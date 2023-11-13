@@ -1,5 +1,5 @@
 # Repository - Domits Project
-
+(readme still needs to be adjusted to the aws/javascript workspace)
 ## Purpose
 
 This repository contains the code for the Domits project. The following instructions will guide you through the installation, setup and being able to start the project locally.
@@ -16,13 +16,13 @@ This repository contains the code for the Domits project. The following instruct
 
 Install in new folder (recommended)
 ```bat
-git clone https://github.com/domits1/repository.git
+git clone https://github.com/domits1/Domits.git
 cd repository
 ```
 
 Install in current folder
 ```bat
-git clone https://github.com/domits1/repository.git .
+git clone https://github.com/domits1/Domits.git .
 ```
 
 ### 2. Backend Setup
