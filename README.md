@@ -8,6 +8,7 @@ This repository contains the code for the Domits project. The following instruct
 
 - [Node.js](https://nodejs.org/)
 - [npm](https://www.npmjs.com/)
+- [git](https://www.git-scm.com/)
 
 ## Installation
 
