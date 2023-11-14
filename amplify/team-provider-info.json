@@ -1,4 +1,22 @@
 {
+  "staging": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-staging-132913-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-staging-132913-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-staging-132913-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-staging-132913-deployment",
+      "UnauthRoleName": "amplify-domits-staging-132913-unauthRole",
+      "StackName": "amplify-domits-staging-132913",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-staging-132913/a2ef2b70-8228-11ee-82b9-0a3796479190",
+      "AmplifyAppId": "d3rko7lkwyhpib"
+    },
+    "categories": {
+      "auth": {
+        "Domits": {}
+      }
+    }
+  },
   "dev": {
     "awscloudformation": {
       "AuthRoleName": "amplify-domits-dev-110949-authRole",
