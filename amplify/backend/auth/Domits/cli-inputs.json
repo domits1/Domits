@@ -39,7 +39,9 @@
     ],
     "useDefault": "manual",
     "userPoolGroups": false,
-    "userPoolGroupList": [],
+    "userPoolGroupList": [
+      "domits"
+    ],
     "adminQueries": false,
     "usernameCaseSensitive": false,
     "useEnabledMfas": true,

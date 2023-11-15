@@ -13,7 +13,8 @@
     },
     "categories": {
       "auth": {
-        "Domits": {}
+        "Domits": {},
+        "userPoolGroups": {}
       }
     }
   },
