@@ -1,6 +1,15 @@
 # Getting Started with Create React App
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+first open the project directory. in the terminal do the following things to make sure everything runs properly:
+
+npm install 
+npm install amplify
+npm install router
+npm install react-router-dom
+npm install ui-react
+
+this are all the dependencies we added to the project. 
+
 
 ## Available Scripts
 
