@@ -1,58 +1,58 @@
 {
   "providers": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-domits-main-95801-authRole",
-      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-main-95801-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-main-95801-authRole",
+      "AuthRoleName": "amplify-domits-mainquin-113449-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-mainquin-113449-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-mainquin-113449-authRole",
       "Region": "eu-north-1",
-      "DeploymentBucketName": "amplify-domits-main-95801-deployment",
-      "UnauthRoleName": "amplify-domits-main-95801-unauthRole",
-      "StackName": "amplify-domits-main-95801",
-      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-main-95801/407c8a40-845e-11ee-9b69-06036b118700",
+      "DeploymentBucketName": "amplify-domits-mainquin-113449-deployment",
+      "UnauthRoleName": "amplify-domits-mainquin-113449-unauthRole",
+      "StackName": "amplify-domits-mainquin-113449",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-mainquin-113449/c4307060-846b-11ee-a9b6-06038d891f18",
       "AmplifyAppId": "d34jwd0sihmsus"
     }
   },
   "auth": {
-    "domits8b037bad": {
-      "customAuth": false,
+    "domits420cd8cf": {
+      "service": "Cognito",
+      "providerPlugin": "awscloudformation",
       "dependsOn": [],
+      "customAuth": false,
       "frontendAuthConfig": {
-        "mfaConfiguration": "OFF",
-        "mfaTypes": [
-          "SMS"
+        "socialProviders": [],
+        "usernameAttributes": [
+          "EMAIL"
+        ],
+        "signupAttributes": [
+          "EMAIL"
         ],
         "passwordProtectionSettings": {
           "passwordPolicyMinLength": 8,
           "passwordPolicyCharacters": []
         },
-        "signupAttributes": [
-          "EMAIL"
-        ],
-        "socialProviders": [],
-        "usernameAttributes": [
-          "EMAIL"
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
         ],
         "verificationMechanisms": [
           "EMAIL"
         ]
       },
-      "providerPlugin": "awscloudformation",
-      "service": "Cognito",
       "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-main-95801-deployment/amplify-cfn-templates/auth/domits8b037bad-cloudformation-template.json",
-        "logicalId": "authdomits8b037bad"
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-mainquin-113449-deployment/amplify-cfn-templates/auth/domits420cd8cf-cloudformation-template.json",
+        "logicalId": "authdomits420cd8cf"
       },
-      "lastPushTimeStamp": "2023-11-16T09:25:52.607Z",
+      "lastPushTimeStamp": "2023-11-16T10:51:22.560Z",
       "output": {
-        "UserPoolId": "eu-north-1_cKQzgb71E",
-        "AppClientIDWeb": "k7efbddpudb8c0tjk7kh8rojh",
-        "AppClientID": "100f1kn578ovre1olfp9537183",
-        "IdentityPoolId": "eu-north-1:5e6fc98b-8695-4c5c-906f-85e1f2618d35",
-        "UserPoolArn": "arn:aws:cognito-idp:eu-north-1:115462458880:userpool/eu-north-1_cKQzgb71E",
-        "IdentityPoolName": "domits8b037bad_identitypool_8b037bad__main",
-        "UserPoolName": "domits8b037bad_userpool_8b037bad"
+        "UserPoolId": "eu-north-1_m5HzBwhiE",
+        "AppClientIDWeb": "63efhnr8cjmibmdltcojlevh5d",
+        "AppClientID": "2nqf9us3pdfjldf2958f3iilu8",
+        "IdentityPoolId": "eu-north-1:a50499e9-3bb6-4e6c-977a-f84586436546",
+        "UserPoolArn": "arn:aws:cognito-idp:eu-north-1:115462458880:userpool/eu-north-1_m5HzBwhiE",
+        "IdentityPoolName": "domits420cd8cf_identitypool_420cd8cf__mainquin",
+        "UserPoolName": "domits420cd8cf_userpool_420cd8cf"
       },
-      "lastPushDirHash": "NObZDoJ4F7rzNeCmrW9Mi/vnC6w="
+      "lastPushDirHash": "NrK4AOFfDNJNtYF7V4as9LXQG9s="
     }
   }
 }

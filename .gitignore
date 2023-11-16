@@ -33,6 +33,7 @@ yarn-error.log*
 amplify/\#current-cloud-backend
 amplify/.config/local-*
 amplify/logs
+amplify/backend
 amplify/mock-data
 amplify/mock-api-resources
 amplify/backend/amplify-meta.json

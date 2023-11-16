@@ -152,15 +152,15 @@
         }
       }
     },
-    "authdomits8b037bad": {
+    "authdomits420cd8cf": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/amplify-domits-main-95801-deployment/amplify-cfn-templates/auth/domits8b037bad-cloudformation-template.json",
+        "TemplateURL": "https://s3.amazonaws.com/amplify-domits-mainquin-113449-deployment/amplify-cfn-templates/auth/domits420cd8cf-cloudformation-template.json",
         "Parameters": {
-          "identityPoolName": "domits8b037bad_identitypool_8b037bad",
+          "identityPoolName": "domits420cd8cf_identitypool_420cd8cf",
           "allowUnauthenticatedIdentities": false,
-          "resourceNameTruncated": "domits8b037bad",
-          "userPoolName": "domits8b037bad_userpool_8b037bad",
+          "resourceNameTruncated": "domits420cd8cf",
+          "userPoolName": "domits420cd8cf_userpool_420cd8cf",
           "autoVerifiedAttributes": "email",
           "mfaConfiguration": "OFF",
           "mfaTypes": "SMS Text Message",
@@ -177,10 +177,10 @@
           "userpoolClientRefreshTokenValidity": 30,
           "userpoolClientWriteAttributes": "email",
           "userpoolClientReadAttributes": "email",
-          "userpoolClientLambdaRole": "domits8b037bad_userpoolclient_lambda_role",
+          "userpoolClientLambdaRole": "domits420cd8cf_userpoolclient_lambda_role",
           "userpoolClientSetAttributes": false,
-          "sharedId": "8b037bad",
-          "resourceName": "domits8b037bad",
+          "sharedId": "420cd8cf",
+          "resourceName": "domits420cd8cf",
           "authSelections": "identityPoolAndUserPool",
           "useDefault": "default",
           "usernameAttributes": "email",
@@ -202,7 +202,7 @@
           },
           "breakCircularDependency": true,
           "dependsOn": "",
-          "env": "main"
+          "env": "mainquin"
         }
       }
     },
@@ -210,7 +210,7 @@
       "DependsOn": [
         "AuthRole",
         "UnauthRole",
-        "authdomits8b037bad"
+        "authdomits420cd8cf"
       ],
       "Type": "AWS::Lambda::Function",
       "Properties": {
@@ -318,7 +318,7 @@
         },
         "idpId": {
           "Fn::GetAtt": [
-            "authdomits8b037bad",
+            "authdomits420cd8cf",
             "Outputs.IdentityPoolId"
           ]
         },

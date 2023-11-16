@@ -34,5 +34,24 @@
         "domits8b037bad": {}
       }
     }
+  },
+  "mainquin": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-mainquin-113449-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-mainquin-113449-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-mainquin-113449-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-mainquin-113449-deployment",
+      "UnauthRoleName": "amplify-domits-mainquin-113449-unauthRole",
+      "StackName": "amplify-domits-mainquin-113449",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-mainquin-113449/c4307060-846b-11ee-a9b6-06038d891f18",
+      "AmplifyAppId": "d34jwd0sihmsus"
+    },
+    "categories": {
+      "auth": {
+        "domits8b037bad": {},
+        "domits420cd8cf": {}
+      }
+    }
   }
 }
