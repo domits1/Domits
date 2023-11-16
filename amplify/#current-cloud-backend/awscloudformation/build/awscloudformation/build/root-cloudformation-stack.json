@@ -155,7 +155,7 @@
     "authdomits8b037bad": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/amplify-domits-dev-110949-deployment/amplify-cfn-templates/auth/domits8b037bad-cloudformation-template.json",
+        "TemplateURL": "https://s3.amazonaws.com/amplify-domits-main-95801-deployment/amplify-cfn-templates/auth/domits8b037bad-cloudformation-template.json",
         "Parameters": {
           "identityPoolName": "domits8b037bad_identitypool_8b037bad",
           "allowUnauthenticatedIdentities": false,
@@ -202,7 +202,7 @@
           },
           "breakCircularDependency": true,
           "dependsOn": "",
-          "env": "dev"
+          "env": "main"
         }
       }
     },
