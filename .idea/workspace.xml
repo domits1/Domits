@@ -4,7 +4,29 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="06ece906-4846-4848-b33b-213db4dafcac" name="Changes" comment="" />
+    <list default="true" id="06ece906-4846-4848-b33b-213db4dafcac" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/amplify-meta.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/#current-cloud-backend/amplify-meta.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/auth/domits8b037bad/build/domits8b037bad-cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/auth/domits8b037bad/build/parameters.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/auth/domits8b037bad/cli-inputs.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/awscloudformation/build/root-cloudformation-stack.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/#current-cloud-backend/awscloudformation/build/root-cloudformation-stack.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/backend-config.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/.config/local-aws-info.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/.config/local-aws-info.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/.config/local-env-info.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/.config/local-env-info.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/amplify-meta.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/backend/amplify-meta.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/auth/domits8b037bad/build/domits8b037bad-cloudformation-template.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/backend/auth/domits8b037bad/build/domits8b037bad-cloudformation-template.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/awscloudformation/build/root-cloudformation-stack.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/backend/awscloudformation/build/root-cloudformation-stack.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/team-provider-info.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/team-provider-info.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/node_modules/node.js/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/node_modules/node.js/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/amplifyconfiguration.json" beforeDir="false" afterPath="$PROJECT_DIR$/src/amplifyconfiguration.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/aws-exports.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/aws-exports.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -24,21 +46,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/giann/projects/Domits&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "develop",
+    "last_opened_file_path": "C:/Users/giann/projects/Domits",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -49,6 +71,7 @@
       <updated>1699954995395</updated>
       <workItem from="1699954996719" duration="647000" />
       <workItem from="1699955650287" duration="2909000" />
+      <workItem from="1700124867944" duration="1077000" />
     </task>
     <servers />
   </component>

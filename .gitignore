@@ -1,9 +1,16 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# editor files
+.vscode/
+.idea/
+
+
+
 # dependencies
 /node_modules
 /.pnp
 .pnp.js
+
 
 # testing
 /coverage
@@ -43,3 +50,4 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
+/node_modules/.cache/default-development/
