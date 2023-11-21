@@ -1,4 +1,17 @@
 {
+  "maingian": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-maingian-104402-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-maingian-104402-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-maingian-104402-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-maingian-104402-deployment",
+      "UnauthRoleName": "amplify-domits-maingian-104402-unauthRole",
+      "StackName": "amplify-domits-maingian-104402",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-maingian-104402/e3101420-885a-11ee-976e-0a9c323915dc",
+      "AmplifyAppId": "d34jwd0sihmsus"
+    }
+  },
   "dev": {
     "awscloudformation": {
       "AuthRoleName": "amplify-domits-dev-110949-authRole",
@@ -51,6 +64,33 @@
       "auth": {
         "domits8b037bad": {},
         "domits420cd8cf": {}
+      }
+    }
+  },
+  "develop": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-develop-155945-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-155945-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-155945-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-develop-155945-deployment",
+      "UnauthRoleName": "amplify-domits-develop-155945-unauthRole",
+      "StackName": "amplify-domits-develop-155945",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-develop-155945/9cffca10-887e-11ee-896f-0af71353fcf2",
+      "AmplifyAppId": "d34jwd0sihmsus"
+    },
+    "categories": {
+      "auth": {
+        "domits59290817": {}
+      },
+      "function": {
+        "S3Trigger7b5ed19c": {
+          "deploymentBucketName": "amplify-domits-develop-155945-deployment",
+          "s3Key": "amplify-builds/S3Trigger7b5ed19c-2f51476269763150786c-build.zip"
+        }
+      },
+      "storage": {
+        "s39c22bbfa": {}
       }
     }
   }

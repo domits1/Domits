@@ -29,11 +29,13 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+/node_modules/.cache/
+/node_modules/.cache/default-development/
+
 #amplify-do-not-edit-begin
 amplify/\#current-cloud-backend
 amplify/.config/local-*
 amplify/logs
-amplify/backend
 amplify/mock-data
 amplify/mock-api-resources
 amplify/backend/amplify-meta.json
@@ -51,5 +53,3 @@ amplifytools.xcconfig
 .secret-*
 **.sample
 #amplify-do-not-edit-end
-/node_modules/.cache/
-/node_modules/.cache/default-development/

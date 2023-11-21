@@ -13,5 +13,13 @@
     "configLevel": "project",
     "useProfile": true,
     "profileName": "domitsquinten"
+  },
+  "maingian": {
+    "configLevel": "amplifyAdmin"
+  },
+  "develop": {
+    "configLevel": "project",
+    "useProfile": true,
+    "profileName": "amplifygianni"
   }
 }
