@@ -8,6 +8,7 @@ import Home from './Home';
 import Booking from './Booking';
 import Work from './Work';
 import Contact from './Contact';
+import Landing from "./Landing";
 
 function Header() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -22,22 +23,25 @@ function Header() {
                     <nav>
                         <ul>
                             <li>
-                                <Link to="/">Home -</Link>
+                                <Link to="/">Landing</Link>
                             </li>
                             <li>
-                                <Link to="/booking">Do Book -</Link>
+                                <Link to="/home">Home</Link>
                             </li>
                             <li>
-                                <Link to="/about">Do Extra's -</Link>
+                                <Link to="/booking">Do Book</Link>
                             </li>
                             <li>
-                                <Link to="/work">Do Work -</Link>
+                                <Link to="/about">Do Extra's</Link>
                             </li>
                             <li>
-                                <Link to="/contact">Do Contact us -</Link>
+                                <Link to="/work">Do Work</Link>
                             </li>
                             <li>
-                                <button onClick={openLoginModal}>Login -</button>
+                                <Link to="/contact">Do Contact us</Link>
+                            </li>
+                            <li>
+                                <button onClick={openLoginModal}>Login</button>
                             </li>
                         </ul>
                     </nav>
@@ -45,7 +49,8 @@ function Header() {
             </div>
 
             <Routes>
-                <Route path="/" element={<Home />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/home" element={<Home />} />
                 <Route path="/booking" element={<Booking />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/work" element={<Work />} />

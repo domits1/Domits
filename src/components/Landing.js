@@ -3,8 +3,9 @@ import backgroundImage from '../images/landingpagebg.png';
 import {Link} from "react-router-dom"; // Adjust the image path as needed
 
 
-function Home() {
+function Landing() {
     const styles = {
+        backgroundImage: `url(${backgroundImage})`,
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
@@ -17,9 +18,14 @@ function Home() {
 
     return (
         <div style={styles}>
-            <h1>Home </h1>
+            <div>
+                <h1>Your perfect accommodation only at Domits </h1>
+            </div>
+            <div>
+                <button to="/login">to home</button>
+            </div>
         </div>
     );
 }
 
-export default Home;
+export default Landing;
