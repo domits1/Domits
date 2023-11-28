@@ -1,3 +1,5 @@
+import {Amplify} from "aws-amplify";
+
 import {
     Authenticator,
     View,
