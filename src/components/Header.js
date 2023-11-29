@@ -9,6 +9,7 @@ import Booking from './Booking';
 import Work from './Work';
 import Contact from './Contact';
 import Landing from "./Landing";
+import HostDashboard from "./HostDashboard";
 
 function Header() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -56,6 +57,7 @@ function Header() {
                 <Route path="/work" element={<Work />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/hostdashboard" element={<HostDashboard />} />
             </Routes>
 
             {/* Login Modal */}
