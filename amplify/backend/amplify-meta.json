@@ -14,100 +14,54 @@
   },
   "auth": {
     "domits59290817": {
-      "service": "Cognito",
-      "providerPlugin": "awscloudformation",
-      "dependsOn": [],
       "customAuth": false,
+      "dependsOn": [],
       "frontendAuthConfig": {
-        "socialProviders": [],
-        "usernameAttributes": [
-          "EMAIL"
-        ],
-        "signupAttributes": [
-          "EMAIL"
-        ],
-        "passwordProtectionSettings": {
-          "passwordPolicyMinLength": 8,
-          "passwordPolicyCharacters": []
-        },
         "mfaConfiguration": "OFF",
         "mfaTypes": [
           "SMS"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyCharacters": [],
+          "passwordPolicyMinLength": 8
+        },
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "socialProviders": [],
+        "usernameAttributes": [
+          "EMAIL"
         ],
         "verificationMechanisms": [
           "EMAIL"
         ]
       },
-      "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/domits59290817-cloudformation-template.json",
-        "logicalId": "authdomits59290817"
-      },
-      "lastPushTimeStamp": "2023-11-21T15:05:14.785Z",
-      "output": {
-        "UserPoolId": "eu-north-1_aOTlOCXaf",
-        "AppClientIDWeb": "10sn5elruv9nf6ms20vi8jo860",
-        "AppClientID": "4p0gk5la8roimd0q0v49ap682a",
-        "IdentityPoolId": "eu-north-1:6bfb5a59-eeca-4b79-991d-33bd27fa3afe",
-        "UserPoolArn": "arn:aws:cognito-idp:eu-north-1:115462458880:userpool/eu-north-1_aOTlOCXaf",
-        "IdentityPoolName": "domits59290817_identitypool_59290817__develop",
-        "UserPoolName": "domits59290817_userpool_59290817"
-      },
-      "lastPushDirHash": "wAD9uWU538WWkRLWeuUOsaev6J8="
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito"
     }
   },
   "function": {
     "S3Trigger7b5ed19c": {
-      "service": "Lambda",
-      "providerPlugin": "awscloudformation",
       "build": true,
-      "lastBuildTimeStamp": "2023-11-21T15:02:39.261Z",
-      "lastBuildType": "PROD",
-      "lastPackageTimeStamp": "2023-11-21T15:02:39.279Z",
-      "distZipFilename": "S3Trigger7b5ed19c-2f51476269763150786c-build.zip",
-      "s3Bucket": {
-        "deploymentBucketName": "amplify-domits-develop-155945-deployment",
-        "s3Key": "amplify-builds/S3Trigger7b5ed19c-2f51476269763150786c-build.zip"
-      },
-      "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/function/S3Trigger7b5ed19c-cloudformation-template.json",
-        "logicalId": "functionS3Trigger7b5ed19c"
-      },
-      "lastPushTimeStamp": "2023-11-21T15:05:14.785Z",
-      "output": {
-        "LambdaExecutionRoleArn": "arn:aws:iam::115462458880:role/S3Trigger7b5ed19cLambdaRole7b5ed19c-develop",
-        "Region": "eu-north-1",
-        "Arn": "arn:aws:lambda:eu-north-1:115462458880:function:S3Trigger7b5ed19c-develop",
-        "Name": "S3Trigger7b5ed19c-develop",
-        "LambdaExecutionRole": "S3Trigger7b5ed19cLambdaRole7b5ed19c-develop"
-      },
-      "lastPushDirHash": "J15GBHBgJA22TgOVITsppNW2pH4="
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   },
   "storage": {
     "s39c22bbfa": {
-      "service": "S3",
-      "providerPlugin": "awscloudformation",
       "dependsOn": [
         {
-          "category": "function",
-          "resourceName": "S3Trigger7b5ed19c",
           "attributes": [
             "Name",
             "Arn",
             "LambdaExecutionRole"
-          ]
+          ],
+          "category": "function",
+          "resourceName": "S3Trigger7b5ed19c"
         }
       ],
-      "lastPushTimeStamp": "2023-11-21T15:05:14.785Z",
-      "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/storage/cloudformation-template.json",
-        "logicalId": "storages39c22bbfa"
-      },
-      "output": {
-        "BucketName": "domits7117256b4cd444d4ae545fd24c1c6319155945-develop",
-        "Region": "eu-north-1"
-      },
-      "lastPushDirHash": "ZgkAnBGBahehDK8Z0tdZwyx6VoM="
+      "providerPlugin": "awscloudformation",
+      "service": "S3"
     }
   }
 }
