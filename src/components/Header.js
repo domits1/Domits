@@ -9,6 +9,7 @@ import Booking from './Booking';
 import Work from './Work';
 import Contact from './Contact';
 import Landing from "./Landing";
+import HostDashboard from "./hostdashboard/HostDashboard";
 import CreateAccommodation from "./hostdashboard/CreateAccommodation";
 import DeleteAccommodation from "./hostdashboard/DeleteAccommodation";
 import ReadAccommodation from "./hostdashboard/ReadAccommodation";
@@ -60,6 +61,7 @@ function Header() {
                 <Route path="/work" element={<Work />} />
                 <Route path="/contact" element={<Contact />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/hostdashboard" element={<HostDashboard />} />
                 <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                 <Route path="/hostdashboard/Read" element={<ReadAccommodation />} />
                 <Route path="/hostdashboard/Update" element={<UpdateAccommodation />} />
