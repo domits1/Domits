@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import backgroundImage from "../images/landingpagebg.png";
 
-const HostDashboard = () => {
+const CreateAccommodation = () => {
     const [formState, setFormState] = useState({
         title: '',
         housenumber: '',
@@ -160,6 +159,6 @@ const HostDashboard = () => {
                         );
 };
 
-export default HostDashboard;
+export default CreateAccommodation;
 
 
