@@ -9,15 +9,11 @@ import Booking from './Booking';
 import Work from './Work';
 import Contact from './Contact';
 import Landing from "./Landing";
+import HomeDashboard from "./AdminDashboard/HomeDashboard";
 
-function Header() {
-    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-
-    const openLoginModal = () => setIsLoginModalOpen(true);
-    const closeLoginModal = () => setIsLoginModalOpen(false);
+function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
 
     return (
-        <Router>
             <div className="App">
                 <header className="app-header">
                     <nav>
@@ -47,28 +43,6 @@ function Header() {
                     </nav>
                 </header>
             </div>
-
-            <Routes>
-                <Route path="/" element={<Landing />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/booking" element={<Booking />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/work" element={<Work />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/login" element={<Login />} />
-            </Routes>
-
-            {/* Login Modal */}
-            <Modal
-                isOpen={isLoginModalOpen}
-                onRequestClose={closeLoginModal}
-                contentLabel="Login Modal"
-            >
-                {/* Render the Login component inside the modal */}
-                <Login />
-                <button onClick={closeLoginModal}>Close Modal</button>
-            </Modal>
-        </Router>
     );
 }
 
