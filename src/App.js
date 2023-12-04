@@ -44,6 +44,7 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/admin" element={<HomeDashboard />} />
+                    {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/Read" element={<ReadAccommodation />} />
