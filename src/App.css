@@ -1,46 +1,75 @@
+/*css for the header*/
 .app-header {
-  background-color: #282c34;
-  flex-direction: row;
+  /*layout*/
+  display: flex;
+  width: 100%;
+  padding: 16px 32px;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 32px;
-  gap: 10px;
-  width: 1296px;
-  height: 82.39px;
-  left: 108px;
-  top: 25px;
-  background: #FFFFFF;
-  box-shadow: 0px 2px 6px rgba(13, 26, 38, 0.15);
+
+  /*style*/
   border-radius: 20px;
+  background: var(--colors-background-primary, #FFF);
+
+  /* shadows/medium */
+  box-shadow: 0px 2px 6px 0px rgba(13, 26, 38, 0.15);
+
 }
 
 .app-header nav {
-  background-color: #282c34;
-  box-shadow: 0px 2px 6px rgba(13, 26, 38, 0.15);
-  border-radius: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Add this line to vertically center items */
 }
 
 .app-header ul {
   list-style: none;
-  padding: 0;
-  margin: 0;
+  text-decoration: none;
   display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 50px;
 }
 
   .app-header li {
-    margin-right: 10px;
-    display: inline;
+    text-decoration: none;
+    color: var(--colors-font-primary, #0D1A26);
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%; /* 24px */
   }
 
 .app-header a {
   text-decoration: none;
-  color: white;
-  font-weight: bold;
 }
 
 .app-header a:hover {
+  text-decoration: none;
   color: #61dafb;
 }
+
+.app-header li button {
+  /*layout*/
+  display: flex;
+  padding: 8px 16px;
+  justify-content: center;
+  align-items: center;
+
+  /*style*/
+  color:#FFFFFF;/*the color of the text was manually added*/
+  border-radius: 4px;
+  border: 1px solid var(--components-button-primary-border-color, rgba(0, 0, 0, 0.00));
+  background: #0D9813;
+}
+
+.login-container {
+  margin-left: auto;
+  display: flex; /* Ensure the container is also a flex container */
+  align-items: center; /* Center the button vertically within the container */
+}
+
 
 /* Frame 5 */
 .app-header  .frame-5 {
@@ -121,5 +150,5 @@
   line-height: 150%;
   color: #FFFFFF;
 }
-
+/*end of the css header*/
 

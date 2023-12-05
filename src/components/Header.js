@@ -9,6 +9,12 @@ function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
                 <nav>
                     <ul>
                         <li>
+                            <div className="logo">
+                                <img src={process.env.PUBLIC_URL + '/logo.svg'} alt="Logo" />
+
+                            </div>
+                        </li>
+                        <li>
                             <Link to="/">Landing</Link>
                         </li>
                         <li>
