@@ -4,87 +4,41 @@ import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
 //
     return (
-//         <div className="App">
-//             <header className="app-header">
-//                 <nav>
-//                     <ul>
-//                         <li>
-//                             <div className="logo">
-//                                 <img src={process.env.PUBLIC_URL + '/logo.svg'} alt="Logo" />
-//
-//                             </div>
-//                         </li>
-//                         <li>
-//                             <Link to="/">Landing</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/home">Home</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/booking">Do Book</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/about">Do Extra's</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/work">Do Work</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/contact">Do Contact us</Link>
-//                         </li>
-//                         <li>
-//                             <button onClick={openLoginModal}>Login</button>
-//                         </li>
-//                     </ul>
-//                 </nav>
-//             </header>
-//         </div>
-
         <div className="App">
-            <footer className="footer">
-                <div className="newsletter-section">
-                    <p>Sign up for the newsletter</p>
-                    <div className="newsletter-subsection">
-                    <p>No spam, we promise</p>
-                    </div>
-                    <div className="newsletter-form">
-                        <input type="email" placeholder="Your email" />
-                        <button>Subscribe</button>
-                    </div>
-                </div>
+            <header className="app-header">
+                <nav>
+                    <ul>
+                        <li>
+                            <div className="logo">
+                                <img src={process.env.PUBLIC_URL + '/logo.svg'} alt="Logo" />
 
-                <div className="footer-links-section">
-                    <div className="footer-column" id="domits-column">
-                        <h3>Domits</h3>
-                        <ul>
-                            <li>Who is Domits</li>
-                            <li>About Us</li>
-                            <li>Career</li>
-                            <li>Contact</li>
-                        </ul>
-                    </div>
-
-                    <div className="footer-column" id="resources-column">
-                        <h3>Resources</h3>
-                        <ul>
-                            <li>Privacy Policy</li>
-                            <li>General Agreement</li>
-                            <li>Expectation Policy</li>
-                        </ul>
-                    </div>
-
-                    <div className="footer-column" id="my-domits-column">
-                        <h3>My Domits</h3>
-                        <ul>
-                            <li>Bookings</li>
-                            <li>My Contact Centre</li>
-                            <li>My Account Settings</li>
-                        </ul>
-                    </div>
-                </div>
-            </footer>
+                            </div>
+                        </li>
+                        <li>
+                            <Link to="/">Landing</Link>
+                        </li>
+                        <li>
+                            <Link to="/home">Home</Link>
+                        </li>
+                        <li>
+                            <Link to="/booking">Do Book</Link>
+                        </li>
+                        <li>
+                            <Link to="/about">Do Extra's</Link>
+                        </li>
+                        <li>
+                            <Link to="/work">Do Work</Link>
+                        </li>
+                        <li>
+                            <Link to="/contact">Do Contact us</Link>
+                        </li>
+                        <li>
+                            <button onClick={openLoginModal}>Login</button>
+                        </li>
+                    </ul>
+                </nav>
+            </header>
         </div>
-
     );
 }
 
