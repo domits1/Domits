@@ -1,51 +1,15 @@
 import React, { useState } from 'react';
 import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
-//
-    return (
-//         <div className="App">
-//             <header className="app-header">
-//                 <nav>
-//                     <ul>
-//                         <li>
-//                             <div className="logo">
-//                                 <img src={process.env.PUBLIC_URL + '/logo.svg'} alt="Logo" />
-//
-//                             </div>
-//                         </li>
-//                         <li>
-//                             <Link to="/">Landing</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/home">Home</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/booking">Do Book</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/about">Do Extra's</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/work">Do Work</Link>
-//                         </li>
-//                         <li>
-//                             <Link to="/contact">Do Contact us</Link>
-//                         </li>
-//                         <li>
-//                             <button onClick={openLoginModal}>Login</button>
-//                         </li>
-//                     </ul>
-//                 </nav>
-//             </header>
-//         </div>
+function Footer({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
 
+    return (
         <div className="App">
             <footer className="footer">
                 <div className="newsletter-section">
                     <p>Sign up for the newsletter</p>
                     <div className="newsletter-subsection">
-                    <p>No spam, we promise</p>
+                        <p>No spam, we promise</p>
                     </div>
                     <div className="newsletter-form">
                         <input type="email" placeholder="Your email" />
@@ -84,8 +48,7 @@ function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
                 </div>
             </footer>
         </div>
-
     );
 }
 
-export default Header;
+export default Footer;

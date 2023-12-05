@@ -152,3 +152,115 @@
 }
 /*end of the css header*/
 
+/* Footer styles */
+.footer {
+  /*layout*/
+  display: flex;
+  width: 1512px;
+  height: 384px;
+  padding: 40px 72px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  flex-shrink: 0;
+
+  /*style*/
+  background: var(--colors-brand-primary-10, #86CB89);
+}
+
+.newsletter-section {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.newsletter-section p {
+  margin-bottom: 10px;
+  color: var(--colors-font-secondary, #304050);
+  font-family: Inter;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 150%; /* 30px */
+}
+
+.newsletter-subsection p {
+  color: var(--colors-font-secondary, #304050);
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%; /* 24px */
+}
+.newsletter-form {
+  display: flex;
+  gap: 10px;
+
+
+}
+
+.newsletter-form input {
+  display: flex;
+  width: 300px;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.newsletter-form button {
+  /*layout*/
+  display: flex;
+  padding: 8px 50px;
+  justify-content: center;
+  align-items: center;
+/*style*/
+  border-radius: 4px;
+  border: 1px solid var(--components-button-primary-border-color, rgba(0, 0, 0, 0.00));
+  background: var(--components-button-primary-background-color, #0A760F);
+  color: var(--components-button-primary-color, #FFF);
+  /* text*/
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 150%; /* 24px */
+}
+
+.footer-links-section {
+  display: flex;
+  justify-content: space-around;
+}
+
+.footer-column {
+  flex: 1;
+  margin-right: 20px;
+}
+
+.footer-column h3 {
+  color: var(--colors-font-secondary, #304050);
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 24px; /* 150% */
+  letter-spacing: 0.16px;
+}
+
+.footer-column ul {
+  list-style: none;
+  padding: 0;
+}
+
+.footer-column ul li {
+  margin: 10px 0;
+
+  color: var(--colors-font-interactive, #0A760F);
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 24px; /* 150% */
+  letter-spacing: 0.16px;
+}
