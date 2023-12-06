@@ -1,0 +1,53 @@
+import MList from "./mlist";
+import logo from "../../logo.svg";
+import React from "react";
+import {View} from "@aws-amplify/ui-react";
+
+const Sidebar = () => {
+    const list = [
+        {title: 'Manage Admins ', id: 1},
+        {title: 'Manage Guests ', id: 2},
+        {title: 'Manage Hosts ', id: 3},
+        {title: 'Manage Company ', id: 4},
+        {title: 'Manage Documents ', id: 5},
+        {title: 'Manage Hosts ', id: 6},
+        {title: 'Manage Services ', id: 7},
+        {title: 'Manage Help ', id: 8},
+        {title: 'Manage Locations ', id: 9},
+        {title: 'Manage Map ', id: 10},
+        {title: 'Manage Fare ', id: 11},
+        {title: 'Manage Requests', id: 12},
+        {title: 'Manage Bookings', id: 13},
+        {title: 'Manage Ratings', id: 14},
+        {title: 'Manage Referals', id: 15},
+        {title: 'Manage Payout ', id: 16},
+        {title: "Manage Wallet & Promo's ", id: 17},
+        {title: 'Manage App Version ', id: 18},
+        {title: 'Manage Settings ', id: 19},
+        {title: 'Manage Web Language', id: 20},
+        {title: 'Manage App Language', id: 21},
+    ];
+
+    return (
+        <div>
+            <nav className="navbar">
+                <img src={logo} alt="logo.png" height={50}/>
+                <div className="nav">
+                    Stefan Hopman<br />
+                    Superadmin
+                </div>
+            </nav>
+            <div className="aDash">
+                <div className="manage-list">
+                    {list.map(item => (
+                        <div className="item-preview" key={item.id}>
+                            <h2>{item.title}</h2>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+export default Sidebar;
