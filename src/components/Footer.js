@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
-function Footer({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
+function Footer() {
 
     return (
         <div className="App">
