@@ -1,5 +1,5 @@
 {
-  "Description": "Root Stack for AWS Amplify CLI",
+  "Description": "Root Stack for AWS Amplify Console",
   "AWSTemplateFormatVersion": "2010-09-09",
   "Parameters": {
     "DeploymentBucketName": {
@@ -152,15 +152,15 @@
         }
       }
     },
-    "authdomits8b037bad": {
+    "authdomits59290817": {
       "Type": "AWS::CloudFormation::Stack",
       "Properties": {
-        "TemplateURL": "https://s3.amazonaws.com/amplify-domits-dev-110949-deployment/amplify-cfn-templates/auth/domits8b037bad-cloudformation-template.json",
+        "TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/domits59290817-cloudformation-template.json",
         "Parameters": {
-          "identityPoolName": "domits8b037bad_identitypool_8b037bad",
+          "identityPoolName": "domits59290817_identitypool_59290817",
           "allowUnauthenticatedIdentities": false,
-          "resourceNameTruncated": "domits8b037bad",
-          "userPoolName": "domits8b037bad_userpool_8b037bad",
+          "resourceNameTruncated": "domits59290817",
+          "userPoolName": "domits59290817_userpool_59290817",
           "autoVerifiedAttributes": "email",
           "mfaConfiguration": "OFF",
           "mfaTypes": "SMS Text Message",
@@ -177,10 +177,10 @@
           "userpoolClientRefreshTokenValidity": 30,
           "userpoolClientWriteAttributes": "email",
           "userpoolClientReadAttributes": "email",
-          "userpoolClientLambdaRole": "domits8b037bad_userpoolclient_lambda_role",
+          "userpoolClientLambdaRole": "domits59290817_userpoolclient_lambda_role",
           "userpoolClientSetAttributes": false,
-          "sharedId": "8b037bad",
-          "resourceName": "domits8b037bad",
+          "sharedId": "59290817",
+          "resourceName": "domits59290817",
           "authSelections": "identityPoolAndUserPool",
           "useDefault": "default",
           "usernameAttributes": "email",
@@ -202,7 +202,70 @@
           },
           "breakCircularDependency": true,
           "dependsOn": "",
-          "env": "dev"
+          "env": "develop"
+        }
+      }
+    },
+    "functionS3Trigger7b5ed19c": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/function/S3Trigger7b5ed19c-cloudformation-template.json",
+        "Parameters": {
+          "deploymentBucketName": "amplify-domits-develop-155945-deployment",
+          "s3Key": "amplify-builds/S3Trigger7b5ed19c-2f51476269763150786c-build.zip",
+          "env": "develop"
+        }
+      }
+    },
+    "storages39c22bbfa": {
+      "Type": "AWS::CloudFormation::Stack",
+      "Properties": {
+        "TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/storage/cloudformation-template.json",
+        "Parameters": {
+          "bucketName": "domits7117256b4cd444d4ae545fd24c1c6319",
+          "selectedGuestPermissions": "",
+          "selectedAuthenticatedPermissions": "s3:PutObject,s3:GetObject,s3:ListBucket,s3:DeleteObject",
+          "unauthRoleName": {
+            "Ref": "UnauthRoleName"
+          },
+          "authRoleName": {
+            "Ref": "AuthRoleName"
+          },
+          "triggerFunction": "S3Trigger7b5ed19c",
+          "s3PrivatePolicy": "Private_policy_9c22bbfa",
+          "s3ProtectedPolicy": "Protected_policy_9c22bbfa",
+          "s3PublicPolicy": "Public_policy_9c22bbfa",
+          "s3ReadPolicy": "read_policy_9c22bbfa",
+          "s3UploadsPolicy": "Uploads_policy_9c22bbfa",
+          "authPolicyName": "s3_amplify_9c22bbfa",
+          "unauthPolicyName": "s3_amplify_9c22bbfa",
+          "AuthenticatedAllowList": "ALLOW",
+          "GuestAllowList": "DISALLOW",
+          "s3PermissionsAuthenticatedPrivate": "s3:PutObject,s3:GetObject,s3:DeleteObject",
+          "s3PermissionsAuthenticatedProtected": "s3:PutObject,s3:GetObject,s3:DeleteObject",
+          "s3PermissionsAuthenticatedPublic": "s3:PutObject,s3:GetObject,s3:DeleteObject",
+          "s3PermissionsAuthenticatedUploads": "s3:PutObject",
+          "s3PermissionsGuestPublic": "DISALLOW",
+          "s3PermissionsGuestUploads": "DISALLOW",
+          "functionS3Trigger7b5ed19cName": {
+            "Fn::GetAtt": [
+              "functionS3Trigger7b5ed19c",
+              "Outputs.Name"
+            ]
+          },
+          "functionS3Trigger7b5ed19cArn": {
+            "Fn::GetAtt": [
+              "functionS3Trigger7b5ed19c",
+              "Outputs.Arn"
+            ]
+          },
+          "functionS3Trigger7b5ed19cLambdaExecutionRole": {
+            "Fn::GetAtt": [
+              "functionS3Trigger7b5ed19c",
+              "Outputs.LambdaExecutionRole"
+            ]
+          },
+          "env": "develop"
         }
       }
     },
@@ -210,7 +273,7 @@
       "DependsOn": [
         "AuthRole",
         "UnauthRole",
-        "authdomits8b037bad"
+        "authdomits59290817"
       ],
       "Type": "AWS::Lambda::Function",
       "Properties": {
@@ -318,7 +381,7 @@
         },
         "idpId": {
           "Fn::GetAtt": [
-            "authdomits8b037bad",
+            "authdomits59290817",
             "Outputs.IdentityPoolId"
           ]
         },

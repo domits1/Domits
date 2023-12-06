@@ -1,0 +1,67 @@
+/*Import voor het font*/
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300;400;500;600;700&display=swap');
+
+
+/* Stijl voor de lijst rechts, moet nog een grijze achtergrond krijgen maar daar was ik nog niet aan toegekomen*/
+.manage-list {
+  position: relative;
+  left: 50px;
+  top: 5px;
+  color: #000;
+  font-family: "Quicksand";
+  font-size: 9px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: flex;
+  width: 290px;
+  flex-direction: column;
+  background-color: #ffffff;
+  flex-shrink: 0;
+}
+
+ .item-preview {
+  padding: 8px;
+  margin: 4px 0; 
+  border-radius: 15px;
+  box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.25);
+}
+
+.item-preview:hover{
+  transition: transform 0.2s ease;
+  transform: scale(0.95);
+}
+.list-button {
+  line-height: normal;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  display: flex;
+  width: 290px;
+  flex-direction: column;
+  background-color: #ffffff;
+}
+
+/* bgein voor de stijl voor de navbar*/
+.navbar {
+  padding: 25px 25px 25px 50px;
+  display: flex;
+  align-items: center;
+}
+
+.navbar .nav {
+  margin-left: auto;
+  font-family: "Quicksand";
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 0,5;
+  letter-spacing: 1.1px;
+  text-transform: uppercase;
+  text-align: center;
+  width: 265px;
+  height: 60px;
+  flex-shrink: 0;
+  border-radius: 15px;
+  padding-top: 5px;
+  box-shadow: 0px 2px 5px 0px rgba(0, 0, 0, 0.25);
+}
