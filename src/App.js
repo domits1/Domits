@@ -1,5 +1,6 @@
 import './App.css';
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 import Landing from "./components/Landing";
 import Home from "./components/Home";
 import Booking from "./components/Booking";
@@ -31,6 +32,14 @@ function App() {
         return <Header openLoginModal={openLoginModal} />;
     };
 
+    const renderFooter = () => {
+        const currentPath = window.location.pathname;
+        if (currentPath === '/admin') {
+            return null; // Don't render Header for /admin route
+        }
+        return <Footer/>;
+    };
+
     return (
         <Router>
             <div className="App">
@@ -52,6 +61,8 @@ function App() {
                     <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
                 </Routes>
             </div>
+            {renderFooter()}
+
             {/* Login Modal */}
             <Modal
                 isOpen={isLoginModalOpen}

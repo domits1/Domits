@@ -264,3 +264,84 @@
   line-height: 24px; /* 150% */
   letter-spacing: 0.16px;
 }
+
+/*end of footer*/
+
+/*beginning of the accomodation styling*/
+/*hostdashbord*/
+
+.accommodation {
+  /* Add styles for the accommodation container if needed */
+}
+
+.accommodation-row {
+  display: flex;
+  align-items: center; /* Align items vertically in the center */
+  margin: 0.5em 0; /* Adjust the margin between rows */
+}
+
+.image-container {
+  margin-right: 12em; /* Add spacing between image and descriptions */
+}
+
+.descriptions-container {
+  flex-grow: 1;
+}
+
+.manage-link {
+  margin-left: 1em;
+  margin-right: 3em;
+}
+
+/*sidebar*/
+.sidebar {
+  width: 200px;
+  height: 100%;
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 20px;
+}
+
+.sidebar-label {
+  margin-top: 10px;
+  color: var(--colors-font-tertiary, #5C6670);
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 600;
+  line-height: 24px; /* 150% */
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+li a {
+  color: var(--colors-font-interactive, #0A760F);
+  font-family: Inter;
+  font-size: 16px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 24px; /* 150% */
+  letter-spacing: 0.16px;
+  text-decoration: none;
+}
+
+.sidebar-link {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  padding: 10px;
+}
+
+.sidebar-link:hover {
+}
+
