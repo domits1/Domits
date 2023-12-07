@@ -7,6 +7,7 @@ first open the project directory. in the terminal do the following things to mak
 ### npm install router
 ### npm install react-router-dom
 ### npm install ui-react
+### npm install @mui/x-data-grid
 
 this are all the dependencies we added to the project. 
 
