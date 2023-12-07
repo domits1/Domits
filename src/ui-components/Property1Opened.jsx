@@ -199,8 +199,8 @@ export default function Property1Opened(props) {
                 viewBox={{
                   minX: 0,
                   minY: 0,
-                  width: 22.62744140625,
-                  height: 22.627418518066406,
+                  width: 22.627416610717773,
+                  height: 22.627416610717773,
                 }}
                 paths={[
                   {
