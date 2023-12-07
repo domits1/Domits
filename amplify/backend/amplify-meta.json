@@ -14,25 +14,23 @@
   },
   "auth": {
     "domits59290817": {
-      "service": "Cognito",
-      "providerPlugin": "awscloudformation",
-      "dependsOn": [],
       "customAuth": false,
+      "dependsOn": [],
       "frontendAuthConfig": {
-        "socialProviders": [],
-        "usernameAttributes": [
-          "EMAIL"
-        ],
-        "signupAttributes": [
-          "EMAIL"
-        ],
-        "passwordProtectionSettings": {
-          "passwordPolicyMinLength": 8,
-          "passwordPolicyCharacters": []
-        },
         "mfaConfiguration": "OFF",
         "mfaTypes": [
           "SMS"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyCharacters": [],
+          "passwordPolicyMinLength": 8
+        },
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "socialProviders": [],
+        "usernameAttributes": [
+          "EMAIL"
         ],
         "verificationMechanisms": [
           "EMAIL"
@@ -53,12 +51,12 @@
         "UserPoolName": "domits59290817_userpool_59290817"
       },
       "lastPushDirHash": "wAD9uWU538WWkRLWeuUOsaev6J8="
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito"
     }
   },
   "function": {
     "S3Trigger7b5ed19c": {
-      "service": "Lambda",
-      "providerPlugin": "awscloudformation",
       "build": true,
       "lastBuildTimeStamp": "2023-11-21T15:02:39.261Z",
       "lastBuildType": "PROD",
@@ -81,21 +79,21 @@
         "LambdaExecutionRole": "S3Trigger7b5ed19cLambdaRole7b5ed19c-develop"
       },
       "lastPushDirHash": "J15GBHBgJA22TgOVITsppNW2pH4="
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   },
   "storage": {
     "s39c22bbfa": {
-      "service": "S3",
-      "providerPlugin": "awscloudformation",
       "dependsOn": [
         {
-          "category": "function",
-          "resourceName": "S3Trigger7b5ed19c",
           "attributes": [
             "Name",
             "Arn",
             "LambdaExecutionRole"
-          ]
+          ],
+          "category": "function",
+          "resourceName": "S3Trigger7b5ed19c"
         }
       ],
       "lastPushTimeStamp": "2023-11-30T15:20:11.191Z",
@@ -108,6 +106,8 @@
         "Region": "eu-north-1"
       },
       "lastPushDirHash": "ZgkAnBGBahehDK8Z0tdZwyx6VoM="
+      "providerPlugin": "awscloudformation",
+      "service": "S3"
     }
   }
 }
