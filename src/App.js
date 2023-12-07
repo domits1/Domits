@@ -1,5 +1,6 @@
 import './App.css';
 import Header from "./components/Header";
+import Footer from "./components/Footer";
 import Landing from "./components/Landing";
 import Home from "./components/Home";
 import Booking from "./components/Booking";
@@ -11,6 +12,11 @@ import HomeDashboard from "./components/AdminDashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, { useState } from "react";
 import Modal from "react-modal";
+import HostDashboard from "./components/hostdashboard/HostDashboard";
+import CreateAccommodation from "./components/hostdashboard/CreateAccommodation";
+import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
+import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
+import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
 
 function App() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -26,6 +32,14 @@ function App() {
         return <Header openLoginModal={openLoginModal} />;
     };
 
+    const renderFooter = () => {
+        const currentPath = window.location.pathname;
+        if (currentPath === '/admin') {
+            return null; // Don't render Header for /admin route
+        }
+        return <Footer/>;
+    };
+
     return (
         <Router>
             <div className="App">
@@ -39,8 +53,16 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/admin" element={<HomeDashboard />} />
+                    {/*host dashboard*/}
+                    <Route path="/hostdashboard" element={<HostDashboard />} />
+                    <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
+                    <Route path="/hostdashboard/Read" element={<ReadAccommodation />} />
+                    <Route path="/hostdashboard/Update" element={<UpdateAccommodation />} />
+                    <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
                 </Routes>
             </div>
+            {renderFooter()}
+
             {/* Login Modal */}
             <Modal
                 isOpen={isLoginModalOpen}

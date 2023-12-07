@@ -9,11 +9,11 @@ function Landing() {
         backgroundSize: 'cover',
         backgroundRepeat: 'no-repeat',
         backgroundPosition: 'center',
-        minHeight: '100vh', // Adjust as needed
+        minHeight: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        color: '#ffffff', // Text color on top of the background
+        color: '#ffffff',
     };
 
     return (
