@@ -1,7 +1,5 @@
-import MList from "./mlist";
 import logo from "../../logo.svg";
 import React from "react";
-import {View} from "@aws-amplify/ui-react";
 
 const Sidebar = () => {
     const list = [

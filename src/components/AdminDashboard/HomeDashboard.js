@@ -7,6 +7,7 @@ function HomeDashboard() {
     return (
         <div>
             <Sidebar />
+            Test
         </div>
     );
 }

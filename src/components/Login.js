@@ -23,7 +23,7 @@ function App() {
             return (
                 <View textAlign="center" padding={tokens.space.large}>
                     <Image
-                        src={logo} className="App-logo" alt="logo"
+                        src={logo} className="App-logo" alt="logo" height={75}
                     />
                 </View>
             );
