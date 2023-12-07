@@ -1,5 +1,16 @@
 # Getting Started with Domits (draft)
 
+first open the project directory. in the terminal do the following things to make sure everything runs properly:
+
+### npm install 
+### npm install amplify
+### npm install router
+### npm install react-router-dom
+### npm install ui-react
+### npm install @mui/x-data-grid
+
+this are all the dependencies we added to the project. 
+
 Clone the repository:
 Clone develop into the local machine you want to use
 

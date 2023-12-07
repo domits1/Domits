@@ -1,18 +1,21 @@
 import React from "react";
-import { BrowserRouter as Router, Route, Switch } from 'react-router-dom';
-import ADashboard from './aDashboard';
-import Navbar from './navbar'
-import './dashboard.css';
+import Sidebar from './Sidebar';
+import Navbar from './Navbar';
+import './AdminDashboard.css';
 
 
 function HomeDashboard() {
     return (
-        <div className="App">
-            <Navbar />
-                <div className="content">
-                    <ADashboard/>
-                </div>
-                <p></p>
+        <div className="grid-container">
+            <div className="header">
+                <Navbar />
+            </div>
+            <div className="menu">
+                <Sidebar />
+            </div>
+            <div className="main">
+                Test
+            </div>
         </div>
     );
 }
