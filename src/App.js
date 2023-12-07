@@ -37,7 +37,6 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/work" element={<Work />} />
                     <Route path="/contact" element={<Contact />} />
-                    <Route path="/login" element={<Login />} />
                     <Route path="/admin" element={<HomeDashboard />} />
                 </Routes>
             </div>
@@ -49,7 +48,7 @@ function App() {
             >
                 {/* Render the Login component inside the modal */}
                 <Login />
-                <button onClick={closeLoginModal}>Close Modal</button>
+                <button className="close-button" onClick={closeLoginModal} >Close Modal</button>
             </Modal>
         </Router>
     );
