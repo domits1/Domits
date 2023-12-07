@@ -1,8 +1,13 @@
 import React from "react";
+import Sidebar from './Sidebar';
+import './AdminDashboard.css';
+
 
 function HomeDashboard() {
     return (
-        <div>Test</div>
+        <div>
+            <Sidebar />
+        </div>
     );
 }
 
