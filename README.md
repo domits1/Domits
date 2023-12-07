@@ -1,4 +1,4 @@
-# Getting Started with Create React App
+# Getting Started with Domits (draft)
 
 first open the project directory. in the terminal do the following things to make sure everything runs properly:
 
@@ -11,6 +11,17 @@ first open the project directory. in the terminal do the following things to mak
 
 this are all the dependencies we added to the project. 
 
+Clone the repository:
+Clone develop into the local machine you want to use
+
+Local Configuration:
+Running amplify init sets up or updates your local configuration files (amplify/team-provider-info.json, etc.) based on the answers you provide during the initialization process. This includes settings like the environment name, AWS profile, and other local settings.
+
+Backend Configuration:
+The amplify init command typically doesn't directly modify the backend configuration on AWS. Changes to the backend configuration are usually managed through other Amplify commands like amplify add, amplify push, etc.
+Backend Changes:
+
+If someone makes changes to the backend configuration (e.g., adds a new API or updates authentication settings) and pushes those changes using amplify push, you would need to pull those changes using amplify pull to synchronize your local environment with the latest backend configuration.
 
 ## Available Scripts
 
