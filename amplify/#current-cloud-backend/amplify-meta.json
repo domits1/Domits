@@ -42,7 +42,7 @@
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/domits59290817-cloudformation-template.json",
         "logicalId": "authdomits59290817"
       },
-      "lastPushTimeStamp": "2023-11-30T15:20:11.703Z",
+      "lastPushTimeStamp": "2023-11-21T15:05:14.785Z",
       "output": {
         "UserPoolId": "eu-north-1_aOTlOCXaf",
         "AppClientIDWeb": "10sn5elruv9nf6ms20vi8jo860",
@@ -72,7 +72,7 @@
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/function/S3Trigger7b5ed19c-cloudformation-template.json",
         "logicalId": "functionS3Trigger7b5ed19c"
       },
-      "lastPushTimeStamp": "2023-11-30T15:20:11.189Z",
+      "lastPushTimeStamp": "2023-11-21T15:05:14.785Z",
       "output": {
         "LambdaExecutionRoleArn": "arn:aws:iam::115462458880:role/S3Trigger7b5ed19cLambdaRole7b5ed19c-develop",
         "Region": "eu-north-1",
@@ -98,7 +98,7 @@
           ]
         }
       ],
-      "lastPushTimeStamp": "2023-11-30T15:20:11.191Z",
+      "lastPushTimeStamp": "2023-11-21T15:05:14.785Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/storage/cloudformation-template.json",
         "logicalId": "storages39c22bbfa"
