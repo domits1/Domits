@@ -1,17 +1,17 @@
 {
-  "providers": [
-    "awscloudformation"
-  ],
   "projectName": "Domits",
   "version": "3.1",
   "frontend": "javascript",
   "javascript": {
-    "framework": "react",
+    "framework": "none",
     "config": {
       "SourceDir": "src",
-      "DistributionDir": "build",
+      "DistributionDir": "dist",
       "BuildCommand": "npm.cmd run-script build",
       "StartCommand": "npm.cmd run-script start"
     }
-  }
+  },
+  "providers": [
+    "awscloudformation"
+  ]
 }

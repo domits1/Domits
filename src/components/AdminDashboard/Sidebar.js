@@ -27,23 +27,12 @@ const Sidebar = () => {
     ];
 
     return (
-        <div>
-            <nav className="navbar">
-                <img src={logo} alt="logo.png" height={50}/>
-                <div className="nav">
-                    Stefan Hopman<br />
-                    Superadmin
+        <div className="manage-list">
+            {list.map(item => (
+                <div className="item-preview" key={item.id}>
+                    <h2>{item.title}</h2>
                 </div>
-            </nav>
-            <div className="aDash">
-                <div className="manage-list">
-                    {list.map(item => (
-                        <div className="item-preview" key={item.id}>
-                            <h2>{item.title}</h2>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            ))}
         </div>
     );
 }
