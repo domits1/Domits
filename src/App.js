@@ -1,6 +1,7 @@
 import './App.css';
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import Assortment from './components/Assortment';
 import Landing from "./components/Landing";
 import Home from "./components/Home";
 import Booking from "./components/Booking";
@@ -52,6 +53,7 @@ function App() {
                     <Route path="/work" element={<Work />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/admin" element={<HomeDashboard />} />
+                    <Route path="/assortment" element={<Assortment />} />
                     {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />

@@ -360,6 +360,22 @@ li a {
 }
 
 .sidebar-link:hover {
+  
+}
+
+/* style voor alle kaartjes */
+.item-preview{
+  width: 300px;
+}
+
+.imgacco{
+  height: 160px;
+  width: 100%;
+}
+
+.imgacco img{
+  height: 100%;
+  width: 100%;
 }
 
 
