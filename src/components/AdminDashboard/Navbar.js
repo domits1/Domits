@@ -9,7 +9,7 @@ const Navbar = () => {
                 <img className="img" src={logo} alt="logo.png" height={50} />
             </Link>
             <div className="nav">
-                Stefan Hopman:<br/>
+                Tim Hart :cape:<br/>
                 <b>Superadmin</b>
             </div>
         </nav>
