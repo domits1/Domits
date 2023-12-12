@@ -393,16 +393,21 @@ li a {
 
 
 /*Alles voor de searchbar en filter*/
-.wrapper{
-  width: 95%;
-  margin:0 auto;
-}
   
 #search-container{
   margin: 1em 0;
+  border: 1px #0D1A26;
+  width: 95%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  margin:0 auto;
 }
 
 #search-container input{
+  margin-top: 1em;
+  padding: 10px;
   background-color: transparent;
   width: 40%;
   border: #FFF;
@@ -412,30 +417,4 @@ li a {
 
 #search-container input:focus{
   border-bottom-color: #0A760F;
-}
-
-#search-container button{
-  border: #FFF;
-  padding: 10px 25px;
-  margin-left: 1em;
-  background-color: #0A760F;
-  color: #FFF;
-  border-radius: 5px;
-  margin-top: 0,5em;
-}
-
-.button-value{
-  font-size: 20px;
-  border: 2px solid #0D9813;
-  padding: 1em 2,2em;
-  border-radius: 10px;
-  margin: 10px;
-  background-color: transparent;
-  color: #0D9813;
-  cursor: pointer;
-}
-
-.active{
-  background-color: #0A760F;
-  color: #FFF;
 }

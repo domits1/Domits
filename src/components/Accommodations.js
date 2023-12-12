@@ -1,11 +1,11 @@
 import React from "react";
 import accoImg from '../images/accommodationtestpic1.png';
 
-const Accommodations = () => {
+const Accommodations = ({ searchQuery }) => {
     const accolist = [
         {
             image: accoImg, 
-            address: 'Kinderhuissingel 6K',
+            address: 'Amber Avenue 6K',
             details: '3 beds 1 bathroom',
             size: '20m²',
             price: '$720/night',
@@ -13,33 +13,69 @@ const Accommodations = () => {
         },
         {
             image: accoImg, 
-            address: 'Huissingel 2A',
+            address: 'Birch Boulevard 2',
             details: '4 beds 4 bathroom',
             size: '60m²',
             price: '$120/night',
-            id: 1,
+            id: 2,
         },
         {
             image: accoImg, 
-            address: 'Singel 3F',
+            address: 'Cedar Court 3F',
             details: '2 beds 3 bathroom',
             size: '40m²',
             price: '$20/night',
-            id: 1,
+            id: 3,
         },
         {
             image: accoImg, 
-            address: 'De Singel 1B',
+            address: 'Dahlia Drive 1B',
             details: '1 beds 2 bathroom',
             size: '50m²',
             price: '$40/night',
-            id: 1,
+            id: 4,
+        },
+        {
+            image: accoImg, 
+            address: 'Elm Street 6K',
+            details: '3 beds 1 bathroom',
+            size: '20m²',
+            price: '$720/night',
+            id: 5,
+        },
+        {
+            image: accoImg, 
+            address: 'Fern Avenue 2A',
+            details: '4 beds 4 bathroom',
+            size: '60m²',
+            price: '$120/night',
+            id: 6,
+        },
+        {
+            image: accoImg, 
+            address: 'Grove Green 3F',
+            details: '2 beds 3 bathroom',
+            size: '40m²',
+            price: '$20/night',
+            id: 7,
+        },
+        {
+            image: accoImg, 
+            address: 'Hazel Hill 1B',
+            details: '1 beds 2 bathroom',
+            size: '50m²',
+            price: '$40/night',
+            id: 8,
         },
     ];
-    
+
+    const filteredAccommodations = accolist.filter(accommodation =>
+        accommodation.address.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
     return ( 
         <div className="array">
-            {accolist.map((accommodation, index) => (
+            {filteredAccommodations.map((accommodation, index) => (
                 <div className="item-preview" key={index}>
                     <div className="imgacco"> 
                         <img src={accommodation.image} alt="Accommodation" /> 

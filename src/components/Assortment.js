@@ -1,42 +1,30 @@
-import React from "react";
+import React, { useState } from "react";
 import Header from "./Header";
 import Accommodations from "./Accommodations";
 
-    // //Test voor de zoekbalk
-    // const SearchBar = ({ onSearch }) => {
-    //     const [searchTerm, setSearchTerm] = useState('');
-    
-    //     const handleInputChange = (event) => {
-    //       setSearchTerm(event.target.value);
-    //     };
-    
-    //     const handleSearch = () => {
-    //       onSearch(searchTerm);
-    //     };
-    // }
+const Assortment = () => {
+    const [searchQuery, setSearchQuery] = useState("");
 
-    //hier komt de accomodation overview
-    const Assortment = () => {
-        return ( 
-            <div className="assortment">
-                <div className="wrapper">
-                    <div id="search-container">
-                        <input 
-                            type="search" 
-                            id="search-input" 
-                            placeholder="All" 
-                        />
-                        <button id="search">Search</button>
-                    </div>
-                    <div id="buttons">
-                        <button className="button-value">testest</button>
-                        <button className="button-value">estest</button>
-                        <button className="button-value">sttest</button>
-                    </div>
-                </div>
-                <div className="array"><Accommodations/></div>
+    const handleSearch = (query) => {
+        setSearchQuery(query);
+    };
+
+    return ( 
+        <div className="assortment">
+            <div id="search-container">
+                <input 
+                    type="search" 
+                    id="search-input" 
+                    placeholder="Search..." 
+                    value={searchQuery}
+                    onChange={(e) => handleSearch(e.target.value)}
+                />
             </div>
-        );
-    }
+            <div className="array">
+                <Accommodations searchQuery={searchQuery} />
+            </div>
+        </div>
+    );
+}
  
 export default Assortment;
