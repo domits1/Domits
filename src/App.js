@@ -56,6 +56,7 @@ function App() {
                     <Route path="/assortment" element={<Assortment />} />
                     {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
+                    
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/Read" element={<ReadAccommodation />} />
                     <Route path="/hostdashboard/Update" element={<UpdateAccommodation />} />
