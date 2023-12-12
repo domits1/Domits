@@ -1,6 +1,6 @@
 import './App.css';
 import Header from "./components/Header";
-import Footer from "./components/Footer";
+// import Footer from "./components/Footer";
 import Landing from "./components/Landing";
 import Home from "./components/Home";
 import Booking from "./components/Booking";
@@ -12,11 +12,12 @@ import HomeDashboard from "./components/AdminDashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, { useState } from "react";
 import Modal from "react-modal";
-import HostDashboard from "./components/hostdashboard/HostDashboard";
-import CreateAccommodation from "./components/hostdashboard/CreateAccommodation";
-import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
-import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
-import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
+import HostDashboard from "./components/HostDashboard/HostDashboard";
+import CreateAccommodation from "./components/HostDashboard/CreateAccommodation";
+import ReadAccommodation from "./components/HostDashboard/ReadAccommodation";
+import UpdateAccommodation from "./components/HostDashboard/UpdateAccommodation";
+import DeleteAccommodation from "./components/HostDashboard/DeleteAccommodation";
+import Footer from "./components/Footer";
 
 function App() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -55,8 +56,8 @@ function App() {
                     {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
-                    <Route path="/hostdashboard/Read" element={<ReadAccommodation />} />
-                    <Route path="/hostdashboard/Update" element={<UpdateAccommodation />} />
+                    <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
+                    <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
                     <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
                 </Routes>
             </div>

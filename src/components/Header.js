@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import logo from "../logo.svg";
 
 function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
 //
@@ -10,7 +11,7 @@ function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
                     <ul>
                         <li>
                             <div className="logo">
-                                <img src={process.env.PUBLIC_URL + '/logo.svg'} alt="Logo" />
+                                <img src={ logo } width={50} alt="Logo" />
 
                             </div>
                         </li>

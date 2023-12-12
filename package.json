@@ -1,0 +1,46 @@
+{
+  "name": "domits",
+  "version": "1.0.0",
+  "description": "first open the project directory. in the terminal do the following things to make sure everything runs properly:",
+  "main": "index.js",
+  "dependencies": {
+    "@aws-amplify/auth": "^6.0.2",
+    "@aws-amplify/ui-react": "^6.0.1",
+    "@testing-library/jest-dom": "^5.17.0",
+    "@testing-library/react": "^13.4.0",
+    "@testing-library/user-event": "^13.5.0",
+    "amplify": "^0.0.11",
+    "aws-amplify": "^6.0.2",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-modal": "^3.16.1",
+    "react-router-dom": "^6.20.0",
+    "react-scripts": "5.0.1",
+    "router": "^1.3.8",
+    "ui-react": "^1.0.3",
+    "web-vitals": "^2.1.4"
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject"
+  },
+  "devDependencies": {
+    "eslint": "^8.55.0"
+  },
+  "author": "",
+  "license": "ISC",
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
