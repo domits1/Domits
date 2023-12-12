@@ -10,7 +10,7 @@ import Contact from "./components/Contact";
 import Login from "./components/Login";
 import HomeDashboard from "./components/AdminDashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import Modal from "react-modal";
 import HostDashboard from "./components/HostDashboard/HostDashboard";
 import CreateAccommodation from "./components/HostDashboard/CreateAccommodation";
@@ -20,6 +20,12 @@ import DeleteAccommodation from "./components/HostDashboard/DeleteAccommodation"
 import Footer from "./components/Footer";
 
 function App() {
+    useEffect(() => {
+        return () => {
+            document.title = 'Domits';
+        };
+    }, []);
+
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const openLoginModal = () => setIsLoginModalOpen(true);
     const closeLoginModal = () => setIsLoginModalOpen(false);
