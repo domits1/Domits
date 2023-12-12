@@ -173,7 +173,7 @@
 .footer {
   /*layout*/
   display: flex;
-  width: 1512px;
+  width: 100%;
   height: 384px;
   padding: 40px 72px;
   flex-direction: column;
@@ -360,12 +360,24 @@ li a {
 }
 
 .sidebar-link:hover {
-  
+
 }
 
-/* style voor alle kaartjes */
+/*code voor de alignments van de kaartjes*/
+.array{
+  margin: 20px;
+  padding-left: 20px;
+  padding-right: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 50px;
+}
+
+/*code voor de style van de kaartjes*/
 .item-preview{
-  width: 300px;
+  width: 360px;
 }
 
 .imgacco{
@@ -374,8 +386,56 @@ li a {
 }
 
 .imgacco img{
+  border-radius: 5px;
   height: 100%;
   width: 100%;
 }
 
 
+/*Alles voor de searchbar en filter*/
+.wrapper{
+  width: 95%;
+  margin:0 auto;
+}
+  
+#search-container{
+  margin: 1em 0;
+}
+
+#search-container input{
+  background-color: transparent;
+  width: 40%;
+  border: #FFF;
+  border-bottom: 2px solid #0A760F;
+  padding: 1em 0,3em;
+}
+
+#search-container input:focus{
+  border-bottom-color: #0A760F;
+}
+
+#search-container button{
+  border: #FFF;
+  padding: 10px 25px;
+  margin-left: 1em;
+  background-color: #0A760F;
+  color: #FFF;
+  border-radius: 5px;
+  margin-top: 0,5em;
+}
+
+.button-value{
+  font-size: 20px;
+  border: 2px solid #0D9813;
+  padding: 1em 2,2em;
+  border-radius: 10px;
+  margin: 10px;
+  background-color: transparent;
+  color: #0D9813;
+  cursor: pointer;
+}
+
+.active{
+  background-color: #0A760F;
+  color: #FFF;
+}

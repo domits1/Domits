@@ -18,17 +18,25 @@ import Accommodations from "./Accommodations";
     //hier komt de accomodation overview
     const Assortment = () => {
         return ( 
-            <div className="search-filters">
-                <div>
-                    <label htmlFor="search">Search accomodation</label>
-                    <input type="search" placeholder="Search..." id="search"/>
-                    <button >Search</button>
+            <div className="assortment">
+                <div className="wrapper">
+                    <div id="search-container">
+                        <input 
+                            type="search" 
+                            id="search-input" 
+                            placeholder="All" 
+                        />
+                        <button id="search">Search</button>
+                    </div>
+                    <div id="buttons">
+                        <button className="button-value">testest</button>
+                        <button className="button-value">estest</button>
+                        <button className="button-value">sttest</button>
+                    </div>
                 </div>
-                <div className="array">
-                    <Accommodations />
-                </div>
+                <div className="array"><Accommodations/></div>
             </div>
-         );
+        );
     }
  
 export default Assortment;

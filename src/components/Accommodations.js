@@ -6,11 +6,35 @@ const Accommodations = () => {
         {
             image: accoImg, 
             address: 'Kinderhuissingel 6K',
-            details: '4 beds 1 bathroom',
-            size: '60m2',
+            details: '3 beds 1 bathroom',
+            size: '20m²',
+            price: '$720/night',
+            id: 1,
+        },
+        {
+            image: accoImg, 
+            address: 'Huissingel 2A',
+            details: '4 beds 4 bathroom',
+            size: '60m²',
             price: '$120/night',
-            id: 1
-        }
+            id: 1,
+        },
+        {
+            image: accoImg, 
+            address: 'Singel 3F',
+            details: '2 beds 3 bathroom',
+            size: '40m²',
+            price: '$20/night',
+            id: 1,
+        },
+        {
+            image: accoImg, 
+            address: 'De Singel 1B',
+            details: '1 beds 2 bathroom',
+            size: '50m²',
+            price: '$40/night',
+            id: 1,
+        },
     ];
     
     return ( 
