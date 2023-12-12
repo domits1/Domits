@@ -14,7 +14,7 @@ function HomeDashboard() {
                 <Sidebar />
             </div>
             <div className="main">
-                Test
+                Hier komt de uiteindelijke code
             </div>
         </div>
     );
