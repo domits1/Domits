@@ -1,7 +1,7 @@
 import './App.css';
 import Header from "./components/Header";
-// import Footer from "./components/Footer";
 import Landing from "./components/Landing";
+import Assortment from './components/Assortment';
 import Home from "./components/Home";
 import Booking from "./components/Booking";
 import About from "./components/About";
@@ -59,8 +59,10 @@ function App() {
                     <Route path="/work" element={<Work />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/admin" element={<HomeDashboard />} />
+                    <Route path="/assortment" element={<Assortment />} />
                     {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
+                    
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
                     <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
