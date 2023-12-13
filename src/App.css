@@ -394,6 +394,12 @@ li a {
 
 /*Alles voor de searchbar en filter*/
   
+.assortment {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
 #search-container{
   margin: 1em 0;
   border: 1px #0D1A26;
@@ -415,6 +421,23 @@ li a {
   padding: 1em 0,3em;
 }
 
-#search-container input:focus{
-  border-bottom-color: #0A760F;
+#filter-container {
+  margin: 1em 0;
+  width: 95%;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+}
+
+#filter-container input {
+  margin-top: 1em;
+  padding: 10px;
+  background-color: transparent;
+  width: 40%;
+  border: none;
+  border-bottom: 2px solid #0A760F;
+  padding: 1em 0.3em;
+  outline: none; /* Remove default focus outline */
 }
