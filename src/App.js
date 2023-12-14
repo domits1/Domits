@@ -17,7 +17,7 @@ import CreateAccommodation from "./components/HostDashboard/CreateAccommodation"
 import ReadAccommodation from "./components/HostDashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/HostDashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/HostDashboard/DeleteAccommodation";
-// import GuestDashboard from './components/GuestDashboard/GuestDashboard';
+import GuestDashboard from './components/GuestDashboard/GuestDashboard';
 import Footer from "./components/Footer";
 
 function App() {
@@ -61,7 +61,7 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/admin" element={<HomeDashboard />} />
                     <Route path="/assortment" element={<Assortment />} />
-                    {/*<Route path="/Guestdashboard" element={<GuestDashboard />}/>*/}
+                    <Route path="/Guestdashboard" element={<GuestDashboard />}/>
                     {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
