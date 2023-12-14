@@ -362,4 +362,29 @@ li a {
 .sidebar-link:hover {
 }
 
+.guestdashboard{
+  display: flex;
+}
+
+.bookoverview{
+  width: 380px;
+  height: 300px;
+  flex-shrink: 0;
+  border-width: 40%;
+  border-radius: 15px;
+  border: 0.5px solid #0D9813;
+  padding: 20px;
+}
+
+.pricedetails{
+  width: 380px;
+  height: 300px;
+  flex-shrink: 0;
+  border-width: 40%;
+  border-radius: 15px;
+  border: 0.5px solid #0D9813;
+  padding: 20px;
+}
+
+
 

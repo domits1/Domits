@@ -17,6 +17,7 @@ import CreateAccommodation from "./components/hostdashboard/CreateAccommodation"
 import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
+import GuestDashboard from './components/guestDashboard/GuestDashboard';
 
 function App() {
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -52,6 +53,7 @@ function App() {
                     <Route path="/work" element={<Work />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/admin" element={<HomeDashboard />} />
+                    <Route path="/guestdashboard" element={<GuestDashboard />}/>
                     {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
