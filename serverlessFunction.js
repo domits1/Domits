@@ -8,7 +8,7 @@ exports.handler = async (event) => {
             status: '302',
             statusDescription: 'Found',
             headers: {
-                location: [{ key: 'Location', value: '/AdminDashboard/HomeDashboard.js' }],
+                location: [{ key: 'Location', value: '/admindashboard/HomeDashboard.js' }],
             },
         };
     }

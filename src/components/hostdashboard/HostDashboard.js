@@ -1,6 +1,7 @@
 import React from "react";
 import accommodation1 from "../../images/accommodationtestpic1.png";
 import accommodation2 from "../../images/accommodationtestpic2.png";
+import {Link} from "react-router-dom";
 
 function HostDashboard() {
 
@@ -32,7 +33,7 @@ function HostDashboard() {
                         <p>0 ad credits</p>
                     </div>
                     <div className="manage-link">
-                        <a href="#">Manage</a>
+                        <Link to="/hostdashboard/read">Manage</Link>
                     </div>
                 </div>
             </div>

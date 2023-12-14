@@ -307,6 +307,21 @@
   display: block; /* Remove any default inline styles */
 }
 
+.white-block-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between; /* Adjust as needed */
+}
+
+.white-block {
+  flex: 1;
+  width: 18em; /* Set your desired width */
+  height: 18em; /* Set your desired height */
+  background-color: white;
+  border: 1px solid #ccc; /* Optional: Add a border for separation */
+  margin: 5px; /* Optional: Add margin for spacing */
+}
+
 .descriptions-container {
   flex-grow: 1;
 }
