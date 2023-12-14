@@ -15,6 +15,9 @@
       "auth": {
         "domits7b73f586": {},
         "userPoolGroups": {}
+      },
+      "api": {
+        "domits": {}
       }
     }
   },
