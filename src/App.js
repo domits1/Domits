@@ -17,7 +17,7 @@ import CreateAccommodation from "./components/HostDashboard/CreateAccommodation"
 import ReadAccommodation from "./components/HostDashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/HostDashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/HostDashboard/DeleteAccommodation";
-// import GuestDashboard from './components/guestDashboard/GuestDashboard';
+// import GuestDashboard from './components/GuestDashboard/GuestDashboard';
 import Footer from "./components/Footer";
 
 function App() {

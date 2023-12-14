@@ -301,6 +301,12 @@
   margin-right: 12em; /* Add spacing between image and descriptions */
 }
 
+.resizable-image {
+  width: 25em; /* Ensure the image takes the full width of its container */
+  height: auto; /* Maintain the aspect ratio */
+  display: block; /* Remove any default inline styles */
+}
+
 .descriptions-container {
   flex-grow: 1;
 }

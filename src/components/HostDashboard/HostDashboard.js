@@ -1,8 +1,8 @@
 import React from "react";
+import accommodation1 from "../../images/accommodationtestpic1.png";
+import accommodation2 from "../../images/accommodationtestpic2.png";
 
 function HostDashboard() {
-    const accommodation1 = "../../images/accommodationtestpic1.png";
-    const accommodation2 = "../../images/accommodationtestpic2.png";
 
     return (
         <div>
@@ -22,7 +22,7 @@ function HostDashboard() {
             <div className="accommodation">
                 <div className="accommodation-row">
                     <div className="image-container">
-                        <img src={accommodation1} alt="Accommodation Image" />
+                        <img src={accommodation1} alt="Accommodation Image" className="resizable-image" />
                     </div>
                     <div className="descriptions-container">
                         <h3>Kinderhuissingel 6k</h3>
@@ -39,7 +39,7 @@ function HostDashboard() {
             <div className="accommodation2">
                 <div className="accommodation-row">
                     <div className="image-container">
-                        <img src={accommodation2} alt="Accommodation Image" />
+                        <img src={accommodation2} alt="Accommodation Image" className="resizable-image" />
                     </div>
                     <div className="descriptions-container">
                         <h3>domitsstraat 190</h3>
