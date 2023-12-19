@@ -17,6 +17,13 @@
         "domits7b73f586": {},
         "userPoolGroups": {}
       },
+      "function": {
+        "domits3c2c949e": {},
+        "domits7b73f586PreSignup": {
+          "deploymentBucketName": "amplify-domits-develop-155945-deployment",
+          "s3Key": "amplify-builds/domits7b73f586PreSignup-7a4b564d417275704d30-build.zip"
+        }
+      },
       "api": {
         "domits": {}
       }

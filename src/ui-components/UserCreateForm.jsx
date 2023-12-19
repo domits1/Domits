@@ -36,7 +36,11 @@ export default function UserCreateForm(props) {
   };
   const validations = {
     email: [{ type: "Required" }],
+<<<<<<< HEAD
+    password: [],
+=======
     password: [{ type: "Required" }],
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
   };
   const runValidationTasks = async (
     fieldName,
@@ -146,7 +150,11 @@ export default function UserCreateForm(props) {
       ></TextField>
       <TextField
         label="Password"
+<<<<<<< HEAD
+        isRequired={false}
+=======
         isRequired={true}
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
         isReadOnly={false}
         value={password}
         onChange={(e) => {

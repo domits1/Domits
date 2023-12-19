@@ -1,6 +1,99 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
+<<<<<<< HEAD
+export const createAccommodation = /* GraphQL */ `
+  mutation CreateAccommodation(
+    $input: CreateAccommodationInput!
+    $condition: ModelAccommodationConditionInput
+  ) {
+    createAccommodation(input: $input, condition: $condition) {
+      id
+      accommodation
+      description
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const updateAccommodation = /* GraphQL */ `
+  mutation UpdateAccommodation(
+    $input: UpdateAccommodationInput!
+    $condition: ModelAccommodationConditionInput
+  ) {
+    updateAccommodation(input: $input, condition: $condition) {
+      id
+      accommodation
+      description
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const deleteAccommodation = /* GraphQL */ `
+  mutation DeleteAccommodation(
+    $input: DeleteAccommodationInput!
+    $condition: ModelAccommodationConditionInput
+  ) {
+    deleteAccommodation(input: $input, condition: $condition) {
+      id
+      accommodation
+      description
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const createUser = /* GraphQL */ `
+  mutation CreateUser(
+    $input: CreateUserInput!
+    $condition: ModelUserConditionInput
+  ) {
+    createUser(input: $input, condition: $condition) {
+      id
+      email
+      password
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const updateUser = /* GraphQL */ `
+  mutation UpdateUser(
+    $input: UpdateUserInput!
+    $condition: ModelUserConditionInput
+  ) {
+    updateUser(input: $input, condition: $condition) {
+      id
+      email
+      password
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+export const deleteUser = /* GraphQL */ `
+  mutation DeleteUser(
+    $input: DeleteUserInput!
+    $condition: ModelUserConditionInput
+  ) {
+    deleteUser(input: $input, condition: $condition) {
+      id
+      email
+      password
+      createdAt
+      updatedAt
+      __typename
+    }
+  }
+`;
+=======
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
 export const createTodo = /* GraphQL */ `
   mutation CreateTodo(
     $input: CreateTodoInput!

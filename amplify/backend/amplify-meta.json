@@ -51,12 +51,12 @@
       },
       "providerPlugin": "awscloudformation",
       "service": "AppSync",
-      "lastPushTimeStamp": "2023-12-19T14:39:38.172Z",
+      "lastPushTimeStamp": "2023-12-19T15:31:52.428Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/api/cloudformation-template.json",
         "logicalId": "apidomits"
       },
-      "lastPushDirHash": "bMM5rj+xWbOJTvtoWK1dvKjLx2g="
+      "lastPushDirHash": "SwhK/0/ygb9xuxFcDFvqvNMnzl8="
     }
   },
   "auth": {
@@ -104,7 +104,7 @@
         "IdentityPoolName": "domits7b73f586_identitypool_7b73f586__develop",
         "UserPoolName": "domits7b73f586_userpool_7b73f586"
       },
-      "lastPushTimeStamp": "2023-12-19T14:39:38.175Z",
+      "lastPushTimeStamp": "2023-12-19T15:31:52.435Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/domits7b73f586-cloudformation-template.json",
         "logicalId": "authdomits7b73f586"
@@ -165,6 +165,13 @@
       },
       "s3Bucket": {
         "deploymentBucketName": "amplify-domits-develop-155945-deployment",
+        "s3Key": "amplify-builds/domits7b73f586PreSignup-7a4b564d417275704d30-build.zip"
+      },
+      "lastBuildTimeStamp": "2023-12-19T15:29:48.233Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2023-12-19T15:29:48.346Z",
+      "distZipFilename": "domits7b73f586PreSignup-7a4b564d417275704d30-build.zip",
+      "lastPushDirHash": "rWgB4ys0KROZh2mkZ8/VImISf4A="
         "s3Key": "amplify-builds/domits7b73f586PreSignup-755a7643595361576249-build.zip"
       },
       "lastBuildTimeStamp": "2023-12-19T14:32:47.509Z",

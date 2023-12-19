@@ -1,6 +1,6 @@
 projects:
   domits:
-    schemaPath: src/graphql/schema.json
+    schemaPath: amplify/backend/api/domits/build/schema.graphql
     includes:
       - src/graphql/**/*.js
     excludes:
@@ -10,7 +10,9 @@ projects:
         codeGenTarget: javascript
         generatedFileName: ''
         docsFilePath: src/graphql
-        maxDepth: 3
+        region: eu-north-1
+        apiId: null
+        maxDepth: 2
 extensions:
   amplify:
     version: 3
