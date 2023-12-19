@@ -9,13 +9,70 @@
       "UnauthRoleName": "amplify-domits-develop-155945-unauthRole",
       "StackName": "amplify-domits-develop-155945",
       "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-develop-155945/9cffca10-887e-11ee-896f-0af71353fcf2",
-      "AmplifyAppId": "d34jwd0sihmsus"
+      "AmplifyAppId": "d34jwd0sihmsus",
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
+    }
+  },
+  "api": {
+    "domits": {
+      "dependsOn": [
+        {
+          "attributes": [
+            "UserPoolId"
+          ],
+          "category": "auth",
+          "resourceName": "domits7b73f586"
+        }
+      ],
+      "output": {
+        "authConfig": {
+          "additionalAuthenticationProviders": [
+            {
+              "authenticationType": "AWS_IAM"
+            },
+            {
+              "authenticationType": "API_KEY",
+              "apiKeyConfig": {
+                "apiKeyExpirationDays": 30,
+                "description": "api key description"
+              }
+            }
+          ],
+          "defaultAuthentication": {
+            "authenticationType": "AMAZON_COGNITO_USER_POOLS",
+            "userPoolConfig": {
+              "userPoolId": "authdomits7b73f586"
+            }
+          }
+        },
+        "GraphQLAPIIdOutput": "asmpuij5zbffpdq5cp2rn32ezq",
+        "GraphQLAPIEndpointOutput": "https://q34id4qbmvaelbpfr5x4575qa4.appsync-api.eu-north-1.amazonaws.com/graphql",
+        "GraphQLAPIKeyOutput": "da2-l6pnck36w5bsvmokhqbb62gts4"
+      },
+      "providerPlugin": "awscloudformation",
+      "service": "AppSync",
+      "lastPushTimeStamp": "2023-12-19T14:25:10.170Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/api/cloudformation-template.json",
+        "logicalId": "apidomits"
+      },
+      "lastPushDirHash": "bMM5rj+xWbOJTvtoWK1dvKjLx2g="
     }
   },
   "auth": {
     "domits7b73f586": {
       "customAuth": false,
-      "dependsOn": [],
+      "dependsOn": [
+        {
+          "attributes": [
+            "Arn",
+            "Name"
+          ],
+          "category": "function",
+          "resourceName": "domits7b73f586PreSignup",
+          "triggerProvider": "Cognito"
+        }
+      ],
       "frontendAuthConfig": {
         "mfaConfiguration": "OFF",
         "mfaTypes": [
@@ -47,12 +104,11 @@
         "IdentityPoolName": "domits7b73f586_identitypool_7b73f586__develop",
         "UserPoolName": "domits7b73f586_userpool_7b73f586"
       },
-      "lastPushTimeStamp": "2023-12-14T08:34:25.880Z",
+      "lastPushTimeStamp": "2023-12-19T14:25:09.979Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/domits7b73f586-cloudformation-template.json",
         "logicalId": "authdomits7b73f586"
-      },
-      "lastPushDirHash": "ysPIlA1e16n1s5EjtAarzt/jaac="
+      }
     },
     "userPoolGroups": {
       "dependsOn": [
@@ -72,38 +128,45 @@
       "output": {
         "developGroupRole": "arn:aws:iam::115462458880:role/eu-north-1_w0e0s684Z-developGroupRole"
       },
-      "lastPushTimeStamp": "2023-12-14T08:34:23.870Z",
+      "lastPushTimeStamp": "2023-12-19T14:25:09.981Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/userPoolGroups-cloudformation-template.json",
         "logicalId": "authuserPoolGroups"
       }
     }
   },
-  "api": {
-    "domits": {
-      "service": "AppSync",
+  "function": {
+    "domits7b73f586PreSignup": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "domits"
+        }
+      ],
       "providerPlugin": "awscloudformation",
-      "dependsOn": [],
+      "service": "Lambda",
       "output": {
-        "authConfig": {
-          "defaultAuthentication": {
-            "authenticationType": "API_KEY",
-            "apiKeyConfig": {
-              "apiKeyExpirationDays": 7
-            }
-          },
-          "additionalAuthenticationProviders": []
-        },
-        "GraphQLAPIIdOutput": "asmpuij5zbffpdq5cp2rn32ezq",
-        "GraphQLAPIEndpointOutput": "https://q34id4qbmvaelbpfr5x4575qa4.appsync-api.eu-north-1.amazonaws.com/graphql",
-        "GraphQLAPIKeyOutput": "da2-l6pnck36w5bsvmokhqbb62gts4"
+        "LambdaExecutionRoleArn": "arn:aws:iam::115462458880:role/domits7b73f586PreSignup-develop",
+        "Region": "eu-north-1",
+        "Arn": "arn:aws:lambda:eu-north-1:115462458880:function:domits7b73f586PreSignup-develop",
+        "Name": "domits7b73f586PreSignup-develop",
+        "LambdaExecutionRole": "domits7b73f586PreSignup-develop"
       },
+      "lastPushTimeStamp": "2023-12-19T14:25:09.983Z",
       "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/api/cloudformation-template.json",
-        "logicalId": "apidomits"
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/function/domits7b73f586PreSignup-cloudformation-template.json",
+        "logicalId": "functiondomits7b73f586PreSignup"
       },
-      "lastPushTimeStamp": "2023-12-14T08:34:25.880Z",
-      "lastPushDirHash": "RttMx/3Ql6aKqlaRZgsogWxy+cY="
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-domits-develop-155945-deployment",
+        "s3Key": "amplify-builds/domits7b73f586PreSignup-45593930696942373574-build.zip"
+      }
     }
   }
 }
