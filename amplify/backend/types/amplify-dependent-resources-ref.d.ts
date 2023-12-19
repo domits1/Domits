@@ -19,5 +19,14 @@ export type AmplifyDependentResourcesAttributes = {
     "userPoolGroups": {
       "developGroupRole": "string"
     }
+  },
+  "function": {
+    "domits7b73f586PreSignup": {
+      "Arn": "string",
+      "LambdaExecutionRole": "string",
+      "LambdaExecutionRoleArn": "string",
+      "Name": "string",
+      "Region": "string"
+    }
   }
 }

@@ -4,8 +4,23 @@
     "apiName": "domits",
     "serviceName": "AppSync",
     "defaultAuthType": {
-      "mode": "API_KEY",
-      "expirationTime": 7
-    }
+      "mode": "AMAZON_COGNITO_USER_POOLS",
+      "cognitoUserPoolId": "authdomits7b73f586"
+    },
+    "conflictResolution": {
+      "defaultResolutionStrategy": {
+        "type": "NONE"
+      }
+    },
+    "additionalAuthTypes": [
+      {
+        "mode": "AWS_IAM"
+      },
+      {
+        "mode": "API_KEY",
+        "keyDescription": "api key description",
+        "expirationTime": 30
+      }
+    ]
   }
 }
