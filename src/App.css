@@ -1,156 +1,62 @@
-/*css for the header*/
+/* CSS for the header */
 .app-header {
-  /*layout*/
   display: flex;
   width: 100%;
-  padding: 16px 32px;
-  justify-content: space-between;
+  padding: 16px 50px;
   align-items: center;
-
-  /*style*/
-  border-radius: 20px;
   background: var(--colors-background-primary, #FFF);
-
-  /* shadows/medium */
   box-shadow: 0px 2px 6px 0px rgba(13, 26, 38, 0.15);
-
-}
-
-.app-header nav {
-  display: flex;
   justify-content: space-between;
-  align-items: center; /* Add this line to vertically center items */
+  text-align: center; /* Center the contents */
+  border-radius: 20px; /* Increase border-radius for a more rounded header */
 }
 
-.app-header ul {
-  list-style: none;
-  text-decoration: none;
+.header-nav {
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 50px;
+  width: 100%;
 }
 
-  .app-header li {
-    text-decoration: none;
-    color: var(--colors-font-primary, #0D1A26);
-    font-family: Inter;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 150%; /* 24px */
-  }
-
-.app-header a {
-  text-decoration: none;
+.app-header .logo {
+  margin-right: auto; /* Move the logo to the left */
 }
 
-.app-header a:hover {
-  text-decoration: none;
-  color: #61dafb;
+.app-header .login-container {
+  margin-left: auto; /* Move the login container to the right */
 }
 
-.app-header li button {
-  /*layout*/
-  display: flex;
+.app-header button {
   padding: 8px 16px;
-  justify-content: center;
-  align-items: center;
-
-  /*style*/
-  color:#FFFFFF;/*the color of the text was manually added*/
+  color: #FFFFFF;
   border-radius: 4px;
   border: 1px solid var(--components-button-primary-border-color, rgba(0, 0, 0, 0.00));
   background: #0D9813;
 }
 
-.login-container {
-  margin-left: auto;
-  display: flex; /* Ensure the container is also a flex container */
-  align-items: center; /* Center the button vertically within the container */
-}
-
-
-/* Frame 5 */
-.app-header  .frame-5 {
+/* CSS for the SearchBar */
+.search-bar {
   display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 0px;
-  gap: 50px;
-  margin: 0 auto;
-  width: 565px;
-  height: 50.39px;
-}
-
-/* Group 12 */
-.app-header  .frame-5 .group-12 {
-  width: 50px;
-  height: 50.39px;
-}
-
-/* Random Symboles 4 */
-.app-header  .frame-5 .group-12 .random-symbols-4 {
-  position: absolute;
-  left: 0%;
-  right: 91.15%;
-  top: 0%;
-  bottom: 0%;
-  /* Add specific styles for Random Symboles 4 */
-}
-
-/* Clip path group */
-.app-header  .frame-5 .group-12 .clip-path-group {
-  position: absolute;
-  left: 0%;
-  right: 91.15%;
-  top: 0%;
-  bottom: 0%;
-  /* Add specific styles for Clip path group */
-}
-
-/* ... Repeat the above structure for other elements */
-
-/* actions */
-.app-header  .actions {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  padding: 0px;
-  gap: 10px;
-  margin: 0 auto;
-  width: 116px;
+  max-width: 500px; /* Set a maximum width for the search bar */
+  width: 100%; /* Allow the search bar to take up available space */
   height: 40px;
-  border-radius: 4px;
-}
-
-/* Button */
-.app-header  .actions .button {
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
+  padding: 7px 15px;
   align-items: center;
-  padding: 8px 16px;
-  width: 116px;
-  height: 40px;
-  background: #0D9813;
-  border-radius: 4px;
+  gap: 15px;
+  flex-shrink: 0;
+  margin: 0 auto; /* Center the search bar */
+
+  border-radius: 20px; /* Increase border-radius for a more rounded search bar */
+  border: 1px solid #000;
+  background: #FFF;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
-/* label */
-.app-header  .actions .button .label {
-  width: 84px;
-  height: 24px;
-  font-family: 'Inter'; /* ??? */
-  font-style: normal;
-  font-weight: 700;
-  font-size: 16px;
-  line-height: 150%;
-  color: #FFFFFF;
+.search-icon {
+  margin-left: auto; /* Move the search icon to the right */
 }
-/*end of the css header*/
+
+/* End of the CSS for the SearchBar */
+
 
 .close-button {
   position: absolute;
