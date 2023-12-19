@@ -53,7 +53,7 @@ function App() {
             <div className="App">
                 {renderHeader()}
                 <Routes>
-                    <Route path="/" element={<Landing />} />
+                    <Route path="/" element={<Assortment />} />
                     <Route path="/home" element={<Home />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
