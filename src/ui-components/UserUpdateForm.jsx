@@ -57,7 +57,11 @@ export default function UserUpdateForm(props) {
   React.useEffect(resetStateValues, [userRecord]);
   const validations = {
     email: [{ type: "Required" }],
+<<<<<<< HEAD
     password: [],
+=======
+    password: [{ type: "Required" }],
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
   };
   const runValidationTasks = async (
     fieldName,
@@ -86,7 +90,11 @@ export default function UserUpdateForm(props) {
         event.preventDefault();
         let modelFields = {
           email,
+<<<<<<< HEAD
           password: password ?? null,
+=======
+          password,
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -165,7 +173,11 @@ export default function UserUpdateForm(props) {
       ></TextField>
       <TextField
         label="Password"
+<<<<<<< HEAD
         isRequired={false}
+=======
+        isRequired={true}
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
         isReadOnly={false}
         value={password}
         onChange={(e) => {

@@ -1,22 +1,23 @@
 import './App.css';
 import Header from "./components/Header";
-// import Footer from "./components/Footer";
 import Landing from "./components/Landing";
+import Assortment from './components/Assortment';
 import Home from "./components/Home";
 import Booking from "./components/Booking";
 import About from "./components/About";
 import Work from "./components/Work";
 import Contact from "./components/Contact";
 import Login from "./components/Login";
-import HomeDashboard from "./components/AdminDashboard/HomeDashboard";
+import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, {useEffect, useState} from "react";
 import Modal from "react-modal";
-import HostDashboard from "./components/HostDashboard/HostDashboard";
-import CreateAccommodation from "./components/HostDashboard/CreateAccommodation";
-import ReadAccommodation from "./components/HostDashboard/ReadAccommodation";
-import UpdateAccommodation from "./components/HostDashboard/UpdateAccommodation";
-import DeleteAccommodation from "./components/HostDashboard/DeleteAccommodation";
+import HostDashboard from "./components/hostdashboard/HostDashboard";
+import CreateAccommodation from "./components/hostdashboard/CreateAccommodation";
+import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
+import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
+import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
+import GuestDashboard from './components/guestdashboard/GuestDashboard';
 import Footer from "./components/Footer";
 
 function App() {
@@ -52,13 +53,15 @@ function App() {
             <div className="App">
                 {renderHeader()}
                 <Routes>
-                    <Route path="/" element={<Landing />} />
+                    <Route path="/" element={<Assortment />} />
                     <Route path="/home" element={<Home />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/work" element={<Work />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/admin" element={<HomeDashboard />} />
+                    <Route path="/assortment" element={<Assortment />} />
+                    <Route path="/Guestdashboard" element={<GuestDashboard />}/>
                     {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />

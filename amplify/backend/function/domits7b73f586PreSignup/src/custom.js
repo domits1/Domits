@@ -10,8 +10,14 @@ exports.handler = async (event, context) => {
 
   // Check if userAttributes is present in event.request
   const userEmail = event.request?.userAttributes?.email;
+<<<<<<< HEAD
 
   if (!userEmail) {
+=======
+  const userPassword = event.request?.userAttributes?.password;
+
+  if (!userEmail || !userPassword) {
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
     return {
       statusCode: 400,
       body: JSON.stringify({
@@ -24,6 +30,10 @@ exports.handler = async (event, context) => {
     mutation CREATE_USER($input: CreateUserInput!) {
       createUser(input: $input) {
         email,
+<<<<<<< HEAD
+=======
+        password,
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
       }
     }
   `;
@@ -31,6 +41,10 @@ exports.handler = async (event, context) => {
   const variables = {
     input: {
       email: userEmail,
+<<<<<<< HEAD
+=======
+      password: userPassword,
+>>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
     },
   };
 
