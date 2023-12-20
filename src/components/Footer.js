@@ -1,53 +1,136 @@
-import React, { useState } from 'react';
+// Footer.js
 
-function Footer() {
+import React from 'react';
+import logo from "../logo.svg";
 
+// Constants for styles
+const MAIN_FOOTER_STYLE = {
+    backgroundColor: '#f8f8f8',
+    width: '1512px',
+    height: '100%',
+};
+
+
+const FOOTER_CONTENT_STYLE = {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '20px',
+};
+
+const SMALL_HEADER_STYLE = {
+    color: '#0D9813',
+    fontFamily: 'Kanit, sans-serif',
+    fontSize: '24px',
+    fontStyle: 'normal',
+    fontWeight: 400,
+    lineHeight: '150%',
+};
+
+const FOOTER_LIST_STYLE = {
+    listStyle: 'none',
+    padding: 0,
+};
+
+const FOOTER_LINK_STYLE = {
+    color: '#000',
+    fontFamily: 'Kanit, sans-serif',
+    fontSize: '20px',
+    fontStyle: 'normal',
+    fontWeight: 300,
+    lineHeight: '150%',
+    textDecorationLine: 'underline',
+};
+
+const COPYRIGHT_STYLE = {
+    backgroundColor: '#0D9813',
+    width: '1512px',
+    height: '50px',
+    flexShrink: 0,
+};
+
+const COPYRIGHT_TEXT_STYLE = {
+    color: '#fff',
+    fontFamily: 'Kanit, sans-serif',
+    fontSize: '16px',
+    fontStyle: 'normal',
+    fontWeight: 300,
+    lineHeight: '150%',
+};
+
+const Footer = () => {
     return (
-        <div className="App">
-            <footer className="footer">
-                <div className="newsletter-section">
-                    <p>Sign up for the newsletter</p>
-                    <div className="newsletter-subsection">
-                        <p>No spam, we promise</p>
-                    </div>
-                    <div className="newsletter-form">
-                        <input type="email" placeholder="Your email" />
-                        <button>Subscribe</button>
-                    </div>
+        <footer style={MAIN_FOOTER_STYLE}>
+            <div style={FOOTER_CONTENT_STYLE}>
+                <div className="logo">
+                    <img src={logo} width={50} alt="Logo" />
+                </div>
+                {/* Navigation section */}
+                <div className="footer-section">
+                    <h4 style={SMALL_HEADER_STYLE}>Navigation</h4>
+                    <ul style={FOOTER_LIST_STYLE}>
+                        <li style={FOOTER_LINK_STYLE}>How it works</li>
+                        <li style={FOOTER_LINK_STYLE}>Why Domits</li>
+                        <li style={FOOTER_LINK_STYLE}>Jobs</li>
+                        <li style={FOOTER_LINK_STYLE}>About</li>
+                        <li style={FOOTER_LINK_STYLE}>Contact</li>
+                    </ul>
                 </div>
 
-                <div className="footer-links-section">
-                    <div className="footer-column" id="domits-column">
-                        <h3>Domits</h3>
-                        <ul>
-                            <li>Who is Domits</li>
-                            <li>About Us</li>
-                            <li>Career</li>
-                            <li>Contact</li>
-                        </ul>
-                    </div>
 
-                    <div className="footer-column" id="resources-column">
-                        <h3>Resources</h3>
-                        <ul>
-                            <li>Privacy Policy</li>
-                            <li>General Agreement</li>
-                            <li>Expectation Policy</li>
-                        </ul>
-                    </div>
-
-                    <div className="footer-column" id="my-domits-column">
-                        <h3>My Domits</h3>
-                        <ul>
-                            <li>Bookings</li>
-                            <li>My Contact Centre</li>
-                            <li>My Account Settings</li>
-                        </ul>
-                    </div>
+                {/* Network section */}
+                <div className="footer-section">
+                    <h4 style={SMALL_HEADER_STYLE}>Network</h4>
+                    <ul style={FOOTER_LIST_STYLE}>
+                        <li style={FOOTER_LINK_STYLE}>Guests</li>
+                        <li style={FOOTER_LINK_STYLE}>Hosts</li>
+                        <li style={FOOTER_LINK_STYLE}>Developers</li>
+                        <li style={FOOTER_LINK_STYLE}>Partners</li>
+                        <li style={FOOTER_LINK_STYLE}>Students</li>
+                        <li style={FOOTER_LINK_STYLE}>Startups</li>
+                    </ul>
                 </div>
-            </footer>
-        </div>
+
+                {/* Socials section */}
+                <div className="footer-section">
+                    <h4 style={SMALL_HEADER_STYLE}>Socials</h4>
+                    <ul style={FOOTER_LIST_STYLE}>
+                        <li style={FOOTER_LINK_STYLE}>Linkedin</li>
+                        <li style={FOOTER_LINK_STYLE}>Instagram</li>
+                    </ul>
+                    <ul style={FOOTER_LIST_STYLE}>
+                        <li style={FOOTER_LINK_STYLE}>Privacy policy</li>
+                        <li style={FOOTER_LINK_STYLE}>Terms and Conditions</li>
+                        <li style={FOOTER_LINK_STYLE}>Disclaimer</li>
+                    </ul>
+                </div>
+
+
+            {/* Office section */}
+            <div className="footer-section">
+                <h4 style={SMALL_HEADER_STYLE}>Office</h4>
+                <ul style={FOOTER_LIST_STYLE}>
+                    <li style={FOOTER_LINK_STYLE}>2013 AS, Haarlem</li>
+                    <li style={FOOTER_LINK_STYLE}>Kinderhuissingel 6-K</li>
+                </ul>
+            </div>
+            </div>
+
+            {/* Copyright Block */}
+            <div style={COPYRIGHT_STYLE}>
+                <p style={COPYRIGHT_TEXT_STYLE}>Rights reserved, Domits.com ©2023</p>
+            </div>
+        </footer>
     );
-}
+};
 
 export default Footer;
+
+
+{/* Privacy, Terms, Disclaimer */}
+// <div className="footer-section">
+//     <h4 style={SMALL_HEADER_STYLE}>Legal</h4>
+//     <ul style={FOOTER_LIST_STYLE}>
+//         <li style={FOOTER_LINK_STYLE}>Privacy policy</li>
+//         {/* Add other legal items */}
+//     </ul>
+// </div>
