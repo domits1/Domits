@@ -1,5 +1,6 @@
 import React from 'react';
 import logo from "../logo.svg";
+import { Link } from 'react-router-dom';
 
 // Constants for styles
 const MAIN_FOOTER_STYLE = {
@@ -73,25 +74,48 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 style={SMALL_HEADER_STYLE}>Navigation</h4>
                     <ul style={FOOTER_LIST_STYLE}>
-                        <li style={FOOTER_LINK_STYLE}>How it works</li>
-                        <li style={FOOTER_LINK_STYLE}>Why Domits</li>
-                        <li style={FOOTER_LINK_STYLE}>Jobs</li>
-                        <li style={FOOTER_LINK_STYLE}>About</li>
-                        <li style={FOOTER_LINK_STYLE}>Contact</li>
+                        <li><Link to="/contact" style={FOOTER_LINK_STYLE}>How it works</Link></li>
+                       <li><Link to="/contact" style={FOOTER_LINK_STYLE}>Why Domits</Link></li>   {/*needs correct link*/}
+                        <li><Link to="/work" style={FOOTER_LINK_STYLE}>Jobs</Link></li>
+                        <li><Link to="/about" style={FOOTER_LINK_STYLE}>About</Link></li>
+                        <li><Link to="/contact" style={FOOTER_LINK_STYLE}>Contact</Link></li>
                     </ul>
                 </div>
+
+                {/* Guests section */}
+                <div className="footer-section">
+                    <h4 style={SMALL_HEADER_STYLE}>Guest</h4>
+                    <ul style={FOOTER_LIST_STYLE}>
+                        <li><Link to="/profile" style={FOOTER_LINK_STYLE}>Profile</Link></li>
+                        <li><Link to="/bookings" style={FOOTER_LINK_STYLE}>Bookings</Link></li>
+                        <li><Link to="/settings" style={FOOTER_LINK_STYLE}>Settings</Link></li>
+                    </ul>
+                </div>
+
+                {/* Hosts section */}
+                <div className="footer-section">
+                    <h4 style={SMALL_HEADER_STYLE}>Hosts</h4>
+                    <ul style={FOOTER_LIST_STYLE}>
+                        <li><Link to="/dashboard" style={FOOTER_LINK_STYLE}>Dashboard</Link></li>
+                        <li><Link to="/payments" style={FOOTER_LINK_STYLE}>Payments</Link></li>
+                        <li><Link to="/profile" style={FOOTER_LINK_STYLE}>Profile</Link></li>
+                        <li><Link to="/calendar" style={FOOTER_LINK_STYLE}>Calendar</Link></li>
+                        <li><Link to="/Hsettings" style={FOOTER_LINK_STYLE}>Settings</Link></li>
+                    </ul>
+                </div>
+
 
 
                 {/* Network section */}
                 <div className="footer-section">
                     <h4 style={SMALL_HEADER_STYLE}>Network</h4>
                     <ul style={FOOTER_LIST_STYLE}>
-                        <li style={FOOTER_LINK_STYLE}>Guests</li>
-                        <li style={FOOTER_LINK_STYLE}>Hosts</li>
-                        <li style={FOOTER_LINK_STYLE}>Developers</li>
-                        <li style={FOOTER_LINK_STYLE}>Partners</li>
-                        <li style={FOOTER_LINK_STYLE}>Students</li>
-                        <li style={FOOTER_LINK_STYLE}>Startups</li>
+                        <li><Link to="/guests" style={FOOTER_LINK_STYLE}>Guests</Link></li>
+                        <li><Link to="/hosts" style={FOOTER_LINK_STYLE}>Hosts</Link></li>
+                        <li><Link to="/developers" style={FOOTER_LINK_STYLE}>Developers</Link></li>
+                        <li><Link to="/partners" style={FOOTER_LINK_STYLE}>Partners</Link></li>
+                        <li><Link to="/students" style={FOOTER_LINK_STYLE}>Students</Link></li>
+                        <li><Link to="/startups" style={FOOTER_LINK_STYLE}>Startups</Link></li>
                     </ul>
                 </div>
 
@@ -99,8 +123,8 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 style={SMALL_HEADER_STYLE}>Socials</h4>
                     <ul style={FOOTER_LIST_STYLE}>
-                        <li style={FOOTER_LINK_STYLE}>Linkedin</li>
-                        <li style={FOOTER_LINK_STYLE}>Instagram</li>
+                        <li><a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" style={FOOTER_LINK_STYLE}>Linkedin</a></li>
+                        <li><a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" style={FOOTER_LINK_STYLE}>Instagram</a></li>
                     </ul>
                     <ul style={FOOTER_LIST_STYLE}>
                         <li style={FOOTER_LINK_STYLE}>Privacy policy</li>
@@ -112,7 +136,7 @@ const Footer = () => {
 
             {/* Languages section */}
             <div className="footer-section">
-                <h4 style={SMALL_HEADER_STYLE}>Office</h4>
+                <h4 style={SMALL_HEADER_STYLE}>Languages</h4>
                 <ul style={FOOTER_LIST_STYLE}>
                     <li style={FOOTER_LINK_STYLE}>Dutch</li>
                     <li style={FOOTER_LINK_STYLE}>English</li>
@@ -138,13 +162,3 @@ const Footer = () => {
 };
 
 export default Footer;
-
-
-{/* Privacy, Terms, Disclaimer */}
-// <div className="footer-section">
-//     <h4 style={SMALL_HEADER_STYLE}>Legal</h4>
-//     <ul style={FOOTER_LIST_STYLE}>
-//         <li style={FOOTER_LINK_STYLE}>Privacy policy</li>
-//         {/* Add other legal items */}
-//     </ul>
-// </div>
