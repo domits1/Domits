@@ -1,13 +1,15 @@
-// Footer.js
-
 import React from 'react';
 import logo from "../logo.svg";
 
 // Constants for styles
 const MAIN_FOOTER_STYLE = {
     backgroundColor: '#f8f8f8',
-    width: '1512px',
-    height: '100%',
+    width: '100%',
+    minHeight: '50vh',
+    display: 'flex',
+    flexDirection: 'column',
+    maxHeight: '100px', // Set your desired max height
+    overflowY: 'auto', // Add overflow to handle content overflow
 };
 
 
@@ -43,10 +45,13 @@ const FOOTER_LINK_STYLE = {
 
 const COPYRIGHT_STYLE = {
     backgroundColor: '#0D9813',
-    width: '1512px',
-    height: '50px',
     flexShrink: 0,
+    marginTop: 'auto',
+    display: 'flex', // Center the content horizontally
+    alignItems: 'center', // Center the content vertically
+    justifyContent: 'center', // Center the content both horizontally and vertically
 };
+
 
 const COPYRIGHT_TEXT_STYLE = {
     color: '#fff',
@@ -105,14 +110,23 @@ const Footer = () => {
                 </div>
 
 
-            {/* Office section */}
+            {/* Languages section */}
             <div className="footer-section">
                 <h4 style={SMALL_HEADER_STYLE}>Office</h4>
                 <ul style={FOOTER_LIST_STYLE}>
-                    <li style={FOOTER_LINK_STYLE}>2013 AS, Haarlem</li>
-                    <li style={FOOTER_LINK_STYLE}>Kinderhuissingel 6-K</li>
+                    <li style={FOOTER_LINK_STYLE}>Dutch</li>
+                    <li style={FOOTER_LINK_STYLE}>English</li>
                 </ul>
             </div>
+
+                {/* Office section */}
+                <div className="footer-section">
+                    <h4 style={SMALL_HEADER_STYLE}>Office</h4>
+                    <ul style={FOOTER_LIST_STYLE}>
+                        <li style={FOOTER_LINK_STYLE}>2013 AS, Haarlem</li>
+                        <li style={FOOTER_LINK_STYLE}>Kinderhuissingel 6-K</li>
+                    </ul>
+                </div>
             </div>
 
             {/* Copyright Block */}
