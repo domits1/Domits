@@ -8,6 +8,7 @@ import About from "./components/About";
 import Work from "./components/Work";
 import Contact from "./components/Contact";
 import Login from "./components/Login";
+import Details from './components/Details';
 import HomeDashboard from "./components/AdminDashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, { useState } from "react";
@@ -52,6 +53,7 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/work" element={<Work />} />
                     <Route path="/contact" element={<Contact />} />
+                    <Route path="/details" element={<Details/>} />
                     <Route path="/admin" element={<HomeDashboard />} />
                     <Route path="/guestdashboard" element={<GuestDashboard />}/>
                     {/*host dashboard*/}
