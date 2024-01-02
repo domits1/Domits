@@ -1,0 +1,83 @@
+{
+  "providers": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-develop-155945-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-155945-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-155945-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-develop-155945-deployment",
+      "UnauthRoleName": "amplify-domits-develop-155945-unauthRole",
+      "StackName": "amplify-domits-develop-155945",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-develop-155945/9cffca10-887e-11ee-896f-0af71353fcf2",
+      "AmplifyAppId": "d34jwd0sihmsus"
+    }
+  },
+  "auth": {
+    "domits7b73f586": {
+      "customAuth": false,
+      "dependsOn": [],
+      "frontendAuthConfig": {
+        "mfaConfiguration": "OFF",
+        "mfaTypes": [
+          "SMS"
+        ],
+        "passwordProtectionSettings": {
+          "passwordPolicyMinLength": 8,
+          "passwordPolicyCharacters": []
+        },
+        "signupAttributes": [
+          "EMAIL"
+        ],
+        "socialProviders": [],
+        "usernameAttributes": [
+          "EMAIL"
+        ],
+        "verificationMechanisms": [
+          "EMAIL"
+        ]
+      },
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/domits7b73f586-cloudformation-template.json",
+        "logicalId": "authdomits7b73f586"
+      },
+      "lastPushTimeStamp": "2023-12-12T14:19:49.270Z",
+      "output": {
+        "UserPoolId": "eu-north-1_w0e0s684Z",
+        "AppClientIDWeb": "49tcd13lc1d9pptqneh0uiq1hp",
+        "AppClientID": "2cs956jedbkk4149j3ufcp7nif",
+        "IdentityPoolId": "eu-north-1:232a5798-9c10-4451-b6ca-a66301ea9a3c",
+        "UserPoolArn": "arn:aws:cognito-idp:eu-north-1:115462458880:userpool/eu-north-1_w0e0s684Z",
+        "IdentityPoolName": "domits7b73f586_identitypool_7b73f586__develop",
+        "UserPoolName": "domits7b73f586_userpool_7b73f586"
+      },
+      "lastPushDirHash": "yVrPq+5WEUrrn4QNliAKsCk5Zwk="
+    },
+    "userPoolGroups": {
+      "dependsOn": [
+        {
+          "category": "auth",
+          "resourceName": "domits7b73f586",
+          "attributes": [
+            "UserPoolId",
+            "AppClientIDWeb",
+            "AppClientID",
+            "IdentityPoolId"
+          ]
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Cognito-UserPool-Groups",
+      "lastPushTimeStamp": "2023-12-12T14:19:50.745Z",
+      "providerMetadata": {
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/userPoolGroups-cloudformation-template.json",
+        "logicalId": "authuserPoolGroups"
+      },
+      "output": {
+        "developGroupRole": "arn:aws:iam::115462458880:role/eu-north-1_w0e0s684Z-developGroupRole"
+      },
+      "lastPushDirHash": "qkbiNMJUYLdHvMdFlNUHWNtG3lI="
+    }
+  }
+}

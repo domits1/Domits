@@ -156,9 +156,7 @@ const CreateAccommodation = () => {
 
 
 
-                        );
+    );
 };
 
 export default CreateAccommodation;
-
-

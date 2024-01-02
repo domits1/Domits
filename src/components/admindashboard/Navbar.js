@@ -1,12 +1,15 @@
 import logo from "../../logo.svg";
 import React from "react";
+import {Link} from "react-router-dom";
 
 const Navbar = () => {
     return (
         <nav className="navbar">
-            <img className="img" src={logo} alt="logo.png" height={50}/>
+            <Link to="/admin">
+                <img className="img" src={logo} alt="logo.png" height={50} />
+            </Link>
             <div className="nav">
-                Stefan Hopman:<br/>
+                Tim Hart :cape:<br/>
                 <b>Superadmin</b>
             </div>
         </nav>

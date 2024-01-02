@@ -1,6 +1,6 @@
 import './App.css';
 import Header from "./components/Header";
-import Footer from "./components/Footer";
+// import Footer from "./components/Footer";
 import Landing from "./components/Landing";
 import Home from "./components/Home";
 import Booking from "./components/Booking";
@@ -11,7 +11,7 @@ import Login from "./components/Login";
 import Details from './components/Details';
 import HomeDashboard from "./components/AdminDashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import Modal from "react-modal";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
 import CreateAccommodation from "./components/hostdashboard/CreateAccommodation";
@@ -21,6 +21,12 @@ import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation"
 import GuestDashboard from './components/guestDashboard/GuestDashboard';
 
 function App() {
+    useEffect(() => {
+        return () => {
+            document.title = 'Domits';
+        };
+    }, []);
+
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const openLoginModal = () => setIsLoginModalOpen(true);
     const closeLoginModal = () => setIsLoginModalOpen(false);
@@ -59,8 +65,8 @@ function App() {
                     {/*host dashboard*/}
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
-                    <Route path="/hostdashboard/Read" element={<ReadAccommodation />} />
-                    <Route path="/hostdashboard/Update" element={<UpdateAccommodation />} />
+                    <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
+                    <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
                     <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
                 </Routes>
             </div>

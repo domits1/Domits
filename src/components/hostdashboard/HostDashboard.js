@@ -19,41 +19,41 @@ function HostDashboard() {
                     <li><a href="#">Password</a></li>
                 </ul>
             </div>
-        <div className="accommodation">
-            <div className="accommodation-row">
-                <div className="image-container">
-                    <img src={accommodation1} alt="Accommodation Image" />
+            <div className="accommodation">
+                <div className="accommodation-row">
+                    <div className="image-container">
+                        <img src={accommodation1} alt="Accommodation Image" />
+                    </div>
+                    <div className="descriptions-container">
+                        <h3>Kinderhuissingel 6k</h3>
+                        <p>Mon - Sun / 360d p.y.</p>
+                        <p>$140 - night</p>
+                        <p>47 reviews</p>
+                        <p>0 ad credits</p>
+                    </div>
+                    <div className="manage-link">
+                        <a href="#">Manage</a>
+                    </div>
                 </div>
-                <div className="descriptions-container">
-                    <h3>Kinderhuissingel 6k</h3>
-                    <p>Mon - Sun / 360d p.y.</p>
-                    <p>$140 - night</p>
-                    <p>47 reviews</p>
-                    <p>0 ad credits</p>
-                </div>
-                <div className="manage-link">
-                    <a href="#">Manage</a>
+            </div>
+            <div className="accommodation2">
+                <div className="accommodation-row">
+                    <div className="image-container">
+                        <img src={accommodation2} alt="Accommodation Image" />
+                    </div>
+                    <div className="descriptions-container">
+                        <h3>domitsstraat 190</h3>
+                        <p>Mon - sat / 340d p.y.</p>
+                        <p>$130 - night</p>
+                        <p>41 reviews</p>
+                        <p>2 ad credits</p>
+                    </div>
+                    <div className="manage-link">
+                        <a href="#">Manage</a>
+                    </div>
                 </div>
             </div>
         </div>
-    <div className="accommodation2">
-        <div className="accommodation-row">
-            <div className="image-container">
-                <img src={accommodation2} alt="Accommodation Image" />
-            </div>
-            <div className="descriptions-container">
-                <h3>domitsstraat 190</h3>
-                <p>Mon - sat / 340d p.y.</p>
-                <p>$130 - night</p>
-                <p>41 reviews</p>
-                <p>2 ad credits</p>
-            </div>
-            <div className="manage-link">
-                <a href="#">Manage</a>
-            </div>
-        </div>
-    </div>
-    </div>
     );
 }
 

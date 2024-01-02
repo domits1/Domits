@@ -1,15 +1,39 @@
 {
+  "develop": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-develop-155945-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-155945-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-155945-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-develop-155945-deployment",
+      "UnauthRoleName": "amplify-domits-develop-155945-unauthRole",
+      "StackName": "amplify-domits-develop-155945",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-develop-155945/9cffca10-887e-11ee-896f-0af71353fcf2",
+      "AmplifyAppId": "d34jwd0sihmsus"
+    },
+    "categories": {
+      "auth": {
+        "domits7b73f586": {},
+        "userPoolGroups": {}
+      }
+    }
+  },
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-domits-dev-140352-authRole",
-      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-dev-140352-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-dev-140352-authRole",
+      "AuthRoleName": "amplify-domits-dev-144636-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-dev-144636-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-dev-144636-authRole",
       "Region": "eu-north-1",
-      "DeploymentBucketName": "amplify-domits-dev-140352-deployment",
-      "UnauthRoleName": "amplify-domits-dev-140352-unauthRole",
-      "StackName": "amplify-domits-dev-140352",
-      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-dev-140352/112cf910-9501-11ee-8710-0a726b3c299e",
-      "AmplifyAppId": "d22hj8scdlwyhx"
+      "DeploymentBucketName": "amplify-domits-dev-144636-deployment",
+      "UnauthRoleName": "amplify-domits-dev-144636-unauthRole",
+      "StackName": "amplify-domits-dev-144636",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-dev-144636/e0a5f9c0-98f4-11ee-903e-0e3ad7594136",
+      "AmplifyAppId": "d34jwd0sihmsus"
+    },
+    "categories": {
+      "auth": {
+        "domits7b73f586": {}
+      }
     }
   }
 }
