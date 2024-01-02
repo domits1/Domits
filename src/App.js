@@ -5,7 +5,7 @@ import Landing from "./components/Landing";
 import Home from "./components/Home";
 import Booking from "./components/Booking";
 import About from "./components/About";
-import Work from "./components/Work";
+import Careers from "./components/Careers";
 import Contact from "./components/Contact";
 import Login from "./components/Login";
 import Details from './components/Details';
@@ -51,7 +51,7 @@ function App() {
                     <Route path="/home" element={<Home />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
-                    <Route path="/work" element={<Work />} />
+                    <Route path="/careers" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/details" element={<Details/>} />
                     <Route path="/admin" element={<HomeDashboard />} />
