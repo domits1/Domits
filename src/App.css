@@ -774,8 +774,9 @@ margin: 20px;
 }
 
 .awesomefacts{
-  margin-top: 200px;
-  margin-left: 550px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   width: 100%;
 }
 
@@ -847,7 +848,8 @@ margin: 20px;
 
 .contactform{
   border-radius: 15px;
-  background: #c3e3c7;
+  background: #8fe79b;
+  width: 100%;
   padding-top: 50px;
   padding-left: 50px;
   padding-bottom: 50px;
@@ -859,24 +861,28 @@ margin: 20px;
 
 .namemessage{
   display: flex;
-  gap: 460px;
+  gap: 365px;
 }
 
 .biginput{
   width: 1040px;
+  margin-right: -180px;
+  float: right;
 }
 
-.biginput input{
+.biginput textarea {
   display: block;
-  float: right; 
-  margin-top: -50px;
-  margin-right: 100px;
-  width: 100%;
+  width: calc(100% - 200px);
   height: 312px;
-  flex-shrink: 0;
+  resize: vertical; /* Allow vertical resizing */
+  text-align: left;
+  padding: 10px;
+  border: 1px solid #000;
+  border-radius: 15px;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
 }
 
-.contactform input{
+.contactform input:not(.biginput input) {
   border-radius: 15px;
   border: 1px solid #000;
   padding: 10px;
@@ -886,6 +892,7 @@ margin: 20px;
 
 .formbuttons{
   display: flex;
+  margin-left: 395px;
 }
 
 #attachmentsbutton {
@@ -900,7 +907,11 @@ margin: 20px;
   margin: 30px;
   border-radius: 15px;
   background: #49146A;
-  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+#attachmentsbutton:hover{
+  background: #390f52;
+  cursor: pointer;
 }
 
 #sendbutton{
@@ -915,7 +926,11 @@ margin: 20px;
   margin: 30px;
   border-radius: 15px;
   background: #0D9813;
-  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+#sendbutton:hover{
+  background: #09770f;
+  cursor: pointer;
 }
 
 .careers{
