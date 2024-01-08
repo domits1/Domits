@@ -1,6 +1,6 @@
 import './App.css';
 import Header from "./components/Header";
-// import Footer from "./components/Footer";
+import Footer from "./components/Footer";
 import Landing from "./components/Landing";
 import Home from "./components/Home";
 import Booking from "./components/Booking";
@@ -9,7 +9,7 @@ import Careers from "./components/Careers";
 import Contact from "./components/Contact";
 import Login from "./components/Login";
 import Details from './components/Details';
-import HomeDashboard from "./components/AdminDashboard/HomeDashboard";
+import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, {useEffect, useState} from "react";
 import Modal from "react-modal";

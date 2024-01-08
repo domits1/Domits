@@ -26,7 +26,7 @@ function About() {
                     By charging one-time service fees, we can keep our platform running and provide services such as support.
                 </p>
             </div>
-
+                <br />
             <div className="awesomefacts">
                 <h1>Awesome Facts</h1>
             </div>

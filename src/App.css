@@ -757,6 +757,7 @@ margin: 20px;
 
 .aboutusimg img{
   float: right;
+  margin-top: -100px;
   margin-bottom: 150px;
   margin-left: 100px;
   margin-right: 100px;
@@ -772,8 +773,19 @@ margin: 20px;
   line-height: 150%; 
 }
 
+.awesomefacts{
+  margin-top: 200px;
+  margin-left: 450px;
+  width: 100%;
+}
+
 .textbubbles{
-  width: 750px;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 80px;
+  display: flex;
+  flex-wrap: wrap;
 }
 
 .textbubbles h1{
@@ -788,36 +800,43 @@ margin: 20px;
 .bubble1{
   border: #000 3px solid;
   border-radius: 150px;
+  width: 300px;
   margin: 30px;
 }
 
 .bubble2{
   border: #000 3px solid;
   border-radius: 150px;
+  width: 300px;
   margin: 30px;
 }
 
 .bubble3{
   border: #000 3px solid;
   border-radius: 150px;
+  width: 300px;
   margin: 30px;
 }
 
 .bubble4{
   border: #000 3px solid;
   border-radius: 150px;
+  width: 300px;
   margin: 30px;
 }
 
 .bubble5{
   border: #000 3px solid;
-  border-radius: 50%;
+  border-radius: 150px;
+  width: 300px;
   margin: 30px;
 }
 
 .contact{
   padding: 50px;
   margin-left: 100px;
+  margin-right: 100px;
+  margin-bottom: 100px;
   color: #000;
   font-size: 20px;
   font-style: normal;
@@ -825,9 +844,140 @@ margin: 20px;
   line-height: 150%;
 }
 
+.contactform{
+  border-radius: 15px;
+  background: #EBFAED;
+  padding: 50px;
+}
+
+.namemessage{
+  display: flex;
+  gap: 460px;
+}
+
+.biginput{
+  width: 1040px;
+}
+
+.biginput input{
+  margin-top: -50px;
+  width: 905px;
+  height: 312px;
+  float: right; 
+  flex-shrink: 0;
+}
+
 .contactform input{
   border-radius: 15px;
   border: 1px solid #000;
-  background: #FFF;
+  padding: 10px;
+  width: 400px;
   box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+.formbuttons{
+  display: flex;
+}
+
+#attachmentsbutton {
+  width: 400px;
+  height: 50px;
+  padding: 8px 15px;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  color: #FFF;
+  margin: 30px;
+  border-radius: 15px;
+  background: #49146A;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+#sendbutton{
+  width: 400px;
+  height: 50px;
+  padding: 8px 15px;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  flex-shrink: 0;
+  color: #FFF;
+  margin: 30px;
+  border-radius: 15px;
+  background: #0D9813;
+  box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
+
+.careers{
+  padding: 50px;
+  margin-left: 100px;
+  margin-right: 100px;
+  margin-bottom: 100px;
+}
+
+.careertext{
+  color: #000;
+  font-size: 20px;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.careertext img{
+  width: 420px;
+  height: 230px;
+  float: right;
+  margin-top: -80px;
+}
+
+.jobbubbles{
+  display: flex;
+  flex-wrap: wrap;
+  width: 1300px;
+}
+
+.jobcat p{
+  color: #365E3D;
+  background-color: #D6F5DB;
+  font-weight: 500;
+  border-radius: 15px;
+  width: 50px;
+}
+
+.jobbubble{
+  border-radius: 15px;
+  border: 0.5px solid #000;
+  padding-left: 20px;
+  margin-left: 20px;
+  margin-bottom: 30px;
+  width: 320px;
+  height: 140px;
+}
+
+.bubbletext{
+}
+
+#moreinfo{
+  color: #000;
+  font-size: 18px;
+  font-style: normal;
+  font-weight: 500;
+  line-height: 20px;
+  margin-left: 195px;
+  margin-top: -50px;
+}
+
+#moreinfo:hover{
+  cursor: pointer;
+  text-decoration-line: underline;
+}
+
+#openapp{
+  margin-top: 100px;
+  margin-left: 200px;
+}
+
+#openapp:hover{
+  cursor: pointer;
+  text-decoration-line: underline;
 }
