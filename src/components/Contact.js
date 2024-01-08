@@ -17,6 +17,7 @@ function Contact() {
                     <h2>Your message</h2>
                 </div>
                 <input type="text" placeholder="ex. Sheima Mahmoudi" />
+                 
                 <div className="biginput">
                     <input type="text" placeholder="ex. I am still waiting to get paid and would like a follow up or open a dispute about this..."/>
                 </div>
@@ -26,6 +27,7 @@ function Contact() {
 
                 <h2>Enter your email</h2>
                 <input type="email" placeholder="ex. sheima1999@gmail.com"/>
+
                 <div formbuttons>
                     <button id="attachmentsbutton"> Add attachments</button>
                     <button id="sendbutton"> Send message</button>
