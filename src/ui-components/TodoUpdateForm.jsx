@@ -8,10 +8,9 @@
 import * as React from "react";
 import { Button, Flex, Grid, TextField } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
-import { generateClient } from "aws-amplify/api";
+import { API } from "aws-amplify";
 import { getTodo } from "../graphql/queries";
 import { updateTodo } from "../graphql/mutations";
-const client = generateClient();
 export default function TodoUpdateForm(props) {
   const {
     id: idProp,
@@ -46,7 +45,7 @@ export default function TodoUpdateForm(props) {
     const queryData = async () => {
       const record = idProp
         ? (
-            await client.graphql({
+            await API.graphql({
               query: getTodo.replaceAll("__typename", ""),
               variables: { id: idProp },
             })
@@ -118,7 +117,7 @@ export default function TodoUpdateForm(props) {
               modelFields[key] = null;
             }
           });
-          await client.graphql({
+          await API.graphql({
             query: updateTodo.replaceAll("__typename", ""),
             variables: {
               input: {

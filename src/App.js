@@ -19,6 +19,7 @@ import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation"
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
 import Footer from "./components/Footer";
+import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
 
 function App() {
     useEffect(() => {
@@ -35,7 +36,7 @@ function App() {
     const renderHeader = () => {
         const currentPath = window.location.pathname;
         if (currentPath === '/admin') {
-            return null; // Don't render Header for /admin route
+            return null;
         }
         return <Header openLoginModal={openLoginModal} />;
     };
@@ -59,7 +60,6 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/work" element={<Work />} />
                     <Route path="/contact" element={<Contact />} />
-                    <Route path="/admin" element={<HomeDashboard />} />
                     <Route path="/assortment" element={<Assortment />} />
                     <Route path="/Guestdashboard" element={<GuestDashboard />}/>
                     {/*host dashboard*/}
@@ -68,6 +68,8 @@ function App() {
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
                     <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
                     <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
+                    {/*  Admin Routes  */}
+                    <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo="/" />} />
                 </Routes>
             </div>
             {renderFooter()}

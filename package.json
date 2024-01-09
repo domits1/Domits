@@ -4,13 +4,12 @@
   "description": "first open the project directory. in the terminal do the following things to make sure everything runs properly:",
   "main": "index.js",
   "dependencies": {
-    "@aws-amplify/auth": "^6.0.2",
-    "@aws-amplify/ui-react": "^6.0.1",
+    "@aws-amplify/ui-react": "^5.3.3",
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "amplify": "^0.0.11",
-    "aws-amplify": "^6.0.2",
+    "aws-amplify": "^5.3.12",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-modal": "^3.16.1",
@@ -27,7 +26,8 @@
     "eject": "react-scripts eject"
   },
   "devDependencies": {
-    "eslint": "^8.55.0"
+    "eslint": "^8.56.0",
+    "eslint-plugin-react": "^7.33.2"
   },
   "author": "",
   "license": "ISC",
