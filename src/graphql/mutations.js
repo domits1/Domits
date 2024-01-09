@@ -1,7 +1,6 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
-<<<<<<< HEAD
 export const createAccommodation = /* GraphQL */ `
   mutation CreateAccommodation(
     $input: CreateAccommodationInput!
@@ -92,8 +91,7 @@ export const deleteUser = /* GraphQL */ `
     }
   }
 `;
-=======
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
+
 export const createTodo = /* GraphQL */ `
   mutation CreateTodo(
     $input: CreateTodoInput!

@@ -7,11 +7,7 @@ type Accommodation @model @auth(rules: [{allow: public}]) {
 type User @model @auth(rules: [{allow: public}]) {
   id: ID!
   email: String!
-<<<<<<< HEAD
-  password: String
-=======
   password: String!
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
 }
 
 type Todo @model @auth(rules: [{allow: public}]) {

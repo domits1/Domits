@@ -1,7 +1,6 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
-<<<<<<< HEAD
 export const getAccommodation = /* GraphQL */ `
   query GetAccommodation($id: ID!) {
     getAccommodation(id: $id) {
@@ -66,8 +65,7 @@ export const listUsers = /* GraphQL */ `
     }
   }
 `;
-=======
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
+
 export const getTodo = /* GraphQL */ `
   query GetTodo($id: ID!) {
     getTodo(id: $id) {
