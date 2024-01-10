@@ -15,7 +15,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd web
+          cd Domits
           npm ci --verbose
 
       - name: Cypress install
