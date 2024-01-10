@@ -19,7 +19,7 @@ jobs:
 
       # Set the BASE_URL environment variable
       - name: Set BASE_URL
-        run: echo "BASE_URL=http://localhost:3000/" >> $GITHUB_ENV
+        run: echo "BASE_URL=http://127.0.0.1/" >> $GITHUB_ENV
 
       - name: Cypress install
         uses: cypress-io/github-action@v6

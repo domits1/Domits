@@ -1,5 +1,3 @@
-
-
 describe('Authentication spec', () => {
 
   it('Login', () => {
