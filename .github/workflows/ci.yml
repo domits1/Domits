@@ -20,7 +20,6 @@ jobs:
       - name: Cypress install
         uses: cypress-io/github-action@v6
         with:
-          working-directory: web
           runTests: false
 
       # and run all Cypress tests
@@ -28,6 +27,5 @@ jobs:
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          working-directory: web
           build: npm run build
           start: npx vite --host
