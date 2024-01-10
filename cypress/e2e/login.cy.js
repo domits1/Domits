@@ -1,8 +1,7 @@
 describe('Authentication spec', () => {
 
   it('Login', () => {
-    const baseUrl = Cypress.env('BASE_URL') || 'http://127.0.0.1/';
-    cy.visit(baseUrl);
+    cy.visit('https://develop.d34jwd0sihmsus.amplifyapp.com/');
 
     // click login button
     cy.get('#root > div:nth-child(1) > div.App > header > nav > div.login-container > button').click();
