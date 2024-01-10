@@ -18,7 +18,7 @@ import CreateAccommodation from "./components/hostdashboard/CreateAccommodation"
 import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
-import GuestDashboard from './components/guestDashboard/GuestDashboard';
+import GuestDashboard from './components/guestdashboard/GuestDashboard';
 
 function App() {
     useEffect(() => {

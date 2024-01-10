@@ -1,5 +1,5 @@
 import React from "react";
-import careerimg from "./careerimg.png"
+import careerimg from "../images/careerimg.png"
 
 function Work() {
     return (

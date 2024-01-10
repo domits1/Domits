@@ -1,6 +1,6 @@
 import React from "react";
 import Header from "./Header";
-import img from "./aboutusimg.png"
+import img from "../images/aboutusimg.png"
 
 function About() {
     return (
