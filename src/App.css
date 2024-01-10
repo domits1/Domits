@@ -848,7 +848,7 @@ margin: 20px;
 
 .contactform{
   border-radius: 15px;
-  background: #8fe79b;
+  background: #EBFAED;
   width: 100%;
   padding-top: 50px;
   padding-left: 50px;
@@ -891,6 +891,7 @@ margin: 20px;
 }
 
 .formbuttons{
+  border: 0px;
   display: flex;
   margin-left: 395px;
 }
