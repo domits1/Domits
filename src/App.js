@@ -36,7 +36,7 @@ function App() {
     // Conditionally render the Header based on the current route
     const renderHeader = () => {
         const currentPath = window.location.pathname;
-        if (currentPath === '/admin') {
+        if (currentPath === '/admin' || currentPath === '/') {
             return null;
         }
         return <Header openLoginModal={openLoginModal} />;
@@ -71,7 +71,7 @@ function App() {
                     <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
                     <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
                     {/*  Admin Routes  */}
-                    <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo="/" />} />
+                    <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
                 </Routes>
             </div>
             {renderFooter()}
