@@ -11,11 +11,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      # Install NPM dependencies, cache them correctly
 
+      # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
           npm ci --verbose
+
+      # Set the BASE_URL environment variable
+      - name: Set BASE_URL
+        run: echo "BASE_URL=http://localhost:3000/" >> $GITHUB_ENV
 
       - name: Cypress install
         uses: cypress-io/github-action@v6
@@ -23,7 +27,6 @@ jobs:
           runTests: false
 
       # and run all Cypress tests
-
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
