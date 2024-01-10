@@ -3,7 +3,7 @@
 describe('Authentication spec', () => {
 
   it('Login', () => {
-    const baseUrl = Cypress.env('BASE_URL') || 'http://localhost:3000/';
+    const baseUrl = Cypress.env('BASE_URL') || 'http://127.0.0.1/';
     cy.visit(baseUrl);
 
     // click login button
