@@ -14,15 +14,14 @@
         "authConfig": {
           "additionalAuthenticationProviders": [
             {
+              "authenticationType": "AWS_IAM"
+            },
+            {
               "apiKeyConfig": {
-                "apiKeyExpirationDate": "2024-01-18T12:44:57.562Z",
                 "apiKeyExpirationDays": 30,
                 "description": "api key description"
               },
               "authenticationType": "API_KEY"
-            },
-            {
-              "authenticationType": "AWS_IAM"
             }
           ],
           "defaultAuthentication": {
@@ -40,7 +39,17 @@
   "auth": {
     "domits7b73f586": {
       "customAuth": false,
-      "dependsOn": [],
+      "dependsOn": [
+        {
+          "attributes": [
+            "Arn",
+            "Name"
+          ],
+          "category": "function",
+          "resourceName": "domits7b73f586PreSignup",
+          "triggerProvider": "Cognito"
+        }
+      ],
       "frontendAuthConfig": {
         "mfaConfiguration": "OFF",
         "mfaTypes": [
@@ -79,6 +88,24 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Cognito-UserPool-Groups"
+    }
+  },
+  "function": {
+    "domits7b73f586PreSignup": {
+      "build": true,
+      "dependsOn": [
+        {
+          "attributes": [
+            "GraphQLAPIIdOutput",
+            "GraphQLAPIEndpointOutput",
+            "GraphQLAPIKeyOutput"
+          ],
+          "category": "api",
+          "resourceName": "domits"
+        }
+      ],
+      "providerPlugin": "awscloudformation",
+      "service": "Lambda"
     }
   }
 }

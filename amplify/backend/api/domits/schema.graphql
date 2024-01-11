@@ -6,7 +6,7 @@ type Accommodation @model @auth(rules: [{allow: public}]) {
 
 type User @model @auth(rules: [{allow: public}]) {
   id: ID!
-  email: AWSEmail!
+  email: String!
   password: String!
 }
 
@@ -14,4 +14,5 @@ type Todo @model @auth(rules: [{allow: public}]) {
   id: ID!
   name: String!
   description: String
-} 
+}
+ 
