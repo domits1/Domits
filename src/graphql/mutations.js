@@ -137,3 +137,15 @@ export const deleteTodo = /* GraphQL */ `
     }
   }
 `;
+export const createAccommodation = /* GraphQL */ `
+  mutation CreateAccommodation(
+    $input: CreateAccommodationInput!
+    $condition: ModelAccommodationConditionInput
+  ) {
+    createAccommodation(input: $input, condition: $condition) {
+      id
+      accommodation  
+      description
+    }
+  }
+`;
