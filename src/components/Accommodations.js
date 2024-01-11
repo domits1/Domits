@@ -1,5 +1,5 @@
 import React from "react";
-import accoImg from '../images/accommodationtestpic1.png';
+import accoImg from '../components/accoimg1.png';
 
 const Accommodations = ({ searchQuery }) => {
     const accolist = [

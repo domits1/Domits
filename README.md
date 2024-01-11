@@ -1,91 +1,35 @@
-# Getting Started with Domits (draft)
+# Getting Started with Domits
+### Overview
+Domits is a React project with several dependencies. Follow these steps to set up and run the project on your local machine.
 
-first open the project directory. in the terminal do the following things to make sure everything runs properly:
+### Prerequisites
+Before you start, ensure you have Node.js installed on your machine.
 
-### npm install 
-### npm install amplify
-### npm install router
-### npm install react-router-dom
-### npm install ui-react
-### npm install @mui/x-data-grid
+### Installation
+Clone the Repository:
+Open your terminal and run the following command to clone the develop branch of the Domits repository:
 
-this are all the dependencies we added to the project. 
+git clone -b develop https://github.com/your-username/domits.git Replace your-username with your actual GitHub username.
 
-Clone the repository:
-Clone develop into the local machine you want to use
+Navigate to the Project Directory:
+`cd domits`
 
-Local Configuration:
-Running amplify init sets up or updates your local configuration files (amplify/team-provider-info.json, etc.) based on the answers you provide during the initialization process. This includes settings like the environment name, AWS profile, and other local settings.
+Install Dependencies: Run the following command to install the project dependencies: npm install This installs all the dependencies listed in the package.json file.
 
-Backend Configuration:
-The amplify init command typically doesn't directly modify the backend configuration on AWS. Changes to the backend configuration are usually managed through other Amplify commands like amplify add, amplify push, etc.
-Backend Changes:
+Run the Project Now that you have cloned the repository and installed the dependencies, you can run the project using the following command: npm start
 
-If someone makes changes to the backend configuration (e.g., adds a new API or updates authentication settings) and pushes those changes using amplify push, you would need to pull those changes using amplify pull to synchronize your local environment with the latest backend configuration.
+This command starts the development server, and you can view the application in your web browser by navigating to http://localhost:3000.
 
-## Available Scripts
+Additional Commands
+Build the Project:
+`npm run build`
 
-In the project directory, you can run:
+Run Tests:
+`npm test`
 
-### `npm start`
+Eject from Create React App:
+`npm run eject`
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
-
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+Development Environment
+Node.js version: >=14.0.0* React version: ^18.2.0*
+Code Linting npm run lint

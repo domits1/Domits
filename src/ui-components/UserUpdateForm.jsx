@@ -8,10 +8,9 @@
 import * as React from "react";
 import { Button, Flex, Grid, TextField } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
-import { generateClient } from "aws-amplify/api";
+import { API } from "aws-amplify";
 import { getUser } from "../graphql/queries";
 import { updateUser } from "../graphql/mutations";
-const client = generateClient();
 export default function UserUpdateForm(props) {
   const {
     id: idProp,
@@ -44,7 +43,7 @@ export default function UserUpdateForm(props) {
     const queryData = async () => {
       const record = idProp
         ? (
-            await client.graphql({
+            await API.graphql({
               query: getUser.replaceAll("__typename", ""),
               variables: { id: idProp },
             })
@@ -57,11 +56,7 @@ export default function UserUpdateForm(props) {
   React.useEffect(resetStateValues, [userRecord]);
   const validations = {
     email: [{ type: "Required" }],
-<<<<<<< HEAD
-    password: [],
-=======
     password: [{ type: "Required" }],
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
   };
   const runValidationTasks = async (
     fieldName,
@@ -90,11 +85,7 @@ export default function UserUpdateForm(props) {
         event.preventDefault();
         let modelFields = {
           email,
-<<<<<<< HEAD
-          password: password ?? null,
-=======
           password,
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -124,7 +115,7 @@ export default function UserUpdateForm(props) {
               modelFields[key] = null;
             }
           });
-          await client.graphql({
+          await API.graphql({
             query: updateUser.replaceAll("__typename", ""),
             variables: {
               input: {
@@ -173,11 +164,7 @@ export default function UserUpdateForm(props) {
       ></TextField>
       <TextField
         label="Password"
-<<<<<<< HEAD
-        isRequired={false}
-=======
         isRequired={true}
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
         isReadOnly={false}
         value={password}
         onChange={(e) => {

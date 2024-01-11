@@ -8,9 +8,8 @@
 import * as React from "react";
 import { Button, Flex, Grid, TextField } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
-import { generateClient } from "aws-amplify/api";
+import { API } from "aws-amplify";
 import { createUser } from "../graphql/mutations";
-const client = generateClient();
 export default function UserCreateForm(props) {
   const {
     clearOnSuccess = true,
@@ -36,11 +35,7 @@ export default function UserCreateForm(props) {
   };
   const validations = {
     email: [{ type: "Required" }],
-<<<<<<< HEAD
-    password: [],
-=======
     password: [{ type: "Required" }],
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
   };
   const runValidationTasks = async (
     fieldName,
@@ -99,7 +94,7 @@ export default function UserCreateForm(props) {
               modelFields[key] = null;
             }
           });
-          await client.graphql({
+          await API.graphql({
             query: createUser.replaceAll("__typename", ""),
             variables: {
               input: {
@@ -150,11 +145,7 @@ export default function UserCreateForm(props) {
       ></TextField>
       <TextField
         label="Password"
-<<<<<<< HEAD
-        isRequired={false}
-=======
         isRequired={true}
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
         isReadOnly={false}
         value={password}
         onChange={(e) => {

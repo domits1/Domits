@@ -1,5 +1,5 @@
 import React from "react";
-import accommodation1 from "../../images/accommodationtestpic1.png";
+import accommodation1 from "../../components/accoimg1.png";
 import accommodation2 from "../../images/accommodationtestpic2.png";
 import {Link} from "react-router-dom";
 

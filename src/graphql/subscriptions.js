@@ -1,7 +1,6 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
-<<<<<<< HEAD
 export const onCreateAccommodation = /* GraphQL */ `
   subscription OnCreateAccommodation(
     $filter: ModelSubscriptionAccommodationFilterInput
@@ -80,8 +79,7 @@ export const onDeleteUser = /* GraphQL */ `
     }
   }
 `;
-=======
->>>>>>> 5662c3fe3beaa309db06e5b3bb6a187efcf7b8b8
+
 export const onCreateTodo = /* GraphQL */ `
   subscription OnCreateTodo($filter: ModelSubscriptionTodoFilterInput) {
     onCreateTodo(filter: $filter) {
