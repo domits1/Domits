@@ -51,7 +51,7 @@
       },
       "providerPlugin": "awscloudformation",
       "service": "AppSync",
-      "lastPushTimeStamp": "2024-01-09T13:48:45.895Z",
+      "lastPushTimeStamp": "2024-01-11T12:18:04.882Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/api/cloudformation-template.json",
         "logicalId": "apidomits"
@@ -104,7 +104,7 @@
         "IdentityPoolName": "domits7b73f586_identitypool_7b73f586__develop",
         "UserPoolName": "domits7b73f586_userpool_7b73f586"
       },
-      "lastPushTimeStamp": "2024-01-09T13:48:45.909Z",
+      "lastPushTimeStamp": "2024-01-11T12:18:04.885Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/domits7b73f586-cloudformation-template.json",
         "logicalId": "authdomits7b73f586"
@@ -129,7 +129,7 @@
       "output": {
         "developGroupRole": "arn:aws:iam::115462458880:role/eu-north-1_w0e0s684Z-developGroupRole"
       },
-      "lastPushTimeStamp": "2024-01-09T13:48:48.818Z",
+      "lastPushTimeStamp": "2024-01-11T12:18:06.790Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/auth/userPoolGroups-cloudformation-template.json",
         "logicalId": "authuserPoolGroups"
@@ -160,7 +160,7 @@
         "Name": "domits7b73f586PreSignup-develop",
         "LambdaExecutionRole": "domits7b73f586PreSignup-develop"
       },
-      "lastPushTimeStamp": "2024-01-09T13:48:45.930Z",
+      "lastPushTimeStamp": "2024-01-11T12:18:04.889Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-155945-deployment/amplify-cfn-templates/function/domits7b73f586PreSignup-cloudformation-template.json",
         "logicalId": "functiondomits7b73f586PreSignup"
@@ -169,9 +169,9 @@
         "deploymentBucketName": "amplify-domits-develop-155945-deployment",
         "s3Key": "amplify-builds/domits7b73f586PreSignup-37427171426a734b576d-build.zip"
       },
-      "lastBuildTimeStamp": "2024-01-09T13:13:19.450Z",
+      "lastBuildTimeStamp": "2024-01-11T12:16:00.124Z",
       "lastBuildType": "PROD",
-      "lastPackageTimeStamp": "2024-01-09T13:13:19.519Z",
+      "lastPackageTimeStamp": "2024-01-11T12:16:00.189Z",
       "distZipFilename": "domits7b73f586PreSignup-37427171426a734b576d-build.zip",
       "lastPushDirHash": "HV1c6P80ahPupESCJH3SvBQY4r8="
     }
