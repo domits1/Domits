@@ -1,21 +1,6 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
 
-export const createAccommodation = /* GraphQL */ `
-  mutation CreateAccommodation(
-    $input: CreateAccommodationInput!
-    $condition: ModelAccommodationConditionInput
-  ) {
-    createAccommodation(input: $input, condition: $condition) {
-      id
-      accommodation
-      description
-      createdAt
-      updatedAt
-      __typename
-    }
-  }
-`;
 export const updateAccommodation = /* GraphQL */ `
   mutation UpdateAccommodation(
     $input: UpdateAccommodationInput!
