@@ -1,0 +1,281 @@
+.app-header {
+    /*layout*/
+    display: flex;
+    width: 100%;
+    padding: 16px 32px;
+    justify-content: space-between;
+    align-items: center;
+    /*style*/
+    border-radius: 20px;
+    background: var(--colors-background-primary, #FFF);
+    /* shadows/medium */
+    box-shadow: 0px 2px 6px 0px rgba(13, 26, 38, 0.15);
+  
+  }
+  
+  .app-header nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center; /* Add this line to vertically center items */
+  }
+  
+  .app-header ul {
+    list-style: none;
+    text-decoration: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 50px;
+  }
+  
+    .app-header li {
+      text-decoration: none;
+      color: var(--colors-font-primary, #0D1A26);
+      font-family: Inter;
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 150%; /* 24px */
+    }
+  
+  .app-header a {
+    text-decoration: none;
+  }
+  
+  .app-header a:hover {
+    text-decoration: none;
+    color: #61dafb;
+  }
+  
+  .app-header li button {
+    /*layout*/
+    display: flex;
+    padding: 8px 16px;
+    justify-content: center;
+    align-items: center;
+  
+    /*style*/
+    color:#FFFFFF;/*the color of the text was manually added*/
+    border-radius: 4px;
+    border: 1px solid var(--components-button-primary-border-color, rgba(0, 0, 0, 0.00));
+    background: #0D9813;
+  }
+  
+  .login-container {
+    margin-left: auto;
+    display: flex; /* Ensure the container is also a flex container */
+    align-items: center; /* Center the button vertically within the container */
+  }
+  
+  
+  /* Frame 5 */
+  .app-header  .frame-5 {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 0px;
+    gap: 50px;
+    margin: 0 auto;
+    width: 565px;
+    height: 50.39px;
+  }
+  
+  /* Group 12 */
+  .app-header  .frame-5 .group-12 {
+    width: 50px;
+    height: 50.39px;
+  }
+  
+  /* Random Symboles 4 */
+  .app-header  .frame-5 .group-12 .random-symbols-4 {
+    position: absolute;
+    left: 0%;
+    right: 91.15%;
+    top: 0%;
+    bottom: 0%;
+    /* Add specific styles for Random Symboles 4 */
+  }
+  
+  /* Clip path group */
+  .app-header  .frame-5 .group-12 .clip-path-group {
+    position: absolute;
+    left: 0%;
+    right: 91.15%;
+    top: 0%;
+    bottom: 0%;
+    /* Add specific styles for Clip path group */
+  }
+  
+  /* ... Repeat the above structure for other elements */
+  
+  /* actions */
+  .app-header  .actions {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    padding: 0px;
+    gap: 10px;
+    margin: 0 auto;
+    width: 116px;
+    height: 40px;
+    border-radius: 4px;
+  }
+  
+  /* Button */
+  .app-header  .actions .button {
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 16px;
+    width: 116px;
+    height: 40px;
+    background: #0D9813;
+    border-radius: 4px;
+  }
+  
+  /* label */
+  .app-header  .actions .button .label {
+    width: 84px;
+    height: 24px;
+    font-family: 'Inter'; /* ??? */
+    font-style: normal;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 150%;
+    color: #FFFFFF;
+  }
+  /*end of the css header*/
+  
+  .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 30px;
+    color: #ff6f61;
+    transition: transform 0.3s, color 0.3s;
+  }
+  
+  .close-button:hover {
+    transform: rotate(180deg);
+    color: #ff3d3d;
+  }
+  
+  /* Footer styles */
+  .footer {
+    /*layout*/
+    display: flex;
+    width: 100%;
+    height: 384px;
+    padding: 40px 72px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 32px;
+    flex-shrink: 0;
+  
+    /*style*/
+    background: var(--colors-brand-primary-10, #86CB89);
+  }
+  
+  .newsletter-section {
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .newsletter-section p {
+    margin-bottom: 10px;
+    color: var(--colors-font-secondary, #304050);
+    font-family: Inter;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 150%; /* 30px */
+  }
+  
+  .newsletter-subsection p {
+    color: var(--colors-font-secondary, #304050);
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%; /* 24px */
+  }
+  .newsletter-form {
+    display: flex;
+    gap: 10px;
+  
+  
+  }
+  
+  .newsletter-form input {
+    display: flex;
+    width: 300px;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .newsletter-form button {
+    /*layout*/
+    display: flex;
+    padding: 8px 50px;
+    justify-content: center;
+    align-items: center;
+  /*style*/
+    border-radius: 4px;
+    border: 1px solid var(--components-button-primary-border-color, rgba(0, 0, 0, 0.00));
+    background: var(--components-button-primary-background-color, #0A760F);
+    color: var(--components-button-primary-color, #FFF);
+    /* text*/
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: 150%; /* 24px */
+  }
+  
+  .footer-links-section {
+    display: flex;
+    justify-content: space-around;
+  }
+  
+  .footer-column {
+    flex: 1;
+    margin-right: 20px;
+  }
+  
+  .footer-column h3 {
+    color: var(--colors-font-secondary, #304050);
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 600;
+    line-height: 24px; /* 150% */
+    letter-spacing: 0.16px;
+  }
+  
+  .footer-column ul {
+    list-style: none;
+    padding: 0;
+  }
+  
+  .footer-column ul li {
+    margin: 10px 0;
+  
+    color: var(--colors-font-interactive, #0A760F);
+    font-family: Inter;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 24px; /* 150% */
+    letter-spacing: 0.16px;
+  }
+  

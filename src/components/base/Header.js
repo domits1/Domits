@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import './base.css'
 import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import logo from "../logo.svg";
+import logo from "../../logo.svg";
 
 function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
 //

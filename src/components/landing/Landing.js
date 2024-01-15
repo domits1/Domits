@@ -1,6 +1,6 @@
 import React from "react";
-import backgroundImage from '../images/landingpagebg.png';
-import {Link} from "react-router-dom"; // Adjust the image path as needed
+import backgroundImage from '../../images/landingpagebg.png';
+import {Link} from "react-router-dom";
 
 
 function Landing() {

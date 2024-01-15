@@ -1,5 +1,6 @@
 import React from "react";
-import accommodationimg from "./accommodationtestpic1.png"
+import accommodationimg from "../../images/accommodationtestpic1.png"
+import './guestdashboard.css'
 
 const GuestDashboard = () => {
     return ( 
