@@ -9,6 +9,9 @@ import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import Login from "./components/base/Login";
 import Details from './components/details/Details';
+import Disclaimer from './components/disclaimers/disclaimer'
+import Policy from './components/disclaimers/policy'
+import Terms from './components/disclaimers/terms'
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, {useEffect, useState} from "react";
@@ -18,7 +21,7 @@ import CreateAccommodation from "./components/hostdashboard/CreateAccommodation"
 import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
-import GuestDashboard from './components/guestdashboard/GuestDashboard';
+import GuestDashboard from './components/guestDashboard/GuestDashboard';
 
 function App() {
     useEffect(() => {
@@ -60,6 +63,9 @@ function App() {
                     <Route path="/careers" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/details" element={<Details/>} />
+                    <Route path="/disclaimer" element={<Disclaimer/>}/>
+                    <Route path="/policy" element={<Policy/>}/>
+                    <Route path="/terms" element={<Terms/>}/>
                     <Route path="/admin" element={<HomeDashboard />} />
                     <Route path="/guestdashboard" element={<GuestDashboard />}/>
                     {/*host dashboard*/}
