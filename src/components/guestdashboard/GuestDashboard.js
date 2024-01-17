@@ -1,5 +1,5 @@
 import React from "react";
-import accommodationimg from "./accommodationtestpic1.png"
+import accommodationimg from "../../images/accoimg1.png"
 
 const GuestDashboard = () => {
     return ( 
