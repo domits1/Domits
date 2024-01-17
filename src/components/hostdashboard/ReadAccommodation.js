@@ -1,6 +1,6 @@
 import React from "react";
 // import accommodation1 from "../../images/accommodationtestpic1.png";
-import accommodation1 from "../accoimg1.png"
+import accommodation1 from "../../images/accoimg1.png"
 import {Link} from "react-router-dom";
 
 function ReadAccommodation() {

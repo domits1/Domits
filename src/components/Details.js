@@ -1,10 +1,10 @@
 import React from "react";
 import eventimg from '../images/landingpagebg.png';
-import detailbigimg from './accobigimg.png';
-import detailimg1 from './accoimg1.png';
-import detailimg2 from './accoimg2.png';
-import detailimg3 from './accoimg3.png';
-import detailimg4 from './accoimg4.png';
+import detailbigimg from '../images/accobigimg.png';
+import detailimg1 from '../images/accoimg1.png';
+import detailimg2 from '../images/accoimg2.png';
+import detailimg3 from '../images/accoimg3.png';
+import detailimg4 from '../images/accoimg4.png';
 
 const Details = () => {
     return ( 
