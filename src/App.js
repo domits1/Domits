@@ -1,6 +1,6 @@
 import './App.css';
 import Header from "./components/base/Header";
-import Landing from "./components/Landing";
+import Landing from "./components/landingpage/Landing";
 import Assortment from './components/Assortment';
 import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
