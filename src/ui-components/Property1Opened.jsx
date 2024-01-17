@@ -2503,7 +2503,7 @@ export default function Property1Opened(props) {
               {...getOverrideProps(overrides, "Cells124513")}
             >
               <Text
-                fontFamily="Dexa Pro"
+                fontFamily="Kanit"
                 fontSize="13px"
                 fontWeight="500"
                 color="rgba(209,213,219,1)"
