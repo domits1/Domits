@@ -1,6 +1,7 @@
 import React from 'react';
-import logo from "../logo.svg";
+import logo from "../../logo.svg";
 import { Link } from 'react-router-dom';
+import './base.css'
 
 // Constants for styles
 const MAIN_FOOTER_STYLE = {

@@ -1,12 +1,12 @@
 import './App.css';
-import Header from "./components/Header";
+import Header from "./components/base/Header";
 import Landing from "./components/Landing";
 import Assortment from './components/Assortment';
 import Home from "./components/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Career from "./components/careers/Careers";
-import Contact from "./components/Contact";
+import Contact from "./components/contact/Contact";
 import Login from "./components/Login";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
 import Details from './components/Details';
@@ -19,7 +19,7 @@ import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
-import Footer from "./components/Footer";
+import Footer from "./components/base/Footer";
 import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
 
 function App() {

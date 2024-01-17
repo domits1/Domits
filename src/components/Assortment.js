@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 import Accommodations from "./Accommodations";
-import Header from "./Header";
+import Header from "./base/Header";
 import Modal from "react-modal";
 import Login from "./Login";
 

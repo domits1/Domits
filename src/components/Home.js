@@ -1,5 +1,5 @@
 import React from "react";
-import Header from "./Header";
+import Header from "./base/Header";
 import backgroundImage from '../images/landingpagebg.png';
 import {Link} from "react-router-dom"; // Adjust the image path as needed
 
