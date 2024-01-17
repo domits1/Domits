@@ -5,7 +5,7 @@ import Assortment from './components/Assortment';
 import Home from "./components/Home";
 import Booking from "./components/Booking";
 import About from "./components/about/About";
-import Work from "./components/Work";
+import Career from "./components/careers/Careers";
 import Contact from "./components/Contact";
 import Login from "./components/Login";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
@@ -59,7 +59,7 @@ function App() {
                     <Route path="/home" element={<Home />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
-                    <Route path="/work" element={<Work />} />
+                    <Route path="/career" element={<Career />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/details" element={<Details/>} />
                     <Route path="/assortment" element={<Assortment />} />
