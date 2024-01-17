@@ -10,8 +10,8 @@ import {
     Button,
 } from '@aws-amplify/ui-react';
 import '@aws-amplify/ui-react/styles.css';
-import logo from "../logo.svg";
-import awsExports from '../aws-exports';
+import logo from "../../logo.svg";
+import awsExports from '../../aws-exports';
 
 Amplify.configure(awsExports);
 

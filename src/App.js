@@ -1,13 +1,13 @@
 import './App.css';
 import Header from "./components/base/Header";
 import Landing from "./components/landingpage/Landing";
-import Assortment from './components/Assortment';
+import Assortment from './components/assortment/Assortment';
 import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
-import Login from "./components/Login";
+import Login from "./components/base/Login";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";

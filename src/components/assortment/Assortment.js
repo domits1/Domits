@@ -1,8 +1,8 @@
 import React, {useState} from "react";
-import Accommodations from "./hostdashboard/Accommodations";
-import Header from "./base/Header";
+import Accommodations from "../hostdashboard/Accommodations";
+import Header from "../base/Header";
 import Modal from "react-modal";
-import Login from "./Login";
+import Login from "../base/Login";
 
 const Assortment = () => {
     const [searchQuery, setSearchQuery] = useState("");
