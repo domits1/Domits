@@ -75,9 +75,9 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 style={SMALL_HEADER_STYLE}>Navigation</h4>
                     <ul style={FOOTER_LIST_STYLE}>
-                        <li><Link to="/contact" style={FOOTER_LINK_STYLE}>How it works</Link></li>
-                       <li><Link to="/contact" style={FOOTER_LINK_STYLE}>Why Domits</Link></li>   {/*needs correct link*/}
-                        <li><Link to="/work" style={FOOTER_LINK_STYLE}>Jobs</Link></li>
+                        <li><Link to="/" style={FOOTER_LINK_STYLE}>How it works</Link></li>
+                       <li><Link to="/" style={FOOTER_LINK_STYLE}>Why Domits</Link></li>
+                        <li><Link to="/" style={FOOTER_LINK_STYLE}>Jobs</Link></li>
                         <li><Link to="/about" style={FOOTER_LINK_STYLE}>About</Link></li>
                         <li><Link to="/contact" style={FOOTER_LINK_STYLE}>Contact</Link></li>
                     </ul>
