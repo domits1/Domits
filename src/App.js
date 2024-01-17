@@ -2,7 +2,7 @@ import './App.css';
 import Header from "./components/base/Header";
 import Landing from "./components/Landing";
 import Assortment from './components/Assortment';
-import Home from "./components/Home";
+import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Careers from "./components/careers/Careers";
