@@ -5,11 +5,11 @@ import Assortment from './components/Assortment';
 import Home from "./components/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
-import Career from "./components/careers/Careers";
+import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import Login from "./components/Login";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
-import Details from './components/Details';
+import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, {useEffect, useState} from "react";
@@ -21,6 +21,9 @@ import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation"
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
 import Footer from "./components/base/Footer";
 import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
+import Disclaimers from "./components/disclaimers/Disclaimers";
+import Policy from "./components/disclaimers/Policy";
+import Terms from "./components/disclaimers/Terms";
 
 function App() {
     useEffect(() => {
@@ -59,22 +62,20 @@ function App() {
                     <Route path="/home" element={<Home />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
-                    <Route path="/career" element={<Career />} />
+                    <Route path="/career" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/details" element={<Details/>} />
                     <Route path="/assortment" element={<Assortment />} />
                     <Route path="/Guestdashboard" element={<GuestDashboard />}/>
-
-                    {/*/!*host dashboard*!/*/}
+                    <Route path="/career" element={<Careers />} />
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
                     <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
                     <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
-
-                    {/*/!* footer Navigation*!/*/}
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
+                    <Route path="/disclaimers" element={<Disclaimers />} />
+                    <Route path="/policy" element={<Policy />} />
+                    <Route path="/terms" element={<Terms />} />
 
 
                     {/*  Admin Routes  */}

@@ -1,13 +1,14 @@
 import React from "react";
-import eventimg from '../images/landingpagebg.png';
-import detailbigimg from '../images/accobigimg.png';
-import detailimg1 from '../images/accoimg1.png';
-import detailimg2 from '../images/accoimg2.png';
-import detailimg3 from '../images/accoimg3.png';
-import detailimg4 from '../images/accoimg4.png';
+import './details.css'
+import eventimg from '../../images/landingpagebg.png';
+import detailbigimg from '../../images/accobigimg.png';
+import detailimg1 from '../../images/accoimg1.png';
+import detailimg2 from '../../images/accoimg2.png';
+import detailimg3 from '../../images/accoimg3.png';
+import detailimg4 from '../../images/accoimg4.png';
 
 const Details = () => {
-    return ( 
+    return (
         <div className="detailpage">
             <div className="topdetails">
                 <button></button>
@@ -41,14 +42,14 @@ const Details = () => {
                 <div className="box1details">
                     <div id="boxheader"></div><h3>2 persons bedroom - double bed</h3>
                     <p>Free for families with kids under 16 years old</p>
-                    <p>Always wanted to milk a goat? Drink the freshest milk you ever drank? Timo is welcoming visitors for over 5 years. 
-                    At his farm you will be given a tour, feed the animals and talk about his goats the entire time!</p>
+                    <p>Always wanted to milk a goat? Drink the freshest milk you ever drank? Timo is welcoming visitors for over 5 years.
+                        At his farm you will be given a tour, feed the animals and talk about his goats the entire time!</p>
                 </div>
                 <div className="box2details">
                     <div id="boxheader"><h3>Living room - sleeping couch</h3> </div>
                     <p>$35 p.p including Segway rent </p>
                     <p>Tour through the beautiful historical streets of Haarlem together with Mohammed, a Segway master.
-                    A safe, relaxing and fun drive for small groups. </p>
+                        A safe, relaxing and fun drive for small groups. </p>
                 </div>
                 <h4>House and room rules</h4>
             </div>
@@ -62,16 +63,16 @@ const Details = () => {
                 <div className="box1details">
                     <h3>Goat milking at Timo's farm</h3>
                     <p>Free for families with kids under 16 years old</p>
-                    <p>Always wanted to milk a goat? Drink the freshest milk you ever drank? Timo is welcoming visitors for over 5 years. 
-                    At his farm you will be given a tour, feed the animals and talk about his goats the entire time!</p>
+                    <p>Always wanted to milk a goat? Drink the freshest milk you ever drank? Timo is welcoming visitors for over 5 years.
+                        At his farm you will be given a tour, feed the animals and talk about his goats the entire time!</p>
                     <img src="https://s3-alpha-sig.figma.com/img/b7dd/f018/e3bf0987b1f03b3abb9786fe4e70a0b5?Expires=1704067200&Signature=TmePPv8yQL9BGjWNSlhTA5J4GdtZnTqoXt6BVHSt5ObnwcOPPY94e9sAvPssPjddgTpr6uwpMP~FA1nzMFtgQjGB0d9FvHFHVmScPezboBDHA5nFUYTozU7KctJi2wRHrfonydexafv4NGSAk3XcJmh74WYBD2UhnLm2GJWIBdx6TVJEfKTs3aAuyeWbz8MgIq6Rtv2FxI5tYohIPOIDTSn2lKIJQjEhngOJjnq0Z8xdqossXZc-phDKlPGz6aMbLxg5L0MnvJYJ08ZODzOSt82bYHGmXWzuM4x7IC~i48nM4p1JjmryPGKuo2qqX8MXwIZ9ZUID8Lr9IJ-i0O69-Q__&Key-Pair-Id=APKAQ4GOSFWCVNEHN3O4" alt="goated" />
                 </div>
-                
+
                 <div className="box2details">
                     <h3>Segway tour through Haarlem</h3>
                     <p>$35 p.p including Segway rent</p>
                     <p>Tour through the beautiful historical streets of Haarlem together with Mohammed, a Segway master.
-                    A safe, relaxing and fun drive for small groups. </p>
+                        A safe, relaxing and fun drive for small groups. </p>
                 </div>
                 <h4>More things to do</h4>
             </div>
@@ -84,27 +85,27 @@ const Details = () => {
                 <div className="reviewbox1">
                     <h3 id="reviewscore1">Clint Eastwood<p>5,00</p></h3>
                     <p>Stefan, the host, is a good host. He is kind and also offers free fruit.
-                       The mornings in the office are a bit chilly though.</p>
+                        The mornings in the office are a bit chilly though.</p>
                 </div>
                 <div className="reviewbox1">
-                     <h3 id="reviewscore2">East Clintwood <p>4,50</p></h3>
+                    <h3 id="reviewscore2">East Clintwood <p>4,50</p></h3>
                     <p>Such a beautiful location. Much green and a nice park nearby.
-                       Good location for conveniences close by.</p>
+                        Good location for conveniences close by.</p>
                 </div>
                 <div className="reviewbox1">
                     <h3 id="reviewscore1">Clint Eastwood<p>5,00</p></h3>
                     <p>Stefan, the host, is a good host. He is kind and also offers free fruit.
-                       The mornings in the office are a bit chilly though.</p>
+                        The mornings in the office are a bit chilly though.</p>
                 </div>
                 <div className="reviewbox1">
                     <h3 id="reviewscore2">East Clintwood<p>4,50</p></h3>
-                    <p>Such a beautiful location. Much green and a nice park nearby. 
-                       Good location for conveniences close by.</p>
+                    <p>Such a beautiful location. Much green and a nice park nearby.
+                        Good location for conveniences close by.</p>
                 </div>
                 <h4>More reviews</h4>
             </div>
         </div>
-     );
+    );
 }
- 
+
 export default Details;

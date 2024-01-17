@@ -1,6 +1,6 @@
 import React from "react";
 import careerimg from '../../images/careerimg.png';
-import './career.css'
+import './careers.css'
 
 function Career() {
     return (
