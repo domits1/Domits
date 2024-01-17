@@ -3,7 +3,7 @@ import Header from "./components/Header";
 import Landing from "./components/Landing";
 import Assortment from './components/Assortment';
 import Home from "./components/Home";
-import Booking from "./components/Booking";
+import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Career from "./components/careers/Careers";
 import Contact from "./components/Contact";
