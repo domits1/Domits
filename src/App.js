@@ -4,7 +4,7 @@ import Landing from "./components/Landing";
 import Assortment from './components/Assortment';
 import Home from "./components/Home";
 import Booking from "./components/Booking";
-import About from "./components/About";
+import About from "./components/about/About";
 import Work from "./components/Work";
 import Contact from "./components/Contact";
 import Login from "./components/Login";
