@@ -1,5 +1,6 @@
 import './App.css';
 import Header from "./components/base/Header";
+import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
 import Assortment from './components/assortment/Assortment';
 import Home from "./components/home/Home";
@@ -19,7 +20,6 @@ import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
-import Footer from "./components/base/Footer";
 import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
 import Disclaimers from "./components/disclaimers/Disclaimers";
 import Policy from "./components/disclaimers/Policy";

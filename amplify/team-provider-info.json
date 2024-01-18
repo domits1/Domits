@@ -1,5 +1,19 @@
 {
-  "dev": {
+  "production": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-production-150926-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-production-150926-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-production-150926-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-production-150926-deployment",
+      "UnauthRoleName": "amplify-domits-production-150926-unauthRole",
+      "StackName": "amplify-domits-production-150926",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-production-150926/f61a0ab0-887f-11ee-a107-066b65f51f56",
+      "AmplifyAppId": "d34jwd0sihmsus",
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-domits-production-150926-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
+    }
+  },
+  "develop": {
     "awscloudformation": {
       "AuthRoleName": "amplify-domits-dev-144636-authRole",
       "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-dev-144636-unauthRole",
