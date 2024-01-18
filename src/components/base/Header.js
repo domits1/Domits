@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import './base.css'
 import { Link, BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import logo from "../logo.svg";
-import SearchBar from "./SearchBar"
+import logo from "../../logo.svg";
+import SearchBar from "../SearchBar"
 
 
 function Header({ openLoginModal }) {

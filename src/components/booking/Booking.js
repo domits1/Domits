@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { API, graphqlOperation } from 'aws-amplify'; // Import specific modules
-
-import { createAccommodation } from '../graphql/mutations';
+import { createAccommodation } from '../../graphql/mutations';
 
 const Booking = () => {
     const [accommodationData, setAccommodationData] = useState(/* initial data */);
