@@ -79,6 +79,7 @@ const Footer = () => {
                        <li><Link to="/" style={FOOTER_LINK_STYLE}>Why Domits</Link></li>
                         <li><Link to="/" style={FOOTER_LINK_STYLE}>Jobs</Link></li>
                         <li><Link to="/about" style={FOOTER_LINK_STYLE}>About</Link></li>
+                        <li><Link to="/" style={FOOTER_LINK_STYLE}>Release</Link></li>
                         <li><Link to="/contact" style={FOOTER_LINK_STYLE}>Contact</Link></li>
                     </ul>
                 </div>
@@ -87,9 +88,8 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 style={SMALL_HEADER_STYLE}>Guest</h4>
                     <ul style={FOOTER_LIST_STYLE}>
-                        <li><Link to="/profile" style={FOOTER_LINK_STYLE}>Profile</Link></li>
-                        <li><Link to="/bookings" style={FOOTER_LINK_STYLE}>Bookings</Link></li>
-                        <li><Link to="/settings" style={FOOTER_LINK_STYLE}>Settings</Link></li>
+                        <li><Link to="/" style={FOOTER_LINK_STYLE}>Discover and book</Link></li>
+                        <li><Link to="/" style={FOOTER_LINK_STYLE}>Helpdesk for guests</Link></li>
                     </ul>
                 </div>
 
@@ -97,11 +97,8 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 style={SMALL_HEADER_STYLE}>Hosts</h4>
                     <ul style={FOOTER_LIST_STYLE}>
-                        <li><Link to="/dashboard" style={FOOTER_LINK_STYLE}>Dashboard</Link></li>
-                        <li><Link to="/payments" style={FOOTER_LINK_STYLE}>Payments</Link></li>
-                        <li><Link to="/profile" style={FOOTER_LINK_STYLE}>Profile</Link></li>
-                        <li><Link to="/calendar" style={FOOTER_LINK_STYLE}>Calendar</Link></li>
-                        <li><Link to="/Hsettings" style={FOOTER_LINK_STYLE}>Settings</Link></li>
+                        <li><Link to="/" style={FOOTER_LINK_STYLE}>Become a host</Link></li>
+                        <li><Link to="/" style={FOOTER_LINK_STYLE}>Helpdesk for hosts</Link></li>
                     </ul>
                 </div>
 
@@ -120,6 +117,10 @@ const Footer = () => {
                     </ul>
                 </div>
 
+                <svg id="footer-line" xmlns="http://www.w3.org/2000/svg" width="1" height="315" viewBox="0 0 1 315" fill="none">
+                    <path d="M0.25 1L0.250014 314" stroke="#0D9813" stroke-width="0.5" stroke-linecap="round"/>
+                </svg>
+
                 {/* Socials section */}
                 <div className="footer-section">
                     <h4 style={SMALL_HEADER_STYLE}>Socials</h4>
@@ -135,15 +136,6 @@ const Footer = () => {
                 </div>
 
 
-            {/* Languages section */}
-            <div className="footer-section">
-                <h4 style={SMALL_HEADER_STYLE}>Languages</h4>
-                <ul style={FOOTER_LIST_STYLE}>
-                    <li style={FOOTER_LINK_STYLE}>Dutch</li>
-                    <li style={FOOTER_LINK_STYLE}>English</li>
-                </ul>
-            </div>
-
                 {/* Office section */}
                 <div className="footer-section">
                     <h4 style={SMALL_HEADER_STYLE}>Office</h4>
@@ -152,7 +144,34 @@ const Footer = () => {
                         <li style={FOOTER_LINK_STYLE}>Kinderhuissingel 6-K</li>
                     </ul>
                 </div>
+
+                {/* Languages section */}
+                <div className="footer-section">
+                    <h4 style={SMALL_HEADER_STYLE}>Languages</h4>
+                    <select id='language-dropdown' style={FOOTER_LIST_STYLE}>
+                        <option value="english">English</option>
+                        <option value="dutch">Dutch</option>
+                    </select>
+                </div>
+
+                {/* Currency section */}
+                <div className="footer-section">
+                    <h4 style={SMALL_HEADER_STYLE}>Currencies</h4>
+                    <select id='currency-dropdown' style={FOOTER_LIST_STYLE}>
+                        <option value="euro">Euro</option>
+                        <option value="dollar">Dollar</option>
+                    </select>
+                </div>
             </div>
+
+            {/* conditions section */}
+            <div>
+                <h4><a href="#privacy-policy">Privacy policy</a></h4>
+                <h4><a href="#terms-and-conditions">Terms and conditions</a></h4>
+                <h4><a href="#disclaimers">Disclaimers</a></h4>
+                <h4><a href="#sitemap">Sitemap</a></h4>
+            </div>
+
 
             {/* Copyright Block */}
             <div style={COPYRIGHT_STYLE}>

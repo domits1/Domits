@@ -182,4 +182,33 @@
     line-height: 24px; /* 150% */
     letter-spacing: 0.16px;
 }
+
+#footer-line {
+    /*width: 313px;*/
+    /*height: 0px;*/
+    /*transform: rotate(90deg);*/
+    /*flex-shrink: 0;*/
+}
+
+#language-dropdown {
+    display: inline-flex;
+    padding: 5px 15px;
+    align-items: center;
+    gap: 10px;
+
+    border-radius: 15px;
+    border: 0.5px solid #0D9813;
+}
+
+#currency-dropdown {
+    display: inline-flex;
+    padding: 5px 15px;
+    align-items: center;
+    gap: 10px;
+
+    border-radius: 15px;
+    border: 0.5px solid #0D9813;
+}
+
 /* End of footer */
+
