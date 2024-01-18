@@ -56,7 +56,7 @@ export default function UserUpdateForm(props) {
   React.useEffect(resetStateValues, [userRecord]);
   const validations = {
     email: [{ type: "Required" }],
-    password: [],
+    password: [{ type: "Required" }],
   };
   const runValidationTasks = async (
     fieldName,
@@ -85,7 +85,7 @@ export default function UserUpdateForm(props) {
         event.preventDefault();
         let modelFields = {
           email,
-          password: password ?? null,
+          password,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -164,7 +164,7 @@ export default function UserUpdateForm(props) {
       ></TextField>
       <TextField
         label="Password"
-        isRequired={false}
+        isRequired={true}
         isReadOnly={false}
         value={password}
         onChange={(e) => {

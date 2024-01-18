@@ -1,8 +1,9 @@
 import React from "react";
-import accommodationimg from "../../images/accoimg1.png"
+import accommodationimg from "../../images/accommodationtestpic1.png"
+import './guestdashboard.css'
 
 const GuestDashboard = () => {
-    return ( 
+    return (
         <div className="guestdashboard">
             <div className="toptext">
                 <h1>Your bookings</h1>
@@ -28,14 +29,14 @@ const GuestDashboard = () => {
                     <br />
                     <div className="line"></div>
                     <div className="bookoverviewbold">
-                        <p>Accommodation</p> 
-                        <p>Kinderhuissingel 6K</p>                        
+                        <p>Accommodation</p>
+                        <p>Kinderhuissingel 6K</p>
                     </div>
                     <div className="moreinfo">
                         <p>More information</p>
-                    </div> 
+                    </div>
                 </div>
-            
+
                 <div className="pricedetails">
                     <h2>Price details</h2>
                     <ul>
@@ -52,15 +53,15 @@ const GuestDashboard = () => {
                     </div>
                     <div className="moreinfo">
                         <p>More information</p>
-                    </div> 
+                    </div>
                 </div>
 
                 <div className="hostinfo">
                     <h3>Host: Stefan Hopman <h4>Contact host</h4></h3>
                     <img id="accoimg" src={accommodationimg} alt="Accommodation Test Pic 1" />
                 </div>
-                      </div>
-            
+            </div>
+
             <div className="bottomtext">
                 <h3>Change email</h3>
                 <h3>Change phone number</h3>
@@ -68,7 +69,7 @@ const GuestDashboard = () => {
                 <h3>Download payment confirmation</h3>
             </div>
         </div>
-     );
+    );
 }
- 
+
 export default GuestDashboard;

@@ -1,16 +1,16 @@
 import './App.css';
-import Header from "./components/Header";
-import Footer from "./components/Footer";
-import Landing from "./components/Landing";
-import Assortment from './components/Assortment';
-import Home from "./components/Home";
-import Booking from "./components/Booking";
-import About from "./components/About";
-import Work from "./components/Work";
-import Contact from "./components/Contact";
-import Login from "./components/Login";
+import Header from "./components/base/Header";
+import Footer from "./components/base/Footer";
+import Landing from "./components/landingpage/Landing";
+import Assortment from './components/assortment/Assortment';
+import Home from "./components/home/Home";
+import Booking from "./components/booking/Booking";
+import About from "./components/about/About";
+import Careers from "./components/careers/Careers";
+import Contact from "./components/contact/Contact";
+import Login from "./components/base/Login";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
-import Details from './components/Details';
+import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, {useEffect, useState} from "react";
@@ -21,6 +21,9 @@ import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation"
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
 import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
+import Disclaimers from "./components/disclaimers/Disclaimers";
+import Policy from "./components/disclaimers/Policy";
+import Terms from "./components/disclaimers/Terms";
 
 function App() {
     useEffect(() => {
@@ -59,50 +62,20 @@ function App() {
                     <Route path="/home" element={<Home />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
-                    <Route path="/work" element={<Work />} />
+                    <Route path="/career" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/details" element={<Details/>} />
                     <Route path="/assortment" element={<Assortment />} />
                     <Route path="/Guestdashboard" element={<GuestDashboard />}/>
-
-                    {/*/!*host dashboard*!/*/}
+                    <Route path="/career" element={<Careers />} />
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
                     <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
                     <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
-
-                    {/*/!* footer Navigation*!/*/}
-                    {/*<Route path="/howitworks" element={<HowWorks />} />*/}
-                    {/*<Route path="/aboutdomits" element={<AboutDomits />} />*/}
-                    {/*<Route path="/work" element={<Work />} />*/}
-                    <Route path="/about" element={<About />} />
-                    <Route path="/contact" element={<Contact />} />
-
-                    {/*/!* footer Guests*!/*/}
-                    {/*<Route path="/profile" element={<Profile />} />*/}
-                    {/*<Route path="/booking" element={<Booking />} />*/}
-                    {/*<Route path="/settings" element={<Settings />} />*/}
-
-                    {/*/!* footer Hosts*!/*/}
-                    {/*<Route path="/payments" element={<Payments />} />*/}
-                    {/*<Route path="/calendar" element={<Calendar />} />*/}
-                    {/*<Route path="/Hsettings" element={<HSettings />} /> /!*seperate host setting*!/*/}
-
-                    {/*/!* footer Network*!/*/}
-                    {/*<Route path="/guests" element={<Guests />} />*/}
-                    {/*<Route path="/hosts" element={<Hosts />} />*/}
-                    {/*<Route path="/developers" element={<Developers />} />*/}
-                    {/*<Route path="/partners" element={<Partners />} />*/}
-                    {/*<Route path="/students" element={<Students />} />*/}
-                    {/*<Route path="/startups" element={<Startups />} />*/}
-
-                    {/*/!* footer Socials*!/*/}
-                    {/*/!*are normal links inside of the footer*!/*/}
-                    {/*/!*Languages*!/*/}
-                    {/*<Route path="/dutch" element={<Dutch />} />*/}
-                    {/*<Route path="/english" element={<English />} />*/}
-
+                    <Route path="/disclaimers" element={<Disclaimers />} />
+                    <Route path="/policy" element={<Policy />} />
+                    <Route path="/terms" element={<Terms />} />
 
 
                     {/*  Admin Routes  */}
