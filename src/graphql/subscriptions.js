@@ -79,7 +79,6 @@ export const onDeleteUser = /* GraphQL */ `
     }
   }
 `;
-
 export const onCreateTodo = /* GraphQL */ `
   subscription OnCreateTodo($filter: ModelSubscriptionTodoFilterInput) {
     onCreateTodo(filter: $filter) {
