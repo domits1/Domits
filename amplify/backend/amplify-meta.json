@@ -55,7 +55,7 @@
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/api/cloudformation-template.json",
         "logicalId": "apidomits"
       },
-      "lastPushTimeStamp": "2024-01-18T11:50:19.962Z",
+      "lastPushTimeStamp": "2024-01-18T15:06:42.864Z",
       "lastPushDirHash": "bMM5rj+xWbOJTvtoWK1dvKjLx2g="
     }
   },
@@ -99,7 +99,7 @@
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/auth/domits7b73f586-cloudformation-template.json",
         "logicalId": "authdomits7b73f586"
       },
-      "lastPushTimeStamp": "2024-01-18T11:50:19.962Z",
+      "lastPushTimeStamp": "2024-01-18T15:06:42.875Z",
       "output": {
         "UserPoolId": "eu-north-1_mPxNhvSFX",
         "AppClientIDWeb": "78jfrfhpded6meevllpfmo73mo",
@@ -126,7 +126,7 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Cognito-UserPool-Groups",
-      "lastPushTimeStamp": "2024-01-18T11:50:19.962Z",
+      "lastPushTimeStamp": "2024-01-18T15:06:45.800Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/auth/userPoolGroups-cloudformation-template.json",
         "logicalId": "authuserPoolGroups"
@@ -166,7 +166,7 @@
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/function/domits7b73f586PreSignup-cloudformation-template.json",
         "logicalId": "functiondomits7b73f586PreSignup"
       },
-      "lastPushTimeStamp": "2024-01-18T11:50:19.962Z",
+      "lastPushTimeStamp": "2024-01-18T15:06:42.902Z",
       "output": {
         "LambdaExecutionRoleArn": "arn:aws:iam::115462458880:role/domits7b73f586PreSignup-develop",
         "Region": "eu-north-1",

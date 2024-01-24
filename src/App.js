@@ -8,7 +8,6 @@ import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
-import Login from "./components/base/Login";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
@@ -24,6 +23,10 @@ import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
 import Disclaimers from "./components/disclaimers/Disclaimers";
 import Policy from "./components/disclaimers/Policy";
 import Terms from "./components/disclaimers/Terms";
+import Login from "./components/base/Login";
+
+// Set the app element for react-modal
+Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
 
 function App() {
     useEffect(() => {

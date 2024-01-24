@@ -15,29 +15,6 @@
   },
   "develop": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-domits-dev-144636-authRole",
-      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-dev-144636-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-dev-144636-authRole",
-      "Region": "eu-north-1",
-      "DeploymentBucketName": "amplify-domits-dev-144636-deployment",
-      "UnauthRoleName": "amplify-domits-dev-144636-unauthRole",
-      "StackName": "amplify-domits-dev-144636",
-      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-dev-144636/e0a5f9c0-98f4-11ee-903e-0e3ad7594136",
-      "AmplifyAppId": "d34jwd0sihmsus"
-    },
-    "categories": {
-      "auth": {
-        "domits7b73f586": {}
-      },
-      "function": {
-        "domits7b73f586PreSignup": {},
-        "domits": {},
-        "domits7b73f586": {}
-      }
-    }
-  },
-  "develop": {
-    "awscloudformation": {
       "AuthRoleName": "amplify-domits-develop-123953-authRole",
       "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-123953-unauthRole",
       "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-123953-authRole",

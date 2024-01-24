@@ -1,70 +1,107 @@
-import {Amplify} from "aws-amplify";
+import React, { useState, FormEvent } from 'react';
+import { Auth } from 'aws-amplify';
+import { Authenticator } from '@aws-amplify/ui-react';
+import { useNavigate } from 'react-router-dom';
 
-import {
-    Authenticator,
-    View,
-    Image,
-    useTheme,
-    Heading,
-    useAuthenticator,
-    Button,
-} from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
-import logo from "../../logo.svg";
-import awsExports from '../../aws-exports';
+const components = [];
 
-Amplify.configure(awsExports);
+const Login = () => {
+    const navigate = useNavigate();
 
-function App() {
-    const components = {
-        Header() {
-            const { tokens } = useTheme();
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+        repeatPassword: '',
+    });
 
-            return (
-                <View textAlign="center" padding={tokens.space.large}>
-                    <Image
-                        src={logo} className="App-logo" alt="logo" height={75}
-                    />
-                </View>
-            );
-        },
-        SignUp: {
-            Header() {
-                const { tokens } = useTheme();
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+    };
 
-                return (
-                    <Heading
-                        padding={`${tokens.space.xl} 0 0 ${tokens.space.xl}`}
-                        level={5}
-                    >
-                        Create a new account
-                    </Heading>
-                );
-            },
-            Footer() {
-                const { toSignIn } = useAuthenticator();
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
 
-                return (
-                    <View textAlign="center">
-                        <Button
-                            fontWeight="normal"
-                            onClick={toSignIn}
-                            size="small"
-                            variation="link"
-                        >
-                            Already have an account?
-                        </Button>
-                    </View>
-                );
-            },
-        },
+        const userData = {
+            email: formData.email,
+            password: formData.password,
+            repeatPassword: formData.repeatPassword,
+            "custom:group": "Guest",
+        };
+
+        if (userData.email !== '' && userData.password !== '') {
+            try {
+                await Auth.signIn(userData.email, userData.password);
+                navigate('/');
+            } catch (error) {
+                console.error('Error logging in:', error);
+            }
+        } else if (userData.password !== userData.repeatPassword) {
+            console.log('Passwords do not match!');
+        } else {
+            try {
+                await Auth.signUp({
+                    username: userData.email,
+                    password: userData.password,
+                    attributes: {
+                        email: userData.email,
+                        "custom:group": "Guest",
+                    },
+                    autoSignIn: { enabled: true },
+                });
+                navigate('/confirm-email', { state: { email: userData.email } });
+            } catch (error) {
+                if (error.code === 'UsernameExistsException') {
+                    await Auth.resendSignUp(userData.email);
+                    navigate('/confirm-email', { state: { email: userData.email } });
+                } else {
+                    console.error('Error:', error);
+                }
+            }
+        }
     };
 
     return (
         <Authenticator loginMechanisms={['email']} components={components}>
-            {({ signOut }) => <button onClick={signOut}>Sign out</button>}
+            {({ signOut }) => (
+                <>
+                    <button onClick={signOut}>Sign out</button>
+                    <form onSubmit={handleSubmit}>
+                        <label>Email:
+                            <input
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                            />
+                        </label>
+                        <br />
+                        <label>Password:
+                            <input
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                        </label>
+                        <br />
+                        <label>Repeat Password:
+                            <input
+                                type="password"
+                                name="repeatPassword"
+                                value={formData.repeatPassword}
+                                onChange={handleChange}
+                            />
+                        </label>
+                        <br />
+                        <button type="submit">Login/Sign Up</button>
+                    </form>
+                </>
+            )}
         </Authenticator>
     );
-}
+};
 
-export default App;
+export default Login;
