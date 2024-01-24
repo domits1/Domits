@@ -86,15 +86,15 @@ const Accommodations = ({ searchQuery }) => {
                         <img src={Star} alt="Star" />
                         4.97
                     </span>
-                        <span className='map'>
-                        <img src={Map} alt="Map" />
-                    </span>
-                        <h2>{accommodation.address}</h2>
+                    {/*    <span className='map'>*/}
+                    {/*    <img src={Map} alt="Map" />*/}
+                    {/*</span>*/}
+
                     </div>
                     <div className="imgacco">
                         <img src={accommodation.image} alt="Accommodation" />
                     </div>
-
+                    <h2>{accommodation.address}</h2>
                     <p>{accommodation.price}</p>
                     <p>{accommodation.details}</p>
                     <p>{accommodation.size}</p>
