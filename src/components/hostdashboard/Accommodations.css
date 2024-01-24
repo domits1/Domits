@@ -1,0 +1,32 @@
+.item-preview {
+    position: relative;
+}
+
+.overlay {
+    position: absolute;
+    top: 10px; /* Adjust this value as needed for the desired vertical position */
+    left: 10px; /* Adjust this value as needed for the desired horizontal position */
+    background-color: transparent; /* Set background color to transparent */
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.star,
+.map {
+    display: inline-flex;
+    padding: 5px 15px;
+    align-items: center;
+    gap: 6px;
+
+    border-radius: 15px;
+    border: 0.5px solid #0D9813;
+    background: rgba(0, 0, 0, 0.50);
+    backdrop-filter: blur(20px);
+
+    color: white;
+}
+
+.map {
+    margin-left: auto; /* Push the map to the right */
+}
+
