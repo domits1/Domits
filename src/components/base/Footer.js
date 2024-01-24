@@ -1,5 +1,7 @@
 import React from 'react';
 import logo from "../../logo.svg";
+import Appstorebadge from '../../images/assets/appstorebadge.svg';
+import Playstorebadge from '../../images/assets/playstorebadge.svg';
 import { Link } from 'react-router-dom';
 import './base.css'
 
@@ -74,14 +76,14 @@ const Footer = () => {
                     {/* Currency section */}
                     <div className="footer-section">
                         <h4 className='footer-headers'>Currencies</h4>
-                        <select id='currency-dropdown' className='footer-lists'>
+                        <select id='currency-dropdown' className='footer-lists footer-select'>
                             <option value="euro">Euro</option>
                             <option value="dollar">Dollar</option>
                         </select>
                     </div>
-                </div>
 
-                {/* Languages and Currencies in a 2x2 grid */}
+                    <img id='appstorebadge' src={Appstorebadge} alt="App Store Badge" className="app-store-badge" />
+                </div>
 
                 {/* Office section */}
                 <div className="footer-section-grid">
@@ -96,21 +98,24 @@ const Footer = () => {
                     {/* Languages section */}
                     <div className="footer-section">
                         <h4 className='footer-headers'>Languages</h4>
-                        <select id='language-dropdown' className='footer-lists'>
+                        <select id='language-dropdown' className='footer-lists footer-select'>
                             <option value="english">English</option>
                             <option value="dutch">Dutch</option>
                         </select>
                     </div>
+                    <img id='playstorebadge' src={Playstorebadge} alt="Play Store Badge" className="play-store-badge" />
                 </div>
             </div>
 
             {/* conditions section */}
             {/*<div>*/}
-            {/*    <h4><a href="#privacy-policy">Privacy policy</a></h4>*/}
-            {/*    <h4><a href="#terms-and-conditions">Terms and conditions</a></h4>*/}
-            {/*    <h4><a href="#disclaimers">Disclaimers</a></h4>*/}
-            {/*    <h4><a href="#sitemap">Sitemap</a></h4>*/}
+            {/*
             {/*</div>*/}
+
+            {/* App Store and Play Store badges */}
+
+
+
 
 
             {/* Copyright Block */}

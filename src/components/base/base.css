@@ -145,6 +145,22 @@
     gap: 20px; /* Adjust the gap as needed */
 }
 
+.footer-select {
+    display: inline-flex;
+    padding: 5px 15px;
+    align-items: center;
+    gap: 10px;
+    border-radius: 15px;
+    border: 0.5px solid #0D9813;
+}
+
+#appstorebadge {
+   margin-top: 20px;
+}
+
+#playstorebadge {
+    margin-top: 20px;
+}
 
 /* End of footer */
 
