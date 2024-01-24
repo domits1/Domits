@@ -65,7 +65,6 @@ export const listUsers = /* GraphQL */ `
     }
   }
 `;
-
 export const getTodo = /* GraphQL */ `
   query GetTodo($id: ID!) {
     getTodo(id: $id) {

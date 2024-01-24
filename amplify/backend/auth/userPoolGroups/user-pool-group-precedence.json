@@ -1,0 +1,10 @@
+[
+  {
+    "groupName": "develop",
+    "precedence": 1
+  },
+  {
+    "groupName": "developUserPool",
+    "precedence": 2
+  }
+]
