@@ -93,5 +93,51 @@
     justify-content: space-between;
     padding: 20px;
 }
+
+.footer-headers {
+    color: #0D9813;
+    font-family: Kanit, sans-serif;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+}
+
+.footer-lists {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links {
+
+    color: #000;
+    font-family: Kanit, sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+    text-decoration-line: underline;
+}
+
+.footer-copyright {
+
+    background-color: #0D9813;
+    flex-shrink: 0;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+.footer-copyright-text {
+    color: #fff;
+    font-family: Kanit, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+}
+
 /* End of footer */
 
