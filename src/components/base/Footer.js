@@ -4,23 +4,8 @@ import { Link } from 'react-router-dom';
 import './base.css'
 
 // Constants for styles
-const MAIN_FOOTER_STYLE = {
-
-    backgroundColor: '#f8f8f8',
-    width: '100%',
-    minHeight: '50vh',
-    display: 'flex',
-    flexDirection: 'column',
-    maxHeight: '100px', // Set your desired max height
-    overflowY: 'auto', // Add overflow to handle content overflow
-};
 
 
-const FOOTER_CONTENT_STYLE = {
-    display: 'flex',
-    justifyContent: 'space-between',
-    padding: '20px',
-};
 
 const SMALL_HEADER_STYLE = {
     color: '#0D9813',
@@ -67,8 +52,8 @@ const COPYRIGHT_TEXT_STYLE = {
 
 const Footer = () => {
     return (
-        <footer style={MAIN_FOOTER_STYLE}>
-            <div style={FOOTER_CONTENT_STYLE}>
+        <footer className='main-footer'>
+            <div className='footer-content'>
                 <div className="logo">
                     <img src={logo} width={50} alt="Logo" />
                 </div>
@@ -129,11 +114,6 @@ const Footer = () => {
                         <li><a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" style={FOOTER_LINK_STYLE}>Linkedin</a></li>
                         <li><a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" style={FOOTER_LINK_STYLE}>Instagram</a></li>
                     </ul>
-                    <ul style={FOOTER_LIST_STYLE}>
-                        <li style={FOOTER_LINK_STYLE}>Privacy policy</li>
-                        <li style={FOOTER_LINK_STYLE}>Terms and Conditions</li>
-                        <li style={FOOTER_LINK_STYLE}>Disclaimer</li>
-                    </ul>
                 </div>
 
 
@@ -166,12 +146,12 @@ const Footer = () => {
             </div>
 
             {/* conditions section */}
-            <div>
-                <h4><a href="#privacy-policy">Privacy policy</a></h4>
-                <h4><a href="#terms-and-conditions">Terms and conditions</a></h4>
-                <h4><a href="#disclaimers">Disclaimers</a></h4>
-                <h4><a href="#sitemap">Sitemap</a></h4>
-            </div>
+            {/*<div>*/}
+            {/*    <h4><a href="#privacy-policy">Privacy policy</a></h4>*/}
+            {/*    <h4><a href="#terms-and-conditions">Terms and conditions</a></h4>*/}
+            {/*    <h4><a href="#disclaimers">Disclaimers</a></h4>*/}
+            {/*    <h4><a href="#sitemap">Sitemap</a></h4>*/}
+            {/*</div>*/}
 
 
             {/* Copyright Block */}
