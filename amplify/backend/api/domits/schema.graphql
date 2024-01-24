@@ -1,0 +1,18 @@
+type Accommodation @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  accommodation: String
+  description: String
+}
+
+type User @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  email: String!
+  password: String!
+}
+
+type Todo @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String!
+  description: String
+}
+ 
