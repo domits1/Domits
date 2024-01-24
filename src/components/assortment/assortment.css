@@ -1,0 +1,86 @@
+.assortment {
+    border: none;
+}
+.dropdown-row {
+    display: flex;
+    border: none;
+    align-items: center; /* Optional: Align items vertically in the center */
+    justify-content: space-between; /* Adjust as needed for your layout */
+}
+
+.dropdown {
+    display: inline-flex;
+    margin-top: 20px;
+    margin-right: 10px;
+    border: none;
+    text-decoration: none;
+    padding: 8px 10px 8px 15px;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 83px;
+
+    border-radius: 15px;
+    border: 1px solid #000;
+    background: #FFF;
+}
+
+
+.dropdown select {
+    border: none;
+
+/*    removes the arrow*/
+/*    -webkit-appearance: none;*/
+/*    -moz-appearance: none;*/
+/*    appearance: none;*/
+
+    color: #000;  /* Text color */
+    font-family: 'Kanit', sans-serif; /* Font family */
+    font-size: 12px; /* Font size */
+    font-style: normal;
+    font-weight: 275;
+    line-height: 150%;
+}
+
+.label-row {
+    display: inline-flex;
+    margin-top: 20px;
+    margin-right: 10px;
+    border: none;
+    text-decoration: none;
+    padding: 8px 10px 8px 15px;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 83px;
+    background: #FFF;
+}
+
+.label {
+    display: inline-flex;
+    margin-top: 20px;
+    margin-right: 10px;
+    border: none;
+    text-decoration: none;
+    padding: 8px 10px 8px 15px;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 83px;
+
+    border-radius: 15px;
+    border: 1px solid #000;
+    background: #FFF;
+}
+
+button {
+    display: flex;
+    width: 130px;
+    height: 40px;
+    padding: 8px 0px;
+    justify-content: center;
+    align-items: center;
+    flex-shrink: 0;
+
+    border-radius: 15px;
+    border: 1px solid #000;
+    background: #FFF;
+    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+}
