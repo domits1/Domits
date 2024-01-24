@@ -80,6 +80,7 @@
 /* Footer styles */
 .footer {
     /* Layout */
+    position: fixed;
     display: flex;
     flex-direction: column;
     justify-content: center;

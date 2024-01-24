@@ -1,5 +1,8 @@
 import React from "react";
+import Star from '../../images/icons/Star.svg'
+import Map from '../../images/icons/map-02.svg'
 import accoImg from '../../images/accoimg1.png';
+import './Accommodations.css'
 
 const Accommodations = ({ searchQuery }) => {
     const accolist = [
@@ -73,21 +76,33 @@ const Accommodations = ({ searchQuery }) => {
         accommodation.address.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    return ( 
+
+    return (
         <div className="array">
             {filteredAccommodations.map((accommodation, index) => (
                 <div className="item-preview" key={index}>
-                    <div className="imgacco"> 
-                        <img src={accommodation.image} alt="Accommodation" /> 
+                    <div className="overlay">
+                    <span className='star'>
+                        <img src={Star} alt="Star" />
+                        4.97
+                    </span>
+                        <span className='map'>
+                        <img src={Map} alt="Map" />
+                    </span>
+                        <h2>{accommodation.address}</h2>
                     </div>
-                    <h2>{accommodation.address}</h2>
+                    <div className="imgacco">
+                        <img src={accommodation.image} alt="Accommodation" />
+                    </div>
+
+                    <p>{accommodation.price}</p>
                     <p>{accommodation.details}</p>
                     <p>{accommodation.size}</p>
-                    <p>{accommodation.price}</p>
                 </div>
             ))}
         </div>
     );
+
 }
  
 export default Accommodations;

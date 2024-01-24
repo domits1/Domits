@@ -5,6 +5,7 @@ import './base.css'
 
 // Constants for styles
 const MAIN_FOOTER_STYLE = {
+
     backgroundColor: '#f8f8f8',
     width: '100%',
     minHeight: '50vh',
