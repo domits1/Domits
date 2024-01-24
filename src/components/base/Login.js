@@ -1,9 +1,7 @@
-import React, { useState, FormEvent } from 'react';
-import { Auth } from 'aws-amplify';
-import { Authenticator } from '@aws-amplify/ui-react';
-import { useNavigate } from 'react-router-dom';
-
-const components = [];
+import React, {useState, FormEvent, useEffect} from 'react';
+import {Auth} from 'aws-amplify';
+import {useNavigate} from 'react-router-dom';
+import './Login.css';
 
 const Login = () => {
     const navigate = useNavigate();
@@ -11,8 +9,9 @@ const Login = () => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
-        repeatPassword: '',
     });
+
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -21,86 +20,82 @@ const Login = () => {
         });
     };
 
-    const handleSubmit = async (e: FormEvent) => {
-        e.preventDefault();
+    const handleSignIn = async () => {
+        const {email, password} = formData;
 
-        const userData = {
-            email: formData.email,
-            password: formData.password,
-            repeatPassword: formData.repeatPassword,
-            "custom:group": "Guest",
-        };
-
-        if (userData.email !== '' && userData.password !== '') {
-            try {
-                await Auth.signIn(userData.email, userData.password);
-                navigate('/');
-            } catch (error) {
-                console.error('Error logging in:', error);
-            }
-        } else if (userData.password !== userData.repeatPassword) {
-            console.log('Passwords do not match!');
-        } else {
-            try {
-                await Auth.signUp({
-                    username: userData.email,
-                    password: userData.password,
-                    attributes: {
-                        email: userData.email,
-                        "custom:group": "Guest",
-                    },
-                    autoSignIn: { enabled: true },
-                });
-                navigate('/confirm-email', { state: { email: userData.email } });
-            } catch (error) {
-                if (error.code === 'UsernameExistsException') {
-                    await Auth.resendSignUp(userData.email);
-                    navigate('/confirm-email', { state: { email: userData.email } });
-                } else {
-                    console.error('Error:', error);
-                }
-            }
+        try {
+            await Auth.signIn(email, password);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.error('Error logging in:', error);
         }
     };
 
+    const handleSignOut = async () => {
+        try {
+            await Auth.signOut();
+            setIsAuthenticated(false);
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+    };
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+
+        await handleSignIn();
+    };
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                await Auth.currentAuthenticatedUser();
+                setIsAuthenticated(true);
+            } catch (error) {
+                setIsAuthenticated(false);
+            }
+        };
+
+        checkAuth();
+    }, []);
+
     return (
-        <Authenticator loginMechanisms={['email']} components={components}>
-            {({ signOut }) => (
-                <>
-                    <button onClick={signOut}>Sign out</button>
-                    <form onSubmit={handleSubmit}>
-                        <label>Email:
-                            <input
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                            />
-                        </label>
-                        <br />
-                        <label>Password:
-                            <input
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                            />
-                        </label>
-                        <br />
-                        <label>Repeat Password:
-                            <input
-                                type="password"
-                                name="repeatPassword"
-                                value={formData.repeatPassword}
-                                onChange={handleChange}
-                            />
-                        </label>
-                        <br />
-                        <button type="submit">Login/Sign Up</button>
-                    </form>
-                </>
+        <>
+            {isAuthenticated ? (
+                <button onClick={handleSignOut}>Sign out</button>
+            ) : (
+                <div className="loginContainer">
+                    <div className="loginTitle">Log in or Sign Up</div>
+                    <div className="loginForm">
+                        <form onSubmit={handleSubmit}>
+                            <label>Username:</label><br />
+                                <input
+                                    className="loginInput"
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                />
+                            <br/>
+                            <label>Password:</label><br/>
+                                <input
+                                    className="loginInput"
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                />
+                            <br/>
+                            <button type="submit" className="loginButton">Login
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 8L16 12M16 12L12 16M16 12H3M3.33782 7C5.06687 4.01099 8.29859 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C8.29859 22 5.06687 19.989 3.33782 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
+                </div>
             )}
-        </Authenticator>
+        </>
     );
 };
 
