@@ -62,6 +62,7 @@ const Footer = () => {
                 </svg>
 
                 {/* Socials section */}
+                <div className="footer-section-grid">
                 <div className="footer-section">
                     <h4 className='footer-headers'>Socials</h4>
                     <ul className='footer-lists'>
@@ -70,32 +71,36 @@ const Footer = () => {
                     </ul>
                 </div>
 
+                    {/* Currency section */}
+                    <div className="footer-section">
+                        <h4 className='footer-headers'>Currencies</h4>
+                        <select id='currency-dropdown' className='footer-lists'>
+                            <option value="euro">Euro</option>
+                            <option value="dollar">Dollar</option>
+                        </select>
+                    </div>
+                </div>
+
+                {/* Languages and Currencies in a 2x2 grid */}
 
                 {/* Office section */}
-                <div className="footer-section">
-                    <h4 className='footer-headers'>Office</h4>
-                    <ul className='footer-lists'>
-                        <li className='footer-links'>2013 AS, Haarlem</li>
-                        <li className='footer-links'>Kinderhuissingel 6-K</li>
-                    </ul>
-                </div>
+                <div className="footer-section-grid">
+                    <div className="footer-section">
+                        <h4 className='footer-headers'>Office</h4>
+                        <ul className='footer-lists'>
+                            <li className='footer-links'>2013 AS, Haarlem</li>
+                            <li className='footer-links'>Kinderhuissingel 6-K</li>
+                        </ul>
+                    </div>
 
-                {/* Languages section */}
-                <div className="footer-section">
-                    <h4 className='footer-headers'>Languages</h4>
-                    <select id='language-dropdown' className='footer-lists'>
-                        <option value="english">English</option>
-                        <option value="dutch">Dutch</option>
-                    </select>
-                </div>
-
-                {/* Currency section */}
-                <div className="footer-section">
-                    <h4 className='footer-headers'>Currencies</h4>
-                    <select id='currency-dropdown' className='footer-lists'>
-                        <option value="euro">Euro</option>
-                        <option value="dollar">Dollar</option>
-                    </select>
+                    {/* Languages section */}
+                    <div className="footer-section">
+                        <h4 className='footer-headers'>Languages</h4>
+                        <select id='language-dropdown' className='footer-lists'>
+                            <option value="english">English</option>
+                            <option value="dutch">Dutch</option>
+                        </select>
+                    </div>
                 </div>
             </div>
 

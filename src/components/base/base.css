@@ -139,5 +139,12 @@
     line-height: 150%;
 }
 
+.footer-section-grid {
+    display: block;
+    flex-wrap: wrap;
+    gap: 20px; /* Adjust the gap as needed */
+}
+
+
 /* End of footer */
 
