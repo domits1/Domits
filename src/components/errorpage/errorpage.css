@@ -1,5 +1,5 @@
 .errorpage {
-    font-size: large;
+    font-size: x-large;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -9,15 +9,15 @@
 }
 
 .errorpage h3{
-    width:500px;
+    width:600px;
 }
 
 .errorpage button{
     background-color: #fff;
     border: solid 1px #0D9813;
-    border-radius: 15px;
+    border-radius: 30px;
     margin: 10px;
-    padding: 5px 15;
+    padding: 10px 20px;
     backdrop-filter: blur(20px);
     justify-content: center;
     align-items: center;

@@ -24,12 +24,13 @@
 
   .booking {
     float: right;
+    line-height: 1;
     position: sticky;
     top: 0;
     margin: 50px 120px 0px 0px;
     padding: 30px;
     width: 460px;
-    height: 570px;
+    height: 670px;
     flex-shrink: 0;
     border-radius: 15px;
     box-shadow: 0px 0px 10px 0px #00000079;
@@ -40,9 +41,10 @@
     font-size: larger;
     font-weight: 600;
     border-radius: 15px;
-    background: #0D9813;
+    background: hsl(123, 84%, 32%);
+    box-shadow: 0px 0px 10px 0px #00000079;
     border: #FFF;
-    height: 39px;
+    height: 50px;
     width: 350px;
     margin: auto; 
     display: block;
@@ -53,17 +55,41 @@
     cursor: pointer;
   }
 
+  #footbutton{
+    text-align: center;
+  }
+
   .bookh2,
   .checkinp {
     display: flex;
     justify-content: space-between;
-    margin: auto;
+    margin-right: 25px;
+  }
+
+  .checkinp p,
+  .guests p{
+    flex-direction: column;
+    align-items: center;
+    height: 40px;
+    border-radius: 15px;
+    padding: 10px;
+    background: #FFF;
+    box-shadow: 0px 4px 10px 0px rgba(0, 0, 0, 0.234);
   }
 
   .checkinp p {
     text-align: center;
   }
 
+  .guests{
+    display: flex;
+    gap: 15px;
+  }
+
+  .pets{
+    float: right;
+    margin-left: 140px;
+  }
 
   .topdetails{
     width: 590px;

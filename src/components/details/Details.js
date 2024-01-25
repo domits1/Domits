@@ -46,10 +46,37 @@ const Details = () => {
                     <h2>Guests</h2>
                     <h2>Pets</h2>
                 </div>
-                <div className="">
-
+                <div className="guests">
+                    <p>2 adults</p>
+                    <p> 2 kids</p>
+                    <div className="pets">
+                        <p>Select...</p>
+                    </div>
+                    
                 </div>
                 <button>Book* <img id="buttonimg" src={bookarrow} alt="" /></button>
+                <p id="footbutton">*You wont be charged yet</p>
+                <hr />
+                <div className="bookh2">
+                    <p>7 nights x $1400 a night</p>
+                    <p>$98,-</p>
+                </div>
+                <div className="bookh2">
+                    <p>Season booking discount</p>
+                    <p>-$75,-</p>
+                </div>
+                <div className="bookh2">
+                    <p>Cleaning fee</p>
+                    <p>$100</p>
+                </div>
+                <div className="bookh2">
+                    <p>Domits service fee</p>
+                    <p>$98</p>
+                </div>
+                <div  className="bookh2">
+                    <h2>Total</h2>
+                    <h2>$9923</h2>
+                </div>
             </div>
 
             <div className="imagesacco">
