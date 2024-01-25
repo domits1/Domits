@@ -12,7 +12,7 @@ import Login from "./components/base/Login";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
-import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, {useEffect, useState} from "react";
 import Modal from "react-modal";
 import CreateAccommodation from "./components/hostdashboard/CreateAccommodation";
