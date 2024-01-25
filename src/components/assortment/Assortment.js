@@ -85,7 +85,7 @@ const Assortment = () => {
                     <Dropdown value={priceRange} onChange={setPriceRange} options={priceRangeOptions} />
                     <Dropdown value={tags} onChange={setTags} options={tagsOptions} />
                     <button><img src={searchIcon} alt="Search" /></button>
-                    <button><img src={sortIcon} alt="Search" /></button>
+                    <button className="Sortbutton"><img src={sortIcon} alt="Search" /></button>
                 </div>
 
                 <div className="array">
