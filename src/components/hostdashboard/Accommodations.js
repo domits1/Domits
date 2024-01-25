@@ -2,6 +2,14 @@ import React from "react";
 import Star from '../../images/icons/Star.svg'
 import Map from '../../images/icons/map-02.svg'
 import accoImg from '../../images/accoimg1.png';
+import Chalet from '../../images/accom_chalet.png';
+import Luxebamboovilla from '../../images/accom_luxebamboovilla.png';
+import Luxevilla from '../../images/accom_luxevilla.png';
+import Tinyhouse from '../../images/accom_tinyhouse_flowers.png';
+import Treehouse from '../../images/accom_treehouse.png';
+import Villaneth from '../../images/accom_villaneth.png';
+import Yurt from '../../images/accom_yurt.png';
+import Lighthouse from '../../images/orange_caravan.png';
 import './Accommodations.css'
 
 const Accommodations = ({ searchQuery }) => {
@@ -11,63 +19,80 @@ const Accommodations = ({ searchQuery }) => {
             address: 'Amber Avenue 6K',
             details: '3 beds 1 bathroom',
             size: '20m²',
-            price: '$720/night',
+            price: '$210/night',
+            rating: '4,92',
             id: 1,
         },
         {
-            image: accoImg, 
-            address: 'Birch Boulevard 2',
+            image: Chalet,
+            address: 'Typical dutch chalet in Soest',
             details: '4 beds 4 bathroom',
             size: '60m²',
             price: '$120/night',
+            rating: '2,59',
             id: 2,
         },
         {
-            image: accoImg, 
-            address: 'Cedar Court 3F',
+            image: Luxebamboovilla,
+            address: 'A room in bamboo villa in Bali',
             details: '2 beds 3 bathroom',
             size: '40m²',
             price: '$20/night',
+            rating: '4,67',
             id: 3,
         },
         {
-            image: accoImg, 
-            address: 'Dahlia Drive 1B',
+            image: Luxevilla,
+            address: 'Luxe villa in Vinkeveen',
             details: '1 beds 2 bathroom',
             size: '50m²',
             price: '$40/night',
+            rating: '4,23',
             id: 4,
         },
         {
-            image: accoImg, 
-            address: 'Elm Street 6K',
+            image: Tinyhouse,
+            address: 'Tinyhouse Sint Maarten, Netherlands',
             details: '3 beds 1 bathroom',
             size: '20m²',
             price: '$720/night',
+            rating: '3.97',
             id: 5,
         },
         {
-            image: accoImg, 
-            address: 'Fern Avenue 2A',
+            image: Treehouse,
+            address: 'Tinyhouse Sint Maarten, Netherlands',
+            details: '3 beds 1 bathroom',
+            size: '20m²',
+            price: '$720/night',
+            rating: '2.97',
+            id: 5,
+        },
+        {
+            image: Villaneth,
+            address: 'Luxe villa in Oestbeek',
             details: '4 beds 4 bathroom',
             size: '60m²',
             price: '$120/night',
+            rating: '1.60',
             id: 6,
         },
         {
-            image: accoImg, 
-            address: 'Grove Green 3F',
+            image: Yurt,
+            address: 'Blue yurt in Eersel',
             details: '2 beds 3 bathroom',
             size: '40m²',
             price: '$20/night',
+            rating: '2.77',
             id: 7,
         },
         {
-            image: accoImg, 
-            address: 'Hazel Hill 1B',
+            image: Lighthouse,
+            address: 'Lighthouse in the port of Cape Palos',
             details: '1 beds 2 bathroom',
             size: '50m²',
             price: '$40/night',
+            rating: '4,98',
             id: 8,
         },
     ];
@@ -84,7 +109,7 @@ const Accommodations = ({ searchQuery }) => {
                     <div className="overlay">
                     <span className='star'>
                         <img src={Star} alt="Star" />
-                        4.97
+                        {accommodation.rating}
                     </span>
                     {/*    <span className='map'>*/}
                     {/*    <img src={Map} alt="Map" />*/}
