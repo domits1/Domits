@@ -1,11 +1,12 @@
-.item-preview {
+.card-preview {
     display: flex;
     border: none;
     flex-direction: column;
     width: 400px; /* Add or adjust the width as needed */
     height: 481px;
     margin: 10px;
-    border-radius: 15px;
+    border-radius: 0px;
+    box-shadow: none;
     overflow: hidden;
 
     flex-shrink: 0;
