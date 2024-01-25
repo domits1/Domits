@@ -77,8 +77,8 @@ const Footer = () => {
                     <div className="footer-section">
                         <h4 className='footer-headers'>Currencies</h4>
                         <select id='currency-dropdown' className='footer-lists footer-select'>
-                            <option value="euro">Euro</option>
-                            <option value="dollar">Dollar</option>
+                            <option value="euro">EUR</option>
+                            <option value="dollar">US</option>
                         </select>
                     </div>
 
