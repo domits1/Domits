@@ -27,7 +27,7 @@
 .search-bar {
     display: flex;
     margin-left: 6%;
-    width: 55%;
+    width: 35%;
 }
 
 .search-bar input {
@@ -43,15 +43,14 @@
     border: 1px solid black;
     border-radius: 15px;
     background: #FFF;
-    flex-shrink: 1; /* Allow the search bar to shrink if needed */
-    overflow: unset; /* Hide overflowing content */
+    flex-shrink: 1;
+    overflow: unset;
 }
 
 .becomeAHost {
     display: inline-flex;
-    margin-left: 3%;
+    margin-left: 25%;
     width: 10%;
-    height: 100%;
     padding: 5px 15px;
     border-radius: 15px;
     overflow: hidden;
@@ -59,11 +58,8 @@
     justify-content: center;
     align-items: center;
     color: black;
-    font-size: 18px;
     font-family: Kanit, sans-serif;
-    font-weight: 300;
-    line-height: 30px;
-    word-wrap: break-word;
+    font-size: 1vw;
     background: #FFF;
 }
 
@@ -89,7 +85,7 @@
     height: 100%;
     padding: 8px 15px;
     background: #0D9813;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
     border-radius: 15px;
     justify-content: center;
     align-items: center;
