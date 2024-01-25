@@ -1,7 +1,7 @@
 import React from "react";
 import Star from '../../images/icons/Star.svg'
 import Map from '../../images/icons/map-02.svg'
-import accoImg from '../../images/accoimg1.png';
+import Amber from '../../images/accoimg1.png';
 import Chalet from '../../images/accom_chalet.png';
 import Luxebamboovilla from '../../images/accom_luxebamboovilla.png';
 import Luxevilla from '../../images/accom_luxevilla.png';
@@ -15,56 +15,56 @@ import './Accommodations.css'
 const Accommodations = ({ searchQuery }) => {
     const accolist = [
         {
-            image: accoImg, 
+            image: Amber,
             address: 'Amber Avenue 6K',
-            details: '3 beds 1 bathroom',
+            details: '2 beds 1 bathroom',
             size: '20m²',
-            price: '$210/night',
+            price: '€120/night',
             rating: '4,92',
             id: 1,
         },
         {
             image: Chalet,
             address: 'Typical dutch chalet in Soest',
-            details: '4 beds 4 bathroom',
-            size: '60m²',
-            price: '$120/night',
+            details: '6 beds 2 bathroom',
+            size: '80m²',
+            price: '€120/night',
             rating: '2,59',
             id: 2,
         },
         {
             image: Luxebamboovilla,
             address: 'A room in bamboo villa in Bali',
-            details: '2 beds 3 bathroom',
-            size: '40m²',
-            price: '$20/night',
+            details: '2 beds 1bathroom',
+            size: '60m²',
+            price: '€80/night',
             rating: '4,67',
             id: 3,
         },
         {
             image: Luxevilla,
             address: 'Luxe villa in Vinkeveen',
-            details: '1 beds 2 bathroom',
-            size: '50m²',
-            price: '$40/night',
+            details: '5 beds 2 bathroom',
+            size: '120m²',
+            price: '€160/night',
             rating: '4,23',
             id: 4,
         },
         {
             image: Tinyhouse,
             address: 'Tinyhouse Sint Maarten, Netherlands',
-            details: '3 beds 1 bathroom',
+            details: '1 beds 1 bathroom',
             size: '20m²',
-            price: '$720/night',
+            price: '€40/night',
             rating: '3.97',
             id: 5,
         },
         {
             image: Treehouse,
-            address: 'Tinyhouse Sint Maarten, Netherlands',
-            details: '3 beds 1 bathroom',
-            size: '20m²',
-            price: '$720/night',
+            address: 'Luxury treehouse in Indonesia',
+            details: '4 beds 1 bathroom',
+            size: '50m²',
+            price: '€160/night',
             rating: '2.97',
             id: 5,
         },
@@ -72,26 +72,26 @@ const Accommodations = ({ searchQuery }) => {
             image: Villaneth,
             address: 'Luxe villa in Oestbeek',
             details: '4 beds 4 bathroom',
-            size: '60m²',
-            price: '$120/night',
+            size: '70m²',
+            price: '€120/night',
             rating: '1.60',
             id: 6,
         },
         {
             image: Yurt,
             address: 'Blue yurt in Eersel',
-            details: '2 beds 3 bathroom',
-            size: '40m²',
-            price: '$20/night',
+            details: '2 beds 1 bathroom',
+            size: '35m²',
+            price: '€40/night',
             rating: '2.77',
             id: 7,
         },
         {
             image: Lighthouse,
             address: 'Lighthouse in the port of Cape Palos',
-            details: '1 beds 2 bathroom',
-            size: '50m²',
-            price: '$40/night',
+            details: '5 beds 2 bathroom',
+            size: '110m²',
+            price: '€110/night',
             rating: '4,98',
             id: 8,
         },
@@ -129,5 +129,5 @@ const Accommodations = ({ searchQuery }) => {
     );
 
 }
- 
+
 export default Accommodations;
