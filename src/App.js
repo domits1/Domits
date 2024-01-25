@@ -9,9 +9,10 @@ import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import Login from "./components/base/Login";
 import Details from './components/details/Details';
-import Disclaimer from './components/disclaimers/disclaimer'
-import Policy from './components/disclaimers/policy'
-import Terms from './components/disclaimers/terms'
+import Disclaimer from './components/disclaimers/disclaimer';
+import Policy from './components/disclaimers/policy';
+import Terms from './components/disclaimers/terms';
+import Error from './components/errorpage/errorpage';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Routes, Route, useNavigate } from 'react-router-dom';
 import React, {useEffect, useState} from "react";
@@ -66,6 +67,7 @@ function App() {
                     <Route path="/disclaimer" element={<Disclaimer/>}/>
                     <Route path="/policy" element={<Policy/>}/>
                     <Route path="/terms" element={<Terms/>}/>
+                    <Route path="/error" element={<Error/>}/>
                     <Route path="/admin" element={<HomeDashboard />} />
                     <Route path="/guestdashboard" element={<GuestDashboard />}/>
                     {/*host dashboard*/}

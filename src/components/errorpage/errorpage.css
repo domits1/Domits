@@ -1,0 +1,29 @@
+.errorpage {
+    font-size: large;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100vh; 
+}
+
+.errorpage h3{
+    width:500px;
+}
+
+.errorpage button{
+    background-color: #fff;
+    border: solid 1px #0D9813;
+    border-radius: 15px;
+    margin: 10px;
+    padding: 5px 15;
+    backdrop-filter: blur(20px);
+    justify-content: center;
+    align-items: center;
+}
+
+.errorpage button:hover{
+    background: #cccccc;
+    cursor: pointer;
+}

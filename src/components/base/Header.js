@@ -29,7 +29,7 @@ function Header({ isLoginModalOpen, openLoginModal, closeLoginModal }) {
                             <Link to="/about">Do Extra's</Link>
                         </li>
                         <li>
-                            <Link to="/work">Do Work</Link>
+                            <Link to="/careers">Do Work</Link>
                         </li>
                         <li>
                             <Link to="/contact">Do Contact us</Link>

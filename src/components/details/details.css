@@ -1,230 +1,379 @@
-.detailpage{
-    padding-left: 60px;
-    }
-    
-    .topdetails{
-      display: flex;
-      padding-top: 20px;
-      padding-left: 20px;
-      align-items: center;
-      gap: 100px;
-    }
-    
-    .topdetails button{
-      width: 40px;
-      height: 40px;
-      border: #FFF;
-      border-radius: 100px;
-      background-color: #129518;
-    }
-    
-    .topdetails button:hover{
-      cursor: pointer;
-    }
-    
-    .topdetails ul{
-      display: flex;
-      gap: 15px;
-      display: inline-flex;
-      padding: 5px 15px;
-      justify-content: center;
-      align-items: center;
-    }
-    
-    .topdetails li{
-      border-radius: 20px;
-      border: 0.5px solid #0D9813;
-      background: #FFF;
-      padding: 5px;
-    }
-    
-    #boxheader{
-      display: flex;
-    }
-    
-    .imagesacco{
-      display: flex;
-      padding-left: 25px;
-      padding-right: 20px;  
-    }
-    
-    .imagesacco img{
-      border-radius: 15px;
-    }
-    
-    .bigimg img{
-    width: 651px;
-    height: 345px;
+  .detailpage{
+  padding-left: 60px;
+  }
+
+  .detailpage p{
+    font-weight: 500;
+  }
+  
+  .topdetails,
+  .accodetails,
+  .events,
+  .icons,
+  .reviews,
+  .reviewbox1,
+  .roominfo,
+  .roomdetails{
+    width: 1200px;
+  }
+
+  #bookh1{
+    float: right;
+    margin-right: 100px;
+  }
+
+  .booking {
+    float: right;
+    position: sticky;
+    top: 0;
+    margin: 50px 120px 0px 0px;
+    padding: 30px;
+    width: 460px;
+    height: 570px;
     flex-shrink: 0;
-    margin: 20px;
+    border-radius: 15px;
+    box-shadow: 0px 0px 10px 0px #00000079;
+  }
+
+  .booking button {
+    color: #FFF;
+    font-size: larger;
+    font-weight: 600;
+    border-radius: 15px;
+    background: #0D9813;
+    border: #FFF;
+    height: 39px;
+    width: 350px;
+    margin: auto; 
+    display: block;
+  }
+
+  .booking button:hover {
+    background: #0b7c10;
+    cursor: pointer;
+  }
+
+  .bookh2,
+  .checkinp {
+    display: flex;
+    justify-content: space-between;
+    margin: auto;
+  }
+
+  .checkinp p {
+    text-align: center;
+  }
+
+
+  .topdetails{
+    width: 590px;
+    display: flex;
+    padding-top: 20px;
+    padding-left: 30px;
+    align-items: center;
+    gap: 100px;
+  }
+  
+  .topdetails button{
+    text-decoration: none;
+    display: flex;
+    gap: 15px;
+    background-color: #FFF;
+    padding: 5px 10px 5px 10px;
+    border: #FFF;
+    font-weight: 500;
+    font-size: large;
+  }
+
+  .topdetails button:hover{
+    background-color: #0a760f9e;
+    cursor: pointer;
+    border-radius: 20px;
+  }
+  
+  .topdetails button:hover{
+    cursor: pointer;
+  }
+  
+  .topdetails {
+    display: flex;
+    gap: 15px;
+    display: inline-flex;
+    padding: 5px 15px;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  #boxheader{
+    display: flex;
+  }
+  
+  .imagesacco{
+    display: flex;
+    padding-left: 25px;
+    padding-right: 20px;  
+    width: 1200px;
+  }
+  
+  .bigimg img{
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+    width: 600px;
+    height: 340px;
+    flex-shrink: 0;
+    margin: 2px;
+  }
+  
+  .sideimg img{
+    width: 200px;
+    height: 165px;
+    margin: 2px 5px 2px;
+    flex-shrink: 0;
+  }
+
+  #toprightimg{
+    border-top-right-radius: 15px;
+  }
+
+  #darkimg{
+    filter: brightness(0.8);
+    border-bottom-right-radius: 15px;
+  }
+
+  .roominfo{
+    display: flex;
+    font-size: large;
+    padding-left: 35px;
+    padding-right: 20px;
+    gap: 30px;
+    line-height: 30px;
+  }
+
+  .roominfo p{
+    margin-top: 25px;
+  }
+
+  .roomdetails{
+    width: 90%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    border-width: 40%;
+    padding-left: 25px;
+    padding-right: 20px;
+    margin: 10px;
+  }
+
+  .roomdetails h1{
+    padding-left: 10px;
+  }
+
+  .roomcards{ 
+    display: flex;
+    gap: 20px;
+  }
+
+  .roomcard1{
+    border-radius: 15px 0px  0px 15px;
+    background: #FFF;
+    padding: 15px;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.422);
+  }
+  .roomcard{
+    background: #FFF;
+    padding: 15px;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.422);
+  }
+  .roomcard2{
+    border-radius: 0px 15px 15px 0px;
+    background: #FFF;
+    padding: 15px;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.422);
+  }
+
+  .roomcard1 p,
+  .roomcard2 p,
+  .roomcard p{
+    line-height: 30px;
+    width: 80%;
+  }
+
+  .roomcard1 img,
+  .roomcard2 img,
+  .roomcard img{
+    width: 280px;
+    height: 220px;
+    flex-shrink: 0;
+    border-radius: 10px;
+  }
+
+  .roomcard1 h3,
+  .roomcard2 h3,
+  .roomcard h3{
+    line-height: 10px;
+  }
+
+  .icons{
+    padding-left: 50px;
+  }
+
+  .iconcards{
+    width: 700px;
+    line-height: 30px;
+    gap: 30px;
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  .iconcard{
+    width: 200px;
+    display: flex;
+    gap: 40px;
+  }
+
+  .iconcard img{
+    width: 60px;
+    height: 60px;
+  }
+
+  .accodetails{
+    width: 90%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    border-width: 40%;
+    padding-left: 25px;
+    padding-right: 20px;
+    margin: 10px;
+  }
+  
+  .accodetails h2{
+    padding-left: 20px;
+  }
+  
+  #ondertitelroom{
+    padding-left: 10px;
+  }
+  
+  
+  .accodetails img{
+    width: 190px;
+    height: 200px;
+    border-radius: 15px;
+  }
+  
+  .accodetails h4{
+    font-size: 16px;
+    font-style: normal;
+    font-weight: bold;
+    color: #0A760F;
+    width: 100%;
+    padding-left: 550px;
+  }
+  
+  .accodetails h4:hover{
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  
+  .boxdetails{
+    width: 865px;
+    height: 210px;
+    flex-shrink: 0;
+    border-radius: 15px;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.334);
+    padding: 20px;
+    margin: 10px;
+  }
+
+  .boxdetails img{
+    width: 430px;
+    height: 141px;
+    align-items: center;
+  }
+
+  .events{
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    border-width: 40%;
+    padding-left: 25px;
+    padding-right: 20px;
+    padding-bottom: 200px;
+    margin: 10px;
+  }
+
+  #ondertitel{
+    padding-left: 30px;
+  }
+  
+  .events h2{
+    padding-left: 20px;
+  }
+  
+  .events h4{
+    font-size: 16px;
+    font-style: normal;
+    font-weight: bold;
+    color: #0A760F;
+    width: auto;  
+    margin: 30px 0px 20px 0px;
     }
+  
+  .events h4:hover{
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  .reviews{
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 15px;
+    border-width: 40%;
+    padding-left: 25px;
+    padding-right: 20px;
+    margin: 10px;
+    margin-bottom: 100px;
+  }
+  
+  .reviews h2{
+    padding-left: 20px;
+  }
+  
+  .reviews h4{
+    font-size: 16px;
+    font-style: normal;
+    font-weight: bold;
+    color: #0A760F;
+    width: 100%;
+    padding-left: 450px;
+  }
+  
+  .reviews h4:hover{
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  
+  #reviewscore{
+    border-radius: 15px;
+    border-width: 40%;
+    display: flex;
+    gap: 80%;
+    margin-bottom: -30px;
+  }
+  .reviewbox1{
+    height: 180px;
+    width: 60%;
+    align-items: center;
+    border-radius: 15px;
+    box-shadow: 0px 0px 10px 0px #00000068;
+    padding: 10px 20px 20px ;
+    margin: 10px 10px 20px 10px;
+  }
+
+  .reviewbox1 {
     
-    .sideimgtop img{
-      width: 200px;
-      height: 165px;
-      flex-shrink: 0;
-    }
-    
-    .sideimgbot img{
-      width: 200px;
-      height: 165px;
-      flex-shrink: 0;
-    }
-    
-    .accodetails{
-      width: 90%;
-      align-items: center;
-      justify-content: center;
-      border-radius: 15px;
-      border-width: 40%;
-      padding-left: 25px;
-      padding-right: 20px;
-      margin: 10px;
-    }
-    
-    .accodetails h2{
-      padding-left: 20px;
-    }
-    
-    #ondertitel{
-      padding-left: 20px;
-    }
-    
-    
-    .accodetails img{
-      width: 190px;
-      height: 200px;
-      border-radius: 15px;
-    }
-    
-    .accodetails h4{
-      font-size: 16px;
-      font-style: normal;
-      font-weight: bold;
-      color: #0A760F;
-      width: 100%;
-      padding-left: 550px;
-      
-    }
-    
-    .accodetails h4:hover{
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    
-    
-    .box1details{
-      width: 60%;
-      align-items: center;
-      border-radius: 15px;
-      border: 1px solid #0D9813;
-      border-width: 40%;
-      padding-left: 20px;
-      padding-right: 20px;
-      margin: 10px;  
-    }
-    
-    .box2details{
-      width: 60%;
-      align-items: center;
-      border-radius: 15px;
-      border: 1px solid #0D9813;
-      border-width: 40%;
-      padding-left: 20px;
-      padding-right: 20px;
-      margin: 10px;
-    }
-    
-    .events{
-      width: 100%;
-      align-items: center;
-      justify-content: center;
-      border-radius: 15px;
-      border-width: 40%;
-      padding-left: 25px;
-      padding-right: 20px;
-      margin: 10px;
-    }
-    
-    .events h2{
-      padding-left: 20px;
-    }
-    
-    .events img{
-      width: 190px;
-      height: 200px;
-      border-radius: 15px;
-      
-    }
-    
-    .events h4{
-      font-size: 16px;
-      font-style: normal;
-      font-weight: bold;
-      color: #0A760F;
-      width: 170px;
-      width: 100%;
-      padding-left: 680px;
-    }
-    
-    .events h4:hover{
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    
-    .reviews{
-      width: 100%;
-      align-items: center;
-      justify-content: center;
-      border-radius: 15px;
-      border-width: 40%;
-      padding-left: 25px;
-      padding-right: 20px;
-      margin: 10px;
-      margin-bottom: 100px;
-    }
-    
-    .reviews h2{
-      padding-left: 20px;
-    }
-    
-    .reviews h4{
-      font-size: 16px;
-      font-style: normal;
-      font-weight: bold;
-      color: #0A760F;
-      width: 100%;
-      padding-left: 450px;
-    }
-    
-    .reviews h4:hover{
-      text-decoration: underline;
-      cursor: pointer;
-    }
-    
-    #reviewscore1{
-      border-radius: 15px;
-      border-width: 40%;
-      display: flex;
-      gap: 70%;
-      margin-bottom: 10px;
-    }
-    
-    #reviewscore2{
-      border-radius: 15px;
-      border-width: 40%;
-      display: flex;
-      gap: 70%;
-      margin-bottom: 10px;
-    }
-    
-    .reviewbox1{
-      width: 40%;
-      align-items: center;
-      border-radius: 15px;
-      border: 1px solid #0D9813;
-      border-width: 40%;
-      padding-left: 20px;
-      padding-right: 20px;
-      margin: 10px;
-    }
+  }
