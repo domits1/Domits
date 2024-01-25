@@ -103,31 +103,25 @@ const Accommodations = ({ searchQuery }) => {
 
 
     return (
-        <div className="array">
+        <div id='card-visibility' className="array">
             {filteredAccommodations.map((accommodation, index) => (
                 <div className="item-preview" key={index}>
-                    <div className="overlay">
-                    <span className='star'>
-                        <img src={Star} alt="Star" />
-                        {accommodation.rating}
-                    </span>
-                    {/*    <span className='map'>*/}
-                    {/*    <img src={Map} alt="Map" />*/}
-                    {/*</span>*/}
-
-                    </div>
                     <div className="imgacco">
                         <img src={accommodation.image} alt="Accommodation" />
+                        <div className="overlay">
+                            <h2 className='titles'>{accommodation.address}</h2>
+                            {/*<span className='star'>*/}
+                            {/*    <img src={Star} alt="Star" />*/}
+                            {/*    {accommodation.rating}*/}
+                            {/*</span>*/}
+                        </div>
                     </div>
-                    <h2>{accommodation.address}</h2>
-                    <p>{accommodation.price}</p>
-                    <p>{accommodation.details}</p>
-                    <p>{accommodation.size}</p>
+                    <p className='prices'>{accommodation.price}</p>
+                    <p>{accommodation.details} - {accommodation.size}</p>
                 </div>
             ))}
         </div>
     );
-
 }
 
 export default Accommodations;
