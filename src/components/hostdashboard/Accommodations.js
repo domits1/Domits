@@ -1,70 +1,99 @@
 import React from "react";
-import accoImg from '../../images/accoimg1.png';
+import Star from '../../images/icons/Star.svg'
+import Heart from '../../images/icons/heart.svg'
+import Map from '../../images/icons/map-02.svg'
+import Amsterdam from '../../images/accoimg1.png';
+import Chalet from '../../images/accom_chalet.png';
+import Luxebamboovilla from '../../images/accom_luxebamboovilla.png';
+import Luxevilla from '../../images/accom_luxevilla.png';
+import Tinyhouse from '../../images/accom_tinyhouse_flowers.png';
+import Treehouse from '../../images/accom_treehouse.png';
+import Villaneth from '../../images/accom_villaneth.png';
+import Yurt from '../../images/accom_yurt.png';
+import Lighthouse from '../../images/orange_caravan.png';
+import './Accommodations.css'
 
 const Accommodations = ({ searchQuery }) => {
     const accolist = [
         {
-            image: accoImg, 
-            address: 'Amber Avenue 6K',
-            details: '3 beds 1 bathroom',
+            image: Amsterdam,
+            address: 'Charming Apartment in Amsterdam',
+            details: '2 beds 1 bathroom',
             size: '20m²',
-            price: '$720/night',
+            price: '€120/night',
+            rating: '4,92',
             id: 1,
         },
         {
-            image: accoImg, 
-            address: 'Birch Boulevard 2',
-            details: '4 beds 4 bathroom',
-            size: '60m²',
-            price: '$120/night',
+            image: Chalet,
+            address: 'Typical dutch chalet in Soest',
+            details: '6 beds 2 bathroom',
+            size: '80m²',
+            price: '€120/night',
+            rating: '2,59',
             id: 2,
         },
         {
-            image: accoImg, 
-            address: 'Cedar Court 3F',
-            details: '2 beds 3 bathroom',
-            size: '40m²',
-            price: '$20/night',
+            image: Luxebamboovilla,
+            address: 'A room in bamboo villa in Bali',
+            details: '2 beds 1bathroom',
+            size: '60m²',
+            price: '€80/night',
+            rating: '4,67',
             id: 3,
         },
         {
-            image: accoImg, 
-            address: 'Dahlia Drive 1B',
-            details: '1 beds 2 bathroom',
-            size: '50m²',
-            price: '$40/night',
+            image: Luxevilla,
+            address: 'Luxe villa in Vinkeveen',
+            details: '5 beds 2 bathroom',
+            size: '120m²',
+            price: '€160/night',
+            rating: '4,23',
             id: 4,
         },
         {
-            image: accoImg, 
-            address: 'Elm Street 6K',
-            details: '3 beds 1 bathroom',
+            image: Tinyhouse,
+            address: 'Tinyhouse Sint Maarten, Netherlands',
+            details: '1 beds 1 bathroom',
             size: '20m²',
-            price: '$720/night',
+            price: '€40/night',
+            rating: '3.97',
             id: 5,
         },
         {
-            image: accoImg, 
-            address: 'Fern Avenue 2A',
+            image: Treehouse,
+            address: 'Luxury treehouse in Indonesia',
+            details: '4 beds 1 bathroom',
+            size: '50m²',
+            price: '€160/night',
+            rating: '2.97',
+            id: 5,
+        },
+        {
+            image: Villaneth,
+            address: 'Luxe villa in Oestbeek',
             details: '4 beds 4 bathroom',
-            size: '60m²',
-            price: '$120/night',
+            size: '70m²',
+            price: '€120/night',
+            rating: '1.60',
             id: 6,
         },
         {
-            image: accoImg, 
-            address: 'Grove Green 3F',
-            details: '2 beds 3 bathroom',
-            size: '40m²',
-            price: '$20/night',
+            image: Yurt,
+            address: 'Blue yurt in Eersel',
+            details: '2 beds 1 bathroom',
+            size: '35m²',
+            price: '€40/night',
+            rating: '2.77',
             id: 7,
         },
         {
-            image: accoImg, 
-            address: 'Hazel Hill 1B',
-            details: '1 beds 2 bathroom',
-            size: '50m²',
-            price: '$40/night',
+            image: Lighthouse,
+            address: 'Lighthouse in the port of Cape Palos',
+            details: '5 beds 2 bathroom',
+            size: '110m²',
+            price: '€110/night',
+            rating: '4,98',
             id: 8,
         },
     ];
@@ -73,21 +102,31 @@ const Accommodations = ({ searchQuery }) => {
         accommodation.address.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    return ( 
-        <div className="array">
+
+
+    return (
+        <div id='card-visibility' className="array">
             {filteredAccommodations.map((accommodation, index) => (
                 <div className="item-preview" key={index}>
-                    <div className="imgacco"> 
-                        <img src={accommodation.image} alt="Accommodation" /> 
+                    <div className="imgacco">
+                        <img src={accommodation.image} alt="Accommodation" />
+                        <div className="overlay">
+                            {/*<span className='star'>*/}
+                            {/*   <img src={Star} alt="Star" />*/}
+                            {/*    {accommodation.rating}*/}
+                            {/*</span>*/}
+                            <h2 className='titles'>{accommodation.address}</h2>
+                        </div>
                     </div>
-                    <h2>{accommodation.address}</h2>
-                    <p>{accommodation.details}</p>
-                    <p>{accommodation.size}</p>
-                    <p>{accommodation.price}</p>
+                    <span>
+                        <p className='prices'>{accommodation.price}</p>
+                        {/*<img className='heart' src={Heart} alt="Fav" />*/}
+                    </span>
+                    <p>{accommodation.details} - {accommodation.size}</p>
                 </div>
             ))}
         </div>
     );
 }
- 
+
 export default Accommodations;
