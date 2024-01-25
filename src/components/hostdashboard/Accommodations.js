@@ -2,7 +2,7 @@ import React from "react";
 import Star from '../../images/icons/Star.svg'
 import Heart from '../../images/icons/heart.svg'
 import Map from '../../images/icons/map-02.svg'
-import Amber from '../../images/accoimg1.png';
+import Amsterdam from '../../images/accoimg1.png';
 import Chalet from '../../images/accom_chalet.png';
 import Luxebamboovilla from '../../images/accom_luxebamboovilla.png';
 import Luxevilla from '../../images/accom_luxevilla.png';
@@ -16,8 +16,8 @@ import './Accommodations.css'
 const Accommodations = ({ searchQuery }) => {
     const accolist = [
         {
-            image: Amber,
-            address: 'Amber Avenue 6K',
+            image: Amsterdam,
+            address: 'Charming Apartment in Amsterdam',
             details: '2 beds 1 bathroom',
             size: '20m²',
             price: '€120/night',
