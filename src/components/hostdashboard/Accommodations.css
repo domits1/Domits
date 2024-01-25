@@ -87,6 +87,12 @@ p {
     max-width: 100%; /* Add this line to limit the width */
 }
 
+.heart {
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+}
+
 
 
 

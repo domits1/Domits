@@ -1,5 +1,6 @@
 import React from "react";
 import Star from '../../images/icons/Star.svg'
+import Heart from '../../images/icons/heart.svg'
 import Map from '../../images/icons/map-02.svg'
 import Amber from '../../images/accoimg1.png';
 import Chalet from '../../images/accom_chalet.png';
@@ -102,6 +103,7 @@ const Accommodations = ({ searchQuery }) => {
     );
 
 
+
     return (
         <div id='card-visibility' className="array">
             {filteredAccommodations.map((accommodation, index) => (
@@ -109,14 +111,17 @@ const Accommodations = ({ searchQuery }) => {
                     <div className="imgacco">
                         <img src={accommodation.image} alt="Accommodation" />
                         <div className="overlay">
-                            <h2 className='titles'>{accommodation.address}</h2>
                             {/*<span className='star'>*/}
-                            {/*    <img src={Star} alt="Star" />*/}
+                            {/*   <img src={Star} alt="Star" />*/}
                             {/*    {accommodation.rating}*/}
                             {/*</span>*/}
+                            <h2 className='titles'>{accommodation.address}</h2>
                         </div>
                     </div>
-                    <p className='prices'>{accommodation.price}</p>
+                    <span>
+                        <p className='prices'>{accommodation.price}</p>
+                        {/*<img className='heart' src={Heart} alt="Fav" />*/}
+                    </span>
                     <p>{accommodation.details} - {accommodation.size}</p>
                 </div>
             ))}
