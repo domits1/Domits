@@ -156,7 +156,6 @@
     font-style: normal;
     font-weight: 300;
     line-height: 150%;
-    text-decoration-line: underline;
 }
 
 .footer-copyright {
@@ -211,6 +210,25 @@
     line-height: 24px; /* 150% */
     letter-spacing: 0.16px;
 }
+
+.footer-terms {
+    color: #000;
+    position: absolute;
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+    text-decoration-line: underline;
+    margin-top: 20px;
+}
+
+.footer-terms a {
+    display: inline;
+    margin-right: 20px;
+    text-decoration-line: underline;
+}
+
 
 /* End of footer */
 

@@ -5,6 +5,8 @@ import Playstorebadge from '../../images/assets/playstorebadge.svg';
 import { Link } from 'react-router-dom';
 import './base.css'
 
+var currentYear = new Date().getFullYear();
+
 
 const Footer = () => {
     return (
@@ -23,7 +25,14 @@ const Footer = () => {
                         <li><Link to="/about" className='footer-links'>About</Link></li>
                         <li><Link to="/" className='footer-links'>Release</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
+                        <br/>
                     </ul>
+                    <div className='footer-terms'>
+                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Privacy policy</a>
+                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Terms and Conditions</a>
+                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Disclaimer</a>
+                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Sitemap</a>
+                    </div>
                 </div>
 
                 {/* Guests section */}
@@ -107,12 +116,10 @@ const Footer = () => {
                 </div>
             </div>
 
-            {/* conditions section */}
-            {/*<div>*/}
-            {/*
-            {/*</div>*/}
 
-            {/* App Store and Play Store badges */}
+
+
+
 
 
 
@@ -120,7 +127,7 @@ const Footer = () => {
 
             {/* Copyright Block */}
             <div className='footer-copyright'>
-                <p className='footer-copyright-text'>Rights reserved, Domits.com ©2023</p>
+                <p className='footer-copyright-text'>Rights reserved, Domits.com ©{currentYear}</p>
             </div>
         </footer>
     );
