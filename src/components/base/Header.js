@@ -12,7 +12,9 @@ function Header({openLoginModal}) {
             <header className="app-header">
                 <nav className="header-nav">
                     <div className="logo">
-                        <img src={logo} width={50} alt="Logo"/>
+                        <a href="/">
+                          <img src={logo} width={50} alt="Logo"/>
+                        </a>
                     </div>
                     <div className="search-bar">
                         <input type="text" placeholder="Location"/>
