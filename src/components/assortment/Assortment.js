@@ -59,7 +59,7 @@ const Assortment = () => {
 
     return (
         <div>
-            <Header openLoginModal={openLoginModal} />
+            
             {/* Login Modal */}
             <Modal
                 isOpen={isLoginModalOpen}
