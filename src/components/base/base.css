@@ -108,7 +108,7 @@
 }
 
 .close-button:hover {
-    transform: rotate(180deg);
+    
     color: #ff3d3d;
 }
 
