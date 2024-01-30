@@ -68,7 +68,7 @@ const Assortment = () => {
             >
                 {/* Render the Login component inside the modal */}
                 <Login />
-                <button className="close-button" onClick={closeLoginModal} >Close Modal</button>
+                <button className="close-button" onClick={closeLoginModal} >X</button>
             </Modal>
             <div className="assortment">
                 <div className="label-row">
