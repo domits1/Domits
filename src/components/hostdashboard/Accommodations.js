@@ -107,7 +107,7 @@ const Accommodations = ({ searchQuery }) => {
     return (
         <div id='card-visibility' className="array">
             {filteredAccommodations.map((accommodation, index) => (
-                <div className="item-preview" key={index}>
+                <div className="card-preview" key={index}>
                     <div className="imgacco">
                         <img src={accommodation.image} alt="Accommodation" />
                         <div className="overlay">

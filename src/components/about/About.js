@@ -35,7 +35,7 @@ function About() {
             <div className="textbubbles">
                 <div className="bubble1">
                     <br />
-                    <h1>120000 listings!</h1>
+                    <h1>120 listings!</h1>
                     <br />
                 </div>
                 <div className="bubble2">
@@ -50,7 +50,7 @@ function About() {
                 </div>
                 <div className="bubble4">
                     <br />
-                    <h1>13000 customers</h1>
+                    <h1>130 customers</h1>
                     <br />
                 </div>
                 <div className="bubble5">
