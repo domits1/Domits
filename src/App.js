@@ -39,7 +39,7 @@ function App() {
     // Conditionally render the Header based on the current route
     const renderHeader = () => {
         const currentPath = window.location.pathname;
-        if (currentPath === '/admin' || currentPath === '/') {
+        if (currentPath === '/admin') {
             return null;
         }
         return <Header openLoginModal={openLoginModal} />;
@@ -48,7 +48,7 @@ function App() {
     const renderFooter = () => {
         const currentPath = window.location.pathname;
         if (currentPath === '/admin') {
-            return null; // Don't render Header for /admin route
+            return null; // Don't render Footer for /admin route
         }
         return <Footer/>;
     };
