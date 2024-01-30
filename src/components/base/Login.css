@@ -11,6 +11,23 @@
     font-size: 18px;
     justify-content: center;
     align-items: center;
+    margin: 20px auto 0;
+    display: block;
+}
+
+.registerButton {
+    width: 400px;
+    padding: 8px 15px;
+    background: #0D9813;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    border: 0;
+    color: white;
+    font-size: 18px;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto 0;
+    display: block;
 }
 
 .loginTitle {

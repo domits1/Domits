@@ -77,7 +77,7 @@ const Login = () => {
                                     onChange={handleChange}
                                 />
                             <br/>
-                            <label>Password:</label><br/>
+                            <label className="passwordLabel">Password:</label><br/>
                                 <input
                                     className="loginInput"
                                     type="password"
@@ -92,6 +92,7 @@ const Login = () => {
                                 </svg>
                             </button>
                         </form>
+                        <a href="/register" className="registerButton">Register</a>
                     </div>
                 </div>
             )}
