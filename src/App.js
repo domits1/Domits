@@ -26,9 +26,11 @@ import Terms from "./components/disclaimers/Terms";
 import Login from "./components/base/Login";
 import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
+import Error from "./components/errorpage/errorpage";
 
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
+
 
 function App() {
     useEffect(() => {
@@ -80,6 +82,7 @@ function App() {
                     <Route path="/disclaimers" element={<Disclaimers />} />
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
+                    <Route path="/error" element={<Error/>}/>
 
                     {/*  Admin Routes  */}
                     <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
