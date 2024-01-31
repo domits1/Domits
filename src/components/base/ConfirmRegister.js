@@ -29,6 +29,16 @@ function ConfirmEmail() {
             }})
     }
 
+    const handleResendCode = () => {
+        if (userEmail === '') {
+            // Redirect to register page or any other desired route
+            navigate('/register'); // Change '/register' to the desired route
+        } else {
+            // Resend code logic
+            Auth.resendSignUp(userEmail);
+        }
+    };
+
     const form =
         <div className="confirmEmailContainer">
             <div className="confirmEmailTitle">Verify your registration</div>
@@ -41,7 +51,7 @@ function ConfirmEmail() {
                 <div className="notReceivedCodeText">
                     Not received a code? Check your spam folder or let us resend a code.
                 </div>
-                <button className="resendCodeButton" onClick={() => Auth.resendSignUp(userEmail)}>Resend code</button>
+                <button className="resendCodeButton" onClick={handleResendCode}>Resend code</button>
             </form>
         </div>
 
@@ -50,7 +60,6 @@ function ConfirmEmail() {
             <p className="confirmemail-card_title">Succes!</p>
             <p className="confirmemail-card_text">Your email is now verified! You will be redirected shortly</p>
         </div>
-
     return (
         isConfirmed ?
             confirmedPopup : form
