@@ -8,7 +8,6 @@ import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
-import Login from "./components/base/Login";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
@@ -24,7 +23,14 @@ import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
 import Disclaimers from "./components/disclaimers/Disclaimers";
 import Policy from "./components/disclaimers/Policy";
 import Terms from "./components/disclaimers/Terms";
+import Login from "./components/base/Login";
+import Register from "./components/base/Register";
+import ConfirmRegister from "./components/base/ConfirmRegister";
 import Error from "./components/errorpage/errorpage";
+
+// Set the app element for react-modal
+Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
+
 
 function App() {
     useEffect(() => {
@@ -33,17 +39,13 @@ function App() {
         };
     }, []);
 
-    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-    const openLoginModal = () => setIsLoginModalOpen(true);
-    const closeLoginModal = () => setIsLoginModalOpen(false);
-
     // Conditionally render the Header based on the current route
     const renderHeader = () => {
         const currentPath = window.location.pathname;
         if (currentPath === '/admin') {
             return null;
         }
-        return <Header openLoginModal={openLoginModal} />;
+        return <Header />;
     };
 
     const renderFooter = () => {
@@ -61,6 +63,9 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Assortment />} />
                     <Route path="/home" element={<Home />} />
+                    <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/confirm-email" element={<ConfirmRegister />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/career" element={<Careers />} />
@@ -79,23 +84,11 @@ function App() {
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/error" element={<Error/>}/>
 
-
                     {/*  Admin Routes  */}
                     <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
                 </Routes>
             </div>
             {renderFooter()}
-
-            {/* Login Modal */}
-            <Modal
-                isOpen={isLoginModalOpen}
-                onRequestClose={closeLoginModal}
-                contentLabel="Login Modal"
-            >
-                {/* Render the Login component inside the modal */}
-                <Login />
-                <button className="close-button" onClick={closeLoginModal} >X</button>
-            </Modal>
         </Router>
     );
 }

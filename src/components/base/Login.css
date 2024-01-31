@@ -1,0 +1,89 @@
+/* Login.css */
+
+.loginButton {
+    width: 100%;
+    padding: 8px 15px;
+    background: #0D9813;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    border: 0;
+    color: white;
+    font-size: 18px;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto 0;
+    display: block;
+}
+
+.registerButtonLogin {
+    width: 100%;
+    padding: 8px 15px;
+    background: #49146A;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    border: 0;
+    color: white;
+    font-size: 18px;
+    justify-content: center;
+    margin: 20px auto 0;
+    display: block;
+    text-align: center; /* Center the text within the button */
+    text-decoration: none; /* Remove the default underline on anchor tags */
+}
+
+.loginTitle {
+    color: black;
+    font-size: 36px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 54px;
+    word-wrap: break-word;
+    margin-top: 50px;
+}
+
+.loginContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.loginForm {
+    width: 25%;
+    margin-top: 20px;
+    padding: 30px;
+    background: #EBFAED;
+    border-radius: 15px;
+    margin-bottom: 50px;
+    box-sizing: border-box;
+}
+
+label {
+    font-size: 24px;
+}
+
+.loginInput {
+    width: 92.5%;
+    height: auto;
+    padding: 11px 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    background: white;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    border: 1px solid black;
+    justify-content: flex-start;
+    align-items: center;
+    display: inline-flex;
+}
+
+.noAccountText {
+    color: black;
+    margin-top: 20px;
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 18px;
+    word-wrap: break-word;
+    align-self: flex-start;
+}

@@ -53,23 +53,8 @@ const Assortment = () => {
         console.log(`Sorting order: ${order}`);
     };
 
-    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-    const openLoginModal = () => setIsLoginModalOpen(true);
-    const closeLoginModal = () => setIsLoginModalOpen(false);
-
     return (
         <div>
-            
-            {/* Login Modal */}
-            <Modal
-                isOpen={isLoginModalOpen}
-                onRequestClose={closeLoginModal}
-                contentLabel="Login Modal"
-            >
-                {/* Render the Login component inside the modal */}
-                <Login />
-                <button className="close-button" onClick={closeLoginModal} >X</button>
-            </Modal>
             <div className="assortment">
                 <div className="label-row">
                     <label>Visitors/guests</label>

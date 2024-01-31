@@ -1,16 +1,16 @@
 {
   "providers": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-domits-production-150926-authRole",
-      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-production-150926-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-production-150926-authRole",
+      "AuthRoleName": "amplify-domits-develop-123953-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-123953-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-123953-authRole",
       "Region": "eu-north-1",
-      "DeploymentBucketName": "amplify-domits-production-150926-deployment",
-      "UnauthRoleName": "amplify-domits-production-150926-unauthRole",
-      "StackName": "amplify-domits-production-150926",
-      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-production-150926/f61a0ab0-887f-11ee-a107-066b65f51f56",
+      "DeploymentBucketName": "amplify-domits-develop-123953-deployment",
+      "UnauthRoleName": "amplify-domits-develop-123953-unauthRole",
+      "StackName": "amplify-domits-develop-123953",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-develop-123953/4d59ff30-b5f6-11ee-b06c-0e54438f2f36",
       "AmplifyAppId": "d34jwd0sihmsus",
-      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-domits-production-150926-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
     }
   },
   "api": {
@@ -45,18 +45,18 @@
             }
           }
         },
-        "GraphQLAPIIdOutput": "6tcgm2ueivf5lp3p5djtfduqsa",
-        "GraphQLAPIEndpointOutput": "https://x6jtcixwyre3vb6vz6axw42zne.appsync-api.eu-north-1.amazonaws.com/graphql",
-        "GraphQLAPIKeyOutput": "da2-p3rlhqujivdmrh5ktyx3s4qoxi"
+        "GraphQLAPIIdOutput": "7b4aavvsdrgqvkodjms6gypac4",
+        "GraphQLAPIEndpointOutput": "https://2vop7wr4erdkxn2ilg2hzmw7vi.appsync-api.eu-north-1.amazonaws.com/graphql",
+        "GraphQLAPIKeyOutput": "da2-6x2y5zsfmfbqdkeilsxtwwim3a"
       },
       "providerPlugin": "awscloudformation",
       "service": "AppSync",
-      "lastPushTimeStamp": "2024-01-24T15:01:53.774Z",
       "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-production-150926-deployment/amplify-cfn-templates/api/cloudformation-template.json",
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/api/cloudformation-template.json",
         "logicalId": "apidomits"
       },
-      "lastPushDirHash": "bMM5rj+xWbOJTvtoWK1dvKjLx2g="
+      "lastPushTimeStamp": "2024-01-31T13:17:50.815Z",
+      "lastPushDirHash": "jXryX0zHmyAWjHQoQ6CFXCEFlWY="
     }
   },
   "auth": {
@@ -95,21 +95,21 @@
       },
       "providerPlugin": "awscloudformation",
       "service": "Cognito",
-      "output": {
-        "UserPoolId": "eu-north-1_HjL3yKPeV",
-        "AppClientIDWeb": "3cjja7o9i1pgi68ttlempgvgpt",
-        "AppClientID": "13vcpmbgd3gj1im6jmruv9o45f",
-        "IdentityPoolId": "eu-north-1:bcb83cac-b152-4ed5-8877-d0d009c13f53",
-        "UserPoolArn": "arn:aws:cognito-idp:eu-north-1:115462458880:userpool/eu-north-1_HjL3yKPeV",
-        "IdentityPoolName": "domits7b73f586_identitypool_7b73f586__production",
-        "UserPoolName": "domits7b73f586_userpool_7b73f586"
-      },
-      "lastPushTimeStamp": "2024-01-24T15:01:53.776Z",
       "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-production-150926-deployment/amplify-cfn-templates/auth/domits7b73f586-cloudformation-template.json",
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/auth/domits7b73f586-cloudformation-template.json",
         "logicalId": "authdomits7b73f586"
       },
-      "lastPushDirHash": "8z+b0OaJ1geFFP1l7R7YepqdYv8="
+      "lastPushTimeStamp": "2024-01-31T13:17:50.815Z",
+      "output": {
+        "UserPoolId": "eu-north-1_mPxNhvSFX",
+        "AppClientIDWeb": "78jfrfhpded6meevllpfmo73mo",
+        "AppClientID": "3mbk6j5phshnmnc8nljued41qt",
+        "IdentityPoolId": "eu-north-1:6776b3c3-e6ff-4025-9651-4ad94e7eb98e",
+        "UserPoolArn": "arn:aws:cognito-idp:eu-north-1:115462458880:userpool/eu-north-1_mPxNhvSFX",
+        "IdentityPoolName": "domits7b73f586_identitypool_7b73f586__develop",
+        "UserPoolName": "domits7b73f586_userpool_7b73f586"
+      },
+      "lastPushDirHash": "PPiYS/zdpruciELtLLjXQ8a5zdU="
     },
     "userPoolGroups": {
       "dependsOn": [
@@ -126,15 +126,16 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Cognito-UserPool-Groups",
-      "output": {
-        "developGroupRole": "arn:aws:iam::115462458880:role/eu-north-1_HjL3yKPeV-developGroupRole"
-      },
-      "lastPushTimeStamp": "2024-01-24T15:01:55.513Z",
+      "lastPushTimeStamp": "2024-01-31T13:17:48.917Z",
       "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-production-150926-deployment/amplify-cfn-templates/auth/userPoolGroups-cloudformation-template.json",
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/auth/userPoolGroups-cloudformation-template.json",
         "logicalId": "authuserPoolGroups"
       },
-      "lastPushDirHash": "qkbiNMJUYLdHvMdFlNUHWNtG3lI="
+      "output": {
+        "developUserPoolGroupRole": "arn:aws:iam::115462458880:role/eu-north-1_mPxNhvSFX-developUserPoolGroupRole",
+        "developGroupRole": "arn:aws:iam::115462458880:role/eu-north-1_mPxNhvSFX-developGroupRole"
+      },
+      "lastPushDirHash": "cUz12C8msRfuesdSwF16Jct2Uls="
     }
   },
   "function": {
@@ -153,27 +154,27 @@
       ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda",
-      "output": {
-        "LambdaExecutionRoleArn": "arn:aws:iam::115462458880:role/domits7b73f586PreSignup-production",
-        "Region": "eu-north-1",
-        "Arn": "arn:aws:lambda:eu-north-1:115462458880:function:domits7b73f586PreSignup-production",
-        "Name": "domits7b73f586PreSignup-production",
-        "LambdaExecutionRole": "domits7b73f586PreSignup-production"
+      "lastBuildTimeStamp": "2024-01-31T13:12:34.400Z",
+      "lastBuildType": "PROD",
+      "lastPackageTimeStamp": "2024-01-31T13:12:34.939Z",
+      "distZipFilename": "domits7b73f586PreSignup-732b377864666575514a-build.zip",
+      "s3Bucket": {
+        "deploymentBucketName": "amplify-domits-develop-123953-deployment",
+        "s3Key": "amplify-builds/domits7b73f586PreSignup-732b377864666575514a-build.zip"
       },
-      "lastPushTimeStamp": "2024-01-24T15:01:53.779Z",
       "providerMetadata": {
-        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-production-150926-deployment/amplify-cfn-templates/function/domits7b73f586PreSignup-cloudformation-template.json",
+        "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/function/domits7b73f586PreSignup-cloudformation-template.json",
         "logicalId": "functiondomits7b73f586PreSignup"
       },
-      "s3Bucket": {
-        "deploymentBucketName": "amplify-domits-production-150926-deployment",
-        "s3Key": "amplify-builds/domits7b73f586PreSignup-37427171426a734b576d-build.zip"
+      "lastPushTimeStamp": "2024-01-31T13:17:50.815Z",
+      "output": {
+        "LambdaExecutionRoleArn": "arn:aws:iam::115462458880:role/domits7b73f586PreSignup-develop",
+        "Region": "eu-north-1",
+        "Arn": "arn:aws:lambda:eu-north-1:115462458880:function:domits7b73f586PreSignup-develop",
+        "Name": "domits7b73f586PreSignup-develop",
+        "LambdaExecutionRole": "domits7b73f586PreSignup-develop"
       },
-      "lastBuildTimeStamp": "2024-01-18T11:36:30.625Z",
-      "lastBuildType": "PROD",
-      "lastPackageTimeStamp": "2024-01-18T11:36:30.690Z",
-      "distZipFilename": "domits7b73f586PreSignup-37427171426a734b576d-build.zip",
-      "lastPushDirHash": "2vnDu/ivOoNK5FYqWQxLXJWFfH0="
+      "lastPushDirHash": "e/GAZXNgpMrurVPB3+eIBVB7JL4="
     }
   }
 }
