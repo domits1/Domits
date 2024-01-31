@@ -37,17 +37,13 @@ function App() {
         };
     }, []);
 
-    const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-    const openLoginModal = () => setIsLoginModalOpen(true);
-    const closeLoginModal = () => setIsLoginModalOpen(false);
-
     // Conditionally render the Header based on the current route
     const renderHeader = () => {
         const currentPath = window.location.pathname;
         if (currentPath === '/admin') {
             return null;
         }
-        return <Header openLoginModal={openLoginModal} />;
+        return <Header />;
     };
 
     const renderFooter = () => {
@@ -85,23 +81,11 @@ function App() {
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
 
-
                     {/*  Admin Routes  */}
                     <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
                 </Routes>
             </div>
             {renderFooter()}
-
-            {/* Login Modal */}
-            <Modal
-                isOpen={isLoginModalOpen}
-                onRequestClose={closeLoginModal}
-                contentLabel="Login Modal"
-            >
-                {/* Render the Login component inside the modal */}
-                <Login />
-                <button className="close-button" onClick={closeLoginModal} >X</button>
-            </Modal>
         </Router>
     );
 }
