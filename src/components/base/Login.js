@@ -59,6 +59,11 @@ const Login = () => {
         checkAuth();
     }, []);
 
+
+    const handleRegisterClick = () => {
+        navigate('/register');
+    };
+
     return (
         <>
             {isAuthenticated ? (
@@ -92,7 +97,12 @@ const Login = () => {
                                 </svg>
                             </button>
                         </form>
-                        <a href="/register" className="registerButton">Register</a>
+                        <div className="noAccountText">
+                            No account yet? Register for free!
+                        </div>
+                        <button onClick={handleRegisterClick} className="registerButtonLogin">
+                            Register
+                        </button>
                     </div>
                 </div>
             )}

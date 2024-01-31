@@ -24,6 +24,8 @@ import Disclaimers from "./components/disclaimers/Disclaimers";
 import Policy from "./components/disclaimers/Policy";
 import Terms from "./components/disclaimers/Terms";
 import Login from "./components/base/Login";
+import Register from "./components/base/Register";
+import ConfirmRegister from "./components/base/ConfirmRegister";
 
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
@@ -64,6 +66,8 @@ function App() {
                     <Route path="/" element={<Assortment />} />
                     <Route path="/home" element={<Home />} />
                     <Route path="/login" element={<Login />} />
+                    <Route path="/register" element={<Register />} />
+                    <Route path="/confirm-email" element={<ConfirmRegister />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/career" element={<Careers />} />

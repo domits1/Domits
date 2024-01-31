@@ -1,22 +1,7 @@
 /* Login.css */
 
-.loginButton {
-    width: 100%;
-    padding: 8px 15px;
-    background: #0D9813;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
-    border: 0;
-    color: white;
-    font-size: 18px;
-    justify-content: center;
-    align-items: center;
-    margin: 20px auto 0;
-    display: block;
-}
-
-.registerButtonLogin {
-    width: 100%;
+.registerButton {
+    width: 400px;
     padding: 8px 15px;
     background: #49146A;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
@@ -31,7 +16,7 @@
     text-decoration: none; /* Remove the default underline on anchor tags */
 }
 
-.loginTitle {
+.registerTitle {
     color: black;
     font-size: 36px;
     font-family: Kanit, sans-serif;
@@ -41,32 +26,32 @@
     margin-top: 50px;
 }
 
-.loginContainer {
+.registerContainer {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
 }
 
-.loginForm {
-    width: 25%;
+.registerForm {
     margin-top: 20px;
+    max-width: 25%;
     padding: 30px;
     background: #EBFAED;
     border-radius: 15px;
-    box-sizing: border-box;
+    margin-bottom: 50px;
 }
 
 label {
     font-size: 24px;
 }
 
-.loginInput {
+.registerInput {
     width: 92.5%;
     height: auto;
     padding: 11px 15px;
-    margin-top: 20px;
-    margin-bottom: 20px;
+    margin-top: 15px;
+    margin-bottom: 15px;
     background: white;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
     border-radius: 15px;
@@ -76,9 +61,9 @@ label {
     display: inline-flex;
 }
 
-.noAccountText {
+.alreadyAccountText {
     color: black;
-    margin-top: 20px;
+    margin-top: 10px;
     font-size: 14px;
     font-family: Kanit, sans-serif;
     font-weight: 400;
