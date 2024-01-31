@@ -24,6 +24,7 @@ import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
 import Disclaimers from "./components/disclaimers/Disclaimers";
 import Policy from "./components/disclaimers/Policy";
 import Terms from "./components/disclaimers/Terms";
+import Error from "./components/errorpage/errorpage";
 
 function App() {
     useEffect(() => {
@@ -76,6 +77,7 @@ function App() {
                     <Route path="/disclaimers" element={<Disclaimers />} />
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
+                    <Route path="/error" element={<Error/>}/>
 
 
                     {/*  Admin Routes  */}
