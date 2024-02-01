@@ -87,3 +87,15 @@ label {
     word-wrap: break-word;
     align-self: flex-start;
 }
+
+.errorText {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 8px 15px;
+    text-align: center;
+    border: 1px solid darkred;
+    background: red;
+    opacity: 0.7;
+    color: white;
+    border-radius: 15px;
+}
