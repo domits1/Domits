@@ -1,70 +1,113 @@
-import {Amplify} from "aws-amplify";
+import React, {useState, FormEvent, useEffect} from 'react';
+import {Auth} from 'aws-amplify';
+import {useNavigate} from 'react-router-dom';
+import './Login.css';
 
-import {
-    Authenticator,
-    View,
-    Image,
-    useTheme,
-    Heading,
-    useAuthenticator,
-    Button,
-} from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
-import logo from "../../logo.svg";
-import awsExports from '../../aws-exports';
+const Login = () => {
+    const navigate = useNavigate();
 
-Amplify.configure(awsExports);
+    const [formData, setFormData] = useState({
+        email: '',
+        password: '',
+    });
 
-function App() {
-    const components = {
-        Header() {
-            const { tokens } = useTheme();
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-            return (
-                <View textAlign="center" padding={tokens.space.large}>
-                    <Image
-                        src={logo} className="App-logo" alt="logo" height={75}
-                    />
-                </View>
-            );
-        },
-        SignUp: {
-            Header() {
-                const { tokens } = useTheme();
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setFormData({
+            ...formData,
+            [e.target.name]: e.target.value,
+        });
+    };
 
-                return (
-                    <Heading
-                        padding={`${tokens.space.xl} 0 0 ${tokens.space.xl}`}
-                        level={5}
-                    >
-                        Create a new account
-                    </Heading>
-                );
-            },
-            Footer() {
-                const { toSignIn } = useAuthenticator();
+    const handleSignIn = async () => {
+        const {email, password} = formData;
 
-                return (
-                    <View textAlign="center">
-                        <Button
-                            fontWeight="normal"
-                            onClick={toSignIn}
-                            size="small"
-                            variation="link"
-                        >
-                            Already have an account?
-                        </Button>
-                    </View>
-                );
-            },
-        },
+        try {
+            await Auth.signIn(email, password);
+            setIsAuthenticated(true);
+        } catch (error) {
+            console.error('Error logging in:', error);
+        }
+    };
+
+    const handleSignOut = async () => {
+        try {
+            await Auth.signOut();
+            setIsAuthenticated(false);
+        } catch (error) {
+            console.error('Error signing out:', error);
+        }
+    };
+
+    const handleSubmit = async (e: FormEvent) => {
+        e.preventDefault();
+
+        await handleSignIn();
+    };
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                await Auth.currentAuthenticatedUser();
+                setIsAuthenticated(true);
+            } catch (error) {
+                setIsAuthenticated(false);
+            }
+        };
+
+        checkAuth();
+    }, []);
+
+
+    const handleRegisterClick = () => {
+        navigate('/register');
     };
 
     return (
-        <Authenticator loginMechanisms={['email']} components={components}>
-            {({ signOut }) => <button onClick={signOut}>Sign out</button>}
-        </Authenticator>
+        <>
+            {isAuthenticated ? (
+                <button onClick={handleSignOut}>Sign out</button>
+            ) : (
+                <div className="loginContainer">
+                    <div className="loginTitle">Log in or Sign Up</div>
+                    <div className="loginForm">
+                        <form onSubmit={handleSubmit}>
+                            <label>Username:</label><br />
+                                <input
+                                    className="loginInput"
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleChange}
+                                />
+                            <br/>
+                            <label className="passwordLabel">Password:</label><br/>
+                                <input
+                                    className="loginInput"
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                />
+                            <br/>
+                            <button type="submit" className="loginButton">Login
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M12 8L16 12M16 12L12 16M16 12H3M3.33782 7C5.06687 4.01099 8.29859 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C8.29859 22 5.06687 19.989 3.33782 17" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </button>
+                        </form>
+                        <div className="noAccountText">
+                            No account yet? Register for free!
+                        </div>
+                        <button onClick={handleRegisterClick} className="registerButtonLogin">
+                            Register
+                        </button>
+                    </div>
+                </div>
+            )}
+        </>
     );
-}
+};
 
-export default App;
+export default Login;
