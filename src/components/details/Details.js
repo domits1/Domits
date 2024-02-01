@@ -187,7 +187,7 @@ const Details = () => {
                     <p>Always wanted to milk a goat? Drink the freshest milk you ever drank? Timo is welcoming visitors for over 5 years.
                         At his farm you will be given a tour, feed the animals and talk about his goats the entire time!</p>
                      <img src={goated} alt="goat" />
-                    <h4>More info</h4>
+                gi    <h4>More info</h4>
                 </div>
             </div>
         </div>
