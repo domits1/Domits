@@ -41,8 +41,7 @@
       "email"
     ],
     "userPoolGroupList": [
-      "develop",
-      "developUserPool"
+      "develop"
     ],
     "serviceName": "Cognito",
     "usernameCaseSensitive": false,
