@@ -7,6 +7,7 @@ import './ConfirmRegister.css'
 function ConfirmEmail() {
 
     const [isConfirmed, setIsConfirmed] = useState(false)
+    const [errorMessage, setErrorMessage] = useState('');
 
     const location = useLocation()
     const navigate = useNavigate()
@@ -21,7 +22,7 @@ function ConfirmEmail() {
 
         Auth.confirmSignUp(userEmail, code)
             .catch(error => {
-                console.error(error)
+                setErrorMessage('Invalid verification code, please check your email!');
             })
             .then(result => { if (result === 'SUCCESS') {
                 setIsConfirmed(true)
@@ -47,6 +48,9 @@ function ConfirmEmail() {
                     Enter 6 digit code send to your email
                 </div>
                 <DigitInputs amount={6} inputRef={inputRef} />
+                {errorMessage && (
+                    <div className="errorText">{errorMessage}</div>
+                )}
                 <button className="verifyRegisterButton" type="submit">Verify registration</button>
                 <div className="notReceivedCodeText">
                     Not received a code? Check your spam folder or let us resend a code.
