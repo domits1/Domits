@@ -28,9 +28,9 @@ const Footer = () => {
                         <br/>
                     </ul>
                     <div className='footer-terms'>
-                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Privacy policy</a>
-                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Terms and Conditions</a>
-                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Disclaimer</a>
+                        <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
+                        <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>
+                        <a><Link to="/disclaimers" className='footer-links'>Disclaimer</Link></a>
                         <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Sitemap</a>
                     </div>
                 </div>
