@@ -10,7 +10,7 @@
     "@testing-library/user-event": "^13.5.0",
     "amplify": "^0.0.11",
     "aws-amplify": "^5.3.12",
-    "aws-sdk": "^2.1547.0",
+    "aws-sdk": "^2.1549.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-modal": "^3.16.1",
