@@ -11,6 +11,7 @@ const Register = () => {
         repeatPassword: '',
     });
     const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [errorMessage, setErrorMessage] = useState('');
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({
@@ -28,8 +29,18 @@ const Register = () => {
             repeatPassword: formData.repeatPassword,
         };
 
+        if (userData.email === "" || userData.email === null) {
+            setErrorMessage('Email can\'t be empty!');
+            return;
+        }
+
+        if (userData.password === "" || userData.password === null || userData.repeatPassword === "" || userData.repeatPassword === null) {
+            setErrorMessage('Password can\'t be empty!');
+            return;
+        }
+
         if (userData.password !== userData.repeatPassword) {
-            console.log("Passwords do not match!");
+            setErrorMessage('Passwords does not match!');
             return;
         }
 
@@ -43,11 +54,11 @@ const Register = () => {
             });
 
             navigate('/confirm-email', {
-                state: { email: userData.email, username: data.user.getUsername() },
+                state: {email: userData.email, username: data.user.getUsername()},
             });
         } catch (error) {
             if (error.code === 'UsernameExistsException') {
-                // Handle case where user already exists (optional)
+                setErrorMessage('User already exists!');
             } else {
                 console.error("Error:", error);
             }
@@ -82,50 +93,54 @@ const Register = () => {
                 <button onClick={handleSignOut}>Sign out</button>
             ) : (
                 <div className="registerContainer">
-                <div className="registerTitle">Sign Up</div>
-                <div className="registerForm">
-                    <form onSubmit={onSubmit}>
-                        <label>Email:</label>
-                        <br/>
-                        <input
-                            className="registerInput"
-                            type="email"
-                            name="email"
-                            value={formData.email}
-                            onChange={handleChange}
-                        />
-                        <br/>
-                        <label className="passwordLabel">Password:</label>
-                        <br/>
-                        <input
-                            className="registerInput"
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                        />
-                        <br/>
-                        <label className="passwordLabel">Repeat Password:</label>
-                        <br/>
-                        <input
-                            className="registerInput"
-                            type="password"
-                            name="repeatPassword"
-                            value={formData.repeatPassword}
-                            onChange={handleChange}
-                        />
-                        <br/>
-                        <div className="alreadyAccountText">
-                            Already have an account? <a href="/login">Log in here</a>.
-                        </div>
-                        <button type="submit" className="registerButton">
-                            Sign Up
-                        </button>
-                    </form>
+                    <div className="registerTitle">Sign Up</div>
+                    <div className="registerForm">
+                        <form onSubmit={onSubmit}>
+                            <label>Email:</label>
+                            <br/>
+                            <input
+                                className="registerInput"
+                                type="email"
+                                name="email"
+                                value={formData.email}
+                                onChange={handleChange}
+                            />
+                            <br/>
+                            <label className="passwordLabel">Password:</label>
+                            <br/>
+                            <input
+                                className="registerInput"
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                            />
+                            <br/>
+                            <label className="passwordLabel">Repeat Password:</label>
+                            <br/>
+                            <input
+                                className="registerInput"
+                                type="password"
+                                name="repeatPassword"
+                                value={formData.repeatPassword}
+                                onChange={handleChange}
+                            />
+                            <br/>
+                            <div className="alreadyAccountText">
+                                Already have an account? <a href="/login">Log in here</a>.
+                            </div>
+                            {errorMessage && (
+                                <div className="errorText">{errorMessage}</div>
+                            )}
+                            <button type="submit" className="registerButton">
+                                Sign Up
+                            </button>
+                        </form>
+                    </div>
                 </div>
-            </div>
-        )}
-    </>
-)};
+            )}
+        </>
+    )
+};
 
 export default Register;
