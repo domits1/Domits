@@ -12,6 +12,10 @@ function Header() {
     const navigateToLogin = () => {
         navigate('/login');
     };
+    const navigateToLanding = () => {
+        navigate('/landing');
+    };
+
 
     return (
         <div className="App">
@@ -25,7 +29,7 @@ function Header() {
                     <div className="search-bar">
                         <input type="text" placeholder="Location"/>
                     </div>
-                    <button className="becomeAHost">
+                    <button className="becomeAHost" onClick={navigateToLanding}>
                         Become a host
                     </button>
                     <button className="nineDots">
