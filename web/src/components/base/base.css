@@ -64,6 +64,9 @@
     background: #FFF;
     cursor: pointer;
 }
+.becomeAHost:hover{
+    cursor: pointer;
+}
 
 .nineDots {
     margin-top: 0;
@@ -114,7 +117,7 @@
 }
 
 .close-button:hover {
-    
+
     color: #ff3d3d;
 }
 
@@ -196,7 +199,7 @@
 }
 
 #appstorebadge {
-   margin-top: 20px;
+    margin-top: 20px;
 }
 
 #playstorebadge {
