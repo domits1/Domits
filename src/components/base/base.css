@@ -63,6 +63,9 @@
     font-size: 1vw;
     background: #FFF;
 }
+.becomeAHost:hover{
+    cursor: pointer;
+}
 
 .nineDots {
     margin-top: 0;

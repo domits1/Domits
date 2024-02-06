@@ -139,7 +139,7 @@ class Calculator extends Component {
             </div>
             <div className='buttonHolder'>
             <button className='nextButtons' onClick={this.resetCalculator}>Reset</button>
-            <button className='nextButtons'>List this accomodation</button>
+            <button className='nextButtons'>Enlist</button>
             </div>
           </div>
         );
