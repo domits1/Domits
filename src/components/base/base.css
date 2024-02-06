@@ -62,6 +62,7 @@
     font-family: Kanit, sans-serif;
     font-size: 1vw;
     background: #FFF;
+    cursor: pointer;
 }
 
 .nineDots {
@@ -79,6 +80,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    cursor: pointer;
 }
 
 .personalMenu {
@@ -95,6 +97,7 @@
     gap: 10px;
     display: inline-flex;
     border: none;
+    cursor: pointer;
 }
 
 /* Close Button */
