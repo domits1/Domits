@@ -1,5 +1,6 @@
 import React from "react";
 import Page from "./Calculator"; 
+import FAQ from "./Faq"; 
 import './landing.css';
 
 import huis from "../../images/huis-illustratie.png";
@@ -37,6 +38,9 @@ function Landing() {
                         <p>Modern, quick and customizable dashboard with over 10 widgets.</p>    
                     </div>
                     
+                </div>
+                <div>
+                    <FAQ />
                 </div>
             </div>
         </div>
