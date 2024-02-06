@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="06ece906-4846-4848-b33b-213db4dafcac" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.eslintignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.graphqlconfig.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/amplify-meta.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/.config/project-config.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/amplify-meta.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/cli-inputs.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/parameters.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/resolvers/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/schema.graphql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/stacks/CustomResources.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/transform.conf.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/auth/domits7b73f586/cli-inputs.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/auth/userPoolGroups/user-pool-group-precedence.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/backend-config.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/amplify.state" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/custom-policies.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/domits7b73f586PreSignup-cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/function-parameters.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/parameters.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/custom.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/event.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/tags.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/types/amplify-dependent-resources-ref.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/cli.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/hooks/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/team-provider-info.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress.config.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/1-getting-started/todo.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/actions.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/aliasing.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/assertions.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/connectors.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/cookies.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/cypress_api.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/files.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/location.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/misc.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/navigation.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/network_requests.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/querying.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/spies_stubs_clocks.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/storage.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/traversal.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/utilities.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/viewport.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/waiting.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/2-advanced-examples/window.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/e2e/login.cy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/fixtures/example.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/support/commands.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/support/component-index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/support/component.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/cypress/support/e2e.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/favicon.ico" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/index.html" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/logo.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/logo192.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/logo512.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/manifest.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/public/robots.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/serverlessFunction.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/App.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/App.test.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/amplifyconfiguration.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/aws-exports.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/SearchBar.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/about/About.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/about/about.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/admindashboard/AdminDashboard.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/admindashboard/HomeDashboard.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/admindashboard/Navbar.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/admindashboard/Sidebar.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/assortment/Assortment.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/assortment/assortment.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/ConfirmRegister.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/ConfirmRegister.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/Footer.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/Header.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/Login.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/Login.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/Register.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/Register.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/base/base.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/booking/Booking.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/booking/booking.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/careers/Careers.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/careers/careers.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/contact/Contact.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/contact/contact.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/details/Details.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/details/details.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/disclaimers/Disclaimers.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/disclaimers/Policy.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/disclaimers/Terms.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/disclaimers/disclaimers.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/errorpage/errorpage.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/errorpage/errorpage.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/guestdashboard/GuestDashboard.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/guestdashboard/guestdashboard.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/home/Home.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/home/home.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/hostdashboard/Accommodations.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/hostdashboard/Accommodations.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/hostdashboard/CreateAccommodation.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/hostdashboard/DeleteAccommodation.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/hostdashboard/HostDashboard.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/hostdashboard/ReadAccommodation.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/hostdashboard/UpdateAccommodation.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/landingpage/Calculator.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/Calculator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/landingpage/Faq.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/Faq.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/landingpage/Landing.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/landingpage/landing.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/protectedroute/ProtectedRoute.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/ui/DigitsInputs/DigitsInputs.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/context/UserContext.tsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/graphql/mutations.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/graphql/queries.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/graphql/schema.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/graphql/subscriptions.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/aboutusimg.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accobigimg.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accoimg1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accoimg2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accoimg3.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accoimg4.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accom_chalet.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accom_luxebamboovilla.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accom_luxevilla.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accom_tinyhouse_flowers.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accom_treehouse.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accom_villaneth.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accom_yurt.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accomap.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accommodationtestpic1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/accommodationtestpic2.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/adultacco.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/appartement-illustratie.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/images/appartement-illustratie.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/arrow-down-icon.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/arrowleft.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/assets/appstorebadge.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/assets/ffmpeg-6.1.1.tar.xz" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/assets/playstorebadge.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/camper-illustratie.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/images/camper-illustratie.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/careerimg.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/dots-grid.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/gift.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/goated.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/huis-illustratie.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/images/huis-illustratie.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/icons/Star.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/icons/filter-lines.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/icons/heart.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/icons/map-02.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/icons/search-lg.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/kidacco.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/landingpagebg.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/light.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/orange_caravan.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/profile-icon.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/search-lg.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/teenacco.jpg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/telescope.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/thermometer.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/tv.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/vault.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/villa-illustratie.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/images/villa-illustratie.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/whitearrow.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/images/wifi.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/index.css" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/logo.svg" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/index.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/schema.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/models/schema.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/reportWebVitals.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/setupTests.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/AccommodationCreateForm.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/AccommodationCreateForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/AccommodationUpdateForm.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/AccommodationUpdateForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/Property1Opened.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/Property1Opened.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/TodoCreateForm.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/TodoCreateForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/TodoUpdateForm.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/TodoUpdateForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/UserCreateForm.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/UserCreateForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/UserUpdateForm.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/UserUpdateForm.jsx" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/index.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/studioTheme.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/studioTheme.js.d.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ui-components/utils.js" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/base/Header.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/Header.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/base/base.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/base.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/Landing.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/Landing.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/landing.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/landing.css" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="CSS File" />
+        <option value="JavaScript File" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="hostdashboard" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 0
+}</component>
+  <component name="ProjectId" id="2YA4LZzKxdgEJA6qglbcFIGedn3" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "develop",
+    "last_opened_file_path": "C:/Users/giann/projects/Domits/web",
+    "list.type.of.created.stylesheet": "CSS",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "ts.external.directory.path": "C:\\Users\\giann\\projects\\Domits\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Users\giann\projects\Domits\src\images" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\giann\projects\Domits\web\src\components\landingpage" />
+      <recent name="C:\Users\giann\projects\Domits\web\src\images" />
+      <recent name="C:\Users\giann\projects\Domits\web" />
+      <recent name="C:\Users\giann\projects\Domits" />
+      <recent name="C:\Users\giann\projects\Domits\src\components" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="06ece906-4846-4848-b33b-213db4dafcac" name="Changes" comment="" />
+      <created>1699954995395</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1699954995395</updated>
+      <workItem from="1699954996719" duration="647000" />
+      <workItem from="1699955650287" duration="2909000" />
+      <workItem from="1702473606244" duration="1083000" />
+      <workItem from="1702542261010" duration="12962000" />
+      <workItem from="1702977870497" duration="3415000" />
+      <workItem from="1702987132337" duration="9790000" />
+      <workItem from="1703002002668" duration="2000" />
+      <workItem from="1703077821142" duration="4083000" />
+      <workItem from="1703161640877" duration="7424000" />
+      <workItem from="1704787130393" duration="263000" />
+      <workItem from="1704787548157" duration="156000" />
+      <workItem from="1704802886459" duration="5965000" />
+      <workItem from="1704813459629" duration="360000" />
+      <workItem from="1704815668978" duration="8000" />
+      <workItem from="1704885721494" duration="237000" />
+      <workItem from="1704885971382" duration="2293000" />
+      <workItem from="1704897490663" duration="4924000" />
+      <workItem from="1704906543335" duration="25000" />
+      <workItem from="1704907126698" duration="70000" />
+      <workItem from="1704907474379" duration="1290000" />
+      <workItem from="1704963280812" duration="9674000" />
+      <workItem from="1705387954524" duration="612000" />
+      <workItem from="1705420660695" duration="891000" />
+      <workItem from="1705483783497" duration="2763000" />
+      <workItem from="1705486805998" duration="9789000" />
+      <workItem from="1705499655500" duration="6602000" />
+      <workItem from="1705569282836" duration="2130000" />
+      <workItem from="1705574453773" duration="2919000" />
+      <workItem from="1705587474545" duration="1406000" />
+      <workItem from="1706039660930" duration="586000" />
+      <workItem from="1706086785968" duration="6947000" />
+      <workItem from="1706098688602" duration="13029000" />
+      <workItem from="1706115695585" duration="696000" />
+      <workItem from="1706118715583" duration="1203000" />
+      <workItem from="1706173140004" duration="14886000" />
+      <workItem from="1706199111663" duration="96000" />
+      <workItem from="1706519284465" duration="8000" />
+      <workItem from="1706600233634" duration="829000" />
+      <workItem from="1706605150243" duration="5094000" />
+      <workItem from="1706712728195" duration="1040000" />
+      <workItem from="1706717913209" duration="450000" />
+      <workItem from="1706788056187" duration="3527000" />
+      <workItem from="1706862770377" duration="883000" />
+      <workItem from="1707121851689" duration="8000" />
+      <workItem from="1707212438894" duration="3342000" />
+      <workItem from="1707224597063" duration="2000" />
+      <workItem from="1707226631988" duration="1562000" />
+      <workItem from="1707228472151" duration="19000" />
+      <workItem from="1707228998326" duration="593000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+</project>
