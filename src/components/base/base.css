@@ -64,6 +64,9 @@
     background: #FFF;
     cursor: pointer;
 }
+.becomeAHost:hover{
+    cursor: pointer;
+}
 
 .nineDots {
     margin-top: 0;

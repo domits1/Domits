@@ -77,6 +77,7 @@ function App() {
                     <Route path="/Guestdashboard" element={<GuestDashboard />}/>
                     <Route path="/career" element={<Careers />} />
                     <Route path="/hostdashboard" element={<HostDashboard />} />
+                    <Route path="/landing" element={<Landing />}/>
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
                     <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
@@ -85,6 +86,7 @@ function App() {
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/error" element={<Error/>}/>
+                    
 
                     {/*  Admin Routes  */}
                     <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
