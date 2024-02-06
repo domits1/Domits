@@ -1,3 +1,4 @@
+// index.js
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Amplify, Auth } from 'aws-amplify';
@@ -7,24 +8,34 @@ import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
+import ConfirmEmail from "./components/base/ConfirmRegister";
+export let AWS_SDK_LOAD_CONFIG;
+AWS_SDK_LOAD_CONFIG=1
 
-// Configure AWS
-aws.config.update({
-    accessKeyId: process.env.VITE_AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.VITE_AWS_SECRET_ACCESS_KEY,
-    region: process.env.VITE_AWS_REGION,
-});
+const awsConfig = {
+    region: awsExports.aws_project_region,
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+};
+
+aws.config.update(awsConfig);
 
 export const cognitoClient = new aws.CognitoIdentityServiceProvider();
+
 Amplify.configure(awsExports);
 Auth.configure(awsExports);
+
+// Define your UserPoolId here
+export const userPoolId = 'eu-north-1_HjL3yKPeV';
 
 // Render the app
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
     <React.StrictMode>
+        <BrowserRouter>
             <App />
-    </React.StrictMode>
+        </BrowserRouter>
+    </React.StrictMode>,
 );
 
 // If you want to start measuring performance in your app, pass a function

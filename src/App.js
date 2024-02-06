@@ -57,39 +57,37 @@ function App() {
     };
 
     return (
-        <Router>
-            <div className="App">
-                {renderHeader()}
-                <Routes>
-                    <Route path="/" element={<Assortment />} />
-                    <Route path="/home" element={<Home />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/register" element={<Register />} />
-                    <Route path="/confirm-email" element={<ConfirmRegister />} />
-                    <Route path="/booking" element={<Booking />} />
-                    <Route path="/about" element={<About />} />
-                    <Route path="/career" element={<Careers />} />
-                    <Route path="/contact" element={<Contact />} />
-                    <Route path="/details" element={<Details/>} />
-                    <Route path="/assortment" element={<Assortment />} />
-                    <Route path="/Guestdashboard" element={<GuestDashboard />}/>
-                    <Route path="/career" element={<Careers />} />
-                    <Route path="/hostdashboard" element={<HostDashboard />} />
-                    <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
-                    <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
-                    <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
-                    <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
-                    <Route path="/disclaimers" element={<Disclaimers />} />
-                    <Route path="/policy" element={<Policy />} />
-                    <Route path="/terms" element={<Terms />} />
-                    <Route path="/error" element={<Error/>}/>
+        <div className="App">
+            {renderHeader()}
+            <Routes>
+                <Route path="/" element={<Assortment />} />
+                <Route path="/home" element={<Home />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/register" element={<Register />} />
+                <Route path="/confirm-email" element={<ConfirmRegister />} />
+                <Route path="/booking" element={<Booking />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/career" element={<Careers />} />
+                <Route path="/contact" element={<Contact />} />
+                <Route path="/details" element={<Details/>} />
+                <Route path="/assortment" element={<Assortment />} />
+                <Route path="/Guestdashboard" element={<GuestDashboard />}/>
+                <Route path="/career" element={<Careers />} />
+                <Route path="/hostdashboard" element={<HostDashboard />} />
+                <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
+                <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
+                <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
+                <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
+                <Route path="/disclaimers" element={<Disclaimers />} />
+                <Route path="/policy" element={<Policy />} />
+                <Route path="/terms" element={<Terms />} />
+                <Route path="/error" element={<Error/>}/>
 
-                    {/*  Admin Routes  */}
-                    <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
-                </Routes>
-            </div>
+                {/*  Admin Routes  */}
+                <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
+            </Routes>
             {renderFooter()}
-        </Router>
+        </div>
     );
 }
 

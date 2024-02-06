@@ -50,6 +50,7 @@ const Register = () => {
                 password: userData.password,
                 attributes: {
                     email: userData.email,
+                    "custom:group": "Guest"
                 },
             });
 

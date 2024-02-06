@@ -1,42 +1,47 @@
+// ConfirmEmail.js
 import React, { FormEvent, useRef, useState } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
-import './ConfirmRegister.css'
+import './ConfirmRegister.css';
+import { cognitoClient } from "../../index";
+import aws from "aws-sdk";
+import awsExports from "../../aws-exports";
 
-function ConfirmEmail() {
-
-    const [isConfirmed, setIsConfirmed] = useState(false)
+function ConfirmEmail({ userPoolId }) {
+    const [isConfirmed, setIsConfirmed] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const location = useLocation()
-    const navigate = useNavigate()
-    const inputRef = useRef([])
+    const location = useLocation();
+    const navigate = useNavigate();
+    const inputRef = useRef([]);
 
-    const userEmail = location.state === null ? "" : location.state.email
+    const userEmail = location.state === null ? "" : location.state.email;
 
-    function onSubmit(e: FormEvent) {
-        e.preventDefault()
-        let code: string = ""
-        inputRef.current.forEach((input: HTMLInputElement) => { code += input.value })
+    async function onSubmit(e: FormEvent) {
+        e.preventDefault();
+        let code = '';
+        inputRef.current.forEach((input) => { code += input.value });
 
-        Auth.confirmSignUp(userEmail, code)
-            .catch(error => {
-                setErrorMessage('Invalid verification code, please check your email!');
-            })
-            .then(result => { if (result === 'SUCCESS') {
-                setIsConfirmed(true)
-                setTimeout(() => navigate('/'), 3000)
-            }})
+        try {
+            const confirmationResult = await Auth.confirmSignUp(userEmail, code);
+
+            if (confirmationResult === 'SUCCESS') {
+                setIsConfirmed(true);
+                setTimeout(() => navigate('/'), 3000);
+            }
+        } catch (error) {
+            setErrorMessage('Invalid verification code, please check your email!');
+            console.error(error);
+        }
     }
+
 
     const handleResendCode = () => {
         if (userEmail === '') {
-            // Redirect to register page or any other desired route
-            navigate('/register'); // Change '/register' to the desired route
+            navigate('/register'); // Redirect to register page or any other desired route
         } else {
-            // Resend code logic
-            Auth.resendSignUp(userEmail);
+            Auth.resendSignUp(userEmail); // Resend code logic
         }
     };
 
@@ -57,18 +62,17 @@ function ConfirmEmail() {
                 </div>
                 <button className="resendCodeButton" onClick={handleResendCode}>Resend code</button>
             </form>
-        </div>
+        </div>;
 
     const confirmedPopup =
         <div className="confirmemail-container">
-            <p className="confirmemail-card_title">Succes!</p>
+            <p className="confirmemail-card_title">Success!</p>
             <p className="confirmemail-card_text">Your email is now verified! You will be redirected shortly</p>
-        </div>
-    return (
-        isConfirmed ?
-            confirmedPopup : form
+        </div>;
 
-    )
+    return (
+        isConfirmed ? confirmedPopup : form
+    );
 }
 
-export default ConfirmEmail
+export default ConfirmEmail;
