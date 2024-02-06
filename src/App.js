@@ -27,6 +27,8 @@ import Login from "./components/base/Login";
 import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
 import Error from "./components/errorpage/errorpage";
+import Stripe from 'stripe';
+export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
@@ -75,6 +77,7 @@ function App() {
                     <Route path="/Guestdashboard" element={<GuestDashboard />}/>
                     <Route path="/career" element={<Careers />} />
                     <Route path="/hostdashboard" element={<HostDashboard />} />
+                    <Route path="/landing" element={<Landing />}/>
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
                     <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
@@ -83,6 +86,7 @@ function App() {
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/error" element={<Error/>}/>
+                    
 
                     {/*  Admin Routes  */}
                     <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />

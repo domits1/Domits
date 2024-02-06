@@ -1,0 +1,239 @@
+/* CSS for the header */
+.app-header {
+    display: flex;
+    width: 100%;
+    padding: 16px 50px;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    box-shadow: 0 2px 6px 0 rgba(13, 26, 38, 0.15);
+}
+
+.header-nav {
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.logo {
+    margin-left: 5%;
+}
+
+.app-header .login-container {
+    margin-left: auto;
+}
+
+/* CSS for the SearchBar */
+.search-bar {
+    display: flex;
+    margin-left: 6%;
+    width: 35%;
+}
+
+.search-bar input {
+    width: 100%;
+    height: 25px;
+    padding: 7px 15px;
+    color: black;
+    font-size: 12px;
+    font-family: Kanit, sans-serif;
+    font-weight: 275;
+    line-height: 18px;
+    align-items: center;
+    border: 1px solid black;
+    border-radius: 15px;
+    background: #FFF;
+    flex-shrink: 1;
+    overflow: unset;
+}
+
+.becomeAHost {
+    margin-top: 0;
+    display: inline-flex;
+    margin-left: 15%;
+    width: 10%;
+    padding: 5px 15px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px #49146A solid;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    font-family: Kanit, sans-serif;
+    font-size: 1vw;
+    background: #FFF;
+    cursor: pointer;
+}
+.becomeAHost:hover{
+    cursor: pointer;
+}
+
+.nineDots {
+    margin-top: 0;
+    margin-left: 1%;
+    box-sizing: content-box;
+    padding: 8px 0;
+    width: 3%;
+    height: 100%;
+    background: white;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    overflow: hidden;
+    border: 1px #49146A solid;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+
+.personalMenu {
+    margin-top: 0;
+    margin-left: 1%;
+    width: 5%;
+    height: 100%;
+    padding: 8px 15px;
+    background: #0D9813;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
+    border: none;
+    cursor: pointer;
+}
+
+/* Close Button */
+.close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 30px;
+    color: #ff6f61;
+    transition: transform 0.3s, color 0.3s;
+}
+
+.close-button:hover {
+
+    color: #ff3d3d;
+}
+
+
+/* Footer styles */
+.main-footer {
+    background-color: #f8f8f8;
+    width: 100%;
+    /*min-height: 50vh;*/
+    /*display: 'flex';*/
+    /*flexDirection: 'column';*/
+    /*max-height: 100px;*/
+    /*overflowY: 'auto';*/
+}
+
+.footer-content {
+    display: flex;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.footer-headers {
+    color: #0D9813;
+    font-family: Kanit, sans-serif;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+}
+
+.footer-lists {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links {
+
+    color: #000;
+    font-family: Kanit, sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+}
+
+.footer-copyright {
+
+    background-color: #0D9813;
+    flex-shrink: 0;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+}
+
+.footer-copyright-text {
+    color: #fff;
+    font-family: Kanit, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+}
+
+.footer-section-grid {
+    display: block;
+    flex-wrap: wrap;
+    gap: 20px; /* Adjust the gap as needed */
+}
+
+.footer-select {
+    display: inline-flex;
+    padding: 5px 15px;
+    align-items: center;
+    gap: 10px;
+    border-radius: 15px;
+    border: 0.5px solid #0D9813;
+}
+
+#appstorebadge {
+    margin-top: 20px;
+}
+
+#playstorebadge {
+    margin-top: 20px;
+}
+
+.footer-column ul li {
+    margin: 10px 0;
+    color: var(--colors-font-interactive, #0A760F);
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px; /* 150% */
+    letter-spacing: 0.16px;
+}
+
+.footer-terms {
+    color: #000;
+    position: absolute;
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+    text-decoration-line: underline;
+    margin-top: 20px;
+}
+
+.footer-terms a {
+    display: inline;
+    margin-right: 20px;
+    text-decoration-line: underline;
+}
+
+
+/* End of footer */
+
