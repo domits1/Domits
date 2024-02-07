@@ -3,6 +3,8 @@
 # editor files
 .vscode/
 .idea/
+web/.idea
+app/.idea
 
 
 
