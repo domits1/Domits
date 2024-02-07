@@ -3,7 +3,7 @@
 Domits is a React (native) project with several dependencies. Follow these steps to set up and run the project on your local machine.
 
 ### Prerequisites
-Before you start, ensure you have Node.js installed on your machine.
+Before you start, ensure you have Node.js installed on your local machine.
 
 ### Installation
 Clone the Repository:
