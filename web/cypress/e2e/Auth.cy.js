@@ -1,15 +1,30 @@
 describe('Authentication spec', () => {
-  it('Login', () => {
-    // Visit the login page
+
+  // guest login/logout
+  it('LoginGuest', () => {
     cy.visit('https://develop.domits.com/');
-    cy.get('//*[@id="root"]/div/div[1]/header/nav/button[3]');
+    cy.wait(1000); //1 second interval
+    cy.get('.personalMenu').click(); // to login page
 
-    // Fill in the login form and submit
-    cy.get('input[name="email"]').type('quintenschaap12@gmail.com');
-    cy.get('input[name="password"]').type('123!Pizza');
-    cy.get('button[type="submit"]').click();
+    cy.wait(1000); //1 second interval
 
-    // Assert the user is redirected to the admin dashboard after successful login
-    cy.url().should('include', '/admin');
+    cy.get('input[name="email"]').type('quintenschaap12@gmail.com'); //email
+    cy.wait(500); //0.5 second interval
+    cy.get('input[name="password"]').type('123!Pizza'); //password
+    cy.wait(500); //0.5 second interval
+    cy.get('button[type="submit"]').click(); //login button
+
+    cy.wait(5000); //5 second interval
+
+
+    cy.get('button').contains('Sign out').should('exist').then(($button) => {
+      if ($button.length > 0) {
+        cy.wrap($button).click();
+
+       cy.log('login and out successfull')
+      }
+    });
+
   });
+
 });
