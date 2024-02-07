@@ -12,6 +12,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Navigates to the web folder
+      - name: Navigate to web folder
+        run: cd web
+
       # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
