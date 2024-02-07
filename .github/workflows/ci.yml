@@ -12,13 +12,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Navigates to the web folder
+      # Debug: List contents of the web directory
+      - name: List contents of web directory
+        run: ls -la web
+
+      # Navigate to the web folder
       - name: Navigate to web folder
         run: cd web
+
+      # Debug: List contents of the current directory
+      - name: List contents of current directory
+        run: ls -la
 
       # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
+          pwd
           npm ci --verbose
 
       - name: Cypress install
