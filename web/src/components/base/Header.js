@@ -15,6 +15,10 @@ function Header() {
     const navigateToLanding = () => {
         navigate('/landing');
     };
+    const navigateToNinedots = () => {
+        navigate('/travelinnovation');
+    };
+    
 
 
     return (
@@ -32,7 +36,7 @@ function Header() {
                     <button className="becomeAHost" onClick={navigateToLanding}>
                         Become a host
                     </button>
-                    <button className="nineDots">
+                    <button className="nineDots" onClick={navigateToNinedots}>
                         <img src={nineDots} alt={nineDots}/>
                     </button>
                     <button className="personalMenu" onClick={navigateToLogin}>

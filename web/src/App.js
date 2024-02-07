@@ -2,6 +2,7 @@ import './App.css';
 import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
+import Travelinnovation from "./components/ninedots/travelinnovation";
 import Assortment from './components/assortment/Assortment';
 import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
@@ -70,6 +71,7 @@ function App() {
                     <Route path="/confirm-email" element={<ConfirmRegister />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/travelinnovation" element={<Travelinnovation />} />
                     <Route path="/career" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/details" element={<Details/>} />
