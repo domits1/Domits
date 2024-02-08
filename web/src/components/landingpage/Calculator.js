@@ -1,8 +1,9 @@
 import React, { Component } from 'react';
-import huis from "../../images/huis-illustratie.png";
-import appartement from "../../images/appartement-illustratie.png";
-import camper from "../../images/camper-illustratie.png";
-import villa from "../../images/villa-illustratie.png";
+import huis from "../../images/icons/house.png";
+import boothuis from "../../images/icons/house-boat.png";
+import appartement from "../../images/icons/flat.png";
+import camper from "../../images/icons/camper-van.png";
+import villa from "../../images/icons/mansion.png";
 
 class Calculator extends Component {
   constructor(props) {
@@ -67,7 +68,7 @@ class Calculator extends Component {
               {this.renderCard(0, "House", huis, selectedCards[1] === 0, 1500)}
               {this.renderCard(1, "Appartement", appartement, selectedCards[1] === 1, 950)}
               {this.renderCard(2, "Camper", camper, selectedCards[1] === 2, 1700)}
-              {this.renderCard(3, "Boathouse", huis, selectedCards[1] === 3, 720)}
+              {this.renderCard(3, "Boathouse", boothuis, selectedCards[1] === 3, 720)}
               {this.renderCard(4, "Villa", villa, selectedCards[1] === 4, 10500)}
             </div>
             <div className='buttonHolder'>
@@ -102,7 +103,7 @@ class Calculator extends Component {
               {this.renderCard(1, '2', null, selectedCards[3] === 1, 1.05)}
               {this.renderCard(2, '3', null, selectedCards[3] === 2, 1.20)}
               {this.renderCard(3, '4', null, selectedCards[3] === 3, 1.23)}
-              {this.renderCard(4, 'More than 5', null, selectedCards[3] === 4, 1.50)}
+              {this.renderCard(4, '5 or more', null, selectedCards[3] === 4, 1.50)}
             </div>
             <div className='buttonHolder'>
               <button className='nextButtons' onClick={() => this.pageUpdater(page - 1)}>Previous</button>

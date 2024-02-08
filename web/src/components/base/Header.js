@@ -18,7 +18,7 @@ function Header() {
     const navigateToNinedots = () => {
         navigate('/travelinnovation');
     };
-    
+
 
 
     return (
@@ -27,22 +27,24 @@ function Header() {
                 <nav className="header-nav">
                     <div className="logo">
                         <a href="/">
-                            <img src={logo} width={50} alt="Logo"/>
+                            <img src={logo} width={50} alt="Logo" />
                         </a>
                     </div>
                     <div className="search-bar">
-                        <input type="text" placeholder="Location"/>
+                        <input type="text" placeholder="Location" />
                     </div>
-                    <button className="becomeAHost" onClick={navigateToLanding}>
-                        Become a host
-                    </button>
-                    <button className="nineDots" onClick={navigateToNinedots}>
-                        <img src={nineDots} alt={nineDots}/>
-                    </button>
-                    <button className="personalMenu" onClick={navigateToLogin}>
-                        <img src={profile} alt={profile}/>
-                        <img src={arrowDown} alt={arrowDown}/>
-                    </button>
+                    <div className='headerRight'>
+                        <button className="headerButtons" onClick={navigateToLanding}>
+                            Become a host
+                        </button>
+                        <button className="headerButtons" onClick={navigateToNinedots}>
+                            <img src={nineDots} alt={nineDots} />
+                        </button>
+                        <button className="personalMenu" onClick={navigateToLogin}>
+                            <img src={profile} alt={profile} />
+                            <img src={arrowDown} alt={arrowDown} />
+                        </button>
+                        </div>
                 </nav>
             </header>
         </div>

@@ -31,6 +31,7 @@ import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 
+
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
 
