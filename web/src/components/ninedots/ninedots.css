@@ -46,7 +46,9 @@
     display: flex;
     flex-direction: row;
     justify-content: flex-start;
-    margin: 15px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
 }
 
