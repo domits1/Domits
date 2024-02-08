@@ -20,7 +20,8 @@ jobs:
 
       # Copy AWS export file
       - name: Copy AWS export file
-        run: cp /Domits/web/src/aws-exports.js /home/runner/work/Domits/Domits/web
+        run: cp /home/runner/work/Domits/Domits/web/src/aws-exports.js /home/runner/work/Domits/Domits/web
+
 
       - name: Cypress install
         uses: cypress-io/github-action@v6
