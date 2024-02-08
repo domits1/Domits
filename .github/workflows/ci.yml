@@ -18,9 +18,9 @@ jobs:
           cd web
           npm ci --verbose
 
-      # Copy AWS export file
-      - name: Copy AWS export file
-        run: cp /home/runner/work/Domits/Domits/web/src/aws-exports.js /home/runner/work/Domits/Domits/web
+#      # Copy AWS export file
+#      - name: Copy AWS export file
+#        run: cp /home/runner/work/Domits/Domits/web/src/aws-exports.js /home/runner/work/Domits/Domits/web
 
 
       - name: Cypress install
