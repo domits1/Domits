@@ -3,7 +3,7 @@ name: Cypress Tests
 on:
   push:
     branches:
-      - 'develop'
+      - 'acceptance'
 
 jobs:
   cypress-run:
