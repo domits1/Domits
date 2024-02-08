@@ -112,6 +112,7 @@
 
 .footer-content {
     display: flex;
+    flex-direction: row;
     justify-content: space-between;
     padding: 20px;
 }
@@ -160,6 +161,10 @@
     line-height: 150%;
 }
 
+.footer-section {
+    display: inline-block;
+    margin-right: 15px;
+}
 .footer-section-grid {
     display: block;
     flex-wrap: wrap;
@@ -198,6 +203,7 @@
 .footer-terms {
     color: #000;
     position: absolute;
+    margin-left: 20px;
     font-family: 'Kanit', sans-serif;
     font-size: 16px;
     font-style: normal;
@@ -211,6 +217,39 @@
     display: inline;
     margin-right: 20px;
     text-decoration-line: underline;
+}
+
+.borderline {
+    border-right: 1px solid #0A760F;
+    padding-right: 5%;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 830px) {
+
+    .footer-content{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+    }
+    .footer-section, .footer-endsection{
+        margin: 0;
+        border-top: 1px solid #0A760F;
+        margin-bottom: 20px;
+        width: 80%;
+    }
+    .footer-headers {
+        margin-top: 10px;
+    }
+    .borderline {
+        border-right: none;
+        padding-right: 0px;
+    }
+    
 }
 
 

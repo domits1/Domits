@@ -27,12 +27,7 @@ const Footer = () => {
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
                         <br/>
                     </ul>
-                    <div className='footer-terms'>
-                        <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
-                        <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>
-                        <a><Link to="/disclaimers" className='footer-links'>Disclaimer</Link></a>
-                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Sitemap</a>
-                    </div>
+                    
                 </div>
 
                 {/* Guests section */}
@@ -56,8 +51,8 @@ const Footer = () => {
 
 
                 {/* Network section */}
-                <div className="footer-section">
-                    <h4 className='footer-headers'>Network</h4>
+                <div className="footer-section borderline">
+                    <h4 className='footer-headers '>Network</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/guests" className='footer-links'>Guests</Link></li>
                         <li><Link to="/hosts" className='footer-links'>Hosts</Link></li>
@@ -68,9 +63,7 @@ const Footer = () => {
                     </ul>
                 </div>
 
-                <svg id="footer-line" xmlns="http://www.w3.org/2000/svg" width="1" height="315" viewBox="0 0 1 315" fill="none">
-                    <path d="M0.25 1L0.250014 314" stroke="#0D9813" stroke-width="0.5" stroke-linecap="round"/>
-                </svg>
+                
 
                 {/* Socials section */}
                 <div className="footer-section-grid">
@@ -83,7 +76,7 @@ const Footer = () => {
                 </div>
 
                     {/* Currency section */}
-                    <div className="footer-section">
+                    <div className="footer-endsection">
                         <h4 className='footer-headers'>Currencies</h4>
                         <select id='currency-dropdown' className='footer-lists footer-select'>
                             <option value="euro">EUR</option>
@@ -105,7 +98,7 @@ const Footer = () => {
                     </div>
 
                     {/* Languages section */}
-                    <div className="footer-section">
+                    <div className="footer-endsection">
                         <h4 className='footer-headers'>Languages</h4>
                         <select id='language-dropdown' className='footer-lists footer-select'>
                             <option value="english">English</option>
@@ -116,14 +109,12 @@ const Footer = () => {
                 </div>
             </div>
 
-
-
-
-
-
-
-
-
+            <div className='footer-terms'>
+                        <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
+                        <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>
+                        <a><Link to="/disclaimers" className='footer-links'>Disclaimer</Link></a>
+                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Sitemap</a>
+                    </div>
 
             {/* Copyright Block */}
             <div className='footer-copyright'>
