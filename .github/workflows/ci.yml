@@ -11,26 +11,12 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       # Install NPM dependencies, cache them correctly
+
       - name: Install dependencies
         run: |
           cd web
           npm ci --verbose
-          
-      - name: configure amplify
-        uses: ambientlight/amplify-cli-action@0.3.0
-        with:
-            amplify_command: configure
-            amplify_env: develop
-            amplify_cli_version: 10.6.1
-        env:
-            AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-            AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-            AWS_REGION: eu-north-1
-
-
-
 
       - name: Cypress install
         uses: cypress-io/github-action@v6
@@ -45,5 +31,4 @@ jobs:
         with:
           working-directory: web
           build: npm run build
-          start: npx vite --host
-
+          start: npm start
