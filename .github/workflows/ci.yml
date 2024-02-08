@@ -19,7 +19,7 @@ jobs:
           npm ci --verbose
           
       - name: configure amplify
-        uses: ambient-light/amplify-cli-action@0.3.0
+        uses: ambientlight/amplify-cli-action@0.3.0
         with:
             amplify_command: configure
             amplify_env: develop
