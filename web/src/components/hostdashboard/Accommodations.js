@@ -116,7 +116,7 @@ const Accommodations = ({ searchQuery }) => {
                             {/*    {accommodation.rating}*/}
                             {/*</span>*/}
                             <h2 className='titles'>{accommodation.address}</h2>
-                        </div>
+                        </div> 
                     </div>
                     <span>
                         <p className='prices'>{accommodation.price}</p>
