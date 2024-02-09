@@ -4,7 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="" />
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/Domits.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/cypress/e2e/Auth.cy.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/cypress/e2e/Auth.cy.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/base/base.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/base.css" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -29,7 +37,7 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "acceptance",
+    "git-widget-placeholder": "Merging acceptance",
     "last_opened_file_path": "C:/Users/giann/projects/Domits",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -68,6 +76,7 @@
       <workItem from="1707390289133" duration="464000" />
       <workItem from="1707396896239" duration="411000" />
       <workItem from="1707404314200" duration="1591000" />
+      <workItem from="1707490148094" duration="388000" />
     </task>
     <servers />
   </component>

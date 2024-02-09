@@ -1,7 +1,8 @@
 /* CSS for the header */
 .app-header {
     display: flex;
-    padding: 16px 50px;
+    width: 100%;
+    padding: 16px 0px;
     align-items: center;
     justify-content: space-between;
     text-align: center;
