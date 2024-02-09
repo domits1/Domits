@@ -1,0 +1,258 @@
+/* CSS for the header */
+.app-header {
+    display: flex;
+    padding: 16px 50px;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    box-shadow: 0 2px 6px 0 rgba(13, 26, 38, 0.15);
+}
+
+.header-nav{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.headerRight{
+    float: right;
+}
+
+
+.headerButtons, .personalMenu{
+    float: left;
+    color: black;
+    text-align: center;
+    padding: 12px;
+    font-size: 18px;
+    border-radius: 15px;
+    margin-top: 0;
+    display: inline-flex;
+    border: 1px black solid;
+    font-family: Kanit, sans-serif;
+    cursor: pointer;
+    width: auto;
+}
+
+.personalMenu {
+    border: none;
+    background-color: #0D9813;
+    
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    display: flex;
+}
+
+.headerButtons:hover{
+    background-color: #d3d3d3;
+}
+.personalMenu:hover {
+    background-color: #3fb366;
+}
+
+/* CSS for the SearchBar */
+.search-bar {
+    display: flex;
+    width: 35%;
+    min-width: 140px;
+}
+
+.search-bar input {
+    width: 100%;
+    height: 25px;
+    padding: 7px 15px;
+    color: black;
+    font-size: 12px;
+    font-family: Kanit, sans-serif;
+    font-weight: 275;
+    line-height: 18px;
+    align-items: center;
+    border: 1px solid black;
+    border-radius: 15px;
+    background: #FFF;
+    flex-shrink: 1;
+    overflow: unset;
+}
+
+@media screen and (max-width: 650px) {
+
+    .header-nav, .headerRight{
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .headerButtons, .personalMenu{
+        width: 100%;
+        margin-top: 10px;
+        margin-right: 0px;
+        justify-content: center;
+        float: none;
+    }
+
+    .search-bar {
+        width: 100%;
+        margin-top: 10px;
+    }
+
+}
+
+/* Footer styles */
+.main-footer {
+    background-color: #f8f8f8;
+    width: 100%;
+    /*min-height: 50vh;*/
+    /*display: 'flex';*/
+    /*flexDirection: 'column';*/
+    /*max-height: 100px;*/
+    /*overflowY: 'auto';*/
+}
+
+.footer-content {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 20px;
+}
+
+.footer-headers {
+    color: #0D9813;
+    font-family: Kanit, sans-serif;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
+}
+
+.footer-lists {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links {
+
+    color: #000;
+    font-family: Kanit, sans-serif;
+    font-size: 20px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+}
+
+.footer-copyright {
+
+    background-color: #0D9813;
+    flex-shrink: 0;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
+
+
+}
+
+.footer-copyright-text {
+    color: #fff;
+    font-family: Kanit, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+}
+
+.footer-section {
+    display: inline-block;
+    margin-right: 15px;
+}
+.footer-section-grid {
+    display: block;
+    flex-wrap: wrap;
+    gap: 20px;
+    /* Adjust the gap as needed */
+}
+
+.footer-select {
+    display: inline-flex;
+    padding: 5px 15px;
+    align-items: center;
+    gap: 10px;
+    border-radius: 15px;
+    border: 0.5px solid #0D9813;
+}
+
+#appstorebadge {
+    margin-top: 20px;
+}
+
+#playstorebadge {
+    margin-top: 20px;
+}
+
+.footer-column ul li {
+    margin: 10px 0;
+    color: var(--colors-font-interactive, #0A760F);
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    /* 150% */
+    letter-spacing: 0.16px;
+}
+
+.footer-terms {
+    color: #000;
+    position: absolute;
+    margin-left: 20px;
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
+    text-decoration-line: underline;
+    margin-top: 20px;
+}
+
+.footer-terms a {
+    display: inline;
+    margin-right: 20px;
+    text-decoration-line: underline;
+}
+
+.borderline {
+    border-right: 1px solid #0A760F;
+    padding-right: 5%;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 830px) {
+
+    .footer-content{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+    }
+    .footer-section, .footer-endsection{
+        margin: 0;
+        border-top: 1px solid #0A760F;
+        margin-bottom: 20px;
+        width: 80%;
+    }
+    .footer-headers {
+        margin-top: 10px;
+    }
+    .borderline {
+        border-right: none;
+        padding-right: 0px;
+    }
+    
+}
+
+
+/* End of footer */
