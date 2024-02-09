@@ -56,26 +56,39 @@ const Assortment = () => {
     return (
         <div>
             <div className="assortment">
-                <div className="label-row">
-                    <label>Visitors/guests</label>
-                    <label>Date range</label>
-                    <label>Price range</label>
-                    <label>Tags</label>
-                    <label>Search</label>
-                    <label>Sort results</label>
-                </div>
+    
                 <div className="dropdown-row">
-                    <Dropdown value={visitorGuests} onChange={setVisitorGuests} options={visitorGuestsOptions} />
-                    <Dropdown value={dateRange} onChange={setDateRange} options={dateRangeOptions} />
-                    <Dropdown value={priceRange} onChange={setPriceRange} options={priceRangeOptions} />
-                    <Dropdown value={tags} onChange={setTags} options={tagsOptions} />
-                    <button><img src={searchIcon} alt="Search" /></button>
-                    <button className="Sortbutton"><img src={sortIcon} alt="Search" /></button>
+                    <div className="dropdown-column">
+                        <label>Visitors/guests</label>
+                        <Dropdown value={visitorGuests} onChange={setVisitorGuests} options={visitorGuestsOptions} />
+                    </div>
+                    <div  className="dropdown-column">
+                        <label>Date range</label>
+                        <Dropdown value={dateRange} onChange={setDateRange} options={dateRangeOptions} />
+                    </div>
+                    <div  className="dropdown-column">
+                        <label>Price range</label>
+                        <Dropdown value={priceRange} onChange={setPriceRange} options={priceRangeOptions} />
+                    </div>
+                    <div  className="dropdown-column">
+                        <label>Tags</label>
+                        <Dropdown value={tags} onChange={setTags} options={tagsOptions} />
+                    </div>
+                    <div style={{ display: 'flex', flexWrap: 'no-wrap'}}>
+                    <div  className="dropdown-column">
+                        <label>Search</label>
+                        <button><img src={searchIcon} alt="Search" /></button>
+                    </div>
+                    <div  className="dropdown-column">
+                        <label>Sort results</label>
+                        <button className="Sortbutton"><img src={sortIcon} alt="Search" /></button>
+                    </div>
+                    </div>
                 </div>
 
-                <div className="array">
+                
                     <Accommodations searchQuery={searchQuery} filterQuery={filterQuery} />
-                </div>
+                
             </div>
         </div>
     );
@@ -99,23 +112,23 @@ export default Assortment;
 
 
 // <div className="assortment">
-{/*<div id="search-container">*/}
-{/*    <input*/}
-{/*        type="search"*/}
-{/*        id="search-input"*/}
-{/*        placeholder="Search..."*/}
-{/*        value={searchQuery}*/}
-{/*        onChange={(e) => handleSearch(e.target.value)}*/}
-{/*    />*/}
-{/*</div>*/}
-{/*<div id="filter-container">*/}
-{/*    <input*/}
-{/*        type="text"*/}
-{/*        id="filter-input"*/}
-{/*        placeholder="Filter"*/}
-{/*        value={filterQuery}*/}
-{/*        onChange={(e) => handleFilter(e.target.value)}*/}
-{/*    />*/}
-{/*</div>*/}
+{/*<div id="search-container">*/ }
+{/*    <input*/ }
+{/*        type="search"*/ }
+{/*        id="search-input"*/ }
+{/*        placeholder="Search..."*/ }
+{/*        value={searchQuery}*/ }
+{/*        onChange={(e) => handleSearch(e.target.value)}*/ }
+{/*    />*/ }
+{/*</div>*/ }
+{/*<div id="filter-container">*/ }
+{/*    <input*/ }
+{/*        type="text"*/ }
+{/*        id="filter-input"*/ }
+{/*        placeholder="Filter"*/ }
+{/*        value={filterQuery}*/ }
+{/*        onChange={(e) => handleFilter(e.target.value)}*/ }
+{/*    />*/ }
+{/*</div>*/ }
 
 // </div>

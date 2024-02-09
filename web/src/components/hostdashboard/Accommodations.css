@@ -1,3 +1,28 @@
+.array {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px; /* Adjust the gap as needed */
+  }
+  
+  /* Responsive layout for smaller screens */
+  @media (max-width: 1728px) {
+    .array {
+      grid-template-columns: repeat(3, 1fr); /* Adjust the number of columns for smaller screens */
+    }
+  }
+  
+  @media (max-width: 1292px) {
+    .array {
+      grid-template-columns: repeat(2, 1fr); /* Adjust the number of columns for even smaller screens */
+    }
+  }
+  @media (max-width: 856px) {
+    .array {
+      grid-template-columns: repeat(1, 1fr); /* Adjust the number of columns for even smaller screens */
+    }
+  }
+  
+
 .card-preview {
     display: flex;
     border: none;

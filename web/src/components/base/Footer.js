@@ -12,22 +12,20 @@ const Footer = () => {
     return (
         <footer className='main-footer'>
             <div className='footer-content'>
-                <div className="logo">
-                    <img src={logo} width={50} alt="Logo" />
-                </div>
+
                 {/* Navigation section */}
                 <div className="footer-section">
                     <h4 className='footer-headers'>Navigation</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>How it works</Link></li>
-                       <li><Link to="/" className='footer-links'>Why Domits</Link></li>
+                        <li><Link to="/" className='footer-links'>Why Domits</Link></li>
                         <li><Link to="/" className='footer-links'>Jobs</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
                         <li><Link to="/" className='footer-links'>Release</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
-                        <br/>
+                        <br />
                     </ul>
-                    
+
                 </div>
 
                 {/* Guests section */}
@@ -63,17 +61,17 @@ const Footer = () => {
                     </ul>
                 </div>
 
-                
+
 
                 {/* Socials section */}
                 <div className="footer-section-grid">
-                <div className="footer-section">
-                    <h4 className='footer-headers'>Socials</h4>
-                    <ul className='footer-lists'>
-                        <li><a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" className='footer-links'>Linkedin</a></li>
-                        <li><a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className='footer-links'>Instagram</a></li>
-                    </ul>
-                </div>
+                    <div className="footer-section">
+                        <h4 className='footer-headers'>Socials</h4>
+                        <ul className='footer-lists'>
+                            <li><a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" className='footer-links'>Linkedin</a></li>
+                            <li><a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className='footer-links'>Instagram</a></li>
+                        </ul>
+                    </div>
 
                     {/* Currency section */}
                     <div className="footer-endsection">
@@ -110,11 +108,14 @@ const Footer = () => {
             </div>
 
             <div className='footer-terms'>
-                        <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
-                        <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>
-                        <a><Link to="/disclaimers" className='footer-links'>Disclaimer</Link></a>
-                        <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Sitemap</a>
-                    </div>
+                <div className="logo">
+                    <img src={logo} width={25} alt="Logo" />
+                </div>
+                <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
+                <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>
+                <a><Link to="/disclaimers" className='footer-links'>Disclaimer</Link></a>
+                <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Sitemap</a>
+            </div>
 
             {/* Copyright Block */}
             <div className='footer-copyright'>
