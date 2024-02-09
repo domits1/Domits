@@ -2,7 +2,7 @@
 .app-header {
     display: flex;
     width: 100%;
-    padding: 16px 50px;
+    padding: 16px 0px;
     align-items: center;
     justify-content: space-between;
     text-align: center;
