@@ -1,7 +1,22 @@
 /* Login.css */
+.lbHolder {
+    width: auto;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+}
+
+.lbText {
+    width: auto;
+    display: flex;
+    justify-content: center;
+    gap: 5px;
+    color: white;
+}
 
 .loginButton {
-    width: 100%;
+    width: auto;
+    min-width: 100%;
     padding: 8px 15px;
     background: #0D9813;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
@@ -9,14 +24,14 @@
     border: 0;
     color: white;
     font-size: 18px;
-    justify-content: center;
-    align-items: center;
-    margin: 20px auto 0;
     display: block;
+    text-align: center;
+    cursor: pointer;
 }
 
 .registerButtonLogin {
-    width: 100%;
+    width: auto;
+    min-width: 100%;
     padding: 8px 15px;
     background: #49146A;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
@@ -24,11 +39,10 @@
     border: 0;
     color: white;
     font-size: 18px;
-    justify-content: center;
-    margin: 20px auto 0;
     display: block;
     text-align: center; /* Center the text within the button */
     text-decoration: none; /* Remove the default underline on anchor tags */
+    cursor: pointer;
 }
 
 .loginTitle {
@@ -46,9 +60,11 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    
 }
 
 .loginForm {
+    min-width: 300px;
     width: 25%;
     margin-top: 20px;
     padding: 30px;
