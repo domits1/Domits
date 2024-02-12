@@ -1,124 +1,225 @@
 .array {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px; /* Adjust the gap as needed */
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  /* Adjust the gap as needed */
+}
+
+/* Responsive layout for smaller screens */
+@media (max-width: 1728px) {
+  .array {
+    grid-template-columns: repeat(3, 1fr);
+    /* Adjust the number of columns for smaller screens */
   }
-  
-  /* Responsive layout for smaller screens */
-  @media (max-width: 1728px) {
-    .array {
-      grid-template-columns: repeat(3, 1fr); /* Adjust the number of columns for smaller screens */
-    }
+}
+
+@media (max-width: 1292px) {
+  .array {
+    grid-template-columns: repeat(2, 1fr);
+    /* Adjust the number of columns for even smaller screens */
   }
-  
-  @media (max-width: 1292px) {
-    .array {
-      grid-template-columns: repeat(2, 1fr); /* Adjust the number of columns for even smaller screens */
-    }
+}
+
+@media (max-width: 856px) {
+  .array {
+    grid-template-columns: repeat(1, 1fr);
+    /* Adjust the number of columns for even smaller screens */
   }
-  @media (max-width: 856px) {
-    .array {
-      grid-template-columns: repeat(1, 1fr); /* Adjust the number of columns for even smaller screens */
-    }
-  }
-  
+}
+
 
 .card-preview {
-    display: flex;
-    border: none;
-    flex-direction: column;
-    width: 400px; /* Add or adjust the width as needed */
-    height: 481px;
-    margin: 10px;
-    border-radius: 0px;
-    box-shadow: none;
-    overflow: hidden;
+  display: flex;
+  border: none;
+  flex-direction: column;
+  width: 400px;
+  /* Add or adjust the width as needed */
+  height: 481px;
+  margin: 10px;
+  border-radius: 0px;
+  box-shadow: none;
+  overflow: hidden;
 
-    flex-shrink: 0;
+  flex-shrink: 0;
 }
 
 
 .imgacco {
-    position: relative;
-    width: 100%;
-    height: 400px;
-    flex-shrink: 0;
-    overflow: hidden;
-    border-radius: 15px;
+  position: relative;
+  width: 100%;
+  height: 400px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 15px;
 }
 
 
 .titles {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 10px;
-    box-sizing: border-box;
-    z-index: 1;
-    border-radius: 0 0 15px 15px;
-    background: rgba(0, 0, 0, 0.50);
-    backdrop-filter: blur(5px);
-    color: #FFF;
-    font-family: Kanit;
-    font-size: 24px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 150%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+  z-index: 1;
+  border-radius: 0 0 15px 15px;
+  background: rgba(0, 0, 0, 0.50);
+  backdrop-filter: blur(5px);
+  color: #FFF;
+  font-family: Kanit;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
 }
 
 
 .overlay {
-    display: flex;
-    justify-content: space-between;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 10px;
-    border-radius: 15px;
-    box-sizing: border-box;
+  display: flex;
+  justify-content: space-between;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  border-radius: 15px;
+  box-sizing: border-box;
 }
 
 .item-preview:hover .overlay {
-    opacity: 1;
+  opacity: 1;
 }
 
 .prices {
-    color: #000;
-    font-family: Kanit;
-    font-size: 24px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 150%;
+  color: #000;
+  font-family: Kanit;
+  font-size: 24px;
+  font-style: normal;
+  font-weight: 400;
+  line-height: 150%;
 }
 
 h2,
 p {
-    color: black;
-    margin: 0;
+  color: black;
+  margin: 0;
 }
 
 .star {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 15px;
-    border: 0.5px solid #0D9813;
-    background: rgba(0, 0, 0, 0.50);
-    backdrop-filter: blur(20px);
-    color: white;
-    padding: 5px 10px; /* Adjust padding as needed */
-    max-width: 100%; /* Add this line to limit the width */
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 15px;
+  border: 0.5px solid #0D9813;
+  background: rgba(0, 0, 0, 0.50);
+  backdrop-filter: blur(20px);
+  color: white;
+  padding: 5px 10px;
+  /* Adjust padding as needed */
+  max-width: 100%;
+  /* Add this line to limit the width */
 }
 
 .heart {
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
 }
 
 
+.container {
+  width: 90%;
+  margin: auto;
+  margin-top: 30px;
+  margin-bottom: 30px;
+}
+
+.dashboard {
+  flex-wrap: wrap;
+}
 
 
+.wijzer {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+
+}
+
+.dashboard {
+  display: grid;
+  grid-template-columns: 200px auto;
+}
+
+
+.dashboardSection {
+  display: flex;
+  flex-direction: column;
+}
+
+
+.wijzer, .boxText {
+  border: 0.5px solid black;
+  border-radius: 15px;
+  padding: 5px;
+
+}
+
+.wijzer {
+  margin-bottom: 10px;
+  align-items: center;
+  width: 100%;
+  max-width: 200px;
+}
+
+.contentContainer {
+  width: 100%;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  
+}
+
+.boxColumns {
+  width: 24%;
+  height: auto;
+  margin: 10px;
+  min-width: 155px;
+
+  display: flex;
+  flex-direction: column;
+  
+}
+
+.box {
+  margin-right: 10px;
+  margin-top: 20px;
+  padding: 10px;
+  
+}
+
+.boxText {
+  width: 80%;
+  margin: auto;
+}
+
+
+@media screen and (max-width: 830px) {
+
+  .dashboard{
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+  }
+  .dashboardSection {
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-items: center;
+}
+.wijzer {
+  
+  width: 90%;
+}
+}

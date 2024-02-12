@@ -1,64 +1,61 @@
-import React from "react";
-import accommodation1 from "../../images/accoimg1.png";
-import accommodation2 from "../../images/accommodationtestpic2.png";
-import {Link} from "react-router-dom";
+import React, { useState } from "react";
+import { Dashboard, Messages, Payments, Listing, Calendar, Settings } from "./Pages"; 
+
+import profile from "../../images/icons/profile-icon.png";
+import message from "../../images/icons/message-icon.png";
+import payment from "../../images/icons/payment-icon.png";
+import review from "../../images/icons/star-icon.png";
+import settings from "../../images/icons/settings-icon.png";
 
 function HostDashboard() {
+  const [selectedPage, setSelectedPage] = useState("Dashboard");
 
-    return (
-        <div>
-            <div className="sidebar">
-                <ul>
-                    <li><a href="#">Profile</a></li>
-                    <label className="sidebar-label">Manage</label>
-                    <li><a href="#">Manage</a></li>
-                    <li><a href="#">Accommodations</a></li>
-                    <li><a href="#">Payments</a></li>
-                    <li><a href="#">Customers</a></li>
-                    <li><a href="#">Settings</a></li>
-                    <label className="sidebar-label">Settings</label>
-                    <li><a href="#">Password</a></li>
-                </ul>
-            </div>
-            <div className="accommodation">
-                <div className="accommodation-row">
-                    <div className="image-container">
-                        <img src={accommodation1} alt="Accommodation Image" className="resizable-image" />
-                    </div>
-                    <div className="descriptions-container">
-                        <h3>Kinderhuissingel 6k</h3>
-                        <p>Mon - Sun / 360d p.y.</p>
-                        <p>$140 - night</p>
-                        <p>47 reviews</p>
-                        <p>0 ad credits</p>
-                    </div>
-                    <div className="manage-link">
-                        <Link to="/hostdashboard/read">Manage</Link>
-                    </div>
-                </div>
-            </div>
-            <div className="accommodation2">
-                <div className="accommodation-row">
-                    <div className="image-container">
-                        <img src={accommodation2} alt="Accommodation Image" className="resizable-image" />
-                    </div>
-                    <div className="descriptions-container">
-                        <h3>domitsstraat 190</h3>
-                        <p>Mon - sat / 340d p.y.</p>
-                        <p>$130 - night</p>
-                        <p>41 reviews</p>
-                        <p>2 ad credits</p>
-                    </div>
-                    <div className="manage-link">
-                        <a href="#">Manage</a>
-                    </div>
-                </div>
-            </div>
+  const handlePageChange = (page) => {
+    
+    setSelectedPage(page);
+  };
+
+  return (
+    <div className="container">
+      <h2>Dashboard</h2>
+      <div className="dashboard">
+        <div className="dashboardSection section-1">
+          <div className="wijzer" onClick={() => handlePageChange("Dashboard")}>
+            <img src={profile} alt="Dashboard"></img>
+            <p>Profile</p>
+          </div>
+          <div className="wijzer" onClick={() => handlePageChange("Messages")}>
+            <img src={message} alt="Messages"></img>
+            <p>Messages</p>
+          </div>
+          <div className="wijzer" onClick={() => handlePageChange("Payments")}>
+            <img src={payment} alt="Payments"></img>
+            <p>Payments</p>
+          </div>
+          <div className="wijzer" onClick={() => handlePageChange("Listing")}>
+            <img src={review} alt="Listing"></img>
+            <p>Listing</p>
+          </div>
+          <div className="wijzer" onClick={() => handlePageChange("Calendar")}>
+            <img src={review} alt="Listing"></img>
+            <p>Calendar</p>
+          </div>
+          <div className="wijzer" onClick={() => handlePageChange("Settings")}>
+            <img src={settings} alt="Settings"></img>
+            <p>Settings</p>
+          </div>
         </div>
-    );
+
+        {/* Render the selected page dynamically */}
+        {selectedPage === "Dashboard" && <Dashboard />}
+        {selectedPage === "Messages" && <Messages />}
+        {selectedPage === "Payments" && <Payments />}
+        {selectedPage === "Listing" && <Listing />}
+        {selectedPage === "Calendar" && <Calendar />}
+        {selectedPage === "Settings" && <Settings />}
+      </div>
+    </div>
+  );
 }
-
-
-
 
 export default HostDashboard;
