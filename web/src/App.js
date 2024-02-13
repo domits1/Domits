@@ -9,7 +9,7 @@ import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
-import HostDashboard from "./components/hostdashboard/HostDashboard";
+import HostHomepage from "./components/hostdashboard/HostHomepage";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -79,7 +79,7 @@ function App() {
                     <Route path="/assortment" element={<Assortment />} />
                     <Route path="/Guestdashboard" element={<GuestDashboard />}/>
                     <Route path="/career" element={<Careers />} />
-                    <Route path="/hostdashboard" element={<HostDashboard />} />
+                    <Route path="/hosthomepage" element={<HostHomepage />} />
                     <Route path="/landing" element={<Landing />}/>
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
