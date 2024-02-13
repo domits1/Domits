@@ -18,6 +18,8 @@ import CreateAccommodation from "./components/hostdashboard/CreateAccommodation"
 import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
+import BookingOverview from "./components/bookingprocess/BookingOverview";
+import BookingPayment from "./components/bookingprocess/BookingPayment";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
 import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
 import Disclaimers from "./components/disclaimers/Disclaimers";
@@ -32,7 +34,6 @@ export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
-
 
 function App() {
     useEffect(() => {
@@ -52,7 +53,7 @@ function App() {
 
     const renderFooter = () => {
         const currentPath = window.location.pathname;
-        if (currentPath === '/admin') {
+        if (currentPath === '/admin' || currentPath === '/bookingoverview') {
             return null; // Don't render Footer for /admin route
         }
         return <Footer/>;
@@ -72,7 +73,6 @@ function App() {
                     <Route path="/about" element={<About />} />
                     <Route path="/career" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />
-                    <Route path="/details" element={<Details/>} />
                     <Route path="/assortment" element={<Assortment />} />
                     <Route path="/Guestdashboard" element={<GuestDashboard />}/>
                     <Route path="/career" element={<Careers />} />
@@ -86,7 +86,10 @@ function App() {
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/error" element={<Error/>}/>
-
+                    {/* Booking process*/}
+                    <Route path="/details" element={<Details/>} />
+                    <Route path="/bookingoverview" element={<BookingOverview/>} />
+                    <Route path="/bookingpayment" element={<BookingPayment/>} />
 
                     {/*  Admin Routes  */}
                     <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />

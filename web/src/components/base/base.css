@@ -1,7 +1,6 @@
 /* CSS for the header */
 .app-header {
     display: flex;
-    width: 100%;
     padding: 16px 50px;
     align-items: center;
     justify-content: space-between;
@@ -50,7 +49,7 @@
 .becomeAHost {
     margin-top: 0;
     display: inline-flex;
-    margin-left: 15%;
+    margin-left: 25%;
     width: 10%;
     padding: 5px 15px;
     border-radius: 15px;
@@ -70,7 +69,7 @@
 
 .nineDots {
     margin-top: 0;
-    margin-left: 1%;
+    margin-left: 0.5%;
     box-sizing: content-box;
     padding: 8px 0;
     width: 3%;
@@ -88,7 +87,7 @@
 
 .personalMenu {
     margin-top: 0;
-    margin-left: 1%;
+    margin-left: 0.5%;
     width: 5%;
     height: 100%;
     padding: 8px 15px;
