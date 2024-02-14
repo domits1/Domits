@@ -9,6 +9,7 @@
     width: 80%;
     align-items: center; /* Optional: Align items vertically in the center */
     justify-content: space-evenly; /* Adjust as needed for your layout */
+    margin-bottom: 20px;
 }
 
 .dropdown-column {
