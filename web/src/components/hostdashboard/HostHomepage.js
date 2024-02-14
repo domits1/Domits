@@ -7,6 +7,7 @@ import payment from "../../images/icons/payment-icon.png";
 import listings from "../../images/icons/listings-icon.png";
 import calendar from "../../images/icons/calendar-icon.png";
 import settings from "../../images/icons/settings-icon.png";
+import './HostHomepage.css'
 
 function HostHomepage() {
   const [selectedPage, setSelectedPage] = useState("Dashboard");

@@ -1,0 +1,96 @@
+.container {
+    width: 90%;
+    margin: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+  }
+  
+  .dashboard {
+    flex-wrap: wrap;
+  }
+  
+  
+  .wijzer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  
+  }
+  
+  .dashboard {
+    display: grid;
+    grid-template-columns: 200px auto;
+  }
+  
+  
+  .dashboardSection {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  
+  .wijzer, .boxText {
+    border: 0.5px solid black;
+    border-radius: 15px;
+    padding: 5px;
+  
+  }
+  
+  .wijzer {
+    margin-bottom: 10px;
+    align-items: center;
+    width: 100%;
+    max-width: 200px;
+  }
+  
+  .contentContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    
+  }
+  
+  .boxColumns {
+    width: 24%;
+    height: auto;
+    margin: 10px;
+    min-width: 155px;
+  
+    display: flex;
+    flex-direction: column;
+    
+  }
+  
+  .box {
+    margin-right: 10px;
+    margin-top: 20px;
+    padding: 10px;
+    
+  }
+  
+  .boxText {
+    width: 80%;
+    margin: auto;
+  }
+  
+  
+  @media screen and (max-width: 830px) {
+  
+    .dashboard{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .dashboardSection {
+      display: grid;
+      grid-template-columns: auto auto;
+      justify-items: center;
+  }
+  .wijzer {
+    
+    width: 90%;
+  }
+  }
+  
