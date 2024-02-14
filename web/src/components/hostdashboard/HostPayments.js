@@ -2,7 +2,7 @@ import React from "react";
 import Pages from "./Pages";
 import './HostHomepage.css'
 
-function HostSettings() {
+function HostPayments() {
 
     return (
         <div className="container">
@@ -13,7 +13,7 @@ function HostSettings() {
                 <div className="contentContainer">
                     <div className="boxColumns">
                         <div className="box">
-                            <p className="boxText">Settings</p>
+                            <p className="boxText">Payments</p>
                         </div>
                         <div className="box">
                             <p className="boxText">Pending guests</p>
@@ -44,4 +44,4 @@ function HostSettings() {
 
 
 
-export default HostSettings;
+export default HostPayments;
