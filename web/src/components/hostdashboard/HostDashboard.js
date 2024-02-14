@@ -1,14 +1,19 @@
 import React from "react";
+import Pages from "./Pages";
+import './HostHomepage.css'
 
-
-
-function Dashboard() {
+function HostDashboard() {
 
     return (
+        <div className="container">
+            <h2>Dashboard</h2>
+            <div className="dashboard">
+                <Pages />
+
                 <div className="contentContainer">
                     <div className="boxColumns">
                         <div className="box">
-                            <p className="boxText">Current guests</p>
+                            <p className="boxText">Dashboard</p>
                         </div>
                         <div className="box">
                             <p className="boxText">Pending guests</p>
@@ -31,10 +36,12 @@ function Dashboard() {
 
                     </div>
                 </div>
+            </div>
+        </div>
     );
 }
 
 
 
 
-export default Dashboard;
+export default HostDashboard;

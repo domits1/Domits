@@ -9,7 +9,12 @@ import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
-import HostHomepage from "./components/hostdashboard/HostHomepage";
+import HostDashboard from "./components/hostdashboard/HostDashboard.js";
+import HostMessages from "./components/hostdashboard/HostMessages.js";
+import HostPayments from "./components/hostdashboard/HostPayments.js";
+import HostListings from "./components/hostdashboard/HostListings.js";
+import HostCalendar from "./components/hostdashboard/HostCalendar.js";
+import HostSettings from "./components/hostdashboard/HostSettings.js";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -79,7 +84,12 @@ function App() {
                     <Route path="/assortment" element={<Assortment />} />
                     <Route path="/Guestdashboard" element={<GuestDashboard />}/>
                     <Route path="/career" element={<Careers />} />
-                    <Route path="/hosthomepage" element={<HostHomepage />} />
+                    <Route path="/hostdashboard" element={<HostDashboard />} />
+                    <Route path="/hostdashboard/messages" element={<HostMessages/>} />
+                    <Route path="/hostdashboard/payments" element={<HostPayments />} />
+                    <Route path="/hostdashboard/listings" element={<HostListings />} />
+                    <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
+                    <Route path="/hostdashboard/settings" element={<HostSettings />} />
                     <Route path="/landing" element={<Landing />}/>
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
