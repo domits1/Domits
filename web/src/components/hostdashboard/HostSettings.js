@@ -2,13 +2,13 @@ import React from "react";
 
 
 
-function Dashboard() {
+function HostSettings() {
 
     return (
                 <div className="contentContainer">
                     <div className="boxColumns">
                         <div className="box">
-                            <p className="boxText">Current guests</p>
+                            <p className="boxText">Settings</p>
                         </div>
                         <div className="box">
                             <p className="boxText">Pending guests</p>
@@ -37,4 +37,4 @@ function Dashboard() {
 
 
 
-export default Dashboard;
+export default HostSettings;
