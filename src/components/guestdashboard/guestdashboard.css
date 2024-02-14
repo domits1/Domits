@@ -10,7 +10,7 @@
 
 .sidebar {
     padding: 20px;
-    display: flex;
+    display: inline;
     flex-direction: column;
 }
 
@@ -29,39 +29,42 @@
 }
 
 .content {
-    flex: 1;
     padding: 20px;
     display: flex;
     justify-content: space-between;
 }
 
 .leftContent {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
+    /* If .leftContent's height isn't defined by its content or an explicit height, consider setting one here. */
+    height: 360px; /* Example fixed height; adjust as needed. */
 }
 
+.bookingBox {
+    /* Adjust the percentage to increase the height relative to .leftContent */
+    height: 60%; /* Example adjustment */
+    margin-bottom: 20px; /* Maintain spacing between boxes */
+    overflow: auto; /* In case the content exceeds the box */
+}
+
+.messageBox {
+    /* Adjust the percentage to decrease the height relative to .leftContent */
+    height: 40%; /* Example adjustment */
+    overflow: auto; /* In case the content exceeds the box */
+}
 .bookingBox, .messageBox {
-    background-color: #fff;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
-}
-
+     background-color: #fff;
+     border-radius: 15px;
+     padding: 20px;
+     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+     margin-bottom: 20px;
+    width: 60%;
+ }
 .bookingBox img {
     width: 20%;
     height: auto;
     border-radius: 15px;
     margin-top: 10px;
 }
-
-.messageBox {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
 .messageBox button {
     align-self: flex-end;
     padding: 10px 20px;
@@ -74,7 +77,7 @@
 .personalInfoContent {
     display: flex;
     flex-direction: column;
-    margin-left: 20px;
+    margin-left: 1px;
 }
 
 .infoBox {
