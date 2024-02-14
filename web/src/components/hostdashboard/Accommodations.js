@@ -12,6 +12,7 @@ import Villaneth from '../../images/accom_villaneth.png';
 import Yurt from '../../images/accom_yurt.png';
 import Lighthouse from '../../images/orange_caravan.png';
 import './Accommodations.css'
+import './HostHomepage.css'
 
 const Accommodations = ({ searchQuery }) => {
     const accolist = [
@@ -105,25 +106,34 @@ const Accommodations = ({ searchQuery }) => {
 
 
     return (
-        <div id='card-visibility' className="array">
+        <div id='card-visibility' >
             {filteredAccommodations.map((accommodation, index) => (
-                <div className="card-preview" key={index}>
-                    <div className="imgacco">
-                        <img src={accommodation.image} alt="Accommodation" />
-                        <div className="overlay">
-                            {/*<span className='star'>*/}
-                            {/*   <img src={Star} alt="Star" />*/}
-                            {/*    {accommodation.rating}*/}
-                            {/*</span>*/}
-                            <h2 className='titles'>{accommodation.address}</h2>
-                        </div> 
-                    </div>
-                    <span>
-                        <p className='prices'>{accommodation.price}</p>
-                        {/*<img className='heart' src={Heart} alt="Fav" />*/}
-                    </span>
-                    <p>{accommodation.details} - {accommodation.size}</p>
+                // <div className="card-preview" key={index}>
+                //     <div className="imgacco">
+                //         <img src={accommodation.image} alt="Accommodation" />
+                //         <div className="overlay">
+                //             {/*<span className='star'>*/}
+                //             {/*   <img src={Star} alt="Star" />*/}
+                //             {/*    {accommodation.rating}*/}
+                //             {/*</span>*/}
+                //             <h2 className='titles'>{accommodation.address}</h2>
+                //         </div> 
+                //     </div>
+                //     <span>
+                //         <p className='prices'>{accommodation.price}</p>
+                //         {/*<img className='heart' src={Heart} alt="Fav" />*/}
+                //     </span>
+                //     <p>{accommodation.details} - {accommodation.size}</p>
+                // </div>
+                <div className="accocard" key={index}>
+                <img src={accommodation.image} alt="Product Image"></img>
+                <div className="accocard-content">
+                    <div className="accocard-title">{accommodation.address}</div>
+                    <div className="accocard-price">{accommodation.price}</div>
+                    <div className="accocard-detail">{accommodation.details}</div>
+                    <div className="accocard-size">{accommodation.size}</div>
                 </div>
+            </div>
             ))}
         </div>
     );
