@@ -222,8 +222,7 @@ a:hover {
     .borderline {
         border-right: none;
         padding-right: 0px;
-    }
-    
+    } 
 }
 .search-bar-container {
     /* padding-top: 20vh; */
@@ -237,9 +236,4 @@ a:hover {
     left: 40%; /* Plaats in het midden of pas aan zoals gewenst */
     transform: translateX(-50%);
   }
-  
-  
-  
-
-
 /* End of footer */
