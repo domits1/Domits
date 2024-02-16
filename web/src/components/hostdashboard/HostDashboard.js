@@ -1,6 +1,6 @@
 import React from "react";
-import Pages from "./Pages";
-import './HostHomepage.css'
+import Pages from "./Pages.js";
+import './HostHomepage.css';
 
 function HostDashboard() {
 
