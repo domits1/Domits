@@ -6,24 +6,29 @@ import img from "../../images/aboutusimg.png"
 function About() {
     return (
         <div className="aboutus">
-            <div className="bigtext">
-                <h1>“Our mission is to simplify travel for 1 million people”</h1>
+            <div>
+                <h2>About Domits</h2>
             </div>
-
-            <div className="aboutusimg">
-                <img src={img} alt="aboutusimg"/>
+            <div>
+                <h3>Tailor made partnership</h3>
             </div>
 
             <div className="underbigtext">
-                <p>
-                    Domits is a platform for secure accommodations. On our platform, you'll find a wide range of lodging options.
+                <p className="aboutText">
+                    Domits is a platform to list, search and book holiday accommodations.
+                    We build cool stuff in our travel innovation labs for People, Growth, Cloud IT and AI Data.
                 </p>
-                <p>
-                    We strive to support tenants and landlords in every step of the process. Domits acts as the intermediary in this process.
+                <p className="aboutText">
+                    In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners.
+                    There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.
+                </p>
+                <p className="aboutText">
+                    We strive to support tenants and landlords in every step of the process.
+                    Domits acts as the intermediary in this process.
                     You enter into a rental agreement directly with the landlord and/or owner of the accommodation.
                     Through Domits, you have the opportunity to inquire about options without any obligation.
                 </p>
-                <p>
+                <p className="aboutText">
                     By charging one-time service fees, we can keep our platform running and provide services such as support.
                 </p>
             </div>
@@ -64,3 +69,4 @@ function About() {
 }
 
 export default About;
+

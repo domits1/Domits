@@ -1,39 +1,16 @@
 
 
 .aboutus{
-    padding-left: 108px;
-    padding-right: 100px;
+    width: 80%;
+    margin: auto;
     color: #000;
     font-size: 20px;
     font-style: normal;
     font-weight: 400;
 }
-
-.bigtext{
-    margin-top: 77px;
-    margin-bottom: 70px;
-    width: 693px;
-    height: 108px;
+.aboutText {
+    margin-bottom: 15px;
 }
-
-.aboutusimg img{
-    float: right;
-    margin-top: -100px;
-    margin-bottom: 150px;
-    margin-left: 100px;
-    margin-right: 100px;
-}
-
-.underbigtext{
-    width: 760px;
-    height: 300px;
-    color: #000;
-    font-size: 20px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 150%;
-}
-
 .awesomefacts{
     display: flex;
     justify-content: center;
