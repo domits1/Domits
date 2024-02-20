@@ -31,10 +31,14 @@
   
 
 
-  .check-in:hover, .check-out:hover, .accommodation:hover, .location:hover , .location1:hover{
+  .check-in:hover, .check-out:hover, .location:hover , .location1:hover{
     width: 30%;
     cursor: pointer;
     
+  }
+  .accommodation:hover, .accommodation.hovered {
+    width: 30%;
+    cursor: pointer;
   }
   
   input[type="text"] {
@@ -111,6 +115,7 @@
 
 .button svg {
     color: black; /* Zwarte kleur voor FaSearch-icoon */
+    
 }
 
 .button:hover svg {
@@ -128,6 +133,8 @@
       transform: translateY(-3px);
   }
 }
+
+
 
 
 

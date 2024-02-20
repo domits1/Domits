@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import { FaSearch } from 'react-icons/fa';
+import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
 import debounce from 'lodash.debounce';
 import './SearchBar.css';
@@ -8,8 +9,8 @@ import './SearchBar.css';
 export const SearchBar = ({ setResults }) => {
   const [selectedCountry, setSelectedCountry] = useState('');
   const [selectedCity, setSelectedCity] = useState('');
-  const [checkIn, setCheckIn] = useState(null); // Use null for the date state
-  const [checkOut, setCheckOut] = useState(null); // Use null for the date state
+  const [checkIn, setCheckIn] = useState(null);
+  const [checkOut, setCheckOut] = useState(null);
   const [accommodation, setAccommodation] = useState('');
 
   // de brains achter de search, hier wordt de data gefilterd en verdeeld over twee delen: Country, city
@@ -88,14 +89,41 @@ export const SearchBar = ({ setResults }) => {
         </div>
       </div>
       <div className="accommodation">
-        <p>Accommodation</p>
-        <input
-          type="text"
-          placeholder="Type of accommodation"
-          value={accommodation}
-          onChange={(e) => setAccommodation(e.target.value)}
-        />
-      </div>
+  <p>Accommodation</p>
+  <Select
+    value={accommodation ? { label: accommodation, value: accommodation } : null}
+    onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
+    options={[
+      { value: 'hotel', label: 'Hotel' },
+      { value: 'apartment', label: 'Apartment' },
+      { value: 'guesthouse', label: 'Guesthouse' },
+      // Add more options as needed
+    ]}
+    placeholder="Type of accommodation"
+    isSearchable={false}
+    styles={{
+      control: (provided) => ({
+        ...provided,
+        border: 'none',
+        boxShadow: 'none',
+        width: '200px', // Adjust the width as needed
+      }),
+      indicatorSeparator: (provided) => ({
+        ...provided,
+        display: 'none',
+      }),
+      dropdownIndicator: (provided) => ({
+        ...provided,
+        display: 'none',
+      }),
+      placeholder: (provided) => ({
+        ...provided,
+        color: '#666',
+      }),
+    }}
+  />
+</div>
+
       <button className="button" type="button">
         <FaSearch style={{ marginRight: '1px' }} />
       </button>
