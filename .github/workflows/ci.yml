@@ -22,7 +22,7 @@ jobs:
       - name: Initialize Amplify
         run: |
           cd web
-          npx amplify init --app-id <34jwd0sihmsu --envName develop --verbose
+          npx amplify init --app-id 34jwd0sihmsu --envName develop --verbose
 
       # Install and configure AWS Amplify CLI
       - name: Configure Amplify CLI
