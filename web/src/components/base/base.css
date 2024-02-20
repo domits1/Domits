@@ -1,130 +1,77 @@
 /* CSS for the header */
 .app-header {
-    display: flex;
+    box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 16px 50px;
-    align-items: center;
-    justify-content: space-between;
     text-align: center;
-    box-shadow: 0 2px 6px 0 rgba(13, 26, 38, 0.15);
 }
 
-.header-nav {
+.header-nav{
     display: flex;
+    justify-content: space-between;
     align-items: center;
     width: 100%;
 }
 
-.logo {
-    margin-left: 5%;
+.headerRight{
+    float: right;
 }
 
-.app-header .login-container {
-    margin-left: auto;
-}
 
-/* CSS for the SearchBar */
-.search-bar {
-    display: flex;
-    margin-left: 6%;
-    width: 35%;
-}
-
-.search-bar input {
-    width: 100%;
-    height: 25px;
-    padding: 7px 15px;
+.headerButtons, .personalMenu{
+    float: left;
     color: black;
-    font-size: 12px;
-    font-family: Kanit, sans-serif;
-    font-weight: 275;
-    line-height: 18px;
-    align-items: center;
-    border: 1px solid black;
-    border-radius: 15px;
-    background: #FFF;
-    flex-shrink: 1;
-    overflow: unset;
-}
-
-.becomeAHost {
+    text-align: center;
+    padding: 12px;
+    font-size: 18px;
+    border-radius: 10px;
     margin-top: 0;
     display: inline-flex;
-    margin-left: 25%;
-    width: 10%;
-    padding: 5px 15px;
-    border-radius: 15px;
-    overflow: hidden;
-    border: 1px #49146A solid;
-    justify-content: center;
-    align-items: center;
-    color: black;
     font-family: Kanit, sans-serif;
-    font-size: 1vw;
-    background: #FFF;
     cursor: pointer;
-}
-.becomeAHost:hover{
-    cursor: pointer;
-}
-
-.nineDots {
-    margin-top: 0;
-    margin-left: 0.5%;
-    box-sizing: content-box;
-    padding: 8px 0;
-    width: 3%;
-    height: 100%;
-    background: white;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
-    overflow: hidden;
-    border: 1px #49146A solid;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    cursor: pointer;
+    width: auto;
+    box-shadow: 0 0 5px hsl(0 0% 78%);
 }
 
 .personalMenu {
-    margin-top: 0;
-    margin-left: 0.5%;
-    width: 5%;
-    height: 100%;
-    padding: 8px 15px;
-    background: #0D9813;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
+    border: none;
+    background-color: #0D9813;
+
     justify-content: center;
     align-items: center;
     gap: 10px;
-    display: inline-flex;
-    border: none;
-    cursor: pointer;
+    display: flex;
 }
 
-/* Close Button */
-.close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 30px;
-    color: #ff6f61;
-    transition: transform 0.3s, color 0.3s;
+.headerButtons:hover{
+    background-color: #d3d3d3;
+}
+.personalMenu:hover {
+    background-color: #3fb366;
 }
 
-.close-button:hover {
+/* CSS for the SearchBar */
 
-    color: #ff3d3d;
+@media screen and (max-width: 650px) {
+
+    .header-nav, .headerRight{
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .headerButtons, .personalMenu{
+        width: 100%;
+        margin-top: 10px;
+        margin-right: 0px;
+        justify-content: center;
+        float: none;
+    }
+
 }
-
 
 /* Footer styles */
 .main-footer {
     background-color: #f8f8f8;
-    width: 100%;
     /*min-height: 50vh;*/
     /*display: 'flex';*/
     /*flexDirection: 'column';*/
@@ -133,7 +80,10 @@
 }
 
 .footer-content {
+    margin: auto;
     display: flex;
+    flex-direction: row;
+    width: 90%;
     justify-content: space-between;
     padding: 20px;
 }
@@ -150,6 +100,8 @@
 .footer-lists {
     list-style: none;
     padding: 0;
+    overflow: visible;
+    white-space: normal;
 }
 
 .footer-links {
@@ -170,6 +122,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    padding: 15px;
+
 
 }
 
@@ -182,10 +136,15 @@
     line-height: 150%;
 }
 
+.footer-section {
+    display: inline-block;
+    margin-right: 15px;
+}
 .footer-section-grid {
     display: block;
     flex-wrap: wrap;
-    gap: 20px; /* Adjust the gap as needed */
+    gap: 20px;
+    /* Adjust the gap as needed */
 }
 
 .footer-select {
@@ -211,28 +170,76 @@
     font-family: Inter;
     font-size: 16px;
     font-weight: 400;
-    line-height: 24px; /* 150% */
+    line-height: 24px;
+    /* 150% */
     letter-spacing: 0.16px;
 }
 
 .footer-terms {
-    color: #000;
-    position: absolute;
-    font-family: 'Kanit', sans-serif;
-    font-size: 16px;
-    font-style: normal;
-    font-weight: 300;
-    line-height: 150%;
+    margin: auto;
+    padding: 0;
+
+    width: 90%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+
     text-decoration-line: underline;
     margin-top: 20px;
 }
 
 .footer-terms a {
     display: inline;
-    margin-right: 20px;
+    margin-left: 20px;
     text-decoration-line: underline;
 }
 
+.borderline {
+    border-right: 1px solid #0A760F;
+    padding-right: 5%;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+@media screen and (max-width: 830px) {
+
+    .footer-content{
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+    .footer-section, .footer-endsection{
+        margin: 0;
+        border-top: 1px solid #0A760F;
+        margin-bottom: 20px;
+        width: 80%;
+    }
+    .footer-headers {
+        margin-top: 10px;
+    }
+    .borderline {
+        border-right: none;
+        padding-right: 0px;
+    }
+
+}
+.search-bar-container {
+    /* padding-top: 20vh; */
+    width: 40%;
+    padding: 1px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    position: absolute;
+    top: 10px; /* Pas de gewenste bovenste positie aan */
+    left: 40%; /* Plaats in het midden of pas aan zoals gewenst */
+    transform: translateX(-50%);
+}
+
+
+
+
 
 /* End of footer */
-

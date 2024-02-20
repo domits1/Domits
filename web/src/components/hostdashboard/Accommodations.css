@@ -1,99 +1,68 @@
-.card-preview {
-    display: flex;
-    border: none;
-    flex-direction: column;
-    width: 400px; /* Add or adjust the width as needed */
-    height: 481px;
-    margin: 10px;
-    border-radius: 0px;
-    box-shadow: none;
-    overflow: hidden;
-
-    flex-shrink: 0;
+.accocard {
+  width: 23%;
+  margin: 1%;
+  margin-top: 10px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: top;
+  transition: all 0.5s ease-in-out;
 }
 
-
-.imgacco {
-    position: relative;
-    width: 100%;
-    height: 400px;
-    flex-shrink: 0;
-    overflow: hidden;
-    border-radius: 15px;
+.accocard:hover {
+  box-shadow: 3px 12px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  transform: translateY(-10px);
 }
 
-
-.titles {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 10px;
-    box-sizing: border-box;
-    z-index: 1;
-    border-radius: 0 0 15px 15px;
-    background: rgba(0, 0, 0, 0.50);
-    backdrop-filter: blur(5px);
-    color: #FFF;
-    font-family: Kanit;
-    font-size: 24px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 150%;
+.accocard img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
 }
 
-
-.overlay {
-    display: flex;
-    justify-content: space-between;
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    padding: 10px;
-    border-radius: 15px;
-    box-sizing: border-box;
+.accocard-content {
+  padding: 15px;
+  overflow: hidden;
+  
 }
 
-.item-preview:hover .overlay {
-    opacity: 1;
+.accocard-title {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  
 }
 
-.prices {
-    color: #000;
-    font-family: Kanit;
-    font-size: 24px;
-    font-style: normal;
-    font-weight: 400;
-    line-height: 150%;
+.accocard-price {
+  font-size: 16px;
+  color: #007bff;
+  margin-bottom: 8px;
 }
 
-h2,
-p {
-    color: black;
-    margin: 0;
+.accocard-detail {
+  margin-bottom: 8px;
 }
 
-.star {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 15px;
-    border: 0.5px solid #0D9813;
-    background: rgba(0, 0, 0, 0.50);
-    backdrop-filter: blur(20px);
-    color: white;
-    padding: 5px 10px; /* Adjust padding as needed */
-    max-width: 100%; /* Add this line to limit the width */
+.accocard-size {
+  font-size: 14px;
+  color: #777;
 }
 
-.heart {
-    width: 26px;
-    height: 26px;
-    flex-shrink: 0;
+@media (max-width: 1292px) {
+  .accocard {
+    width: 31%;
+  }
 }
 
-
-
-
+@media (max-width: 856px) {
+  .accocard {
+    width: 48%;
+  }
+}

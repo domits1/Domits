@@ -2,13 +2,14 @@ import './App.css';
 import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
+import Travelinnovation from "./components/ninedots/travelinnovation";
 import Assortment from './components/assortment/Assortment';
 import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
-import HostDashboard from "./components/hostdashboard/HostDashboard";
+import HostHomepage from "./components/hostdashboard/HostHomepage";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -30,7 +31,10 @@ import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
 import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
+import Release from "./components/release/Release";
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
+import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
+
 
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
@@ -71,12 +75,17 @@ function App() {
                     <Route path="/confirm-email" element={<ConfirmRegister />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/travelinnovation" element={<Travelinnovation />} />
                     <Route path="/career" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/assortment" element={<Assortment />} />
-                    <Route path="/Guestdashboard" element={<GuestDashboard />}/>
+                    <Route path="/guestdashboard" element={<GuestDashboard />}/>
+                    <Route path="/guestdashboard/messages" element={<Details />}/>
+                    <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />}/>
+                    <Route path="/guestdashboard/reviews" element={<GuestDashboard />}/>
+                    <Route path="/guestdashboard/settings" element={<GuestDashboard />}/>
                     <Route path="/career" element={<Careers />} />
-                    <Route path="/hostdashboard" element={<HostDashboard />} />
+                    <Route path="/hosthomepage" element={<HostHomepage />} />
                     <Route path="/landing" element={<Landing />}/>
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
@@ -86,6 +95,8 @@ function App() {
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/error" element={<Error/>}/>
+                    <Route path="/release" element={<Release/>}/>
+
                     {/* Booking process*/}
                     <Route path="/details" element={<Details/>} />
                     <Route path="/bookingoverview" element={<BookingOverview/>} />
