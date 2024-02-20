@@ -11,41 +11,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       # Install NPM dependencies, cache them correctly
+
       - name: Install dependencies
         run: |
           cd web
           npm ci --verbose
 
-      # Initialize Amplify
-      - name: Initialize Amplify
-        run: |
-          cd web
-          npx amplify init --app-id 34jwd0sihmsu --envName develop --verbose
-
-      # Install and configure AWS Amplify CLI
-      - name: Configure Amplify CLI
-        run: |
-          npm install -g @aws-amplify/cli
-          amplify configure --profile amplify-githubpipline  --accessKeyId AKIARVYQZJYAI5H2AUMB --secretAccessKey 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 --region us-east-1
-
-      # Build and start the application
-      - name: Build and Start Application
-        run: |
-          cd web
-          npm run build
-          npm start
-
-      # Install Cypress
       - name: Cypress install
         uses: cypress-io/github-action@v6
         with:
           working-directory: web
           runTests: false
 
-      # Run Cypress tests
+      # and run all Cypress tests
+
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
           working-directory: web
+          build: npm run build
+          start: npx vite --host
