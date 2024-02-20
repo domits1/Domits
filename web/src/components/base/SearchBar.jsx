@@ -16,7 +16,7 @@ export const SearchBar = ({ setResults }) => {
   // de brains achter de search, hier wordt de data gefilterd en verdeeld over twee delen: Country, city
   const fetchData = (value, searchType) => {
     const partialValue = encodeURIComponent(value);
-    const endpoint = `http://api.geonames.org/searchJSON?q=${partialValue}&maxRows=40&username=Kacper29`;
+    const endpoint = `http://secure.geonames.org/searchJSON?q=${partialValue}&maxRows=40&username=Kacper29`;
 
     fetch(endpoint)
       .then((response) => response.json())
@@ -89,40 +89,41 @@ export const SearchBar = ({ setResults }) => {
         </div>
       </div>
       <div className="accommodation">
-  <p>Accommodation</p>
-  <Select
-    value={accommodation ? { label: accommodation, value: accommodation } : null}
-    onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
-    options={[
-      { value: 'hotel', label: 'Hotel' },
-      { value: 'apartment', label: 'Apartment' },
-      { value: 'guesthouse', label: 'Guesthouse' },
-      // Add more options as needed
-    ]}
-    placeholder="Type of accommodation"
-    isSearchable={false}
-    styles={{
-      control: (provided) => ({
-        ...provided,
-        border: 'none',
-        boxShadow: 'none',
-        width: '200px', // Adjust the width as needed
-      }),
-      indicatorSeparator: (provided) => ({
-        ...provided,
-        display: 'none',
-      }),
-      dropdownIndicator: (provided) => ({
-        ...provided,
-        display: 'none',
-      }),
-      placeholder: (provided) => ({
-        ...provided,
-        color: '#666',
-      }),
-    }}
-  />
-</div>
+        <p>Accommodation</p>
+        <Select
+          value={accommodation ? { label: accommodation, value: accommodation } : null}
+          onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
+          options={[
+            { value: 'hotel', label: 'Hotel' },
+            { value: 'apartment', label: 'Apartment' },
+            { value: 'guesthouse', label: 'Guesthouse' },
+            // Add more options as needed
+
+          ]}
+          placeholder="Type of accommodation"
+          isSearchable={false}
+          styles={{
+            control: (provided) => ({
+              ...provided,
+              border: 'none',
+              boxShadow: 'none',
+              width: '200px', 
+            }),
+            indicatorSeparator: (provided) => ({
+              ...provided,
+              display: 'none',
+            }),
+            dropdownIndicator: (provided) => ({
+              ...provided,
+              display: 'none',
+            }),
+            placeholder: (provided) => ({
+              ...provided,
+              color: '#666',
+            }),
+          }}
+        />
+      </div>
 
       <button className="button" type="button">
         <FaSearch style={{ marginRight: '1px' }} />
