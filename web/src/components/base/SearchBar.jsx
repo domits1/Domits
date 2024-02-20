@@ -16,7 +16,7 @@ export const SearchBar = ({ setResults }) => {
   // de brains achter de search, hier wordt de data gefilterd en verdeeld over twee delen: Country, city
   const fetchData = (value, searchType) => {
     const partialValue = encodeURIComponent(value);
-    const endpoint = `http://secure.geonames.org/searchJSON?q=${partialValue}&maxRows=40&username=Kacper29`;
+    const endpoint = `https://secure.geonames.org/searchJSON?q=${partialValue}&maxRows=40&username=Kacper29`;
 
     fetch(endpoint)
       .then((response) => response.json())
