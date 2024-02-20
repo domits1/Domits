@@ -7,6 +7,7 @@ import bookingimage4 from "../../images/accoimg3.png";
 import bookingimage5 from "../../images/accoimg1.png";
 import React from 'react';
 import './BookingOverview.css';
+import Details from "../details/Details";
 
 const BookingOverview = () => {
     return (
@@ -19,6 +20,11 @@ const BookingOverview = () => {
                     <img src={bookingimage4} alt="Booking Image 4" className="booking-image4"/>
                     <img src={bookingimage5} alt="Booking Image 5" className="booking-image5"/>
                 </div>
+            </div>
+            <div className="back-arrow">
+                <a href="/details">
+                    <img src={backarrow} alt="Back Arrow"/>
+                </a>
             </div>
             <div className="info-section">
                 <div className="title-section">
@@ -84,7 +90,6 @@ const BookingOverview = () => {
                         </div>
                     </div>
                     <hr/>
-
                     <div className="details-row">
                         <div className="left-column">
                             <div className="row">
@@ -99,9 +104,40 @@ const BookingOverview = () => {
                         </div>
                     </div>
                 </div>
-                <div className="booking-overview-section">
-                    <div className="section-titles">Booking Overview</div>
-                    <div className="small-information-text">05/12/2023 - 08/12/2023</div>
+                <div className="information-section">
+                    <div className="left-sections">
+                        <div className="confirm-email-section">
+                            <div className="section-titles">Confirm email address</div>
+                            <input className="booking-information-input"/>
+                        </div>
+                        <div className="confirm-number-section">
+                            <div className="section-titles">Confirm phone number</div>
+                            <input className="booking-information-input"/>
+                        </div>
+                    </div>
+                    <div className="special-requests-sections">
+                        <div className="section-titles">Special custom requests</div>
+                        <textarea className="booking-information-input" />
+                    </div>
+                </div>
+                <div className="booking-confirmation-section">
+                    <div className="accept-conditions-section">
+                        <div className="accept-conditions">
+                            <input type="checkbox" id="accept-conditions" name="accept-conditions" />
+                            I have read and accept the <a>house rules of the host</a>
+                        </div>
+                        <div className="accept-conditions">
+                            <input type="checkbox" id="accept-privacy-policy" name="accept-privacy-policy" />
+                            I have read and accept the <a>privacy agreement</a>
+                        </div>
+                        <div className="accept-conditions">
+                            <input type="checkbox" id="accept-cookies-policy" name="accept-cookies-policy" />
+                            I have read and accept the <a>terms and conditions</a>
+                        </div>
+                    </div>
+                    <div className="cost-overview-section">
+                        <button>Cost Overview</button>
+                    </div>
                 </div>
             </div>
         </div>
