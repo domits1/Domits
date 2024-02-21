@@ -1,34 +1,34 @@
-name: Cypress Tests
+name: Cypress Pipeline
 
 on:
   push:
     branches:
       - 'acceptance'
+      - 'main' # Add 'main' branch here
 
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch:
+          - 'acceptance'
+          - 'main' # Define the branches to run the tests on
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      # Install NPM dependencies, cache them correctly
 
+      # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
           cd web
           npm ci --verbose
 
-      - name: Cypress install
-        uses: cypress-io/github-action@v6
-        with:
-          working-directory: web
-          runTests: false
-
-      # and run all Cypress tests
-
+      # Run Cypress tests for each branch
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
           working-directory: web
-          build: npm run build
-          start: npm start
+          start: npx vite --host
+

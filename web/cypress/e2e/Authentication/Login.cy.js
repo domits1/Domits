@@ -2,13 +2,13 @@ describe('Authentication spec', () => {
 
   // guest login/logout
   it('LoginGuest', () => {
-    cy.visit('https://develop.domits.com/');
+    cy.visit('https://acceptance.domits.com/');
     cy.wait(1000); //1 second interval
     cy.get('.personalMenu').click(); // to login page
 
     cy.wait(1000); //1 second interval
 
-    cy.get('input[name="email"]').type('quintenschaap12@gmail.com'); //email
+    cy.get('input[name="email"]').type('giannivanlooij@outlook.com'); //email
     cy.wait(500); //0.5 second interval
     cy.get('input[name="password"]').type('123!Pizza'); //password
     cy.wait(500); //0.5 second interval
