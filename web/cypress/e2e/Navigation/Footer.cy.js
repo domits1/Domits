@@ -1,6 +1,6 @@
 describe('Links', () => {
     it('Should check all footer links', () => {
-        cy.visit('127.0.0.1:3000');
+        cy.visit('https://acceptance.domits.com/');
 
         // Navigation section
         cy.get('.footer-section').eq(0).find('a').each(($link) => {
