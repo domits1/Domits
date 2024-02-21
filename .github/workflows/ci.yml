@@ -1,13 +1,20 @@
-name: Cypress Tests
+name: Cypress Pipeline
 
 on:
   push:
     branches:
       - 'acceptance'
+      - 'main' # Add 'main' branch here
 
 jobs:
   cypress-run:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        branch:
+          - 'acceptance'
+          - 'main' # Define the branches to run the tests on
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -18,9 +25,10 @@ jobs:
           cd web
           npm ci --verbose
 
-      # Run your Cypress tests
+      # Run Cypress tests for each branch
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
           working-directory: web
           start: npx vite --host
+
