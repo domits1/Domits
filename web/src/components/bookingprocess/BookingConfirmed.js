@@ -1,21 +1,17 @@
 import backarrow from "../../images/arrowleft.png";
+import checkcirlce from "../../images/check-circle.svg";
 import bookingimage1 from "../../images/accobigimg.png";
 import bookingimage2 from "../../images/adultacco.png";
 import bookingimage3 from "../../images/accoimg4.png";
 import bookingimage4 from "../../images/accoimg3.png";
 import bookingimage5 from "../../images/accoimg1.png";
 import React from 'react';
-import './BookingPayment.css';
+import './BookingConfirmedDeclined.css';
 
-const BookingPayment = () => {
+const BookingConfirmed = () => {
     return (
         <div className="booking-container">
-            <div className="back-arrow">
-                <a href="/bookingoverview">
-                    <img src={backarrow} alt="Back Arrow"/>
-                </a>
-            </div>
-            <div className="image-section">
+            <div className="image-section booking-confirmed-image-section">
                 <img src={bookingimage1} alt="Booking Image 1" className="booking-image1"/>
                 <div className="imageWindow">
                     <img src={bookingimage2} alt="Booking Image 2"/>
@@ -25,10 +21,21 @@ const BookingPayment = () => {
                 </div>
             </div>
             <div className="info-section">
-                <div className="title-section">
-                    <div className="section-titles">Payment in process</div>
-                    <div className="booking-subtitle">Choose your payment method and pay safely through Stripe
+                <div className="booking-supertitle">
+                    Minimalistic and cozy place in Haarlem
+                </div>
+                <div className="booking-confirmed-section">
+                    <div className="booking-confirmed-content">
+                        <div className="booking-confirmed-title">Booking Confirmed!</div>
+                        <div className="booking-confirmed-subtitle">You paid with Mastercard [ L.Summer ] [0123 xxxx xxxx 2345]</div>
                     </div>
+                    <div className="booking-confirmed-check">
+                        <img src={checkcirlce} alt="Checkmark"/>
+                    </div>
+                </div>
+                <div className="booking-confirmation-details">
+                    Payment and booking details are send to lotte_summer@gmail.com
+                    <a>Resend confirmation</a>
                 </div>
                 <div className="booking-overview-section">
                     <div className="section-titles">Price Details</div>
@@ -82,19 +89,11 @@ const BookingPayment = () => {
                             <div className="payment-type-text">Mastercard</div>
                             <div className="payment-info-text">[ L.Summer ] [0123 xxxx xxxx 2345]</div>
                         </div>
-                        <button className="change-payment-button">Change ></button>
                     </div>
                 </div>
-                <div className="confirm-booking-payment-section">
-                    <div className="accept-personal-data-terms">
-                        <input type="checkbox" />
-                        I have read and accept the <a>personal data terms </a> on how we collect and proccess your data
-                    </div>
-                    <div className="proceed-to-pay-button">
-                        <button>Proceed to pay*</button>
-                    </div>
-                    <div className="proceed-to-pay-text">
-                        *Secure payment gateway powered by Stripe.com
+                <div className="view-booking-section">
+                    <div className="view-booking-button">
+                        <button>View booking</button>
                     </div>
                 </div>
             </div>
@@ -102,4 +101,4 @@ const BookingPayment = () => {
     );
 }
 
-export default BookingPayment;
+export default BookingConfirmed;

@@ -1,21 +1,17 @@
 import backarrow from "../../images/arrowleft.png";
+import alertcircle from "../../images/alert-circle.svg";
 import bookingimage1 from "../../images/accobigimg.png";
 import bookingimage2 from "../../images/adultacco.png";
 import bookingimage3 from "../../images/accoimg4.png";
 import bookingimage4 from "../../images/accoimg3.png";
 import bookingimage5 from "../../images/accoimg1.png";
 import React from 'react';
-import './BookingPayment.css';
+import './BookingConfirmedDeclined.css';
 
-const BookingPayment = () => {
+const BookingDeclined = () => {
     return (
         <div className="booking-container">
-            <div className="back-arrow">
-                <a href="/bookingoverview">
-                    <img src={backarrow} alt="Back Arrow"/>
-                </a>
-            </div>
-            <div className="image-section">
+            <div className="image-section booking-confirmedw-image-section">
                 <img src={bookingimage1} alt="Booking Image 1" className="booking-image1"/>
                 <div className="imageWindow">
                     <img src={bookingimage2} alt="Booking Image 2"/>
@@ -25,9 +21,19 @@ const BookingPayment = () => {
                 </div>
             </div>
             <div className="info-section">
-                <div className="title-section">
-                    <div className="section-titles">Payment in process</div>
-                    <div className="booking-subtitle">Choose your payment method and pay safely through Stripe
+                <div className="booking-supertitle">
+                    Minimalistic and cozy place in Haarlem
+                </div>
+                <div className="booking-declined-section">
+                    <div className="booking-declined-content">
+                        <div className="booking-declined-title">Something went wrong.</div>
+                        <div className="booking-declined-subtitle">
+                            <span className="booking-declined-underline">No money was deducted</span>
+                            from Mastercard [ L.Summer ] [0123 xxxx xxxx 2345]
+                        </div>
+                    </div>
+                    <div className="booking-declined-alert">
+                        <img src={alertcircle} alt="Alert Circle"/>
                     </div>
                 </div>
                 <div className="booking-overview-section">
@@ -85,16 +91,9 @@ const BookingPayment = () => {
                         <button className="change-payment-button">Change ></button>
                     </div>
                 </div>
-                <div className="confirm-booking-payment-section">
-                    <div className="accept-personal-data-terms">
-                        <input type="checkbox" />
-                        I have read and accept the <a>personal data terms </a> on how we collect and proccess your data
-                    </div>
-                    <div className="proceed-to-pay-button">
-                        <button>Proceed to pay*</button>
-                    </div>
-                    <div className="proceed-to-pay-text">
-                        *Secure payment gateway powered by Stripe.com
+                <div className="try-again-section">
+                    <div className="try-again-button">
+                        <button>Try again</button>
                     </div>
                 </div>
             </div>
@@ -102,4 +101,4 @@ const BookingPayment = () => {
     );
 }
 
-export default BookingPayment;
+export default BookingDeclined;

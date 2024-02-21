@@ -21,6 +21,8 @@ import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation"
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
 import BookingOverview from "./components/bookingprocess/BookingOverview";
 import BookingPayment from "./components/bookingprocess/BookingPayment";
+import BookingConfirmed from "./components/bookingprocess/BookingConfirmed";
+import BookingDeclined from "./components/bookingprocess/BookingDeclined";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
 import {ProtectedRoute} from "./components/protectedroute/ProtectedRoute.tsx";
 import Disclaimers from "./components/disclaimers/Disclaimers";
@@ -34,7 +36,6 @@ import Stripe from 'stripe';
 import Release from "./components/release/Release";
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
-
 
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
@@ -101,6 +102,8 @@ function App() {
                     <Route path="/details" element={<Details/>} />
                     <Route path="/bookingoverview" element={<BookingOverview/>} />
                     <Route path="/bookingpayment" element={<BookingPayment/>} />
+                    <Route path="/bookingconfirmed" element={<BookingConfirmed/>} />
+                    <Route path="/bookingdeclined" element={<BookingDeclined/>} />
 
                     {/*  Admin Routes  */}
                     <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />

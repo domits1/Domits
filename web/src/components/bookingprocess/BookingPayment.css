@@ -13,7 +13,7 @@
     margin-bottom: 15px;
     display: flex;
     flex-direction: row;
-    justify-content: space-between;
+    justify-content: right;
     color: black;
     font-size: 12px;
     font-family: Kanit;
@@ -29,6 +29,10 @@
     font-weight: 600;
     line-height: 24px;
     word-wrap: break-word
+}
+
+.total-booking-price {
+    margin-right: 25px;
 }
 
 .payment-method-container {
