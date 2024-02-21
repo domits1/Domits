@@ -1,4 +1,3 @@
-import {Link} from "react-router-dom";
 import backarrow from "../../images/arrowleft.png";
 import bookingimage1 from "../../images/accobigimg.png";
 import bookingimage2 from "../../images/adultacco.png";
@@ -7,11 +6,15 @@ import bookingimage4 from "../../images/accoimg3.png";
 import bookingimage5 from "../../images/accoimg1.png";
 import React from 'react';
 import './BookingOverview.css';
-import Details from "../details/Details";
 
 const BookingOverview = () => {
     return (
         <div className="booking-container">
+            <div className="back-arrow">
+                <a href="/details">
+                    <img src={backarrow} alt="Back Arrow"/>
+                </a>
+            </div>
             <div className="image-section">
                 <img src={bookingimage1} alt="Booking Image 1" className="booking-image1"/>
                 <div className="imageWindow">
@@ -21,15 +24,10 @@ const BookingOverview = () => {
                     <img src={bookingimage5} alt="Booking Image 5" className="booking-image5"/>
                 </div>
             </div>
-            <div className="back-arrow">
-                <a href="/details">
-                    <img src={backarrow} alt="Back Arrow"/>
-                </a>
-            </div>
             <div className="info-section">
                 <div className="title-section">
                     <div className="section-titles">Minimalistic and cozy place in Haarlem</div>
-                    <div className="bookingSubtitle">Fantastic villa with private swimming pool and surrounded by
+                    <div className="booking-subtitle">Fantastic villa with private swimming pool and surrounded by
                         beautiful parks.
                     </div>
                 </div>

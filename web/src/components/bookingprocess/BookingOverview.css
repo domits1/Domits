@@ -4,12 +4,12 @@
 
 .back-arrow {
     margin-top: 52px; /* Adjust as needed */
-    margin-left: 50px; /* Adjust as needed */
+    margin-left: 5%; /* Adjust as needed */
 }
 
 .image-section {
     flex: 30%;
-    margin-left: 5%;
+    margin-left: 2%;
     margin-top: 50px;
     margin-right: 50px;
 }
@@ -88,7 +88,7 @@
     border-radius: 15px
 }
 
-.bookingSubtitle {
+.booking-subtitle {
     color: black;
     font-size: 16px;
     font-family: 'Kanit', sans-serif;
@@ -167,7 +167,7 @@
     font-family: 'Kanit', sans-serif;
     font-weight: 300;
     line-height: 24px;
-    word-wrap: break-word
+    word-wrap: break-word;
 }
 
 .left-column,

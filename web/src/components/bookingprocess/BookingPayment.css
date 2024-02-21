@@ -1,0 +1,161 @@
+.domits-service-fee {
+    margin-top: 15px;
+    color: black;
+    font-size: 12px;
+    font-family: Kanit;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.total-row {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    color: black;
+    font-size: 12px;
+    font-family: Kanit;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.total-detail {
+    color: black;
+    font-size: 12px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 600;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.payment-method-container {
+    margin-top: 20px;
+}
+
+.payment-method-header {
+    color: black;
+    font-size: 24px;
+    font-family: Kanit;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+    margin-bottom: 10px;
+}
+
+.payment-method-section {
+    display: flex;
+    align-items: center;
+}
+
+.payment-information-section {
+    flex: 1;
+    display: flex;
+    margin-right: 10px;
+    padding: 15px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+}
+
+.change-payment-button {
+    width: 15%;
+    background: white;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+    height: 100%;
+    padding: 15px;
+    margin: 0;
+    color: black;
+    font-size: 18px;
+    font-family: Kanit;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.payment-type-text {
+    color: black;
+    font-size: 16px;
+    font-family: Kanit;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+    margin-right: 5px;
+}
+
+.payment-info-text {
+    color: black;
+    font-size: 14px;
+    font-family: Kanit;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.confirm-booking-payment-section {
+    margin-top: 40px;
+}
+
+.confirm-booking-payment-section div {
+    display: flex;
+    align-items: center;
+}
+
+.confirm-booking-payment-section input[type="checkbox"] {
+    margin-right: 10px;
+    width: 24px;
+    height: 24px;
+    background-color: #E7E7E7;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 5px;
+}
+
+.accept-personal-data-terms {
+    color: black;
+    font-size: 16px;
+    font-family: Kanit;
+    font-weight: 300;
+    line-height: 24px;
+    letter-spacing: 0.16px;
+    word-wrap: break-word;
+}
+
+.accept-personal-data-terms a {
+    margin-left: 0.3%;
+    margin-right: 0.3%;
+    color: #0A760F;
+    font-size: 16px;
+    font-family: Kanit;
+    font-weight: 400;
+    text-decoration: underline;
+}
+
+.proceed-to-pay-button button{
+    width: 100%;
+    height: 100%;
+    margin-top: 20px;
+    padding: 10px;
+    background: #0D9813;
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 20px;
+    font-family: Kanit;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.proceed-to-pay-text {
+    margin-top: 5px;
+    color: black;
+    font-size: 12px;
+    font-family: Kanit;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word
+}
