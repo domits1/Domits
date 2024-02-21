@@ -58,7 +58,7 @@ function App() {
 
     const renderFooter = () => {
         const currentPath = window.location.pathname;
-        if (currentPath === '/admin' || '/bookingoverview' || '/bookingpayment') {
+        if (currentPath === '/admin' || currentPath === '/bookingoverview' || currentPath === '/bookingpayment') {
             return null; // Don't render Footer for /admin route
         }
         return <Footer/>;
