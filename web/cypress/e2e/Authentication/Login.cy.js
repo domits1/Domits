@@ -2,7 +2,7 @@ describe('Authentication spec', () => {
 
   // guest login/logout
   it('LoginGuest', () => {
-    cy.visit('https://develop.domits.com/');
+    cy.visit('https://acceptance.domits.com/');
     cy.wait(1000); //1 second interval
     cy.get('.personalMenu').click(); // to login page
 
