@@ -14,12 +14,16 @@ describe('Authentication spec', () => {
     cy.wait(500); //0.5 second interval
     cy.get('button[type="submit"]').click(); //login button
 
+    cy.url().should('include', 'https://acceptance.domits.com/login');
+
     cy.wait(5000); //5 second interval
 
 
     cy.get('button').contains('Sign out').should('exist').then(($button) => {
       if ($button.length > 0) {
         cy.wrap($button).click();
+
+        cy.url().should('include', 'https://acceptance.domits.com');
 
        cy.log('login and out successfull')
       }
