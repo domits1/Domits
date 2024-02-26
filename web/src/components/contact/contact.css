@@ -1,4 +1,4 @@
-contact{
+.contact {
     padding: 50px;
     margin-left: 100px;
     margin-right: 100px;
@@ -6,62 +6,65 @@ contact{
     color: #000;
     font-size: 20px;
     font-style: normal;
-    font-family: sans-serif, 'Gill Sans';
     font-weight: 400;
     line-height: 150%;
-}
-
-.contactform{
+  }
+  
+  .contactform {
     border-radius: 15px;
     background: #EBFAED;
-    width: 100%;
-    padding-top: 50px;
-    padding-left: 50px;
-    padding-bottom: 50px;
-}
-
-.contactform h2{
-    font-weight: 600;
-}
-
-.namemessage{
+    padding: 50px;
     display: flex;
-    gap: 365px;
-}
-
-.biginput{
-    width: 1040px;
-    margin-right: -180px;
-    float: right;
-}
-
-.biginput textarea {
+    flex-wrap: wrap; /* Allow flex items to wrap */
+  }
+  
+  .contactform h2 {
+    font-weight: 600;
+  }
+  
+  .namemessage,
+  .biginput {
+    flex: 1; /* Equal width for both sections */
+    margin-right: 20px; /* Add margin between sections */
+  }
+  
+  @media screen and (max-width: 768px) {
+    .namemessage,
+    .biginput {
+      flex: 100%; /* Full width when screen size is smaller */
+      margin-right: 0; /* Remove margin between sections */
+    }
+  }
+  
+  .biginput textarea {
     display: block;
-    width: calc(100% - 200px);
-    height: 312px;
-    resize: vertical; /* Allow vertical resizing */
+    width: 100%; /* Full width textarea */
+    height: 272px;
+    resize: vertical;
     text-align: left;
     padding: 10px;
     border: 1px solid #000;
     border-radius: 15px;
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-}
-
-.contactform input:not(.biginput input) {
+  }
+  
+  .contactform input:not(.biginput input) {
     border-radius: 15px;
     border: 1px solid #000;
     padding: 10px;
-    width: 400px;
+    width: 100%; /* Full width input */
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-}
-
-.formbuttons{
+  }
+  
+  .formbuttons {
     border: 0px;
     display: flex;
-    margin-left: 395px;
-}
-
-#attachmentsbutton {
+    flex-direction: row;
+    justify-content: flex-end;
+  }
+  
+  #attachmentsbutton,
+  #sendbutton {
     width: 400px;
     height: 50px;
     padding: 8px 15px;
@@ -72,29 +75,23 @@ contact{
     color: #FFF;
     margin: 30px;
     border-radius: 15px;
+  }
+  
+  #attachmentsbutton {
     background: #49146A;
-}
-
-#attachmentsbutton:hover{
+  }
+  
+  #sendbutton {
+    background: #0D9813;
+  }
+  
+  #attachmentsbutton:hover {
     background: #390f52;
     cursor: pointer;
-}
-
-#sendbutton{
-    width: 400px;
-    height: 50px;
-    padding: 8px 15px;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
-    color: #FFF;
-    margin: 30px;
-    border-radius: 15px;
-    background: #0D9813;
-}
-
-#sendbutton:hover{
+  }
+  
+  #sendbutton:hover {
     background: #09770f;
     cursor: pointer;
-}
+  }
+  

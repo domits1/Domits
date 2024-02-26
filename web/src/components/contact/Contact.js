@@ -15,24 +15,25 @@ function Contact() {
             <div className="contactform">
                 <div className="namemessage">
                     <h2>Name</h2>
-                    <h2>Your message</h2>
+                    <input type="text" placeholder="ex. Lotte Summer" />
+
+                    <h2>Subject</h2>
+                    <input type="text" placeholder="ex. Payment issues" />
+
+                    <h2>Enter your email</h2>
+                    <input type="email" placeholder="ex. lotte_summer@gmail.com" />
+
                 </div>
-                <input type="text" placeholder="ex. Lotte Summer" />
 
                 <div class="biginput">
+                    <h2>Your message</h2>
                     <textarea placeholder="ex. I am still waiting to get paid and would like a follow up or open a dispute about this..."></textarea>
                 </div>
+            </div>
 
-                <h2>Subject</h2>
-                <input type="text" placeholder="ex. Payment issues" />
-
-                <h2>Enter your email</h2>
-                <input type="email" placeholder="ex. lotte_summer@gmail.com"/>
-
-                <div className="formbuttons">
-                    <button id="attachmentsbutton"> Add attachments</button>
-                    <button id="sendbutton"> Send message</button>
-                </div>
+            <div className="formbuttons">
+                <button id="attachmentsbutton"> Add attachments</button>
+                <button id="sendbutton"> Send message</button>
             </div>
         </div>
     );
