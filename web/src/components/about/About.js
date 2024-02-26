@@ -1,6 +1,6 @@
 import React from "react";
 import './about.css'
-import img from "../../images/aboutusimg.png"
+import FAQ from "../landingpage/Faq"
 
 
 function About() {
@@ -33,38 +33,70 @@ function About() {
                 </p>
             </div>
             <br />
-            <div className="awesomefacts">
-                <h1>Awesome Facts</h1>
+            <div className="factsbox">
+                <div className="awesomefacts">
+                    <p className="factsTitle">Vision</p>
+                    <p className="factsTitle">A healthy, safe and future-proof travel world</p>
+                    <p className="aboutText">
+                        Our vision is a travel world that has less problems with health, safety and future-proofing.
+                        Now and in the future, that is what Domits has in mind.
+                        Everyone takes into account how people deal with these problems and their options.
+                        Together with partners, we work every day to simplify travel.
+                    </p>
+                </div>
+                <div className="awesomefacts">
+                    <p className="factsTitle">What we do</p>
+                    <p className="factsTitle">Together with partners we provide travel solutions</p>
+                    <p className="aboutText">
+                        We build our travel platform to list, search and book accommodations.
+                        Besides that we are providing traveltech development and consultancy for a select group of partners.
+                        We are open to cooperate through ventures and our travel innovation labs.
+                    </p>
+                </div>
             </div>
+            <div className="crew">
+                <h1>Who we are</h1>
+                <p>We are all conscious founders.</p>
 
-            <div className="textbubbles">
-                <div className="bubble1">
-                    <br />
-                    <h1>120 listings!</h1>
-                    <br />
+                <div class="team">
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Stefan Hopman</p>
+                        <p>Founder and CEO</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Employee 8</p>
+                        <p>Marketing Specialist</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Employee 8</p>
+                        <p>Marketing Specialist</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Employee 8</p>
+                        <p>Marketing Specialist</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Employee 8</p>
+                        <p>Marketing Specialist</p>
+                    </div>
+                    
                 </div>
-                <div className="bubble2">
+
+                <div class="about">
+                    <p>We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.</p>
                     <br />
-                    <h1>Since 2023</h1>
-                    <br />
-                </div>
-                <div className="bubble3">
-                    <br />
-                    <h1>More than 15 staff</h1>
-                    <br />
-                </div>
-                <div className="bubble4">
-                    <br />
-                    <h1>130 customers</h1>
-                    <br />
-                </div>
-                <div className="bubble5">
-                    <br />
-                    <h1>Adding houses daily</h1>
-                    <br />
+                    <p>You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders.</p>
                 </div>
             </div>
+            <FAQ />
         </div>
+
+
     );
 }
 

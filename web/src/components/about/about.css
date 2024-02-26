@@ -8,90 +8,79 @@
     font-style: normal;
     font-weight: 400;
 }
-.aboutText {
-    margin-bottom: 15px;
+
+.factsbox{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    color: white;
+    
+
 }
+
 .awesomefacts{
     display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100%;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 42%;
+    background-color: #0D9813;
+    border-radius: 20px;
+    padding: 20px;
+    margin-bottom: 20px;
+    
 }
 
-.textbubbles{
-    width: 100%;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 80px;
-    display: flex;
-    flex-wrap: wrap;
+.aboutText {
+    margin-bottom: 25px;
 }
 
-.textbubbles h1{
-    color: #0D9813;
+.factsTitle {
+    margin: 0;
+    margin-bottom: 15px;
+    font-size: 25px;
+}
+
+
+.crew {
     text-align: center;
-    font-size: 24px;
-    font-style: normal;
-    font-weight: 700;
-    line-height: 100%;
+}
+.team {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
 }
 
-.bubble1{
-    border: #000 3px solid;
-    border-radius: 150px;
-    width: 300px;
-    margin: 30px;
+.member {
+    width: 20%;
+    margin-bottom: 20px;
 }
 
-.bubble2{
-    border: #000 3px solid;
-    border-radius: 150px;
-    width: 300px;
-    margin: 30px;
+.avatar {
+    height: 100px;
+    width: 100px;
+    background-color: #ccc;
+    border-radius: 50%;
+    margin: auto;
+    margin-bottom: 10px;
 }
 
-.bubble3{
-    border: #000 3px solid;
-    border-radius: 150px;
-    width: 300px;
-    margin: 30px;
+.about {
+    text-align: left;
+    margin-top: 40px;
 }
 
-.bubble4{
-    border: #000 3px solid;
-    border-radius: 150px;
-    width: 300px;
-    margin: 30px;
-}
-
-.bubble5{
-    border: #000 3px solid;
-    border-radius: 150px;
-    width: 300px;
-    margin: 30px;
-}
-
-.bubble1:hover{
-    transition: transform 0.3s ease-in-out;
-    transform: scale(1.2);
-}
-
-.bubble2:hover{
-    transition: transform 0.3s ease-in-out;
-    transform: scale(1.2);
-}
-
-.bubble3:hover{
-    transition: transform 0.3s ease-in-out;
-    transform: scale(1.2);
-}
-
-.bubble4:hover{
-    transition: transform 0.3s ease-in-out;
-    transform: scale(1.2);
-}
-
-.bubble5:hover{
-    transition: transform 0.3s ease-in-out;
-    transform: scale(1.2);
+@media (max-width: 850px) {
+    .member {
+        width: 100%;
+    }
+    .factsbox{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .awesomefacts {
+        width: 100%;
+    }
 }
