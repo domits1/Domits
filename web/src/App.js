@@ -108,7 +108,6 @@ function App() {
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/error" element={<Error/>}/>
-                    <Route path="/release" element={<Release/>}/>
 
 
                     {/*  Admin Routes  */}
