@@ -75,7 +75,7 @@
   }
   
   #attachmentsbutton {
-    background: #49146A;
+    background: #003366;
   }
   
   #sendbutton {
@@ -83,7 +83,7 @@
   }
   
   #attachmentsbutton:hover {
-    background: #390f52;
+    background: #003366;
     cursor: pointer;
   }
   
