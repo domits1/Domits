@@ -38,7 +38,7 @@
 
 .factsTitle {
     margin: 0;
-    font-size: 25px;
+    font-size: 30px;
 }
 
 .factsHeader {
@@ -52,6 +52,7 @@
 }
 
 .factsImage {
+    height: auto;
     object-fit: contain;
 }
 
