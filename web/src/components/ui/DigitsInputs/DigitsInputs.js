@@ -9,7 +9,7 @@ const DigitAction = {
     None: 'NONE'
 };
 
-function DigitInputs({ amount, inputRef }) {
+function DigitInputs({ amount, inputRef, className }) {
     const digitInputMap = {
         '0': DigitAction.Next,
         '1': DigitAction.Next,
@@ -57,7 +57,7 @@ function DigitInputs({ amount, inputRef }) {
         if (pastedCode.length === amount) inputRef.current.forEach((input, index) => input.value = pastedCode[index]);
     }
 
-    return React.createElement('div', { className: 'digitinputs' },
+    return React.createElement('div', { className: `digitinputs ${className}` },
         Array(amount).fill(0).map((_, index) => React.createElement('input', {
             autoComplete: 'off',
             key: index,
@@ -66,7 +66,7 @@ function DigitInputs({ amount, inputRef }) {
             onChange: onChange,
             onPaste: onPaste,
             onClick: onDigitClick,
-            className: 'digitinputs_digit',
+            className: `digitinputs_digit ${className}_digit`,
             type: 'tel',
             maxLength: 1,
             name: `digit${index}`,
