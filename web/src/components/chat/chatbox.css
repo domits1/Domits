@@ -1,72 +1,74 @@
 .button_containerc {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    display: inline-flex;
+    margin-right: 10px;
 }
 
 .buttonc {
     height: 5rem;
     width: 18rem;
-    background-color: #308AE4;
     border-radius: 1.5rem;
     border: none;
     color: white;
-    margin: auto;
+    margin: 0;
+}
 
-    &:hover {
-        background-color: #367fc8;
-        cursor: pointer;
-    }
+.add-files-button {
+    background-color: #0D9813;
+}
+
+.send-review-link {
+    background-color: #49146A;
 }
 
 .username {
-    width:fit-content;
     background-color: #308AE4;
-    border-left: 10px solid #308AE4;
-    border-right: 10px solid #308AE4;
     border-radius: 1.5rem;
-
     color: white;
 }
 
-.time {
-    font-size: small;
-
-}
-
 .text {
-    background-color: rgb(212, 210, 210);
+    background-color: #C2E5C4;
     border-radius: 1.5rem;
-    width:fit-content;
-    border-left: 10px solid rgb(212, 210, 210);
-    border-right: 10px solid rgb(212, 210, 210);
-    margin-bottom: 40px;
-}
-
-.chat-enter{
-    display: flex;
-    float: right;
-    margin-right: 7px;
-    margin-top: 17px;
 }
 
 .chat_box {
     width: 900px;
     height: 500px;
-    background: rgb(224, 241, 255);
+    background:lightgrey;
+    border: 2px;
     overflow: auto;
     margin-left: 300px;
 }
+.input_container {
+    display: flex;
+    align-items: center;
+    margin-top: 20px;
+}
 
-.input_form {
-    margin-left: 590px;
-    overflow: auto;
-    border: 2px solid #308AE4;
-    border-radius: 15px;
-    width: 360px;
+.input_field {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
     outline: none;
-    &:hover {
-        border: 2.2px solid #2d73b9;
-        cursor: pointer;
-    }
+    color: #333; /* Add text color */
+    background-color: #fff; /* Add background color */
+    box-shadow: none; /* Remove any box shadow */
+}
+
+
+.send_button {
+    background-color: #308AE4;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 10px 20px;
+    margin-left: 10px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.send_button:hover {
+    background-color: #367fc8;
 }
