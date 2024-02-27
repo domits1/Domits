@@ -24,9 +24,9 @@ function TravelInnovation() {
                             <p className="boxTitle">Growth</p>
                         </div>
 
-                        <div className="box">
+                       
 
-                        </div>
+                        
                     </div>
 
                     <div className="boxColumn">
@@ -35,9 +35,9 @@ function TravelInnovation() {
                             <p className="boxTitle">People</p>
                         </div>
 
-                        <div className="box">
+                        
 
-                        </div>
+                       
                     </div>
 
                     <div className="boxColumn">
@@ -46,9 +46,9 @@ function TravelInnovation() {
                             <p className="boxTitle">Cloud Ict</p>
                         </div>
 
-                        <div className="box">
+                        
 
-                        </div>
+                       
                     </div>
 
                     <div className="boxColumn">
@@ -57,9 +57,9 @@ function TravelInnovation() {
                             <p className="boxTitle">A.I. data</p>
                         </div>
 
-                        <div className="box">
+                        
 
-                        </div>
+                        
                     </div>
 
 
