@@ -1,4 +1,4 @@
-import React, { FormEvent, useRef, useState } from 'react';
+import React, { FormEvent, useRef, useState, useEffect     } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
@@ -15,10 +15,48 @@ function ConfirmEmail() {
 
     const userEmail = location.state === null ? "" : location.state.email
 
-    function onSubmit(e: FormEvent) {
+    const isHost = location.state?.isHost;
+
+    const createStripeAccount = () => {
+        stripeClient.accounts.create({
+            type: 'standard',
+            email: userEmail,
+            country: 'NL',
+        })
+        .then(stripeAccount => {
+            cognitoClient.adminUpdateUserAttributes({
+                UserPoolId: import.meta.env.VITE_AWS_USER_POOL_ID,
+                Username: userEmail,
+                UserAttributes: [{
+                    Name: 'custom:stripeAccountId',
+                    Value: stripeAccount.id
+                }]
+            }).promise()
+            .then(() => {
+                stripeClient.accountLinks.create({
+                    account: stripeAccount.id,
+                    type: 'account_onboarding',
+                    refresh_url: `${window.location.origin}/payments/onboarding-failed`,
+                    return_url: `${window.location.origin}${'/'}`
+                })
+                .then(result => window.location.href = result.url)
+                .catch(err => console.error(err))
+            })
+            .catch(err => console.error(err))
+        })
+        .catch(err => console.error(err))
+    }
+
+    useEffect(() => {
+        if (isHost) {
+            createStripeAccount();
+        }
+    }, [isHost]);
+
+    function onSubmit(e) {
         e.preventDefault()
-        let code: string = ""
-        inputRef.current.forEach((input: HTMLInputElement) => { code += input.value })
+        let code = ""
+        inputRef.current.forEach((input) => { code += input.value })
 
         Auth.confirmSignUp(userEmail, code)
             .catch(error => {
