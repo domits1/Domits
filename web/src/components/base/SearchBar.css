@@ -1,0 +1,142 @@
+* {
+    box-sizing: border-box;
+   
+  }
+  .bar {
+    width: 750px;
+    background: white;
+    box-shadow: 0 0 5px hsl(0 0% 78%);
+    border-radius: 20px;
+    display: flex;
+    font-size: 0.6rem;
+    
+   
+  }
+  
+  .bar div {
+    /* border-radius: inherit; */
+    padding: 0.8rem 1.5rem;
+    transition: background 250ms ease;
+    
+  }
+  
+  .bar div:hover {
+    background: hsl(0 0% 94%);
+    border-radius: 20px;
+    
+  }
+  
+  .location:hover {
+    width: 68%;
+    transform: translateY(-2px);
+  }
+  .location1:hover {
+    width: 54%;
+    transform: translateY(-2px);
+    
+  }
+  
+  .check-in:hover, .check-out:hover, .accommodation:hover {
+    width: 41%;
+    cursor: pointer;
+    transform: translateY(-2px);
+  }
+  
+  input[type="text"] {
+    background: none;
+    border: none;
+    padding: 0.2rem 0 0 0;
+    width: 100%; /* Added width 100% for full-width input */
+  }
+  
+  input[type="text"]:focus {
+    outline: none;
+  }
+  
+  ::placeholder {
+    font-size: 0.64rem;
+  }
+  
+  .accommodation {
+    /* position: relative; */
+    align-items: center;
+    
+  }
+  
+/* balngrijk voor later */
+  .bar>div {
+    position: relative;
+  }
+  .bar>div::before {
+    position: absolute;
+    content: "";
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1px;
+    height: 55%;
+    background: rgb(88, 153, 22);
+  }
+  
+  .bar>div:nth-of-type(1)::before {
+    background: transparent;
+  }
+  
+  .bar>div:hover::before {
+    background: transparent;
+  }
+  
+  .button {
+    display: inline-block;
+    outline: 0;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 10px;
+    line-height: 30px; 
+    border: 1px solid #2ea44f; 
+    border-radius: 50%; 
+    color: #ffffff;
+    background-color: transparent; 
+    box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+    transition: 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+    transition-property: color, background-color, border-color;
+    height: 35px;
+    width: 35px; 
+    margin-top: 10px; 
+}
+
+.button:hover {
+  background-color: #2ea44f;
+  border-color: #2ea44f;
+  /* box-shadow: 0 0 2px 3px #3e3d3d; Adjust the shadow color and size as needed */
+  transition-duration: 0.4s;
+ 
+}
+
+
+.button svg {
+    color: black; /* Zwarte kleur voor FaSearch-icoon */
+}
+
+.button:hover svg {
+  animation: bounce 0.7s ease 1;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% {
+      transform: translateY(0);
+  }
+  40% {
+      transform: translateY(-5px);
+  }
+  60% {
+      transform: translateY(-3px);
+  }
+}
+
+
+
+
+
+
+  

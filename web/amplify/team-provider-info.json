@@ -1,0 +1,59 @@
+{
+  "develop": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-develop-123953-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-123953-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-develop-123953-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-develop-123953-deployment",
+      "UnauthRoleName": "amplify-domits-develop-123953-unauthRole",
+      "StackName": "amplify-domits-develop-123953",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-develop-123953/4d59ff30-b5f6-11ee-b06c-0e54438f2f36",
+      "AmplifyAppId": "d34jwd0sihmsus",
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
+    },
+    "categories": {
+      "auth": {
+        "domits7b73f586": {},
+        "userPoolGroups": {}
+      },
+      "function": {
+        "domits7b73f586PreSignup": {
+          "deploymentBucketName": "amplify-domits-develop-123953-deployment",
+          "s3Key": "amplify-builds/domits7b73f586PreSignup-43714f534742445a6754-build.zip"
+        },
+        "domits": {},
+        "domits7b73f586": {}
+      },
+      "api": {
+        "domits": {}
+      }
+    }
+  },
+  "production": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-domits-production-150926-authRole",
+      "UnauthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-production-150926-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::115462458880:role/amplify-domits-production-150926-authRole",
+      "Region": "eu-north-1",
+      "DeploymentBucketName": "amplify-domits-production-150926-deployment",
+      "UnauthRoleName": "amplify-domits-production-150926-unauthRole",
+      "StackName": "amplify-domits-production-150926",
+      "StackId": "arn:aws:cloudformation:eu-north-1:115462458880:stack/amplify-domits-production-150926/f61a0ab0-887f-11ee-a107-066b65f51f56",
+      "AmplifyAppId": "d34jwd0sihmsus",
+      "AuthTriggerTemplateURL": "https://s3.amazonaws.com/amplify-domits-production-150926-deployment/amplify-cfn-templates/auth/auth-trigger-cloudformation-template.json"
+    },
+    "categories": {
+      "auth": {
+        "domits7b73f586": {},
+        "userPoolGroups": {}
+      },
+      "function": {
+        "domits7b73f586PreSignup": {
+          "deploymentBucketName": "amplify-domits-production-150926-deployment",
+          "s3Key": "amplify-builds/domits7b73f586PreSignup-37427171426a734b576d-build.zip"
+        }
+      }
+    }
+  }
+}

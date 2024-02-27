@@ -1,0 +1,97 @@
+.confirmEmailTitle {
+    color: black;
+    font-size: 36px;
+    font-family: Kanit, sans-serif;
+    font-weight: bold;
+    line-height: 54px;
+    word-wrap: break-word;
+    margin-top: 60px;
+}
+
+.confirmEmailContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.confirmEmailForm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 500px;
+    max-width: 500px;
+    margin: 60px;
+    padding: 40px;
+    background: #EBFAED;
+    border-radius: 15px;
+}
+
+.confirmEmailDigitsInput {
+    margin: 20px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.confirmEmailDigitsInput_digit {
+    text-align: center;
+    font-size: 20px;
+    width: 40px;
+    height: 40px;
+    margin: 10px;
+    background: white;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    border: 1px black solid;
+}
+
+.enter6DigitText {
+    color: black;
+    font-size: 24px;
+    font-family: Kanit, sans-serif;
+    font-weight: 550;
+    line-height: 54px;
+    word-wrap: break-word;
+    text-align: center;
+}
+
+.verifyRegisterButton {
+    width: 100%;
+    padding: 8px 15px;
+    background: #0D9813;
+    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    border: 0;
+    color: white;
+    font-size: 18px;
+    justify-content: center;
+    align-items: center;
+    margin: 20px auto 0;
+    display: block;
+}
+
+.resendCodeButton {
+        width: 100%;
+        padding: 8px 15px;
+        background: #49146A;
+        box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
+        border-radius: 15px;
+        border: 0;
+        color: white;
+        font-size: 18px;
+        justify-content: center;
+        margin: 20px auto 0;
+        display: block;
+}
+
+.notReceivedCodeText {
+    color: black;
+    margin-top: 20px;
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 18px;
+    word-wrap: break-word;
+    align-self: flex-start;
+}
