@@ -9,7 +9,5 @@
     max-height: 300px;
     overflow-y: scroll;
 
-    /* potentiele fix voor dat resulaten worden getoont dat die niet onder fotos worden getoont */
-    /* position: relative; 
-    z-index: 2;  */
+
   }

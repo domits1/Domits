@@ -17,7 +17,7 @@ export const SearchBar = ({ setResults }) => {
   const fetchData = (value, searchType) => {
     const partialValue = encodeURIComponent(value);
     const endpoint = `https://secure.geonames.org/searchJSON?q=${partialValue}&maxRows=40&username=Kacper29`;
-
+    
     fetch(endpoint)
       .then((response) => response.json())
       .then((data) => {
@@ -42,7 +42,7 @@ export const SearchBar = ({ setResults }) => {
 
   const debouncedFetch = debounce((value, searchType) => {
     fetchData(value, searchType);
-  }, 100); // debounce-tijd naar 100 milliseconden
+  }, 100); 
 
   return (
     <div className="bar">
