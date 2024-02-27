@@ -9,44 +9,43 @@
     border-radius: 20px;
     display: flex;
     font-size: 0.6rem;
-    position: fixed;
-    top: 0;
-    left: 54%;
-    transform: translateX(-50%);
     
+   
   }
   
   .bar div {
     /* border-radius: inherit; */
-    text-align: center;
-    transition: background 250ms ease
-
-
+    padding: 0.8rem 1.5rem;
+    transition: background 250ms ease;
+    
   }
+  
   .bar div:hover {
     background: hsl(0 0% 94%);
     border-radius: 20px;
     
   }
   
-
-
-  .check-in:hover, .check-out:hover, .location:hover , .location1:hover{
-    width: 30%;
-    cursor: pointer;
+  .location:hover {
+    width: 68%;
+    transform: translateY(-2px);
+  }
+  .location1:hover {
+    width: 54%;
+    transform: translateY(-2px);
     
   }
-  .accommodation:hover, .accommodation.hovered {
-    width: 30%;
+  
+  .check-in:hover, .check-out:hover, .accommodation:hover {
+    width: 41%;
     cursor: pointer;
+    transform: translateY(-2px);
   }
   
   input[type="text"] {
     background: none;
     border: none;
-    padding: 0.2rem 0 0 0; 
-    text-align: center;
-    cursor: pointer;
+    padding: 0.2rem 0 0 0;
     width: 100%; /* Added width 100% for full-width input */
   }
   
@@ -61,6 +60,7 @@
   .accommodation {
     /* position: relative; */
     align-items: center;
+    
   }
   
 /* balngrijk voor later */
@@ -93,7 +93,7 @@
     padding: 5px 10px;
     font-size: 10px;
     line-height: 30px; 
-    border: 1px solid #0D9813; 
+    border: 1px solid #2ea44f; 
     border-radius: 50%; 
     color: #ffffff;
     background-color: transparent; 
@@ -102,20 +102,20 @@
     transition-property: color, background-color, border-color;
     height: 35px;
     width: 35px; 
-    margin-top: 15px; 
+    margin-top: 10px; 
 }
 
 .button:hover {
-  background-color: #0D9813;
-  border-color: #0D9813;
+  background-color: #2ea44f;
+  border-color: #2ea44f;
   /* box-shadow: 0 0 2px 3px #3e3d3d; Adjust the shadow color and size as needed */
   transition-duration: 0.4s;
-
+ 
 }
+
 
 .button svg {
     color: black; /* Zwarte kleur voor FaSearch-icoon */
-    
 }
 
 .button:hover svg {
@@ -133,8 +133,6 @@
       transform: translateY(-3px);
   }
 }
-
-
 
 
 
