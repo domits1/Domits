@@ -10,7 +10,7 @@
 .lbText {
     width: 20px;
     display: flex;
-    align-items: center; /* Verticale uitlijning in het midden */
+    align-items: center; 
     justify-content: center;
     color: white;
 }
