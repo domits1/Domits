@@ -1,0 +1,72 @@
+.button_containerc {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.buttonc {
+    height: 5rem;
+    width: 18rem;
+    background-color: #308AE4;
+    border-radius: 1.5rem;
+    border: none;
+    color: white;
+    margin: auto;
+
+    &:hover {
+        background-color: #367fc8;
+        cursor: pointer;
+    }
+}
+
+.username {
+    width:fit-content;
+    background-color: #308AE4;
+    border-left: 10px solid #308AE4;
+    border-right: 10px solid #308AE4;
+    border-radius: 1.5rem;
+
+    color: white;
+}
+
+.time {
+    font-size: small;
+
+}
+
+.text {
+    background-color: rgb(212, 210, 210);
+    border-radius: 1.5rem;
+    width:fit-content;
+    border-left: 10px solid rgb(212, 210, 210);
+    border-right: 10px solid rgb(212, 210, 210);
+    margin-bottom: 40px;
+}
+
+.chat-enter{
+    display: flex;
+    float: right;
+    margin-right: 7px;
+    margin-top: 17px;
+}
+
+.chat_box {
+    width: 900px;
+    height: 500px;
+    background: rgb(224, 241, 255);
+    overflow: auto;
+    margin-left: 300px;
+}
+
+.input_form {
+    margin-left: 590px;
+    overflow: auto;
+    border: 2px solid #308AE4;
+    border-radius: 15px;
+    width: 360px;
+    outline: none;
+    &:hover {
+        border: 2.2px solid #2d73b9;
+        cursor: pointer;
+    }
+}
