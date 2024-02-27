@@ -39,7 +39,6 @@ import Stripe from 'stripe';
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
-import testfile from "./components/guestdashboard/testfile123";
 
 
 
