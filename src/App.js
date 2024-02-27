@@ -28,6 +28,9 @@ import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
 import Error from "./components/errorpage/errorpage";
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
+import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
+import testfile from "./components/guestdashboard/testfile123";
+
 
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
@@ -77,7 +80,7 @@ function App() {
                     <Route path="/guestdashboard/messages" element={<Details />}/>
                     <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />}/>
                     <Route path="/guestdashboard/reviews" element={<GuestDashboard />}/>
-                    <Route path="/guestdashboard/settings" element={<GuestDashboard />}/>
+                    <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard/>}/>
                     <Route path="/career" element={<Careers />} />
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
