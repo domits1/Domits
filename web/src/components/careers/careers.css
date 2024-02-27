@@ -1,32 +1,36 @@
-
-.careers{
+.careers {
     padding: 50px;
-    margin-left: 100px;
-    margin-right: 100px;
+    margin-left: auto;
+    margin-right: auto;
     margin-bottom: 100px;
+    max-width: 1200px; /* Set a maximum width for the container */
 }
 
-.careertext{
+.careertext {
     color: #000;
     font-size: 20px;
-    font-style: normal;
     font-weight: 500;
 }
 
-.careertext img{
-    width: 420px;
-    height: 230px;
-    float: right;
-    margin-top: -80px;
+.careerimg{
+    display: flex; /* Add display flex to the parent container */
+    justify-content: flex-end; /* Align #careerimg to the flex end */
 }
 
-.jobbubbles{
+#careerimg {
+    width: 100%;
+    max-width: 420px;
+    height: 230px;
+}
+
+.jobbubbles {
     display: flex;
     flex-wrap: wrap;
-    width: 1300px;
+    margin-left: -20px; /* Offset margin-left from jobbubbles */
+    margin-right: -20px; /* Offset margin-right from jobbubbles */
 }
 
-.jobcat p{
+.jobcat p {
     color: #365E3D;
     background-color: #D6F5DB;
     font-weight: 500;
@@ -34,40 +38,75 @@
     width: 50px;
 }
 
-.jobbubble{
+.jobbubble {
     border-radius: 15px;
     border: 0.5px solid #000;
     padding-left: 20px;
     margin-left: 20px;
     margin-bottom: 30px;
-    width: 320px;
-    height: 140px;
+    flex: 1 1 320px; /* Flex item properties */
+    width: 100%;
+    max-width: calc(33.333% - 20px); /* 33.333% of the container minus margins */
 }
 
-.bubbletext{
-}
-
-#moreinfo{
+#moreinfo {
     color: #000;
     font-size: 18px;
-    font-style: normal;
     font-weight: 500;
     line-height: 20px;
-    margin-left: 195px;
-    margin-top: -50px;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
 }
 
-#moreinfo:hover{
-    cursor: pointer;
-    text-decoration-line: underline;
-}
-
-#openapp{
+#openapp {
     margin-top: 100px;
     margin-left: 200px;
 }
 
-#openapp:hover{
-    cursor: pointer;
-    text-decoration-line: underline;
+/* Media query for phone screens */
+@media only screen and (max-width: 600px) {
+    .careers {
+        padding: 20px;
+    }
+
+    .careertext {
+        font-size: 16px;
+    }
+
+    #careerimg {
+        max-width: 100%;
+        height: auto;
+        float: none;
+    }
+
+    .jobbubbles {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .jobbubble {
+        padding-left: 10px;
+        margin-left: 0;
+        margin-bottom: 20px;
+        max-width: 100%;
+    }
+
+    #moreinfo {
+        justify-content: center;
+        margin: 20px 0;
+    }
+
+    #openapp {
+        margin-top: 20px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Media query for larger screens */
+@media only screen and (min-width: 601px) {
+    #moreinfo {
+        margin-right: 20px; /* Add margin to the right */
+    }
 }
