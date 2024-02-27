@@ -1,7 +1,8 @@
 import React from "react";
 import './about.css'
-import FAQ from "../landingpage/Faq"
-
+import FAQ from "../landingpage/Faq";
+import vision from '../../images/icons/vision.png';
+import whatwedo from '../../images/icons/route.png';
 
 function About() {
     return (
@@ -15,18 +16,26 @@ function About() {
 
             <div className="underbigtext">
                 <p className="aboutText">
-                    Domits is a platform to list, search and book holiday accommodations.
-                    We build cool stuff in our travel innovation labs for People, Growth, Cloud IT and AI Data.
+                    <p>
+                        Domits is a platform to list, search and book holiday accommodations.
+                    </p>
+                    <p>
+                        We build cool stuff in our travel innovation labs for People, Growth, Cloud IT and AI Data.
+                    </p>
                 </p>
                 <p className="aboutText">
                     In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners.
                     There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.
                 </p>
                 <p className="aboutText">
-                    We strive to support tenants and landlords in every step of the process.
-                    Domits acts as the intermediary in this process.
-                    You enter into a rental agreement directly with the landlord and/or owner of the accommodation.
-                    Through Domits, you have the opportunity to inquire about options without any obligation.
+                    <p>
+                        We strive to support tenants and landlords in every step of the process.
+                        Domits acts as the intermediary in this process.
+                    </p>
+                    <p>
+                        You enter into a rental agreement directly with the landlord and/or owner of the accommodation.
+                        Through Domits, you have the opportunity to inquire about options without any obligation.
+                    </p>
                 </p>
                 <p className="aboutText">
                     By charging one-time service fees, we can keep our platform running and provide services such as support.
@@ -35,9 +44,12 @@ function About() {
             <br />
             <div className="factsbox">
                 <div className="awesomefacts">
-                    <p className="factsTitle">Vision</p>
+                    <div className="factsHeader">
+                        <p className="factsTitle">Vision</p>
+                        <img className="factsImage" src={vision}></img>
+                    </div>
                     <p className="factsTitle">A healthy, safe and future-proof travel world</p>
-                    <p className="aboutText">
+                    <p className="factsText">
                         Our vision is a travel world that has less problems with health, safety and future-proofing.
                         Now and in the future, that is what Domits has in mind.
                         Everyone takes into account how people deal with these problems and their options.
@@ -45,9 +57,12 @@ function About() {
                     </p>
                 </div>
                 <div className="awesomefacts">
-                    <p className="factsTitle">What we do</p>
+                    <div className="factsHeader">
+                        <p className="factsTitle">What we do</p>
+                        <img className="factsImage" src={whatwedo}></img>
+                    </div>
                     <p className="factsTitle">Together with partners we provide travel solutions</p>
-                    <p className="aboutText">
+                    <p className="factsText">
                         We build our travel platform to list, search and book accommodations.
                         Besides that we are providing traveltech development and consultancy for a select group of partners.
                         We are open to cooperate through ventures and our travel innovation labs.
@@ -84,7 +99,7 @@ function About() {
                         <p>Employee 8</p>
                         <p>Marketing Specialist</p>
                     </div>
-                    
+
                 </div>
 
                 <div class="about">

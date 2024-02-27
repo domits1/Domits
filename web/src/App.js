@@ -7,14 +7,15 @@ import Assortment from './components/assortment/Assortment';
 import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
+import Whydomits from "./components/about/Whydomits";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
-import HostDashboard from "./components/hostdashboard/HostDashboard.js";
-import HostMessages from "./components/hostdashboard/HostMessages.js";
-import HostPayments from "./components/hostdashboard/HostPayments.js";
-import HostListings from "./components/hostdashboard/HostListings.js";
-import HostCalendar from "./components/hostdashboard/HostCalendar.js";
-import HostSettings from "./components/hostdashboard/HostSettings.js";
+import HostDashboard from "./components/hostdashboard/HostDashboard";
+import HostMessages from "./components/hostdashboard/HostMessages";
+import HostPayments from "./components/hostdashboard/HostPayments";
+import HostListings from "./components/hostdashboard/HostListings";
+import HostCalendar from "./components/hostdashboard/HostCalendar";
+import HostSettings from "./components/hostdashboard/HostSettings";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -78,6 +79,7 @@ function App() {
                     <Route path="/confirm-email" element={<ConfirmRegister />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
+                    <Route path="/why-domits" element={<Whydomits />} />
                     <Route path="/travelinnovation" element={<Travelinnovation />} />
                     <Route path="/career" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />

@@ -1,8 +1,7 @@
-
-
 .aboutus{
     width: 80%;
     margin: auto;
+    margin-top: 40px;
     color: #000;
     font-size: 20px;
     font-style: normal;
@@ -12,32 +11,48 @@
 .factsbox{
     display: flex;
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: space-between;
     color: white;
-    
-
 }
 
 .awesomefacts{
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    width: 42%;
+    width: 45%;
     background-color: #0D9813;
     border-radius: 20px;
     padding: 20px;
+    margin-top: 20px;
     margin-bottom: 20px;
-    
 }
 
 .aboutText {
-    margin-bottom: 25px;
+    margin-top: 30px;
+}
+
+.factsText {
+    margin-top: 20px;
 }
 
 .factsTitle {
     margin: 0;
-    margin-bottom: 15px;
     font-size: 25px;
+}
+
+.factsHeader {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    min-height: 30px; 
+    margin-top: 10px; 
+    margin-bottom: 10px;
+}
+
+.factsImage {
+    object-fit: contain;
 }
 
 
