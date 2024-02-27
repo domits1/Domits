@@ -1,4 +1,4 @@
-contact{
+.contact {
     padding: 50px;
     margin-left: 100px;
     margin-right: 100px;
@@ -6,95 +6,89 @@ contact{
     color: #000;
     font-size: 20px;
     font-style: normal;
-    font-family: sans-serif, 'Gill Sans';
     font-weight: 400;
     line-height: 150%;
-}
-
-.contactform{
+  }
+  
+  .contactform {
     border-radius: 15px;
     background: #EBFAED;
-    width: 100%;
-    padding-top: 50px;
-    padding-left: 50px;
-    padding-bottom: 50px;
-}
-
-.contactform h2{
-    font-weight: 600;
-}
-
-.namemessage{
+    padding: 50px;
     display: flex;
-    gap: 365px;
-}
-
-.biginput{
-    width: 1040px;
-    margin-right: -180px;
-    float: right;
-}
-
-.biginput textarea {
-    display: block;
-    width: calc(100% - 200px);
-    height: 312px;
-    resize: vertical; /* Allow vertical resizing */
+    flex-wrap: wrap;
+  }
+  
+  .contactform h2 {
+    font-weight: 600;
+  }
+  
+  .namemessage,
+  .biginput {
+    flex: 1;
+    margin-right: 20px;
+  }
+  
+  @media screen and (max-width: 768px) {
+    .namemessage,
+    .biginput,
+    .formbuttons {
+      flex: 100%;
+      margin-right: 0;
+    }
+  }
+  
+  .biginput textarea {
+    width: 100%;
+    height: 272px;
+    box-sizing: border-box;
     text-align: left;
     padding: 10px;
     border: 1px solid #000;
     border-radius: 15px;
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-}
-
-.contactform input:not(.biginput input) {
+  }
+  
+  .contactform input:not(.biginput input) {
     border-radius: 15px;
     border: 1px solid #000;
+    background: #FFF;
     padding: 10px;
-    width: 400px;
+    width: 100%;
     box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
-}
-
-.formbuttons{
+  }
+  
+  .formbuttons {
     border: 0px;
     display: flex;
-    margin-left: 395px;
-}
-
-#attachmentsbutton {
-    width: 400px;
+    justify-content: flex-start;
+  }
+  
+  #attachmentsbutton,
+  #sendbutton {
+    width: 50%;
     height: 50px;
     padding: 8px 15px;
-    justify-content: center;
-    align-items: center;
     gap: 15px;
     flex-shrink: 0;
     color: #FFF;
-    margin: 30px;
     border-radius: 15px;
-    background: #49146A;
-}
-
-#attachmentsbutton:hover{
-    background: #390f52;
-    cursor: pointer;
-}
-
-#sendbutton{
-    width: 400px;
-    height: 50px;
-    padding: 8px 15px;
-    justify-content: center;
-    align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
-    color: #FFF;
-    margin: 30px;
-    border-radius: 15px;
+  }
+  
+  #attachmentsbutton {
+    background: #003366;
+  }
+  
+  #sendbutton {
     background: #0D9813;
-}
-
-#sendbutton:hover{
+  }
+  
+  #attachmentsbutton:hover {
+    background: #003366;
+    cursor: pointer;
+  }
+  
+  #sendbutton:hover {
     background: #09770f;
     cursor: pointer;
-}
+  }
+  
