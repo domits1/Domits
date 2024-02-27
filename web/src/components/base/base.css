@@ -83,15 +83,20 @@
     font-weight: 400;
     line-height: 24px;
     word-wrap: break-word;
-    margin-top: 0;
 }
 
 .dropdownLoginButton {
+    margin-top: 0;
     margin-bottom: 10px;
     background: #0D9813;
 }
-.dropdownRegisterButton {
+.dropdownRegisterButton, .dropdownLogoutButton {
+    margin-top: 0;
     background-color: #49146A;
+}
+
+.dropdownLogoutButton {
+    margin-top: 20px;
 }
 
 .personalMenuDropdown .personalMenuDropdownContent button:hover {
