@@ -32,8 +32,8 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 className='footer-headers'>Guest</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/" className='footer-links'>Discover and book</Link></li>
-                        <li><Link to="/" className='footer-links'>Helpdesk for guests</Link></li>
+                        <li><Link to="/" className='footer-links'>Search and book</Link></li>
+                        <li><Link to="/" className='footer-links'>Helpdesk</Link></li>
                     </ul>
                 </div>
 
