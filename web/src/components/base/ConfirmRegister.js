@@ -85,7 +85,7 @@ function ConfirmEmail() {
                 <div className="enter6DigitText">
                     Enter 6 digit code send to your email
                 </div>
-                <DigitInputs amount={6} inputRef={inputRef} />
+                <DigitInputs amount={6} inputRef={inputRef} className="confirmEmailDigitsInput" />
                 {errorMessage && (
                     <div className="errorText">{errorMessage}</div>
                 )}

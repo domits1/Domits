@@ -94,10 +94,13 @@ const Login = () => {
                                 onChange={handleChange}
                             />
                             <br />
+                            <div className="forgot-password-text">
+                                <a href="/forgot-password">Forgot your password?</a>
+                            </div>
                             {errorMessage && (
                                 <div className="errorText">{errorMessage}</div>
                             )}
-                            <button type="submit" className="loginButton" name="loginButton">
+                            <button type="submit" className="loginButton">
                                 <div className='lbHolder'>
                                     <p className='lbText'>Login</p>
                                     <svg

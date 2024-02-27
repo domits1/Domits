@@ -1,8 +1,8 @@
 /* CSS for the header */
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
-    padding: 16px 50px;
-    text-align: center;
+  padding: 16px 50px;
+  text-align: center;
 }
 
 .header-nav{
@@ -35,7 +35,7 @@
 .personalMenu {
     border: none;
     background-color: #0D9813;
-
+    
     justify-content: center;
     align-items: center;
     gap: 10px;
@@ -177,13 +177,13 @@
 
 .footer-terms {
     margin: auto;
-    padding: 0;
+    padding: 0; 
 
     width: 90%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-
+   
     text-decoration-line: underline;
     margin-top: 20px;
 }
@@ -202,7 +202,7 @@
 a:hover {
     text-decoration: underline;
 }
-
+ 
 @media screen and (max-width: 830px) {
 
     .footer-content{
@@ -223,7 +223,7 @@ a:hover {
         border-right: none;
         padding-right: 0px;
     }
-
+    
 }
 .search-bar-container {
     /* padding-top: 20vh; */
@@ -236,10 +236,10 @@ a:hover {
     top: 10px; /* Pas de gewenste bovenste positie aan */
     left: 40%; /* Plaats in het midden of pas aan zoals gewenst */
     transform: translateX(-50%);
-}
-
-
-
+  }
+  
+  
+  
 
 
 /* End of footer */
