@@ -1,9 +1,11 @@
+// React component
 import React, { useState } from 'react';
 import './base.css'
 import logo from "../../logo.svg";
 import nineDots from '../../images/dots-grid.svg';
 import profile from '../../images/profile-icon.svg';
 import arrowDown from '../../images/arrow-down-icon.svg';
+import loginArrow from '../../images/whitearrow.png';
 import { useNavigate } from 'react-router-dom';
 
 //search balk files
@@ -16,12 +18,22 @@ function Header() {
     const navigateToLogin = () => {
         navigate('/login');
     };
+    const navigateToRegister = () => {
+        navigate('/register');
+    };
     const navigateToLanding = () => {
         navigate('/landing');
     };
     const navigateToNinedots = () => {
         navigate('/travelinnovation');
     };
+
+    const [dropdownVisible, setDropdownVisible] = useState(false);
+
+    const toggleDropdown = () => {
+        setDropdownVisible(!dropdownVisible);
+    };
+
     const [results, setResults] = useState([]);
     return (
         <div className="App">
@@ -47,10 +59,17 @@ function Header() {
                         <button className="headerButtons" onClick={navigateToNinedots}>
                             <img src={nineDots} alt={nineDots} />
                         </button>
-                        <button className="personalMenu" onClick={navigateToLogin}>
-                            <img src={profile} alt={profile} />
-                            <img src={arrowDown} alt={arrowDown} />
-                        </button>
+                        {/* Dropdown menu */}
+                        <div className="personalMenuDropdown">
+                            <button className="personalMenu" onClick={toggleDropdown}>
+                                <img src={profile} alt={profile} />
+                                <img src={arrowDown} alt={arrowDown} />
+                            </button>
+                            <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
+                                <button onClick={navigateToLogin} className="dropdownLoginButton">Login <img src={loginArrow} alt="Login Arrow"/></button>
+                                <button onClick={navigateToRegister} className="dropdownRegisterButton">Register</button>
+                            </div>
+                        </div>
                     </div>
                 </nav>
             </header>
