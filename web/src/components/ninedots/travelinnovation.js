@@ -1,5 +1,5 @@
 import React from "react";
-import home from "../../images/futurehome.jpg";
+import huis from "../../images/accom_villaneth.png";
 import growth from "../../images/icons/users-01.png"
 import people from "../../images/icons/trend-up-01.png"
 import cloud from "../../images/icons/cloud-01.png"
@@ -10,7 +10,7 @@ import './ninedots.css';
 function TravelInnovation() {
     return (
         <div>
-            <div className="imageContainer" style={{ backgroundImage: `url(${home})` }}>
+            <div className="imageContainer" style={{ backgroundImage: `url(${huis})` }}>
                 <h1 className="title">Travel Innovation Lab</h1>
                 <h3 className="subTitle">Sustainable Development Creation</h3>
             </div>

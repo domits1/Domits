@@ -100,7 +100,7 @@ const Login = () => {
                             {errorMessage && (
                                 <div className="errorText">{errorMessage}</div>
                             )}
-                            <button type="submit" className="loginButton" name="loginButton">
+                            <button type="submit" className="loginButton">
                                 <div className='lbHolder'>
                                     <p className='lbText'>Login</p>
                                     <svg
