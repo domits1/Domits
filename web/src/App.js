@@ -33,6 +33,7 @@ import Terms from "./components/disclaimers/Terms";
 import Login from "./components/base/Login";
 import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
+import ForgotPassword from "./components/base/ForgotPassword";
 import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
@@ -77,6 +78,7 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/confirm-email" element={<ConfirmRegister />} />
+                    <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
                     <Route path="/why-domits" element={<Whydomits />} />
