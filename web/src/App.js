@@ -34,7 +34,7 @@ import ConfirmRegister from "./components/base/ConfirmRegister";
 import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
 import Release from "./components/release/Release";
-export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
+export const stripe = new Stripe(process.env.REACT_APP_STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 
 // Set the app element for react-modal
