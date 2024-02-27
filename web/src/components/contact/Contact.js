@@ -28,12 +28,11 @@ function Contact() {
                 <div class="biginput">
                     <h2>Your message</h2>
                     <textarea placeholder="ex. I am still waiting to get paid and would like a follow up or open a dispute about this..."></textarea>
+                    <div className="formbuttons">
+                        <button id="attachmentsbutton"> Add attachments</button>
+                        <button id="sendbutton"> Send message</button>
+                    </div>
                 </div>
-            </div>
-
-            <div className="formbuttons">
-                <button id="attachmentsbutton"> Add attachments</button>
-                <button id="sendbutton"> Send message</button>
             </div>
         </div>
     );
