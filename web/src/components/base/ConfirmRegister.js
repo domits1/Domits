@@ -53,10 +53,10 @@ function ConfirmEmail() {
         }
     }, [isHost]);
 
-    function onSubmit(e: FormEvent) {
+    function onSubmit(e) {
         e.preventDefault()
-        let code: string = ""
-        inputRef.current.forEach((input: HTMLInputElement) => { code += input.value })
+        let code = ""
+        inputRef.current.forEach((input) => { code += input.value })
 
         Auth.confirmSignUp(userEmail, code)
             .catch(error => {
