@@ -182,3 +182,65 @@
     max-height: 200px; 
   }
   
+  .formContainer {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 20px;
+    width: 80%;
+    margin: auto;
+
+}
+
+.form-section {
+    width: 45%;
+}
+
+.map-section {
+    width: 45%;
+}
+
+#map-placeholder {
+    width: 100%;
+    height: 300px;
+    background-color: #e0e0e0;
+    text-align: center;
+    line-height: 300px;
+    color: #333;
+    margin-top: 20px;
+}
+
+.room-type label,
+.quantity label,
+.locationInput label {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+    gap: 15px;
+}
+
+.formRow {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.textInput, .radioInput {
+    width: auto;
+    padding: 11px 15px;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 15px;
+    border: 1px solid black;
+    justify-content: flex-start;
+    align-items: center;
+    display: inline-flex;
+}
+
+.locationText {
+    min-width: 173px;
+    width: 60%;
+}

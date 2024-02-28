@@ -10,6 +10,7 @@ import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomits";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
+import HostOnboarding from "./components/landingpage/OnboardingHost";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
 import HostMessages from "./components/hostdashboard/HostMessages";
 import HostPayments from "./components/hostdashboard/HostPayments";
@@ -93,6 +94,7 @@ function App() {
                     <Route path="/guestdashboard/reviews" element={<GuestDashboard />}/>
                     <Route path="/guestdashboard/settings" element={<GuestDashboard />}/>
                     <Route path="/career" element={<Careers />} />
+                    <Route path="/enlist" element={<HostOnboarding />} />
                     <Route path="/hostdashboard" element={<HostDashboard />} />
                     <Route path="/hostdashboard/messages" element={<HostMessages/>} />
                     <Route path="/hostdashboard/payments" element={<HostPayments />} />
