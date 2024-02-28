@@ -1,4 +1,4 @@
-.button_containerc {
+.button_container {
     display: inline-flex;
     margin-right: 10px;
 }
@@ -32,17 +32,25 @@
 }
 
 .chat_box {
-    width: 900px;
-    height: 500px;
-    background:lightgrey;
-    border: 2px;
-    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    /* Your existing styles */
+    width: 717px;
+    height: 427px;
+    flex-shrink: 0;
+    border-radius: 15px;
+    background: #FFF;
+    box-shadow: 0px 0px 10px 0px rgba(0, 0, 0, 0.10);
     margin-left: 300px;
+    overflow: auto;
 }
+
 .input_container {
     display: flex;
     align-items: center;
     margin-top: 20px;
+    margin-bottom: 20px; /* Add margin bottom to create space between the input and bottom */
 }
 
 .input_field {
