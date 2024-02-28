@@ -1,121 +1,135 @@
 * {
-    box-sizing: border-box;
-   
-  }
-  .bar {
-    width: 750px;
-    background: white;
-    box-shadow: 0 0 5px hsl(0 0% 78%);
-    border-radius: 20px;
-    display: flex;
-    font-size: 0.6rem;
-    position: fixed;
-    top: 0;
-    left: 54%;
-    transform: translateX(-50%);
+  box-sizing: border-box;
+}
+.search-bar-container {
     
-  }
+  width: 45%;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  position: absolute;
+  top: 8px; 
+  left: 40%; 
+  transform: translateX(-50%);
+}
+.bar {
+  width: 750px;
+  background: white;
+  box-shadow: 0 0 5px hsl(0 0% 78%);
+  border-radius: 30px;
+  display: flex;
+  font-size: 0.6rem;
+  position: fixed;
+  top: 0;
+  left: 54%;
+  transform: translateX(-50%);
+  height: 65px;
+}
+
+.bar div {
+  text-align: center;
+  transition: background 250ms ease, width 250ms ease; /* Include width transition here */
+  border-radius: 20px;
+}
+
+.bar div:hover {
+  background: hsl(0 0% 94%);
   
-  .bar div {
-    /* border-radius: inherit; */
-    text-align: center;
-    transition: background 250ms ease
+}
+
+.check-in:hover, .check-out:hover, .location:hover, .location1:hover, .accommodation:hover {
+  width: 30%;
+  cursor: pointer;
+}
+.check-in{
+  width: 22%;
+  align-items: center;
+}
+.check-out{
+  width: 22%;
+  align-items: center;
+}
+.location{
+  width: 22%;
+  align-items: center;
+}
+.location1{
+  width: 22%;
+  align-items: center;
+}
 
 
-  }
-  .bar div:hover {
-    background: hsl(0 0% 94%);
-    border-radius: 20px;
-    
-  }
-  
+input[type="text"] {
+  background: none;
+  border: none;
+  padding: 0.2rem 0 0 0;
+  text-align: center;
+  cursor: pointer;
+  width: 100%;
+}
+
+input[type="text"]:focus {
+  outline: none;
+}
+
+::placeholder {
+  font-size: 0.64rem;
+}
+
+.accommodation {
+  width: 22%;
+  align-items: center;
+}
+
+.bar>div {
+  position: relative;
+  transition: background 250ms ease, width 250ms ease;
+}
+
+.bar>div::before {
+  position: absolute;
+  content: "";
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 55%;
+  background: rgb(88, 153, 22);
+}
+
+.bar>div:nth-of-type(1)::before {
+  background: transparent;
+}
 
 
-  .check-in:hover, .check-out:hover, .location:hover , .location1:hover{
-    width: 30%;
-    cursor: pointer;
-    
-  }
-  .accommodation:hover, .accommodation.hovered {
-    width: 30%;
-    cursor: pointer;
-  }
-  
-  input[type="text"] {
-    background: none;
-    border: none;
-    padding: 0.2rem 0 0 0; 
-    text-align: center;
-    cursor: pointer;
-    width: 100%; /* Added width 100% for full-width input */
-  }
-  
-  input[type="text"]:focus {
-    outline: none;
-  }
-  
-  ::placeholder {
-    font-size: 0.64rem;
-  }
-  
-  .accommodation {
-    /* position: relative; */
-    align-items: center;
-  }
-  
-/* balngrijk voor later */
-  .bar>div {
-    position: relative;
-  }
-  .bar>div::before {
-    position: absolute;
-    content: "";
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 1px;
-    height: 55%;
-    background: rgb(88, 153, 22);
-  }
-  
-  .bar>div:nth-of-type(1)::before {
-    background: transparent;
-  }
-  
-  .bar>div:hover::before {
-    background: transparent;
-  }
-  
-  .button {
-    display: inline-block;
-    outline: 0;
-    cursor: pointer;
-    padding: 5px 10px;
-    font-size: 10px;
-    line-height: 30px; 
-    border: 1px solid #0D9813; 
-    border-radius: 50%; 
-    color: #ffffff;
-    background-color: transparent; 
-    box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-    transition: 0.2s cubic-bezier(0.3, 0, 0.5, 1);
-    transition-property: color, background-color, border-color;
-    height: 35px;
-    width: 35px; 
-    margin-top: 15px; 
+
+.button {
+  display: inline-block;
+  outline: 0;
+  cursor: pointer;
+  padding: 5px 10px;
+  font-size: 10px;
+  line-height: 30px;
+  border: 1px solid #0D9813;
+  border-radius: 50%;
+  color: #ffffff;
+  background-color: transparent;
+  box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+  transition: 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+  transition-property: color, background-color, border-color;
+  height: 35px;
+  width: 35px;
+  margin-top: 15px;
 }
 
 .button:hover {
   background-color: #0D9813;
   border-color: #0D9813;
-  /* box-shadow: 0 0 2px 3px #3e3d3d; Adjust the shadow color and size as needed */
   transition-duration: 0.4s;
-
 }
 
 .button svg {
-    color: black; /* Zwarte kleur voor FaSearch-icoon */
-    
+  color: black; /* Zwarte kleur voor FaSearch-icoon */
 }
 
 .button:hover svg {
@@ -124,13 +138,13 @@
 
 @keyframes bounce {
   0%, 20%, 50%, 80%, 100% {
-      transform: translateY(0);
+    transform: translateY(0);
   }
   40% {
-      transform: translateY(-5px);
+    transform: translateY(-5px);
   }
   60% {
-      transform: translateY(-3px);
+    transform: translateY(-3px);
   }
 }
 
@@ -138,7 +152,3 @@
 
 
 
-
-
-
-  

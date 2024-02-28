@@ -17,7 +17,7 @@ export const SearchBar = ({ setResults }) => {
   const fetchData = (value, searchType) => {
     const partialValue = encodeURIComponent(value);
     const endpoint = `https://secure.geonames.org/searchJSON?q=${partialValue}&maxRows=40&username=Kacper29`;
-    
+
     fetch(endpoint)
       .then((response) => response.json())
       .then((data) => {
@@ -42,14 +42,13 @@ export const SearchBar = ({ setResults }) => {
 
   const debouncedFetch = debounce((value, searchType) => {
     fetchData(value, searchType);
-  }, 100); 
+  }, 100);
 
   return (
     <div className="bar">
       <div className="location">
         <p>Country</p>
-        <input
-          type="text"
+        <input type="text"
           placeholder="Choose a country"
           value={selectedCountry}
           onChange={(e) => handleInputChange(e.target.value, setSelectedCountry, 'country')}
@@ -57,8 +56,7 @@ export const SearchBar = ({ setResults }) => {
       </div>
       <div className="location1">
         <p>City</p>
-        <input
-          type="text"
+        <input type="text"
           placeholder="Choose a city"
           value={selectedCity}
           onChange={(e) => handleInputChange(e.target.value, setSelectedCity, 'city')}
@@ -94,27 +92,30 @@ export const SearchBar = ({ setResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            { value: 'hotel', label: 'Hotel' },
-            { value: 'apartment', label: 'Apartment' },
-            { value: 'guesthouse', label: 'Guesthouse' },
-            // Add more options as needed
-
+            { value: 'Hotel', label: 'Hotel' },
+            { value: 'Apartment', label: 'Apartment' },
+            { value: 'Guesthouse', label: 'Guesthouse' },
+            { value: 'Villa', label: 'Villa' },
+            { value: 'Cottage', label: 'Cottage' },
+            { value: 'Resort', label: 'Resort' },
+            { value: 'Hostel', label: 'Hostel' },
           ]}
+
           placeholder="Type of accommodation"
-          isSearchable={false}
+          isSearchable={true}
           styles={{
             control: (provided) => ({
-              ...provided,
+              provided,
               border: 'none',
               boxShadow: 'none',
-              width: '200px', 
+
             }),
             indicatorSeparator: (provided) => ({
-              ...provided,
+              provided,
               display: 'none',
             }),
             dropdownIndicator: (provided) => ({
-              ...provided,
+              provided,
               display: 'none',
             }),
             placeholder: (provided) => ({
@@ -126,7 +127,7 @@ export const SearchBar = ({ setResults }) => {
       </div>
 
       <button className="button" type="button">
-        <FaSearch style={{ marginRight: '1px' }} />
+        <FaSearch style={{ marginRight: '2px' }} />
       </button>
     </div>
   );

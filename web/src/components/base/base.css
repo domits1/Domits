@@ -224,16 +224,5 @@ a:hover {
         padding-right: 0px;
     } 
 }
-.search-bar-container {
-    /* padding-top: 20vh; */
-    width: 40%;
-    padding: 1px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 8px; /* Pas de gewenste bovenste positie aan */
-    left: 40%; /* Plaats in het midden of pas aan zoals gewenst */
-    transform: translateX(-50%);
-  }
+
 /* End of footer */
