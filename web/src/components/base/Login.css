@@ -79,8 +79,7 @@ label {
 }
 
 .loginInput {
-    width: auto;
-    min-width: 100%;
+    width: 92.5%;
     height: auto;
     padding: 11px 15px;
     margin-top: 20px;
@@ -115,19 +114,4 @@ label {
     opacity: 0.7;
     color: white;
     border-radius: 15px;
-}
-
-.forgot-password-text a {
-    color: black;
-    font-size: 14px;
-    font-family: Kanit, sans-serif;
-    font-weight: 400;
-    line-height: 18px;
-    word-wrap: break-word;
-    align-self: flex-start;
-    text-decoration: none;
-}
-
-.forgot-password-text a:hover {
-    text-decoration: underline;
 }

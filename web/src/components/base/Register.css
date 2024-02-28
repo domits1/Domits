@@ -1,8 +1,7 @@
 /* Login.css */
 
 .registerButton {
-    width: auto;
-    min-width: 100%;
+    width: 400px;
     padding: 8px 15px;
     background: #49146A;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
@@ -10,10 +9,11 @@
     border: 0;
     color: white;
     font-size: 18px;
+    justify-content: center;
+    margin: 20px auto 0;
     display: block;
     text-align: center; /* Center the text within the button */
     text-decoration: none; /* Remove the default underline on anchor tags */
-    cursor: pointer;
 }
 
 .registerTitle {
@@ -34,14 +34,12 @@
 }
 
 .registerForm {
-    min-width: 300px;
-    width: 25%;
     margin-top: 20px;
+    max-width: 25%;
     padding: 30px;
     background: #EBFAED;
     border-radius: 15px;
     margin-bottom: 50px;
-    box-sizing: border-box;
 }
 
 label {
@@ -49,8 +47,7 @@ label {
 }
 
 .registerInput {
-    width: auto;
-    min-width: 100%;
+    width: 92.5%;
     height: auto;
     padding: 11px 15px;
     margin-top: 15px;
