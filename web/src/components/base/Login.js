@@ -95,9 +95,6 @@ const Login = () => {
                                 onChange={handleChange}
                             />
                             <br />
-                            <div className="forgot-password-text">
-                                <a href="/forgot-password">Forgot your password?</a>
-                            </div>
                             {errorMessage && (
                                 <div className="errorText">{errorMessage}</div>
                             )}

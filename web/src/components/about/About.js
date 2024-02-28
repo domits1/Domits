@@ -1,119 +1,66 @@
 import React from "react";
 import './about.css'
-import FAQ from "../landingpage/Faq";
-import vision from '../../images/icons/vision.png';
-import whatwedo from '../../images/icons/route.png';
+import img from "../../images/aboutusimg.png"
+
 
 function About() {
     return (
         <div className="aboutus">
-            <div>
-                <h2>About Domits</h2>
+            <div className="bigtext">
+                <h1>“Our mission is to simplify travel for 1 million people”</h1>
             </div>
-            <div>
-                <h3>Tailor made partnership</h3>
+
+            <div className="aboutusimg">
+                <img src={img} alt="aboutusimg"/>
             </div>
 
             <div className="underbigtext">
-                <p className="aboutText">
-                    <p>
-                        Domits is a platform to list, search and book holiday accommodations.
-                    </p>
-                    <p>
-                        We build cool stuff in our travel innovation labs for People, Growth, Cloud IT and AI Data.
-                    </p>
+                <p>
+                    Domits is a platform for secure accommodations. On our platform, you'll find a wide range of lodging options.
                 </p>
-                <p className="aboutText">
-                    In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners.
-                    There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.
+                <p>
+                    We strive to support tenants and landlords in every step of the process. Domits acts as the intermediary in this process.
+                    You enter into a rental agreement directly with the landlord and/or owner of the accommodation.
+                    Through Domits, you have the opportunity to inquire about options without any obligation.
                 </p>
-                <p className="aboutText">
-                    <p>
-                        We strive to support tenants and landlords in every step of the process.
-                        Domits acts as the intermediary in this process.
-                    </p>
-                    <p>
-                        You enter into a rental agreement directly with the landlord and/or owner of the accommodation.
-                        Through Domits, you have the opportunity to inquire about options without any obligation.
-                    </p>
-                </p>
-                <p className="aboutText">
+                <p>
                     By charging one-time service fees, we can keep our platform running and provide services such as support.
                 </p>
             </div>
             <br />
-            <div className="factsbox">
-                <div className="awesomefacts">
-                    <div className="factsHeader">
-                        <p className="factsTitle">Vision</p>
-                        <img className="factsImage" src={vision}></img>
-                    </div>
-                    <p className="factsTitle">A healthy, safe and future-proof travel world</p>
-                    <p className="factsText">
-                        Our vision is a travel world that has less problems with health, safety and future-proofing.
-                        Now and in the future, that is what Domits has in mind.
-                        Everyone takes into account how people deal with these problems and their options.
-                        Together with partners, we work every day to simplify travel.
-                    </p>
-                </div>
-                <div className="awesomefacts">
-                    <div className="factsHeader">
-                        <p className="factsTitle">What we do</p>
-                        <img className="factsImage" src={whatwedo}></img>
-                    </div>
-                    <p className="factsTitle">Together with partners we provide travel solutions</p>
-                    <p className="factsText">
-                        We build our travel platform to list, search and book accommodations.
-                        Besides that we are providing traveltech development and consultancy for a select group of partners.
-                        We are open to cooperate through ventures and our travel innovation labs.
-                    </p>
-                </div>
+            <div className="awesomefacts">
+                <h1>Awesome Facts</h1>
             </div>
-            <div className="crew">
-                <h1>Who we are</h1>
-                <p>We are all conscious founders.</p>
 
-                <div class="team">
-                    <div class="member">
-                        <div class="avatar"></div>
-                        <p>Stefan Hopman</p>
-                        <p>Founder and CEO</p>
-                    </div>
-                    <div class="member">
-                        <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
-                    </div>
-                    <div class="member">
-                        <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
-                    </div>
-                    <div class="member">
-                        <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
-                    </div>
-                    <div class="member">
-                        <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
-                    </div>
-
-                </div>
-
-                <div class="about">
-                    <p>We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.</p>
+            <div className="textbubbles">
+                <div className="bubble1">
                     <br />
-                    <p>You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders.</p>
+                    <h1>120 listings!</h1>
+                    <br />
+                </div>
+                <div className="bubble2">
+                    <br />
+                    <h1>Since 2023</h1>
+                    <br />
+                </div>
+                <div className="bubble3">
+                    <br />
+                    <h1>More than 15 staff</h1>
+                    <br />
+                </div>
+                <div className="bubble4">
+                    <br />
+                    <h1>130 customers</h1>
+                    <br />
+                </div>
+                <div className="bubble5">
+                    <br />
+                    <h1>Adding houses daily</h1>
+                    <br />
                 </div>
             </div>
-            <FAQ />
         </div>
-
-
     );
 }
 
 export default About;
-
