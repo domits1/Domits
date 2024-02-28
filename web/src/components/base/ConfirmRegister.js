@@ -1,8 +1,12 @@
-import React, { FormEvent, useRef, useState, useEffect     } from 'react';
+import React, { FormEvent, useRef, useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
 import './ConfirmRegister.css'
+import { loadStripe } from '@stripe/stripe-js';
+
+// Initialize stripe with your Stripe Publishable Key
+const stripeClient = loadStripe(process.env.REACT_APP_STRIPE_SECRET_KEY);
 
 function ConfirmEmail() {
 
@@ -17,34 +21,39 @@ function ConfirmEmail() {
 
     const isHost = location.state?.isHost;
 
-    const createStripeAccount = () => {
-        stripeClient.accounts.create({
+    const createStripeAccount = async () => {
+        const stripe = await stripeClient; // Make sure to await the stripeClient Promise
+        if (!stripe) {
+            console.error('Stripe has not been properly initialized');
+            return;
+        }
+        stripe.accounts.create({
             type: 'standard',
             email: userEmail,
             country: 'NL',
         })
-        .then(stripeAccount => {
-            cognitoClient.adminUpdateUserAttributes({
-                UserPoolId: import.meta.env.VITE_AWS_USER_POOL_ID,
-                Username: userEmail,
-                UserAttributes: [{
-                    Name: 'custom:stripeAccountId',
-                    Value: stripeAccount.id
-                }]
-            }).promise()
-            .then(() => {
-                stripeClient.accountLinks.create({
-                    account: stripeAccount.id,
-                    type: 'account_onboarding',
-                    refresh_url: `${window.location.origin}/payments/onboarding-failed`,
-                    return_url: `${window.location.origin}${'/'}`
-                })
-                .then(result => window.location.href = result.url)
-                .catch(err => console.error(err))
+            .then(stripeAccount => {
+                cognitoClient.adminUpdateUserAttributes({
+                    UserPoolId: import.meta.env.VITE_AWS_USER_POOL_ID,
+                    Username: userEmail,
+                    UserAttributes: [{
+                        Name: 'custom:stripeAccountId',
+                        Value: stripeAccount.id
+                    }]
+                }).promise()
+                    .then(() => {
+                        stripe.accountLinks.create({
+                            account: stripeAccount.id,
+                            type: 'account_onboarding',
+                            refresh_url: `${window.location.origin}/payments/onboarding-failed`,
+                            return_url: `${window.location.origin}${'/'}`
+                        })
+                            .then(result => window.location.href = result.url)
+                            .catch(err => console.error(err))
+                    })
+                    .catch(err => console.error(err))
             })
             .catch(err => console.error(err))
-        })
-        .catch(err => console.error(err))
     }
 
     useEffect(() => {
@@ -62,10 +71,12 @@ function ConfirmEmail() {
             .catch(error => {
                 setErrorMessage('Invalid verification code, please check your email!');
             })
-            .then(result => { if (result === 'SUCCESS') {
-                setIsConfirmed(true)
-                setTimeout(() => navigate('/'), 3000)
-            }})
+            .then(result => {
+                if (result === 'SUCCESS') {
+                    setIsConfirmed(true)
+                    setTimeout(() => navigate('/'), 3000)
+                }
+            })
     }
 
     const handleResendCode = () => {

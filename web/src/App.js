@@ -36,7 +36,7 @@ import ConfirmRegister from "./components/base/ConfirmRegister";
 import ForgotPassword from "./components/base/ForgotPassword";
 import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
-export const stripe = new Stripe(process.env.REACT_APP_STRIPE_TEST_KEY);
+export const stripe = new Stripe(process.env.REACT_APP_STRIPE_SECRET_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 
 

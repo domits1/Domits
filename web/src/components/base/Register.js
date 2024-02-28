@@ -54,7 +54,7 @@ const Register = () => {
             });
 
             navigate('/confirm-email', {
-                state: {email: userData.email, username: data.user.getUsername()},
+                state: {email: userData.email, username: data.user.getUsername(), isHost: true},
             });
         } catch (error) {
             if (error.code === 'UsernameExistsException') {
