@@ -1,10 +1,15 @@
 import React from "react";
-
-
+import Pages from "./Pages";
+import './HostHomepage.css'
 
 function HostSettings() {
 
     return (
+        <div className="container">
+            <h2>Dashboard</h2>
+            <div className="dashboard">
+                <Pages />
+
                 <div className="contentContainer">
                     <div className="boxColumns">
                         <div className="box">
@@ -31,6 +36,8 @@ function HostSettings() {
 
                     </div>
                 </div>
+            </div>
+        </div>
     );
 }
 

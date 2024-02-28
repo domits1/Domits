@@ -4,6 +4,12 @@ import boothuis from "../../images/icons/house-boat.png";
 import appartement from "../../images/icons/flat.png";
 import camper from "../../images/icons/camper-van.png";
 import villa from "../../images/icons/mansion.png";
+import { useNavigate } from 'react-router-dom';
+
+function WithNavigate(props) {
+  let navigate = useNavigate();
+  return <Calculator {...props} navigate={navigate} />;
+}
 
 class Calculator extends Component {
   constructor(props) {
@@ -26,6 +32,10 @@ class Calculator extends Component {
         3: null
       }
     };
+  }
+
+  handleRedirect = () => {
+    this.props.navigate('/register', { state: { isHost: true } });
   }
 
   pageUpdater = (pageNumber) => {
@@ -140,7 +150,7 @@ class Calculator extends Component {
             </div>
             <div className='buttonHolder'>
             <button className='nextButtons' onClick={this.resetCalculator}>Reset</button>
-            <button className='nextButtons'>Enlist</button>
+            <button className='nextButtons' onClick={this.handleRedirect}>Enlist</button>
             </div>
           </div>
         );
@@ -223,4 +233,4 @@ class Calculator extends Component {
   }
 }
 
-export default Calculator;
+export default WithNavigate;
