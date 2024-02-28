@@ -6,7 +6,7 @@ import './ConfirmRegister.css'
 import { loadStripe } from '@stripe/stripe-js';
 
 // Initialize stripe with your Stripe Publishable Key
-const stripeClient = loadStripe(process.env.REACT_APP_STRIPE_SECRET_KEY);
+const stripeClient = loadStripe(process.env.REACT_APP_PK);
 
 function ConfirmEmail() {
 
@@ -21,46 +21,46 @@ function ConfirmEmail() {
 
     const isHost = location.state?.isHost;
 
-    const createStripeAccount = async () => {
-        const stripe = await stripeClient; // Make sure to await the stripeClient Promise
-        if (!stripe) {
-            console.error('Stripe has not been properly initialized');
-            return;
-        }
-        stripe.accounts.create({
-            type: 'standard',
-            email: userEmail,
-            country: 'NL',
-        })
-            .then(stripeAccount => {
-                cognitoClient.adminUpdateUserAttributes({
-                    UserPoolId: import.meta.env.VITE_AWS_USER_POOL_ID,
-                    Username: userEmail,
-                    UserAttributes: [{
-                        Name: 'custom:stripeAccountId',
-                        Value: stripeAccount.id
-                    }]
-                }).promise()
-                    .then(() => {
-                        stripe.accountLinks.create({
-                            account: stripeAccount.id,
-                            type: 'account_onboarding',
-                            refresh_url: `${window.location.origin}/payments/onboarding-failed`,
-                            return_url: `${window.location.origin}${'/'}`
-                        })
-                            .then(result => window.location.href = result.url)
-                            .catch(err => console.error(err))
-                    })
-                    .catch(err => console.error(err))
-            })
-            .catch(err => console.error(err))
-    }
+    // const createStripeAccount = () => {
 
-    useEffect(() => {
-        if (isHost) {
-            createStripeAccount();
-        }
-    }, [isHost]);
+    //     if (!stripeClient) {
+    //         console.error('Stripe has not been properly initialized');
+    //         return;
+    //     }
+    //     stripeClient.accounts.create({
+    //         type: 'standard',
+    //         email: userEmail,
+    //         country: 'NL',
+    //     })
+    //         .then(stripeAccount => {
+    //             cognitoClient.adminUpdateUserAttributes({
+    //                 UserPoolId: import.meta.env.VITE_AWS_USER_POOL_ID,
+    //                 Username: userEmail,
+    //                 UserAttributes: [{
+    //                     Name: 'custom:stripeAccountId',
+    //                     Value: stripeAccount.id
+    //                 }]
+    //             }).promise()
+    //                 .then(() => {
+    //                     stripeClient.accountLinks.create({
+    //                         account: stripeAccount.id,
+    //                         type: 'account_onboarding',
+    //                         refresh_url: `${window.location.origin}/payments/onboarding-failed`,
+    //                         return_url: `${window.location.origin}${'/'}`
+    //                     })
+    //                         .then(result => window.location.href = result.url)
+    //                         .catch(err => console.error(err))
+    //                 })
+    //                 .catch(err => console.error(err))
+    //         })
+    //         .catch(err => console.error(err))
+    // }
+
+    // useEffect(() => {
+    //     if (isHost) {
+    //         createStripeAccount();
+    //     }
+    // }, [isHost]);
 
     function onSubmit(e) {
         e.preventDefault()

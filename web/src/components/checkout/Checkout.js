@@ -1,69 +1,52 @@
-import { useEffect, useState } from 'react';
-import { stripeClient } from '../../index';
-import { Auth } from 'aws-amplify';
+import React from 'react';
+import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
+
+const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3');
 
 
-const Checkout = () => {
-
-
-    
-}
-
-// const PaymentLink = ({ subtotal }) => {
-//     const [paymentLink, setPaymentLink] = useState('')
-//     const [currentUser, setCurrentUser] = useState('')
-//     const [userStripeAccountId, setUserStripeAccountId] = useState('')
-//     const companyFee = subtotal * 0.15 // Domits takes 15% of the transaction.
-
-//     useEffect(() => {
-//         async function checkStripeAccountId() {
-//             try {
-//                 const user = await Auth.currentAuthenticatedUser();
-//                 setCurrentUser(user);
-//                 const stripeAccountId = user?.attributes['custom:stripeAccountId'] || '';
-//                 setUserStripeAccountId(stripeAccountId);
-//             } catch (error) {
-//                 console.error('Error fetching authenticated user:', error);
-//                 // Handle unauthenticated user scenario
-//             }
-//         }
-//         checkStripeAccountId()
-//     }, [])
-
-
-// const createSession = async () => {
-//     if (userStripeAccountId == '') return;
-
-//     stripeClient.checkout.sessions.create({
-//         currency: 'eur',
-//         mode: 'payment',
-//         customer_email: `${currentUser.attributes.email}`,
-//         line_items: [{
-//             price_data: {
-//                 currency: 'eur',
-//                 product_data: {
-//                     name: "Betaling voor accommodatie",
-//                 },
-//                 unit_amount: subtotal
-//             },
-//             quantity: 1
-//         }],
-//         payment_method_types: ['card', 'ideal'],
-//         payment_intent_data: {
-//             application_fee_amount: Math.ceil(companyFee),
-//             transfer_data: {
-//                 destination: userStripeAccountId
-//             }
-//         },
-//         success_url: `${window.location.origin}/payments/success`,
-//         cancel_url: `${window.location.origin}/payments/canceled`,
-//     }).then(result => setPaymentLink(result.url || ""))
-// }
-
-// return <>
-//     <button onClick={createSession}>create payment</button>
-//     <a href={paymentLink}>payment link</a>
-// </>
-// }
-
-export default Checkout
+const CheckoutForm = () => {
+    const stripe = useStripe();
+    const elements = useElements();
+  
+    const handleSubmit = async (event) => {
+      event.preventDefault();
+  
+      if (!stripe || !elements) {
+        // Stripe.js has not yet loaded.
+        // Make sure to disable form submission until Stripe.js has loaded.
+        return;
+      }
+  
+      const cardElement = elements.getElement(CardElement);
+  
+      const {error, paymentMethod} = await stripe.createPaymentMethod({
+        type: 'card',
+        card: cardElement,
+      });
+  
+      if (error) {
+        console.log('[error]', error);
+      } else {
+        console.log('[PaymentMethod]', paymentMethod);
+        // Here you would pass paymentMethod.id to your backend to create a charge
+      }
+    };
+  
+    return (
+      <form onSubmit={handleSubmit}>
+        <CardElement />
+        <button type="submit" disabled={!stripe}>
+          Pay
+        </button>
+      </form>
+    );
+  };
+  
+  const StripePaymentForm = () => (
+    <Elements stripe={stripePromise}>
+      <CheckoutForm />
+    </Elements>
+  );
+  
+  export default StripePaymentForm;
