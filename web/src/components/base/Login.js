@@ -28,6 +28,7 @@ const Login = () => {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
             setErrorMessage('');
+            navigate("/");
         } catch (error) {
             console.error('Error logging in:', error);
             setErrorMessage('Invalid username or password. Please try again.');
@@ -97,12 +98,12 @@ const Login = () => {
                             {errorMessage && (
                                 <div className="errorText">{errorMessage}</div>
                             )}
-                            <button type="submit" className="loginButton" name="loginButton">
+                            <button type="submit" className="loginButton">
                                 <div className='lbHolder'>
                                     <p className='lbText'>Login</p>
                                     <svg
                                         width="24"
-                                        height="24"
+                                        height="59"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         xmlns="http://www.w3.org/2000/svg"

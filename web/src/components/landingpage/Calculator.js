@@ -68,7 +68,7 @@ class Calculator extends Component {
               {this.renderCard(0, "House", huis, selectedCards[1] === 0, 1500)}
               {this.renderCard(1, "Appartement", appartement, selectedCards[1] === 1, 950)}
               {this.renderCard(2, "Camper", camper, selectedCards[1] === 2, 1700)}
-              {this.renderCard(3, "Boathouse", boothuis, selectedCards[1] === 3, 720)}
+              {this.renderCard(3, "Boat", boothuis, selectedCards[1] === 3, 720)}
               {this.renderCard(4, "Villa", villa, selectedCards[1] === 4, 10500)}
             </div>
             <div className='buttonHolder'>
