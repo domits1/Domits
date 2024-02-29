@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
 import './ConfirmRegister.css'
 import { loadStripe } from '@stripe/stripe-js';
+import { API } from 'aws-amplify';
 
 // Initialize stripe with your Stripe Publishable Key
 const stripeClient = loadStripe(process.env.REACT_APP_PK);
@@ -21,46 +22,27 @@ function ConfirmEmail() {
 
     const isHost = location.state?.isHost;
 
-    // const createStripeAccount = () => {
-
-    //     if (!stripeClient) {
-    //         console.error('Stripe has not been properly initialized');
-    //         return;
-    //     }
-    //     stripeClient.accounts.create({
-    //         type: 'standard',
-    //         email: userEmail,
-    //         country: 'NL',
-    //     })
-    //         .then(stripeAccount => {
-    //             cognitoClient.adminUpdateUserAttributes({
-    //                 UserPoolId: import.meta.env.VITE_AWS_USER_POOL_ID,
-    //                 Username: userEmail,
-    //                 UserAttributes: [{
-    //                     Name: 'custom:stripeAccountId',
-    //                     Value: stripeAccount.id
-    //                 }]
-    //             }).promise()
-    //                 .then(() => {
-    //                     stripeClient.accountLinks.create({
-    //                         account: stripeAccount.id,
-    //                         type: 'account_onboarding',
-    //                         refresh_url: `${window.location.origin}/payments/onboarding-failed`,
-    //                         return_url: `${window.location.origin}${'/'}`
-    //                     })
-    //                         .then(result => window.location.href = result.url)
-    //                         .catch(err => console.error(err))
-    //                 })
-    //                 .catch(err => console.error(err))
-    //         })
-    //         .catch(err => console.error(err))
+    // async function createStripeAccount() {
+    //     const response = await API.post('HostOnboardingAPI', '/create-stripe-account', {
+    //         body: { isHost: true },
+    //     });
+    //     const { url } = await response.json();
+    //     window.location.href = url; // Redirects user to Stripe for account completion
     // }
 
-    // useEffect(() => {
-    //     if (isHost) {
-    //         createStripeAccount();
-    //     }
-    // }, [isHost]);
+    async function createStripeAccount() {
+        try {
+            // Assuming you're using AWS Amplify API
+            const apiName = 'HostOnboardingAPI'; // replace with your API Gateway API name
+            const path = '/create-stripe-account'; // replace with your API Gateway path
+            const response = await API.post(apiName, path, {});
+            const data = await response.json();
+            // Redirect to Stripe for account completion
+            window.location.href = data.url;
+        } catch (error) {
+            console.error('Error creating Stripe account:', error);
+        }
+    }
 
     function onSubmit(e) {
         e.preventDefault()
@@ -74,6 +56,9 @@ function ConfirmEmail() {
             .then(result => {
                 if (result === 'SUCCESS') {
                     setIsConfirmed(true)
+                    if (isHost) {
+                        createStripeAccount();
+                    }
                     setTimeout(() => navigate('/'), 3000)
                 }
             })

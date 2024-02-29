@@ -13,14 +13,14 @@ const Register = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
         });
     };
 
-    const onSubmit = async (e: FormEvent) => {
+    const onSubmit = async (e) => {
         e.preventDefault();
 
         const userData = {
