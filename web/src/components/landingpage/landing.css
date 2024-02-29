@@ -192,12 +192,12 @@
 
 }
 
-.form-section {
+.form-section, .map-section {
     width: 45%;
 }
 
-.map-section {
-    width: 45%;
+.front-section {
+    width: 50%;
 }
 
 #map-placeholder {
@@ -211,6 +211,7 @@
 }
 
 .room-type label,
+.room-info label,
 .quantity label,
 .locationInput label {
     display: flex;
