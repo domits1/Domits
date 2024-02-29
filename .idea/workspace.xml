@@ -4,33 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="">
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="android app development">
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/guestDashboard.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/App.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/components/guestdashboard/SettingsGuestDashboard.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/amplify/.config/project-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/web/amplify/.config/project-config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/amplify/team-provider-info.json" beforeDir="false" afterPath="$PROJECT_DIR$/web/amplify/team-provider-info.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/guestdashboard/SettingsGuestDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/SettingsGuestDashboard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/AccommodationCreateForm.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/AccommodationCreateForm.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/AccommodationCreateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/AccommodationCreateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/AccommodationUpdateForm.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/AccommodationUpdateForm.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/AccommodationUpdateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/AccommodationUpdateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/Property1Opened.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/Property1Opened.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/Property1Opened.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/Property1Opened.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/TodoCreateForm.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/TodoCreateForm.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/TodoCreateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/TodoCreateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/TodoUpdateForm.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/TodoUpdateForm.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/TodoUpdateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/TodoUpdateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/UserCreateForm.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/UserCreateForm.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/UserCreateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/UserCreateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/UserUpdateForm.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/UserUpdateForm.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/UserUpdateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/UserUpdateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/studioTheme.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/studioTheme.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/studioTheme.js.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/studioTheme.js.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/utils.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/utils.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -61,29 +43,32 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "git-widget-placeholder": "acceptance",
-    "last_opened_file_path": "C:/Users/giann/projects/Domits",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "AndroidSdkUpdater",
-    "ts.external.directory.path": "C:\\Users\\hamza\\IdeaProjects\\Domits2\\app\\Domits\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;acceptance&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/giann/projects/Domits&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;AndroidSdkUpdater&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\hamza\\IdeaProjects\\Domits2\\app\\Domits\\node_modules\\typescript\\lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\giann\projects\Domits" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\hamza\IdeaProjects\Domits2\app\Domits\src\screens\guestdashboard" />
     </key>
   </component>
   <component name="RunManager">
@@ -116,8 +101,17 @@
       <workItem from="1707752074726" duration="2000" />
       <workItem from="1707812241050" duration="201000" />
       <workItem from="1709124129771" duration="3626000" />
-      <workItem from="1709132432561" duration="2987000" />
+      <workItem from="1709132432561" duration="4321000" />
+      <workItem from="1709203654689" duration="3464000" />
     </task>
+    <task id="LOCAL-00001" summary="android app development">
+      <created>1709138237032</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1709138237032</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -138,5 +132,9 @@
         </entry>
       </map>
     </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="android app development" />
+    <option name="LAST_COMMIT_MESSAGE" value="android app development" />
   </component>
 </project>
