@@ -31,6 +31,8 @@ import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
+import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
+
 
 
 // Set the app element for react-modal
@@ -82,7 +84,7 @@ function App() {
                     <Route path="/guestdashboard/messages" element={<Details />}/>
                     <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />}/>
                     <Route path="/guestdashboard/reviews" element={<GuestDashboard />}/>
-                    <Route path="/guestdashboard/settings" element={<GuestDashboard />}/>
+                    <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard/>}/>
                     <Route path="/career" element={<Careers />} />
                     <Route path="/hosthomepage" element={<HostHomepage />} />
                     <Route path="/landing" element={<Landing />}/>

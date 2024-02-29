@@ -78,6 +78,7 @@
     display: flex;
     flex-direction: column;
     margin-left: 1px;
+    width: 100%; /* Ensure it expands to the full available width of its parent */
 }
 
 .infoBox {
@@ -85,9 +86,10 @@
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px; /* Space between each info box */
+    margin-bottom: 10px;
     display: flex;
     align-items: center;
+    width: auto; /* Adjust this to control the width more explicitly, e.g., 100% for full width */
 }
 
 .infoBox i {
