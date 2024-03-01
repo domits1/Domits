@@ -22,25 +22,33 @@ function ConfirmEmail() {
 
     const isHost = location.state?.isHost;
 
-    // async function createStripeAccount() {
-    //     const response = await API.post('HostOnboardingAPI', '/create-stripe-account', {
-    //         body: { isHost: true },
-    //     });
-    //     const { url } = await response.json();
-    //     window.location.href = url; // Redirects user to Stripe for account completion
-    // }
+    // This is unfinished, aws config should be updated to use the correct invoke url.
+    // Lambda function associated with this endpoint is also unfinished
 
-    async function createStripeAccount() {
-        try {
-            // Assuming you're using AWS Amplify API
-            const apiName = 'HostOnboardingAPI'; // replace with your API Gateway API name
-            const path = '/create-stripe-account'; // replace with your API Gateway path
-            const response = await API.post(apiName, path, {});
-            const data = await response.json();
-            // Redirect to Stripe for account completion
-            window.location.href = data.url;
-        } catch (error) {
-            console.error('Error creating Stripe account:', error);
+    async function createStripeAccount()
+    {
+        const options = {
+            userEmail: JSON.stringify(userEmail)
+        };
+        try{
+            const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
+            method: 'POST',
+            body: JSON.stringify(options),
+            headers: {
+                'Content-type': 'application/json; charset=UTF-8',
+            },
+        }
+        ).then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+
+        console.log(result)
+
+        }catch(error){
+            console.log(error)
         }
     }
 

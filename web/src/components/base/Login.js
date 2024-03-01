@@ -14,7 +14,7 @@ const Login = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
@@ -44,7 +44,7 @@ const Login = () => {
         }
     };
 
-    const handleSubmit = async (e: FormEvent) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         await handleSignIn();
     };
@@ -125,6 +125,7 @@ const Login = () => {
                         <div className="noAccountText">
                             No account yet? Register for free!
                         </div>
+                    
                         <button
                             onClick={handleRegisterClick}
                             className="registerButtonLogin"
