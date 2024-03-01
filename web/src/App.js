@@ -11,9 +11,6 @@ import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
-import HostMessages from "./components/hostdashboard/HostMessages";
-import HostPayments from "./components/hostdashboard/HostPayments";
-import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
 import Details from './components/details/Details';
@@ -94,9 +91,6 @@ function App() {
                     <Route path="/career" element={<Careers />} />
                     <Route path="/enlist" element={<HostOnboarding />} />
                     <Route path="/hostdashboard" element={<HostDashboard />} />
-                    <Route path="/hostdashboard/messages" element={<HostMessages/>} />
-                    <Route path="/hostdashboard/payments" element={<HostPayments />} />
-                    <Route path="/hostdashboard/listings" element={<HostListings />} />
                     <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
                     <Route path="/hostdashboard/settings" element={<HostSettings />} />
                     <Route path="/landing" element={<Landing />}/>
