@@ -6,8 +6,8 @@ import './landing.css';
 function OnboardingHost() {
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
-        title: "",
-        description: "",
+        Title: "",
+        Description: "",
         Roomtype: "",
         Guests: 0,
         Bedrooms: 0,
@@ -134,8 +134,8 @@ function OnboardingHost() {
                         <div class="front-section">
                             <div className="room-info">
                                 <label>Add accomodation information</label>
-                                <label>Title<input className="textInput locationText" name="title" onChange={handleInputChange} ></input></label>
-                                <label style={{ alignItems: 'start' }}>Description<textarea className="textInput locationText" name="description" onChange={handleInputChange} rows="10" cols="30"></textarea></label>
+                                <label>Title<input className="textInput locationText" name="Title" onChange={handleInputChange} value={formData.Title}></input></label>
+                                <label style={{ alignItems: 'start' }}>Description<textarea className="textInput locationText" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea></label>
 
                                 <div id="map-placeholder">Images are still being worked on</div>
                             </div>
@@ -148,8 +148,8 @@ function OnboardingHost() {
                         <div class="form-section">
                             <h2>Review your information</h2>
                             <div>
-                                <p>Title: {formData.title}</p>
-                                <p>Description: {formData.description}</p>
+                                <p>Title: {formData.Title}</p>
+                                <p>Description: {formData.Description}</p>
                                 <p>Room Type: {formData.Roomtype}</p>
                                 <p>Number of Guests: {formData.Guests}</p>
                                 <p>Number of Bedrooms: {formData.Bedrooms}</p>
