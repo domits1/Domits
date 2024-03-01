@@ -12,6 +12,10 @@ export const SearchBar = ({ setResults }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [accommodation, setAccommodation] = useState('');
+  
+  const handleRefreshClick = () => {
+    window.location.reload();
+  };
 
   // de brains achter de search, hier wordt de data gefilterd en verdeeld over twee delen: Country, city
   const fetchData = (value, searchType) => {
@@ -127,7 +131,10 @@ export const SearchBar = ({ setResults }) => {
       </div>
 
       <button className="button" type="button">
-        <FaSearch style={{ marginRight: '2px' }} />
+      <FaSearch
+        style={{ marginRight: '2px', cursor: 'pointer' }}
+        onClick={handleRefreshClick}
+      />
       </button>
     </div>
   );

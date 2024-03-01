@@ -45,6 +45,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 3,
+
   },
   searchIcon: {
     width: 20,
@@ -54,9 +55,9 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    height: 40,  // Adjusted height
+    height: 40,  
     color: '#333',
-    paddingVertical: 5,  // Adjusted paddingVertical
+    paddingVertical: 5,  
   },
 });
 
