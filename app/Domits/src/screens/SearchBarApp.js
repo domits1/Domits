@@ -6,7 +6,7 @@ function SearchBarApp() {
 
   const handleSearch = () => {
     console.log('Searching for:', searchText);
-    // Add your custom search functionality here
+    
   };
 
   return (
