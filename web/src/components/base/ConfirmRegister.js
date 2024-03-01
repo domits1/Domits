@@ -1,4 +1,4 @@
-import React, { FormEvent, useRef, useState, useEffect     } from 'react';
+import React, { FormEvent, useRef, useState } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
@@ -15,48 +15,10 @@ function ConfirmEmail() {
 
     const userEmail = location.state === null ? "" : location.state.email
 
-    const isHost = location.state?.isHost;
-
-    const createStripeAccount = () => {
-        stripeClient.accounts.create({
-            type: 'standard',
-            email: userEmail,
-            country: 'NL',
-        })
-        .then(stripeAccount => {
-            cognitoClient.adminUpdateUserAttributes({
-                UserPoolId: import.meta.env.VITE_AWS_USER_POOL_ID,
-                Username: userEmail,
-                UserAttributes: [{
-                    Name: 'custom:stripeAccountId',
-                    Value: stripeAccount.id
-                }]
-            }).promise()
-            .then(() => {
-                stripeClient.accountLinks.create({
-                    account: stripeAccount.id,
-                    type: 'account_onboarding',
-                    refresh_url: `${window.location.origin}/payments/onboarding-failed`,
-                    return_url: `${window.location.origin}${'/'}`
-                })
-                .then(result => window.location.href = result.url)
-                .catch(err => console.error(err))
-            })
-            .catch(err => console.error(err))
-        })
-        .catch(err => console.error(err))
-    }
-
-    useEffect(() => {
-        if (isHost) {
-            createStripeAccount();
-        }
-    }, [isHost]);
-
-    function onSubmit(e) {
+    function onSubmit(e: FormEvent) {
         e.preventDefault()
-        let code = ""
-        inputRef.current.forEach((input) => { code += input.value })
+        let code: string = ""
+        inputRef.current.forEach((input: HTMLInputElement) => { code += input.value })
 
         Auth.confirmSignUp(userEmail, code)
             .catch(error => {
@@ -85,7 +47,7 @@ function ConfirmEmail() {
                 <div className="enter6DigitText">
                     Enter 6 digit code send to your email
                 </div>
-                <DigitInputs amount={6} inputRef={inputRef} className="confirmEmailDigitsInput" />
+                <DigitInputs amount={6} inputRef={inputRef} />
                 {errorMessage && (
                     <div className="errorText">{errorMessage}</div>
                 )}

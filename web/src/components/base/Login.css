@@ -118,18 +118,3 @@ label {
     color: white;
     border-radius: 15px;
 }
-
-.forgot-password-text a {
-    color: black;
-    font-size: 14px;
-    font-family: Kanit, sans-serif;
-    font-weight: 400;
-    line-height: 18px;
-    word-wrap: break-word;
-    align-self: flex-start;
-    text-decoration: none;
-}
-
-.forgot-password-text a:hover {
-    text-decoration: underline;
-}

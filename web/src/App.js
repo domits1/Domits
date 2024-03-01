@@ -7,14 +7,10 @@ import Assortment from './components/assortment/Assortment';
 import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
-import Whydomits from "./components/about/Whydomits";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
-import HostMessages from "./components/hostdashboard/HostMessages";
-import HostPayments from "./components/hostdashboard/HostPayments";
-import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
 import Details from './components/details/Details';
@@ -34,11 +30,12 @@ import Terms from "./components/disclaimers/Terms";
 import Login from "./components/base/Login";
 import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
-import ForgotPassword from "./components/base/ForgotPassword";
 import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
-export const stripe = new Stripe(process.env.REACT_APP_STRIPE_TEST_KEY);
+export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
+import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
+
 
 
 // Set the app element for react-modal
@@ -79,10 +76,8 @@ function App() {
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/confirm-email" element={<ConfirmRegister />} />
-                    <Route path="/forgot-password" element={<ForgotPassword />} />
                     <Route path="/booking" element={<Booking />} />
                     <Route path="/about" element={<About />} />
-                    <Route path="/why-domits" element={<Whydomits />} />
                     <Route path="/travelinnovation" element={<Travelinnovation />} />
                     <Route path="/career" element={<Careers />} />
                     <Route path="/contact" element={<Contact />} />
@@ -92,13 +87,10 @@ function App() {
                     <Route path="/guestdashboard/messages" element={<Details />}/>
                     <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />}/>
                     <Route path="/guestdashboard/reviews" element={<GuestDashboard />}/>
-                    <Route path="/guestdashboard/settings" element={<GuestDashboard />}/>
+                    <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard/>}/>
                     <Route path="/career" element={<Careers />} />
                     <Route path="/enlist" element={<HostOnboarding />} />
                     <Route path="/hostdashboard" element={<HostDashboard />} />
-                    <Route path="/hostdashboard/messages" element={<HostMessages/>} />
-                    <Route path="/hostdashboard/payments" element={<HostPayments />} />
-                    <Route path="/hostdashboard/listings" element={<HostListings />} />
                     <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
                     <Route path="/hostdashboard/settings" element={<HostSettings />} />
                     <Route path="/landing" element={<Landing />}/>

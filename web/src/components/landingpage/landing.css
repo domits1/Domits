@@ -9,7 +9,7 @@
 }
 
 .calculatorBlock {
-    border: 2px solid #003366;
+    border: 2px solid #1245A8;
     border-radius: 20px;
     margin-top: 30px;
 }
@@ -21,7 +21,7 @@
 }
 
 .pageButtons {
-    border: 2px solid #003366;
+    border: 2px solid #1245A8;
     border-radius: 10px;
     box-shadow: none;
 
@@ -46,7 +46,7 @@
 }
 
 .nextButtons {
-    background-color: #003366;
+    background-color: #1245A8;
     color: #fff;
 
     margin: 10px;
@@ -64,7 +64,7 @@
 }
 
 .selected {
-    background-color: #003366;
+    background-color: #1245A8;
     color: #fff;
 }
 
@@ -85,13 +85,12 @@
     margin-bottom: 30px;
 }
 
-.card:hover,
-.selectedCard {
-    border: 3px solid #003366;
+.card:hover, .selectedCard {
+    border: 3px solid #1245A8;
     border-radius: 10px;
     box-shadow: none;
     cursor: pointer;
-    margin-top: -3px;
+    margin: -3px;
     margin-bottom: 27px;
 }
 
@@ -109,8 +108,8 @@
     padding: 10px;
     border-radius: 10px;
 
-    border: 1px solid #003366;
-    box-shadow: 1px 1px 5px 1px #003366;
+    border: 1px solid #1245A8;
+    box-shadow: 1px 1px 5px 1px #1245A8;
 
     margin: auto;
     margin-top: 30px;
@@ -155,7 +154,7 @@
 
 .faq-box {
     width: 80%;
-    border: 2px solid #003366;
+    border: 2px solid #1245A8;
     border-radius: 10px;
     margin: 10px;
     padding: 15px;

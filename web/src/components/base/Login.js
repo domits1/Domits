@@ -28,7 +28,6 @@ const Login = () => {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
             setErrorMessage('');
-            navigate("/");
         } catch (error) {
             console.error('Error logging in:', error);
             setErrorMessage('Invalid username or password. Please try again.');
@@ -95,9 +94,6 @@ const Login = () => {
                                 onChange={handleChange}
                             />
                             <br />
-                            <div className="forgot-password-text">
-                                <a href="/forgot-password">Forgot your password?</a>
-                            </div>
                             {errorMessage && (
                                 <div className="errorText">{errorMessage}</div>
                             )}
