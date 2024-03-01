@@ -85,7 +85,8 @@
     margin-bottom: 30px;
 }
 
-.card:hover, .selectedCard {
+.card:hover,
+.selectedCard {
     border: 3px solid #003366;
     border-radius: 10px;
     box-shadow: none;
@@ -119,6 +120,7 @@
 .proHosting {
     margin-top: 50px;
 }
+
 .infoCard {
     max-width: 200px;
     max-height: 230px;
@@ -149,40 +151,40 @@
     align-items: center;
     margin-top: 50px;
     margin-bottom: 50px;
-  }
-  
-  .faq-box {
+}
+
+.faq-box {
     width: 80%;
     border: 2px solid #003366;
     border-radius: 10px;
     margin: 10px;
     padding: 15px;
     cursor: pointer;
-    max-height: 60px; 
+    max-height: 60px;
     overflow: hidden;
-    transition: max-height 2s ease; 
-  }
-  
-  .faq-box:hover {
-    max-height: 200px; 
-  }
-  
-  .question {
+    transition: max-height 2s ease;
+}
+
+.faq-box:hover {
+    max-height: 200px;
+}
+
+.question {
     font-weight: bold;
     margin-bottom: 8px;
-  }
-  
-  .answer {
+}
+
+.answer {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 2s ease; 
-  }
-  
-  .faq-box:hover .answer {
-    max-height: 200px; 
-  }
-  
-  .formContainer {
+    transition: max-height 2s ease;
+}
+
+.faq-box:hover .answer {
+    max-height: 200px;
+}
+
+.formContainer {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
@@ -192,7 +194,8 @@
 
 }
 
-.form-section, .map-section {
+.form-section,
+.map-section {
     width: 45%;
 }
 
@@ -212,6 +215,7 @@
 
 .room-type label,
 .room-info label,
+.room-features label,
 .quantity label,
 .locationInput label {
     display: flex;
@@ -223,6 +227,13 @@
     gap: 15px;
 }
 
+.room-type label,
+.room-features label {
+    justify-content: flex-start;
+    cursor: pointer;
+}
+
+
 .formRow {
     display: flex;
     flex-direction: row;
@@ -230,15 +241,19 @@
     flex-wrap: wrap;
 }
 
-.textInput, .radioInput {
+.textInput,
+.radioInput {
     width: auto;
     padding: 11px 15px;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
     border-radius: 15px;
     border: 1px solid black;
-    justify-content: flex-start;
-    align-items: center;
-    display: inline-flex;
+}
+
+.radioInput {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
 }
 
 .locationText {
