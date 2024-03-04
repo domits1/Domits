@@ -9,7 +9,10 @@ import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
-import HostHomepage from "./components/hostdashboard/HostHomepage";
+import HostOnboarding from "./components/landingpage/OnboardingHost";
+import HostDashboard from "./components/hostdashboard/HostDashboard";
+import HostCalendar from "./components/hostdashboard/HostCalendar";
+import HostSettings from "./components/hostdashboard/HostSettings";
 import Details from './components/details/Details';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
@@ -31,6 +34,8 @@ import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
+import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
+
 
 
 // Set the app element for react-modal
@@ -82,9 +87,12 @@ function App() {
                     <Route path="/guestdashboard/messages" element={<Details />}/>
                     <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />}/>
                     <Route path="/guestdashboard/reviews" element={<GuestDashboard />}/>
-                    <Route path="/guestdashboard/settings" element={<GuestDashboard />}/>
+                    <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard/>}/>
                     <Route path="/career" element={<Careers />} />
-                    <Route path="/hosthomepage" element={<HostHomepage />} />
+                    <Route path="/enlist" element={<HostOnboarding />} />
+                    <Route path="/hostdashboard" element={<HostDashboard />} />
+                    <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
+                    <Route path="/hostdashboard/settings" element={<HostSettings />} />
                     <Route path="/landing" element={<Landing />}/>
                     <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                     <Route path="/hostdashboard/read" element={<ReadAccommodation />} />

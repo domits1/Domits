@@ -28,7 +28,6 @@ const Login = () => {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
             setErrorMessage('');
-            navigate("/");
         } catch (error) {
             console.error('Error logging in:', error);
             setErrorMessage('Invalid username or password. Please try again.');
