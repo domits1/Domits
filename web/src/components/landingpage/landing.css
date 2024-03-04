@@ -85,7 +85,8 @@
     margin-bottom: 30px;
 }
 
-.card:hover, .selectedCard {
+.card:hover,
+.selectedCard {
     border: 3px solid #1245A8;
     border-radius: 10px;
     box-shadow: none;
@@ -193,6 +194,10 @@
 
 }
 
+.formHolder {
+    width: 100%;
+}
+
 .form-section,
 .map-section {
     width: 45%;
@@ -212,11 +217,7 @@
     margin-top: 20px;
 }
 
-.room-type label,
-.room-info label,
-.room-features label,
-.quantity label,
-.locationInput label {
+.formContainer label {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -258,4 +259,18 @@
 .locationText {
     min-width: 173px;
     width: 60%;
+}
+
+.configurations label{
+    min-width: 250px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 20px;
+    margin-bottom: 20px; 
+    white-space: nowrap
+}
+
+.priceSlider {
+    width: 100%;
+    cursor: ew-resize;
 }

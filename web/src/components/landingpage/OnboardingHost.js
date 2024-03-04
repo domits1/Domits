@@ -8,6 +8,9 @@ function OnboardingHost() {
     const [formData, setFormData] = useState({
         Title: "",
         Description: "",
+        Rent: 0,
+        Ownertype: "",
+        Bookingsystem: "",
         Roomtype: "",
         Guests: 0,
         Bedrooms: 0,
@@ -60,89 +63,162 @@ function OnboardingHost() {
         switch (page) {
             case 1:
                 return (
-                    <div class="formContainer">
-                        <div class="form-section">
-                            <div className="formRow">
-                                <div class="room-type">
-                                    <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "entireHouse"} value="entireHouse"></input> Entire house</label>
-                                    <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "room"} value="room"></input> Room</label>
-                                    <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "sharedRoom"} value="sharedRoom"></input> Shared room</label>
+                    <div>
+                        <div class="formContainer">
+                            <div class="form-section">
+                                <div className="formRow">
+                                    <div class="room-type">
+                                        <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "entireHouse"} value="entireHouse"></input> Entire house</label>
+                                        <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "room"} value="room"></input> Room</label>
+                                        <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "sharedRoom"} value="sharedRoom"></input> Shared room</label>
+                                    </div>
+
+
+                                    <div class="quantity">
+                                        <label>How many guests? <input className="textInput" type="number" name="Guests" onChange={handleInputChange} value={formData.Guests} min={0}></input></label>
+                                        <label>How many bedrooms? <input className="textInput" type="number" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input></label>
+                                        <label>How many bathrooms? <input className="textInput" type="number" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input></label>
+                                        <label>How many fixed beds? <input className="textInput" type="number" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input></label>
+                                    </div>
                                 </div>
 
-
-                                <div class="quantity">
-                                    <label>How many guests? <input className="textInput" type="number" name="Guests" onChange={handleInputChange} value={formData.Guests} min={0}></input></label>
-                                    <label>How many bedrooms? <input className="textInput" type="number" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input></label>
-                                    <label>How many bathrooms? <input className="textInput" type="number" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input></label>
-                                    <label>How many fixed beds? <input className="textInput" type="number" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input></label>
+                                <div class="locationInput">
+                                    <h2>Fill in Location</h2>
+                                    <label>Country<input className="textInput locationText" name="Country" onChange={handleInputChange} value={formData.Country}></input></label>
+                                    <label>Postal Code <input className="textInput locationText" name="PostalCode" onChange={handleInputChange} value={formData.PostalCode}></input></label>
+                                    <label>Street + house nr.<input className="textInput locationText" name="Street" onChange={handleInputChange} value={formData.Street}></input></label>
+                                    <label>Neighbourhood<input className="textInput locationText" name="Neighbourhood" onChange={handleInputChange} value={formData.Neighbourhood}></input></label>
                                 </div>
                             </div>
-
-                            <div class="locationInput">
-                                <h2>Fill in Location</h2>
-                                <label>Country<input className="textInput locationText" name="Country" onChange={handleInputChange} value={formData.Country}></input></label>
-                                <label>Postal Code <input className="textInput locationText" name="PostalCode" onChange={handleInputChange} value={formData.PostalCode}></input></label>
-                                <label>Street + house nr.<input className="textInput locationText" name="Street" onChange={handleInputChange} value={formData.Street}></input></label>
-                                <label>Neighbourhood<input className="textInput locationText" name="Neighbourhood" onChange={handleInputChange} value={formData.Neighbourhood}></input></label>
-                            </div>
-                            <div className='buttonHolder'>
-                                <button type="button" className='nextButtons'>Go back to change</button>
-                                <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
+                            <div class="map-section">
+                                <label>What we show on Domits.com</label>
+                                <div id="map-placeholder">Map is still being worked on</div>
                             </div>
                         </div>
-                        <div class="map-section">
-                            <label>What we show on Domits.com</label>
-                            <div id="map-placeholder">Map is still being worked on</div>
+                        <div class="formContainer">
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
                         </div>
                     </div>
                 );
             case 2:
                 return (
-                    <div class="formContainer">
-                        <div class="form-section">
-                            <label>Add accomodation features</label>
-                            <h2>Fill in ammendities</h2>
-                            <div class="room-features formRow">
-                                <div>
-                                    <label><input type="checkbox" className="radioInput" name="Wifi" onChange={handleInputChange} checked={formData.Features.Wifi}></input>Wifi</label>
-                                    <label><input type="checkbox" className="radioInput" name="Television" onChange={handleInputChange} checked={formData.Features.Television}></input>Television</label>
-                                    <label><input type="checkbox" className="radioInput" name="Kitchen" onChange={handleInputChange} checked={formData.Features.Kitchen}></input>Kitchen</label>
-                                    <label><input type="checkbox" className="radioInput" name="WashingMachine" onChange={handleInputChange} checked={formData.Features.WashingMachine}></input>Washing machine</label>
+                    <div>
+                        <div class="formContainer">
+                            <div class="form-section">
+                                <label>Add accomodation features</label>
+                                <h2>Fill in ammendities</h2>
+                                <div class="room-features formRow">
+                                    <div>
+                                        <label><input type="checkbox" className="radioInput" name="Wifi" onChange={handleInputChange} checked={formData.Features.Wifi}></input>Wifi</label>
+                                        <label><input type="checkbox" className="radioInput" name="Television" onChange={handleInputChange} checked={formData.Features.Television}></input>Television</label>
+                                        <label><input type="checkbox" className="radioInput" name="Kitchen" onChange={handleInputChange} checked={formData.Features.Kitchen}></input>Kitchen</label>
+                                        <label><input type="checkbox" className="radioInput" name="WashingMachine" onChange={handleInputChange} checked={formData.Features.WashingMachine}></input>Washing machine</label>
+                                    </div>
+                                    <div>
+                                        <label><input type="checkbox" className="radioInput" name="Airconditioning" onChange={handleInputChange} checked={formData.Features.Airconditioning}></input>Airconditioning</label>
+                                        <label><input type="checkbox" className="radioInput" name="Onsiteparking" onChange={handleInputChange} checked={formData.Features.Onsiteparking}></input>Onsite parking</label>
+                                        <label><input type="checkbox" className="radioInput" name="Homeoffice" onChange={handleInputChange} checked={formData.Features.Homeoffice}></input>Home office</label>
+                                    </div>
                                 </div>
-                                <div>
-                                    <label><input type="checkbox" className="radioInput" name="Airconditioning" onChange={handleInputChange} checked={formData.Features.Airconditioning}></input>Airconditioning</label>
-                                    <label><input type="checkbox" className="radioInput" name="Onsiteparking" onChange={handleInputChange} checked={formData.Features.Onsiteparking}></input>Onsite parking</label>
-                                    <label><input type="checkbox" className="radioInput" name="Homeoffice" onChange={handleInputChange} checked={formData.Features.Homeoffice}></input>Home office</label>
+                                <h2>Fill in safety measures</h2>
+                                <div class="room-features formRow">
+                                    <div>
+                                        <label><input type="checkbox" className="radioInput" name="Smokedetector" onChange={handleInputChange} checked={formData.Features.Smokedetector}></input>Smoke detector</label>
+                                        <label><input type="checkbox" className="radioInput" name="FirstAidkit" onChange={handleInputChange} checked={formData.Features.FirstAidkit}></input>First Aid kit</label>
+                                    </div>
+                                    <div>
+                                        <label><input type="checkbox" className="radioInput" name="Fireextinguisher" onChange={handleInputChange} checked={formData.Features.Fireextinguisher}></input>Fire extinguisher</label>
+                                    </div>
                                 </div>
                             </div>
-                            <h2>Fill in safety measures</h2>
-                            <div class="room-features formRow">
-                                <div>
-                                    <label><input type="checkbox" className="radioInput" name="Smokedetector" onChange={handleInputChange} checked={formData.Features.Smokedetector}></input>Smoke detector</label>
-                                    <label><input type="checkbox" className="radioInput" name="FirstAidkit" onChange={handleInputChange} checked={formData.Features.FirstAidkit}></input>First Aid kit</label>
-                                </div>
-                                <div>
-                                    <label><input type="checkbox" className="radioInput" name="Fireextinguisher" onChange={handleInputChange} checked={formData.Features.Fireextinguisher}></input>Fire extinguisher</label>
-                                </div>
-                            </div>
+                            <div class="front-section">
+                                <div className="room-info">
+                                    <label>Add accomodation information</label>
+                                    <label>Title<input className="textInput locationText" name="Title" onChange={handleInputChange} value={formData.Title}></input></label>
+                                    <label style={{ alignItems: 'start' }}>Description<textarea className="textInput locationText" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea></label>
 
-                            <div className='buttonHolder'>
-                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                                <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
+                                    <div id="map-placeholder">Images are still being worked on</div>
+                                </div>
                             </div>
                         </div>
-                        <div class="front-section">
-                            <div className="room-info">
-                                <label>Add accomodation information</label>
-                                <label>Title<input className="textInput locationText" name="Title" onChange={handleInputChange} value={formData.Title}></input></label>
-                                <label style={{ alignItems: 'start' }}>Description<textarea className="textInput locationText" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea></label>
-
-                                <div id="map-placeholder">Images are still being worked on</div>
-                            </div>
+                        <div class="formContainer">
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
                         </div>
                     </div>
                 );
             case 3:
+                return (
+                    <div>
+                        <div class="formContainer">
+                            <div className="formHolder">
+                                <h2>Systems and configurations</h2>
+                                <div className="formRow">
+                                    <div class="room-features formRow">
+                                        <div className="configurations">
+                                            <label>Preferred booking system</label>
+                                            <label><input type="radio" className="radioInput" name="Bookingsystem"></input>Let guests book immediately</label>
+                                            <label><input type="radio" className="radioInput" name="Bookingsystem"></input>Review a booking request</label>
+                                        </div>
+                                    </div>
+                                    <div class="room-features formRow">
+                                        <div className="configurations">
+                                            <label>Guest type</label>
+                                            <label><input type="checkbox" className="radioInput" name="Guesttype"></input>Unverified guest</label>
+                                            <label><input type="checkbox" className="radioInput" name="Guesttype"></input>Verified Domits guest</label>
+                                        </div>
+                                    </div>
+                                    <div class="room-features formRow">
+                                        <div className="configurations">
+                                            <label>Enlist as</label>
+                                            <label><input type="radio" className="radioInput" name="Ownertype"></input>Private owner</label>
+                                            <label><input type="radio" className="radioInput" name="Ownertype"></input>Corporation</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <p>Rent: {formData.Rent}</p>
+                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="0" max="10000" step="100" />
+                            <div className="formHolder">
+                                <h2>Discounts and Policies</h2>
+                                <div className="formRow">
+                                    <div class="room-features formRow">
+                                        <div className="configurations">
+                                            <label>Enlist as</label>
+                                            <label><input type="checkbox" className="radioInput" name="Airconditioning"></input>Airconditioning</label>
+                                            <label><input type="checkbox" className="radioInput" name="Onsiteparking"></input>Onsite parking</label>
+                                            <label><input type="checkbox" className="radioInput" name="Homeoffice"></input>Home office</label>
+                                        </div>
+                                    </div>
+                                    <div class="room-features formRow">
+                                        <div className="configurations">
+                                            <label>Enlist as</label>
+                                            <label><input type="checkbox" className="radioInput" name="Airconditioning"></input>Airconditioning</label>
+                                            <label><input type="checkbox" className="radioInput" name="Onsiteparking"></input>Onsite parking</label>
+                                            <label><input type="checkbox" className="radioInput" name="Homeoffice"></input>Home office</label>
+                                        </div>
+                                    </div>
+                                    <div class="room-features formRow">
+                                        <div className="configurations">
+                                            <label>Enlist as</label>
+                                            <label><input type="checkbox" className="radioInput" name="Airconditioning"></input>Airconditioning</label>
+                                            <label><input type="checkbox" className="radioInput" name="Onsiteparking"></input>Onsite parking</label>
+                                            <label><input type="checkbox" className="radioInput" name="Homeoffice"></input>Home office</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="formContainer">
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Enlist</button>
+                        </div>
+
+                    </div>
+
+                );
+            case 4:
                 return (
                     <div class="formContainer">
                         <div class="form-section">
@@ -150,6 +226,7 @@ function OnboardingHost() {
                             <div>
                                 <p>Title: {formData.Title}</p>
                                 <p>Description: {formData.Description}</p>
+                                <p>Rent: {formData.Rent}</p>
                                 <p>Room Type: {formData.Roomtype}</p>
                                 <p>Number of Guests: {formData.Guests}</p>
                                 <p>Number of Bedrooms: {formData.Bedrooms}</p>
