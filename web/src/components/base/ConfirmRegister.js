@@ -3,11 +3,7 @@ import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
 import './ConfirmRegister.css'
-import { loadStripe } from '@stripe/stripe-js';
 import { API } from 'aws-amplify';
-
-// Initialize stripe with your Stripe Publishable Key
-const stripeClient = loadStripe(process.env.REACT_APP_PK);
 
 function ConfirmEmail() {
 
@@ -23,12 +19,11 @@ function ConfirmEmail() {
     const isHost = location.state?.isHost;
 
     // This is unfinished, aws config should be updated to use the correct invoke url.
-    // Lambda function associated with this endpoint is also unfinished
 
     async function createStripeAccount()
     {
         const options = {
-            userEmail: JSON.stringify(userEmail)
+            userEmail: userEmail
         };
         try{
             const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
@@ -45,7 +40,7 @@ function ConfirmEmail() {
             return response.json();
         })
 
-        console.log(result)
+        window.location.replace(result.url);
 
         }catch(error){
             console.log(error)
