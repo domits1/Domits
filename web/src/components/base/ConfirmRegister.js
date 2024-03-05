@@ -1,4 +1,4 @@
-import React, { FormEvent, useRef, useState, useEffect } from 'react';
+import React, { FormEvent, useRef, useState } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
@@ -49,22 +49,20 @@ function ConfirmEmail() {
 
     function onSubmit(e) {
         e.preventDefault()
-        let code = ""
-        inputRef.current.forEach((input) => { code += input.value })
+        let code: string = ""
+        inputRef.current.forEach((input: HTMLInputElement) => { code += input.value })
 
         Auth.confirmSignUp(userEmail, code)
             .catch(error => {
                 setErrorMessage('Invalid verification code, please check your email!');
             })
-            .then(result => {
-                if (result === 'SUCCESS') {
-                    setIsConfirmed(true)
+            .then(result => { if (result === 'SUCCESS') {
+                setIsConfirmed(true)
                     if (isHost) {
                         createStripeAccount();
                     }
-                    setTimeout(() => navigate('/'), 3000)
-                }
-            })
+                setTimeout(() => navigate('/'), 3000)
+            }})
     }
 
     const handleResendCode = () => {
@@ -84,7 +82,7 @@ function ConfirmEmail() {
                 <div className="enter6DigitText">
                     Enter 6 digit code send to your email
                 </div>
-                <DigitInputs amount={6} inputRef={inputRef} className="confirmEmailDigitsInput" />
+                <DigitInputs amount={6} inputRef={inputRef} />
                 {errorMessage && (
                     <div className="errorText">{errorMessage}</div>
                 )}

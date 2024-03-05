@@ -1,22 +1,23 @@
 /* CSS for the header */
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
-    padding: 16px 50px;
-    text-align: center;
+  padding: 16px 50px;
+  text-align: center;
 }
 
-.header-nav {
+.header-nav{
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
 }
 
-.headerRight {
+.headerRight{
     float: right;
 }
 
-.headerButtons, .personalMenu {
+
+.headerButtons, .personalMenu{
     float: left;
     color: black;
     text-align: center;
@@ -34,79 +35,16 @@
 .personalMenu {
     border: none;
     background-color: #0D9813;
+    
     justify-content: center;
     align-items: center;
     gap: 10px;
     display: flex;
 }
 
-/* Adjusted CSS for dropdown */
-.personalMenuDropdown {
-    position: relative;
-    display: inline-block;
-}
-
-.personalMenuDropdownContent {
-    display: none; /* Hidden by default */
-}
-
-.personalMenuDropdownContent.show {
-    display: block; /* Show when the "show" class is applied */
-}
-
-.personalMenuDropdown .personalMenuDropdownContent {
-    padding: 15px;
-    position: absolute;
-    background-color: #EBFAED;
-    width: auto; /* Adjust width as needed */
-    min-width: 240px;
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-    top: calc(100% + 25px); /* Position below the personalMenu button */
-    right: 10px; /* Align with the left edge of the button */
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px ;
-}
-
-.personalMenuDropdownContent button {
-    padding: 8px 15px;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    display: inline-flex;
-    width: 100%;
-    color: white;
-    font-size: 16px;
-    font-family: Kanit, sans-serif;
-    font-weight: 400;
-    line-height: 24px;
-    word-wrap: break-word;
-}
-
-.dropdownLoginButton {
-    margin-top: 0;
-    margin-bottom: 10px;
-    background: #0D9813;
-}
-.dropdownRegisterButton, .dropdownLogoutButton {
-    margin-top: 0;
-    background-color: #49146A;
-}
-
-.dropdownLogoutButton {
-    margin-top: 20px;
-}
-
-.personalMenuDropdown .personalMenuDropdownContent button:hover {
-    opacity: 90%;
-}
-
-.headerButtons:hover {
+.headerButtons:hover{
     background-color: #d3d3d3;
 }
-
 .personalMenu:hover {
     background-color: #3fb366;
 }
@@ -115,13 +53,13 @@
 
 @media screen and (max-width: 650px) {
 
-    .header-nav, .headerRight {
+    .header-nav, .headerRight{
         flex-direction: column;
         justify-content: center;
         width: 100%;
     }
 
-    .headerButtons, .personalMenu {
+    .headerButtons, .personalMenu{
         width: 100%;
         margin-top: 10px;
         margin-right: 0px;
@@ -202,7 +140,6 @@
     display: inline-block;
     margin-right: 15px;
 }
-
 .footer-section-grid {
     display: block;
     flex-wrap: wrap;
@@ -240,13 +177,13 @@
 
 .footer-terms {
     margin: auto;
-    padding: 0;
+    padding: 0; 
 
     width: 90%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-
+   
     text-decoration-line: underline;
     margin-top: 20px;
 }
@@ -265,45 +202,27 @@
 a:hover {
     text-decoration: underline;
 }
-
+ 
 @media screen and (max-width: 830px) {
 
-    .footer-content {
+    .footer-content{
         display: flex;
         flex-direction: column;
         justify-content: center;
     }
-
-    .footer-section, .footer-endsection {
+    .footer-section, .footer-endsection{
         margin: 0;
         border-top: 1px solid #0A760F;
         margin-bottom: 20px;
         width: 80%;
     }
-
     .footer-headers {
         margin-top: 10px;
     }
-
     .borderline {
         border-right: none;
         padding-right: 0px;
-    }
-
+    } 
 }
-
-.search-bar-container {
-    /* padding-top: 20vh; */
-    width: 40%;
-    padding: 1px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 10px; /* Pas de gewenste bovenste positie aan */
-    left: 40%; /* Plaats in het midden of pas aan zoals gewenst */
-    transform: translateX(-50%);
-}
-
 
 /* End of footer */
