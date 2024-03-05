@@ -37,7 +37,7 @@ import Chat from "./components/chat/Chat";
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
-
+import FlowContext from './FlowContext';
 
 
 // Set the app element for react-modal
@@ -68,7 +68,10 @@ function App() {
         return <Footer/>;
     };
 
+    const [flowState, setFlowState] = useState({ isHost: false });
+
     return (
+        <FlowContext.Provider value={{ flowState, setFlowState }}>
         <Router>
             <div className="App">
                 {renderHeader()}
@@ -115,6 +118,7 @@ function App() {
             </div>
             {renderFooter()}
         </Router>
+        </FlowContext.Provider>
     );
 }
 
