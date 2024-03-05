@@ -8,7 +8,6 @@ import { useNavigate } from 'react-router-dom';
 
 function WithNavigate(props) {
   let navigate = useNavigate();
-  console.log(navigate);
   return <Calculator {...props} navigate={navigate} />;
 }
 
@@ -36,7 +35,6 @@ class Calculator extends Component {
   }
 
   handleRedirect = () => {
-    console.log(this.props.navigate);
     this.props.navigate('/register', { state: { isHost: true } });
   }
 
