@@ -1,35 +1,32 @@
 import React from 'react';
-import { useStripe, useElements, CardElement, Elements } from '@stripe/react-stripe-js';
+import { useStripe, CardElement, Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
-const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3');
-
+const stripePromise = loadStripe('YOUR_PUBLIC_STRIPE_KEY');
 
 const CheckoutForm = () => {
     const stripe = useStripe();
-    const elements = useElements();
   
     const handleSubmit = async (event) => {
       event.preventDefault();
   
-      if (!stripe || !elements) {
+      if (!stripe) {
         // Stripe.js has not yet loaded.
-        // Make sure to disable form submission until Stripe.js has loaded.
         return;
       }
-  
-      const cardElement = elements.getElement(CardElement);
-  
-      const {error, paymentMethod} = await stripe.createPaymentMethod({
-        type: 'card',
-        card: cardElement,
+
+      // Call your backend to create a Checkout Session
+      const response = await fetch('/create-checkout-session', { method: 'POST' });
+      const session = await response.json();
+
+      // Redirect to Stripe Checkout
+      const result = await stripe.redirectToCheckout({
+        sessionId: session.id,
       });
-  
-      if (error) {
-        console.log('[error]', error);
-      } else {
-        console.log('[PaymentMethod]', paymentMethod);
-        // Here you would pass paymentMethod.id to your backend to create a charge
+
+      if (result.error) {
+        // Display error message
+        console.log(result.error.message);
       }
     };
   
@@ -41,12 +38,12 @@ const CheckoutForm = () => {
         </button>
       </form>
     );
-  };
-  
-  const StripePaymentForm = () => (
-    <Elements stripe={stripePromise}>
-      <CheckoutForm />
-    </Elements>
-  );
-  
-  export default StripePaymentForm;
+};
+
+const StripePaymentForm = () => (
+  <Elements stripe={stripePromise}>
+    <CheckoutForm />
+  </Elements>
+);
+
+export default StripePaymentForm;

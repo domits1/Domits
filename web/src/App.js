@@ -38,6 +38,7 @@ import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
 export const stripe = new Stripe(process.env.REACT_APP_PK);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
+import FlowContext from './FlowContext';
 
 
 // Set the app element for react-modal
@@ -68,7 +69,10 @@ function App() {
         return <Footer/>;
     };
 
+    const [flowState, setFlowState] = useState({ isHost: false });
+
     return (
+        <FlowContext.Provider value={{ flowState, setFlowState }}>
         <Router>
             <div className="App">
                 {renderHeader()}
@@ -116,6 +120,7 @@ function App() {
             </div>
             {renderFooter()}
         </Router>
+        </FlowContext.Provider>
     );
 }
 

@@ -5,6 +5,7 @@ import appartement from "../../images/icons/flat.png";
 import camper from "../../images/icons/camper-van.png";
 import villa from "../../images/icons/mansion.png";
 import { useNavigate } from 'react-router-dom';
+import FlowContext from '../../FlowContext';
 
 function WithNavigate(props) {
   let navigate = useNavigate();
@@ -34,9 +35,13 @@ class Calculator extends Component {
     };
   }
 
-  handleRedirect = () => {
-    this.props.navigate('/register', { state: { isHost: true } });
-  }
+  static contextType = FlowContext; // Assigning context to the class
+
+    navigateToRegister = () => {
+    const { setFlowState } = this.context; // Accessing context
+    setFlowState({ isHost: true });
+    this.props.navigate('/register'); // Corrected to use navigate from props
+  };
 
   pageUpdater = (pageNumber) => {
     this.setState({
@@ -150,7 +155,7 @@ class Calculator extends Component {
             </div>
             <div className='buttonHolder'>
             <button className='nextButtons' onClick={this.resetCalculator}>Reset</button>
-            <button className='nextButtons' onClick={this.handleRedirect}>Enlist</button>
+            <button className='nextButtons' onClick={this.navigateToRegister}>Enlist</button>
             </div>
           </div>
         );

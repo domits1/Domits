@@ -1,8 +1,9 @@
-import React, { FormEvent, useRef, useState, useEffect } from 'react';
+import React, { FormEvent, useRef, useState, useEffect, useContext } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
 import './ConfirmRegister.css'
+import FlowContext from '../../FlowContext';
 import { API } from 'aws-amplify';
 
 function ConfirmEmail() {
@@ -16,7 +17,8 @@ function ConfirmEmail() {
 
     const userEmail = location.state === null ? "" : location.state.email
 
-    const isHost = location.state?.isHost;
+    const { flowState } = useContext(FlowContext); // Destructure to get flowState
+    const { isHost } = flowState; // Now get isHost from flowState
 
     // This is unfinished, aws config should be updated to use the correct invoke url.
 
