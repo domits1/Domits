@@ -32,6 +32,8 @@ import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
 import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
+//import Release from "./components/release/Release";
+import Chat from "./components/chat/Chat";
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
@@ -102,6 +104,9 @@ function App() {
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/error" element={<Error/>}/>
+                    {/*<Route path="/release" element={<Release/>}/>*/}
+                    <Route path="/chat" element={<Chat/>}/>
+
 
 
                     {/*  Admin Routes  */}
