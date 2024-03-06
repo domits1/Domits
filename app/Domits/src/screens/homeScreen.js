@@ -1,16 +1,19 @@
 import React from 'react';
-import { View, Text, Button, StyleSheet, Image } from 'react-native';
-import SearchBarApp from './SearchBarApp'; 
+import {View, Text, Button, StyleSheet, Image} from 'react-native';
+import SearchBarApp from './SearchBarApp';
 
-function HomeScreen({ navigation }) {
+function HomeScreen({navigation}) {
   return (
     <View style={styles.container}>
-      
       <SearchBarApp />
 
-      <Image source={require('./pictures/domits-logo.jpg')} style={styles.logo} />
+      <Image
+        source={require('./pictures/domits-logo.jpg')}
+        style={styles.logo}
+      />
       <Text style={styles.welcomeText}>
-        Welcome to the final product of the <Text style={styles.greenText}>Domits App</Text>
+        Welcome to the final product of the{' '}
+        <Text style={styles.greenText}>Domits App</Text>
       </Text>
 
       <View style={styles.buttonContainer}>
