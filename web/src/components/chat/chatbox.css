@@ -67,14 +67,7 @@
 
 
 .send_button {
-    background-color: #308AE4;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    padding: 10px 20px;
-    margin-left: 10px;
-    font-size: 16px;
-    cursor: pointer;
+
 }
 
 .send_button:hover {
