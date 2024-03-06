@@ -7,9 +7,9 @@
     "@aws-amplify/ui-react": "^5.3.3",
     "@stripe/react-stripe-js": "^2.5.1",
     "@stripe/stripe-js": "^3.0.6",
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
+    "@testing-library/jest-dom": "^6.4.2",
+    "@testing-library/react": "^14.2.1",
+    "@testing-library/user-event": "^14.5.2",
     "amplify": "^0.0.11",
     "aws-amplify": "^5.3.12",
     "aws-sdk": "^2.1549.0",
@@ -27,7 +27,7 @@
     "stripe": "^14.14.0",
     "typescript": "^4.9.5",
     "ui-react": "^1.0.3",
-    "web-vitals": "^2.1.4"
+    "web-vitals": "^3.5.2"
   },
   "scripts": {
     "start": "react-scripts start",
@@ -41,7 +41,7 @@
     "cypress": "^13.6.2",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
-    "faker": "^5.5.3"
+    "faker": "^6.6.6"
   },
   "author": "",
   "license": "ISC",
