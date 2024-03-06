@@ -5,14 +5,17 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="android app development">
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/guestDashboard.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/components/BottomTabNavigator.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/account.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/android/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,10 +30,12 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="guestDashboard" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/app/Domits/App.js" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -43,26 +48,26 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;acceptance&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/giann/projects/Domits&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;AndroidSdkUpdater&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\hamza\\IdeaProjects\\Domits2\\app\\Domits\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "git-widget-placeholder": "acceptance",
+    "last_opened_file_path": "C:/Program Files/Java/jdk-11.0.0.1",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.15",
+    "project.structure.side.proportion": "0.33793104",
+    "settings.editor.selected.configurable": "AndroidSdkUpdater",
+    "ts.external.directory.path": "C:\\Users\\hamza\\IdeaProjects\\Domits2\\app\\Domits\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\giann\projects\Domits" />
@@ -74,6 +79,19 @@
   <component name="RunManager">
     <configuration name="index.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/Domits/web/build/index.html" useBuiltInWebServerPort="true">
       <method v="2" />
+    </configuration>
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="Domits2" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="Domits2" />
+      <option name="filePath" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
     </configuration>
     <recent_temporary>
       <list>
@@ -103,6 +121,15 @@
       <workItem from="1709124129771" duration="3626000" />
       <workItem from="1709132432561" duration="4321000" />
       <workItem from="1709203654689" duration="3464000" />
+      <workItem from="1709629966028" duration="1947000" />
+      <workItem from="1709632874741" duration="166000" />
+      <workItem from="1709633051517" duration="875000" />
+      <workItem from="1709633949470" duration="4812000" />
+      <workItem from="1709642482009" duration="1961000" />
+      <workItem from="1709644628365" duration="172000" />
+      <workItem from="1709644816401" duration="76000" />
+      <workItem from="1709645056470" duration="46000" />
+      <workItem from="1709645114477" duration="3078000" />
     </task>
     <task id="LOCAL-00001" summary="android app development">
       <created>1709138237032</created>

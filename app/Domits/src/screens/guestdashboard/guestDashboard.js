@@ -4,7 +4,7 @@ import {View, Text} from 'react-native';
 const GuestDashboard = () => {
   return (
     <View>
-      <Text>Host Dashboard</Text>
+      <Text>Host Dashboard 2</Text>
     </View>
   );
 };

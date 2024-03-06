@@ -32,10 +32,12 @@ import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
 import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
+//import Release from "./components/release/Release";
+import Chat from "./components/chat/Chat";
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
-
+import FlowContext from './FlowContext';
 
 
 // Set the app element for react-modal
@@ -66,7 +68,10 @@ function App() {
         return <Footer/>;
     };
 
+    const [flowState, setFlowState] = useState({ isHost: false });
+
     return (
+        <FlowContext.Provider value={{ flowState, setFlowState }}>
         <Router>
             <div className="App">
                 {renderHeader()}
@@ -102,6 +107,9 @@ function App() {
                     <Route path="/policy" element={<Policy />} />
                     <Route path="/terms" element={<Terms />} />
                     <Route path="/error" element={<Error/>}/>
+                    {/*<Route path="/release" element={<Release/>}/>*/}
+                    <Route path="/chat" element={<Chat/>}/>
+
 
 
                     {/*  Admin Routes  */}
@@ -110,6 +118,7 @@ function App() {
             </div>
             {renderFooter()}
         </Router>
+        </FlowContext.Provider>
     );
 }
 

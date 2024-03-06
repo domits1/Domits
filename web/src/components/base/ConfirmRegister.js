@@ -1,51 +1,79 @@
-import React, { FormEvent, useRef, useState } from 'react';
+import React, { FormEvent, useRef, useState, useContext } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
-import './ConfirmRegister.css'
+import './ConfirmRegister.css';
+import FlowContext from '../../FlowContext';
 
 function ConfirmEmail() {
-
-    const [isConfirmed, setIsConfirmed] = useState(false)
+    const [isConfirmed, setIsConfirmed] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const inputRef = useRef([]);
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { flowState } = useContext(FlowContext);
+    const { isHost } = flowState;
 
-    const location = useLocation()
-    const navigate = useNavigate()
-    const inputRef = useRef([])
+    const userEmail = location.state === null ? "" : location.state.email;
 
-    const userEmail = location.state === null ? "" : location.state.email
+    async function createStripeAccount() {
+        const options = {
+            userEmail: userEmail
+        };
+        try {
+            const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
+                method: 'POST',
+                body: JSON.stringify(options),
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                },
+            });
+
+            if (!result.ok) {
+                throw new Error(`HTTP error! Status: ${result.status}`);
+            }
+
+            const data = await result.json();
+            window.location.replace(data.url);
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
     function onSubmit(e: FormEvent) {
-        e.preventDefault()
-        let code: string = ""
-        inputRef.current.forEach((input: HTMLInputElement) => { code += input.value })
+        e.preventDefault();
+        let code: string = "";
+        inputRef.current.forEach((input: HTMLInputElement) => { code += input.value });
 
         Auth.confirmSignUp(userEmail, code)
+            .then(result => {
+                if (result === 'SUCCESS') {
+                    setIsConfirmed(true);
+                    if (isHost) {
+                        createStripeAccount();
+                    }
+                    setTimeout(() => navigate('/'), 3000);
+                }
+            })
             .catch(error => {
                 setErrorMessage('Invalid verification code, please check your email!');
-            })
-            .then(result => { if (result === 'SUCCESS') {
-                setIsConfirmed(true)
-                setTimeout(() => navigate('/'), 3000)
-            }})
+            });
     }
 
     const handleResendCode = () => {
         if (userEmail === '') {
-            // Redirect to register page or any other desired route
-            navigate('/register'); // Change '/register' to the desired route
+            navigate('/register');
         } else {
-            // Resend code logic
             Auth.resendSignUp(userEmail);
         }
     };
 
-    const form =
+    const form = (
         <div className="confirmEmailContainer">
             <div className="confirmEmailTitle">Verify your registration</div>
             <form className="confirmEmailForm" onSubmit={onSubmit}>
                 <div className="enter6DigitText">
-                    Enter 6 digit code send to your email
+                    Enter 6 digit code sent to your email
                 </div>
                 <DigitInputs amount={6} inputRef={inputRef} />
                 {errorMessage && (
@@ -58,17 +86,16 @@ function ConfirmEmail() {
                 <button className="resendCodeButton" onClick={handleResendCode}>Resend code</button>
             </form>
         </div>
+    );
 
-    const confirmedPopup =
+    const confirmedPopup = (
         <div className="confirmemail-container">
-            <p className="confirmemail-card_title">Succes!</p>
+            <p className="confirmemail-card_title">Success!</p>
             <p className="confirmemail-card_text">Your email is now verified! You will be redirected shortly</p>
         </div>
-    return (
-        isConfirmed ?
-            confirmedPopup : form
+    );
 
-    )
+    return isConfirmed ? confirmedPopup : form;
 }
 
-export default ConfirmEmail
+export default ConfirmEmail;
