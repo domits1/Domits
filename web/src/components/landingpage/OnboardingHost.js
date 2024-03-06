@@ -20,6 +20,10 @@ function OnboardingHost() {
         PostalCode: "",
         Street: "",
         Neighbourhood: "",
+        Bookingsystem: "",
+        Guesttype: "",
+        Ownertype: "",
+        CancelPolicy: "",
         Features: {
             Wifi: false,
             Television: false,
@@ -31,7 +35,17 @@ function OnboardingHost() {
             Smokedetector: false,
             FirstAidkit: false,
             Fireextinguisher: false,
-        }
+        },
+        SystemConfiguration: {
+            UnverifiedGuest: false,
+            VerifiedGuest: false,
+            Monthlydiscount: false,
+            Weeklydiscount: false,
+            FirstBookerdiscount: false,
+        },
+        Monthlypercent: 0,
+        Weeklypercent: 0,
+        FirstBookerpercent: 0,
     });
 
     const pageUpdater = (pageNumber) => {
@@ -48,12 +62,17 @@ function OnboardingHost() {
                 Features: {
                     ...prevData.Features,
                     [name]: checked,
+                },
+                SystemConfiguration: {
+                    ...prevData.Features,
+                    [name]: checked,
                 }
             }));
         } else {
+            const inputValue = formData.SystemConfiguration[name] ? parseFloat(value) || 0 : 0;
             setFormData((prevData) => ({
                 ...prevData,
-                [name]: value
+                [name]: inputValue,
             }));
         }
     };
@@ -96,7 +115,7 @@ function OnboardingHost() {
                             </div>
                         </div>
                         <div class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)} disabled={true}>Go back to change</button>
                             <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
                         </div>
                     </div>
@@ -158,22 +177,22 @@ function OnboardingHost() {
                                     <div class="room-features formRow">
                                         <div className="configurations">
                                             <label>Preferred booking system</label>
-                                            <label><input type="radio" className="radioInput" name="Bookingsystem"></input>Let guests book immediately</label>
-                                            <label><input type="radio" className="radioInput" name="Bookingsystem"></input>Review a booking request</label>
+                                            <label><input type="radio" className="radioInput" name="Bookingsystem" onChange={handleInputChange} checked={formData.Bookingsystem === "Guests book immediately"} value="Guests book immediately"></input>Let guests book immediately</label>
+                                            <label><input type="radio" className="radioInput" name="Bookingsystem" onChange={handleInputChange} checked={formData.Bookingsystem === "Booking request"} value="Booking request"></input>Review a booking request</label>
                                         </div>
                                     </div>
                                     <div class="room-features formRow">
                                         <div className="configurations">
                                             <label>Guest type</label>
-                                            <label><input type="checkbox" className="radioInput" name="Guesttype"></input>Unverified guest</label>
-                                            <label><input type="checkbox" className="radioInput" name="Guesttype"></input>Verified Domits guest</label>
+                                            <label><input type="checkbox" className="radioInput" name="UnverifiedGuest" onChange={handleInputChange} checked={formData.SystemConfiguration.UnverifiedGuest}></input>Unverified guest</label>
+                                            <label><input type="checkbox" className="radioInput" name="VerifiedGuest" onChange={handleInputChange} checked={formData.SystemConfiguration.VerifiedGuest}></input>Verified Domits guest</label>
                                         </div>
                                     </div>
                                     <div class="room-features formRow">
                                         <div className="configurations">
                                             <label>Enlist as</label>
-                                            <label><input type="radio" className="radioInput" name="Ownertype"></input>Private owner</label>
-                                            <label><input type="radio" className="radioInput" name="Ownertype"></input>Corporation</label>
+                                            <label><input type="radio" className="radioInput" name="Ownertype" onChange={handleInputChange} checked={formData.Ownertype === "Private owner"} value="Private owner"></input>Private owner</label>
+                                            <label><input type="radio" className="radioInput" name="Ownertype" onChange={handleInputChange} checked={formData.Ownertype === "Corporation"} value="Corporation"></input>Corporation</label>
                                         </div>
                                     </div>
                                 </div>
@@ -185,26 +204,24 @@ function OnboardingHost() {
                                 <div className="formRow">
                                     <div class="room-features formRow">
                                         <div className="configurations">
-                                            <label>Enlist as</label>
-                                            <label><input type="checkbox" className="radioInput" name="Airconditioning"></input>Airconditioning</label>
-                                            <label><input type="checkbox" className="radioInput" name="Onsiteparking"></input>Onsite parking</label>
-                                            <label><input type="checkbox" className="radioInput" name="Homeoffice"></input>Home office</label>
+                                            <label>Do you offer discounts?</label>
+                                            <label><input type="checkbox" className="radioInput" name="Monthlydiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.Monthlydiscount}></input>Monthly discount</label>
+                                            <label><input type="checkbox" className="radioInput" name="Weeklydiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.Weeklydiscount}></input>Weekly discount</label>
+                                            <label><input type="checkbox" className="radioInput" name="FirstBookerdiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.FirstBookerdiscount}></input>First Booker discount</label>
                                         </div>
                                     </div>
                                     <div class="room-features formRow">
                                         <div className="configurations">
-                                            <label>Enlist as</label>
-                                            <label><input type="checkbox" className="radioInput" name="Airconditioning"></input>Airconditioning</label>
-                                            <label><input type="checkbox" className="radioInput" name="Onsiteparking"></input>Onsite parking</label>
-                                            <label><input type="checkbox" className="radioInput" name="Homeoffice"></input>Home office</label>
+                                            <label><input type="number" className="textInput" name="Monthlypercent" onChange={handleInputChange} value={formData.Monthlypercent} disabled={!formData.SystemConfiguration.Monthlydiscount}></input>%</label>
+                                            <label><input type="number" className="textInput" name="Weeklypercent" onChange={handleInputChange} value={formData.Weeklypercent} disabled={!formData.SystemConfiguration.Weeklydiscount}></input>%</label>
+                                            <label><input type="number" className="textInput" name="FirstBookerpercent" onChange={handleInputChange} value={formData.FirstBookerpercent} disabled={!formData.SystemConfiguration.FirstBookerdiscount}></input>%</label>
                                         </div>
                                     </div>
                                     <div class="room-features formRow">
                                         <div className="configurations">
-                                            <label>Enlist as</label>
-                                            <label><input type="checkbox" className="radioInput" name="Airconditioning"></input>Airconditioning</label>
-                                            <label><input type="checkbox" className="radioInput" name="Onsiteparking"></input>Onsite parking</label>
-                                            <label><input type="checkbox" className="radioInput" name="Homeoffice"></input>Home office</label>
+                                            <label>Cancel policy</label>
+                                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "Users can cancel anytime"} value="Users can cancel anytime"></input>Users can cancel anytime</label>
+                                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "No cancel 24h before arrival"} value="No cancel 24h before arrival"></input>No cancel 24h before arrival </label>
                                         </div>
                                     </div>
                                 </div>
@@ -242,13 +259,22 @@ function OnboardingHost() {
                                         <li key={feature}>{feature}: {value ? 'Yes' : 'No'}</li>
                                     ))}
                                 </ul>
+                                <p>System Configuration:</p>
+                                <ul>
+                                    {Object.entries(formData.SystemConfiguration).map(([config, value]) => (
+                                        <li key={config}>{config}: {value ? 'Yes' : 'No'}</li>
+                                    ))}
+                                </ul>
+                                <p>Monthly Discount: {formData.Monthlypercent}%</p>
+                                <p>Weekly Discount: {formData.Weeklypercent}%</p>
+                                <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
                             </div>
                             <div className='buttonHolder'>
                                 <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
                                 <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
                             </div>
                         </div>
-                    </div>
+                    </div >
                 );
             default:
                 return null;
