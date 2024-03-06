@@ -45,31 +45,36 @@ function Header() {
     };
 
     const [dropdownVisible, setDropdownVisible] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // State to manage authentication status
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [group, setGroup] = useState(''); // State to store user group
     const [results, setResults] = useState([]);
 
     useEffect(() => {
-        checkAuthentication(); // Check authentication status on component mount
+        checkAuthentication();
     }, []);
 
     useEffect(() => {
-        // Close dropdown when location changes
         setDropdownVisible(false);
     }, [location]);
 
     const checkAuthentication = async () => {
         try {
-            await Auth.currentSession();
-            setIsLoggedIn(true); // Update isLoggedIn state if user is authenticated
+            const session = await Auth.currentSession();
+            const user = await Auth.currentAuthenticatedUser();
+            setIsLoggedIn(true);
+            const userAttributes = user.attributes;
+            const userGroup = userAttributes['custom:group'];
+            setGroup(userGroup); // Set the group state based on user's custom:group attribute
         } catch (error) {
             setIsLoggedIn(false);
+            console.error('Error logging in:', error);
         }
     };
 
     const handleLogout = async () => {
         try {
             await Auth.signOut();
-            setIsLoggedIn(false); // Update isLoggedIn state after logout
+            setIsLoggedIn(false);
             console.log('User logged out successfully');
         } catch (error) {
             console.error('Error logging out:', error);
@@ -91,8 +96,6 @@ function Header() {
                     </div>
                     <div className='App'>
                         <div className='search-bar-container'>
-                            {/* Zoekbalk en zoekresultaten  */}
-                            {/* Disclaimer dit stuk hoort bij drie andere files die beginnen met Search :)  */}
                             <SearchBar setResults={setResults} />
                             <SearchResultsList results={results} />
                         </div>
@@ -111,15 +114,16 @@ function Header() {
                             </button>
                             <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                 {isLoggedIn ? (
-                                     <>
-                                         <button onClick={navigateToProfile} className="dropdownLoginButton">Profile</button>
-                                         <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
-                                         <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
-                                         <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
-                                         <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
-                                         <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
-                                             src={logoutArrow} alt="Logout Arrow"/></button>
-                                     </>
+                                    <>
+                                        <p>Hello {group}!</p>
+                                        <button onClick={navigateToProfile} className="dropdownLoginButton">Profile</button>
+                                        <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
+                                        <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
+                                        <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
+                                        <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
+                                        <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
+                                            src={logoutArrow} alt="Logout Arrow"/></button>
+                                    </>
                                 ) : (
                                     <>
                                         <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img
