@@ -237,4 +237,4 @@ class Calculator extends Component {
   }
 }
 
-export default Calculator;
+export default WithNavigate;
