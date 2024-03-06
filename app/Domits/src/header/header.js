@@ -45,6 +45,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 20,
+    backgroundColor: 'blue',
+    height: 170, // Voeg deze regel toe om een limiet van 170 toe te voegen
   },
   contentContainer: {
     flex: 1,
@@ -57,8 +59,8 @@ const styles = StyleSheet.create({
   },
   squareContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between', // Voeg deze regel toe om de items aan beide zijden uit te lijnen
-    marginBottom: 880,
+    justifyContent: 'space-between',
+    marginBottom: 900,
   },
   itemContainer: {
     justifyContent: 'center',
@@ -71,6 +73,7 @@ const styles = StyleSheet.create({
   },
   itemText: {
     color: 'black',
+    fontFamily: 'MotivaSansRegular.woff'
   },
 });
 
