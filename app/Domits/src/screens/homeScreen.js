@@ -6,7 +6,7 @@ function HomeScreen({ navigation }) {
   return (
     <View style={styles.container}>
       <Header />
-      {/* Voeg hier andere scherminhoud toe */}
+      
     </View>
   );
 }
@@ -14,7 +14,7 @@ function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white', // Achtergrondkleur van het hele scherm
+    backgroundColor: 'white', 
   },
 });
 

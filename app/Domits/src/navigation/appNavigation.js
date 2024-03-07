@@ -10,7 +10,7 @@ function AppNavigation() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false, // Hiermee wordt de volledige header verborgen
+        headerShown: false, 
       }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="HostDashboard" component={HostDashboard} />

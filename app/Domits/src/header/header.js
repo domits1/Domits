@@ -46,7 +46,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     backgroundColor: 'blue',
-    height: 170, // Voeg deze regel toe om een limiet van 170 toe te voegen
+    height: 170, 
   },
   contentContainer: {
     flex: 1,

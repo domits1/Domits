@@ -7,7 +7,7 @@ import AppNavigation from './src/navigation/appNavigation.js';
 function App() {
   return (
     <NavigationContainer>
-    {/*  <Header />  Add the header component */}
+    
       <AppNavigation />
     </NavigationContainer>
   );
