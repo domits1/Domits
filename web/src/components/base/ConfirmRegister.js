@@ -43,12 +43,11 @@ function ConfirmEmail() {
         }
     }
 
-    async function onSubmit(e) {
+
+    function onSubmit(e) {
         e.preventDefault();
         let code = "";
-        inputRef.current.forEach((input) => {
-            code += input.value;
-        });
+        inputRef.current.forEach((input) => { code += input.value });
 
         try {
             const result = await Auth.confirmSignUp(userEmail, code);
