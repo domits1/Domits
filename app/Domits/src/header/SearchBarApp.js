@@ -156,6 +156,7 @@ const styles = StyleSheet.create({
     marginRight: 5,
     color: '#333',
     fontSize: 13,
+    fontFamily: 'MotivaSansRegular.woff'
   },
   expandedContainer: {
     backgroundColor: 'white',
@@ -190,6 +191,7 @@ const styles = StyleSheet.create({
   boldText: {
     fontWeight: 'bold',
     fontSize: 17,
+    fontFamily: 'MotivaSansRegular.woff'
 
   },
   searchInputBar: {
