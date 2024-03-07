@@ -8,7 +8,11 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 
-const GuestDashboard = () => {
+const GuestDashboard = ({navigation}) => {
+  const navigateTo = screen => {
+    navigation.navigate(screen);
+  };
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -18,19 +22,27 @@ const GuestDashboard = () => {
           change app settings.
         </Text>
       </View>
-      <TouchableOpacity style={styles.listItem}>
+      <TouchableOpacity
+        style={styles.listItem}
+        onPress={() => navigateTo('Profile')}>
         <Text style={styles.listItemText}>Profile</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.listItem}>
+      <TouchableOpacity
+        style={styles.listItem}
+        onPress={() => navigateTo('PaymentMethods')}>
         <Text style={styles.listItemText}>Payment methods</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.listItem}>
+      <TouchableOpacity
+        style={styles.listItem}
+        onPress={() => navigateTo('Reviews')}>
         <Text style={styles.listItemText}>Reviews</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.listItem}>
+      <TouchableOpacity
+        style={styles.listItem}
+        onPress={() => navigateTo('Settings')}>
         <Text style={styles.listItemText}>Settings</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
@@ -40,7 +52,9 @@ const GuestDashboard = () => {
           Do you have trouble with using our app?{'\n'}Please send a support
           request to Domits.
         </Text>
-        <TouchableOpacity style={styles.helpButton}>
+        <TouchableOpacity
+          style={styles.helpButton}
+          onPress={() => navigateTo('HelpAndFeedback')}>
           <Text style={styles.helpButtonText}>Help and feedback</Text>
         </TouchableOpacity>
       </View>
