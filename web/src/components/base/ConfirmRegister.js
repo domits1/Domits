@@ -1,9 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { FormEvent, useRef, useState, useContext } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import DigitInputs from '../ui/DigitsInputs/DigitsInputs';
 import './ConfirmRegister.css';
 import { useAuth } from './AuthContext'; // Import the AuthContext hook
+import FlowContext from '../../FlowContext';
 
 function ConfirmEmail() {
     const [isConfirmed, setIsConfirmed] = useState(false);
@@ -12,9 +13,35 @@ function ConfirmEmail() {
     const location = useLocation();
     const navigate = useNavigate();
     const inputRef = useRef([]);
+    const { flowState } = useContext(FlowContext);
+    const { isHost } = flowState;
 
     const userEmail = location.state === null ? "" : location.state.email;
     const userPassword = credentials.password; // Access password from AuthContext
+
+    async function createStripeAccount() {
+        const options = {
+            userEmail: userEmail
+        };
+        try {
+            const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
+                method: 'POST',
+                body: JSON.stringify(options),
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                },
+            });
+
+            if (!result.ok) {
+                throw new Error(`HTTP error! Status: ${result.status}`);
+            }
+
+            const data = await result.json();
+            window.location.replace(data.url);
+        } catch (error) {
+            console.log(error);
+        }
+    }
 
     async function onSubmit(e) {
         e.preventDefault();
@@ -30,6 +57,9 @@ function ConfirmEmail() {
                 // Manually sign in the user after confirming their sign-up
                 await Auth.signIn(userEmail, userPassword); // Sign in with email and password
 
+                if (isHost) {
+                    createStripeAccount();
+                }
                 // Redirect to home page ("/") after 3 seconds
                 setTimeout(() => {
                     navigate('/');
@@ -40,7 +70,6 @@ function ConfirmEmail() {
             console.error('Error confirming sign up:', error);
         }
     }
-
 
     const handleResendCode = () => {
         if (userEmail === '') {

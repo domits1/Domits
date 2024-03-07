@@ -18,7 +18,7 @@ const Footer = () => {
                     <h4 className='footer-headers'>Navigation</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>How it works</Link></li>
-                        <li><Link to="/why-domits" className='footer-links'>Why Domits</Link></li>
+                        <li><Link to="/" className='footer-links'>Why Domits</Link></li>
                         <li><Link to="/" className='footer-links'>Jobs</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
                         <li><Link to="/" className='footer-links'>Release</Link></li>
@@ -32,8 +32,8 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 className='footer-headers'>Guest</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/" className='footer-links'>Discover and book</Link></li>
-                        <li><Link to="/" className='footer-links'>Helpdesk for guests</Link></li>
+                        <li><Link to="/" className='footer-links'>Search and book</Link></li>
+                        <li><Link to="/" className='footer-links'>Helpdesk</Link></li>
                     </ul>
                 </div>
 
@@ -52,8 +52,8 @@ const Footer = () => {
                 <div className="footer-section borderline">
                     <h4 className='footer-headers '>Network</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/guests" className='footer-links'>Guests</Link></li>
-                        <li><Link to="/hosts" className='footer-links'>Hosts</Link></li>
+                        <li><Link to="/" className='footer-links'>Guests</Link></li>
+                        <li><Link to="/landing" className='footer-links'>Hosts</Link></li>
                         <li><Link to="/developers" className='footer-links'>Developers</Link></li>
                         <li><Link to="/partners" className='footer-links'>Partners</Link></li>
                         <li><Link to="/students" className='footer-links'>Students</Link></li>

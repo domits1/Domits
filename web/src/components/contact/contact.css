@@ -3,9 +3,9 @@
     margin-left: 100px;
     margin-right: 100px;
     margin-bottom: 100px;
+    margin: 50px auto; /* Adjusted margin for laptops */
     color: #000;
     font-size: 20px;
-    font-style: normal;
     font-weight: 400;
     line-height: 150%;
   }
@@ -20,21 +20,18 @@
   
   .contactform h2 {
     font-weight: 600;
+    /* font-size: 20px; Adjusted font size for laptops */
+    width: 100%;
   }
   
   .namemessage,
   .biginput {
-    flex: 1;
+    flex: 1 1 calc(50% - 20px); /* Adjusted flex calculation for laptops */
     margin-right: 20px;
   }
   
-  @media screen and (max-width: 768px) {
-    .namemessage,
-    .biginput,
-    .formbuttons {
-      flex: 100%;
-      margin-right: 0;
-    }
+  ::placeholder {
+    text-align: left;
   }
   
   .biginput textarea {
@@ -44,34 +41,36 @@
     text-align: left;
     padding: 10px;
     border: 1px solid #000;
-    border-radius: 15px;
-    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
   }
   
   .contactform input:not(.biginput input) {
-    border-radius: 15px;
+    border-radius: 10px;
     border: 1px solid #000;
     background: #FFF;
     padding: 10px;
     width: 100%;
-    box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.25);
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
   }
   
   .formbuttons {
-    border: 0px;
+    border: 0;
     display: flex;
     justify-content: flex-start;
+    flex-wrap: wrap;
   }
   
   #attachmentsbutton,
   #sendbutton {
-    width: 50%;
-    height: 50px;
+    width: 40%;
+    height: 40px; /* Adjusted height for laptops */
     padding: 8px 15px;
-    gap: 15px;
+    margin-right: 20px;
+    margin-bottom: 20px;
     flex-shrink: 0;
     color: #FFF;
-    border-radius: 15px;
+    border-radius: 10px;
   }
   
   #attachmentsbutton {
@@ -90,5 +89,47 @@
   #sendbutton:hover {
     background: #09770f;
     cursor: pointer;
+  }
+  
+  input[type="text"] {
+    text-align: left;
+  }
+  
+  /* Media query for phone screens */
+  @media screen and (max-width: 768px) {
+    .contact {
+      padding: 10px;
+      margin: 10px auto;
+      font-size: 14px;
+    }
+  
+    .contactform {
+      padding: 10px;
+    }
+  
+    .contactform h2 {
+      font-size: 18px;
+    }
+  
+    .namemessage,
+    .biginput,
+    .formbuttons {
+      flex: 100%;
+      margin-right: 0;
+    }
+  
+    .biginput textarea {
+      height: 100px;
+      padding: 8px;
+    }
+  
+    #attachmentsbutton,
+    #sendbutton {
+      width: 100%;
+      height: 40px;
+      padding: 8px 15px;
+      margin-right: 0;
+      margin-bottom: 20px;
+    }
   }
   

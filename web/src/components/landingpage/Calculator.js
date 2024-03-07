@@ -4,6 +4,13 @@ import boothuis from "../../images/icons/house-boat.png";
 import appartement from "../../images/icons/flat.png";
 import camper from "../../images/icons/camper-van.png";
 import villa from "../../images/icons/mansion.png";
+import { useNavigate } from 'react-router-dom';
+import FlowContext from '../../FlowContext';
+
+function WithNavigate(props) {
+  let navigate = useNavigate();
+  return <Calculator {...props} navigate={navigate} />;
+}
 
 class Calculator extends Component {
   constructor(props) {
@@ -28,6 +35,13 @@ class Calculator extends Component {
     };
   }
 
+  static contextType = FlowContext; // Assigning context to the class
+
+    navigateToRegister = () => {
+    const { setFlowState } = this.context; // Accessing context
+    setFlowState({ isHost: true });
+    this.props.navigate('/register'); // Corrected to use navigate from props
+  };
   pageUpdater = (pageNumber) => {
     this.setState({
       page: pageNumber
@@ -68,7 +82,7 @@ class Calculator extends Component {
               {this.renderCard(0, "House", huis, selectedCards[1] === 0, 1500)}
               {this.renderCard(1, "Appartement", appartement, selectedCards[1] === 1, 950)}
               {this.renderCard(2, "Camper", camper, selectedCards[1] === 2, 1700)}
-              {this.renderCard(3, "Boathouse", boothuis, selectedCards[1] === 3, 720)}
+              {this.renderCard(3, "Boat", boothuis, selectedCards[1] === 3, 720)}
               {this.renderCard(4, "Villa", villa, selectedCards[1] === 4, 10500)}
             </div>
             <div className='buttonHolder'>
@@ -140,7 +154,7 @@ class Calculator extends Component {
             </div>
             <div className='buttonHolder'>
             <button className='nextButtons' onClick={this.resetCalculator}>Reset</button>
-            <button className='nextButtons'>Enlist</button>
+            <button className='nextButtons' onClick={this.navigateToRegister}>Enlist</button>
             </div>
           </div>
         );
@@ -223,4 +237,4 @@ class Calculator extends Component {
   }
 }
 
-export default Calculator;
+export default WithNavigate;

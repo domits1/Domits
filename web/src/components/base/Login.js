@@ -14,7 +14,7 @@ const Login = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
@@ -28,7 +28,6 @@ const Login = () => {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
             setErrorMessage('');
-            navigate("/");
         } catch (error) {
             console.error('Error logging in:', error);
             setErrorMessage('Invalid username or password. Please try again.');
@@ -44,7 +43,7 @@ const Login = () => {
         }
     };
 
-    const handleSubmit = async (e: FormEvent) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         await handleSignIn();
     };
@@ -95,9 +94,6 @@ const Login = () => {
                                 onChange={handleChange}
                             />
                             <br />
-                            <div className="forgot-password-text">
-                                <a href="/forgot-password">Forgot your password?</a>
-                            </div>
                             {errorMessage && (
                                 <div className="errorText">{errorMessage}</div>
                             )}
@@ -106,7 +102,7 @@ const Login = () => {
                                     <p className='lbText'>Login</p>
                                     <svg
                                         width="24"
-                                        height="24"
+                                        height="59"
                                         viewBox="0 0 24 24"
                                         fill="none"
                                         xmlns="http://www.w3.org/2000/svg"
@@ -125,6 +121,7 @@ const Login = () => {
                         <div className="noAccountText">
                             No account yet? Register for free!
                         </div>
+                    
                         <button
                             onClick={handleRegisterClick}
                             className="registerButtonLogin"

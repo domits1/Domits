@@ -1,19 +1,20 @@
 /* Login.css */
 
 .registerButton {
-    width: 400px;
+    width: auto;
+    min-width: 100%;
+    width: 300px;
     padding: 8px 15px;
-    background: #49146A;
+    background: #003366;
     box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
     border-radius: 15px;
     border: 0;
     color: white;
     font-size: 18px;
-    justify-content: center;
-    margin: 20px auto 0;
     display: block;
     text-align: center; /* Center the text within the button */
     text-decoration: none; /* Remove the default underline on anchor tags */
+    cursor: pointer;
 }
 
 .registerTitle {
@@ -31,6 +32,7 @@
     flex-direction: column;
     justify-content: center;
     align-items: center;
+    
 }
 
 .registerForm {

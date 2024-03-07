@@ -1,23 +1,31 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
-import { Amplify } from 'aws-amplify';
+import ReactDOM from 'react-dom/client';
+import { Amplify, Auth } from 'aws-amplify';
+import aws from 'aws-sdk';
 import awsExports from './aws-exports';
 import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
 import reportWebVitals from './reportWebVitals';
+import './fonts/kanit/Kanit-Regular.ttf';
 
-// Configure Amplify
+// Configure AWS
+aws.config.update({
+    accessKeyId: process.env.VITE_AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.VITE_AWS_SECRET_ACCESS_KEY,
+    region: process.env.VITE_AWS_REGION,
+});
+
+export const cognitoClient = new aws.CognitoIdentityServiceProvider();
 Amplify.configure(awsExports);
+Auth.configure(awsExports);
 
 // Render the app
-ReactDOM.render(
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
     <React.StrictMode>
-        <BrowserRouter>
-            <App />
-        </BrowserRouter>
-    </React.StrictMode>,
-    document.getElementById('root')
+        <App />
+    </React.StrictMode>
 );
 
 // If you want to start measuring performance in your app, pass a function

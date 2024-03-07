@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import './base.css';
+import React, {useEffect, useState} from 'react';
+import './base.css'
 import logo from "../../logo.svg";
 import nineDots from '../../images/dots-grid.svg';
 import profile from '../../images/profile-icon.svg';
 import arrowDown from '../../images/arrow-down-icon.svg';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Auth } from "aws-amplify";
-
+import { useNavigate } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
 import { SearchResultsList } from './SearchResultsList';
+import {Auth} from "aws-amplify";
 
 function Header() {
     const navigate = useNavigate();
-    const location = useLocation();
 
     const navigateToLogin = () => {
         navigate('/login');
@@ -91,7 +89,7 @@ function Header() {
                 <nav className="header-nav">
                     <div className="logo">
                         <a href="/">
-                            <img src={logo} width={50} alt="Logo"/>
+                            <img src={logo} width={50} alt="Logo" />
                         </a>
                     </div>
                     <div className='App'>
@@ -105,7 +103,7 @@ function Header() {
                             Become a host
                         </button>
                         <button className="headerButtons" onClick={navigateToNinedots}>
-                            <img src={nineDots} alt={nineDots}/>
+                            <img src={nineDots} alt={nineDots} />
                         </button>
                         <div className="personalMenuDropdown">
                             <button className="personalMenu" onClick={toggleDropdown}>
