@@ -4,7 +4,7 @@ import {View, Text} from 'react-native';
 const Messages = () => {
   return (
     <View>
-      <Text>Host Dashboard 1</Text>
+      <Text>Messsages</Text>
     </View>
   );
 };

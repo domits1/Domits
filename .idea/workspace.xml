@@ -4,17 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="Footer, start on guestDashboard.js">
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/helpAndFeedback.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/paymentMethods.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/profile.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/reviews.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/settings.js" afterDir="false" />
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="Merge conflict and navigation for guest dashboard">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/guestDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/guestDashboard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/account.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/account.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,7 +107,7 @@
       <workItem from="1709124129771" duration="3626000" />
       <workItem from="1709132432561" duration="4321000" />
       <workItem from="1709203654689" duration="3464000" />
-      <workItem from="1709814757651" duration="997000" />
+      <workItem from="1709814757651" duration="4117000" />
     </task>
     <task id="LOCAL-00001" summary="android app development">
       <created>1709138237032</created>
@@ -120,7 +116,14 @@
       <option name="project" value="LOCAL" />
       <updated>1709138237032</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Merge conflict and navigation for guest dashboard">
+      <created>1709821476937</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1709821476937</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -144,6 +147,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="android app development" />
-    <option name="LAST_COMMIT_MESSAGE" value="android app development" />
+    <MESSAGE value="Merge conflict and navigation for guest dashboard" />
+    <option name="LAST_COMMIT_MESSAGE" value="Merge conflict and navigation for guest dashboard" />
   </component>
 </project>
