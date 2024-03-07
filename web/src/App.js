@@ -1,4 +1,5 @@
 import './App.css';
+import Test from './components/test/testroom';
 import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
@@ -78,6 +79,7 @@ function App() {
                 <Routes>
                     <Route path="/" element={<Assortment />} />
                     <Route path="/home" element={<Home />} />
+                    <Route path="/test" element={<Test />} />
                     <Route path="/login" element={<Login />} />
                     <Route path="/register" element={<Register />} />
                     <Route path="/confirm-email" element={<ConfirmRegister />} />
