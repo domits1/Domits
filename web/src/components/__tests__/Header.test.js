@@ -12,6 +12,16 @@ describe('Header Component', () => {
         );
     });
 
+    it('navigates to home page when logo is clicked', () => {
+        const { getByAltText } = render(
+            <Router>
+                <Header />
+            </Router>
+        );
+        fireEvent.click(getByAltText('Logo'));
+        expect(window.location.pathname).toBe('/');
+    });
+
     it('navigates to login page when profile button is clicked', () => {
         const { getByAltText } = render(
             <Router>
@@ -19,7 +29,7 @@ describe('Header Component', () => {
             </Router>
         );
         fireEvent.click(getByAltText('profile-icon.svg'));
-        // Assert navigation behavior here
+        expect(window.location.pathname).toBe('/login');
     });
 
     it('navigates to landing page when "Become a host" button is clicked', () => {
@@ -29,7 +39,7 @@ describe('Header Component', () => {
             </Router>
         );
         fireEvent.click(getByText('Become a host'));
-        // Assert navigation behavior here
+        expect(window.location.pathname).toBe('/landing');
     });
 
     it('navigates to ninedots page when ninedots button is clicked', () => {
@@ -39,7 +49,7 @@ describe('Header Component', () => {
             </Router>
         );
         fireEvent.click(getByAltText('dots-grid.svg'));
-        // Assert navigation behavior here
+        expect(window.location.pathname).toBe('/travelinnovation');
     });
 
     // You can add more test cases to cover additional functionalities
