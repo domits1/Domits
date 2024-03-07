@@ -6,8 +6,7 @@ import Login from "../base/Login";
 import searchIcon from '../../images/icons/search-lg.svg';
 import sortIcon from '../../images/icons/filter-lines.svg';
 import './assortment.css';
-import StripePaymentForm from "../checkout/Checkout";
-import Stripe from "stripe";
+import CheckoutFrontend from '../checkout/CheckoutFrontEnd'
 
 const Assortment = () => {
     const [searchQuery, setSearchQuery] = useState("");
@@ -58,7 +57,7 @@ const Assortment = () => {
     return (
         <div>
             <div className="assortment">
-                {/* < StripePaymentForm /> */}
+                {/* { <CheckoutFrontend/> } */}
                 <div className="dropdown-row">
                     <div className="dropdown-column">
                         <label>Visitors/guests</label>
