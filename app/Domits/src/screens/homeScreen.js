@@ -7,6 +7,7 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 
 function HomeScreen({ navigation }) {
   return (
+
       <View style={styles.container}>
         <SearchBarApp />
         <View style={styles.squareContainer}>
