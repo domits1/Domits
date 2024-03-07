@@ -4,9 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="Footer, start on guestDashboard.js">
-      <change beforePath="$PROJECT_DIR$/app/Domits/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/App.js" afterDir="false" />
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="Merge conflict and navigation for guest dashboard">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/account.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/account.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -23,10 +27,13 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="appHamza" />
+        <entry key="$PROJECT_DIR$" value="AppHome" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/app/Domits/App.js" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
@@ -45,15 +52,15 @@
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "WebServerToolWindowFactoryState": "false",
     "git-widget-placeholder": "acceptance",
-    "last_opened_file_path": "C:/Program Files/Java/jdk-11.0.0.1",
+    "last_opened_file_path": "C:/Users/hamza/OneDrive/Bureaublad/School/ADS/levelUpLife",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "SDKs",
-    "project.structure.proportion": "0.15",
-    "project.structure.side.proportion": "0.33793104",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
     "settings.editor.selected.configurable": "AndroidSdkUpdater",
     "ts.external.directory.path": "C:\\Users\\hamza\\IdeaProjects\\Domits2\\web\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
@@ -71,21 +78,9 @@
     <configuration name="index.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/Domits/web/build/index.html" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
-    <configuration default="true" type="JetRunConfigurationType">
-      <module name="Domits2" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
-      <module name="Domits2" />
-      <option name="filePath" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="JavaScript Debug.index.html" />
         <item itemvalue="JavaScript Debug.index.html" />
       </list>
     </recent_temporary>
@@ -112,15 +107,7 @@
       <workItem from="1709124129771" duration="3626000" />
       <workItem from="1709132432561" duration="4321000" />
       <workItem from="1709203654689" duration="3464000" />
-      <workItem from="1709629966028" duration="1947000" />
-      <workItem from="1709632874741" duration="166000" />
-      <workItem from="1709633051517" duration="875000" />
-      <workItem from="1709633949470" duration="4812000" />
-      <workItem from="1709642482009" duration="1961000" />
-      <workItem from="1709644628365" duration="172000" />
-      <workItem from="1709644816401" duration="76000" />
-      <workItem from="1709645056470" duration="46000" />
-      <workItem from="1709645114477" duration="3078000" />
+      <workItem from="1709814757651" duration="4117000" />
     </task>
     <task id="LOCAL-00001" summary="android app development">
       <created>1709138237032</created>
@@ -129,7 +116,14 @@
       <option name="project" value="LOCAL" />
       <updated>1709138237032</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Merge conflict and navigation for guest dashboard">
+      <created>1709821476937</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1709821476937</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -153,6 +147,7 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="android app development" />
-    <option name="LAST_COMMIT_MESSAGE" value="android app development" />
+    <MESSAGE value="Merge conflict and navigation for guest dashboard" />
+    <option name="LAST_COMMIT_MESSAGE" value="Merge conflict and navigation for guest dashboard" />
   </component>
 </project>

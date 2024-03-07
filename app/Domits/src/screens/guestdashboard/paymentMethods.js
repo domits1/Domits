@@ -1,12 +1,12 @@
 import React from 'react';
 import {View, Text} from 'react-native';
 
-const Messages = () => {
+const PaymentMethods = () => {
   return (
     <View>
-      <Text>Messsages</Text>
+      <Text>Payment Methods Screen</Text>
     </View>
   );
 };
 
-export default Messages;
+export default PaymentMethods;

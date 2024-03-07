@@ -1,12 +1,12 @@
 import React from 'react';
 import {View, Text} from 'react-native';
 
-const Messages = () => {
+const HelpAndFeedback = () => {
   return (
     <View>
-      <Text>Messsages</Text>
+      <Text>Help and Feedback Screen</Text>
     </View>
   );
 };
 
-export default Messages;
+export default HelpAndFeedback;

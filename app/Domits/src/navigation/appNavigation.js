@@ -1,37 +1,74 @@
-// appNavigation.js
-
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import HomeScreen from '../screens/homeScreen';
+import Messages from '../screens/messages';
+import AccountPage from '../screens/account';
 import HostDashboard from '../screens/hostdashboard/hostDashboard';
 import GuestDashboard from '../screens/guestdashboard/guestDashboard';
-import BottomTabNavigator from '../components/BottomTabNavigator';
+import {View, Text} from 'react-native';
 
-const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
-function DashboardNavigator() {
-    return (
-        <Tab.Navigator>
-            <Tab.Screen name="Home" component={HomeScreen} />
-            <Tab.Screen name="Messages" component={Messages} /> {/* Assuming Messages is a valid component */}
-            <Tab.Screen name="Account" component={AccountPage} /> {/* Assuming AccountPage is a valid component */}
-        </Tab.Navigator>
-    );
+function HomeStack() {
+  return (
+    <Stack.Navigator screenOptions={{headerShown: false}}>
+      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="HostDashboard" component={HostDashboard} />
+      <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
+    </Stack.Navigator>
+  );
 }
 
-function AppNavigation() {
-    return (
-        <Stack.Navigator
-            screenOptions={{
-                headerShown: false, // Hide the header for all screens
-            }}>
-            <Stack.Screen name="Dashboard" component={BottomTabNavigator} />
-            <Stack.Screen name="HostDashboard" component={HostDashboard} />
-            <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
-        </Stack.Navigator>
-    );
+function BottomTabNavigator() {
+  return (
+    <Tab.Navigator
+      screenOptions={({route}) => ({
+        tabBarShowLabel: false,
+        tabBarStyle: {
+          backgroundColor: 'white',
+          borderTopColor: 'transparent',
+          height: 60,
+          paddingBottom: 10,
+        },
+        tabBarIcon: ({focused, color, size}) => {
+          let iconName;
+          switch (route.name) {
+            case 'Home':
+              iconName = 'home';
+              break;
+            case 'Messages':
+              iconName = 'message';
+              break;
+            case 'Account':
+              iconName = 'account-circle';
+              break;
+            default:
+              iconName = 'circle';
+          }
+
+          return (
+            <View style={{alignItems: 'center', justifyContent: 'center'}}>
+              <MaterialIcons
+                name={iconName}
+                size={30}
+                color={focused ? '#007AFF' : '#8e8e93'}
+              />
+              <Text
+                style={{color: focused ? '#007AFF' : '#8e8e93', fontSize: 12}}>
+                {route.name}
+              </Text>
+            </View>
+          );
+        },
+      })}>
+      <Tab.Screen name="Home" component={HomeStack} />
+      <Tab.Screen name="Messages" component={Messages} />
+      <Tab.Screen name="Account" component={AccountPage} />
+    </Tab.Navigator>
+  );
 }
 
-export default AppNavigation;
+export default BottomTabNavigator;
