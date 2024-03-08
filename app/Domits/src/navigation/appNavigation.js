@@ -47,7 +47,7 @@ function BottomTabNavigator() {
       screenOptions={({route}) => ({
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: 'white',
+          backgroundColor: '#f0f0f0',
           borderTopColor: 'transparent',
           height: 60,
           paddingBottom: 10,
@@ -83,7 +83,11 @@ function BottomTabNavigator() {
           );
         },
       })}>
-      <Tab.Screen name="Home" component={HomeStack} />
+     <Tab.Screen
+        name="Home"
+        component={HomeStack}
+        options={{ headerShown: false }} 
+      />
       <Tab.Screen name="Messages" component={Messages} />
       <Tab.Screen name="Account" component={AccountPage} />
     </Tab.Navigator>
