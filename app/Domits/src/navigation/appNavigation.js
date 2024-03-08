@@ -5,7 +5,6 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import HomeScreen from '../screens/homeScreen';
 import Messages from '../screens/messages';
 import AccountPage from '../screens/account';
-import HostDashboard from '../screens/hostdashboard/hostDashboard';
 import GuestDashboard from '../screens/guestdashboard/guestDashboard';
 import Header from '../header/header';
 import Scan from '../header/scan';
@@ -18,6 +17,13 @@ import paymentMethods from '../screens/guestdashboard/paymentMethods';
 import reviews from '../screens/guestdashboard/reviews';
 import settings from '../screens/guestdashboard/settings';
 import helpAndFeedback from "../screens/guestdashboard/helpAndFeedback";
+import HostHomepage from '../screens/hostdashboard/hostDashboard';
+import HostDashboard from '../screens/hostdashboard/dashboard';
+import HostProfile from '../screens/hostdashboard/profile';
+import HostPayments from '../screens/hostdashboard/payments';
+import HostReviews from '../screens/hostdashboard/reviews';
+import HostSettings from '../screens/hostdashboard/settings';
+
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -35,17 +41,24 @@ function HomeStack() {
         }}
       />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="HostDashboard" component={HostDashboard} />
       <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
       <Stack.Screen name="Scan" component={Scan} />
       <Stack.Screen name="Pay" component={Pay} />
       <Stack.Screen name="Bookings" component={Bookings} />
       <Stack.Screen name="Pocket" component={Pocket} />
+        
       <Stack.Screen name="Profile" component={profile} />
       <Stack.Screen name="PaymentMethods" component={paymentMethods} />
       <Stack.Screen name="Reviews" component={reviews} />
       <Stack.Screen name="Settings" component={settings} />
       <Stack.Screen name="HelpAndFeedback" component={helpAndFeedback} />
+        
+      <Stack.Screen name="HostHomepage" component={HostHomepage} />
+      <Stack.Screen name="HostDashboard" component={HostDashboard} />
+      <Stack.Screen name="HostProfile" component={HostProfile} />
+      <Stack.Screen name="HostPayments" component={HostPayments} />
+      <Stack.Screen name="HostReviews" component={HostReviews} />
+      <Stack.Screen name="HostSettings" component={HostSettings} />
     </Stack.Navigator>
   );
 }
