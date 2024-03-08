@@ -39,6 +39,7 @@ import Stripe from 'stripe';
 import { AuthProvider } from './components/base/AuthContext';
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard"; // Import the AuthProvider
 import Chat from "./components/chat/Chat";
+import Chatprototype from "./components/chat/Chatprototype.js";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
 
@@ -118,6 +119,7 @@ function App() {
                         <Route path="/bookingconfirmed" element={<BookingConfirmed/>} />
                         <Route path="/bookingdeclined" element={<BookingDeclined/>} />
                         <Route path="/chat" element={<Chat/>}/>
+                        <Route path="/chatprototype" element={<Chatprototype/>}/>
 
                         {/*  Admin Routes  */}
                         <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
