@@ -1,63 +1,34 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Text, Animated } from 'react-native';
+//SearchBarApp.js
+
+import React, { useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, TextInput, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 
 
-// Component
 function SearchBarApp() {
   const [whereToText, setWhereToText] = useState('');
   const [addGuestText, setAddGuestText] = useState('0');
   const [numberOfGuestsText, setNumberOfGuestsText] = useState('0');
   const [selectDatesText, setSelectDatesText] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [scaleValue, setScaleValue] = useState(new Animated.Value(0));
 
   const handleSearch = () => {
     console.log('Searching for:', whereToText, addGuestText, numberOfGuestsText, selectDatesText);
   };
-  //here will come the search ability
 
   const handleToggleExpand = () => {
     setIsExpanded(!isExpanded);
-
-
-    Animated.parallel([
-      Animated.timing(scaleValue, {
-        toValue: isExpanded ? 0 : 1,
-        duration: 500,
-        useNativeDriver: false,
-      }),
-      Animated.timing(iconScaleValue, {
-        toValue: isExpanded ? 1 : 1.2,
-        duration: 300,
-        useNativeDriver: false,
-      }),
-    ]).start();
   };
 
-  useEffect(() => {
-    setNumberOfGuestsText(addGuestText);
-  }, [addGuestText]);
-
-  const iconScaleValue = useRef(new Animated.Value(1)).current;
-
-  const iconScaleInterpolation = iconScaleValue.interpolate({
-    inputRange: [1, 1.2],
-    outputRange: [1, 1.2],
-  });
-
-
-
-  const scaleInterpolation = scaleValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 1],
-  });
-
-  const animatedStyle = {
-    transform: [{ scale: scaleInterpolation }],
+  const handleAddGuest = () => {
+    setAddGuestText((prev) => (parseInt(prev, 10) + 1).toString());
+    setNumberOfGuestsText((prev) => (parseInt(prev, 10) + 1).toString());
   };
 
-
+  const handleRemoveGuest = () => {
+    setAddGuestText((prev) => Math.max(0, Math.floor(parseInt(prev, 10)) - 1).toString());
+    setNumberOfGuestsText((prev) => Math.max(0, Math.floor(parseInt(prev, 10)) - 1).toString());
+  };
 
   return (
     <View style={styles.container}>
@@ -66,72 +37,69 @@ function SearchBarApp() {
           <Text style={styles.boldText}>Country</Text> •  Where • When • Who
         </Text>
 
+        {isExpanded && (
+          <View style={styles.expandedContainer}>
+            <View style={styles.expandedInputContainer}>
+              <Text style={styles.expandedItem}>Where to?</Text>
+              <TextInput
+                style={styles.searchInputBar}
+                placeholder="Search Destinations"
+                placeholderTextColor="#666"
+                value={whereToText}
+                onChangeText={(text) => setWhereToText(text)}
+              />
+            </View>
 
-
-        <Animated.View style={[styles.expandedContainer, animatedStyle]}>
-          {isExpanded && (
-            <>
-              <View style={styles.expandedInputContainer}>
-                <Text style={styles.expandedItem}>Where to?</Text>
-                <TextInput
-                
-                  style={styles.searchInputBar}
-                  placeholder="Search Destinations"
-                  placeholderTextColor="#666"
-                  value={whereToText}
-                  onChangeText={(text) => setWhereToText(text)}
-                />
+            <View style={styles.expandedInputContainer}>
+              <Text style={styles.expandedItem}>Add guests</Text>
+              <View style={styles.guestInputContainer}>
+                <TouchableOpacity onPress={handleRemoveGuest}>
+                  <Icon name="minus-circle" size={20} color="black" style={styles.guestIcon} />
+                </TouchableOpacity>
+                <Text style={styles.guestCount}>{addGuestText}</Text>
+                <TouchableOpacity onPress={handleAddGuest}>
+                  <Icon name="plus-circle" size={20} color="black" style={styles.guestIcon} />
+                </TouchableOpacity>
               </View>
+            </View>
 
-              <View style={styles.expandedInputContainer}>
-                <Text style={styles.expandedItem}>Add guests</Text>
-                <View style={styles.guestInputContainer}>
-                <TouchableOpacity onPress={() => setAddGuestText((prev) => Math.max(0, Math.floor(parseInt(prev, 10)) - 1).toString())}>
-                    <Icon name="minus-circle" size={20} color="black" style={styles.guestIcon} />
-                  </TouchableOpacity>
-                  <Text style={styles.guestCount}>{addGuestText}</Text>
-                  <TouchableOpacity onPress={() => setAddGuestText((prev) => (parseInt(prev, 10) + 1).toString())}>
-                    <Icon name="plus-circle" size={20} color="black" style={styles.guestIcon} />
-                  </TouchableOpacity>
-                </View>
-              </View>
+            <View style={styles.expandedInputContainer}>
+              <Text style={styles.expandedItem}>Number of guests</Text>
+              <Text style={styles.guestCount}>{numberOfGuestsText}</Text>
+            </View>
 
-              <View style={styles.expandedInputContainer}>
-                <Text style={styles.expandedItem}>Number of guests</Text>
-                <Text style={styles.guestCount}>{numberOfGuestsText}</Text>
-              </View>
-            
-
-
-          <View style={styles.expandedInputContainer}>
-            <Text style={styles.expandedItem}>Select dates</Text>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="When?"
-              placeholderTextColor="#666"
-              value={selectDatesText}
-              onChangeText={(text) => setSelectDatesText(text)}
-            />
+            <View style={styles.expandedInputContainer}>
+              <Text style={styles.expandedItem}>Select dates</Text>
+              <TextInput
+                style={styles.searchInput}
+                placeholder="When?"
+                placeholderTextColor="#666"
+                value={selectDatesText}
+                onChangeText={(text) => setSelectDatesText(text)}
+              />
+            </View>
           </View>
-        </>
-          )}
-      </Animated.View>
-      <View style={styles.searchIconContainer}>
-        <Icon name="search" size={20} color="black" style={styles.searchIcon} />
-      </View>
-    </TouchableOpacity>
-    </View >
+        )}
+
+        <View style={styles.searchIconContainer}>
+          <Icon name="search" size={20} color="black" style={styles.searchIcon} />
+        </View>
+      </TouchableOpacity>
+
+      
+    </View>
   );
 }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'left',
+    alignItems: 'left',
+    marginLeft: 55
   },
   searchBarContainer: {
-    width: 320,
-    top: 20,
+    width: 280,
+    top: 10,
     backgroundColor: '#ffff',
     borderRadius: 18,
     padding: 10,
@@ -147,7 +115,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   searchIconContainer: {
-    marginLeft: 65,
+    marginLeft: 25,
   },
   searchIcon: {
     marginLeft: 10,
@@ -161,11 +129,11 @@ const styles = StyleSheet.create({
   expandedContainer: {
     backgroundColor: 'white',
     borderRadius: 18,
-    marginTop: 50,
+    marginTop: 20,
     padding: 20,
     width: 350,
     position: 'absolute',
-    left: -25,
+    left: -33,
     top: 55,
   },
   expandedItem: {
@@ -219,6 +187,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#333',
+  },
+  filterIconContainer: {
+    marginLeft: 10,
+    padding: 10,
+  },
+  filterIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20, 
+    backgroundColor: 'white',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'black',
   },
 });
 

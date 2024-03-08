@@ -1,5 +1,7 @@
+//header.js
+
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView,  } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
@@ -27,35 +29,39 @@ function Header() {
 
   return (
     <View style={styles.headerContainer}>
-      
-
       <View style={styles.contentContainer}>
-        <View style={styles.squareContainer}>
-          <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
-            <Icon name="scan1" size={30} color="black" />
-            <Text style={styles.itemText}>Scan</Text>
-          </TouchableOpacity>
+       
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View style={styles.squareContainer}>
+            <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
+              <Icon name="scan1" size={30} color="black" />
+              <Text style={styles.itemText}>Scan</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity onPress={handlePayPress} style={styles.itemContainer}>
-            <FeatherIcon name="dollar-sign" size={30} color="black" />
-            <Text style={styles.itemText}>Pay</Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={handlePayPress} style={styles.itemContainer}>
+              <FeatherIcon name="dollar-sign" size={30} color="black" />
+              <Text style={styles.itemText}>Pay</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity onPress={handleBookingsPress} style={styles.itemContainer}>
-            <EntypoIcon name="location" size={30} color="black" />
-            <Text style={styles.itemText}>Bookings</Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={handleBookingsPress} style={styles.itemContainer}>
+              <EntypoIcon name="location" size={30} color="black" />
+              <Text style={styles.itemText}>Bookings</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
-            <EntypoIcon name="wallet" size={30} color="black" />
-            <Text style={styles.itemText}>Pocket</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
+              <EntypoIcon name="wallet" size={30} color="black" />
+              <Text style={styles.itemText}>Pocket</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
+              <FeatherIcon name="settings" size={30} color="black" />
+              <Text style={styles.itemText}>Settings</Text>
+            </TouchableOpacity>
+          
+          </View>
+        </ScrollView>
       </View>
-    </View> 
-
-
-
+    </View>
   );
 }
 
@@ -65,7 +71,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingHorizontal: 20,
     backgroundColor: '#f0f0f0',
    
   },
@@ -73,24 +78,28 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 10,
   },
   buttonContainer: {
     marginVertical: 10,
     width: '100%',
   },
-  squareContainer: {
+ squareContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 100, 
+    width: '100%', 
+    paddingHorizontal: 10, 
+    marginTop: 75, 
   },
   itemContainer: {
     justifyContent: 'center',
     alignItems: 'center',
-    width: 70,
-    height: 70,
+    width: 64,
+    height: 64,
     backgroundColor: 'white',
     margin: 10,
     borderRadius: 12,
+    marginHorizontal: 15,
   },
   itemText: {
     color: 'black',
