@@ -13,7 +13,11 @@ import Pay from '../header/pay';
 import Bookings from '../header/bookings';
 import Pocket from '../header/pocket';
 import {View, Text} from 'react-native';
-
+import profile from '../screens/guestdashboard/profile';
+import paymentMethods from '../screens/guestdashboard/paymentMethods';
+import reviews from '../screens/guestdashboard/reviews';
+import settings from '../screens/guestdashboard/settings';
+import helpAndFeedback from "../screens/guestdashboard/helpAndFeedback";
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
@@ -21,13 +25,13 @@ function HomeStack() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerShown: false, 
+        headerShown: false,
       }}>
       <Stack.Screen
         name="Home"
         component={HomeScreen}
         options={{
-          header: (props) => <Header {...props} />, 
+          header: props => <Header {...props} />,
         }}
       />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
@@ -37,6 +41,11 @@ function HomeStack() {
       <Stack.Screen name="Pay" component={Pay} />
       <Stack.Screen name="Bookings" component={Bookings} />
       <Stack.Screen name="Pocket" component={Pocket} />
+      <Stack.Screen name="Profile" component={profile} />
+      <Stack.Screen name="PaymentMethods" component={paymentMethods} />
+      <Stack.Screen name="Reviews" component={reviews} />
+      <Stack.Screen name="Settings" component={settings} />
+      <Stack.Screen name="HelpAndFeedback" component={helpAndFeedback} />
     </Stack.Navigator>
   );
 }
