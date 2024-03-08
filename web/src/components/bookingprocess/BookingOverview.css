@@ -1,0 +1,311 @@
+.booking-container {
+    display: flex;
+}
+
+.back-arrow {
+    margin-top: 52px; /* Adjust as needed */
+    margin-left: 5%; /* Adjust as needed */
+}
+
+.image-section {
+    flex: 30%;
+    margin-left: 2%;
+    margin-top: 50px;
+    margin-right: 50px;
+}
+
+.info-section {
+    display: flex;
+    flex-direction: column;
+    flex: 60%;
+    padding: 0 20px;
+    margin-right: 5%;
+    margin-top: 50px;
+}
+
+.image-section img {
+    width: 100%;
+}
+
+.imageWindow {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    margin-top: 5px;
+    gap: 10px;
+}
+
+.imageWindow img {
+    width: 100%;
+    height: 100%
+}
+
+.booking-image1 {
+    width: 100%;
+    height: 50%;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px
+}
+
+.booking-image4 {
+    border-bottom-left-radius: 20px;
+}
+
+.booking-image5 {
+    border-bottom-right-radius: 20px;
+}
+
+.dates-section,
+.guests-section,
+.extra-cleaning-section {
+    flex: 1;
+    padding: 15px;
+    margin-bottom: 10px;
+    margin-right: 10px;
+    width: 100%;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+}
+
+.extra-cleaning-section {
+    margin-right: 0; /* Override the margin-right for extra-cleaning-section */
+}
+
+.horizontal-sections {
+    display: flex;
+}
+
+.horizontal-section:last-child {
+    margin-right: 0;
+}
+
+.title-section {
+    padding: 20px;
+    margin-bottom: 10px;
+    width: 100%;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px
+}
+
+.booking-subtitle {
+    color: black;
+    font-size: 16px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.date-guest-wrapper {
+    display: flex;
+    align-items: center;
+}
+
+.change-link {
+    margin-left: auto;
+    color: #0A760F;
+    font-size: 16px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    text-decoration: underline;
+    line-height: 24px;
+    letter-spacing: 0.16px;
+    word-wrap: break-word
+}
+
+.change-link:hover {
+    text-decoration: none;
+}
+
+.section-titles {
+    color: black;
+    font-size: 18px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.small-information-text {
+    color: black;
+    font-size: 12px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.extraCleaningCheckbox {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: #E7E7E7;
+    border-radius: 5px;
+    border: 1px #0D9813 solid;
+    margin-left: auto;
+    position: relative;
+}
+
+.booking-overview-section {
+    padding: 20px 20px 0 20px;
+    margin-bottom: 10px;
+    width: 100%;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+}
+
+.details-row {
+    margin-top: 15px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    color: black;
+    font-size: 12px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.left-column,
+.right-column {
+    flex: 1;
+}
+
+.right-column {
+    text-align: right;
+}
+
+.accommodation-detail {
+    color: black;
+    font-size: 12px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 600;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.more-information-link {
+    text-align: right;
+    color: #0A760F;
+    font-size: 16px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    text-decoration: underline;
+    line-height: 24px;
+    letter-spacing: 0.16px;
+    word-wrap: break-word;
+}
+
+.information-section {
+    display: flex;
+}
+
+.left-sections {
+    display: flex;
+    flex-direction: column;
+    width: 60%; /* 60% of the container width */
+}
+
+.confirm-email-section,
+.confirm-number-section,
+.special-requests-sections {
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+    padding: 20px;
+}
+
+.confirm-email-section,
+.confirm-number-section {
+    flex: 1;
+}
+
+.special-requests-sections {
+    width: 40%; /* 40% of the container width */
+    margin-left: 10px; /* Add 10px space to the left */
+    display: flex;
+    flex-direction: column;
+}
+
+.special-requests-sections .booking-information-input {
+    flex: 1;
+    height: auto; /* Reset the height */
+}
+
+.confirm-email-section {
+    margin-bottom: 10px;
+}
+
+.booking-information-input {
+    width: 100%;
+    background: #E7E7E7;
+    border: 0;
+    border-radius: 5px;
+    margin-top: 5px;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.booking-confirmation-section {
+    display: flex;
+}
+
+.accept-conditions-section {
+    flex: 3;
+    margin-top: 15px;
+}
+
+.cost-overview-section {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+}
+
+.cost-overview-section button {
+    width: 100%;
+    margin-top: auto;
+    background-color: #0D9813;
+    color: white;
+    font-size: 20px;
+    font-family: Kanit;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.accept-conditions-section div {
+    display: flex;
+    align-items: center;
+}
+
+.accept-conditions-section input[type="checkbox"] {
+    margin-right: 10px;
+    width: 24px;
+    height: 24px;
+    background-color: #E7E7E7;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 5px;
+}
+
+.accept-conditions {
+    color: black;
+    font-size: 16px;
+    font-family: Kanit;
+    font-weight: 300;
+    line-height: 24px;
+    letter-spacing: 0.16px;
+    word-wrap: break-word;
+}
+
+.accept-conditions a {
+    margin-left: 5px;
+    color: #0A760F;
+    font-size: 16px;
+    font-family: Kanit;
+    font-weight: 400;
+    text-decoration: underline;
+}

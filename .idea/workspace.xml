@@ -13,6 +13,11 @@
       <change beforePath="$PROJECT_DIR$/app/Domits/src/header/header.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/header/header.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/components/BottomTabNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/components/BottomTabNavigator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/paymentMethods.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/paymentMethods.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/reviews.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/reviews.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/settings.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/settings.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -151,5 +156,17 @@
     <MESSAGE value="android app development" />
     <MESSAGE value="Merge conflict and navigation for guest dashboard" />
     <option name="LAST_COMMIT_MESSAGE" value="Merge conflict and navigation for guest dashboard" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/guestDashboard.js</url>
+          <line>18</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>

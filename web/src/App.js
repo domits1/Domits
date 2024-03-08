@@ -22,6 +22,10 @@ import CreateAccommodation from "./components/hostdashboard/CreateAccommodation"
 import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
 import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
 import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
+import BookingOverview from "./components/bookingprocess/BookingOverview";
+import BookingPayment from "./components/bookingprocess/BookingPayment";
+import BookingConfirmed from "./components/bookingprocess/BookingConfirmed";
+import BookingDeclined from "./components/bookingprocess/BookingDeclined";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
 import { ProtectedRoute } from "./components/protectedroute/ProtectedRoute.tsx";
 import Disclaimers from "./components/disclaimers/Disclaimers";
@@ -61,7 +65,7 @@ function App() {
 
     const renderFooter = () => {
         const currentPath = window.location.pathname;
-        if (currentPath === '/admin') {
+        if (currentPath === '/admin' || '/bookingoverview' || '/bookingpayment') {
             return null; // Don't render Footer for /admin route
         }
         return <Footer/>;
@@ -86,7 +90,6 @@ function App() {
                         <Route path="/travelinnovation" element={<Travelinnovation />} />
                         <Route path="/career" element={<Careers />} />
                         <Route path="/contact" element={<Contact />} />
-                        <Route path="/details" element={<Details/>} />
                         <Route path="/assortment" element={<Assortment />} />
                         <Route path="/guestdashboard" element={<GuestDashboard />}/>
                         <Route path="/guestdashboard/messages" element={<Details />}/>
@@ -108,6 +111,12 @@ function App() {
                         <Route path="/terms" element={<Terms />} />
                         <Route path="/error" element={<Error/>}/>
                         {/*<Route path="/release" element={<Release/>}/>*/}
+                        {/* Booking process*/}
+                        <Route path="/details" element={<Details/>} />
+                        <Route path="/bookingoverview" element={<BookingOverview/>} />
+                        <Route path="/bookingpayment" element={<BookingPayment/>} />
+                        <Route path="/bookingconfirmed" element={<BookingConfirmed/>} />
+                        <Route path="/bookingdeclined" element={<BookingDeclined/>} />
                         <Route path="/chat" element={<Chat/>}/>
 
                         {/*  Admin Routes  */}

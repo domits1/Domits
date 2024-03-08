@@ -7,8 +7,11 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import { useNavigation } from '@react-navigation/native';
 
 const HostDashboard = () => {
+  const navigation = useNavigation();
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -18,19 +21,23 @@ const HostDashboard = () => {
           change app settings.
         </Text>
       </View>
-      <TouchableOpacity style={styles.listItem}>
+      <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostDashboard')}>
+        <Text style={styles.listItemText}>Dashboard</Text>
+        <MaterialIcons name="chevron-right" size={22} color="#000" />
+      </TouchableOpacity>
+      <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostProfile')}>
         <Text style={styles.listItemText}>Profile</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.listItem}>
+      <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostPayments')}>
         <Text style={styles.listItemText}>Payment methods</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.listItem}>
+      <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostReviews')}>
         <Text style={styles.listItemText}>Reviews</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.listItem}>
+      <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostSettings')}>
         <Text style={styles.listItemText}>Settings</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
