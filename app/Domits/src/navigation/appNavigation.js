@@ -5,7 +5,6 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import HomeScreen from '../screens/homeScreen';
 import Messages from '../screens/messages';
 import AccountPage from '../screens/account';
-import HostDashboard from '../screens/hostdashboard/hostDashboard';
 import GuestDashboard from '../screens/guestdashboard/guestDashboard';
 import Header from '../header/header';
 import Scan from '../header/scan';
@@ -13,6 +12,13 @@ import Pay from '../header/pay';
 import Bookings from '../header/bookings';
 import Pocket from '../header/pocket';
 import {View, Text} from 'react-native';
+
+import HostHomepage from '../screens/hostdashboard/hostDashboard';
+import HostDashboard from '../screens/hostdashboard/dashboard';
+import HostProfile from '../screens/hostdashboard/profile';
+import HostPayments from '../screens/hostdashboard/payments';
+import HostReviews from '../screens/hostdashboard/reviews';
+import HostSettings from '../screens/hostdashboard/settings';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -31,12 +37,18 @@ function HomeStack() {
         }}
       />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
-      <Stack.Screen name="HostDashboard" component={HostDashboard} />
       <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
       <Stack.Screen name="Scan" component={Scan} />
       <Stack.Screen name="Pay" component={Pay} />
       <Stack.Screen name="Bookings" component={Bookings} />
       <Stack.Screen name="Pocket" component={Pocket} />
+
+      <Stack.Screen name="HostHomepage" component={HostHomepage} />
+      <Stack.Screen name="HostDashboard" component={HostDashboard} />
+      <Stack.Screen name="HostProfile" component={HostProfile} />
+      <Stack.Screen name="HostPayments" component={HostPayments} />
+      <Stack.Screen name="HostReviews" component={HostReviews} />
+      <Stack.Screen name="HostSettings" component={HostSettings} />
     </Stack.Navigator>
   );
 }
