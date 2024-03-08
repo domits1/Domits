@@ -25,7 +25,12 @@ const Chat = () => {
                 </div>
                 <div className="input_container">
                     <input type="text" className="input_field" placeholder="Type your message here..." style={{width: "687px", height: "45px", borderRadius: "15px", border: "0.5px solid #000"}} />
-                    <button type="button" className="send_button">Send</button>
+                    <div>
+
+                        <button type="button" className="send_button"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                            <path d="M10.5004 12.0008H5.00043M4.91577 12.2923L2.58085 19.267C2.39742 19.8149 2.3057 20.0889 2.37152 20.2576C2.42868 20.4041 2.55144 20.5152 2.70292 20.5575C2.87736 20.6061 3.14083 20.4876 3.66776 20.2505L20.3792 12.7303C20.8936 12.4989 21.1507 12.3831 21.2302 12.2224C21.2993 12.0827 21.2993 11.9188 21.2302 11.7792C21.1507 11.6184 20.8936 11.5027 20.3792 11.2712L3.66193 3.74849C3.13659 3.51209 2.87392 3.39389 2.69966 3.44237C2.54832 3.48448 2.42556 3.59527 2.36821 3.74151C2.30216 3.90991 2.3929 4.18328 2.57437 4.73004L4.91642 11.7863C4.94759 11.8802 4.96317 11.9272 4.96933 11.9752C4.97479 12.0178 4.97473 12.0609 4.96916 12.1035C4.96289 12.1515 4.94718 12.1984 4.91577 12.2923Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg></button>
+                    </div>
                 </div>
             </div>
 
