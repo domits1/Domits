@@ -30,11 +30,11 @@ const HostDashboard = () => {
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
       <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostPayments')}>
-        <Text style={styles.listItemText}>Payment methods</Text>
+        <Text style={styles.listItemText}>Payments</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostReviews')}>
-        <Text style={styles.listItemText}>Reviews</Text>
+      <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostListings')}>
+        <Text style={styles.listItemText}>Listings</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
       <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostSettings')}>
