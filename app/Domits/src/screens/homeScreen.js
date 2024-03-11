@@ -1,10 +1,7 @@
 import React from 'react';
-import { View, ScrollView, Text, Image, StyleSheet, Button } from 'react-native';
+import { View, ScrollView, Text, Image, StyleSheet, Button, TouchableOpacity } from 'react-native';
 import Header from '../header/header';
 import SearchBarApp from '../header/SearchBarApp';
-// import Icon from 'react-native-vector-icons/AntDesign'; 
-// import FeatherIcon from 'react-native-vector-icons/Feather';
-// import EntypoIcon from 'react-native-vector-icons/Entypo';
 
 function HomeScreen({ navigation }) {
   const images = [
@@ -14,6 +11,10 @@ function HomeScreen({ navigation }) {
     require('./pictures/image4.jpg'),
   ];
 
+  const handleDetailpagePress = () => {
+    navigation.navigate('Detailpage');
+  };
+
   return (
     <View style={styles.container}>
       <SearchBarApp />
@@ -21,19 +22,18 @@ function HomeScreen({ navigation }) {
         <Header />
         <View style={styles.imageContainer}>
           {images.map((image, index) => (
-            <View key={index} style={{ marginBottom: 30 }}>
+            <TouchableOpacity key={index} onPress={handleDetailpagePress}>
               <Image source={image} style={styles.image} />
               <Text style={styles.imageText}>Kinderhuissingle 6k</Text>
-              
+
               <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={styles.imageText}>Host: Unknown</Text>
                 <Text style={[styles.imageText, { fontFamily: 'MotivaSansBold.woff', textDecorationLine: 'underline' }]}>$400 Night</Text>
               </View>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
 
-        
         <View style={styles.buttonContainer}>
           <Button title="Go to Host Dashboard" onPress={() => navigation.navigate('HostDashboard')} />
           <Button title="Go to Guest Dashboard" onPress={() => navigation.navigate('GuestDashboard')} />
@@ -51,7 +51,7 @@ const styles = StyleSheet.create({
   imageContainer: {
     flexDirection: 'column',
     padding: 15,
-    marginTop: '3%',
+    marginTop: '0%',
   },
   buttonContainer: {
     marginVertical: 10,
@@ -77,6 +77,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 250,
     borderRadius: 15,
+    marginVertical: 20,
   },
   imageText: {
     textAlign: 'left',

@@ -23,6 +23,7 @@ import HostProfile from '../screens/hostdashboard/profile';
 import HostPayments from '../screens/hostdashboard/payments';
 import HostReviews from '../screens/hostdashboard/reviews';
 import HostSettings from '../screens/hostdashboard/settings';
+import Detailpage from '../screens/detailpage';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -46,6 +47,7 @@ function HomeStack() {
       <Stack.Screen name="Pay" component={Pay} />
       <Stack.Screen name="Bookings" component={Bookings} />
       <Stack.Screen name="Pocket" component={Pocket} />
+      <Stack.Screen name="Detailpage" component={Detailpage} />
         
       <Stack.Screen name="Profile" component={profile} />
       <Stack.Screen name="PaymentMethods" component={paymentMethods} />
