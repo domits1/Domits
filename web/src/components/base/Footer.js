@@ -5,7 +5,7 @@ import Playstorebadge from '../../images/assets/playstorebadge.svg';
 import { Link } from 'react-router-dom';
 import './base.css'
 
-var currentYear = new Date().getFullYear();
+const currentYear = new Date().getFullYear();
 
 
 const Footer = () => {
