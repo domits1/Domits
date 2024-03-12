@@ -66,10 +66,10 @@ function App() {
 
     const renderFooter = () => {
         const currentPath = window.location.pathname;
-        if (currentPath === '/admin' || '/bookingoverview' || '/bookingpayment') {
-            return null; // Don't render Footer for /admin route
+        if (currentPath === '/admin' || currentPath === '/bookingoverview' || currentPath === '/bookingpayment') {
+            return null; // Don't render Footer for certain routes
         }
-        return <Footer/>;
+        return <Footer/>; // Render Footer for other routes
     };
 
     const [flowState, setFlowState] = useState({ isHost: false });
