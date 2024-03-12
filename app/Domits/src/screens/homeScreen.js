@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, ScrollView, Text, Image, StyleSheet, Button, TouchableOpacity, SafeAreaView } from 'react-native';
 import Header from '../header/header';
-import SearchBarApp from '../header/SearchBarApp';
+
 
 function HomeScreen({ navigation }) {
   const images = [
@@ -17,8 +17,9 @@ function HomeScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <SearchBarApp />
+      
       <ScrollView stickyHeaderIndices={[0]}>
+     
         <Header />
         <View style={styles.imageContainer}>
           {images.map((image, index) => (
