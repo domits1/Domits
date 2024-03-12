@@ -74,7 +74,7 @@ const Login = () => {
                     <div className="loginTitle">Log in or Sign Up</div>
                     <div className="loginForm">
                         <form onSubmit={handleSubmit}>
-                            <label>Username:</label>
+                            <label>Email:</label>
                             <br />
                             <input
                                 className="loginInput"
