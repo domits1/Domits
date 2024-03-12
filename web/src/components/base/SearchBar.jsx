@@ -130,7 +130,7 @@ export const SearchBar = ({ setResults }) => {
         />
       </div>
 
-      <button className="button" type="button">
+      <button className="Searchbutton" type="button">
       <FaSearch
         style={{ marginRight: '2px', cursor: 'pointer' }}
         onClick={handleRefreshClick}

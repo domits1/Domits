@@ -37,9 +37,7 @@ function HomeStack() {
       <Stack.Screen
         name="Home"
         component={HomeScreen}
-        options={{
-          header: props => <Header {...props} />,
-        }}
+        
       />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="GuestDashboard" component={GuestDashboard} />

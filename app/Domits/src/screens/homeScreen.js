@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ScrollView, Text, Image, StyleSheet, Button, TouchableOpacity } from 'react-native';
+import { View, ScrollView, Text, Image, StyleSheet, Button, TouchableOpacity, SafeAreaView } from 'react-native';
 import Header from '../header/header';
 import SearchBarApp from '../header/SearchBarApp';
 
@@ -16,7 +16,7 @@ function HomeScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SearchBarApp />
       <ScrollView stickyHeaderIndices={[0]}>
         <Header />
@@ -39,7 +39,7 @@ function HomeScreen({ navigation }) {
           <Button title="Go to Guest Dashboard" onPress={() => navigation.navigate('GuestDashboard')} />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -54,9 +54,11 @@ const styles = StyleSheet.create({
     marginTop: '0%',
   },
   buttonContainer: {
-    marginVertical: 10,
+    marginVertical: 15,
     width: '100%',
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   squareContainer: {
     flexDirection: 'row',
@@ -85,8 +87,6 @@ const styles = StyleSheet.create({
     color: 'black',
     fontFamily: 'MotivaSansRegular.woff'
   },
-
-
 });
 
 export default HomeScreen;
