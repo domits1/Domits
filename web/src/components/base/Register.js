@@ -48,7 +48,7 @@ const Register = () => {
         }
 
         try {
-            const groupName = "Traveler";
+            const groupName = "Traveller";
             const data = await Auth.signUp({
                 username: userData.email,
                 email: userData.email,
