@@ -1,23 +1,31 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AutoImportSettings">
-    <option name="autoReloadType" value="SELECTIVE" />
+    <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="android app development">
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/guestDashboard.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" afterDir="false" />
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="Merge conflict and navigation for guest dashboard">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/android/app/build.gradle" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/header/SearchBarApp.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/header/SearchBarApp.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/header/header.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/header/header.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/components/BottomTabNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/components/BottomTabNavigator.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/paymentMethods.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/paymentMethods.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/reviews.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/reviews.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/settings.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/settings.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -27,6 +35,11 @@
     </option>
   </component>
   <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="AppHome" />
+      </map>
+    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
@@ -47,9 +60,12 @@
   &quot;keyToString&quot;: {
     &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
     &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
     &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;acceptance&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/giann/projects/Domits&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;AppHomme&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Kacpe/OneDrive/Documenten/GitHub&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -59,7 +75,7 @@
     &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
     &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
     &quot;settings.editor.selected.configurable&quot;: &quot;AndroidSdkUpdater&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\hamza\\IdeaProjects\\Domits2\\app\\Domits\\node_modules\\typescript\\lib&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\hamza\\IdeaProjects\\Domits2\\web\\node_modules\\typescript\\lib&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
@@ -75,11 +91,6 @@
     <configuration name="index.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/Domits/web/build/index.html" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
-    <recent_temporary>
-      <list>
-        <item itemvalue="JavaScript Debug.index.html" />
-      </list>
-    </recent_temporary>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -103,6 +114,7 @@
       <workItem from="1709124129771" duration="3626000" />
       <workItem from="1709132432561" duration="4321000" />
       <workItem from="1709203654689" duration="3464000" />
+      <workItem from="1709814757651" duration="4117000" />
     </task>
     <task id="LOCAL-00001" summary="android app development">
       <created>1709138237032</created>
@@ -111,7 +123,14 @@
       <option name="project" value="LOCAL" />
       <updated>1709138237032</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Merge conflict and navigation for guest dashboard">
+      <created>1709821476937</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1709821476937</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -135,6 +154,19 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="android app development" />
-    <option name="LAST_COMMIT_MESSAGE" value="android app development" />
+    <MESSAGE value="Merge conflict and navigation for guest dashboard" />
+    <option name="LAST_COMMIT_MESSAGE" value="Merge conflict and navigation for guest dashboard" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/guestDashboard.js</url>
+          <line>18</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="1" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
 </project>
