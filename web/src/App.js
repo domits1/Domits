@@ -123,6 +123,8 @@ function App() {
                             <Route path="/hostdashboard" element={<HostDashboard />} />
                             <Route path="/hostdashboard/listings" element={<HostListings />} />
                             <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
+                            <Route path="/hostdashboard/messages" element={<HostMessages />} />
+                            <Route path="/hostdashboard/payments" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
                             <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
                             <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
