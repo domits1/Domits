@@ -36,6 +36,7 @@ const BottomTabNavigator = () => {
       tabBarOptions={{
         activeTintColor: '#ffffff',
         inactiveTintColor: '#8e8e93',
+        activeBackgroundColor: '#007AFF', // Change this color to your desired highlight color
         style: styles.tabBar,
       }}>
       <Tab.Screen name="Home" component={HomePage} />
@@ -61,5 +62,4 @@ const styles = StyleSheet.create({
     fontSize: 12,
   }),
 });
-
 export default BottomTabNavigator;

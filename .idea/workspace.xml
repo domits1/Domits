@@ -4,18 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="android app development">
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/components/BottomTabNavigator.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/account.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="Footer, start on guestDashboard.js">
       <change beforePath="$PROJECT_DIR$/app/Domits/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/App.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/android/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/android/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -32,7 +23,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="guestDashboard" />
+        <entry key="$PROJECT_DIR$" value="appHamza" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -64,7 +55,7 @@
     "project.structure.proportion": "0.15",
     "project.structure.side.proportion": "0.33793104",
     "settings.editor.selected.configurable": "AndroidSdkUpdater",
-    "ts.external.directory.path": "C:\\Users\\hamza\\IdeaProjects\\Domits2\\app\\Domits\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "C:\\Users\\hamza\\IdeaProjects\\Domits2\\web\\node_modules\\typescript\\lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
