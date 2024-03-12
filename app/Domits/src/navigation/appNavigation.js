@@ -21,7 +21,7 @@ import HostHomepage from '../screens/hostdashboard/hostDashboard';
 import HostDashboard from '../screens/hostdashboard/dashboard';
 import HostProfile from '../screens/hostdashboard/profile';
 import HostPayments from '../screens/hostdashboard/payments';
-import HostReviews from '../screens/hostdashboard/reviews';
+import HostListings from '../screens/hostdashboard/listings';
 import HostSettings from '../screens/hostdashboard/settings';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingProcess';
@@ -61,7 +61,7 @@ function HomeStack() {
       <Stack.Screen name="HostDashboard" component={HostDashboard} />
       <Stack.Screen name="HostProfile" component={HostProfile} />
       <Stack.Screen name="HostPayments" component={HostPayments} />
-      <Stack.Screen name="HostReviews" component={HostReviews} />
+      <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
     </Stack.Navigator>
   );
