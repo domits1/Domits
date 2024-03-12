@@ -1,9 +1,17 @@
 import React from 'react';
-import { View, ScrollView, Text, Image, StyleSheet, Button, TouchableOpacity, SafeAreaView } from 'react-native';
+import {
+  View,
+  ScrollView,
+  Text,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  Button, // Add Button here
+} from 'react-native';
 import Header from '../header/header';
 
 
-function HomeScreen({ navigation }) {
+function HomeScreen({navigation}) {
   const images = [
     require('./pictures/image1.jpg'),
     require('./pictures/image2.jpg'),
@@ -12,7 +20,7 @@ function HomeScreen({ navigation }) {
   ];
 
   const handleDetailpagePress = () => {
-    navigation.navigate('Detailpage');
+    navigation.navigate('onBoarding1');
   };
 
   return (
@@ -27,23 +35,38 @@ function HomeScreen({ navigation }) {
               <Image source={image} style={styles.image} />
               <Text style={styles.imageText}>Kinderhuissingle 6k</Text>
 
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <View
+                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
                 <Text style={styles.imageText}>Host: Unknown</Text>
-                <Text style={[styles.imageText, { fontFamily: 'MotivaSansBold.woff', textDecorationLine: 'underline' }]}>$400 Night</Text>
+                <Text
+                  style={[
+                    styles.imageText,
+                    {
+                      fontFamily: 'MotivaSansBold.woff',
+                      textDecorationLine: 'underline',
+                    },
+                  ]}>
+                  $400 Night
+                </Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
         <View style={styles.buttonContainer}>
-          <Button title="Go to Host Dashboard" onPress={() => navigation.navigate('HostDashboard')} />
-          <Button title="Go to Guest Dashboard" onPress={() => navigation.navigate('GuestDashboard')} />
+          <Button
+            title="Go to Host Dashboard"
+            onPress={() => navigation.navigate('HostDashboard')}
+          />
+          <Button
+            title="Go to Guest Dashboard"
+            onPress={() => navigation.navigate('GuestDashboard')}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -86,7 +109,7 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     marginTop: 0,
     color: 'black',
-    fontFamily: 'MotivaSansRegular.woff'
+    fontFamily: 'MotivaSansRegular.woff',
   },
 });
 

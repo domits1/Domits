@@ -16,14 +16,15 @@ import profile from '../screens/guestdashboard/profile';
 import paymentMethods from '../screens/guestdashboard/paymentMethods';
 import reviews from '../screens/guestdashboard/reviews';
 import settings from '../screens/guestdashboard/settings';
-import helpAndFeedback from "../screens/guestdashboard/helpAndFeedback";
+import helpAndFeedback from '../screens/guestdashboard/helpAndFeedback';
 import HostHomepage from '../screens/hostdashboard/hostDashboard';
 import HostDashboard from '../screens/hostdashboard/dashboard';
 import HostProfile from '../screens/hostdashboard/profile';
 import HostPayments from '../screens/hostdashboard/payments';
-import HostReviews from '../screens/hostdashboard/reviews';
+import HostListings from '../screens/hostdashboard/listings';
 import HostSettings from '../screens/hostdashboard/settings';
 import Detailpage from '../screens/detailpage';
+import onBoarding1 from '../screens/bookingProcess';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -46,18 +47,19 @@ function HomeStack() {
       <Stack.Screen name="Bookings" component={Bookings} />
       <Stack.Screen name="Pocket" component={Pocket} />
       <Stack.Screen name="Detailpage" component={Detailpage} />
-        
+      <Stack.Screen name="onBoarding1" component={onBoarding1} />
+
       <Stack.Screen name="Profile" component={profile} />
       <Stack.Screen name="PaymentMethods" component={paymentMethods} />
       <Stack.Screen name="Reviews" component={reviews} />
       <Stack.Screen name="Settings" component={settings} />
       <Stack.Screen name="HelpAndFeedback" component={helpAndFeedback} />
-        
+
       <Stack.Screen name="HostHomepage" component={HostHomepage} />
       <Stack.Screen name="HostDashboard" component={HostDashboard} />
       <Stack.Screen name="HostProfile" component={HostProfile} />
       <Stack.Screen name="HostPayments" component={HostPayments} />
-      <Stack.Screen name="HostReviews" component={HostReviews} />
+      <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
     </Stack.Navigator>
   );
@@ -105,10 +107,10 @@ function BottomTabNavigator() {
           );
         },
       })}>
-     <Tab.Screen
+      <Tab.Screen
         name="Home"
         component={HomeStack}
-        options={{ headerShown: false }} 
+        options={{headerShown: false}}
       />
       <Tab.Screen name="Messages" component={Messages} />
       <Tab.Screen name="Account" component={AccountPage} />
