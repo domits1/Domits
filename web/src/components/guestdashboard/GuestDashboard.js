@@ -1,4 +1,6 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { Auth } from "aws-amplify";
+import { useNavigate } from 'react-router-dom';
 import accommodationImg from "../../images/accommodationtestpic1.png";
 import faceHappyIcon from "../../images/icons/face-happy.png";
 import './guestdashboard.css';
@@ -8,7 +10,6 @@ import starIcon from "../../images/icons/star-01.png";
 import messageIcon from "../../images/icons/message-chat-circle.png";
 import changeScreenIcon from "../../images/icons/Icon.png";
 import editIcon from "../../images/icons/edit-05.png";
-import { useNavigate } from 'react-router-dom';
 import { API, graphqlOperation } from "aws-amplify";
 
 const listAccommodationsQuery = `
@@ -36,10 +37,25 @@ const fetchAccommodations = async () => {
 };
 
 const GuestDashboard = () => {
-    useEffect(() => {
-        fetchAccommodations();
-    }, []);
+    const [userEmail, setUserEmail] = useState(null);
+    const [userUsername, setUsername] = useState(null);
     const navigate = useNavigate();
+
+    useEffect(() => {
+        const getUserEmail = async () => {
+            try {
+                const user = await Auth.currentAuthenticatedUser();
+                setUserEmail(user.attributes.email);
+                setUsername(user.attributes["custom:username"]);
+            } catch (error) {
+                // User is not logged in, redirect to login page
+                navigate("/login");
+            }
+        };
+
+        getUserEmail();
+        fetchAccommodations(); // Fetch accommodations when component mounts
+    }, [navigate]);
 
     return (
         <div className="guestdashboard">
@@ -85,8 +101,8 @@ const GuestDashboard = () => {
                 </div>
                 <div className="personalInfoContent">
                     <h3>Personal Information</h3>
-                    <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> Lotte_summer@gmail.com</div>
-                    <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> Lotte Summer</div>
+                    <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {userEmail}</div>
+                    <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> {userUsername}</div>
                     <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> Kinderhuissingel 6K, Haarlem</div>
                     <div className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> +31 6 09877890</div>
                     <div className="infoBox"><img src={editIcon} alt="Family Icon" /><span>Family:</span> 2 adults - 2 kids</div>
