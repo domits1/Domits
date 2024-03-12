@@ -59,7 +59,7 @@
 }
 
 
-input[type="text"] {
+.searchbar-input {
   background: none;
   border: none;
   padding: 0.2rem 0 0 0;
@@ -68,7 +68,8 @@ input[type="text"] {
   width: 100%;
 }
 
-input[type="text"]:focus {
+
+.searchbar-input:focus {
   outline: none;
 }
 
@@ -103,7 +104,7 @@ input[type="text"]:focus {
 
 
 
-.button {
+.searchbar-button {
   display: inline-block;
   outline: 0;
   cursor: pointer;
@@ -122,17 +123,17 @@ input[type="text"]:focus {
   margin-top: 15px;
 }
 
-.button:hover {
+.searchbar-button:hover {
   background-color: #0D9813;
   border-color: #0D9813;
   transition-duration: 0.4s;
 }
 
-.button svg {
+.searchbar-button svg {
   color: black; /* Zwarte kleur voor FaSearch-icoon */
 }
 
-.button:hover svg {
+.searchbar-button:hover svg {
   animation: bounce 0.7s ease 1;
 }
 

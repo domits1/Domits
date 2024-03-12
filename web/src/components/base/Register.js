@@ -26,6 +26,7 @@ const Register = () => {
         e.preventDefault();
 
         const userData = {
+            username: formData.username,
             email: formData.email,
             password: formData.password,
             repeatPassword: formData.repeatPassword,
@@ -50,10 +51,11 @@ const Register = () => {
             const groupName = "Traveler";
             const data = await Auth.signUp({
                 username: userData.email,
+                email: userData.email,
                 password: userData.password,
                 attributes: {
-                    email: userData.email,
-                    'custom:group': groupName
+                    'custom:group': groupName,
+                    'custom:username': userData.username
                 },
             });
 
@@ -103,6 +105,16 @@ const Register = () => {
                     <div className="registerTitle">Sign Up</div>
                     <div className="registerForm">
                         <form onSubmit={onSubmit}>
+                            <label>Username:</label>
+                            <br />
+                            <input
+                                className="registerInput"
+                                type="text"
+                                name="username"
+                                value={formData.username}
+                                onChange={handleChange}
+                            />
+                            <br />
                             <label>Email:</label>
                             <br />
                             <input

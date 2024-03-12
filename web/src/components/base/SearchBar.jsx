@@ -53,6 +53,7 @@ export const SearchBar = ({ setResults }) => {
       <div className="location">
         <p>Country</p>
         <input type="text"
+               className="searchbar-input"
           placeholder="Choose a country"
           value={selectedCountry}
           onChange={(e) => handleInputChange(e.target.value, setSelectedCountry, 'country')}
@@ -61,6 +62,7 @@ export const SearchBar = ({ setResults }) => {
       <div className="location1">
         <p>City</p>
         <input type="text"
+               className="searchbar-input"
           placeholder="Choose a city"
           value={selectedCity}
           onChange={(e) => handleInputChange(e.target.value, setSelectedCity, 'city')}
@@ -70,6 +72,7 @@ export const SearchBar = ({ setResults }) => {
         <p>Check in</p>
         <div>
           <DatePicker
+              className="searchbar-input"
             id="checkInPicker"
             selected={checkIn}
             onChange={(date) => setCheckIn(date)}
@@ -82,6 +85,7 @@ export const SearchBar = ({ setResults }) => {
         <p>Check out</p>
         <div>
           <DatePicker
+              className="searchbar-input"
             id="checkOutPicker"
             selected={checkOut}
             onChange={(date) => setCheckOut(date)}
@@ -130,7 +134,7 @@ export const SearchBar = ({ setResults }) => {
         />
       </div>
 
-      <button className="button" type="button">
+      <button className="searchbar-button" type="button">
       <FaSearch
         style={{ marginRight: '2px', cursor: 'pointer' }}
         onClick={handleRefreshClick}
