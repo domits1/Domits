@@ -24,7 +24,7 @@ function HomeScreen({navigation}) {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SearchBarApp />
       <ScrollView stickyHeaderIndices={[0]}>
         <Header />
@@ -63,7 +63,7 @@ function HomeScreen({navigation}) {
           />
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
@@ -77,9 +77,11 @@ const styles = StyleSheet.create({
     marginTop: '0%',
   },
   buttonContainer: {
-    marginVertical: 10,
+    marginVertical: 15,
     width: '100%',
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   squareContainer: {
     flexDirection: 'row',
