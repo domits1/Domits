@@ -11,6 +11,9 @@ import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
+import HostMessages from "./components/hostdashboard/HostMessages";
+import HostPayments from "./components/hostdashboard/HostPayments";
+import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
 import Details from './components/details/Details';
@@ -66,10 +69,10 @@ function App() {
 
     const renderFooter = () => {
         const currentPath = window.location.pathname;
-        if (currentPath === '/admin' || '/bookingoverview' || '/bookingpayment') {
-            return null; // Don't render Footer for /admin route
+        if (currentPath === '/admin' || currentPath === '/bookingoverview' || currentPath === '/bookingpayment') {
+            return null; // Don't render Footer for certain routes
         }
-        return <Footer/>;
+        return <Footer />; // Render Footer for other routes
     };
 
     const [flowState, setFlowState] = useState({ isHost: false });
@@ -77,58 +80,70 @@ function App() {
     return (
         <FlowContext.Provider value={{ flowState, setFlowState }}>
             <Router>
-        <AuthProvider> {/* Wrap your entire application with the AuthProvider */}
-                <div className="App">
-                    {renderHeader()}
-                    <Routes>
-                        <Route path="/" element={<Assortment />} />
-                        <Route path="/home" element={<Home />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/register" element={<Register />} />
-                        <Route path="/confirm-email" element={<ConfirmRegister />} />
-                        <Route path="/booking" element={<Booking />} />
-                        <Route path="/about" element={<About />} />
-                        <Route path="/travelinnovation" element={<Travelinnovation />} />
-                        <Route path="/career" element={<Careers />} />
-                        <Route path="/contact" element={<Contact />} />
-                        <Route path="/assortment" element={<Assortment />} />
-                        <Route path="/guestdashboard" element={<GuestDashboard />}/>
-                        <Route path="/guestdashboard/messages" element={<Details />}/>
-                        <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />}/>
-                        <Route path="/guestdashboard/reviews" element={<GuestDashboard />}/>
-                        <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard/>}/>
-                        <Route path="/career" element={<Careers />} />
-                        <Route path="/enlist" element={<HostOnboarding />} />
-                        <Route path="/hostdashboard" element={<HostDashboard />} />
-                        <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
-                        <Route path="/hostdashboard/settings" element={<HostSettings />} />
-                        <Route path="/landing" element={<Landing />}/>
-                        <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
-                        <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
-                        <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
-                        <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
-                        <Route path="/disclaimers" element={<Disclaimers />} />
-                        <Route path="/policy" element={<Policy />} />
-                        <Route path="/terms" element={<Terms />} />
-                        <Route path="/error" element={<Error/>}/>
-                        {/*<Route path="/release" element={<Release/>}/>*/}
-                        {/* Booking process*/}
-                        <Route path="/details" element={<Details/>} />
-                        <Route path="/bookingoverview" element={<BookingOverview/>} />
-                        <Route path="/bookingpayment" element={<BookingPayment/>} />
-                        <Route path="/bookingconfirmed" element={<BookingConfirmed/>} />
-                        <Route path="/bookingdeclined" element={<BookingDeclined/>} />
-                        <Route path="/chat" element={<Chat/>}/>
-                        <Route path="/chatprototype" element={<Chatprototype/>}/>
+                <AuthProvider> {/* Wrap your entire application with the AuthProvider */}
+                    <div className="App">
+                        {renderHeader()}
+                        <Routes>
+                            {/* General Routes */}
+                            <Route path="/" element={<Assortment />} />
+                            <Route path="/home" element={<Home />} />
+                            <Route path="/about" element={<About />} />
+                            <Route path="/contact" element={<Contact />} />
+                            <Route path="/travelinnovation" element={<Travelinnovation />} />
+                            <Route path="/landing" element={<Landing />} />
 
-                        {/*  Admin Routes  */}
-                        <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard/>} redirectTo='/' />} />
-                    </Routes>
-                </div>
-                {renderFooter()}
-        </AuthProvider>
+                            {/* Authentication & User Account Management */}
+                            <Route path="/login" element={<Login />} />
+                            <Route path="/register" element={<Register />} />
+                            <Route path="/confirm-email" element={<ConfirmRegister />} />
+                            <Route path="/error" element={<Error />} />
+                            {/*<Route path="/release" element={<Release/>}/>*/}
+
+                            {/* Booking */}
+                            <Route path="/booking" element={<Booking />} />
+                            <Route path="/details" element={<Details />} />
+                            <Route path="/bookingoverview" element={<BookingOverview />} />
+                            <Route path="/bookingpayment" element={<BookingPayment />} />
+                            <Route path="/bookingconfirmed" element={<BookingConfirmed />} />
+                            <Route path="/bookingdeclined" element={<BookingDeclined />} />
+
+                            {/* Chat */}
+                            <Route path="/chat" element={<Chat />} />
+                            <Route path="/chatprototype" element={<Chatprototype />} />
+
+                            {/* Guest Dashboard */}
+                            <Route path="/guestdashboard" element={<GuestDashboard />} />
+                            <Route path="/guestdashboard/messages" element={<Details />} />
+                            <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
+                            <Route path="/guestdashboard/reviews" element={<GuestDashboard />} />
+                            <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
+
+                            {/* Host Management */}
+                            <Route path="/enlist" element={<HostOnboarding />} />
+                            <Route path="/hostdashboard" element={<HostDashboard />} />
+                            <Route path="/hostdashboard/listings" element={<HostListings />} />
+                            <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
+                            <Route path="/hostdashboard/settings" element={<HostSettings />} />
+                            <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
+                            <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
+                            <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
+                            <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
+
+                            {/* Career, Policies, and Terms */}
+                            <Route path="/career" element={<Careers />} />
+                            <Route path="/policy" element={<Policy />} />
+                            <Route path="/terms" element={<Terms />} />
+                            <Route path="/disclaimers" element={<Disclaimers />} />
+
+                            {/* Admin Routes */}
+                            <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard />} redirectTo='/' />} />
+                        </Routes>
+                        {renderFooter()}
+                    </div>
+                </AuthProvider>
             </Router>
         </FlowContext.Provider>
+
     );
 }
 
