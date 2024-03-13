@@ -68,10 +68,11 @@ function OnboardingHost() {
                     [name]: checked,
                 }
             }));
-        }  else {
+        } else {
+            const inputValue = formData.SystemConfiguration[name] ? parseFloat(value) || 0 : 0;
             setFormData((prevData) => ({
                 ...prevData,
-                [name]: value
+                [name]: inputValue,
             }));
         }
     };

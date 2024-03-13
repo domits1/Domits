@@ -47,6 +47,8 @@ const Detailpage = ({ navigation }) => {
             The perfect getaway for 2 people in Haarlem to relax with 100% cozy vibes!
           </Text>
         </View>
+
+
         <View style={styles.borderContainer}>
           <View style={styles.bedroomsContainer}>
             <Text style={styles.bedroomsText}>2 bedrooms</Text>

@@ -6,7 +6,7 @@ import HomeScreen from '../screens/homeScreen';
 import Messages from '../screens/messages';
 import AccountPage from '../screens/account';
 import GuestDashboard from '../screens/guestdashboard/guestDashboard';
-// import Header from '../header/header';
+import Header from '../header/header';
 import Scan from '../header/scan';
 import Pay from '../header/pay';
 import Bookings from '../header/bookings';
