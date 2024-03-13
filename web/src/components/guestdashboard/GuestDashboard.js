@@ -40,6 +40,7 @@ const GuestDashboard = () => {
             <div className="dashboard">
                 <Pages />
                 <div className="content">
+
                     <div className="leftContent">
                         <div className="bookingBox">
                             <h3>Current Booking</h3>
@@ -47,7 +48,7 @@ const GuestDashboard = () => {
                             <img src={accommodationImg} alt="Booking" />
                             <p>Host: John Doe</p>
                         </div>
-                        <div className="messageBox">
+                        <div className="messageBoxes">
                             <h3>Messages (9+)</h3>
                             <p>Go to message centre</p>
                             <button>Go</button>
@@ -55,6 +56,7 @@ const GuestDashboard = () => {
                     </div>
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
+
                         <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> Lotte_summer@gmail.com</div>
                         <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> Lotte Summer</div>
                         <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> Kinderhuissingel 6K, Haarlem</div>
