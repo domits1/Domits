@@ -6,7 +6,7 @@ import HomeScreen from '../screens/homeScreen';
 import Messages from '../screens/messages';
 import AccountPage from '../screens/account';
 import GuestDashboard from '../screens/guestdashboard/guestDashboard';
-// import Header from '../header/header';
+import Header from '../header/header';
 import Scan from '../header/scan';
 import Pay from '../header/pay';
 import Bookings from '../header/bookings';
@@ -23,6 +23,7 @@ import HostProfile from '../screens/hostdashboard/profile';
 import HostPayments from '../screens/hostdashboard/payments';
 import HostListings from '../screens/hostdashboard/listings';
 import HostSettings from '../screens/hostdashboard/settings';
+import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingProcess';
 
@@ -61,6 +62,8 @@ function HomeStack() {
       <Stack.Screen name="HostPayments" component={HostPayments} />
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
+
+      <Stack.Screen name="HostRevenue" component={HostRevenue} />
     </Stack.Navigator>
   );
 }

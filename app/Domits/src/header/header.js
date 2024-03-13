@@ -1,15 +1,14 @@
 //header.js
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity,   } from 'react-native';
-
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView,  } from 'react-native';
+import Icon from 'react-native-vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
-import SearchBarApp from '../header/SearchBarApp';
 
 
 function Header() {
@@ -34,8 +33,7 @@ function Header() {
   return (
     <View style={styles.headerContainer}>
       <View style={styles.contentContainer}>
-      <SearchBarApp />
-        
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.squareContainer}>
             <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
               <MaterialCommunityIconsIcon name="qrcode-scan" size={30} color="black" />
@@ -90,7 +88,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%', 
     paddingHorizontal: 10, 
-    marginTop: 15, 
+    marginTop: 75, 
   },
   itemContainer: {
     justifyContent: 'center',
