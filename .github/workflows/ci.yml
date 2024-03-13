@@ -6,7 +6,7 @@ on:
       - 'acceptance'
 
 jobs:
-  cypress-run:
+  tests:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,18 +25,8 @@ jobs:
           working-directory: web
           start: npx vite --host
 
-  jest-run:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      # Install NPM dependencies, cache them correctly
-      - name: Install dependencies
-        run: |
-          cd web
-          npm ci --verbose
-
       # Run Jest tests
       - name: Run Jest tests
-        run: npm test
+        run: |
+          cd web
+          npm jest
