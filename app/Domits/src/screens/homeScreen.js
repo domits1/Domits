@@ -6,9 +6,12 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Button, // Add Button here
+  Button,
+  SafeAreaView
 } from 'react-native';
 import Header from '../header/header';
+
+
 
 
 function HomeScreen({navigation}) {
