@@ -1,4 +1,4 @@
-name: Cypress Tests
+name: Cypress and Jest Tests
 
 on:
   push:
@@ -17,9 +17,26 @@ jobs:
         run: |
           cd web
           npm ci --verbose
+
       # Run your Cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
           working-directory: web
           start: npx vite --host
+
+  jest-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Install NPM dependencies, cache them correctly
+      - name: Install dependencies
+        run: |
+          cd web
+          npm ci --verbose
+
+      # Run Jest tests
+      - name: Run Jest tests
+        run: npm test
