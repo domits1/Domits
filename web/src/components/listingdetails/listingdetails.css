@@ -6,7 +6,7 @@
     font-weight: 500;
 }
 
-.topdetails,
+.TopDetailsSection,
 .accodetails,
 .events,
 .icons,
@@ -91,7 +91,7 @@
     margin-left: 140px;
 }
 
-.topdetails{
+.TopDetailsSection {
     width: 590px;
     display: flex;
     padding-top: 20px;
@@ -100,7 +100,7 @@
     gap: 100px;
 }
 
-.topdetails button{
+.TopDetailsSection button{
     text-decoration: none;
     display: flex;
     gap: 15px;
@@ -111,17 +111,17 @@
     font-size: large;
 }
 
-.topdetails button:hover{
+.TopDetailsSection button:hover{
     background-color: #0a760f9e;
     cursor: pointer;
     border-radius: 20px;
 }
 
-.topdetails button:hover{
+.TopDetailsSection button:hover{
     cursor: pointer;
 }
 
-.topdetails {
+.TopDetailsSection {
     display: flex;
     gap: 15px;
     display: inline-flex;
@@ -319,16 +319,16 @@
     align-items: center;
 }
 
-.events{
+.events {
     width: 100%;
     align-items: center;
     justify-content: center;
     border-radius: 15px;
-    border-width: 40%;
     padding-left: 25px;
     padding-right: 20px;
     padding-bottom: 200px;
     margin: 10px;
+    border: none; /* Remove border */
 }
 
 #ondertitel{
@@ -353,16 +353,16 @@
     cursor: pointer;
 }
 
-.reviews{
+.reviews {
     width: 100%;
     align-items: center;
     justify-content: center;
     border-radius: 15px;
-    border-width: 40%;
     padding-left: 25px;
     padding-right: 20px;
     margin: 10px;
     margin-bottom: 100px;
+    border: none; /* Remove border */
 }
 
 .reviews h2{

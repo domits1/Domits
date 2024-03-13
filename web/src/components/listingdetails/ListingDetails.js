@@ -1,5 +1,5 @@
 import React from "react";
-import"./details.css";
+import"./listingdetails.css";
 import detailbigimg from '../../images/accobigimg.png';
 import detailimg1 from '../../images/accoimg1.png';
 import detailimg2 from '../../images/accoimg2.png';
@@ -21,10 +21,10 @@ import light from "../../images/light.png";
 import goated from "../../images/goated.jpg"
 import bookarrow from "../../images/whitearrow.png"
 
-const Details = () => {
+const ListingDetails = () => {
     return (
         <div className="detailpage">
-            <div className="topdetails">
+            <div className="TopDetailsSection">
                 <Link to="/home">
                     <button>
                         <img src={back} alt="backarrow" />Back
@@ -186,12 +186,12 @@ const Details = () => {
                     <h3>Goat milking at Timo's farm</h3>
                     <p>Always wanted to milk a goat? Drink the freshest milk you ever drank? Timo is welcoming visitors for over 5 years.
                         At his farm you will be given a tour, feed the animals and talk about his goats the entire time!</p>
-                     <img src={goated} alt="goat" />
-                gi    <h4>More info</h4>
+                    <img src={goated} alt="goat" />
+                    gi    <h4>More info</h4>
                 </div>
             </div>
         </div>
     );
 }
 
-export default Details;
+export default ListingDetails;
