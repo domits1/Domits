@@ -1,7 +1,7 @@
 //SearchBarApp.js
 
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, Text,SafeAreaView } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
 
 
@@ -31,10 +31,11 @@ function SearchBarApp() {
   };
 
   return (
-    <View style={styles.container}>
+    
+    <SafeAreaView style={styles.container}>
       <TouchableOpacity style={styles.searchBarContainer} onPress={handleToggleExpand}>
         <Text style={styles.placeholderText}>
-          <Text style={styles.boldText}>Country</Text> •  Where • When • Who
+          <Text style={styles.boldText}>Country</Text> +  Where - When - Who
         </Text>
 
         {isExpanded && (
@@ -87,18 +88,16 @@ function SearchBarApp() {
       </TouchableOpacity>
 
       
-    </View>
+      </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'left',
-    alignItems: 'left',
-    marginLeft: 55
+    marginLeft: 27
   },
   searchBarContainer: {
-    width: 280,
+    width: 343,
     top: 10,
     backgroundColor: '#ffff',
     borderRadius: 18,
@@ -106,19 +105,18 @@ const styles = StyleSheet.create({
     height: 60,
     flexDirection: 'row',
     alignItems: 'center',
-    position: 'absolute',
     zIndex: 1,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
-    elevation: 3,
+    elevation: 5,
   },
   searchIconContainer: {
     marginLeft: 25,
   },
   searchIcon: {
-    marginLeft: 10,
+    marginLeft: 57,
   },
   placeholderText: {
     marginRight: 5,
@@ -133,7 +131,7 @@ const styles = StyleSheet.create({
     padding: 20,
     width: 350,
     position: 'absolute',
-    left: -33,
+    left: -5,
     top: 55,
   },
   expandedItem: {
@@ -157,9 +155,8 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   boldText: {
-    fontWeight: 'bold',
     fontSize: 17,
-    fontFamily: 'MotivaSansRegular.woff'
+    fontFamily: 'MotivaSansBold.woff'
 
   },
   searchInputBar: {

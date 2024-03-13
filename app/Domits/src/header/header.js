@@ -2,10 +2,14 @@
 
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView,  } from 'react-native';
-import Icon from 'react-native-vector-icons/AntDesign';
+
 import { useNavigation } from '@react-navigation/native';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
 import FeatherIcon from 'react-native-vector-icons/Feather';
+import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
+import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
+import IoniconsIcon from 'react-native-vector-icons/Ionicons';
+import SearchBarApp from '../header/SearchBarApp';
 
 
 function Header() {
@@ -30,16 +34,16 @@ function Header() {
   return (
     <View style={styles.headerContainer}>
       <View style={styles.contentContainer}>
-       
+      <SearchBarApp />
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.squareContainer}>
             <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
-              <Icon name="scan1" size={30} color="black" />
+              <MaterialCommunityIconsIcon name="qrcode-scan" size={30} color="black" />
               <Text style={styles.itemText}>Scan</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handlePayPress} style={styles.itemContainer}>
-              <FeatherIcon name="dollar-sign" size={30} color="black" />
+              <FontAwesome5Icon name="money-bill-wave" size={30} color="black" />
               <Text style={styles.itemText}>Pay</Text>
             </TouchableOpacity>
 
@@ -49,13 +53,13 @@ function Header() {
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
-              <EntypoIcon name="wallet" size={30} color="black" />
+              <IoniconsIcon name="wallet-outline" size={30} color="black" />
               <Text style={styles.itemText}>Pocket</Text>
             </TouchableOpacity>
 
             <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
-              <FeatherIcon name="settings" size={30} color="black" />
-              <Text style={styles.itemText}>Settings</Text>
+              <FeatherIcon name="user-x" size={30} color="black" />
+              <Text style={styles.itemText}>Log out</Text>
             </TouchableOpacity>
           
           </View>
@@ -89,7 +93,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%', 
     paddingHorizontal: 10, 
-    marginTop: 75, 
+    marginTop: 15, 
   },
   itemContainer: {
     justifyContent: 'center',
