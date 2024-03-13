@@ -33,7 +33,6 @@ function Header() {
   return (
     <View style={styles.headerContainer}>
       <View style={styles.contentContainer}>
-       
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           <View style={styles.squareContainer}>
             <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
@@ -56,13 +55,10 @@ function Header() {
               <Text style={styles.itemText}>Pocket</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
-              <FeatherIcon name="user-x" size={30} color="black" />
-              <Text style={styles.itemText}>Log out</Text>
-            </TouchableOpacity>
+            
           
           </View>
-        </ScrollView>
+        
       </View>
     </View>
   );
