@@ -1,7 +1,7 @@
 //header.js
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView,  } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity,   } from 'react-native';
 
 import { useNavigation } from '@react-navigation/native';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
@@ -35,7 +35,7 @@ function Header() {
     <View style={styles.headerContainer}>
       <View style={styles.contentContainer}>
       <SearchBarApp />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        
           <View style={styles.squareContainer}>
             <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
               <MaterialCommunityIconsIcon name="qrcode-scan" size={30} color="black" />
@@ -57,13 +57,10 @@ function Header() {
               <Text style={styles.itemText}>Pocket</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
-              <FeatherIcon name="user-x" size={30} color="black" />
-              <Text style={styles.itemText}>Log out</Text>
-            </TouchableOpacity>
+            
           
           </View>
-        </ScrollView>
+        
       </View>
     </View>
   );

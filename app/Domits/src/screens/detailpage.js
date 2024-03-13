@@ -1,10 +1,14 @@
 import React from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity,  } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+
+const handleonBoarding1Press = () => {
+  navigation.navigate('onBoarding1');
+};
 
 
 const Detailpage = ({ navigation }) => {
@@ -12,7 +16,7 @@ const Detailpage = ({ navigation }) => {
     require('./pictures/detailPhoto.jpg'),
     require('./pictures/detailPhoto2.jpg'),
     require('./pictures/detailPhoto3.jpg'),
-    require('./pictures/goaty.png'),
+    
   ];
 
   const handleHomeScreenPress = () => {
@@ -63,9 +67,11 @@ const Detailpage = ({ navigation }) => {
           <View style={styles.newBathroomsContainer}>
             <Text style={styles.newBathroomsText}>Over 120+ bookings</Text>
           </View>
+          <TouchableOpacity onPress={handleonBoarding1Press}>
           <View style={styles.book}>
             <Text style={styles.bookText2}>Book  {'>'} </Text>
           </View>
+          </TouchableOpacity>
         </View>
         <View style={styles.horizontalLine} />
 
