@@ -25,45 +25,46 @@ const Register = () => {
     const onSubmit = async (e: FormEvent) => {
         e.preventDefault();
 
-        const userData = {
-            username: formData.username,
-            email: formData.email,
-            password: formData.password,
-            repeatPassword: formData.repeatPassword,
-        };
+        const { username, email, password, repeatPassword } = formData;
 
-        if (userData.email === "" || userData.email === null) {
+        // Validation checks
+        if (!email) {
             setErrorMessage('Email can\'t be empty!');
             return;
         }
-
-        if (userData.password === "" || userData.password === null || userData.repeatPassword === "" || userData.repeatPassword === null) {
+        if (!password || !repeatPassword) {
             setErrorMessage('Password can\'t be empty!');
             return;
         }
-
-        if (userData.password !== userData.repeatPassword) {
-            setErrorMessage('Passwords does not match!');
+        if (password !== repeatPassword) {
+            setErrorMessage('Passwords do not match!');
             return;
         }
 
         try {
             const groupName = "Traveller";
             const data = await Auth.signUp({
-                username: userData.email,
-                email: userData.email,
-                password: userData.password,
+                username: email,
+                password,
                 attributes: {
+                    'email': email,
                     'custom:group': groupName,
-                    'custom:username': userData.username
+                    'custom:username': username
                 },
             });
 
             // Store the email and password in the AuthContext
-            setAuthCredentials(userData.email, userData.password);
+            setAuthCredentials(email, password);
+
+            // Get user ID (sub) from Cognito response
+            const userId = data.userSub;
+
+            // Now you can insert the userId into your user table
+            // For example, you can call a function to insert it
+            insertUserIdIntoDatabase(userId);
 
             navigate('/confirm-email', {
-                state: { email: userData.email, username: data.user.getUsername() },
+                state: { email, username },
             });
         } catch (error) {
             if (error.code === 'UsernameExistsException') {
