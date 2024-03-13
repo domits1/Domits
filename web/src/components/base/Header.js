@@ -45,6 +45,7 @@ function Header() {
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [group, setGroup] = useState(''); // State to store user group
+    const [username, setUsername] = useState(''); // State to store username
     const [results, setResults] = useState([]);
 
     useEffect(() => {
@@ -63,6 +64,8 @@ function Header() {
             const userAttributes = user.attributes;
             const userGroup = userAttributes['custom:group'];
             setGroup(userGroup); // Set the group state based on user's custom:group attribute
+            const userName = userAttributes['custom:username'];
+            setUsername(userName); // Set the username state based on user's custom:username attribute
         } catch (error) {
             setIsLoggedIn(false);
             console.error('Error logging in:', error);
@@ -89,7 +92,7 @@ function Header() {
                 <nav className="header-nav">
                     <div className="logo">
                         <a href="/">
-                            <img src={logo} width={50} alt="Logo" />
+                            <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>
                     <div className='App'>
@@ -113,7 +116,7 @@ function Header() {
                             <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                 {isLoggedIn ? (
                                     <>
-                                        <p>Hello {group}!</p>
+                                        <div className="helloUsername">Hello {username}!</div>
                                         <button onClick={navigateToProfile} className="dropdownLoginButton">Profile</button>
                                         <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
                                         <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>

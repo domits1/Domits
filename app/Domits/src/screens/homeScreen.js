@@ -6,12 +6,15 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Button, // Add Button here
+  Button,
+  SafeAreaView
 } from 'react-native';
 import Header from '../header/header';
 import SearchBarApp from '../header/SearchBarApp';
 
-function HomeScreen({navigation}) {
+
+
+function HomeScreen({ navigation }) {
   const images = [
     require('./pictures/image1.jpg'),
     require('./pictures/image2.jpg'),
@@ -20,11 +23,11 @@ function HomeScreen({navigation}) {
   ];
 
   const handleDetailpagePress = () => {
-    navigation.navigate('onBoarding1');
+    navigation.navigate('Detailpage');
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <SearchBarApp />
       <ScrollView stickyHeaderIndices={[0]}>
         <Header />
@@ -35,7 +38,7 @@ function HomeScreen({navigation}) {
               <Text style={styles.imageText}>Kinderhuissingle 6k</Text>
 
               <View
-                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={styles.imageText}>Host: Unknown</Text>
                 <Text
                   style={[
@@ -62,8 +65,9 @@ function HomeScreen({navigation}) {
             onPress={() => navigation.navigate('GuestDashboard')}
           />
         </View>
+        
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 const styles = StyleSheet.create({
@@ -77,9 +81,11 @@ const styles = StyleSheet.create({
     marginTop: '0%',
   },
   buttonContainer: {
-    marginVertical: 10,
+    marginVertical: 15,
     width: '100%',
+    flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
   },
   squareContainer: {
     flexDirection: 'row',

@@ -36,13 +36,13 @@
     "sharedId": "7b73f586",
     "resourceName": "domits7b73f586",
     "authSelections": "identityPoolAndUserPool",
-    "useDefault": "manual",
+    "useDefault": "default",
     "usernameAttributes": [
       "email"
     ],
     "userPoolGroupList": [
-      "develop",
-      "developUserPool"
+      "acceptance",
+      "acceptanceUserPools"
     ],
     "serviceName": "Cognito",
     "usernameCaseSensitive": false,
@@ -71,8 +71,6 @@
         ]
       }
     ],
-    "thirdPartyAuth": true,
-    "authProviders": [],
     "userPoolGroups": false,
     "adminQueries": false,
     "triggers": {
@@ -85,6 +83,7 @@
       "Ref": "AWS::StackId"
     },
     "authTriggerConnections": "[\n  {\n    \"triggerType\": \"PreSignUp\",\n    \"lambdaFunctionName\": \"domits7b73f586PreSignup\"\n  }\n]",
-    "permissions": []
+    "permissions": [],
+    "authProviders": []
   }
 }

@@ -12,6 +12,9 @@ const Payments = () => {
   return (
     <ScrollView style={styles.container}>
 
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Payments</Text>
+      </View>
       <View style={styles.boxColumns}>
         <View style={styles.box}>
           <Text style={styles.boxText}>Completed Payments</Text>
@@ -50,6 +53,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  header: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   boxColumns: {
     margin: 10,
