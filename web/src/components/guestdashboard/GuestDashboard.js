@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Auth } from "aws-amplify";
 import { useNavigate } from 'react-router-dom';
 import accommodationImg from "../../images/accommodationtestpic1.png";
 import faceHappyIcon from "../../images/icons/face-happy.png";
@@ -12,29 +11,31 @@ import changeScreenIcon from "../../images/icons/Icon.png";
 import editIcon from "../../images/icons/edit-05.png";
 import { API, graphqlOperation } from "aws-amplify";
 
-const listAccommodationsQuery = `
-query ListAccommodations {
-  listAccommodations {
-    items {
-      id
-      accommodation
-      description
-      createdAt
-      updatedAt
-    }
-    nextToken
+const getUserDetailsQuery = `
+query GetUser($email: String!) {
+  getUser(email: $email) {
+    email
+    username
+    // Add other user details as needed
   }
 }
 `;
 
-const fetchAccommodations = async () => {
+const fetchUserDetails = async (email) => {
     try {
-        const response = await API.graphql(graphqlOperation(listAccommodationsQuery));
-        console.log("Accommodations:", response.data.listAccommodations.items);
+        const response = await API.graphql(graphqlOperation(getUserDetailsQuery, { email }));
+        if (response.data && response.data.getUser) {
+            return response.data.getUser;
+        } else {
+            console.error("No user details found in response:", response);
+            return null;
+        }
     } catch (error) {
-        console.error("Error listing accommodations:", error);
+        console.error("Error fetching user details:", error);
+        return null;
     }
 };
+
 
 const GuestDashboard = () => {
     const [userEmail, setUserEmail] = useState(null);
@@ -42,20 +43,24 @@ const GuestDashboard = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const getUserEmail = async () => {
+        const getUserDetails = async () => {
             try {
-                const user = await Auth.currentAuthenticatedUser();
-                setUserEmail(user.attributes.email);
-                setUsername(user.attributes["custom:username"]);
+                const user = await fetchUserDetails(userEmail);
+                if (user) {
+                    setUserEmail(user.email);
+                    setUsername(user.username);
+                } else {
+                    navigate("/login");
+                }
             } catch (error) {
-                // User is not logged in, redirect to login page
-                navigate("/login");
+                console.error("Error fetching user details:", error);
+                // Handle error
             }
         };
 
-        getUserEmail();
-        fetchAccommodations(); // Fetch accommodations when component mounts
-    }, [navigate]);
+        // Assuming userEmail is available, maybe you fetched it from somewhere else.
+        getUserDetails();
+    }, [userEmail]);
 
     return (
         <div className="guestdashboard">
