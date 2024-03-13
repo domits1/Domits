@@ -35,7 +35,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "jest": "react-scripts test --watch",
+    "jest": "react-scripts test --watchAll",
     "cypress:open": "cypress open"
   },
   "devDependencies": {
