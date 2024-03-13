@@ -315,7 +315,7 @@ p{
 
 }
 
-.chat__input{
+#search{
     width: 95%;
     height: 50px;
     border-radius: 1rem;
@@ -324,6 +324,16 @@ p{
     background-repeat: no-repeat;
     background-position: 98% center;
 }
+
+/* input[type="text"]{
+    width: 95%;
+    height: 50px;
+    border-radius: 1rem;
+    border: 1.5px solid black;
+    background-image: url(send.png);
+    background-repeat: no-repeat;
+    background-position: 98% center;
+} */
 
 .chat__aside{
     width: 100%;
@@ -528,6 +538,8 @@ p{
         flex-direction: row;
         align-items: center;
     }
+
+
 
     .chat__user{
         

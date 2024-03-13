@@ -136,3 +136,16 @@ export const deleteTodo = /* GraphQL */ `
     }
   }
 `;
+
+
+export const createChat = /* GraphQL */ `mutation CreateChat(
+  $input: CreateChatInput!
+  $condition: ModelChatConditionInput
+) {
+  createChat(input: $input, condition: $condition) {
+    id
+    text
+    email
+  }
+}
+`;

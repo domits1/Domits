@@ -97,3 +97,32 @@ export const listTodos = /* GraphQL */ `
     }
   }
 `;
+
+export const getChat = /* GraphQL */ `query GetChat($id: ID!) {
+  getChat(id: $id) {
+    id
+    text
+    email
+  }
+}
+`;
+
+export const listChats = /* GraphQL */ `query ListChats(
+  $filter: ModelChatFilterInput
+  $limit: Int
+  $nextToken: String
+) {
+  listChats(filter: $filter, limit: $limit, nextToken: $nextToken) {
+    items {
+      id
+      text
+      email
+      createdAt
+      updatedAt
+      __typename
+    }
+    nextToken
+    __typename
+  }
+}
+`;

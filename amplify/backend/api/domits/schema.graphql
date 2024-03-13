@@ -1,0 +1,24 @@
+type Chat @model @auth(rules: [{allow: private}]) {
+  id: ID!
+  text: String!
+  email: String
+}
+
+type Accommodation @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  accommodation: String
+  description: String
+}
+
+type User @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  email: String!
+  password: String!
+}
+
+type Todo @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  name: String!
+  description: String
+}
+ 

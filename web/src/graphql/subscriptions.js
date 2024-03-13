@@ -115,3 +115,16 @@ export const onDeleteTodo = /* GraphQL */ `
     }
   }
 `;
+
+export const onCreateChat = /* GraphQL */ `subscription OnCreateChat($filter: ModelSubscriptionChatFilterInput) {
+  onCreateChat(filter: $filter) {
+    id
+    text
+    email
+    sortKey
+    createdAt
+    updatedAt
+    __typename
+  }
+}
+`

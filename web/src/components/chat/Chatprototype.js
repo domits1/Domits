@@ -1,4 +1,3 @@
-import React from "react";
 import "./chatprototype.css";
 import img1 from './image22.png';
 import heart from './Icon.png';
@@ -12,6 +11,14 @@ import django from './django.png';
 import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
+import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from "react";
+import { API } from "aws-amplify";
+import * as mutations from "../../graphql/mutations";
+import "@aws-amplify/ui-react/styles.css";
+import { withAuthenticator } from "@aws-amplify/ui-react";
+import * as queries from "../../graphql/queries";
+
 
 
 
@@ -34,7 +41,18 @@ function showMessages() {
 
 
 
-const Chat = () => {
+const Chat = ({ user, signOut  }) => {
+    const [chats, setChats] = React.useState([]);
+    React.useEffect(() => {
+        async function fetchChats() {
+          const allChats = await API.graphql({
+            query: queries.listChats,
+          });
+          console.log(allChats.data.listChats.items);
+          setChats(allChats.data.listChats.items);
+        }
+        fetchChats();
+      }, []);
     return (
         <main className="chat">
             <div className="chat__headerWrapper">
@@ -172,15 +190,51 @@ const Chat = () => {
                         </aside>
                         <article className="chat__chatContainer">
                             <div className="chat__messages">
-                                <article className="chat__dialog chat__dialog--guest">You got an amazing place and
-we are loving it!</article>
-                                <article className="chat__dialog chat__dialog--user">Thanks so much, we are doing everything we can to make sure your family has a wonderful time!</article>
+                                {/* <article className="chat__dialog chat__dialog--guest">{chats}</article> */}
+                                {chats
+  .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+  .map((chat) => (
+    <div
+      key={chat.id}
+      className={`chat__dialog chat__dialog--${
+        chat.email === user.attributes.email && "user"
+      }`}
+    >
+         {chat.text}
+          {/* <article className="chat__dialog chat__dialog--user"></article> */}
+          <span>
+                        {chat.email.split("@")[0]}
+                      </span>{" "}
+    </div>
+  ))}
+    
+
+                                {/* <article className="chat__dialog chat__dialog--user">Thanks so much, we are doing everything we can to make sure your family has a wonderful time!</article>
                                 <article className="chat__dialog chat__dialog--guest">That is super sweet, thanks a lot :D</article>
                                 <article className="chat__dialog chat__dialog--user">Sounds like a 5 star review might be incoming for us?!</article>
                                 <article className="chat__dialog chat__dialog--guest">Oh! You can count on that for sure... send me the review link please!</article>
-                                <article className="chat__dialog chat__dialog--user">test message user test message user</article>
+                                <article className="chat__dialog chat__dialog--user">test message user test message user</article> */}
                             </div>
-                            <input className="chat__input"/>
+                            <input className="chat__input"  type="text" name="search" id="search"
+onKeyUp={async (e) => {
+    if (e.key === "Enter") {
+        if (user && user.attributes && user.attributes.email) {
+            await API.graphql({
+                query: mutations.createChat,
+                variables: {
+                    input: {
+                        text: e.target.value,
+                        email: user.attributes.email,
+                    },
+                },
+            });
+            e.target.value = "";
+        } else {
+            console.error("User not authenticated or missing email");
+        }
+    }
+}}
+                />
                         </article>
 
                     </article>
@@ -202,7 +256,8 @@ we are loving it!</article>
                 </article>
             </section>
         </main>
+          
     );
 }
 
-export default Chat;
+export default withAuthenticator(Chat);

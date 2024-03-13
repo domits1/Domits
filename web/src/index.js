@@ -2,7 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { Amplify, Auth } from 'aws-amplify';
 import aws from 'aws-sdk';
-// import awsExports from './aws-exports';
+import awsExports from './aws-exports';
 import './index.css';
 import App from './App';
 import { BrowserRouter } from 'react-router-dom';
@@ -17,8 +17,8 @@ aws.config.update({
 });
 
 export const cognitoClient = new aws.CognitoIdentityServiceProvider();
-// Amplify.configure(awsExports);
-// Auth.configure(awsExports);
+Amplify.configure(awsExports);
+Auth.configure(awsExports);
 
 // Render the app
 const root = ReactDOM.createRoot(document.getElementById('root'));
