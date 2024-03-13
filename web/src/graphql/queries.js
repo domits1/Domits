@@ -1,7 +1,8 @@
-/* eslint-disable */
+/*
+/!* eslint-disable *!/
 // this is an auto generated file. This will be overwritten
 
-// export const getAccommodation = /* GraphQL */ `
+// export const getAccommodation = /!* GraphQL *!/ `
 //   query GetAccommodation($id: ID!) {
 //     getAccommodation(id: $id) {
 //       id
@@ -13,7 +14,7 @@
 //     }
 //   }
 // `;
-// export const listAccommodations = /* GraphQL */ `
+// export const listAccommodations = /!* GraphQL *!/ `
 //   query ListAccommodations(
 //     $filter: ModelAccommodationFilterInput
 //     $limit: Int
@@ -33,7 +34,7 @@
 //     }
 //   }
 // `;
-// export const getUser = /* GraphQL */ `
+// export const getUser = /!* GraphQL *!/ `
 //   query GetUser($id: ID!) {
 //     getUser(id: $id) {
 //       id
@@ -45,7 +46,7 @@
 //     }
 //   }
 // `;
-// export const listUsers = /* GraphQL */ `
+// export const listUsers = /!* GraphQL *!/ `
 //   query ListUsers(
 //     $filter: ModelUserFilterInput
 //     $limit: Int
@@ -65,7 +66,7 @@
 //     }
 //   }
 // `;
-// export const getTodo = /* GraphQL */ `
+// export const getTodo = /!* GraphQL *!/ `
 //   query GetTodo($id: ID!) {
 //     getTodo(id: $id) {
 //       id
@@ -77,7 +78,7 @@
 //     }
 //   }
 // `;
-// export const listTodos = /* GraphQL */ `
+// export const listTodos = /!* GraphQL *!/ `
 //   query ListTodos(
 //     $filter: ModelTodoFilterInput
 //     $limit: Int
@@ -97,3 +98,4 @@
 //     }
 //   }
 // `;
+*/
