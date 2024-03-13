@@ -6,10 +6,13 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Button, // Add Button here
+  Button,
+  SafeAreaView
 } from 'react-native';
 import Header from '../header/header';
 import SearchBarApp from '../header/SearchBarApp';
+
+
 
 function HomeScreen({navigation}) {
   const images = [
