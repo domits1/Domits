@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   image: {
     width: 393,
     height: 250,
-    borderRadius: 15,
+    borderRadius: 5,
   },
   borderContainer: {
     flexDirection: 'row',
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(0, 0, 0, 0.0)',
     borderTopLeftRadius: 15, 
-    borderBottomRightRadius: 15, 
+    borderBottomRightRadius: 0, 
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
@@ -511,7 +511,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'white',
     fontFamily: 'MotivaSansRegular.woff',
-    marginLeft: 0,
+    marginLeft: 2,
   },
 });
 
