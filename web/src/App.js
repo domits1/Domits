@@ -16,7 +16,7 @@ import HostPayments from "./components/hostdashboard/HostPayments";
 import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
-import Details from './components/details/Details';
+import ListingDetails from './components/listingdetails/ListingDetails';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
@@ -102,7 +102,7 @@ function App() {
 
                             {/* Booking */}
                             <Route path="/booking" element={<Booking />} />
-                            <Route path="/details" element={<Details />} />
+                            <Route path="/listingdetails" element={<ListingDetails />} />
                             <Route path="/bookingoverview" element={<BookingOverview />} />
                             <Route path="/bookingpayment" element={<BookingPayment />} />
                             <Route path="/bookingconfirmed" element={<BookingConfirmed />} />
@@ -114,7 +114,7 @@ function App() {
 
                             {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
-                            <Route path="/guestdashboard/messages" element={<Details />} />
+                            <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
