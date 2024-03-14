@@ -15,17 +15,25 @@ function HostPayments() {
                         <div className="box fullBox">
                             <p>Ready to be withdrawn</p>
                             <div className="withdrawContain">
-                                <p className="priceText">Text</p>
-                                <p className="withdrawText">Text</p>
+                                <p className="priceText">$6000</p>
+                                <p className="withdrawText">Ready for payout</p>
                             </div>
-                            <p className="withdrawText">Text</p>
-                            <p className="withdrawText">Text</p>
-                            <p className="withdrawText">Text</p>
-                            <p className="withdrawText">Text</p>
-                            <p className="withdrawText">Text</p>
-                            <p className="withdrawText">Text</p>
-                            <p className="withdrawText">Text</p>
-                            <p className="withdrawText">Text</p>
+                            <div className="withdrawContain">
+                                <p className="priceText">$700000</p>
+                                <p className="withdrawText">Ready for payout</p>
+                            </div>
+                            <div className="withdrawContain">
+                                <p className="priceText">$12300</p>
+                                <p className="withdrawText">Pending withdrawal</p>
+                            </div>
+                            <div className="withdrawContain">
+                                <p className="priceText">$5000</p>
+                                <p className="withdrawText">Ready for payout</p>
+                            </div>
+                            <div className="withdrawContain">
+                                <p className="priceText">$1250</p>
+                                <p className="withdrawText">Ready for payout</p>
+                            </div>
                         </div>
                         <button id="withdrawButton">Withdraw</button>
                         <div className="box fullBox">
