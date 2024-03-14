@@ -29,4 +29,5 @@ jobs:
       - name: Run Jest tests
         run: |
           cd web
-          npm run npm
+          npm test
+      
