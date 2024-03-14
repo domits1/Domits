@@ -116,16 +116,15 @@ const styles = StyleSheet.create({
     padding: 25,
     width: 380,
     position: 'absolute',
-    left: -27,
+    left: -22,
     top: 55,
   },
   expandedItem: {
     fontSize: 16,
-    fontWeight: 'bold',
     padding: 16,
     marginBottom: 10,
     color: '#333',
-    fontFamily: 'MotivaSansMedium',
+    fontFamily: 'MotivaSansBold.woff',
   },
   expandedInputContainer: {
     flexDirection: 'row',
@@ -134,7 +133,6 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     height: 35,
-
     flex: 1,
     marginLeft: 20,
     color: '#333',
@@ -169,20 +167,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
-  filterIconContainer: {
-    marginLeft: 10,
-    padding: 10,
-  },
-  filterIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: 'white',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'black',
-  },
+ 
+
 });
 
 export default SearchBarApp;
