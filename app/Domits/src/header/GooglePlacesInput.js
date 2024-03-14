@@ -15,9 +15,9 @@ const GooglePlacesInput = () => {
       <GooglePlacesAutocomplete
         placeholder='Search Destinations'
         onPress={(data, details = null) => {
-          // Handle selection of a place
+        
           console.log(data, details);
-          setSearchText(data.description); // Voeg de beschrijving van het geselecteerde adres toe aan de zoektekst
+          setSearchText(data.description); 
         }}
         query={{
           key: 'AIzaSyDsc4bZSQfuPkpluzSPfT5eYnVRzPWD-ow',

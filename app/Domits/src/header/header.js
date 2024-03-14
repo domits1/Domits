@@ -30,7 +30,7 @@ function Header() {
   return (
       <View style={styles.headerContainer}>
         <View style={styles.contentContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+         
             <View style={styles.squareContainer}>
               <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
                 <MaterialCommunityIconsIcon name="qrcode-scan" size={30} color="black" />
@@ -52,7 +52,7 @@ function Header() {
                 <Text style={styles.itemText}>Pocket</Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+         
         </View>
       </View>
   );
