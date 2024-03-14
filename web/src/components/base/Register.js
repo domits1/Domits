@@ -3,8 +3,9 @@ import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext'; // Import the AuthContext hook
 import './Register.css';
-// import { useMutation } from '@apollo/client';
-// import { createUserMutation } from './graphql/mutations';
+import { API } from 'aws-amplify'; // Import API from aws-amplify
+import { useMutation } from '@apollo/client';
+import { createUser } from '../../graphql/mutations';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -24,10 +25,22 @@ const Register = () => {
         });
     };
 
-    const insertUserIdIntoDatabase = async (userId: string) => {
-        // Call your function to insert userId into your user table here
-        // Example:
-        // await YourDatabaseService.insertUser(userId, formData.email, formData.username);
+    const insertUserIdIntoDatabase = async (userId: string, email: string, username: string) => {
+        try {
+            // Make a call to your API to insert the user into the database
+            const response = await API.post('domits', '/https://2vop7wr4erdkxn2ilg2hzmw7vi.appsync-api.eu-north-1.amazonaws.com/graphql', {
+                body: {
+                    id: userId,
+                    email: email,
+                    username: username
+                    // Add any other fields you want to store in your database
+                }
+            });
+            console.log('User inserted into the database:', response);
+        } catch (error) {
+            console.error('Error inserting user into the database:', error);
+            // Handle error
+        }
     };
 
     const onSubmit = async (e: FormEvent) => {

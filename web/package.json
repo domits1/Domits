@@ -4,6 +4,7 @@
   "description": "first open the project directory. in the terminal do the following things to make sure everything runs properly:",
   "main": "index.js",
   "dependencies": {
+    "@apollo/client": "^3.9.7",
     "@aws-amplify/ui-react": "^5.3.3",
     "@stripe/react-stripe-js": "^2.5.1",
     "@stripe/stripe-js": "^3.0.6",
@@ -15,6 +16,7 @@
     "aws-sdk": "^2.1571.0",
     "dotenv": "^16.4.1",
     "gh": "^2.8.9",
+    "graphql": "^16.8.1",
     "jest": "^27.5.1",
     "react": "^18.2.0",
     "react-datepicker": "^6.1.0",
