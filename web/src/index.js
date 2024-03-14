@@ -18,10 +18,8 @@ aws.config.update({
 
 export const cognitoClient = new aws.CognitoIdentityServiceProvider();
 
-// DONT TOUCH THIS!
 Amplify.configure(awsExports);
 Auth.configure(awsExports);
-// DONT TOUCH THIS ^^
 
 // Render the app
 const root = ReactDOM.createRoot(document.getElementById('root'));
