@@ -26,6 +26,7 @@ import HostSettings from '../screens/hostdashboard/settings';
 import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingProcess';
+import personalDetailsForm from "../screens/personalDetailsForm";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -36,11 +37,7 @@ function HomeStack() {
       screenOptions={{
         headerShown: false,
       }}>
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-        
-      />
+      <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
       <Stack.Screen name="Scan" component={Scan} />
@@ -49,6 +46,7 @@ function HomeStack() {
       <Stack.Screen name="Pocket" component={Pocket} />
       <Stack.Screen name="Detailpage" component={Detailpage} />
       <Stack.Screen name="onBoarding1" component={onBoarding1} />
+      <Stack.Screen name="personalDetailsForm" component={personalDetailsForm} />
 
       <Stack.Screen name="Profile" component={profile} />
       <Stack.Screen name="PaymentMethods" component={paymentMethods} />

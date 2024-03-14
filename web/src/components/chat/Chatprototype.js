@@ -196,7 +196,7 @@ we are loving it!</article>
                     <div className="chat__buttonWrapper">
                     <button className="chat__button chat__button--file">add files</button>
                     <button className="chat__button chat__button--review">Send review link</button>
-                        
+
                     </div>
                     </nav>
                 </article>
