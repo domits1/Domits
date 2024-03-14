@@ -1,10 +1,12 @@
-import React, {useState, FormEvent, useEffect} from 'react';
-import {Auth} from 'aws-amplify';
-import {useNavigate} from 'react-router-dom';
+import React, { useState, FormEvent, useEffect } from 'react';
+import { Auth } from 'aws-amplify';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from './AuthContext'; // Import the AuthContext hook
 import './Register.css';
 
 const Register = () => {
     const navigate = useNavigate();
+    const { setAuthCredentials } = useAuth(); // Access setAuthCredentials from AuthContext
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -24,6 +26,7 @@ const Register = () => {
         e.preventDefault();
 
         const userData = {
+            username: formData.username,
             email: formData.email,
             password: formData.password,
             repeatPassword: formData.repeatPassword,
@@ -45,16 +48,22 @@ const Register = () => {
         }
 
         try {
+            const groupName = "Traveler";
             const data = await Auth.signUp({
                 username: userData.email,
+                email: userData.email,
                 password: userData.password,
                 attributes: {
-                    email: userData.email,
+                    'custom:group': groupName,
+                    'custom:username': userData.username
                 },
             });
 
+            // Store the email and password in the AuthContext
+            setAuthCredentials(userData.email, userData.password);
+
             navigate('/confirm-email', {
-                state: {email: userData.email, username: data.user.getUsername()},
+                state: { email: userData.email, username: data.user.getUsername() },
             });
         } catch (error) {
             if (error.code === 'UsernameExistsException') {
@@ -96,8 +105,18 @@ const Register = () => {
                     <div className="registerTitle">Sign Up</div>
                     <div className="registerForm">
                         <form onSubmit={onSubmit}>
+                            <label>Username:</label>
+                            <br />
+                            <input
+                                className="registerInput"
+                                type="text"
+                                name="username"
+                                value={formData.username}
+                                onChange={handleChange}
+                            />
+                            <br />
                             <label>Email:</label>
-                            <br/>
+                            <br />
                             <input
                                 className="registerInput"
                                 type="email"
@@ -105,9 +124,9 @@ const Register = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                             />
-                            <br/>
+                            <br />
                             <label className="passwordLabel">Password:</label>
-                            <br/>
+                            <br />
                             <input
                                 className="registerInput"
                                 type="password"
@@ -115,9 +134,9 @@ const Register = () => {
                                 value={formData.password}
                                 onChange={handleChange}
                             />
-                            <br/>
+                            <br />
                             <label className="passwordLabel">Repeat Password:</label>
-                            <br/>
+                            <br />
                             <input
                                 className="registerInput"
                                 type="password"
@@ -125,7 +144,7 @@ const Register = () => {
                                 value={formData.repeatPassword}
                                 onChange={handleChange}
                             />
-                            <br/>
+                            <br />
                             <div className="alreadyAccountText">
                                 Already have an account? <a href="/login">Log in here</a>.
                             </div>
