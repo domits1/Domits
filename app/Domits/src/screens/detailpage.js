@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FeatherIcon from 'react-native-vector-icons/Feather';
@@ -6,47 +6,97 @@ import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-
 const Detailpage = ({ navigation }) => {
   const images = [
     require('./pictures/detailPhoto.jpg'),
     require('./pictures/detailPhoto2.jpg'),
     require('./pictures/detailPhoto3.jpg'),
-    require('./pictures/goaty.png'),
+    require('./pictures/detailPhoto4.jpg'),
+    require('./pictures/detailPhoto5.jpg'),
   ];
+
+  const [currentPage, setCurrentPage] = useState(0);
 
   const handleHomeScreenPress = () => {
     navigation.navigate('HomeScreen');
+  };
+  const handleMessagesPress = () => {
+    navigation.navigate('Messages');
+  };
+  const handleSettingsPress = () => {
+    navigation.navigate('Settings');
+  };
+  const handleonBoarding1Press = () => {
+    navigation.navigate('onBoarding1');
+  };
+
+  const handleScroll = (event) => {
+    const page = Math.round(event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width);
+    setCurrentPage(page);
   };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleHomeScreenPress}>
-          <AntDesign name="leftcircleo" size={24} color="black" style={styles.icon} />
+          <AntDesign
+            name="leftcircleo"
+            size={24}
+            color="black"
+            style={styles.icon}
+          />
         </TouchableOpacity>
 
         <View style={styles.iconContainer}>
-          <FeatherIcon name="message-square" size={24} color="black" style={styles.icon1} />
-          <FeatherIcon name="settings" size={24} color="black" style={styles.icon2} />
+        <TouchableOpacity onPress={handleMessagesPress}>
+          <FeatherIcon
+            name="message-square"
+            size={24}
+            color="black"
+            style={styles.icon1}
+          />
+        </TouchableOpacity>
+          
+        <TouchableOpacity onPress={handleSettingsPress}>
+          <FeatherIcon
+            name="settings"
+            size={24}
+            color="black"
+            style={styles.icon2}
+          />
+        </TouchableOpacity>
         </View>
       </View>
 
-      <ScrollView>
-        <ScrollView horizontal={true} contentContainerStyle={styles.imageContainer}>
+      <ScrollView style={{ flex: 1 }}>
+        <ScrollView
+          horizontal={true}
+          contentContainerStyle={styles.imageContainer}
+          pagingEnabled={true}
+          onScroll={handleScroll}
+          scrollEventThrottle={100}
+        >
           {images.map((image, index) => (
             <View key={index} style={styles.imageWrapper}>
               <Image source={image} style={styles.image} />
+              
             </View>
           ))}
         </ScrollView>
+        <View style={styles.counterContainer}>
+                <Text style={styles.counterText}>{currentPage + 1}/{images.length}</Text>
+              </View>
 
         <View>
-          <Text style={styles.text}>Minimalistic and cozy apartment in Haarlem</Text>
+          <Text style={styles.text}>
+            Minimalistic and cozy apartment in Haarlem
+          </Text>
           <Text style={styles.additionalText}>
-            The perfect getaway for 2 people in Haarlem to relax with 100% cozy vibes!
+            The perfect getaway for 2 people in Haarlem to relax with 100% cozy
+            vibes!
           </Text>
         </View>
+
         <View style={styles.borderContainer}>
           <View style={styles.bedroomsContainer}>
             <Text style={styles.bedroomsText}>2 bedrooms</Text>
@@ -63,9 +113,11 @@ const Detailpage = ({ navigation }) => {
           <View style={styles.newBathroomsContainer}>
             <Text style={styles.newBathroomsText}>Over 120+ bookings</Text>
           </View>
-          <View style={styles.book}>
-            <Text style={styles.bookText2}>Book  {'>'} </Text>
-          </View>
+          <TouchableOpacity onPress={handleonBoarding1Press}>
+            <View style={styles.book}>
+              <Text style={styles.bookText2}>Book {'>'} </Text>
+            </View>
+          </TouchableOpacity>
         </View>
         <View style={styles.horizontalLine} />
 
@@ -77,11 +129,11 @@ const Detailpage = ({ navigation }) => {
           </View>
           <View style={styles.rightHostInfo}>
             <View style={styles.hostRatingContainer}>
-              <Text style={styles.hostRatingText}>Huub Homer has an average star rating of 4.4 </Text>
-
+              <Text style={styles.hostRatingText}>
+                Huub Homer has an average star rating of 4.4{' '}
+              </Text>
             </View>
           </View>
-
         </View>
         <View style={styles.horizontalLine1} />
 
@@ -90,41 +142,76 @@ const Detailpage = ({ navigation }) => {
         <View style={styles.bothAmenities}>
           <View style={styles.amenities}>
             <View style={styles.iconItem}>
-              <FontAwesomeIcon name="tv" size={24} color="black" style={styles.iconamenities} />
+              <FontAwesomeIcon
+                name="tv"
+                size={24}
+                color="black"
+                style={styles.iconamenities}
+              />
               <Text style={styles.bedroomsText}>Smart TV</Text>
             </View>
 
             <View style={styles.iconItem}>
-              <FeatherIcon name="gift" size={24} color="black" style={styles.iconamenities} />
+              <FeatherIcon
+                name="gift"
+                size={24}
+                color="black"
+                style={styles.iconamenities}
+              />
               <Text style={styles.bedroomsText}>Welcome Gift</Text>
             </View>
 
             <View style={styles.iconItem}>
-              <MaterialCommunityIcons name="lightning-bolt-outline" size={24} color="black" style={styles.iconamenities} />
+              <MaterialCommunityIcons
+                name="lightning-bolt-outline"
+                size={24}
+                color="black"
+                style={styles.iconamenities}
+              />
               <Text style={styles.bedroomsText}>Super fast Internet</Text>
             </View>
 
             <View style={styles.iconItem}>
-              <Ionicons name="telescope-outline" size={24} color="black" style={styles.iconamenities} />
+              <Ionicons
+                name="telescope-outline"
+                size={24}
+                color="black"
+                style={styles.iconamenities}
+              />
               <Text style={styles.bedroomsText}>Telescope</Text>
             </View>
           </View>
 
-          {/* Tweede amenities sectie voor de rechterkant, (Dit is tijdelijk)*/}
+          {/*  (Dit is tijdelijk)*/}
           <View style={styles.amenities}>
             <View style={styles.iconItem}>
-              <MaterialCommunityIcons name="sun-thermometer-outline" size={24} color="black" style={styles.iconamenities} />
+              <MaterialCommunityIcons
+                name="sun-thermometer-outline"
+                size={24}
+                color="black"
+                style={styles.iconamenities}
+              />
 
               <Text style={styles.bedroomsText}>Sauna</Text>
             </View>
 
             <View style={styles.iconItem}>
-              <MaterialCommunityIcons name="lightbulb-on-outline" size={24} color="black" style={styles.iconamenities} />
+              <MaterialCommunityIcons
+                name="lightbulb-on-outline"
+                size={24}
+                color="black"
+                style={styles.iconamenities}
+              />
               <Text style={styles.bedroomsText}>Dimmable lights</Text>
             </View>
 
             <View style={styles.iconItem}>
-              <FontAwesomeIcon name="diamond" size={20} color="black" style={styles.iconamenities} />
+              <FontAwesomeIcon
+                name="diamond"
+                size={20}
+                color="black"
+                style={styles.iconamenities}
+              />
               <Text style={styles.bedroomsText}>Vault</Text>
             </View>
           </View>
@@ -133,33 +220,20 @@ const Detailpage = ({ navigation }) => {
 
         <Text style={styles.verifiedHostText}>In the Area:</Text>
 
-
         <View style={styles.imageAndTextContainer}>
           <View style={styles.imageWrapper}>
-            <Image source={require('./pictures/goaty.png')} style={styles.goaty} />
+            <Image
+              source={require('./pictures/goaty.png')}
+              style={styles.goaty}
+            />
           </View>
 
           <View style={styles.randomTextWrapper}>
-            <Text style={styles.randomText}>Goat milkig at Timo’s farm in Haarlem</Text>
+            <Text style={styles.randomText}>
+              Goat milkig at Timo’s farm in Haarlem
+            </Text>
           </View>
         </View>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
       </ScrollView>
     </View>
   );
@@ -184,13 +258,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginHorizontal: 25,
-
   },
   amenities: {
     flexDirection: 'column',
     alignItems: 'flex-start',
     marginLeft: 5,
-    marginBottom: 10
+    marginBottom: 10,
   },
   iconItem: {
     flexDirection: 'row',
@@ -224,16 +297,19 @@ const styles = StyleSheet.create({
     marginLeft: 17,
     fontFamily: 'MotivaSansRegular.woff',
   },
-
+//padding for so that image wont touch phone wall
   imageContainer: {
-    padding: 15,
+    padding: 0,
     flexDirection: 'row',
   },
+  // marginRight 32 for more spacing between pics
   imageWrapper: {
-    marginRight: 10,
+    position: 'relative',
+    marginRight: 0,
   },
+  //resolution 360 to bring back old slide
   image: {
-    width: 360,
+    width: 393,
     height: 250,
     borderRadius: 15,
   },
@@ -309,8 +385,8 @@ const styles = StyleSheet.create({
     borderColor: '#f0f0f0',
     borderRadius: 25,
     padding: 10,
-    marginLeft: 50,
-    height: 38,
+    marginLeft: 45,
+    height: 37,
     backgroundColor: 'green',
   },
   newBedroomsText: {
@@ -329,6 +405,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 12,
     textAlign: 'center',
+
     fontFamily: 'MotivaSansRegular.woff',
   },
   horizontalLine: {
@@ -343,7 +420,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'black',
     marginVertical: -10,
-    marginBottom: 10, // this is for test so that i can scroll up and down (can be removed later)
+    marginBottom: 5, // this is for test so that i can scroll up and down (can be removed later)
     alignSelf: 'center',
     width: 330,
   },
@@ -353,7 +430,6 @@ const styles = StyleSheet.create({
     color: 'black',
     fontSize: 16,
     fontFamily: 'MotivaSansBold.woff',
-
   },
   namebutton: {
     width: 110,
@@ -400,25 +476,43 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 15,
-    
   },
   imageAndTextContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 25,
-    marginBottom: 20, // Pas de waarde aan op basis van je ontwerp
+    marginBottom: 20,
   },
   randomTextWrapper: {
     flex: 1,
-    marginLeft: 20, // Pas de waarde aan op basis van je ontwerp
+    marginLeft: 20, 
   },
   randomText: {
     fontSize: 12,
     color: 'black',
-    fontFamily: 'MotivaSansRegular.woff', 
+    fontFamily: 'MotivaSansRegular.woff',
+  },
+  counterContainer: {
+    position: 'absolute',
+    top: 220,
+    right: 0,
+    width: 50,
+    height: 30,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.0)',
+    borderTopLeftRadius: 15, 
+    borderBottomRightRadius: 15, 
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  counterText: {
+    fontSize: 16,
+    color: 'white',
+    fontFamily: 'MotivaSansRegular.woff',
+    marginLeft: 0,
   },
 });
-
 
 export default Detailpage;

@@ -45,6 +45,7 @@ import Chat from "./components/chat/Chat";
 import Chatprototype from "./components/chat/Chatprototype.js";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
+import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
 
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 
@@ -115,7 +116,7 @@ function App() {
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
-                            <Route path="/guestdashboard/reviews" element={<GuestDashboard />} />
+                            <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
 
                             {/* Host Management */}

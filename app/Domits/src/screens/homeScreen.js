@@ -6,28 +6,32 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Button, // Add Button here
+  Button,
+  SafeAreaView
 } from 'react-native';
 import Header from '../header/header';
+import SearchBarApp from '../header/SearchBarApp';
 
 
-function HomeScreen({navigation}) {
+
+function HomeScreen({ navigation }) {
   const images = [
     require('./pictures/image1.jpg'),
     require('./pictures/image2.jpg'),
     require('./pictures/image3.jpg'),
     require('./pictures/image4.jpg'),
+    require('./pictures/image5.jpg'),
+    require('./pictures/image6.jpg'),
   ];
 
   const handleDetailpagePress = () => {
-    navigation.navigate('onBoarding1');
+    navigation.navigate('Detailpage');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      
+      <SearchBarApp />
       <ScrollView stickyHeaderIndices={[0]}>
-     
         <Header />
         <View style={styles.imageContainer}>
           {images.map((image, index) => (
@@ -36,7 +40,7 @@ function HomeScreen({navigation}) {
               <Text style={styles.imageText}>Kinderhuissingle 6k</Text>
 
               <View
-                style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={styles.imageText}>Host: Unknown</Text>
                 <Text
                   style={[
@@ -63,6 +67,7 @@ function HomeScreen({navigation}) {
             onPress={() => navigation.navigate('GuestDashboard')}
           />
         </View>
+        
       </ScrollView>
     </SafeAreaView>
   );
