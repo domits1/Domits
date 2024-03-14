@@ -127,8 +127,8 @@ const Register = () => {
                 <button onClick={handleSignOut}>Sign out</button>
             ) : (
                 <div className="registerContainer">
-                    <button onClick={testFunc}>testacc</button>
-                    {/* <div className="registerTitle">Sign Up</div> */}
+                    {/* <button onClick={testFunc}>testacc</button> */}
+                    <div className="registerTitle">Sign Up</div>
                     <div className="registerForm">
                         <form onSubmit={onSubmit}>
                             <label>Username:</label>
