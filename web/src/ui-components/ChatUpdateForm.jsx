@@ -26,9 +26,11 @@ export default function ChatUpdateForm(props) {
   const initialValues = {
     text: "",
     email: "",
+    sortKey: "",
   };
   const [text, setText] = React.useState(initialValues.text);
   const [email, setEmail] = React.useState(initialValues.email);
+  const [sortKey, setSortKey] = React.useState(initialValues.sortKey);
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     const cleanValues = chatRecord
@@ -36,6 +38,7 @@ export default function ChatUpdateForm(props) {
       : initialValues;
     setText(cleanValues.text);
     setEmail(cleanValues.email);
+    setSortKey(cleanValues.sortKey);
     setErrors({});
   };
   const [chatRecord, setChatRecord] = React.useState(chatModelProp);
@@ -57,6 +60,7 @@ export default function ChatUpdateForm(props) {
   const validations = {
     text: [{ type: "Required" }],
     email: [],
+    sortKey: [{ type: "Required" }],
   };
   const runValidationTasks = async (
     fieldName,
@@ -86,6 +90,7 @@ export default function ChatUpdateForm(props) {
         let modelFields = {
           text,
           email: email ?? null,
+          sortKey,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -148,6 +153,7 @@ export default function ChatUpdateForm(props) {
             const modelFields = {
               text: value,
               email,
+              sortKey,
             };
             const result = onChange(modelFields);
             value = result?.text ?? value;
@@ -173,6 +179,7 @@ export default function ChatUpdateForm(props) {
             const modelFields = {
               text,
               email: value,
+              sortKey,
             };
             const result = onChange(modelFields);
             value = result?.email ?? value;
@@ -186,6 +193,32 @@ export default function ChatUpdateForm(props) {
         errorMessage={errors.email?.errorMessage}
         hasError={errors.email?.hasError}
         {...getOverrideProps(overrides, "email")}
+      ></TextField>
+      <TextField
+        label="Sort key"
+        isRequired={true}
+        isReadOnly={false}
+        value={sortKey}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              text,
+              email,
+              sortKey: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.sortKey ?? value;
+          }
+          if (errors.sortKey?.hasError) {
+            runValidationTasks("sortKey", value);
+          }
+          setSortKey(value);
+        }}
+        onBlur={() => runValidationTasks("sortKey", sortKey)}
+        errorMessage={errors.sortKey?.errorMessage}
+        hasError={errors.sortKey?.hasError}
+        {...getOverrideProps(overrides, "sortKey")}
       ></TextField>
       <Flex
         justifyContent="space-between"

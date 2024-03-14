@@ -7,6 +7,7 @@ export const onCreateChat = /* GraphQL */ `
       id
       text
       email
+      sortKey
       createdAt
       updatedAt
       __typename
@@ -19,6 +20,7 @@ export const onUpdateChat = /* GraphQL */ `
       id
       text
       email
+      sortKey
       createdAt
       updatedAt
       __typename
@@ -31,6 +33,7 @@ export const onDeleteChat = /* GraphQL */ `
       id
       text
       email
+      sortKey
       createdAt
       updatedAt
       __typename

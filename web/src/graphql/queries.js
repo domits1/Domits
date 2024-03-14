@@ -7,6 +7,7 @@ export const getChat = /* GraphQL */ `
       id
       text
       email
+      sortKey
       createdAt
       updatedAt
       __typename
@@ -24,6 +25,7 @@ export const listChats = /* GraphQL */ `
         id
         text
         email
+        sortKey
         createdAt
         updatedAt
         __typename

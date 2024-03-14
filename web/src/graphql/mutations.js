@@ -10,6 +10,7 @@ export const createChat = /* GraphQL */ `
       id
       text
       email
+      sortKey
       createdAt
       updatedAt
       __typename
@@ -25,6 +26,7 @@ export const updateChat = /* GraphQL */ `
       id
       text
       email
+      sortKey
       createdAt
       updatedAt
       __typename
@@ -40,6 +42,7 @@ export const deleteChat = /* GraphQL */ `
       id
       text
       email
+      sortKey
       createdAt
       updatedAt
       __typename
