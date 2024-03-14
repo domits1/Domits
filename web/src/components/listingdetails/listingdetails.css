@@ -517,6 +517,7 @@
     font-family: Kanit, sans-serif;
     font-weight: 300;
     word-wrap: break-word;
+    line-height: 14px;
 }
 
 .listing-details-guests-pets-container {
