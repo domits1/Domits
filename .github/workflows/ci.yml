@@ -29,5 +29,5 @@ jobs:
       - name: Run Jest tests
         run: |
           cd web
-          npm test
+          npm test -- --detectOpenHandles
       
