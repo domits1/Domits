@@ -1,20 +1,13 @@
-//SearchBarApp.js
-
 import React, { useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, TextInput, Text,SafeAreaView } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, TextInput, Text, SafeAreaView, TouchableWithoutFeedback } from 'react-native';
 import Icon from 'react-native-vector-icons/Feather';
-
+import GooglePlacesInput from '../header/GooglePlacesInput';
 
 function SearchBarApp() {
-  const [whereToText, setWhereToText] = useState('');
   const [addGuestText, setAddGuestText] = useState('0');
   const [numberOfGuestsText, setNumberOfGuestsText] = useState('0');
   const [selectDatesText, setSelectDatesText] = useState('');
   const [isExpanded, setIsExpanded] = useState(false);
-
-  const handleSearch = () => {
-    console.log('Searching for:', whereToText, addGuestText, numberOfGuestsText, selectDatesText);
-  };
 
   const handleToggleExpand = () => {
     setIsExpanded(!isExpanded);
@@ -31,70 +24,62 @@ function SearchBarApp() {
   };
 
   return (
-    
     <SafeAreaView style={styles.container}>
       <TouchableOpacity style={styles.searchBarContainer} onPress={handleToggleExpand}>
         <Text style={styles.placeholderText}>
-          <Text style={styles.boldText}>Country</Text> +  Where - When - Who
+          <Text style={styles.boldText}>Country</Text> + Where - When - Who
         </Text>
 
         {isExpanded && (
-          <View style={styles.expandedContainer}>
-            <View style={styles.expandedInputContainer}>
-              <Text style={styles.expandedItem}>Where to?</Text>
-              <TextInput
-                style={styles.searchInputBar}
-                placeholder="Search Destinations"
-                placeholderTextColor="#666"
-                value={whereToText}
-                onChangeText={(text) => setWhereToText(text)}
-              />
-            </View>
+          <TouchableWithoutFeedback>
+            <View style={styles.expandedContainer}>
+              
+              <GooglePlacesInput />
 
-            <View style={styles.expandedInputContainer}>
-              <Text style={styles.expandedItem}>Add guests</Text>
-              <View style={styles.guestInputContainer}>
-                <TouchableOpacity onPress={handleRemoveGuest}>
-                  <Icon name="minus-circle" size={20} color="black" style={styles.guestIcon} />
-                </TouchableOpacity>
-                <Text style={styles.guestCount}>{addGuestText}</Text>
-                <TouchableOpacity onPress={handleAddGuest}>
-                  <Icon name="plus-circle" size={20} color="black" style={styles.guestIcon} />
-                </TouchableOpacity>
+              <View style={styles.expandedInputContainer}>
+                <Text style={styles.expandedItem}>Add guests</Text>
+                <View style={styles.guestInputContainer}>
+                  <TouchableOpacity onPress={handleRemoveGuest}>
+                    <Icon name="minus-circle" size={20} color="black" style={styles.guestIcon} />
+                  </TouchableOpacity>
+                  <Text style={styles.guestCount}>{addGuestText}</Text>
+                  <TouchableOpacity onPress={handleAddGuest}>
+                    <Icon name="plus-circle" size={20} color="black" style={styles.guestIcon} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.expandedInputContainer}>
+                <Text style={styles.expandedItem}>Number of guests</Text>
+                <Text style={styles.guestCount}>{numberOfGuestsText}</Text>
+              </View>
+
+              <View style={styles.expandedInputContainer}>
+                <Text style={styles.expandedItem}>Select dates</Text>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="When?"
+                  placeholderTextColor="#666"
+                  value={selectDatesText}
+                  onChangeText={(text) => setSelectDatesText(text)}
+                />
               </View>
             </View>
-
-            <View style={styles.expandedInputContainer}>
-              <Text style={styles.expandedItem}>Number of guests</Text>
-              <Text style={styles.guestCount}>{numberOfGuestsText}</Text>
-            </View>
-
-            <View style={styles.expandedInputContainer}>
-              <Text style={styles.expandedItem}>Select dates</Text>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="When?"
-                placeholderTextColor="#666"
-                value={selectDatesText}
-                onChangeText={(text) => setSelectDatesText(text)}
-              />
-            </View>
-          </View>
+          </TouchableWithoutFeedback>
         )}
 
         <View style={styles.searchIconContainer}>
           <Icon name="search" size={20} color="black" style={styles.searchIcon} />
         </View>
       </TouchableOpacity>
-
-      
-      </SafeAreaView>
+    </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    marginLeft: 27
+    marginLeft: 27,
   },
   searchBarContainer: {
     width: 343,
@@ -122,16 +107,16 @@ const styles = StyleSheet.create({
     marginRight: 5,
     color: '#333',
     fontSize: 13,
-    fontFamily: 'MotivaSansRegular.woff'
+    fontFamily: 'MotivaSansRegular.woff',
   },
   expandedContainer: {
     backgroundColor: 'white',
     borderRadius: 18,
     marginTop: 20,
-    padding: 20,
-    width: 350,
+    padding: 25,
+    width: 380,
     position: 'absolute',
-    left: -5,
+    left: -27,
     top: 55,
   },
   expandedItem: {
@@ -156,8 +141,7 @@ const styles = StyleSheet.create({
   },
   boldText: {
     fontSize: 17,
-    fontFamily: 'MotivaSansBold.woff'
-
+    fontFamily: 'MotivaSansBold.woff',
   },
   searchInputBar: {
     height: 35,
@@ -192,7 +176,7 @@ const styles = StyleSheet.create({
   filterIconCircle: {
     width: 40,
     height: 40,
-    borderRadius: 20, 
+    borderRadius: 20,
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',

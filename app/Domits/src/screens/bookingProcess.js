@@ -1,64 +1,79 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Image,
+  TouchableOpacity,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import personalDetailsForm from "./personalDetailsForm";
 
-const OnBoarding1 = ({ navigation }) => {
+const OnBoarding1 = ({navigation}) => {
+
+  const handleBookButton = () => {
+    navigation.navigate('personalDetailsForm');
+  };
+
   return (
-      <View style={styles.container}>
-        <ScrollView>
-          <View style={styles.header}>
-            <Icon
-                name="chevron-back-outline"
-                size={30}
-                color="black"
-                onPress={() => navigation.goBack()}
-            />
-            <Text style={styles.headerText}>Detail</Text>
-          </View>
-          <Image
-              source={{ uri: 'https://picsum.photos/200/300' }}
-              style={styles.image}
+    <View style={styles.container}>
+      <ScrollView>
+        <View style={styles.header}>
+          <Icon
+            name="chevron-back-outline"
+            size={30}
+            color="black"
+            onPress={() => navigation.goBack()}
           />
-          <View style={styles.detailsContainer}>
-            <Text style={styles.title}>Kinderhuissingle 6k</Text>
-            <Text style={styles.description}>
-              Fantastic villa with private swimming pool and surrounded by beautiful parks.
-            </Text>
-            <View style={styles.separator} />
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Dates</Text>
-              <Text style={styles.sectionContent}>05/12/2023 - 08/12/2023</Text>
-              <TouchableOpacity>
-                <Text style={styles.linkText}>Change</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.separator} />
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Travellers</Text>
-              <Text style={styles.sectionContent}>2 adults - 2 kids</Text>
-              <TouchableOpacity>
-                <Text style={styles.linkText}>Change</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.separator} />
-            <View style={styles.priceDetails}>
-              <Text style={styles.sectionTitle}>Price details</Text>
-              <Text style={styles.sectionContent}>2 adults - 2 kids | 3 nights</Text>
-              <Text style={styles.priceBreakdown}>$400 night x 3 nights - $1200</Text>
-              <Text style={styles.fee}>Cleaning fee - $500.00</Text>
-              <Text style={styles.tax}>Cat tax - $75.00</Text>
-              <Text style={styles.serviceFee}>Domris service fee - $39.50</Text>
-              <Text style={styles.total}>Total (USD) - $527.00</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.bookButton}>
-            <Text style={styles.bookButtonText}>Book Kinderhuissingle 6k</Text>
-          </TouchableOpacity>
-        </ScrollView>
-        <View style={styles.navbar}>
-          {/* Render your navbar items here */}
+          <Text style={styles.headerText}>Detail</Text>
         </View>
-      </View>
+        <Image
+          source={{uri: 'https://picsum.photos/200/300'}}
+          style={styles.image}
+        />
+        <View style={styles.detailsContainer}>
+          <Text style={styles.title}>Kinderhuissingle 6k</Text>
+          <Text style={styles.description}>
+            Fantastic villa with private swimming pool and surrounded by
+            beautiful parks.
+          </Text>
+          <View style={styles.separator} />
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Dates</Text>
+            <Text style={styles.sectionContent}>05/12/2023 - 08/12/2023</Text>
+            <TouchableOpacity>
+              <Text style={styles.linkText}>Change</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.separator} />
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Travellers</Text>
+            <Text style={styles.sectionContent}>2 adults - 2 kids</Text>
+            <TouchableOpacity>
+              <Text style={styles.linkText}>Change</Text>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.separator} />
+          <View style={styles.priceDetails}>
+            <Text style={styles.sectionTitle}>Price details</Text>
+            <Text style={styles.sectionContent}>
+              2 adults - 2 kids | 3 nights
+            </Text>
+            <Text style={styles.priceBreakdown}>
+              $400 night x 3 nights - $1200
+            </Text>
+            <Text style={styles.fee}>Cleaning fee - $500.00</Text>
+            <Text style={styles.tax}>Cat tax - $75.00</Text>
+            <Text style={styles.serviceFee}>Domits service fee - $39.50</Text>
+            <Text style={styles.total}>Total (USD) - $527.00</Text>
+          </View>
+        </View>
+        <TouchableOpacity onPress={handleBookButton} style={styles.bookButton}>
+          <Text style={styles.bookButtonText}>Book Kinderhuissingle 6k</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 

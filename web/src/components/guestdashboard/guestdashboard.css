@@ -4,7 +4,6 @@
     margin: auto;
     margin-top: 30px;
     margin-bottom: 30px;
-    overflow: hidden;
 }
 
 .dashboards {
@@ -21,18 +20,24 @@
     align-items: center;
     width: 100%;
     max-width: 200px;
+
     border: 0.5px solid black;
     border-radius: 15px;
     padding: 5px;
 
 }
 
-.wijzers:hover {
-    box-shadow: 2px 2px #0D9813;
-    transition: .3s;
-    border-bottom: 0.5px solid #0D9813;
-    border-right: 0.5px solid #0D9813;
+.reviewText {
+    border: 0.5px solid black;
+    border-radius: 15px;
+    padding: 5px;
 }
+
+.wijzers:hover {
+    box-shadow: 4px 4px #0D9813;
+    transition: .3s;
+}
+
 
 .disabled:hover {
     cursor: not-allowed;
@@ -40,10 +45,41 @@
     border: 0.5px solid black;
 }
 
-.dashboardSections {
+.contentContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+
+}
+
+.reviewColumn {
+    width: 48%;
+    height: auto;
+    margin: 10px;
+    min-width: 155px;
+
     display: flex;
     flex-direction: column;
+
 }
+
+.reviewBox {
+    margin-right: 5px;
+    margin-top: 10px;
+    padding: 10px;
+    height: 100%;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    border-radius: 10px;
+
+}
+
+.reviewText {
+    width: 80%;
+    margin: auto;
+}
+
 
 
 @media screen and (max-width: 830px) {
@@ -93,12 +129,9 @@
     /* In case the content exceeds the box */
 }
 
-.messageBox {
-    /* Adjust the percentage to decrease the height relative to .leftContent */
+.messageBoxes {
     height: 40%;
-    /* Example adjustment */
     overflow: auto;
-    /* In case the content exceeds the box */
 }
 
 .bookingBox,

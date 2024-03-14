@@ -3,7 +3,7 @@
   margin: auto;
   margin-top: 30px;
   margin-bottom: 30px;
-  
+
 }
 
 .dashboard {
@@ -22,8 +22,9 @@
   max-width: 200px;
 
 }
+
 .wijzer:hover {
-  box-shadow: 2px 2px #003366;
+  box-shadow: 4px 4px #003366;
   transition: .3s;
 }
 
@@ -39,7 +40,8 @@
 }
 
 
-.wijzer, .boxText {
+.wijzer,
+.boxText {
   border: 0.5px solid black;
   border-radius: 15px;
   padding: 5px;
@@ -53,7 +55,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  
+
 }
 
 .boxColumns {
@@ -64,14 +66,23 @@
 
   display: flex;
   flex-direction: column;
-  
+
+}
+
+.fullColumn {
+  width: 80%;
 }
 
 .box {
   margin-right: 10px;
   margin-top: 20px;
   padding: 10px;
-  
+
+}
+
+.fullBox {
+  min-height: 200px;
+  overflow: scroll;
 }
 
 .boxText {
@@ -79,20 +90,44 @@
   margin: auto;
 }
 
+#withdrawButton {
+  background-color: #003366;
+  color: #fff;
+
+  margin: 10px;
+  border-radius: 10px;
+  box-shadow: none;
+  padding: 10px;
+  margin-left: auto;
+}
+
+.withdrawText {
+  color: black;
+
+}
+
+.withdrawContain {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+}
+
 @media screen and (max-width: 830px) {
 
-  .dashboard{
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
+
   .dashboardSection {
     display: grid;
     grid-template-columns: auto auto;
     justify-items: center;
-}
-.wijzer {
-  
-  width: 90%;
-}
+  }
+
+  .wijzer {
+
+    width: 90%;
+  }
 }

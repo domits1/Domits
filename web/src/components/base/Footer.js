@@ -2,6 +2,8 @@ import React from 'react';
 import logo from "../../logo.svg";
 import Appstorebadge from '../../images/assets/appstorebadge.svg';
 import Playstorebadge from '../../images/assets/playstorebadge.svg';
+import { ReactComponent as InstagramIcon } from '../../images/instagram.svg';
+import linkedinIcon from "../../images/linkedin.png";
 import { Link } from 'react-router-dom';
 import './base.css'
 
@@ -68,8 +70,16 @@ const Footer = () => {
                     <div className="footer-section">
                         <h4 className='footer-headers'>Socials</h4>
                         <ul className='footer-lists'>
-                            <li><a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" className='footer-links'>Linkedin</a></li>
-                            <li><a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className='footer-links'>Instagram</a></li>
+                            <li>
+                                <a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" className='footer-links'>
+                                <img src={linkedinIcon} alt="LinkedIn" />
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className='footer-links'>
+                                    <InstagramIcon/>
+                                </a>
+                            </li>
                         </ul>
                     </div>
 

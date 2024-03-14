@@ -3,6 +3,8 @@ import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext'; // Import the AuthContext hook
 import './Register.css';
+// import { useMutation } from '@apollo/client';
+// import { createUserMutation } from './graphql/mutations';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -20,6 +22,12 @@ const Register = () => {
             ...formData,
             [e.target.name]: e.target.value,
         });
+    };
+
+    const insertUserIdIntoDatabase = async (userId: string) => {
+        // Call your function to insert userId into your user table here
+        // Example:
+        // await YourDatabaseService.insertUser(userId, formData.email, formData.username);
     };
 
     const onSubmit = async (e: FormEvent) => {
@@ -42,7 +50,7 @@ const Register = () => {
         }
 
         try {
-            const groupName = "Traveller";
+            const groupName = "Traveler";
             const data = await Auth.signUp({
                 username: email,
                 password,

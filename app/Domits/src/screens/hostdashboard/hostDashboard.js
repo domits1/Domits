@@ -41,6 +41,10 @@ const HostDashboard = () => {
         <Text style={styles.listItemText}>Settings</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
       </TouchableOpacity>
+      <TouchableOpacity style={styles.listItem} onPress={() => navigation.navigate('HostRevenue')}>
+        <Text style={styles.listItemText}>Revenue Tool</Text>
+        <MaterialIcons name="chevron-right" size={22} color="#000" />
+      </TouchableOpacity>
 
       <View style={styles.helpSection}>
         <Text style={styles.helpText}>

@@ -92,7 +92,7 @@ function Header() {
                 <nav className="header-nav">
                     <div className="logo">
                         <a href="/">
-                            <img src={logo} width={50} alt="Logo" />
+                            <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>
                     <div className='App'>

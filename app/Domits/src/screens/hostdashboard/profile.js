@@ -11,7 +11,9 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 const Profile = () => {
   return (
     <ScrollView style={styles.container}>
-      <Text>Profile</Text>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Profile</Text>
+      </View>
 
       <View>
         <View style={styles.avatarContainer}>
@@ -51,6 +53,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
+  header: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
   listItem: {
     flex: 1,
     flexDirection: 'row',
@@ -73,7 +87,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 50,
   },
   deactivateText: {
     fontSize: 18,

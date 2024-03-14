@@ -1,7 +1,5 @@
-//header.js
-
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView,  } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/AntDesign';
 import { useNavigation } from '@react-navigation/native';
 import EntypoIcon from 'react-native-vector-icons/Entypo';
@@ -9,7 +7,6 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
-
 
 function Header() {
   const navigation = useNavigation();
@@ -31,43 +28,35 @@ function Header() {
   };
 
   return (
-    <View style={styles.headerContainer}>
-      <View style={styles.contentContainer}>
-       
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          <View style={styles.squareContainer}>
-            <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
-              <MaterialCommunityIconsIcon name="qrcode-scan" size={30} color="black" />
-              <Text style={styles.itemText}>Scan</Text>
-            </TouchableOpacity>
+      <View style={styles.headerContainer}>
+        <View style={styles.contentContainer}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+            <View style={styles.squareContainer}>
+              <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
+                <MaterialCommunityIconsIcon name="qrcode-scan" size={30} color="black" />
+                <Text style={styles.itemText}>Scan</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity onPress={handlePayPress} style={styles.itemContainer}>
-              <FontAwesome5Icon name="money-bill-wave" size={30} color="black" />
-              <Text style={styles.itemText}>Pay</Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={handlePayPress} style={styles.itemContainer}>
+                <FontAwesome5Icon name="money-bill-wave" size={30} color="black" />
+                <Text style={styles.itemText}>Pay</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity onPress={handleBookingsPress} style={styles.itemContainer}>
-              <EntypoIcon name="location" size={30} color="black" />
-              <Text style={styles.itemText}>Bookings</Text>
-            </TouchableOpacity>
+              <TouchableOpacity onPress={handleBookingsPress} style={styles.itemContainer}>
+                <EntypoIcon name="location" size={30} color="black" />
+                <Text style={styles.itemText}>Bookings</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
-              <IoniconsIcon name="wallet-outline" size={30} color="black" />
-              <Text style={styles.itemText}>Pocket</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
-              <FeatherIcon name="user-x" size={30} color="black" />
-              <Text style={styles.itemText}>Log out</Text>
-            </TouchableOpacity>
-          
-          </View>
-        </ScrollView>
+              <TouchableOpacity onPress={handlePocketPress} style={styles.itemContainer}>
+                <IoniconsIcon name="wallet-outline" size={30} color="black" />
+                <Text style={styles.itemText}>Pocket</Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
       </View>
-    </View>
   );
 }
-
 
 const styles = StyleSheet.create({
   headerContainer: {
@@ -75,7 +64,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f0f0f0',
-   
   },
   contentContainer: {
     flex: 1,
@@ -83,16 +71,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: 10,
   },
-  buttonContainer: {
-    marginVertical: 10,
-    width: '100%',
-  },
- squareContainer: {
+  squareContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    width: '100%', 
-    paddingHorizontal: 10, 
-    marginTop: 75, 
+    width: '100%',
+    paddingHorizontal: 10,
+    marginTop: 75,
   },
   itemContainer: {
     justifyContent: 'center',

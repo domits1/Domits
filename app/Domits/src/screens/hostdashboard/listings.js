@@ -11,6 +11,9 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 const Listings = () => {
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerText}>Listings</Text>
+      </View>
       <TouchableOpacity style={styles.listItem}>
         <Text style={styles.listItemText}>Add new accommodation</Text>
         <MaterialIcons name="chevron-right" size={22} color="#000" />
@@ -34,6 +37,18 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: 'white',
+  },
+  header: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+    marginBottom: 30,
+    marginTop: 10,
+  },
+  headerText: {
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   boxColumns: {
     margin: 10,
@@ -63,13 +78,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderWidth: 1,
     borderColor: '#003366',
+    borderRadius: 10,
     margin: 20,
     marginBottom: 0,
     marginTop: 30,
   },
   listItemText: {
     fontSize: 18,
-    color: '#003366',
   },
 });
 
