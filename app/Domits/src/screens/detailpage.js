@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   image: {
     width: 393,
     height: 250,
-    borderRadius: 5,
+    borderRadius: 1,
   },
   borderContainer: {
     flexDirection: 'row',
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'black',
     marginVertical: -10,
-    marginBottom: 5, // this is for test so that i can scroll up and down (can be removed later)
+    marginBottom: 5,
     alignSelf: 'center',
     width: 330,
   },

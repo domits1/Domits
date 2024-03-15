@@ -3,6 +3,8 @@ import {View, ScrollView, Text, Image, StyleSheet, TouchableOpacity, Button, Saf
 import Header from '../header/header';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MapView from 'react-native-maps';
+import SearchBarApp from '../header/SearchBarApp';
+
 
 
 function HomeScreen({ navigation }) {
@@ -25,6 +27,7 @@ function HomeScreen({ navigation }) {
     <SafeAreaView style={styles.container}>
       
       <ScrollView stickyHeaderIndices={[0]}>
+      <SearchBarApp />
       {/*Header is bedoeld voor de bovenste stuk van de homepage dus de searchbar en de scan, pay etc icons */}
         <Header />
         <View style={styles.imageContainer}>
