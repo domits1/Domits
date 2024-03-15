@@ -6,32 +6,20 @@ function HostListings() {
 
     return (
         <div className="container">
-            <h2>Dashboard</h2>
+            <h2>Listings</h2>
             <div className="dashboard">
                 <Pages />
                 <div className="contentContainer">
-                    <div className="boxColumns">
-                        <div className="box">
-                            <p className="boxText">Listings</p>
+                    <div className="boxColumns fullColumn">
+                        <div className="box fullBox">
+                            <p className="">Current listings</p>
                         </div>
                         <div className="box">
-                            <p className="boxText">Pending guests</p>
-                        </div>
-                    </div>
-                    <div className="boxColumns">
-                        <div className="box">
-                            <p className="boxText">Earnings</p>
-                        </div>
-                    </div>
-                    <div className="boxColumns">
-                        <div className="box">
-                            <p className="boxText">Disputes</p>
-                        </div>
-                        <div className="box">
-                            <p className="boxText">Recent reviews</p>
+                            <p className="">Pending</p>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     );
