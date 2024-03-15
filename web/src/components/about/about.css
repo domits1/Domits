@@ -34,11 +34,13 @@
 
 .factsText {
     margin-top: 20px;
+    color: white;
 }
 
 .factsTitle {
     margin: 0;
     font-size: 30px;
+    color: white;
 }
 
 .factsHeader {
