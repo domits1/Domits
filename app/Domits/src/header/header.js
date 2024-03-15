@@ -9,6 +9,7 @@ import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommun
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import SearchBarApp from '../header/SearchBarApp';
 
+
 function Header() {
   const navigation = useNavigation();
 
@@ -32,7 +33,7 @@ function Header() {
       <View style={styles.headerContainer}>
         
         <View style={styles.contentContainer}>
-        <SearchBarApp />
+        
          
             <View style={styles.squareContainer}>
               <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 10,
-    marginTop: 15,
+    marginTop: 75,
   },
   itemContainer: {
     justifyContent: 'center',
