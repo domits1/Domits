@@ -1,17 +1,8 @@
 import React from 'react';
-import {
-  View,
-  ScrollView,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Button,
-  SafeAreaView
-} from 'react-native';
+import {View, ScrollView, Text, Image, StyleSheet, TouchableOpacity, Button, SafeAreaView, Linking } from 'react-native';
 import Header from '../header/header';
-import SearchBarApp from '../header/SearchBarApp';
-
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
+import MapView from 'react-native-maps';
 
 
 function HomeScreen({ navigation }) {
@@ -24,14 +15,17 @@ function HomeScreen({ navigation }) {
     require('./pictures/image6.jpg'),
   ];
 
+  
+
   const handleDetailpagePress = () => {
     navigation.navigate('Detailpage');
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <SearchBarApp />
+      
       <ScrollView stickyHeaderIndices={[0]}>
+      {/*Header is bedoeld voor de bovenste stuk van de homepage dus de searchbar en de scan, pay etc icons */}
         <Header />
         <View style={styles.imageContainer}>
           {images.map((image, index) => (
@@ -67,8 +61,16 @@ function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('GuestDashboard')}
           />
         </View>
-        
+
       </ScrollView>
+      <View style={styles.bookContainer}>
+        <TouchableOpacity style={styles.book} onPress={() => Linking.openURL('https://maps.google.com')}>
+          <View style={styles.textAndIconContainer}>
+            <Text style={styles.bookText2}>Map </Text>
+            <FontAwesomeIcon name="map-o" size={22} color="black" style={styles.iconamenities} />
+          </View>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -115,6 +117,38 @@ const styles = StyleSheet.create({
     marginTop: 0,
     color: 'black',
     fontFamily: 'MotivaSansRegular.woff',
+  },
+
+
+  bookContainer: {
+    position: 'absolute',
+    bottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  book: {
+    width: 95,
+    borderWidth: 1,
+    borderColor: '#319914',
+    borderRadius: 13,
+    padding: 10,
+    height: 45,
+    backgroundColor: '#319914',
+  },
+  bookText2: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    fontFamily: 'MotivaSansRegular.woff',
+    marginRight: 10,
+  },
+  iconamenities: {
+
+    marginVertical: 1,
+  },
+  textAndIconContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
 

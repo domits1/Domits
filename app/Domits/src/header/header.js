@@ -7,6 +7,7 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
+import SearchBarApp from '../header/SearchBarApp';
 
 function Header() {
   const navigation = useNavigation();
@@ -29,7 +30,9 @@ function Header() {
 
   return (
       <View style={styles.headerContainer}>
+        
         <View style={styles.contentContainer}>
+        <SearchBarApp />
          
             <View style={styles.squareContainer}>
               <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
@@ -76,7 +79,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 10,
-    marginTop: 75,
+    marginTop: 15,
   },
   itemContainer: {
     justifyContent: 'center',
