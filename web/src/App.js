@@ -7,6 +7,7 @@ import Assortment from './components/assortment/Assortment';
 import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
+import Whydomits from "./components/about/Whydomits";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
@@ -21,10 +22,6 @@ import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import CreateAccommodation from "./components/hostdashboard/CreateAccommodation";
-import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
-import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
-import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
 import BookingOverview from "./components/bookingprocess/BookingOverview";
 import BookingPayment from "./components/bookingprocess/BookingPayment";
 import BookingConfirmed from "./components/bookingprocess/BookingConfirmed";
@@ -89,6 +86,7 @@ function App() {
                             <Route path="/" element={<Assortment />} />
                             <Route path="/home" element={<Home />} />
                             <Route path="/about" element={<About />} />
+                            <Route path="/why-domits" element={<Whydomits />} />
                             <Route path="/contact" element={<Contact />} />
                             <Route path="/travelinnovation" element={<Travelinnovation />} />
                             <Route path="/landing" element={<Landing />} />
@@ -127,10 +125,6 @@ function App() {
                             <Route path="/hostdashboard/messages" element={<HostMessages />} />
                             <Route path="/hostdashboard/payments" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
-                            <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
-                            <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
-                            <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
-                            <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />
