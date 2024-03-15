@@ -11,6 +11,9 @@ import Icon from 'react-native-vector-icons/Ionicons';
 
 const BookingScreen = ({navigation}) => {
 
+  const handleButton = () => {
+    navigation.navigate('finalBookingOverview');
+  };
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollView}>
@@ -65,7 +68,7 @@ const BookingScreen = ({navigation}) => {
             />
           </View>
 
-          <TouchableOpacity style={styles.button}>
+          <TouchableOpacity onPress={handleButton} style={styles.button}>
             <Text style={styles.buttonText}>Cost overview</Text>
           </TouchableOpacity>
         </View>
@@ -159,7 +162,7 @@ const styles = StyleSheet.create({
     color: '#6e6e6e',
   },
   button: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#4CAF50',
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
