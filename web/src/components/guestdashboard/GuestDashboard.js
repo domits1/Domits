@@ -1,8 +1,8 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import accommodationImg from "../../images/accommodationtestpic1.png";
 import editIcon from "../../images/icons/edit-05.png";
 import { useNavigate } from 'react-router-dom';
-import { API, graphqlOperation } from "aws-amplify";
+import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
 
 const listAccommodationsQuery = `
@@ -30,9 +30,32 @@ const fetchAccommodations = async () => {
 };
 
 const GuestDashboard = () => {
+    const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
+
     useEffect(() => {
         fetchAccommodations();
+        fetchUserData();
     }, []);
+
+    const fetchUserData = async () => {
+        try {
+            const userInfo = await Auth.currentUserInfo();
+            console.log(userInfo); // This should show the entire userInfo object
+            console.log(userInfo.attributes); // This specifically shows the attributes
+            // Assuming userInfo has the necessary details, adjust the keys based on your user data structure
+            setUser({
+                email: userInfo.attributes.email,
+                // because it is a custom attribute it should be called like this
+                name: userInfo.attributes['custom:username'],
+                address: userInfo.attributes.address,
+                phone: userInfo.attributes.phone_number,
+                family: "2 adults - 2 kids" // needs to be calculated later on
+            });
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    };
+
     const navigate = useNavigate();
 
     return (
@@ -56,12 +79,12 @@ const GuestDashboard = () => {
                     </div>
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
-
-                        <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> Lotte_summer@gmail.com</div>
-                        <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> Lotte Summer</div>
-                        <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> Kinderhuissingel 6K, Haarlem</div>
-                        <div className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> +31 6 09877890</div>
-                        <div className="infoBox"><img src={editIcon} alt="Family Icon" /><span>Family:</span> 2 adults - 2 kids</div>
+                        <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</div>
+                        {/*custom attributes need to be called slightly different */}
+                        <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> {user.name}</div>
+                        <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> {user.address}</div>
+                        <div className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> {user.phone}</div>
+                        <div className="infoBox"><img src={editIcon} alt="Family Icon" /><span>Family:</span> {user.family}</div>
                     </div>
                 </div>
             </div>

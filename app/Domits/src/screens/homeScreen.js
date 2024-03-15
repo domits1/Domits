@@ -20,6 +20,8 @@ function HomeScreen({ navigation }) {
     require('./pictures/image2.jpg'),
     require('./pictures/image3.jpg'),
     require('./pictures/image4.jpg'),
+    require('./pictures/image5.jpg'),
+    require('./pictures/image6.jpg'),
   ];
 
   const handleDetailpagePress = () => {
