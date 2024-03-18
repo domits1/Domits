@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity,SafeAreaView } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const Detailpage = ({ navigation }) => {
   const images = [
@@ -36,11 +37,13 @@ const Detailpage = ({ navigation }) => {
   };
 
   return (
+    
+    <SafeAreaView style={{ flex: 1 }}>
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={handleHomeScreenPress}>
-          <AntDesign
-            name="leftcircleo"
+          <Ionicons
+            name="chevron-back-outline"
             size={24}
             color="black"
             style={styles.icon}
@@ -67,7 +70,8 @@ const Detailpage = ({ navigation }) => {
         </TouchableOpacity>
         </View>
       </View>
-
+      
+    
       <ScrollView style={{ flex: 1 }}>
         <ScrollView
           horizontal={true}
@@ -236,6 +240,7 @@ const Detailpage = ({ navigation }) => {
         </View>
       </ScrollView>
     </View>
+    </SafeAreaView>
   );
 };
 
@@ -382,9 +387,9 @@ const styles = StyleSheet.create({
   book: {
     width: 80,
     borderWidth: 2,
-    borderColor: '#f0f0f0',
+    borderColor: 'green',
     borderRadius: 25,
-    padding: 10,
+    padding: 8,
     marginLeft: 45,
     height: 37,
     backgroundColor: 'green',
@@ -403,8 +408,9 @@ const styles = StyleSheet.create({
   },
   bookText2: {
     color: 'white',
-    fontSize: 12,
+    fontSize: 13,
     textAlign: 'center',
+     marginLeft: 5,
 
     fontFamily: 'MotivaSansRegular.woff',
   },
