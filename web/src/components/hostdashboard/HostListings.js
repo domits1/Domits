@@ -1,8 +1,12 @@
 import React from "react";
 import Pages from "./Pages";
 import './HostHomepage.css'
+import add from "../../images/icons/host-add.png";
+import { useNavigate } from 'react-router-dom';
 
 function HostListings() {
+
+    const navigate = useNavigate();
 
     return (
         <div className="container">
@@ -11,6 +15,10 @@ function HostListings() {
                 <Pages />
                 <div className="contentContainer">
                     <div className="boxColumns fullColumn">
+                        <div className="wijzer addAcco" onClick={() => navigate("/enlist")} style={{maxWidth: 250,}}>
+                            <img src={add} alt="add"></img>
+                            <p>Add new accommodation</p>
+                        </div>
                         <div className="box fullBox">
                             <p className="">Current listings</p>
                         </div>
