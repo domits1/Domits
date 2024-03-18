@@ -13,6 +13,10 @@ import Yurt from '../../images/accom_yurt.png';
 import Lighthouse from '../../images/orange_caravan.png';
 import './Accommodations.css'
 
+const lambdaEndpoint = 'https://xyunyodqwa4dxcryxxisqpeei40jjnwm.lambda-url.eu-north-1.on.aws/index';
+
+console.log(lambdaEndpoint);
+
 const Accommodations = ({ searchQuery }) => {
     const accolist = [
         {
