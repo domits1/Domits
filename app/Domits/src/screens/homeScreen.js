@@ -1,11 +1,7 @@
 import React from 'react';
-import {View, ScrollView, Text, Image, StyleSheet, TouchableOpacity, Button, SafeAreaView, Linking } from 'react-native';
+import { View, ScrollView, Text, Image, StyleSheet, TouchableOpacity, Button, SafeAreaView, Linking, Vibration } from 'react-native';
 import Header from '../header/header';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
-import MapView from 'react-native-maps';
-import SearchBarApp from '../header/SearchBarApp';
-
-
 
 function HomeScreen({ navigation }) {
   const images = [
@@ -17,25 +13,27 @@ function HomeScreen({ navigation }) {
     require('./pictures/image6.jpg'),
   ];
 
-  
-
   const handleDetailpagePress = () => {
     navigation.navigate('Detailpage');
   };
 
+  const handleLongPress = () => {
+    Vibration.vibrate(50);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      
       <ScrollView stickyHeaderIndices={[0]}>
-      <SearchBarApp />
-      {/*Header is bedoeld voor de bovenste stuk van de homepage dus de searchbar en de scan, pay etc icons */}
         <Header />
         <View style={styles.imageContainer}>
           {images.map((image, index) => (
-            <TouchableOpacity key={index} onPress={handleDetailpagePress}>
+            <TouchableOpacity 
+              key={index} 
+              onLongPress={handleLongPress}
+              onPress={handleDetailpagePress} 
+              activeOpacity={1}>
               <Image source={image} style={styles.image} />
               <Text style={styles.imageText}>Kinderhuissingle 6k</Text>
-
               <View
                 style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={styles.imageText}>Host: Unknown</Text>
@@ -64,7 +62,6 @@ function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('GuestDashboard')}
           />
         </View>
-
       </ScrollView>
       <View style={styles.bookContainer}>
         <TouchableOpacity style={styles.book} onPress={() => Linking.openURL('https://maps.google.com')}>
@@ -84,7 +81,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     flexDirection: 'column',
-    padding: 15,
+    padding: 10,
     marginTop: '0%',
   },
   buttonContainer: {
