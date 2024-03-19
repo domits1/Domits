@@ -8,6 +8,7 @@ import {
   Image,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {SafeAreaView} from "react-native-safe-area-context";
 
 const SettingsScreen = ({navigation}) => {
   const navigateTo = screen => {
@@ -15,35 +16,39 @@ const SettingsScreen = ({navigation}) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Profile</Text>
-        <Text style={styles.headerSubText}>Change your profile settings.</Text>
-      </View>
-      <TouchableOpacity
-        style={styles.avatarContainer}
-        onPress={() => navigateTo('EditAvatar')}>
-        <Text style={styles.listItemText}>Avatar</Text>
-        <Image source={{uri: 'avatar_url'}} style={styles.avatar} />
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-      {['Email address', 'Password', 'Logout'].map((item, index) => (
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Profile</Text>
+          <Text style={styles.headerSubText}>
+            Change your profile settings.
+          </Text>
+        </View>
         <TouchableOpacity
-          key={index}
-          style={styles.listItem}
-          onPress={() => navigateTo(item.replace(/\s+/g, ''))}>
-          <Text style={styles.listItemText}>{item}</Text>
+          style={styles.avatarContainer}
+          onPress={() => navigateTo('EditAvatar')}>
+          <Text style={styles.listItemText}>Avatar</Text>
+          <Image source={{uri: 'avatar_url'}} style={styles.avatar} />
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-      ))}
-      <TouchableOpacity
-        style={styles.deactivateButton}
-        onPress={() => navigateTo('DeactivateAccount')}>
-        <Text style={styles.deactivateButtonText}>
-          Deactivate account for 30 days
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+        {['Email address', 'Password', 'Logout'].map((item, index) => (
+          <TouchableOpacity
+            key={index}
+            style={styles.listItem}
+            onPress={() => navigateTo(item.replace(/\s+/g, ''))}>
+            <Text style={styles.listItemText}>{item}</Text>
+            <MaterialIcons name="chevron-right" size={22} color="#000" />
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity
+          style={styles.deactivateButton}
+          onPress={() => navigateTo('DeactivateAccount')}>
+          <Text style={styles.deactivateButtonText}>
+            Deactivate account for 30 days
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

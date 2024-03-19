@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const GuestDashboard = ({navigation}) => {
   const navigateTo = screen => {
@@ -14,51 +15,53 @@ const GuestDashboard = ({navigation}) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>Welcome Lotte Summer!</Text>
-        <Text style={styles.descriptionText}>
-          Manage your profile, see your payments, add or remove reviews and
-          change app settings.
-        </Text>
-      </View>
-      <TouchableOpacity
-        style={styles.listItem}
-        onPress={() => navigateTo('Profile')}>
-        <Text style={styles.listItemText}>Profile</Text>
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.listItem}
-        onPress={() => navigateTo('PaymentMethods')}>
-        <Text style={styles.listItemText}>Payment methods</Text>
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.listItem}
-        onPress={() => navigateTo('Reviews')}>
-        <Text style={styles.listItemText}>Reviews</Text>
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={styles.listItem}
-        onPress={() => navigateTo('Settings')}>
-        <Text style={styles.listItemText}>Settings</Text>
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-
-      <View style={styles.helpSection}>
-        <Text style={styles.helpText}>
-          Do you have trouble with using our app?{'\n'}Please send a support
-          request to Domits.
-        </Text>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.welcomeText}>Welcome Lotte Summer!</Text>
+          <Text style={styles.descriptionText}>
+            Manage your profile, see your payments, add or remove reviews and
+            change app settings.
+          </Text>
+        </View>
         <TouchableOpacity
-          style={styles.helpButton}
-          onPress={() => navigateTo('HelpAndFeedback')}>
-          <Text style={styles.helpButtonText}>Help and feedback</Text>
+          style={styles.listItem}
+          onPress={() => navigateTo('Profile')}>
+          <Text style={styles.listItemText}>Profile</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigateTo('PaymentMethods')}>
+          <Text style={styles.listItemText}>Payment methods</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigateTo('Reviews')}>
+          <Text style={styles.listItemText}>Reviews</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigateTo('Settings')}>
+          <Text style={styles.listItemText}>Settings</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+
+        <View style={styles.helpSection}>
+          <Text style={styles.helpText}>
+            Do you have trouble with using our app?{'\n'}Please send a support
+            request to Domits.
+          </Text>
+          <TouchableOpacity
+            style={styles.helpButton}
+            onPress={() => navigateTo('HelpAndFeedback')}>
+            <Text style={styles.helpButtonText}>Help and feedback</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
