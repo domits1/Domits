@@ -7,29 +7,31 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const Listings = () => {
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Listings</Text>
-      </View>
-      <TouchableOpacity style={styles.listItem}>
-        <Text style={styles.listItemText}>Add new accommodation</Text>
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-      <View style={styles.boxColumns}>
-        <View style={styles.box}>
-          <Text style={styles.boxText}>Current Listings</Text>
-          <Text>Listings Info</Text>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Listings</Text>
         </View>
-        <View style={styles.box}>
-          <Text style={styles.boxText}>Pending</Text>
-          <Text>Listings Info</Text>
+        <TouchableOpacity style={styles.listItem}>
+          <Text style={styles.listItemText}>Add new accommodation</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <View style={styles.boxColumns}>
+          <View style={styles.box}>
+            <Text style={styles.boxText}>Current Listings</Text>
+            <Text>Listings Info</Text>
+          </View>
+          <View style={styles.box}>
+            <Text style={styles.boxText}>Pending</Text>
+            <Text>Listings Info</Text>
+          </View>
         </View>
-      </View>
-
-    </ScrollView>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -87,6 +89,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 });
-
 
 export default Listings;
