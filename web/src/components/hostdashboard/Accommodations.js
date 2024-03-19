@@ -17,7 +17,7 @@ const Accommodations = ({ searchQuery }) => {
             const responseData = await response.json();
             console.log(responseData);
             const formattedData = responseData.map(item => ({
-                image: item.PhotoUrls,
+                image: `https://amplify-domits-develop-123953-deployment.s3.eu-north-1.amazonaws.com/photos/${item.PhotoUrls}`,
                 title: item.Title,
                 details: item.description,
                 size: item.Size,
@@ -25,6 +25,7 @@ const Accommodations = ({ searchQuery }) => {
                 id: item['#PK'],
             }));
             setAccolist(formattedData);
+            console.log("Image URLs:", formattedData.map(item => item.image));
         } catch (error) {
             console.error('Error fetching or processing data:', error);
         }
