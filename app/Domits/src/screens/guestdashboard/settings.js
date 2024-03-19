@@ -8,6 +8,7 @@ import {
   Switch,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {SafeAreaView} from "react-native-safe-area-context";
 
 const Settings = () => {
   const [highContrast, setHighContrast] = useState(false);
