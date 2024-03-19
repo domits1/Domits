@@ -38,7 +38,7 @@
 }
 
 .check-in:hover, .check-out:hover, .location:hover, .location1:hover, .accommodation:hover {
-  width: 30%;
+  width: 28%;
   cursor: pointer;
 }
 .check-in{

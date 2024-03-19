@@ -3,8 +3,8 @@ import DatePicker from 'react-datepicker';
 import { FaSearch } from 'react-icons/fa';
 import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
-import debounce from 'lodash.debounce';
 import './SearchBar.css';
+
 
 export const SearchBar = ({ setResults }) => {
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -17,42 +17,45 @@ export const SearchBar = ({ setResults }) => {
     window.location.reload();
   };
 
-  // de brains achter de search, hier wordt de data gefilterd en verdeeld over twee delen: Country, city
   const fetchData = (value, searchType) => {
+    if (!value.trim()) {
+      setResults([]);
+      return;
+    }
+  
     const partialValue = encodeURIComponent(value);
     const endpoint = `https://secure.geonames.org/searchJSON?q=${partialValue}&maxRows=40&username=Kacper29`;
-
+  
     fetch(endpoint)
       .then((response) => response.json())
       .then((data) => {
-        const countries = data.geonames.filter((entry) => entry.fcode && entry.fcode.startsWith('PCLI'));
-        const cities = data.geonames.filter((entry) => entry.fcode && entry.fcode.startsWith('PPL'));
-
         let results = [];
         if (searchType === 'city') {
-          results = cities.map((result) => ({ ...result, type: 'city' }));
+          results = data.geonames.filter((entry) => entry.fcode && entry.fcode.startsWith('PPL') && entry.name.toLowerCase().includes(value.toLowerCase()));
         } else {
-          results = countries.map((result) => ({ ...result, type: 'country' }));
+          results = data.geonames.filter((entry) => entry.fcode && entry.fcode.startsWith('PCLI') && entry.name.toLowerCase().includes(value.toLowerCase()));
         }
-
+  
         setResults(results);
+      })
+      .catch((error) => {
+        console.error('Error fetching data:', error);
       });
   };
-
+  
   const handleInputChange = (value, stateSetter, searchType) => {
     stateSetter(value);
-    debouncedFetch(value, searchType);
+    fetchData(value, searchType);
   };
 
-  const debouncedFetch = debounce((value, searchType) => {
-    fetchData(value, searchType);
-  }, 100);
+  
 
   return (
     <div className="bar">
       <div className="location">
         <p>Country</p>
-        <input type="text"
+        <input
+          type="text"
           className="searchbar-input"
           placeholder="Choose a country"
           value={selectedCountry}
@@ -61,7 +64,8 @@ export const SearchBar = ({ setResults }) => {
       </div>
       <div className="location1">
         <p>City</p>
-        <input type="text"
+        <input
+          type="text"
           className="searchbar-input"
           placeholder="Choose a city"
           value={selectedCity}
@@ -104,28 +108,19 @@ export const SearchBar = ({ setResults }) => {
             { value: 'Apartment', label: 'Apartment' },
             { value: 'Guesthouse', label: 'Guesthouse' },
             { value: 'Villa', label: 'Villa' },
-            { value: 'Cottage', label: 'Cottage' },
             { value: 'Resort', label: 'Resort' },
             { value: 'Hostel', label: 'Hostel' },
           ]}
-
           placeholder="Type of accommodation"
           isSearchable={true}
           styles={{
             control: (provided) => ({
-              provided,
+              ...provided,
               border: 'none',
               boxShadow: 'none',
-
             }),
-            indicatorSeparator: (provided) => ({
-              provided,
-              display: 'none',
-            }),
-            dropdownIndicator: (provided) => ({
-              provided,
-              display: 'none',
-            }),
+            indicatorSeparator: () => ({ display: 'none' }),
+            dropdownIndicator: () => ({ display: 'none' }),
             placeholder: (provided) => ({
               ...provided,
               color: '#666',
