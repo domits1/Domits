@@ -6,34 +6,44 @@ function HostPayments() {
 
     return (
         <div className="container">
-            <h2>Dashboard</h2>
+            <h2>Payments</h2>
             <div className="dashboard">
                 <Pages />
 
                 <div className="contentContainer">
-                    <div className="boxColumns">
-                        <div className="box">
-                            <p className="boxText">Payments</p>
+                    <div className="boxColumns fullColumn">
+                        <div className="box fullBox">
+                            <p>Ready to be withdrawn</p>
+                            <div className="withdrawContain">
+                                <p className="priceText">$6000</p>
+                                <p className="withdrawText">Ready for payout</p>
+                            </div>
+                            <div className="withdrawContain">
+                                <p className="priceText">$700000</p>
+                                <p className="withdrawText">Ready for payout</p>
+                            </div>
+                            <div className="withdrawContain">
+                                <p className="priceText">$12300</p>
+                                <p className="withdrawText">Pending withdrawal</p>
+                            </div>
+                            <div className="withdrawContain">
+                                <p className="priceText">$5000</p>
+                                <p className="withdrawText">Ready for payout</p>
+                            </div>
+                            <div className="withdrawContain">
+                                <p className="priceText">$1250</p>
+                                <p className="withdrawText">Ready for payout</p>
+                            </div>
                         </div>
-                        <div className="box">
-                            <p className="boxText">Pending guests</p>
+                        <button id="withdrawButton">Withdraw</button>
+                        <div className="box fullBox">
+                            <p>Completed payments</p>
+                        </div>
+                        <div className="box fullBox">
+                            <p>Cancelled payments</p>
                         </div>
                     </div>
 
-                    <div className="boxColumns">
-                        <div className="box">
-                            <p className="boxText">Earnings</p>
-                        </div>
-                    </div>
-
-                    <div className="boxColumns">
-                        <div className="box">
-                            <p className="boxText">Disputes</p>
-                        </div>
-                        <div className="box">
-                            <p className="boxText">Recent reviews</p>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

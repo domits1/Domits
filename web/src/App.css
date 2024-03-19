@@ -122,12 +122,6 @@ li a {
   width: 100%;
 }
 
-
-/* Alles voor het guestdashboard */
-.guestdashboard {
-  padding-left: 60px; /* Adjust the value as needed */
-}
-
 .toptext {
   display: flex;
   text-indent: 16px;

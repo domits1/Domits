@@ -6,7 +6,7 @@ import HomeScreen from '../screens/homeScreen';
 import Messages from '../screens/messages';
 import AccountPage from '../screens/account';
 import GuestDashboard from '../screens/guestdashboard/guestDashboard';
-import Header from '../header/header';
+// import Header from '../header/header';
 import Scan from '../header/scan';
 import Pay from '../header/pay';
 import Bookings from '../header/bookings';
@@ -23,8 +23,15 @@ import HostProfile from '../screens/hostdashboard/profile';
 import HostPayments from '../screens/hostdashboard/payments';
 import HostListings from '../screens/hostdashboard/listings';
 import HostSettings from '../screens/hostdashboard/settings';
+import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
-import onBoarding1 from '../screens/bookingProcess';
+import onBoarding1 from '../screens/bookingprocess/bookingProcess';
+import personalDetailsForm from '../screens/bookingprocess/personalDetailsForm';
+import finalBookingOverview from '../screens/bookingprocess/finalBookingOverview';
+import simulateStripe from '../screens/bookingprocess/simulateStripe';
+import paymentAccepted from '../screens/bookingprocess/paymentAccepted';
+import paymentDeclined from '../screens/bookingprocess/paymentDeclined';
+import bookedAccommodation from "../screens/bookingprocess/bookedAccommodation";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -35,13 +42,7 @@ function HomeStack() {
       screenOptions={{
         headerShown: false,
       }}>
-      <Stack.Screen
-        name="Home"
-        component={HomeScreen}
-        options={{
-          header: props => <Header {...props} />,
-        }}
-      />
+      <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
       <Stack.Screen name="Scan" component={Scan} />
@@ -50,19 +51,31 @@ function HomeStack() {
       <Stack.Screen name="Pocket" component={Pocket} />
       <Stack.Screen name="Detailpage" component={Detailpage} />
       <Stack.Screen name="onBoarding1" component={onBoarding1} />
+      <Stack.Screen
+        name="personalDetailsForm"
+        component={personalDetailsForm}
+      />
+      <Stack.Screen
+        name="finalBookingOverview"
+        component={finalBookingOverview}
+      />
+      <Stack.Screen name="simulateStripe" component={simulateStripe} />
+      <Stack.Screen name="paymentAccepted" component={paymentAccepted} />
+      <Stack.Screen name="paymentDeclined" component={paymentDeclined} />
+      <Stack.Screen name="bookedAccommodation" component={bookedAccommodation} />
 
       <Stack.Screen name="Profile" component={profile} />
       <Stack.Screen name="PaymentMethods" component={paymentMethods} />
       <Stack.Screen name="Reviews" component={reviews} />
       <Stack.Screen name="Settings" component={settings} />
       <Stack.Screen name="HelpAndFeedback" component={helpAndFeedback} />
-
       <Stack.Screen name="HostHomepage" component={HostHomepage} />
       <Stack.Screen name="HostDashboard" component={HostDashboard} />
       <Stack.Screen name="HostProfile" component={HostProfile} />
       <Stack.Screen name="HostPayments" component={HostPayments} />
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
+      <Stack.Screen name="HostRevenue" component={HostRevenue} />
     </Stack.Navigator>
   );
 }

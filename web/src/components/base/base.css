@@ -65,7 +65,7 @@
     top: calc(100% + 25px); /* Position below the personalMenu button */
     right: 10px; /* Align with the left edge of the button */
     border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px ;
+    border-bottom-right-radius: 15px;
 }
 
 .personalMenuDropdownContent button {
@@ -90,6 +90,7 @@
     margin-bottom: 10px;
     background: #0D9813;
 }
+
 .dropdownRegisterButton, .dropdownLogoutButton {
     margin-top: 0;
     background-color: #49146A;
@@ -101,6 +102,19 @@
 
 .personalMenuDropdown .personalMenuDropdownContent button:hover {
     opacity: 90%;
+}
+
+.headerButtons button{
+    width: 100%;
+    height: 100%;
+    padding: 5px 15px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 0.50px #49146A solid;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
 }
 
 .headerButtons:hover {
@@ -133,7 +147,7 @@
     .headerButtons, .personalMenu {
         width: 100%;
         margin-top: 10px;
-        margin-right: 0px;
+        margin-right: 0;
         justify-content: center;
         float: none;
     }

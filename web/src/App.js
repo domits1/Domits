@@ -7,6 +7,7 @@ import Assortment from './components/assortment/Assortment';
 import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
+import Whydomits from "./components/about/Whydomits";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
@@ -16,15 +17,11 @@ import HostPayments from "./components/hostdashboard/HostPayments";
 import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
-import Details from './components/details/Details';
+import ListingDetails from './components/listingdetails/ListingDetails';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import CreateAccommodation from "./components/hostdashboard/CreateAccommodation";
-import ReadAccommodation from "./components/hostdashboard/ReadAccommodation";
-import UpdateAccommodation from "./components/hostdashboard/UpdateAccommodation";
-import DeleteAccommodation from "./components/hostdashboard/DeleteAccommodation";
 import BookingOverview from "./components/bookingprocess/BookingOverview";
 import BookingPayment from "./components/bookingprocess/BookingPayment";
 import BookingConfirmed from "./components/bookingprocess/BookingConfirmed";
@@ -45,6 +42,7 @@ import Chat from "./components/chat/Chat";
 import Chatprototype from "./components/chat/Chatprototype.js";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
+import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
 
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 
@@ -88,6 +86,7 @@ function App() {
                             <Route path="/" element={<Assortment />} />
                             <Route path="/home" element={<Home />} />
                             <Route path="/about" element={<About />} />
+                            <Route path="/why-domits" element={<Whydomits />} />
                             <Route path="/contact" element={<Contact />} />
                             <Route path="/travelinnovation" element={<Travelinnovation />} />
                             <Route path="/landing" element={<Landing />} />
@@ -101,7 +100,7 @@ function App() {
 
                             {/* Booking */}
                             <Route path="/booking" element={<Booking />} />
-                            <Route path="/details" element={<Details />} />
+                            <Route path="/listingdetails" element={<ListingDetails />} />
                             <Route path="/bookingoverview" element={<BookingOverview />} />
                             <Route path="/bookingpayment" element={<BookingPayment />} />
                             <Route path="/bookingconfirmed" element={<BookingConfirmed />} />
@@ -113,9 +112,9 @@ function App() {
 
                             {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
-                            <Route path="/guestdashboard/messages" element={<Details />} />
+                            <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
-                            <Route path="/guestdashboard/reviews" element={<GuestDashboard />} />
+                            <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
 
                             {/* Host Management */}
@@ -123,11 +122,9 @@ function App() {
                             <Route path="/hostdashboard" element={<HostDashboard />} />
                             <Route path="/hostdashboard/listings" element={<HostListings />} />
                             <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
+                            <Route path="/hostdashboard/messages" element={<HostMessages />} />
+                            <Route path="/hostdashboard/payments" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
-                            <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
-                            <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
-                            <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
-                            <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />

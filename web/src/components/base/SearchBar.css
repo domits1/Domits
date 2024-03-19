@@ -8,8 +8,8 @@
   display: flex;
   flex-direction: column;
   position: absolute;
-  top: 8px; 
-  left: 40%; 
+  top: 13px; 
+  left: 43%; 
   transform: translateX(-50%);
 }
 .bar {
@@ -23,12 +23,12 @@
   top: 0;
   left: 54%;
   transform: translateX(-50%);
-  height: 65px;
+  height: 55px;
 }
 
 .bar div {
   text-align: center;
-  transition: background 250ms ease, width 250ms ease; /* Include width transition here */
+  transition: background 250ms ease, width 250ms ease; 
   border-radius: 20px;
 }
 
@@ -57,15 +57,13 @@
   width: 22%;
   align-items: center;
 }
-
-
 .searchbar-input {
   background: none;
   border: none;
-  padding: 0.2rem 0 0 0;
+  padding: 0.5rem 0 0 0;
   text-align: center;
   cursor: pointer;
-  width: 100%;
+  width: 80%;
 }
 
 
@@ -93,16 +91,14 @@
   left: 0;
   top: 50%;
   transform: translateY(-50%);
-  width: 1px;
-  height: 55%;
+  width: 0.9px;
+  height: 60%;
   background: rgb(88, 153, 22);
 }
 
 .bar>div:nth-of-type(1)::before {
   background: transparent;
 }
-
-
 
 .searchbar-button {
   display: inline-block;
@@ -120,7 +116,7 @@
   transition-property: color, background-color, border-color;
   height: 35px;
   width: 35px;
-  margin-top: 15px;
+  margin-top: 10px;
 }
 
 .searchbar-button:hover {
@@ -131,6 +127,7 @@
 
 .searchbar-button svg {
   color: black; /* Zwarte kleur voor FaSearch-icoon */
+  
 }
 
 .searchbar-button:hover svg {

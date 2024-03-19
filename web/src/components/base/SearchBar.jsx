@@ -12,7 +12,7 @@ export const SearchBar = ({ setResults }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [accommodation, setAccommodation] = useState('');
-  
+
   const handleRefreshClick = () => {
     window.location.reload();
   };
@@ -25,8 +25,8 @@ export const SearchBar = ({ setResults }) => {
     fetch(endpoint)
       .then((response) => response.json())
       .then((data) => {
-        const countries = data.geonames.filter((entry) => entry.fcode.startsWith('PCLI'));
-        const cities = data.geonames.filter((entry) => entry.fcode.startsWith('PPL'));
+        const countries = data.geonames.filter((entry) => entry.fcode && entry.fcode.startsWith('PCLI'));
+        const cities = data.geonames.filter((entry) => entry.fcode && entry.fcode.startsWith('PPL'));
 
         let results = [];
         if (searchType === 'city') {
@@ -53,7 +53,7 @@ export const SearchBar = ({ setResults }) => {
       <div className="location">
         <p>Country</p>
         <input type="text"
-               className="searchbar-input"
+          className="searchbar-input"
           placeholder="Choose a country"
           value={selectedCountry}
           onChange={(e) => handleInputChange(e.target.value, setSelectedCountry, 'country')}
@@ -62,7 +62,7 @@ export const SearchBar = ({ setResults }) => {
       <div className="location1">
         <p>City</p>
         <input type="text"
-               className="searchbar-input"
+          className="searchbar-input"
           placeholder="Choose a city"
           value={selectedCity}
           onChange={(e) => handleInputChange(e.target.value, setSelectedCity, 'city')}
@@ -72,7 +72,7 @@ export const SearchBar = ({ setResults }) => {
         <p>Check in</p>
         <div>
           <DatePicker
-              className="searchbar-input"
+            className="searchbar-input"
             id="checkInPicker"
             selected={checkIn}
             onChange={(date) => setCheckIn(date)}
@@ -85,7 +85,7 @@ export const SearchBar = ({ setResults }) => {
         <p>Check out</p>
         <div>
           <DatePicker
-              className="searchbar-input"
+            className="searchbar-input"
             id="checkOutPicker"
             selected={checkOut}
             onChange={(date) => setCheckOut(date)}
@@ -135,10 +135,10 @@ export const SearchBar = ({ setResults }) => {
       </div>
 
       <button className="searchbar-button" type="button">
-      <FaSearch
-        style={{ marginRight: '2px', cursor: 'pointer' }}
-        onClick={handleRefreshClick}
-      />
+        <FaSearch
+          style={{ marginRight: '2px', cursor: 'pointer' }}
+          onClick={handleRefreshClick}
+        />
       </button>
     </div>
   );

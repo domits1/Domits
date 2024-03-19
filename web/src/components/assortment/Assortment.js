@@ -57,37 +57,7 @@ const Assortment = () => {
     return (
         <div>
             <div className="assortment">
-                {/* { <CheckoutFrontend/> } */}
-                <div className="dropdown-row">
-                    <div className="dropdown-column">
-                        <label>Visitors/guests</label>
-                        <Dropdown value={visitorGuests} onChange={setVisitorGuests} options={visitorGuestsOptions} />
-                    </div>
-                    <div  className="dropdown-column">
-                        <label>Date range</label>
-                        <Dropdown value={dateRange} onChange={setDateRange} options={dateRangeOptions} />
-                    </div>
-                    <div  className="dropdown-column">
-                        <label>Price range</label>
-                        <Dropdown value={priceRange} onChange={setPriceRange} options={priceRangeOptions} />
-                    </div>
-                    <div  className="dropdown-column">
-                        <label>Tags</label>
-                        <Dropdown value={tags} onChange={setTags} options={tagsOptions} />
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'no-wrap'}}>
-                    <div  className="dropdown-column">
-                        <label>Search</label>
-                        <button><img src={searchIcon} alt="Search" /></button>
-                    </div>
-                    <div  className="dropdown-column">
-                        <label>Sort results</label>
-                        <button className="Sortbutton"><img src={sortIcon} alt="Search" /></button>
-                    </div>
-                    </div>
-                </div>
-
-                
+                {/* { <CheckoutFrontend/> } */}                
                     <Accommodations searchQuery={searchQuery} filterQuery={filterQuery} />
                 
             </div>

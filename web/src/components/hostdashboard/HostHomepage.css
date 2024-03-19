@@ -3,10 +3,13 @@
   margin: auto;
   margin-top: 30px;
   margin-bottom: 30px;
+
 }
 
 .dashboard {
   flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 200px auto;
 }
 
 
@@ -21,16 +24,11 @@
   max-width: 200px;
 
 }
+
 .wijzer:hover {
-  box-shadow: 2px 2px #003366;
+  box-shadow: 4px 4px #003366;
   transition: .3s;
 }
-
-.dashboard {
-  display: grid;
-  grid-template-columns: 200px auto;
-}
-
 
 .dashboardSection {
   display: flex;
@@ -38,7 +36,8 @@
 }
 
 
-.wijzer, .boxText {
+.wijzer,
+.boxText {
   border: 0.5px solid black;
   border-radius: 15px;
   padding: 5px;
@@ -52,7 +51,7 @@
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
-  
+
 }
 
 .boxColumns {
@@ -63,14 +62,33 @@
 
   display: flex;
   flex-direction: column;
-  
+
+}
+
+.fullColumn {
+  width: 80%;
 }
 
 .box {
   margin-right: 10px;
   margin-top: 20px;
   padding: 10px;
-  
+  overflow: scroll;
+
+}
+
+.fullBox {
+  min-height: 200px;
+  overflow: scroll;
+}
+
+.locationBox {
+  height: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  overflow: hidden;
 }
 
 .boxText {
@@ -78,20 +96,72 @@
   margin: auto;
 }
 
+#withdrawButton {
+  background-color: #003366;
+  color: #fff;
+
+  margin: 10px;
+  border-radius: 10px;
+  box-shadow: none;
+  padding: 10px;
+  margin-left: auto;
+}
+
+.withdrawText {
+  color: black;
+
+}
+.priceText {
+  border: solid 1px black;
+  border-radius: 15px;
+  padding: 11px;
+  width: 100px;
+}
+
+.withdrawContain {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10%;
+  width: 50%;
+  margin: 10px;
+  text-align: left;
+}
+
+#date {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  font-family: Arial, sans-serif;
+  color: #333;
+  outline: none;
+  
+}
+
+#date {
+  border-color: #007bff; /* Change to your preferred focus color */
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Change to your preferred focus shadow */
+}
+
+
 @media screen and (max-width: 830px) {
 
-  .dashboard{
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
+  .dashboard {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
+
   .dashboardSection {
     display: grid;
     grid-template-columns: auto auto;
     justify-items: center;
-}
-.wijzer {
-  
-  width: 90%;
-}
+  }
+
+  .wijzer {
+
+    width: 90%;
+  }
 }

@@ -1,0 +1,655 @@
+.listing-details-container {
+    display: flex;
+    margin: 2% 10%;
+}
+
+.booking-information-section {
+    width: 70%;
+    margin-right: 60px;
+    padding-right: 60px;
+}
+
+.booking-details-section {
+    width: 25%;
+    position: fixed;
+    right: 0;
+    margin-right: 10%;
+}
+
+.booking-details-text {
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.listing-details-top {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px; /* Add margin between title/back arrow and image section */
+}
+
+.listing-details-back-arrow {
+    display: flex;
+    align-items: center;
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+    margin-right: 20px;
+}
+
+.listing-details-back-arrow a {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+}
+
+.listing-details-back-arrow img {
+    margin-right: 10px;
+}
+
+.listing-details-title {
+    color: black;
+    font-size: 24px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-image-window {
+    margin-top: 20px;
+    display: flex;
+    width: 100%;
+    gap: 10px;
+}
+
+.listing-details-big-img {
+    flex: 1;
+}
+
+.listing-details-big-img img {
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+    width: 100%;
+    height: 380px;
+    max-height: 380px;
+}
+
+.listing-details-side-img {
+    gap: 10px;
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    height: 370px;
+    max-height: 370px;
+}
+
+.listing-details-side-img img {
+    width: calc(50% - 5px);
+    height: 50%;
+    gap: 5px;
+}
+
+#top-right-img {
+    border-top-right-radius: 15px;
+}
+
+#bottom-right-img {
+    border-bottom-right-radius: 15px;
+}
+
+.price-and-rooms-row {
+    margin-top: 20px;
+    display: flex; /* Use flexbox to create a row */
+    align-items: center; /* Align items vertically */
+}
+
+.price-per-night-text {
+    margin-right: 40px;
+    color: black;
+    font-size: 24px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.guest-and-rooms-text {
+    color: black;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.accommodation-detais-text {
+    margin-top: 20px;
+    color: black;
+    font-size: 24px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.rooms-text {
+    margin-top: 10px;
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.listing-details-rooms-section {
+    display: flex;
+    width: 100%;
+}
+
+.listing-details-room {
+    flex: 1;
+    margin-top: 10px;
+    margin-right: 10px;
+    padding: 15px 20px;
+    width: 100%;
+    height: auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    display: flex;
+    flex-direction: column; /* Set flex direction to column */
+}
+
+.listing-details-room:first-child {
+    border-bottom-left-radius: 15px;
+    border-top-left-radius: 15px;
+}
+
+.listing-details-room:last-child {
+    margin-right: 0;
+    border-bottom-right-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.listing-details-room-title,
+.listing-details-room-bed {
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-room-text {
+    margin-top: 10px;
+    color: black;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-detail-room-image {
+    margin-top: auto; /* Push the image container to the bottom */
+}
+
+.listing-detail-room-image img {
+    margin-top: 10px;
+    width: 100%;
+    height: 250px;
+    max-height: 250px;
+}
+
+.first-room-image img {
+    border-bottom-left-radius: 15px;
+    border-top-left-radius: 15px;
+}
+
+.last-room-image img {
+    border-bottom-right-radius: 15px;
+    border-top-right-radius: 15px;
+}
+
+.show-more-button {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.listing-details-show-more {
+    border: none;
+    margin-top: 10px;
+    padding: 10px 15px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
+
+    color: rgba(0, 0, 0, 0.25);
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.listing-details-place-offers-title {
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.listing-details-place-offers {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.listing-details-offer-item {
+    width: 33.33%;
+    padding: 20px;
+    color: black;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
+.listing-details-offer-item img {
+    margin-right: 20px;
+}
+
+.black-show-more {
+    margin-top: 0;
+    color: black;
+}
+
+.black-show-more img {
+    color: black;
+}
+
+.listing-details-review-card-title {
+    margin-top: 10px;
+    color: black;
+    font-size: 24px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.listing-details-verified-guests-text {
+    margin-top: 10px;
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word
+}
+
+.listing-details-review-card {
+    margin-top: 10px;
+    padding: 20px;
+    width: 100%;
+    height: auto;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center; /* Align items vertically */
+}
+
+.listing-details-review-title {
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+    flex: 1; /* Take remaining space */
+}
+
+.listing-details-review-rating {
+    padding: 3px 9px;
+    background: white;
+    border-radius: 15px;
+    border: 0.50px #0D9813 solid;
+    backdrop-filter: blur(40px);
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    display: inline-flex;
+
+    color: black;
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 500;
+    word-wrap: break-word;
+}
+
+.listing-details-review-rating img {
+    margin-right: 5px; /* Add space between star icon and rating */
+}
+
+.listing-details-review-staying-time,
+.listing-details-review-text {
+    margin-top: 5px;
+    flex-basis: 100%; /* Set to full width */
+    color: black;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-extra-margin-top {
+    margin-top: 10px;
+}
+
+.listing-details-country-place-text {
+    margin-top: 10px;
+    color: black;
+    font-size: 24px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-things-closeby-text {
+    margin-top: 5px;
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-things-to-do-card {
+    margin-top: 10px;
+    padding: 20px;
+    width: 100%;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.listing-details-things-to-do-title {
+    color: black;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+    margin-bottom: 20px;
+}
+
+.listing-details-things-to-do-content {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.listing-details-things-to-do-information {
+    flex-basis: 50%;
+    color: black;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    line-height: 24px;
+    word-wrap: break-word;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.listing-details-things-to-do-image {
+    flex-basis: 50%;
+    padding-left: 30px;
+}
+
+.listing-details-things-to-do-image img {
+    max-width: 100%;
+}
+
+.listing-details-things-to-do-more-info a {
+    margin-top: auto;
+    color: #0A760F;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    text-decoration: underline;
+    line-height: 24px;
+    letter-spacing: 0.16px;
+    word-wrap: break-word
+}
+
+.booking-details-card {
+    margin-top: 20px;
+    width: 100%;
+    padding: 20px 30px;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+}
+
+.listing-details-check-container {
+    display: flex;
+}
+
+.listing-details-checkin-text,
+.listing-details-checkout-text {
+    width: calc(50% - 10px); /* 50% width with 20px gap between elements */
+    box-sizing: border-box; /* Ensure padding is included in width */
+    margin-right: 70px; /* Gap between elements */
+
+    color: black;
+    font-size: 20px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-checkin-text:last-child,
+.listing-details-checkout-text:last-child {
+    margin-right: 0; /* Remove right margin from last element to avoid extra gap */
+}
+
+.listing-details-dates-container {
+    display: flex;
+}
+
+.listing-details-checkin-date,
+.listing-details-checkout-date {
+    margin-top: 10px;
+    padding: 5px 5px;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    display: inline-flex;
+
+    color: black;
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    word-wrap: break-word;
+}
+
+.listing-details-checkin-date,
+.listing-details-checkout-date {
+    width: 40%; /* Check-in and Check-out dates take up 40% each */
+}
+
+.listing-details-amount-of-nights-text {
+    width: 20%; /* Nights take up 10% */
+    margin-left: auto;
+    margin-right: auto;
+    margin-top: 5px;
+    text-align: center;
+    color: black;
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    word-wrap: break-word;
+    line-height: 14px;
+}
+
+.listing-details-guests-pets-container {
+    margin-top: 20px;
+    display: flex;
+}
+
+.listing-details-guests-text,
+.listing-details-pets-text {
+    width: calc(50% - 10px); /* 50% width with 20px gap between elements */
+    box-sizing: border-box; /* Ensure padding is included in width */
+    margin-right: 70px; /* Gap between elements */
+
+    color: black;
+    font-size: 20px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-guests-text:last-child,
+.listing-details-pets-text:last-child {
+    margin-right: 0; /* Remove right margin from last element to avoid extra gap */
+}
+
+.listing-details-guests-pets-content {
+    margin-top: 10px;
+    display: flex;
+}
+
+.listing-details-amount-of-adults, .listing-details-amount-of-kids {
+    margin-right: 10px;
+    padding: 10px 15px;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    display: inline-flex;
+
+    color: black;
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    word-wrap: break-word
+}
+
+.listing-details-amount-of-kids {
+    margin-right: 70px;
+}
+
+.listing-details-select {
+    padding: 10px 15px;
+    background: white;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.10);
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    display: inline-flex;
+
+    color: rgba(0, 0, 0, 0.25);
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    word-wrap: break-word;
+}
+
+.listing-details-book-button button {
+    margin-top: 30px;
+    width: 100%;
+    padding: 10px 30px;
+    background: #0D9813;
+    border-radius: 15px;
+    overflow: hidden;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    display: inline-flex;
+    border: none;
+
+    color: white;
+    font-size: 20px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-book-button-star-text {
+    margin-top: 10px;
+    width: 100%;
+    text-align: center;
+    color: black;
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    word-wrap: break-word;
+}
+
+.listing-details-booking-information-text {
+    color: black;
+    font-size: 14px;
+    font-family: Kanit, sans-serif;
+    font-weight: 300;
+    word-wrap: break-word;
+}
+
+.listing-details-booking-information-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.listing-details-booking-total-text {
+    margin-top: 5px;
+    color: black;
+    font-size: 20px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.listing-details-booking-total-price {
+    margin-top: 5px;
+    color: black;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 500;
+    text-decoration: underline;
+    word-wrap: break-word
+}
