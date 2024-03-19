@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     padding: 8,
     marginHorizontal: 0,
-    paddingBottom: 0, // Voeg paddingBottom toe om de onderste rand iets naar boven te brengen
+    paddingBottom: 0, 
   },
   input: {
     flex: 1,
