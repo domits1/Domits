@@ -20,45 +20,47 @@ const Reviews = () => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Reviews</Text>
-        <Text style={styles.subHeader}>
-          View, edit and/or delete your reviews.
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Reviews</Text>
+          <Text style={styles.subHeader}>
+            View, edit and/or delete your reviews.
+          </Text>
+        </View>
+
+        <View style={styles.reviewCard}>
+          <Text style={styles.placeText}>{review.place}</Text>
+          <View style={styles.ratingContainer}>
+            <MaterialIcons name="star" size={22} color="#FFD700" />
+            <Text style={styles.ratingText}>{review.rating}</Text>
+          </View>
+          <Text style={styles.dateText}>{review.date}</Text>
+          <Text style={styles.reviewText}>{review.details}</Text>
+          <Text style={styles.viewsText}>{review.views}</Text>
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionText}>Change</Text>
+              <MaterialIcons name="chevron-right" size={22} color="#000" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.actionButton}>
+              <Text style={styles.actionText}>Delete</Text>
+              <MaterialIcons name="chevron-right" size={22} color="#000" />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <Text style={styles.infoText}>
+          You can only review an accommodation when you booked and stayed.
+          Within 24 hours after your stay you will receive a review code which
+          can be redeemed only once.
         </Text>
-      </View>
-
-      <View style={styles.reviewCard}>
-        <Text style={styles.placeText}>{review.place}</Text>
-        <View style={styles.ratingContainer}>
-          <MaterialIcons name="star" size={22} color="#FFD700" />
-          <Text style={styles.ratingText}>{review.rating}</Text>
-        </View>
-        <Text style={styles.dateText}>{review.date}</Text>
-        <Text style={styles.reviewText}>{review.details}</Text>
-        <Text style={styles.viewsText}>{review.views}</Text>
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionText}>Change</Text>
-            <MaterialIcons name="chevron-right" size={22} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.actionButton}>
-            <Text style={styles.actionText}>Delete</Text>
-            <MaterialIcons name="chevron-right" size={22} color="#000" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <Text style={styles.infoText}>
-        You can only review an accommodation when you booked and stayed. Within
-        24 hours after your stay you will receive a review code which can be
-        redeemed only once.
-      </Text>
-      <Text style={styles.disclaimerText}>
-        This way we are sure that the reviews are 100% real and written by
-        actual guests.
-      </Text>
-    </ScrollView>
+        <Text style={styles.disclaimerText}>
+          This way we are sure that the reviews are 100% real and written by
+          actual guests.
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
