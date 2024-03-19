@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
-const simulateStripe = ({navigation}) => {
+const SimulateStripe = ({navigation}) => {
   const handlePaymentAccepted = () => {
     navigation.navigate('paymentAccepted');
   };
@@ -53,4 +53,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default simulateStripe;
+export default SimulateStripe;

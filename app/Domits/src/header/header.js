@@ -31,7 +31,7 @@ function Header() {
 
   return (
       <View style={styles.headerContainer}>
-        
+        <SearchBarApp />
         <View style={styles.contentContainer}>
         
          
@@ -65,8 +65,8 @@ function Header() {
 const styles = StyleSheet.create({
   headerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    
+    
     backgroundColor: '#f0f0f0',
   },
   contentContainer: {
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 10,
-    marginTop: 75,
+    marginTop: 15,
   },
   itemContainer: {
     justifyContent: 'center',
