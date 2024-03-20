@@ -13,7 +13,7 @@
   transform: translateX(-50%);
 }
 .bar {
-  width: 750px;
+  width: 600px;
   background: white;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 30px;
@@ -31,14 +31,15 @@
   transition: background 250ms ease, width 250ms ease; 
   border-radius: 20px;
 }
-
 .bar div:hover {
-  background: hsl(0 0% 94%);
-  
+  background: hsl(0 0% 94%); 
 }
-
-.check-in:hover, .check-out:hover, .location:hover, .location1:hover, .accommodation:hover {
+.check-in:hover, .check-out:hover, .location:hover, .accommodation:hover {
   width: 28%;
+  cursor: pointer;
+}
+.accommodation:hover {
+  width: 33%;
   cursor: pointer;
 }
 .check-in{
@@ -53,14 +54,10 @@
   width: 22%;
   align-items: center;
 }
-.location1{
-  width: 22%;
-  align-items: center;
-}
 .searchbar-input {
   background: none;
   border: none;
-  padding: 0.5rem 0 0 0;
+  padding: 0.6rem 0 0 0;
   text-align: center;
   cursor: pointer;
   width: 80%;
@@ -76,7 +73,7 @@
 }
 
 .accommodation {
-  width: 22%;
+  width: 27%;
   align-items: center;
 }
 
@@ -99,12 +96,11 @@
 .bar>div:nth-of-type(1)::before {
   background: transparent;
 }
-
 .searchbar-button {
   display: inline-block;
   outline: 0;
   cursor: pointer;
-  padding: 5px 10px;
+  padding: 4px ;
   font-size: 10px;
   line-height: 30px;
   border: 1px solid #0D9813;
@@ -145,6 +141,23 @@
     transform: translateY(-3px);
   }
 }
+.searchBar {
+  background: none;
+  border: none;
+  padding: 0.6rem 0 0 0;
+  text-align: center;
+  cursor: pointer;
+  width: 80%;
+}
+.searchBar:focus {
+  outline: none;
+}
+
+
+
+
+
+
 
 
 

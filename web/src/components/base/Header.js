@@ -8,7 +8,6 @@ import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
 import { useNavigate } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
-import { SearchResultsList } from './SearchResultsList';
 import {Auth} from "aws-amplify";
 
 function Header() {
@@ -98,7 +97,7 @@ function Header() {
                     <div className='App'>
                         <div className='search-bar-container'>
                             <SearchBar setResults={setResults} />
-                            <SearchResultsList results={results} />
+                           
                         </div>
                     </div>
                     <div className='headerRight'>

@@ -1,77 +1,80 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
 import { FaSearch } from 'react-icons/fa';
+import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
 import './SearchBar.css';
 
-
 export const SearchBar = ({ setResults }) => {
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedCity, setSelectedCity] = useState('');
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [accommodation, setAccommodation] = useState('');
+  const [address, setAddress] = useState('');
+
+  const handleChange = (address) => {
+    setAddress(address);
+  };
+
+  const handleSelect = async (address) => {
+    setAddress(address);
+    try {
+      const results = await geocodeByAddress(address);
+      const latLng = await getLatLng(results[0]);
+      console.log('Geocode Success', latLng);
+    } catch (error) {
+      console.error('Error', error);
+    }
+  };
 
   const handleRefreshClick = () => {
     window.location.reload();
   };
 
-  const fetchData = (value, searchType) => {
-    if (!value.trim()) {
-      setResults([]);
-      return;
-    }
-  
-    const partialValue = encodeURIComponent(value);
-    const endpoint = `https://secure.geonames.org/searchJSON?q=${partialValue}&maxRows=40&username=Kacper29`;
-  
-    fetch(endpoint)
-      .then((response) => response.json())
-      .then((data) => {
-        let results = [];
-        if (searchType === 'city') {
-          results = data.geonames.filter((entry) => entry.fcode && entry.fcode.startsWith('PPL') && entry.name.toLowerCase().includes(value.toLowerCase()));
-        } else {
-          results = data.geonames.filter((entry) => entry.fcode && entry.fcode.startsWith('PCLI') && entry.name.toLowerCase().includes(value.toLowerCase()));
-        }
-  
-        setResults(results);
-      })
-      .catch((error) => {
-        console.error('Error fetching data:', error);
-      });
-  };
-  
-  const handleInputChange = (value, stateSetter, searchType) => {
-    stateSetter(value);
-    fetchData(value, searchType);
-  };
-
-  
-
   return (
     <div className="bar">
       <div className="location">
-        <p>Country</p>
+  <p>Location</p>
+  <PlacesAutocomplete
+    value={address}
+    onChange={handleChange}
+    onSelect={handleSelect}
+  >
+    {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+      <div className="autocomplete-container"> 
         <input
-          type="text"
-          className="searchbar-input"
-          placeholder="Choose a country"
-          value={selectedCountry}
-          onChange={(e) => handleInputChange(e.target.value, setSelectedCountry, 'country')}
+          {...getInputProps({
+            placeholder: 'Search Places . . .',
+            className: 'searchBar',
+          })}
         />
+        <div className="suggestions-container"> 
+          {loading ? <div>Loading...</div> : null}
+
+          {suggestions.map((suggestion) => {
+            const style = {
+              backgroundColor: suggestion.active ? '#41b6e6' : '#fff',
+              padding: '18px', 
+              border: '1px solid #ccc', 
+              borderRadius: '4px', 
+              marginBottom: '8px', 
+              cursor: 'pointer', 
+            };
+
+            return (
+              <div
+                {...getSuggestionItemProps(suggestion, { style })}
+                className="suggestion-item" 
+              >
+                {suggestion.description}
+              </div>
+            );
+          })}
+        </div>
       </div>
-      <div className="location1">
-        <p>City</p>
-        <input
-          type="text"
-          className="searchbar-input"
-          placeholder="Choose a city"
-          value={selectedCity}
-          onChange={(e) => handleInputChange(e.target.value, setSelectedCity, 'city')}
-        />
-      </div>
+    )}
+  </PlacesAutocomplete>
+</div>
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()}>
         <p>Check in</p>
         <div>
