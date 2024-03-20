@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import personalDetailsForm from "./personalDetailsForm";
+import {SafeAreaView} from "react-native-safe-area-context";
 
 const OnBoarding1 = ({navigation}) => {
 
@@ -17,7 +18,7 @@ const OnBoarding1 = ({navigation}) => {
   };
 
   return (
-    <View style={styles.container}>
+      <SafeAreaView style={{flex: 1}}>
       <ScrollView>
         <View style={styles.header}>
           <Icon
@@ -73,7 +74,7 @@ const OnBoarding1 = ({navigation}) => {
           <Text style={styles.bookButtonText}>Book Kinderhuissingle 6k</Text>
         </TouchableOpacity>
       </ScrollView>
-    </View>
+      </SafeAreaView>
   );
 };
 

@@ -63,14 +63,7 @@ function HomeScreen({ navigation }) {
           />
         </View>
       </ScrollView>
-      <View style={styles.bookContainer}>
-        <TouchableOpacity style={styles.book} onPress={() => Linking.openURL('https://maps.google.com')}>
-          <View style={styles.textAndIconContainer}>
-            <Text style={styles.bookText2}>Map </Text>
-            <FontAwesomeIcon name="map-o" size={22} color="black" style={styles.iconamenities} />
-          </View>
-        </TouchableOpacity>
-      </View>
+      
     </SafeAreaView>
   );
 }
@@ -145,10 +138,6 @@ const styles = StyleSheet.create({
   iconamenities: {
 
     marginVertical: 1,
-  },
-  textAndIconContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
 });
 
