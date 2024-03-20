@@ -117,6 +117,7 @@ export const listChats = /* GraphQL */ `query ListChats(
       id
       text
       email
+      recipientEmail
       createdAt
       updatedAt
       __typename

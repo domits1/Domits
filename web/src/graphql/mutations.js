@@ -146,6 +146,7 @@ export const createChat = /* GraphQL */ `mutation CreateChat(
     id
     text
     email
+    recipientEmail
   }
 }
 `;

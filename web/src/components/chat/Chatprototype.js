@@ -17,6 +17,7 @@ import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
 import * as queries from "../../graphql/queries";
+import { Auth } from 'aws-amplify';
 
 function showMessages() {
     var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -33,6 +34,34 @@ function showMessages() {
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
     const [newMessage, setNewMessage] = useState('');
+    const [recipientEmail, setRecipientEmail] = useState('');
+    const [messageSent, setMessageSent] = useState(false);
+    const [showDate, setShowDate] = useState(false);
+
+    const signOut = async () => {
+        try {
+            await Auth.signOut(); 
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
+    };
+
+    const signUp = async () => {
+        try {
+         
+            const { user } = await Auth.signUp({
+                username: 'username', 
+                password: 'password', 
+                attributes: {
+                  
+                    email: 'email@example.com'
+                }
+            });
+            console.log("New user signed up:", user);
+        } catch (error) {
+            console.error("Error signing up:", error);
+        }
+    };
 
     useEffect(() => {
         fetchChats();
@@ -48,7 +77,7 @@ const Chat = ({ user }) => {
     };
 
     const sendMessage = async () => {
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || !recipientEmail) return;
         try {
             await API.graphql({
                 query: mutations.createChat,
@@ -56,6 +85,7 @@ const Chat = ({ user }) => {
                     input: {
                         text: newMessage.trim(),
                         email: user.attributes.email,
+                        recipientEmail: recipientEmail.trim(),
                     },
                 },
             });
@@ -64,11 +94,22 @@ const Chat = ({ user }) => {
         } catch (error) {
             console.error("Error sending message:", error);
         }
+        setShowDate(true);
+        setMessageSent(true);
     };
+
+    const currentDate = new Date();
+
+    const options = { month: 'long', day: 'numeric' };
+
+    const formattedDate = currentDate.toLocaleDateString('en-US', options);
+
 
     return (
         <main className="chat">
             <div className="chat__headerWrapper">
+            <button onClick={signOut}>Log Out</button>
+                        <button onClick={signUp}>Create New User</button>
                 <h2 className="chat__heading">Message dashboard</h2>
             </div>
             <section className="chat__container">
@@ -201,35 +242,63 @@ const Chat = ({ user }) => {
                             </ul>
                         </aside>
                         <article className="chat__chatContainer">
+                        {messageSent && (
+                <p className="chat__date">
+                    <span>March 19</span>
+                </p>
+            )}
                         <div className="chat__messages">
-    {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat) => (
-        <div
-            key={chat.id}
-            className={`chat__dialog chat__dialog--${
-                chat.email === user.attributes.email ? "user" : "guest"
-            }`}
-        >
-            {chat.text}
-            <span>{chat.email.split("@")[0]}</span>
-        </div>
-    ))}
-</div>
-
-                            <input
-                                className="chat__input"
-                                type="text"
-                                id="search"
-                                name="search"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyUp={(e) => {
-                                    if (e.key === "Enter") {
-                                        sendMessage();
-                                    }
-                                }}
-                            />
+                        {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat) => (
+                            <div
+                                key={chat.id}
+                                className={`chat__dialog chat__dialog--${
+                                    chat.email === user.attributes.email ? "user" : "guest"
+                                }`}
+                            >
+                                {chat.text}
+                                <span>{chat.email.split("@")[0]}</span>
+                            </div>
+                        ))}
+                    </div>
+                    <input
+                        className="chat__input"
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type your message..."
+                        onKeyUp={(e) => {
+                            if (e.key === "Enter") {
+                                sendMessage();
+                            }
+                        }}
+                    />
+                    <input
+                        className="chat__recipientInput"
+                        type="email"
+                        value={recipientEmail}
+                        onChange={(e) => setRecipientEmail(e.target.value)}
+                        placeholder="Recipient's email..."
+                    />
+                                        <button onClick={sendMessage}>Send</button>
+                            
                         </article>
+                        
                     </article>
+                    <nav className="chat__nav">
+                    <ul className="chat__controls">
+                        <li className="chat__control chat__control--icon">
+                            <img className="chat__icon" src={heart}/>
+                        </li>
+                        <li className="chat__control chat__control--icon">
+                            <img className="chat__icon" src={trash}/>
+                        </li>
+                    </ul>
+                    <div className="chat__buttonWrapper">
+                    <button className="chat__button chat__button--file">add files</button>
+                    <button className="chat__button chat__button--review">Send review link</button>
+                        
+                    </div>
+                    </nav>
                 </article>
             </section>
         </main>

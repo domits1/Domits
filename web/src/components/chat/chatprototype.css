@@ -325,6 +325,19 @@ p{
     background-position: 98% center;
 }
 
+.chat__date {
+    width: 70%; 
+    text-align: center; 
+    border-bottom: 1.5px solid #a1a1a1; 
+    line-height: 0.1em;
+    margin: 10px 0 20px; 
+ } 
+ 
+ .chat__date span { 
+     background:#fff; 
+     padding:0 20px; 
+ }
+
 /* input[type="text"]{
     width: 95%;
     height: 50px;
