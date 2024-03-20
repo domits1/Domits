@@ -9,9 +9,9 @@ function checkoutTest() {
     useEffect(() => {
         async function fetchData() {
             try {
-                const response = await axios.get('https://kcmfezurd1.execute-api.eu-north-1.amazonaws.com/dev');
+                const response = await axios.get('https://kcmfezurd1.execute-api.eu-north-1.amazonaws.com/dev/StripeID');
                 console.log('Response:', response.data); // Log the response to see its structure
-                setPayments(response.data.body.Items);
+                setPayments(response.data);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching payments:', error);
