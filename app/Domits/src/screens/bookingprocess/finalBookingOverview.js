@@ -7,75 +7,81 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const PaymentPage = ({navigation}) => {
-
   const handleButton = () => {
     navigation.navigate('simulateStripe');
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}>
-      <Icon
-        name="chevron-back-outline"
-        size={30}
-        style={styles.backIcon}
-        onPress={() => navigation.goBack()}
-      />
-      <Text style={styles.paymentStatus}>Payment in process</Text>
-      <Text style={styles.paymentInstruction}>Choose your payment method.</Text>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={styles.contentContainer}>
+        <Icon
+          name="chevron-back-outline"
+          size={30}
+          style={styles.backIcon}
+          onPress={() => navigation.goBack()}
+        />
+        <Text style={styles.paymentStatus}>Payment in process</Text>
+        <Text style={styles.paymentInstruction}>
+          Choose your payment method.
+        </Text>
 
-      <View style={styles.priceDetailSection}>
-        <Text style={styles.priceDetailTitle}>Price details</Text>
-        <Text style={styles.priceDetailText}>2 adults - 2 kids | 3 nights</Text>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceItemLabel}>$140 night x 3</Text>
-          <Text style={styles.priceItemValue}>$420.00</Text>
+        <View style={styles.priceDetailSection}>
+          <Text style={styles.priceDetailTitle}>Price details</Text>
+          <Text style={styles.priceDetailText}>
+            2 adults - 2 kids | 3 nights
+          </Text>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceItemLabel}>$140 night x 3</Text>
+            <Text style={styles.priceItemValue}>$420.00</Text>
+          </View>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceItemLabel}>Cleaning fee</Text>
+            <Text style={styles.priceItemValue}>$50.00</Text>
+          </View>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceItemLabel}>Cat tax</Text>
+            <Text style={styles.priceItemValue}>$17.50</Text>
+          </View>
+          <View style={styles.priceItem}>
+            <Text style={styles.priceItemLabel}>Domits service fee</Text>
+            <Text style={styles.priceItemValue}>$39.50</Text>
+          </View>
+          <View style={styles.totalLine} />
+          <View style={styles.totalContainer}>
+            <Text style={styles.totalLabel}>Total (DOL)</Text>
+            <Text style={styles.totalValue}>$527.00</Text>
+          </View>
         </View>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceItemLabel}>Cleaning fee</Text>
-          <Text style={styles.priceItemValue}>$50.00</Text>
-        </View>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceItemLabel}>Cat tax</Text>
-          <Text style={styles.priceItemValue}>$17.50</Text>
-        </View>
-        <View style={styles.priceItem}>
-          <Text style={styles.priceItemLabel}>Domits service fee</Text>
-          <Text style={styles.priceItemValue}>$39.50</Text>
-        </View>
-        <View style={styles.totalLine} />
-        <View style={styles.totalContainer}>
-          <Text style={styles.totalLabel}>Total (DOL)</Text>
-          <Text style={styles.totalValue}>$527.00</Text>
-        </View>
-      </View>
 
-      <TouchableOpacity style={styles.moreInfoButton}>
-        <Text style={styles.moreInfoText}>More information</Text>
-      </TouchableOpacity>
-
-      <View style={styles.paymentMethodSection}>
-        <Text style={styles.paymentMethodText}>Mastercard</Text>
-        <TouchableOpacity style={styles.changeButton}>
-          <Text style={styles.changeText}>Change</Text>
-          <Icon
-            name="chevron-forward-outline"
-            size={20}
-            style={styles.changeIcon}
-          />
+        <TouchableOpacity style={styles.moreInfoButton}>
+          <Text style={styles.moreInfoText}>More information</Text>
         </TouchableOpacity>
-      </View>
 
-      <TouchableOpacity onPress={handleButton} style={styles.proceedButton}>
-        <Text style={styles.proceedButtonText}>Proceed to pay</Text>
-      </TouchableOpacity>
-      <Text style={styles.stripeText}>
-        Secure payment gateway powered by Stripe.com
-      </Text>
-    </ScrollView>
+        <View style={styles.paymentMethodSection}>
+          <Text style={styles.paymentMethodText}>Mastercard</Text>
+          <TouchableOpacity style={styles.changeButton}>
+            <Text style={styles.changeText}>Change</Text>
+            <Icon
+              name="chevron-forward-outline"
+              size={20}
+              style={styles.changeIcon}
+            />
+          </TouchableOpacity>
+        </View>
+
+        <TouchableOpacity onPress={handleButton} style={styles.proceedButton}>
+          <Text style={styles.proceedButtonText}>Proceed to pay</Text>
+        </TouchableOpacity>
+        <Text style={styles.stripeText}>
+          Secure payment gateway powered by Stripe.com
+        </Text>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

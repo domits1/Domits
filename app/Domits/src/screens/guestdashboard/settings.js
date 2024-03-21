@@ -8,45 +8,48 @@ import {
   Switch,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {SafeAreaView} from "react-native-safe-area-context";
 
 const Settings = () => {
   const [highContrast, setHighContrast] = useState(false);
   const [showPaymentInfo, setShowPaymentInfo] = useState(true);
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.header}>Settings</Text>
-      <Text style={styles.subHeader}>Change app settings</Text>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <Text style={styles.header}>Settings</Text>
+        <Text style={styles.subHeader}>Change app settings</Text>
 
-      <TouchableOpacity style={styles.listItem}>
-        <Text style={styles.listItemText}>App language</Text>
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.listItem}>
-        <Text style={styles.listItemText}>Search history</Text>
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-      <View style={styles.switchItem}>
-        <Text style={styles.listItemText}>High contrast</Text>
-        <Switch
-          trackColor={{false: '#767577', true: '#81b0ff'}}
-          thumbColor={highContrast ? '#f5dd4b' : '#f4f3f4'}
-          ios_backgroundColor="#3e3e3e"
-          onValueChange={setHighContrast}
-          value={highContrast}
-        />
-      </View>
-      <View style={styles.switchItem}>
-        <Text style={styles.listItemText}>Show payment info</Text>
-        <Switch
-          trackColor={{false: '#767577', true: '#81b0ff'}}
-          thumbColor={showPaymentInfo ? '#f5dd4b' : '#f4f3f4'}
-          ios_backgroundColor="#3e3e3e"
-          onValueChange={setShowPaymentInfo}
-          value={showPaymentInfo}
-        />
-      </View>
-    </ScrollView>
+        <TouchableOpacity style={styles.listItem}>
+          <Text style={styles.listItemText}>App language</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.listItem}>
+          <Text style={styles.listItemText}>Search history</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <View style={styles.switchItem}>
+          <Text style={styles.listItemText}>High contrast</Text>
+          <Switch
+            trackColor={{false: '#767577', true: '#81b0ff'}}
+            thumbColor={highContrast ? '#f5dd4b' : '#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={setHighContrast}
+            value={highContrast}
+          />
+        </View>
+        <View style={styles.switchItem}>
+          <Text style={styles.listItemText}>Show payment info</Text>
+          <Switch
+            trackColor={{false: '#767577', true: '#81b0ff'}}
+            thumbColor={showPaymentInfo ? '#f5dd4b' : '#f4f3f4'}
+            ios_backgroundColor="#3e3e3e"
+            onValueChange={setShowPaymentInfo}
+            value={showPaymentInfo}
+          />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 

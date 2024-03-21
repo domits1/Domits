@@ -8,6 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {SafeAreaView} from "react-native-safe-area-context";
 
 const BookingScreen = ({navigation}) => {
 
@@ -15,7 +16,8 @@ const BookingScreen = ({navigation}) => {
     navigation.navigate('finalBookingOverview');
   };
   return (
-    <View style={styles.container}>
+
+      <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.scrollView}>
         <Text style={styles.title}>Kinderhuissingel 6k</Text>
         <Text style={styles.description}>
@@ -73,7 +75,7 @@ const BookingScreen = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-    </View>
+      </SafeAreaView>
   );
 };
 

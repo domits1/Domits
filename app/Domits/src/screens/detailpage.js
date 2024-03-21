@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, } from 'react-native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
@@ -36,60 +35,59 @@ const Detailpage = ({ navigation }) => {
     setCurrentPage(page);
   };
 
-  return (
-    
-    <SafeAreaView style={{ flex: 1 }}>
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleHomeScreenPress}>
-          <Ionicons
-            name="chevron-back-outline"
-            size={24}
-            color="black"
-            style={styles.icon}
-          />
-        </TouchableOpacity>
+  // Dynamically calculate image width based on screen width
+  const imageWidth = Dimensions.get('window').width;
 
-        <View style={styles.iconContainer}>
-        <TouchableOpacity onPress={handleMessagesPress}>
-          <FeatherIcon
-            name="message-square"
-            size={24}
-            color="black"
-            style={styles.icon1}
-          />
-        </TouchableOpacity>
-          
-        <TouchableOpacity onPress={handleSettingsPress}>
-          <FeatherIcon
-            name="settings"
-            size={24}
-            color="black"
-            style={styles.icon2}
-          />
-        </TouchableOpacity>
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleHomeScreenPress}>
+            <Ionicons
+              name="chevron-back-outline"
+              size={24}
+              color="black"
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+          <View style={styles.iconContainer}>
+            <TouchableOpacity onPress={handleMessagesPress}>
+              <FeatherIcon
+                name="message-square"
+                size={24}
+                color="black"
+                style={styles.icon1}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSettingsPress}>
+              <FeatherIcon
+                name="settings"
+                size={24}
+                color="black"
+                style={styles.icon2}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-      
-    
-      <ScrollView style={{ flex: 1 }}>
-        <ScrollView
-          horizontal={true}
-          contentContainerStyle={styles.imageContainer}
-          pagingEnabled={true}
-          onScroll={handleScroll}
-          scrollEventThrottle={100}
-        >
-          {images.map((image, index) => (
-            <View key={index} style={styles.imageWrapper}>
-              <Image source={image} style={styles.image} />
-              
-            </View>
-          ))}
-        </ScrollView>
-        <View style={styles.counterContainer}>
-                <Text style={styles.counterText}>{currentPage + 1}/{images.length}</Text>
+
+        <ScrollView style={{ flex: 1 }}>
+          <ScrollView
+            horizontal={true}
+            contentContainerStyle={styles.imageContainer}
+            pagingEnabled={true}
+            onScroll={handleScroll}
+            scrollEventThrottle={100}
+          >
+            {images.map((image, index) => (
+              <View key={index} style={styles.imageWrapper}>
+                <Image source={image} style={[styles.image, { width: imageWidth }]} />
               </View>
+            ))}
+          </ScrollView>
+          <View style={styles.counterContainer}>
+            <Text style={styles.counterText}>{currentPage + 1}/{images.length}</Text>
+          </View>
+
 
         <View>
           <Text style={styles.text}>
@@ -304,19 +302,17 @@ const styles = StyleSheet.create({
   },
 //padding for so that image wont touch phone wall
   imageContainer: {
-    padding: 0,
     flexDirection: 'row',
   },
   // marginRight 32 for more spacing between pics
   imageWrapper: {
     position: 'relative',
-    marginRight: 0,
+    
   },
   //resolution 360 to bring back old slide
   image: {
-    width: 393,
     height: 250,
-    borderRadius: 1,
+    
   },
   borderContainer: {
     flexDirection: 'row',

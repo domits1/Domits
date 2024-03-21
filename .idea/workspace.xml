@@ -4,20 +4,8 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="Merge conflict and navigation for guest dashboard">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/android/app/build.gradle" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/android/app/build.gradle" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/header/SearchBarApp.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/header/SearchBarApp.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/header/header.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/header/header.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/homeScreen.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/components/BottomTabNavigator.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/components/BottomTabNavigator.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/paymentMethods.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/paymentMethods.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/reviews.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/reviews.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/settings.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/settings.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -56,34 +44,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;AppHomme&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Kacpe/OneDrive/Documenten/GitHub&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;AndroidSdkUpdater&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\hamza\\IdeaProjects\\Domits2\\web\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "AppHomme",
+    "last_opened_file_path": "C:/Users/hamza/IdeaProjects/Domits2",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "Project",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "settings.editor.selected.configurable": "AndroidSdkUpdater",
+    "ts.external.directory.path": "C:\\Users\\hamza\\IdeaProjects\\Domits2\\app\\Domits\\node_modules\\typescript\\lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\giann\projects\Domits" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\hamza\IdeaProjects\Domits2\app\Domits\src\screens\bookingprocess" />
       <recent name="C:\Users\hamza\IdeaProjects\Domits2\app\Domits\src\screens\guestdashboard" />
     </key>
   </component>
@@ -115,6 +104,14 @@
       <workItem from="1709132432561" duration="4321000" />
       <workItem from="1709203654689" duration="3464000" />
       <workItem from="1709814757651" duration="4117000" />
+      <workItem from="1710343601278" duration="2775000" />
+      <workItem from="1710363931664" duration="641000" />
+      <workItem from="1710430451764" duration="619000" />
+      <workItem from="1710500736510" duration="11345000" />
+      <workItem from="1710592498079" duration="11000" />
+      <workItem from="1710761764892" duration="2751000" />
+      <workItem from="1710842102273" duration="6001000" />
+      <workItem from="1710858244143" duration="1721000" />
     </task>
     <task id="LOCAL-00001" summary="android app development">
       <created>1709138237032</created>
@@ -130,7 +127,42 @@
       <option name="project" value="LOCAL" />
       <updated>1709821476937</updated>
     </task>
-    <option name="localTasksCounter" value="3" />
+    <task id="LOCAL-00003" summary="Issue #235">
+      <created>1710173328712</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1710173328712</updated>
+    </task>
+    <task id="LOCAL-00004" summary="personalDetailsForm.js">
+      <created>1710345085443</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1710345085443</updated>
+    </task>
+    <task id="LOCAL-00005" summary="bookingProcess is done, last page is still getting updated.">
+      <created>1710514988552</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1710514988552</updated>
+    </task>
+    <task id="LOCAL-00006" summary="build.gradle has correct build and safeareaview implemented in guesttdashboard">
+      <created>1710853475056</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1710853475056</updated>
+    </task>
+    <task id="LOCAL-00007" summary="SafeAreaView toegepast in hostDashboard">
+      <created>1710858328718</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1710858328718</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -155,18 +187,11 @@
   <component name="VcsManagerConfiguration">
     <MESSAGE value="android app development" />
     <MESSAGE value="Merge conflict and navigation for guest dashboard" />
-    <option name="LAST_COMMIT_MESSAGE" value="Merge conflict and navigation for guest dashboard" />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/app/Domits/src/screens/guestdashboard/guestDashboard.js</url>
-          <line>18</line>
-          <properties lambdaOrdinal="-1" />
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
+    <MESSAGE value="Issue #235" />
+    <MESSAGE value="personalDetailsForm.js" />
+    <MESSAGE value="bookingProcess is done, last page is still getting updated." />
+    <MESSAGE value="build.gradle has correct build and safeareaview implemented in guesttdashboard" />
+    <MESSAGE value="SafeAreaView toegepast in hostDashboard" />
+    <option name="LAST_COMMIT_MESSAGE" value="SafeAreaView toegepast in hostDashboard" />
   </component>
 </project>
