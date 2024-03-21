@@ -126,14 +126,14 @@
   animation: bounce 0.7s ease 1;
 }
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
+  0%, 20%, 60%, 80%, 100% {
     transform: translateY(0);
   }
   40% {
-    transform: translateY(-5px);
+    transform: translateY(-2px);
   }
   60% {
-    transform: translateY(-3px);
+    transform: translateY(1px);
   }
 }
 .searchBar {

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt, FaMapPin } from 'react-icons/fa';
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -23,10 +23,10 @@ export const SearchBar = ({ setResults }) => {
       const results = await geocodeByAddress(address);
       const latLng = await getLatLng(results[0]);
       console.log('Geocode Success', latLng);
-      setShowResults(true); 
+      setShowResults(true);
     } catch (error) {
       console.error('Error', error);
-      setShowResults(false); 
+      setShowResults(false);
     }
   };
 
@@ -131,12 +131,12 @@ export const SearchBar = ({ setResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            { value: 'Hotel', label: 'Hotel' },
-            { value: 'Apartment', label: 'Apartment' },
-            { value: 'Guesthouse', label: 'Guesthouse' },
-            { value: 'Villa', label: 'Villa' },
-            { value: 'Resort', label: 'Resort' },
-            { value: 'Hostel', label: 'Hostel' },
+            { value: 'Hotel', label: <><FaMapPin /> Hotel</> }, 
+            { value: 'Apartment', label: <><FaMapPin /> Apartment</> }, 
+            { value: 'Guesthouse', label: <><FaMapPin /> Guesthouse</> },
+            { value: 'Villa', label: <><FaMapPin /> Villa</> }, 
+            { value: 'Resort', label: <><FaMapPin /> Resort</> }, 
+            { value: 'Hostel', label: <><FaMapPin /> Hostel</> }, 
           ]}
           placeholder="Type of accommodation"
           isSearchable={true}
@@ -157,6 +157,16 @@ export const SearchBar = ({ setResults }) => {
               ...provided,
               fontWeight: state.isSelected ? 'bold' : 'normal',
             }),
+            menu: (provided) => ({
+              ...provided,
+              backgroundColor: '#ffff',
+              borderRadius: '8px',
+              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+              padding: '8px',
+              width: '200px', 
+              maxHeight: '300px', 
+              overflowY: 'auto', 
+            }),
           }}
         />
       </div>
@@ -164,7 +174,7 @@ export const SearchBar = ({ setResults }) => {
         {showResults}
         <FaSearch
           style={{ marginRight: '2px', cursor: 'pointer' }}
-          
+
         />
       </button>
     </div>
