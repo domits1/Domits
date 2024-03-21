@@ -24,7 +24,7 @@ const Accommodations = ({ searchQuery }) => {
                 throw new Error('Failed to fetch data');
             }
             const responseData = await response.json();
-            console.log(responseData);
+            // console.log(responseData);
 
             const img = [
                 accom_chalet, accoimg1, accom_luxebamboovilla, accom_luxevilla, accom_tinyhouse_flowers, 
@@ -40,7 +40,7 @@ const Accommodations = ({ searchQuery }) => {
                 id: item['#PK'],
             }));
             setAccolist(formattedData);
-            console.log("Image URLs:", formattedData.map(item => item.image));
+            // console.log("Image URLs:", formattedData.map(item => item.image));
         } catch (error) {
             console.error('Error fetching or processing data:', error);
         }
@@ -51,7 +51,7 @@ const Accommodations = ({ searchQuery }) => {
         accommodation.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    console.log("Filtered accommodations:", filteredAccommodations);
+    // console.log("Filtered accommodations:", filteredAccommodations);
 
     return (
         <div id='card-visibility'>
