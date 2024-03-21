@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from "react";
 import accom_chalet from '../../images/accom_chalet.png';
+import accoimg1 from '../../images/accoimg1.png';
+import accom_luxebamboovilla from '../../images/accom_luxebamboovilla.png';
+import accom_luxevilla from '../../images/accom_luxevilla.png';
+import accom_tinyhouse_flowers from '../../images/accom_tinyhouse_flowers.png';
+import accom_treehouse from '../../images/accom_treehouse.png';
+import accom_villaneth from '../../images/accom_villaneth.png';
+import accom_yurt from '../../images/accom_yurt.png';
+import accommodationtestpic1 from '../../images/accommodationtestpic1.png';
 import './Accommodations.css';
 
 const Accommodations = ({ searchQuery }) => {
@@ -17,9 +25,14 @@ const Accommodations = ({ searchQuery }) => {
             }
             const responseData = await response.json();
             console.log(responseData);
-            const formattedData = responseData.map(item => ({
+
+            const img = [
+                accom_chalet, accoimg1, accom_luxebamboovilla, accom_luxevilla, accom_tinyhouse_flowers, 
+                accom_treehouse,accom_villaneth, accom_yurt, accommodationtestpic1
+            ];
+            const formattedData = responseData.map((item, index) => ({ // Use index of map to access img array
                 // image: `https://amplify-domits-develop-123953-deployment.s3.eu-north-1.amazonaws.com/photos/${item.PhotoUrls}`,
-                image: accom_chalet,
+                image: img[index % img.length],
                 title: item.Title,
                 details: item.description,
                 size: `${item.Size}m²`,
@@ -46,7 +59,7 @@ const Accommodations = ({ searchQuery }) => {
                 <div className="accocard" key={index}>
                     <img src={accommodation.image} alt="Product Image" />
                     <div className="accocard-content">
-                        <div className="accocard-title">{accommodation.Title}</div>
+                        <div className="accocard-title">{accommodation.title}</div>
                         <div className="accocard-price">{accommodation.price}</div>
                         <div className="accocard-detail">{accommodation.details}</div>
                         <div className="accocard-size">{accommodation.size}</div>
@@ -55,7 +68,6 @@ const Accommodations = ({ searchQuery }) => {
             ))}
         </div>
     );
-    
 }
 
 export default Accommodations;
