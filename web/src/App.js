@@ -43,7 +43,6 @@ import Chatprototype from "./components/chat/Chatprototype.js";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
-import CheckoutTest from "./components/checkout/checkoutTest";
 
 export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
 
@@ -91,7 +90,6 @@ function App() {
                             <Route path="/contact" element={<Contact />} />
                             <Route path="/travelinnovation" element={<Travelinnovation />} />
                             <Route path="/landing" element={<Landing />} />
-                            <Route path="/checkouttest" element={<CheckoutTest />} />
 
                             {/* Authentication & User Account Management */}
                             <Route path="/login" element={<Login />} />
