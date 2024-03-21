@@ -163,9 +163,9 @@ export const SearchBar = ({ setResults }) => {
               borderRadius: '8px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
               padding: '8px',
-              width: '200px', // Pas de breedte van het menu aan
-              maxHeight: '300px', // Pas de maximale hoogte van het menu aan
-              overflowY: 'auto', // Voeg verticale scroll toe indien nodig
+              width: '200px', 
+              maxHeight: '300px', 
+              overflowY: 'auto', 
             }),
           }}
         />
