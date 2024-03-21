@@ -13,7 +13,7 @@ function Landing() {
       
     return (
         <div className="container">
-            <h1>Over 4.000+ people are hosting in Domits</h1>
+            <h1>Over 100+ people are hosting in Domits</h1>
             <p className="">What does it look like to host on Domits? We'll show you!</p>
             <div className="calculatorBlock">
                 <Page />

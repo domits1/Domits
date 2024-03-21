@@ -76,6 +76,10 @@ ul {
   margin: 0;
 }
 
+p {
+  margin: 0;
+}
+
 li a {
   color: var(--colors-font-interactive, #0A760F);
   text-decoration: none;
@@ -116,12 +120,6 @@ li a {
   border-radius: 5px;
   height: 100%;
   width: 100%;
-}
-
-
-/* Alles voor het guestdashboard */
-.guestdashboard {
-  padding-left: 60px; /* Adjust the value as needed */
 }
 
 .toptext {
@@ -376,5 +374,5 @@ li a {
 }
 
 * {
-  font-family: "KanitRegular";
+  font-family: Kanit, sans-serif;
 }

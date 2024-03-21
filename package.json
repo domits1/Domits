@@ -1,8 +1,16 @@
 {
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.5.1",
+    "@fortawesome/free-solid-svg-icons": "^6.5.1",
     "@fortawesome/react-fontawesome": "^0.2.0",
+    "@fortawesome/react-native-fontawesome": "^0.3.0",
+    "@react-native-community/blur": "^4.4.0",
+    "@stripe/react-stripe-js": "^2.5.1",
+    "@stripe/stripe-js": "^3.0.8",
     "lodash": "^4.17.21",
-    "react-icons": "^5.0.1"
+    "react-icons": "^5.0.1",
+    "react-native-elements": "^3.4.3",
+    "react-native-paper": "^5.12.3",
+    "react-native-vector-icons": "^10.0.3"
   }
 }

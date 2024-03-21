@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import './base.css';
+import React, {useEffect, useState} from 'react';
+import './base.css'
 import logo from "../../logo.svg";
 import nineDots from '../../images/dots-grid.svg';
 import profile from '../../images/profile-icon.svg';
 import arrowDown from '../../images/arrow-down-icon.svg';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { Auth } from "aws-amplify";
-
+import { useNavigate } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
 import { SearchResultsList } from './SearchResultsList';
+import {Auth} from "aws-amplify";
 
 function Header() {
     const navigate = useNavigate();
-    const location = useLocation();
 
     const navigateToLogin = () => {
         navigate('/login');
@@ -45,31 +43,39 @@ function Header() {
     };
 
     const [dropdownVisible, setDropdownVisible] = useState(false);
-    const [isLoggedIn, setIsLoggedIn] = useState(false); // State to manage authentication status
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [group, setGroup] = useState(''); // State to store user group
+    const [username, setUsername] = useState(''); // State to store username
     const [results, setResults] = useState([]);
 
     useEffect(() => {
-        checkAuthentication(); // Check authentication status on component mount
+        checkAuthentication();
     }, []);
 
     useEffect(() => {
-        // Close dropdown when location changes
         setDropdownVisible(false);
     }, [location]);
 
     const checkAuthentication = async () => {
         try {
-            await Auth.currentSession();
-            setIsLoggedIn(true); // Update isLoggedIn state if user is authenticated
+            const session = await Auth.currentSession();
+            const user = await Auth.currentAuthenticatedUser();
+            setIsLoggedIn(true);
+            const userAttributes = user.attributes;
+            const userGroup = userAttributes['custom:group'];
+            setGroup(userGroup); // Set the group state based on user's custom:group attribute
+            const userName = userAttributes['custom:username'];
+            setUsername(userName); // Set the username state based on user's custom:username attribute
         } catch (error) {
             setIsLoggedIn(false);
+            console.error('Error logging in:', error);
         }
     };
 
     const handleLogout = async () => {
         try {
             await Auth.signOut();
-            setIsLoggedIn(false); // Update isLoggedIn state after logout
+            setIsLoggedIn(false);
             console.log('User logged out successfully');
         } catch (error) {
             console.error('Error logging out:', error);
@@ -86,13 +92,11 @@ function Header() {
                 <nav className="header-nav">
                     <div className="logo">
                         <a href="/">
-                            <img src={logo} width={50} alt="Logo"/>
+                            <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>
                     <div className='App'>
                         <div className='search-bar-container'>
-                            {/* Zoekbalk en zoekresultaten  */}
-                            {/* Disclaimer dit stuk hoort bij drie andere files die beginnen met Search :)  */}
                             <SearchBar setResults={setResults} />
                             <SearchResultsList results={results} />
                         </div>
@@ -102,7 +106,7 @@ function Header() {
                             Become a host
                         </button>
                         <button className="headerButtons" onClick={navigateToNinedots}>
-                            <img src={nineDots} alt={nineDots}/>
+                            <img src={nineDots} alt={nineDots} />
                         </button>
                         <div className="personalMenuDropdown">
                             <button className="personalMenu" onClick={toggleDropdown}>
@@ -111,15 +115,16 @@ function Header() {
                             </button>
                             <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                 {isLoggedIn ? (
-                                     <>
-                                         <button onClick={navigateToProfile} className="dropdownLoginButton">Profile</button>
-                                         <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
-                                         <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
-                                         <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
-                                         <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
-                                         <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
-                                             src={logoutArrow} alt="Logout Arrow"/></button>
-                                     </>
+                                    <>
+                                        <div className="helloUsername">Hello {username}!</div>
+                                        <button onClick={navigateToProfile} className="dropdownLoginButton">Profile</button>
+                                        <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
+                                        <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
+                                        <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
+                                        <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
+                                        <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
+                                            src={logoutArrow} alt="Logout Arrow"/></button>
+                                    </>
                                 ) : (
                                     <>
                                         <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img

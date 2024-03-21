@@ -14,7 +14,7 @@ const Login = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
@@ -28,7 +28,6 @@ const Login = () => {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
             setErrorMessage('');
-            navigate("/");
         } catch (error) {
             console.error('Error logging in:', error);
             setErrorMessage('Invalid username or password. Please try again.');
@@ -44,7 +43,7 @@ const Login = () => {
         }
     };
 
-    const handleSubmit = async (e: FormEvent) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         await handleSignIn();
     };
@@ -75,7 +74,7 @@ const Login = () => {
                     <div className="loginTitle">Log in or Sign Up</div>
                     <div className="loginForm">
                         <form onSubmit={handleSubmit}>
-                            <label>Username:</label>
+                            <label>Email:</label>
                             <br />
                             <input
                                 className="loginInput"
@@ -122,6 +121,7 @@ const Login = () => {
                         <div className="noAccountText">
                             No account yet? Register for free!
                         </div>
+                    
                         <button
                             onClick={handleRegisterClick}
                             className="registerButtonLogin"

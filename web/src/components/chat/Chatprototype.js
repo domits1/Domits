@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import "./chatprototype.css";
 import img1 from './image22.png';
 import heart from './Icon.png';
@@ -11,8 +12,8 @@ import django from './django.png';
 import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
+
 import { useNavigate } from 'react-router-dom';
-import React, { useState, useEffect } from "react";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
@@ -69,12 +70,31 @@ const Chat = ({ user }) => {
 
     const fetchChats = async () => {
         try {
-            const allChats = await API.graphql(graphqlOperation(queries.listChats));
-            setChats(allChats.data.listChats.items);
+            const sentMessages = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                        email: { eq: user.attributes.email },
+                        recipientEmail: { eq: recipientEmail }
+                    }
+                }
+            });
+            const receivedMessages = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                        email: { eq: recipientEmail },
+                        recipientEmail: { eq: user.attributes.email }
+                    }
+                }
+            });
+            const allChats = [...sentMessages.data.listChats.items, ...receivedMessages.data.listChats.items];
+            setChats(allChats);
         } catch (error) {
             console.error("Error fetching chats:", error);
         }
     };
+    
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !recipientEmail) return;
