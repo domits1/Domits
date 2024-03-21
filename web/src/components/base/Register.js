@@ -62,6 +62,8 @@ const Register = () => {
             // Store the email and password in the AuthContext
             setAuthCredentials(userData.email, userData.password);
 
+            sessionStorage.setItem('userEmail', userData.email);
+
             navigate('/confirm-email', {
                 state: { email: userData.email, username: data.user.getUsername() },
             });
@@ -73,31 +75,6 @@ const Register = () => {
             }
         }
     };
-
-    async function testFunc() {
-        const options = {
-            userEmail: 'dokkanjp3838@gmail.com',
-            userId: Number(1)
-        };
-        try {
-            const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
-                method: 'POST',
-                body: JSON.stringify(options),
-                headers: {
-                    'Content-type': 'application/json; charset=UTF-8',
-                },
-            });
-    
-            if (!result.ok) {
-                throw new Error(`HTTP error! Status: ${result.status}`);
-            }
-    
-            const data = await result.json();
-            window.location.replace(data.url);
-        } catch (error) {
-            console.log(error);
-        }
-    }
 
     const handleSignOut = async () => {
         try {
