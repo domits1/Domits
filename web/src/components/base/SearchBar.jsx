@@ -34,47 +34,47 @@ export const SearchBar = ({ setResults }) => {
   return (
     <div className="bar">
       <div className="location">
-  <p>Location</p>
-  <PlacesAutocomplete
-    value={address}
-    onChange={handleChange}
-    onSelect={handleSelect}
-  >
-    {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-      <div className="autocomplete-container"> 
-        <input
-          {...getInputProps({
-            placeholder: 'Search Places . . .',
-            className: 'searchBar',
-          })}
-        />
-        <div className="suggestions-container"> 
-          {loading ? <div>Loading...</div> : null}
+        <p>Location</p>
+        <PlacesAutocomplete
+          value={address}
+          onChange={handleChange}
+          onSelect={handleSelect}
+        >
+          {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+            <div className="autocomplete-container">
+              <input
+                {...getInputProps({
+                  placeholder: 'Search Places . . .',
+                  className: 'searchBar',
+                })}
+              />
+              <div className="suggestions-container">
+                {loading ? <div>Loading...</div> : null}
 
-          {suggestions.map((suggestion) => {
-            const style = {
-              backgroundColor: suggestion.active ? '#41b6e6' : '#fff',
-              padding: '18px', 
-              border: '1px solid #ccc', 
-              borderRadius: '4px', 
-              marginBottom: '8px', 
-              cursor: 'pointer', 
-            };
+                {suggestions.map((suggestion) => {
+                  const style = {
+                    backgroundColor: suggestion.active ? '#41b6e6' : '#fff',
+                    padding: '18px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    marginBottom: '8px',
+                    cursor: 'pointer',
+                  };
 
-            return (
-              <div
-                {...getSuggestionItemProps(suggestion, { style })}
-                className="suggestion-item" 
-              >
-                {suggestion.description}
+                  return (
+                    <div
+                      {...getSuggestionItemProps(suggestion, { style })}
+                      className="suggestion-item"
+                    >
+                      {suggestion.description}
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          )}
+        </PlacesAutocomplete>
       </div>
-    )}
-  </PlacesAutocomplete>
-</div>
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()}>
         <p>Check in</p>
         <div>
