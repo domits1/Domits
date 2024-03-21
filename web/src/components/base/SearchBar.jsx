@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaSearch } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -11,6 +11,7 @@ export const SearchBar = ({ setResults }) => {
   const [checkOut, setCheckOut] = useState(null);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
+  const [showResults, setShowResults] = useState(false);
 
   const handleChange = (address) => {
     setAddress(address);
@@ -22,8 +23,10 @@ export const SearchBar = ({ setResults }) => {
       const results = await geocodeByAddress(address);
       const latLng = await getLatLng(results[0]);
       console.log('Geocode Success', latLng);
+      setShowResults(true); 
     } catch (error) {
       console.error('Error', error);
+      setShowResults(false); 
     }
   };
 
@@ -34,47 +37,68 @@ export const SearchBar = ({ setResults }) => {
   return (
     <div className="bar">
       <div className="location">
-  <p>Location</p>
-  <PlacesAutocomplete
-    value={address}
-    onChange={handleChange}
-    onSelect={handleSelect}
-  >
-    {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-      <div className="autocomplete-container"> 
-        <input
-          {...getInputProps({
-            placeholder: 'Search Places . . .',
-            className: 'searchBar',
-          })}
-        />
-        <div className="suggestions-container"> 
-          {loading ? <div>Loading...</div> : null}
+        <p>Location</p>
+        <PlacesAutocomplete
+          value={address}
+          onChange={handleChange}
+          onSelect={handleSelect}
+          searchOptions={{ language: 'en' }}
+        >
+          {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+            <div className="autocomplete-container">
+              <input
+                {...getInputProps({
+                  placeholder: 'Search Places . . .',
+                  className: 'searchBar',
+                })}
+              />
+              <div className="suggestions-container" style={{ marginTop: '25px', fontWeight: 'bold', }}>
+                {loading ? <div>Loading...</div> : null}
 
-          {suggestions.map((suggestion) => {
-            const style = {
-              backgroundColor: suggestion.active ? '#41b6e6' : '#fff',
-              padding: '18px', 
-              border: '1px solid #ccc', 
-              borderRadius: '4px', 
-              marginBottom: '8px', 
-              cursor: 'pointer', 
-            };
+                {suggestions.map((suggestion) => {
+                  if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
+                    const style = {
+                      backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
+                      padding: '18px 10px',
+                      borderBottom: '2px solid #ddd',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s ease',
+                      fontSize: '15px',
+                      color: '#000',
+                      borderRadius: '1px',
+                      margin: '0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      width: '300px',
+                    };
 
-            return (
-              <div
-                {...getSuggestionItemProps(suggestion, { style })}
-                className="suggestion-item" 
-              >
-                {suggestion.description}
+                    return (
+                      <div
+                        {...getSuggestionItemProps(suggestion, { style })}
+                        className="suggestion-item"
+                      >
+                        <FaMapMarkerAlt
+                          style={{
+                            marginRight: '10px',
+                            backgroundColor: 'lightgray',
+                            border: '1px solid #ccc',
+                            borderRadius: '25%',
+                            padding: '5px',
+                            fontSize: '20px',
+                            color: '#000'
+                          }}
+                        />
+                        {suggestion.description}
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          )}
+        </PlacesAutocomplete>
       </div>
-    )}
-  </PlacesAutocomplete>
-</div>
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()}>
         <p>Check in</p>
         <div>
@@ -121,6 +145,7 @@ export const SearchBar = ({ setResults }) => {
               ...provided,
               border: 'none',
               boxShadow: 'none',
+              height: '40px',
             }),
             indicatorSeparator: () => ({ display: 'none' }),
             dropdownIndicator: () => ({ display: 'none' }),
@@ -128,14 +153,18 @@ export const SearchBar = ({ setResults }) => {
               ...provided,
               color: '#666',
             }),
+            option: (provided, state) => ({
+              ...provided,
+              fontWeight: state.isSelected ? 'bold' : 'normal',
+            }),
           }}
         />
       </div>
-
-      <button className="searchbar-button" type="button">
+      <button className="searchbar-button" type="button" onClick={handleRefreshClick}>
+        {showResults}
         <FaSearch
           style={{ marginRight: '2px', cursor: 'pointer' }}
-          onClick={handleRefreshClick}
+          
         />
       </button>
     </div>
