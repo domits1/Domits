@@ -50,7 +50,7 @@ function ConfirmEmail() {
                 if (result === 'SUCCESS') {
                     setIsConfirmed(true);
                     if (isHost) {
-                        createStripeAccount();
+                        window.location.replace("http://localhost:3000/hostdashboard/")
                     }
                     setTimeout(() => navigate('/'), 3000);
                 }
