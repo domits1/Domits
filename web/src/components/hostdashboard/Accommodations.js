@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import accom_chalet from '../../images/accom_chalet.png';
 import './Accommodations.css';
 
 const Accommodations = ({ searchQuery }) => {
@@ -17,10 +18,11 @@ const Accommodations = ({ searchQuery }) => {
             const responseData = await response.json();
             console.log(responseData);
             const formattedData = responseData.map(item => ({
-                image: `https://amplify-domits-develop-123953-deployment.s3.eu-north-1.amazonaws.com/photos/${item.PhotoUrls}`,
+                // image: `https://amplify-domits-develop-123953-deployment.s3.eu-north-1.amazonaws.com/photos/${item.PhotoUrls}`,
+                image: accom_chalet,
                 title: item.Title,
                 details: item.description,
-                size: item.Size,
+                size: `${item.Size}m²`,
                 price: `€${item.Price}/night`,
                 id: item['#PK'],
             }));
