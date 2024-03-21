@@ -10,8 +10,8 @@ function checkoutTest() {
         async function fetchData() {
             try {
                 const response = await axios.get('https://kcmfezurd1.execute-api.eu-north-1.amazonaws.com/dev/StripeID');
-                console.log('Response:', response.data); // Log the response to see its structure
-                setPayments(response.data);
+                const responseBody = JSON.parse(response.data.body);
+                setPayments(responseBody);
                 setLoading(false);
             } catch (error) {
                 console.error('Error fetching payments:', error);
@@ -32,16 +32,21 @@ function checkoutTest() {
                 <p>Error: {error}</p>
             ) : (
                 <ul>
-                    {payments.map(payment => (
-                        <li key={payment.id}>
-                            <strong>ID:</strong> {payment.id}<br />
-                            <strong>Amount:</strong> {payment.amount}<br />
-                            <strong>Cancel URL:</strong> {payment.cancelUrl}<br />
-                            <strong>Currency:</strong> {payment.currency}<br />
-                            <strong>Product Name:</strong> {payment.productName}<br />
-                            <strong>Success URL:</strong> {payment.successUrl}<br />
-                        </li>
-                    ))}
+                    {Array.isArray(payments) ? (
+                        payments.map(payment => (
+                            <li key={payment.id}>
+                                <strong>ID:</strong> {payment.id}<br />
+                                <strong>Amount:</strong> {payment.amount}<br />
+                                <strong>Cancel URL:</strong> {payment.cancelUrl}<br />
+                                <strong>Currency:</strong> {payment.currency}<br />
+                                <strong>Product Name:</strong> {payment.productName}<br />
+                                <strong>Success URL:</strong> {payment.successUrl}<br />
+                            </li>
+                        ))
+                    ) : (
+                        <p>No payments data available</p>
+                    )}
+
                 </ul>
             )}
         </div>
