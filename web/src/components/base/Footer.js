@@ -21,7 +21,7 @@ const Footer = () => {
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>How it works</Link></li>
                         <li><Link to="/why-domits" className='footer-links'>Why Domits</Link></li>
-                        <li><Link to="/" className='footer-links'>Jobs</Link></li>
+                        <li><Link to="/career" className='footer-links'>Jobs</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
                         <li><Link to="/" className='footer-links'>Release</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
@@ -43,7 +43,7 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 className='footer-headers'>Hosts</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/" className='footer-links'>Become a host</Link></li>
+                        <li><Link to="/landing" className='footer-links'>Become a host</Link></li>
                         <li><Link to="/" className='footer-links'>Helpdesk for hosts</Link></li>
                     </ul>
                 </div>
@@ -54,7 +54,7 @@ const Footer = () => {
                 <div className="footer-section borderline">
                     <h4 className='footer-headers '>Network</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/" className='footer-links'>Guests</Link></li>
+                        <li><Link to="/guestdashboard" className='footer-links'>Guests</Link></li>
                         <li><Link to="/landing" className='footer-links'>Hosts</Link></li>
                         <li><Link to="/developers" className='footer-links'>Developers</Link></li>
                         <li><Link to="/partners" className='footer-links'>Partners</Link></li>
