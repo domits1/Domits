@@ -5,7 +5,7 @@ const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf
 function CheckoutFrontend() {
     const initiateStripeCheckout = async () => {
         const checkoutData = {
-            amount: 2000, // Example: 2000 cents = $20
+            amount: 1000, // Example: 2000 cents = $20
             currency: 'eur',
             productName: 'Example Product',
             successUrl: 'https://example.com/success',
