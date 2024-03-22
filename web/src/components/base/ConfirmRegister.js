@@ -50,7 +50,7 @@ function ConfirmEmail() {
                 if (result === 'SUCCESS') {
                     setIsConfirmed(true);
                     if (isHost) {
-                        window.location.replace("http://localhost:3000/hostdashboard/")
+                        window.location.replace("https://www.domits.com/hostdashboard/")
                     }
                     setTimeout(() => navigate('/'), 3000);
                 }
