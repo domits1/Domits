@@ -15,7 +15,7 @@ import house4 from '../../images/house4.jpeg';
 import house5 from '../../images/house5.jpeg';
 import house6 from '../../images/house6.jpeg';
 import house7 from '../../images/house7.jpeg';
-import house8 from '../../images/house8.jpeg';
+import school8 from '../../images/school8.jpeg';
 import house9 from '../../images/house9.jpeg';
 import house10 from '../../images/house10.jpeg';
 import house11 from '../../images/house11.jpeg';
@@ -52,7 +52,7 @@ const Accommodations = ({ searchQuery }) => {
             const img = [
                 accom_chalet, accoimg1, accom_luxebamboovilla, accom_luxevilla, accom_tinyhouse_flowers, 
                 accom_treehouse,accom_villaneth, accom_yurt, accommodationtestpic1, house1, house2, house3,
-                house4, house5, house6, house7, house8, house9, house10, house11, house12, house13, house14,
+                house4, house5, house6, house7, school8, house9, house10, house11, house12, house13, house14,
                 house15, house16, house17, house18, house19, house20, house21, house22, house23
             ];
             const formattedData = responseData.map((item, index) => ({ // Use index of map to access img array
