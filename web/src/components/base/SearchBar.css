@@ -1,11 +1,7 @@
 * {
   box-sizing: border-box;
 }
-.search-bar-container {
-  position: absolute;
-  top: 13px; 
-  left: 43%; 
-}
+
 .bar {
   width: 560px;
   background: white;
@@ -141,7 +137,6 @@
   border: none;
   padding: 0.6rem 0 0 0;
   text-align: center;
-  cursor: pointer;
   width: 80%;
 }
 .searchBar:focus {
