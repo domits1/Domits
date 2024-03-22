@@ -131,6 +131,7 @@ export const SearchBar = ({ setResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
+            //icons voor accomendaties
             { value: 'Hotel', label: <><FaMapPin /> Hotel</> }, 
             { value: 'Apartment', label: <><FaMapPin /> Apartment</> }, 
             { value: 'Guesthouse', label: <><FaMapPin /> Guesthouse</> },
