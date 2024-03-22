@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaSearch, FaMapMarkerAlt } from 'react-icons/fa';
+import { FaSearch, FaMapMarkerAlt, FaMapPin } from 'react-icons/fa';
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -131,12 +131,13 @@ export const SearchBar = ({ setResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            { value: 'Hotel', label: 'Hotel' },
-            { value: 'Apartment', label: 'Apartment' },
-            { value: 'Guesthouse', label: 'Guesthouse' },
-            { value: 'Villa', label: 'Villa' },
-            { value: 'Resort', label: 'Resort' },
-            { value: 'Hostel', label: 'Hostel' },
+            //icons voor accomendaties
+            { value: 'Hotel', label: <><FaMapPin /> Hotel</> }, 
+            { value: 'Apartment', label: <><FaMapPin /> Apartment</> }, 
+            { value: 'Guesthouse', label: <><FaMapPin /> Guesthouse</> },
+            { value: 'Villa', label: <><FaMapPin /> Villa</> }, 
+            { value: 'Resort', label: <><FaMapPin /> Resort</> }, 
+            { value: 'Hostel', label: <><FaMapPin /> Hostel</> }, 
           ]}
           placeholder="Type of accommodation"
           isSearchable={true}
