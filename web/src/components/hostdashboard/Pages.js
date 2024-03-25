@@ -77,7 +77,9 @@ function Pages() {
         <p>Settings</p>
       </div>
       <div className="wijzer-grn" onClick={() => createStripeAccount()}>
+        <div className="stripe-icon-div">
         <img src={stripe} className="stripe-icon" alt="Stripe"></img>
+        </div>
         <p className="stripe-btn">Create Stripe Account</p>
       </div>
     </div>

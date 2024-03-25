@@ -53,6 +53,7 @@
     align-items: center;
     width: 100%;
     max-width: 200px;
+
 }
 
 .wijzer-grn,.boxText {
@@ -67,10 +68,14 @@
 }
 
 .stripe-icon {
-  height: 48px;
-  width: 48px;
-  border-radius: 20px;
-  border: 2px solid black;
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 15px;
+  border: 1.75px solid black;
+}
+
+.stripe-icon-div {
+  padding-left: 0.25rem;
 }
 
 .contentContainer {
