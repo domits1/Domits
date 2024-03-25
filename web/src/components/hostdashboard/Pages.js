@@ -6,6 +6,7 @@ import payment from "../../images/icons/payment-icon.png";
 import listings from "../../images/icons/listings-icon.png";
 import calendar from "../../images/icons/calendar-icon.png";
 import settings from "../../images/icons/settings-icon.png";
+import stripe from "../../images/icons/stripe-icon.png";
 import { useNavigate } from 'react-router-dom';
 import { useAuth} from "../base/AuthContext"
 import './HostHomepage.css';
@@ -75,9 +76,9 @@ function Pages() {
         <img src={settings} alt="Settings"></img>
         <p>Settings</p>
       </div>
-      <div className="wijzer" onClick={() => createStripeAccount()}>
-        <img src={settings} alt="Settings"></img>
-        <p>Create Stripe Account</p>
+      <div className="wijzer-grn" onClick={() => createStripeAccount()}>
+        <img src={stripe} className="stripe-icon" alt="Stripe"></img>
+        <p className="stripe-btn">Create Stripe Account</p>
       </div>
     </div>
   );
