@@ -18,7 +18,7 @@ const Accommodations = ({ searchQuery }) => {
             // console.log(responseData);
     
             const formattedData = responseData.map((item, index) => ({ // Use index of map to access img array
-                image: `https://amplify-domits-develop-123953-deployment.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
+                image: `https://accommodationphotos.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
                 // image: img[index % img.length],
                 title: item.Title,
                 details: item.description,
@@ -27,7 +27,7 @@ const Accommodations = ({ searchQuery }) => {
                 id: item['#PK'],
             }));
             setAccolist(formattedData);
-            // console.log("Image URLs:", formattedData.map(item => item.image));
+            console.log("Image URLs:", formattedData.map(item => item.image));
         } catch (error) {
             console.error('Error fetching or processing data:', error);
         }
