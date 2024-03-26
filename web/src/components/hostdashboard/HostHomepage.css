@@ -44,6 +44,39 @@
 
 }
 
+.wijzer-grn {
+  display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    cursor: pointer;
+    margin-bottom: 10px;
+    align-items: center;
+    width: 100%;
+    max-width: 200px;
+
+}
+
+.wijzer-grn,.boxText {
+  border: 0.5px solid black;
+  border-radius: 15px;
+  padding: 5px;
+}
+
+.wijzer-grn:hover {
+  box-shadow: 4px 4px #003366;
+  transition: .3s;
+}
+
+.stripe-icon {
+  height: 2.5rem;
+  width: 2.5rem;
+  border-radius: 15px;
+  border: 1.75px solid black;
+}
+
+.stripe-icon-div {
+  padding-left: 0.25rem;
+}
 
 .contentContainer {
   width: 100%;
@@ -161,7 +194,6 @@
   }
 
   .wijzer {
-
     width: 90%;
   }
 }

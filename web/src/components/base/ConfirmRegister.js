@@ -16,30 +16,6 @@ function ConfirmEmail() {
 
     const userEmail = location.state === null ? "" : location.state.email;
 
-    async function createStripeAccount() {
-        const options = {
-            userEmail: userEmail
-        };
-        try {
-            const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
-                method: 'POST',
-                body: JSON.stringify(options),
-                headers: {
-                    'Content-type': 'application/json; charset=UTF-8',
-                },
-            });
-
-            if (!result.ok) {
-                throw new Error(`HTTP error! Status: ${result.status}`);
-            }
-
-            const data = await result.json();
-            window.location.replace(data.url);
-        } catch (error) {
-            console.log(error);
-        }
-    }
-
     function onSubmit(e) {
         e.preventDefault();
         let code = "";
