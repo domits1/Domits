@@ -9,10 +9,10 @@ const RevenueTool = () => {
   const [cardInfo, setCardInfo] = useState({ 1: null, 2: null, 3: null });
   const [priceIndicator, setPriceIndicator] = useState({ 1: null, 2: null, 3: null });
 
-  const navigateToRegister = () => {
+  const navigateToListProperty = () => {
     // Implement navigation logic using React Navigation
     // You may need to set up your navigation stack and screens accordingly
-    navigation.navigate('Register');
+    navigation.navigate('ListProperty');
   };
 
   const pageUpdater = (pageNumber) => {
@@ -172,7 +172,7 @@ const RevenueTool = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.nextButtons}
-                onPress={navigateToRegister}
+                onPress={navigateToListProperty}
               >
                 <Text  style={styles.buttonText}>Enlist</Text>
               </TouchableOpacity>
