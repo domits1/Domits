@@ -4,6 +4,7 @@ import FAQ from "./Faq";
 import './landing.css';
 
 function OnboardingHost() {
+
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
         Title: "",
@@ -76,6 +77,26 @@ function OnboardingHost() {
         }
     };
 
+    const handleSubmit = async () => {
+        try {
+            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                console.log('Form data saved successfully');
+                // Reset form data or navigate to next page
+            } else {
+                console.error('Error saving form data');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        }
+    };
 
     const renderPageContent = (page) => {
         switch (page) {
@@ -270,7 +291,7 @@ function OnboardingHost() {
                             </div>
                             <div className='buttonHolder'>
                                 <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                                <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
+                                <button className='nextButtons' onClick={() => handleSubmit()}>Confirm and proceed</button>
                             </div>
                         </div>
                     </div >
