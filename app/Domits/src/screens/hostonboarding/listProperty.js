@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,24 +7,22 @@ import {
   SafeAreaView,
   ScrollView,
 } from 'react-native';
-import DropdownPicker from 'react-native-dropdown-picker';
+import { Picker } from '@react-native-picker/picker';
 
-function ListProperty({navigation}) {
-  const [roomType, setRoomType] = useState(null);
-  const [travelers, setTravelers] = useState(null);
-  const [bedrooms, setBedrooms] = useState(null);
-  const [bathrooms, setBathrooms] = useState(null);
-  const [beds, setBeds] = useState(null);
+function ListProperty({ navigation }) {
+  const [roomType, setRoomType] = useState(undefined);
+  const [travelers, setTravelers] = useState(undefined);
+  const [bedrooms, setBedrooms] = useState(undefined);
+  const [bathrooms, setBathrooms] = useState(undefined);
+  const [beds, setBeds] = useState(undefined);
 
-  const [isTravelersOpen, setTravelersOpen] = useState(false);
-  const [isBedroomsOpen, setBedroomsOpen] = useState(false);
-  const [isBathroomsOpen, setBathroomsOpen] = useState(false);
-  const [isBedsOpen, setBedsOpen] = useState(false);
-
-  const quantityItems = Array.from({length: 10}, (_, i) => ({
-    label: `${i + 1}`,
-    value: i + 1,
-  }));
+  // Define the list of options
+  const options = {
+    travelers: Array.from({ length: 5 }, (_, i) => i + 1),
+    bedrooms: Array.from({ length: 5 }, (_, i) => i + 1),
+    bathrooms: Array.from({ length: 5 }, (_, i) => i + 1),
+    beds: Array.from({ length: 5 }, (_, i) => i + 1),
+  };
 
   return (
       <SafeAreaView style={styles.container}>
@@ -51,29 +49,35 @@ function ListProperty({navigation}) {
           </View>
 
           <Text style={styles.title}>Define quantity</Text>
+
           <View style={styles.quantityContainer}>
             <Text style={styles.quantityLabel}>How many travelers?</Text>
-            <DropdownPicker
-                open={isTravelersOpen}
-                value={travelers}
-                items={quantityItems}
-                setOpen={setTravelersOpen}
-                setValue={setTravelers}
-                dropDownContainerStyle={{...styles.dropDownPicker, zIndex: 6000}}
-            />
+            <Picker
+                selectedValue={travelers}
+                onValueChange={(itemValue, itemIndex) => setTravelers(itemValue)}
+                mode="dropdown"
+            >
+              {options.travelers.map(value => (
+                  <Picker.Item key={value} label={`${value}`} value={value} />
+              ))}
+            </Picker>
           </View>
 
           <View style={styles.quantityContainer}>
             <Text style={styles.quantityLabel}>How many bedrooms?</Text>
-            <DropdownPicker
-                open={isBedroomsOpen}
-                value={bedrooms}
-                items={quantityItems}
-                setOpen={setBedroomsOpen}
-                setValue={setBedrooms}
-                dropDownContainerStyle={{...styles.dropDownPicker, zIndex: 5000}}
-            />
+            <Picker
+                selectedValue={bedrooms}
+                onValueChange={(itemValue, itemIndex) => setBedrooms(itemValue)}
+                mode="dropdown"
+            >
+              {options.bedrooms.map(value => (
+                  <Picker.Item key={value} label={`${value}`} value={value} />
+              ))}
+            </Picker>
           </View>
+
+          {/* Repeat Picker for bathrooms and beds with similar pattern */}
+
           <View style={styles.footer}>
             <TouchableOpacity style={styles.footerButton}>
               <Text style={styles.footerButtonText}>Previous step</Text>
@@ -116,7 +120,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
   selectedText: {
-    color:'#FFF',
+    color: '#FFF',
   },
   quantityContainer: {
     paddingHorizontal: 16,
