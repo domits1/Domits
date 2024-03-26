@@ -18,7 +18,7 @@ const Accommodations = ({ searchQuery }) => {
             // console.log(responseData);
     
             const formattedData = responseData.map((item, index) => ({ // Use index of map to access img array
-                image: `https://amplify-domits-develop-123953-deployment.s3.eu-north-1.amazonaws.com/photos/${item.PhotoUrls}`,
+                image: `https://amplify-domits-develop-123953-deployment.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
                 // image: img[index % img.length],
                 title: item.Title,
                 details: item.description,
