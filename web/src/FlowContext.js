@@ -1,17 +1,5 @@
-import React, { createContext, useState } from 'react';
+import React from 'react';
 
-const FlowContext = createContext();
-
-export const FlowProvider = ({ children }) => {
-    const [flowState, setFlowState] = useState({
-        isHost: false,
-    });
-
-    return (
-        <FlowContext.Provider value={{ flowState, setFlowState }}>
-            {children}
-        </FlowContext.Provider>
-    );
-};
+const FlowContext = React.createContext();
 
 export default FlowContext;
