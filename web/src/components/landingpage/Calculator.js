@@ -37,11 +37,11 @@ class Calculator extends Component {
 
   static contextType = FlowContext; // Assigning context to the class
 
-    navigateToRegister = () => {
-    const { setFlowState } = this.context; // Accessing context
+  navigateToRegister = () => {
+    const { setFlowState } = this.context; // Accessing setFlowState from context
     setFlowState({ isHost: true });
-    this.props.navigate('/register'); // Corrected to use navigate from props
-  };
+    this.props.navigate('/register');
+};
   pageUpdater = (pageNumber) => {
     this.setState({
       page: pageNumber
