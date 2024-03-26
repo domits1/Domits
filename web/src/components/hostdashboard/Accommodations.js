@@ -27,7 +27,7 @@ const Accommodations = ({ searchQuery }) => {
                 id: item['#PK'],
             }));
             setAccolist(formattedData);
-            console.log("Image URLs:", formattedData.map(item => item.image));
+            // console.log("Image URLs:", formattedData.map(item => item.image));
         } catch (error) {
             console.error('Error fetching or processing data:', error);
         }
