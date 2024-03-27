@@ -1,22 +1,5 @@
 /* eslint-disable */
 // this is an auto generated file. This will be overwritten
-
-export const createChat = /* GraphQL */ `
-  mutation CreateChat(
-    $input: CreateChatInput!
-    $condition: ModelChatConditionInput
-  ) {
-    createChat(input: $input, condition: $condition) {
-      id
-      text
-      email
-      sortKey
-      createdAt
-      updatedAt
-      __typename
-    }
-  }
-`;
 export const updateChat = /* GraphQL */ `
   mutation UpdateChat(
     $input: UpdateChatInput!
@@ -183,4 +166,19 @@ export const deleteTodo = /* GraphQL */ `
       __typename
     }
   }
+`;
+
+
+
+export const createChat = /* GraphQL */ `mutation CreateChat(
+  $input: CreateChatInput!
+  $condition: ModelChatConditionInput
+) {
+  createChat(input: $input, condition: $condition) {
+    id
+    text
+    email
+    recipientEmail
+  }
+}
 `;

@@ -1,0 +1,173 @@
+{
+  "Description": "Root Stack for AWS Amplify CLI",
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Parameters": {
+    "env": {
+      "Type": "String"
+    },
+    "AuthRoleArn": {
+      "Type": "String"
+    },
+    "UnauthRoleArn": {
+      "Type": "String"
+    },
+    "authdomits7b73f586UserPoolId": {
+      "Type": "String",
+      "Default": "authdomits7b73f586UserPoolId"
+    },
+    "authdomits7b73f586IdentityPoolId": {
+      "Type": "String",
+      "Default": "authdomits7b73f586IdentityPoolId"
+    },
+    "authdomits7b73f586AppClientID": {
+      "Type": "String",
+      "Default": "authdomits7b73f586AppClientID"
+    },
+    "authdomits7b73f586AppClientIDWeb": {
+      "Type": "String",
+      "Default": "authdomits7b73f586AppClientIDWeb"
+    }
+  },
+  "Conditions": {
+    "ShouldNotCreateEnvResources": {
+      "Fn::Equals": [
+        {
+          "Ref": "env"
+        },
+        "NONE"
+      ]
+    }
+  },
+  "Resources": {
+    "acceptanceGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "UserPoolId": {
+          "Ref": "authdomits7b73f586UserPoolId"
+        },
+        "Description": "override success",
+        "GroupName": "acceptance",
+        "Precedence": 1,
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "acceptanceGroupRole",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "acceptanceGroupRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "",
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": "cognito-identity.amazonaws.com"
+              },
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "StringEquals": {
+                  "cognito-identity.amazonaws.com:aud": {
+                    "Ref": "authdomits7b73f586IdentityPoolId"
+                  }
+                },
+                "ForAnyValue:StringLike": {
+                  "cognito-identity.amazonaws.com:amr": "authenticated"
+                }
+              }
+            }
+          ]
+        },
+        "RoleName": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "authdomits7b73f586UserPoolId"
+              },
+              "-acceptanceGroupRole"
+            ]
+          ]
+        }
+      }
+    },
+    "acceptanceUserPoolsGroup": {
+      "Type": "AWS::Cognito::UserPoolGroup",
+      "Properties": {
+        "UserPoolId": {
+          "Ref": "authdomits7b73f586UserPoolId"
+        },
+        "Description": "override success",
+        "GroupName": "acceptanceUserPools",
+        "Precedence": 2,
+        "RoleArn": {
+          "Fn::GetAtt": [
+            "acceptanceUserPoolsGroupRole",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "acceptanceUserPoolsGroupRole": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "",
+              "Effect": "Allow",
+              "Principal": {
+                "Federated": "cognito-identity.amazonaws.com"
+              },
+              "Action": "sts:AssumeRoleWithWebIdentity",
+              "Condition": {
+                "StringEquals": {
+                  "cognito-identity.amazonaws.com:aud": {
+                    "Ref": "authdomits7b73f586IdentityPoolId"
+                  }
+                },
+                "ForAnyValue:StringLike": {
+                  "cognito-identity.amazonaws.com:amr": "authenticated"
+                }
+              }
+            }
+          ]
+        },
+        "RoleName": {
+          "Fn::Join": [
+            "",
+            [
+              {
+                "Ref": "authdomits7b73f586UserPoolId"
+              },
+              "-acceptanceUserPoolsGroupRole"
+            ]
+          ]
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "acceptanceGroupRole": {
+      "Value": {
+        "Fn::GetAtt": [
+          "acceptanceGroupRole",
+          "Arn"
+        ]
+      }
+    },
+    "acceptanceUserPoolsGroupRole": {
+      "Value": {
+        "Fn::GetAtt": [
+          "acceptanceUserPoolsGroupRole",
+          "Arn"
+        ]
+      }
+    }
+  }
+}
