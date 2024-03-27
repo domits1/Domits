@@ -3,7 +3,7 @@
 }
 
 .bar {
-  width: 560px;
+  width: 500px;
   background: white;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 30px;
@@ -11,9 +11,10 @@
   font-size: 0.6rem;
   /* position: fixed; */
   /* left: 54%; */
-  /* transform: translateX(-50%); */
+  transform: translateX(-12%);
   height: 55px;
   cursor: 'pointer';
+  
 }
 
 .bar div {
@@ -73,6 +74,8 @@
 
 ::placeholder {
   font-size: 0.64rem;
+  text-align: center;
+  
   
 }
 .bar>div {
@@ -82,7 +85,7 @@
 .bar>div::before {
   position: absolute;
   content: "";
-  left: -5%;
+  left: -0.8%;
   top: 50%;
   transform: translateY(-50%);
   width: 0.9px;
@@ -136,9 +139,14 @@
   background: none;
   border: none;
   padding: 0.6rem 0 0 0;
-  text-align: center;
+  text-align: left;
   width: 80%;
 }
 .searchBar:focus {
   outline: none;
 }
+.searchBar::placeholder {
+  font-size: 0.64rem;
+  text-align: left;
+}
+
