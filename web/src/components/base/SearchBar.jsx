@@ -23,10 +23,10 @@ export const SearchBar = ({ setResults }) => {
       const results = await geocodeByAddress(address);
       const latLng = await getLatLng(results[0]);
       console.log('Geocode Success', latLng);
-      setShowResults(true); 
+      setShowResults(true);
     } catch (error) {
       console.error('Error', error);
-      setShowResults(false); 
+      setShowResults(false);
     }
   };
 
@@ -70,6 +70,8 @@ export const SearchBar = ({ setResults }) => {
                       display: 'flex',
                       alignItems: 'center',
                       width: '300px',
+                      zindex: 999,
+
                     };
 
                     return (
@@ -131,7 +133,6 @@ export const SearchBar = ({ setResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            //icons voor accomendaties
             { value: 'Hotel', label: <><FaMapPin /> Hotel</> }, 
             { value: 'Apartment', label: <><FaMapPin /> Apartment</> }, 
             { value: 'Guesthouse', label: <><FaMapPin /> Guesthouse</> },
@@ -158,6 +159,16 @@ export const SearchBar = ({ setResults }) => {
               ...provided,
               fontWeight: state.isSelected ? 'bold' : 'normal',
             }),
+            menu: (provided) => ({
+              ...provided,
+              backgroundColor: '#ffff',
+              borderRadius: '8px',
+              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+              padding: '8px',
+              width: '200px', 
+              maxHeight: '300px', 
+              overflowY: 'auto', 
+            }),
           }}
         />
       </div>
@@ -165,7 +176,7 @@ export const SearchBar = ({ setResults }) => {
         {showResults}
         <FaSearch
           style={{ marginRight: '2px', cursor: 'pointer' }}
-          
+
         />
       </button>
     </div>
