@@ -38,6 +38,8 @@ const Chat = ({ user }) => {
     const [recipientEmail, setRecipientEmail] = useState('');
     const [messageSent, setMessageSent] = useState(false);
     const [showDate, setShowDate] = useState(false);
+    const [notifications, setNotifications] = useState({});
+    const [sentMessagesCount, setSentMessagesCount] = useState(0); // Track sent messages count
 
     const signOut = async () => {
         try {
@@ -66,7 +68,7 @@ const Chat = ({ user }) => {
 
     useEffect(() => {
         fetchChats();
-    }, []);
+    }, [recipientEmail]);
 
     const fetchChats = async () => {
         try {
@@ -90,11 +92,16 @@ const Chat = ({ user }) => {
             });
             const allChats = [...sentMessages.data.listChats.items, ...receivedMessages.data.listChats.items];
             setChats(allChats);
+
+            // Update recipient's notifications based on received messages
+            setNotifications(prevNotifications => ({
+                ...prevNotifications,
+                [recipientEmail]: receivedMessages.data.listChats.items.length
+            }));
         } catch (error) {
             console.error("Error fetching chats:", error);
         }
     };
-    
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !recipientEmail) return;
@@ -110,20 +117,32 @@ const Chat = ({ user }) => {
                 },
             });
             setNewMessage('');
-            fetchChats();
+            setMessageSent(true);
+            setSentMessagesCount(sentMessagesCount + 1); // Increment sent messages count
+            // Fetch new chats and update notifications after sending the message
+            fetchChats(recipientEmail).then(() => {
+                // Update notifications after chats are fetched and set
+                setNotifications(prevNotifications => ({
+                    ...prevNotifications,
+                    [recipientEmail]: (prevNotifications[recipientEmail] || 0) + 1 // Increment notification count
+                }));
+            });
         } catch (error) {
             console.error("Error sending message:", error);
         }
         setShowDate(true);
-        setMessageSent(true);
     };
 
-    const currentDate = new Date();
-
-    const options = { month: 'long', day: 'numeric' };
-
-    const formattedDate = currentDate.toLocaleDateString('en-US', options);
-
+    const handleUserClick = (email) => {
+        console.log("Recipient Email:", email); 
+        setRecipientEmail(email);
+        fetchChats(email);
+        setNotifications(prevNotifications => ({
+            ...prevNotifications,
+            [email]: 0 // Reset notifications for the opened chat
+        }));
+        showMessages();
+    };
 
     return (
         <main className="chat">
@@ -202,7 +221,8 @@ const Chat = ({ user }) => {
                 </article>
                 <article className="chat__people">
                     <ul className="chat__users">
-                        <li className="chat__user" onClick={showMessages}>
+                        <li className="chat__user" onClick={() => handleUserClick('33580@ma-web.nl')}>
+                        <figure className="chat__notification">{notifications['33580@ma-web.nl']}</figure>
                             <div className="chat__pfp">
                                 <img src={img1} className="chat__img"/>
                             </div>
@@ -211,8 +231,8 @@ const Chat = ({ user }) => {
                                 <p className="chat__preview">You got an amazing place and <br></br> we are loving it!</p>
                             </div>
                         </li>
-                        <li className="chat__user">
-                            <figure className="chat__notification">1</figure>
+                        <li className="chat__user" onClick={() => handleUserClick('nabilsalimi0229@gmail.com')}>
+                            <figure className="chat__notification">{notifications['nabilsalimi0229@gmail.com']}</figure>
                             <div className="chat__pfp"><img src={django} className="chat__img"/></div>
                             <div className="chat__wrapper">
                                 <h2 className="chat__name">Django Wagner</h2>
@@ -237,7 +257,7 @@ const Chat = ({ user }) => {
                             </div>
                             <ul className="chat__list">
                                 <li className="chat__listItem">
-                                    <h2 className="chat__name">Sheima Mahmoudi</h2>
+                                    <h2 className="chat__name">{recipientEmail}</h2>
                                 </li>
                                 <li className="chat__listItem">
                                     <img src={smile}/>
@@ -292,13 +312,13 @@ const Chat = ({ user }) => {
                             }
                         }}
                     />
-                    <input
+                    {/* <input
                         className="chat__recipientInput"
                         type="email"
                         value={recipientEmail}
                         onChange={(e) => setRecipientEmail(e.target.value)}
                         placeholder="Recipient's email..."
-                    />
+                    /> */}
                                         <button onClick={sendMessage}>Send</button>
                             
                         </article>
