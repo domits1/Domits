@@ -23,7 +23,7 @@ function FillInLocationScreen({navigation}) {
   };
 
   const goToPreviousStep = () => navigation.goBack();
-  const goToNextStep = () => navigation.navigate('NextStepScreenName');
+  const goToNextStep = () => navigation.navigate('selectAmenities');
 
   return (
     <SafeAreaView style={styles.container}>
