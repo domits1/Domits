@@ -10,7 +10,7 @@ import './Register.css';
 const Register = () => {
     const navigate = useNavigate();
     const { setAuthCredentials } = useAuth(); // Access setAuthCredentials from AuthContext
-    const { flowState } = useContext(FlowContext); // Correctly using useContext at the top level
+    const { flowState } = useContext(FlowContext);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
