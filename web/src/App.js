@@ -107,7 +107,6 @@ function App() {
                             <Route path="/bookingdeclined" element={<BookingDeclined />} />
 
                             {/* Chat */}
-                            <Route path="/chat" element={<Chat />} />
                             <Route path="/chatprototype" element={<Chatprototype />} />
 
                             {/* Guest Dashboard */}
