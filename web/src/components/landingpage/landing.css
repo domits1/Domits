@@ -48,8 +48,6 @@
 .nextButtons {
     background-color: #003366;
     color: #fff;
-
-    margin: 10px;
     height: 25%;
     width: 25%;
     border-radius: 10px;
@@ -239,6 +237,11 @@
   flex-direction: row;
   justify-content: space-between;
   flex-wrap: wrap;
+}
+
+.reviewInfo {
+  text-align: left;
+  margin-bottom: 20px;
 }
 
 .textInput,
