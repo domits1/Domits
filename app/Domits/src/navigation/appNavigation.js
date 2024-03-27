@@ -31,7 +31,9 @@ import finalBookingOverview from '../screens/bookingprocess/finalBookingOverview
 import simulateStripe from '../screens/bookingprocess/simulateStripe';
 import paymentAccepted from '../screens/bookingprocess/paymentAccepted';
 import paymentDeclined from '../screens/bookingprocess/paymentDeclined';
-import bookedAccommodation from "../screens/bookingprocess/bookedAccommodation";
+import bookedAccommodation from '../screens/bookingprocess/bookedAccommodation';
+import ListProperty from '../screens/hostonboarding/listProperty';
+import LocationFillIn from '../screens/hostonboarding/LocationFillIn';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -62,7 +64,10 @@ function HomeStack() {
       <Stack.Screen name="simulateStripe" component={simulateStripe} />
       <Stack.Screen name="paymentAccepted" component={paymentAccepted} />
       <Stack.Screen name="paymentDeclined" component={paymentDeclined} />
-      <Stack.Screen name="bookedAccommodation" component={bookedAccommodation} />
+      <Stack.Screen
+        name="bookedAccommodation"
+        component={bookedAccommodation}
+      />
 
       <Stack.Screen name="Profile" component={profile} />
       <Stack.Screen name="PaymentMethods" component={paymentMethods} />
@@ -76,6 +81,8 @@ function HomeStack() {
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
       <Stack.Screen name="HostRevenue" component={HostRevenue} />
+      <Stack.Screen name="ListProperty" component={ListProperty} />
+      <Stack.Screen name="LocationFillIn" component={LocationFillIn} />
     </Stack.Navigator>
   );
 }
