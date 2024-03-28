@@ -1,9 +1,22 @@
-import React from "react";
+import React, { useEffect } from "react";
 import Pages from "./Pages.js";
 import './guestdashboard.css';
+import { Auth } from "aws-amplify";
 
+let userId = null;
 function GuestReviews() {
+    const setUserId = async () => {
+        try {
+            const userInfo = await Auth.currentUserInfo();
+            userId = userInfo.attributes.sub
+        } catch (error) {
+            console.error("Error setting user id:", error);
+        }
+    };
 
+    useEffect(() => {
+        setUserId();
+    });
     return (
         <div className="container">
             <h2>Reviews</h2>
