@@ -3,6 +3,7 @@ type Chat @aws_iam @aws_cognito_user_pools {
   text: String!
   email: String
   recipientEmail: String
+  isRead: Boolean
   sortKey: String
   createdAt: AWSDateTime!
   updatedAt: AWSDateTime!
@@ -192,6 +193,7 @@ input ModelChatFilterInput {
   text: ModelStringInput
   email: ModelStringInput
   recipientEmail: ModelStringInput
+  isRead: ModelBooleanInput
   sortKey: ModelStringInput
   and: [ModelChatFilterInput]
   or: [ModelChatFilterInput]
@@ -213,6 +215,7 @@ input ModelChatConditionInput {
   text: ModelStringInput
   email: ModelStringInput
   recipientEmail: ModelStringInput
+  isRead: ModelBooleanInput
   sortKey: ModelStringInput
   and: [ModelChatConditionInput]
   or: [ModelChatConditionInput]
@@ -224,6 +227,7 @@ input CreateChatInput {
   text: String!
   email: String
   recipientEmail: String
+  isRead: Boolean
   sortKey: String
 }
 
@@ -232,6 +236,7 @@ input UpdateChatInput {
   text: String
   email: String
   recipientEmail: String
+  isRead: Boolean
   sortKey: String
 }
 
@@ -259,6 +264,7 @@ input ModelSubscriptionChatFilterInput {
   text: ModelSubscriptionStringInput
   email: ModelSubscriptionStringInput
   recipientEmail: ModelSubscriptionStringInput
+  isRead: ModelSubscriptionBooleanInput
   sortKey: ModelSubscriptionStringInput
   and: [ModelSubscriptionChatFilterInput]
   or: [ModelSubscriptionChatFilterInput]
