@@ -15,7 +15,7 @@ function ConfirmEmail() {
     const { isHost } = flowState;
 
     const userEmail = location.state === null ? "" : location.state.email;
-
+     
     function onSubmit(e) {
         e.preventDefault();
         let code = "";
@@ -26,7 +26,7 @@ function ConfirmEmail() {
                 if (result === 'SUCCESS') {
                     setIsConfirmed(true);
                     if (isHost) {
-                        window.location.replace("https://www.domits.com/hostdashboard/")
+                        navigate("/hostdashboard/");
                     }
                     setTimeout(() => navigate('/'), 3000);
                 }
