@@ -69,7 +69,7 @@ function OnboardingHost() {
                     [name]: checked,
                 }
             }));
-        }  else {
+        } else {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: value
@@ -257,10 +257,10 @@ function OnboardingHost() {
                 );
             case 4:
                 return (
-                    <div class="formContainer">
-                        <div class="form-section">
-                            <h2>Review your information</h2>
-                            <div>
+                    <div className="container" style={{ width: '80%' }}>
+                        <h2>Review your information</h2>
+                        <div className="formRow">
+                            <div className="reviewInfo">
                                 <p>Title: {formData.Title}</p>
                                 <p>Description: {formData.Description}</p>
                                 <p>Rent: {formData.Rent}</p>
@@ -273,28 +273,32 @@ function OnboardingHost() {
                                 <p>Postal Code: {formData.PostalCode}</p>
                                 <p>Street + House Nr.: {formData.Street}</p>
                                 <p>Neighbourhood: {formData.Neighbourhood}</p>
+                            </div>
+                            <div className="reviewInfo">
                                 <p>Features:</p>
                                 <ul>
                                     {Object.entries(formData.Features).map(([feature, value]) => (
-                                        <li key={feature}>{feature}: {value ? 'Yes' : 'No'}</li>
+                                        <p key={feature}>{feature}: {value ? 'Yes' : 'No'}</p>
                                     ))}
                                 </ul>
+                            </div>
+                            <div className="reviewInfo">
                                 <p>System Configuration:</p>
                                 <ul>
                                     {Object.entries(formData.SystemConfiguration).map(([config, value]) => (
-                                        <li key={config}>{config}: {value ? 'Yes' : 'No'}</li>
+                                        <p key={config}>{config}: {value ? 'Yes' : 'No'}</p>
                                     ))}
                                 </ul>
                                 <p>Monthly Discount: {formData.Monthlypercent}%</p>
                                 <p>Weekly Discount: {formData.Weeklypercent}%</p>
                                 <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
                             </div>
-                            <div className='buttonHolder'>
-                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                                <button className='nextButtons' onClick={() => handleSubmit()}>Confirm and proceed</button>
-                            </div>
                         </div>
-                    </div >
+                        <div className='buttonHolder'>
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
+                        </div>
+                    </div>
                 );
             default:
                 return null;

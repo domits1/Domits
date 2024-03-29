@@ -2,13 +2,13 @@
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 16px 50px;
-    text-align: center;
+    text-align: auto;
 }
 
 .header-nav {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: auto;
     width: 100%;
     flex-wrap: wrap;
 }
@@ -135,7 +135,7 @@
     word-wrap: break-word;
 }
 
-/* CSS for the SearchBar */
+
 
 @media screen and (max-width: 650px) {
 
@@ -322,19 +322,5 @@ a:hover {
     }
 
 }
-
-.search-bar-container {
-   
-    width: 40%;
-    padding: 1px;
-    /* margin: auto; */
-    display: flex;
-    flex-direction: column;
-    /* position: absolute;
-    top: 10px; 
-    left: 43%;  */
-    /* transform: translateX(-50%); */
-}
-
 
 /* End of footer */
