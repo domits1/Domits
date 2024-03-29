@@ -11,7 +11,7 @@ function OnboardingHost() {
     const [formData, setFormData] = useState({
         Title: "",
         Description: "",
-        Rent: 0,
+        Rent: "",
         Ownertype: "",
         Bookingsystem: "",
         Roomtype: "",
@@ -24,7 +24,6 @@ function OnboardingHost() {
         Street: "",
         Neighbourhood: "",
         Bookingsystem: "",
-        Guesttype: "",
         Ownertype: "",
         CancelPolicy: "",
         Features: {
@@ -49,15 +48,34 @@ function OnboardingHost() {
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
+
     });
 
     const pageUpdater = (pageNumber) => {
         setPage(pageNumber);
     };
 
+    const isFormFilled = () => {
+        // Exclude specific fields from the check
+        const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent'];
+
+        for (const key in formData) {
+            // Skip checking for excluded fields
+            if (excludedFields.includes(key)) {
+                continue;
+            }
+
+            // Check if value is empty or zero
+            if (formData[key] === "" || formData[key] === 0) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-
         // For checkboxes, update Features object property directly
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -71,7 +89,14 @@ function OnboardingHost() {
                     [name]: checked,
                 }
             }));
-        }  else {
+        } else if (type === 'number' || type === 'range') {
+            // Check if value is 0 and set it to an empty string
+            const newValue = value === '0' ? '' : value;
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: newValue
+            }));
+        } else {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: value
@@ -251,7 +276,17 @@ function OnboardingHost() {
                         </div>
                         <div class="formContainer">
                             <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Enlist</button>
+                            <button
+                                className='nextButtons'
+                                onClick={isFormFilled() ? () => pageUpdater(page + 1) : null}
+                                style={{
+                                    backgroundColor: 'green',
+                                    cursor: isFormFilled() ? 'pointer' : 'not-allowed',
+                                    opacity: isFormFilled() ? 1 : 0.5
+                                }}
+                                disabled={!isFormFilled()}
+                            >Enlist</button>
+
                         </div>
 
                     </div>
@@ -293,53 +328,13 @@ function OnboardingHost() {
                             </div>
                             <div className='buttonHolder'>
                                 <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                                <button className='nextButtons' onClick={() => {handleSubmit(); pageUpdater(page + 1)}}>Confirm and proceed</button>
+                                <button
+                                    className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
                             </div>
                         </div>
                     </div >
                 );
-                case 4:
-                return (
-                    <div class="formContainer">
-                        <div class="form-section">
-                            <h2>Review your information</h2>
-                            <div>
-                                <p>Title: {formData.Title}</p>
-                                <p>Description: {formData.Description}</p>
-                                <p>Rent: {formData.Rent}</p>
-                                <p>Room Type: {formData.Roomtype}</p>
-                                <p>Number of Guests: {formData.Guests}</p>
-                                <p>Number of Bedrooms: {formData.Bedrooms}</p>
-                                <p>Number of Bathrooms: {formData.Bathrooms}</p>
-                                <p>Number of Fixed Beds: {formData.Beds}</p>
-                                <p>Country: {formData.Country}</p>
-                                <p>Postal Code: {formData.PostalCode}</p>
-                                <p>Street + House Nr.: {formData.Street}</p>
-                                <p>Neighbourhood: {formData.Neighbourhood}</p>
-                                <p>Features:</p>
-                                <ul>
-                                    {Object.entries(formData.Features).map(([feature, value]) => (
-                                        <li key={feature}>{feature}: {value ? 'Yes' : 'No'}</li>
-                                    ))}
-                                </ul>
-                                <p>System Configuration:</p>
-                                <ul>
-                                    {Object.entries(formData.SystemConfiguration).map(([config, value]) => (
-                                        <li key={config}>{config}: {value ? 'Yes' : 'No'}</li>
-                                    ))}
-                                </ul>
-                                <p>Monthly Discount: {formData.Monthlypercent}%</p>
-                                <p>Weekly Discount: {formData.Weeklypercent}%</p>
-                                <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
-                            </div>
-                            <div className='buttonHolder'>
-                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                                <button className='nextButtons' onClick={() => {handleSubmit(); pageUpdater(page + 1)}}>Confirm and proceed</button>
-                            </div>
-                        </div>
-                    </div >
-                );
-                case 5:
+            case 5:
                 return (
                     <div className="container">
                         <h2>
@@ -347,7 +342,7 @@ function OnboardingHost() {
                         </h2>
                         <p>It may take a while before your accommodation is verified</p>
                         <div className='buttonHolder'>
-                                <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
+                            <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
                         </div>
                     </div >
                 );
