@@ -43,7 +43,7 @@
 
 /* Adjusted CSS for dropdown */
 .personalMenuDropdown {
-    /* position: relative; */
+    position: relative;
     display: inline-block;
 }
 
