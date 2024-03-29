@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import Page from "./Calculator";
-import FAQ from "./Faq";
+import { useNavigate } from 'react-router-dom';
+
 import './landing.css';
 
 function OnboardingHost() {
+
+    const navigate = useNavigate();
 
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
@@ -291,8 +293,61 @@ function OnboardingHost() {
                             </div>
                             <div className='buttonHolder'>
                                 <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                                <button className='nextButtons' onClick={() => handleSubmit()}>Confirm and proceed</button>
+                                <button className='nextButtons' onClick={() => {handleSubmit(); pageUpdater(page + 1)}}>Confirm and proceed</button>
                             </div>
+                        </div>
+                    </div >
+                );
+                case 4:
+                return (
+                    <div class="formContainer">
+                        <div class="form-section">
+                            <h2>Review your information</h2>
+                            <div>
+                                <p>Title: {formData.Title}</p>
+                                <p>Description: {formData.Description}</p>
+                                <p>Rent: {formData.Rent}</p>
+                                <p>Room Type: {formData.Roomtype}</p>
+                                <p>Number of Guests: {formData.Guests}</p>
+                                <p>Number of Bedrooms: {formData.Bedrooms}</p>
+                                <p>Number of Bathrooms: {formData.Bathrooms}</p>
+                                <p>Number of Fixed Beds: {formData.Beds}</p>
+                                <p>Country: {formData.Country}</p>
+                                <p>Postal Code: {formData.PostalCode}</p>
+                                <p>Street + House Nr.: {formData.Street}</p>
+                                <p>Neighbourhood: {formData.Neighbourhood}</p>
+                                <p>Features:</p>
+                                <ul>
+                                    {Object.entries(formData.Features).map(([feature, value]) => (
+                                        <li key={feature}>{feature}: {value ? 'Yes' : 'No'}</li>
+                                    ))}
+                                </ul>
+                                <p>System Configuration:</p>
+                                <ul>
+                                    {Object.entries(formData.SystemConfiguration).map(([config, value]) => (
+                                        <li key={config}>{config}: {value ? 'Yes' : 'No'}</li>
+                                    ))}
+                                </ul>
+                                <p>Monthly Discount: {formData.Monthlypercent}%</p>
+                                <p>Weekly Discount: {formData.Weeklypercent}%</p>
+                                <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
+                            </div>
+                            <div className='buttonHolder'>
+                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                                <button className='nextButtons' onClick={() => {handleSubmit(); pageUpdater(page + 1)}}>Confirm and proceed</button>
+                            </div>
+                        </div>
+                    </div >
+                );
+                case 5:
+                return (
+                    <div className="container">
+                        <h2>
+                            Congratulations! Your accommodation is being listed
+                        </h2>
+                        <p>It may take a while before your accommodation is verified</p>
+                        <div className='buttonHolder'>
+                                <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
                         </div>
                     </div >
                 );
