@@ -38,8 +38,7 @@ const Chat = ({ user }) => {
     const [recipientEmail, setRecipientEmail] = useState('');
     const [messageSent, setMessageSent] = useState(false);
     const [showDate, setShowDate] = useState(false);
-    const [notifications, setNotifications] = useState({});
-    const [sentMessagesCount, setSentMessagesCount] = useState(0); // Track sent messages count
+    const [unreadMessages, setUnreadMessages] = useState({}); 
 
     const signOut = async () => {
         try {
@@ -66,9 +65,12 @@ const Chat = ({ user }) => {
         }
     };
 
+  
     useEffect(() => {
         fetchChats();
+        fetchUnreadMessages();
     }, [recipientEmail]);
+
 
     const fetchChats = async () => {
         try {
@@ -92,16 +94,74 @@ const Chat = ({ user }) => {
             });
             const allChats = [...sentMessages.data.listChats.items, ...receivedMessages.data.listChats.items];
             setChats(allChats);
-
-            // Update recipient's notifications based on received messages
-            setNotifications(prevNotifications => ({
-                ...prevNotifications,
-                [recipientEmail]: receivedMessages.data.listChats.items.length
-            }));
         } catch (error) {
             console.error("Error fetching chats:", error);
         }
     };
+
+    const fetchUnreadMessages = async () => {
+        try {
+            const unreadMessagesResponse = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                        recipientEmail: { eq: user.attributes.email },
+                        isRead: { eq: false }
+                    }
+                }
+            });
+    
+            const unreadMessagesByEmail = unreadMessagesResponse.data.listChats.items.reduce((acc, chat) => {
+                const { email } = chat;
+                acc[email] = (acc[email] || 0) + 1;
+                return acc;
+            }, {});
+    
+            setUnreadMessages(unreadMessagesByEmail);
+        } catch (error) {
+            console.error("Error fetching unread messages:", error);
+        }
+    };
+    
+    const handleUserClick = async (email) => {
+        setRecipientEmail(email);
+        fetchChats(email); 
+    
+        try {
+            const unreadMessagesIds = chats
+                .filter(chat => chat.recipientEmail === user.attributes.email && chat.isRead === false)
+                .map(chat => chat.id);
+    
+            await Promise.all(unreadMessagesIds.map(async id => {
+                try {
+                    await API.graphql({
+                        query: mutations.updateChat,
+                        variables: {
+                            input: {
+                                id: id,
+                                isRead: true
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error updating read status:", error);
+                }
+            }));
+    
+            setUnreadMessages(prevState => ({
+                ...prevState,
+                [email]: 0 
+            }));
+        } catch (error) {
+            console.error("Error updating read status:", error);
+        } finally {
+            
+            fetchChats(email);
+        }
+    };
+    
+    
+     
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !recipientEmail) return;
@@ -113,36 +173,39 @@ const Chat = ({ user }) => {
                         text: newMessage.trim(),
                         email: user.attributes.email,
                         recipientEmail: recipientEmail.trim(),
+                        isRead: false
                     },
                 },
             });
             setNewMessage('');
-            setMessageSent(true);
-            setSentMessagesCount(sentMessagesCount + 1); // Increment sent messages count
-            // Fetch new chats and update notifications after sending the message
-            fetchChats(recipientEmail).then(() => {
-                // Update notifications after chats are fetched and set
-                setNotifications(prevNotifications => ({
-                    ...prevNotifications,
-                    [recipientEmail]: (prevNotifications[recipientEmail] || 0) + 1 // Increment notification count
-                }));
-            });
+            fetchChats(recipientEmail);
         } catch (error) {
             console.error("Error sending message:", error);
         }
         setShowDate(true);
+        setMessageSent(true);
     };
 
-    const handleUserClick = (email) => {
-        console.log("Recipient Email:", email); 
-        setRecipientEmail(email);
-        fetchChats(email);
-        setNotifications(prevNotifications => ({
-            ...prevNotifications,
-            [email]: 0 // Reset notifications for the opened chat
-        }));
-        showMessages();
-    };
+    const currentDate = new Date();
+
+    const options = { month: 'long', day: 'numeric' };
+
+    const formattedDate = currentDate.toLocaleDateString('en-US', options);
+
+
+
+  
+    const chatUsers = [
+        { email: '33580@ma-web.nl', name: 'Sheima Mahmoudi', profilePic: {img1}, lastMessage: 'You got an amazing place and we are loving it!' },
+        { email: 'nabilsalimi0229@gmail.com', name: 'Django Wagner', profilePic: './django.png', lastMessage: 'Happy to hear the stay is going great' },
+    ];
+
+    useEffect(() => {
+        console.log("Unread messages:", unreadMessages);
+    }, [unreadMessages]);
+    
+    
+
 
     return (
         <main className="chat">
@@ -220,35 +283,22 @@ const Chat = ({ user }) => {
                     </ul>
                 </article>
                 <article className="chat__people">
-                    <ul className="chat__users">
-                        <li className="chat__user" onClick={() => handleUserClick('33580@ma-web.nl')}>
-                        <figure className="chat__notification">{notifications['33580@ma-web.nl']}</figure>
+                <ul className="chat__users">
+                    {chatUsers.map((chatUser) => (
+                        <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
+                            {unreadMessages[chatUser.email] > 0 && <figure className="chat__notification">{unreadMessages[chatUser.email]}</figure>}
                             <div className="chat__pfp">
-                                <img src={img1} className="chat__img"/>
+                                <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
                             </div>
                             <div className="chat__wrapper">
-                                <h2 className="chat__name">Sheima Mahmoudi</h2>
-                                <p className="chat__preview">You got an amazing place and <br></br> we are loving it!</p>
+                                <h2 className="chat__name">{chatUser.name}</h2>
+                                <p className="chat__preview">{chatUser.lastMessage}</p>
                             </div>
                         </li>
-                        <li className="chat__user" onClick={() => handleUserClick('nabilsalimi0229@gmail.com')}>
-                            <figure className="chat__notification">{notifications['nabilsalimi0229@gmail.com']}</figure>
-                            <div className="chat__pfp"><img src={django} className="chat__img"/></div>
-                            <div className="chat__wrapper">
-                                <h2 className="chat__name">Django Wagner</h2>
-                                <p className="chat__preview">Happy to hear the stay is<br></br>going great</p>
-                            </div>
-                        </li>
-                        <li className="chat__user">
-                            <figure className="chat__notification">9+</figure>
-                            <div className="chat__pfp"><div className="chat__pfp"><img src={jan} className="chat__img"/></div></div>
-                            <div className="chat__wrapper">
-                                <h2 className="chat__name">Jan Smit</h2>
-                                <p className="chat__preview">Ik kom zo langs om eieren<br></br>te gooien op dat hoofd...</p>
-                            </div>
-                        </li>
-                    </ul>
-                </article>
+                    ))}
+                </ul>
+            </article>
+
                 <article className="chat__message">
                     <article className="chat__figure">
                         <aside className="chat__aside">
