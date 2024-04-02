@@ -3,6 +3,7 @@ type Chat @model @auth(rules: [{allow: private}]) {
   text: String!
   email: String
   recipientEmail: String
+  isRead: Boolean
   sortKey: String
 }
 

@@ -10,5 +10,5 @@
         ]
     },
     "S3DeploymentBucket": "amplify-domits-develop-123953-deployment",
-    "S3DeploymentRootKey": "amplify-appsync-files/8d039f40c54b2937d7b04e5295d84ac77c9d660b"
+    "S3DeploymentRootKey": "amplify-appsync-files/dcdef152928ea61ddfdb05266249dabcce480247"
 }
