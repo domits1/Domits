@@ -4,7 +4,6 @@ import bookingimage2 from "../../images/adultacco.png";
 import bookingimage3 from "../../images/accoimg4.png";
 import bookingimage4 from "../../images/accoimg3.png";
 import bookingimage5 from "../../images/accoimg1.png";
-import { Link } from "react-router-dom";
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import './BookingOverview.css';
@@ -47,9 +46,21 @@ const BookingOverview = () => {
                     <img src={backarrow} alt="Back Arrow"/>
                 </a>
             </div>
+            <div className="image-section">
+                {/* Static images */}
+                <img src={bookingimage1} alt="Booking Image 1" className="booking-image1"/>
+                <div className="imageWindow">
+                    <img src={bookingimage2} alt="Booking Image 2"/>
+                    <img src={bookingimage3} alt="Booking Image 3"/>
+                    <img src={bookingimage4} alt="Booking Image 4" className="booking-image4"/>
+                    <img src={bookingimage5} alt="Booking Image 5" className="booking-image5"/>
+                </div>
+            </div>
             <div className="info-section">
                 <div className="title-section">
+                    {/* Dynamic title */}
                     <div className="section-titles">{accommodation.title}</div>
+                    {/* Dynamic subtitle */}
                     <div className="booking-subtitle">{accommodation.description}</div>
                 </div>
                 {/* Render other dynamic details based on accommodation */}
