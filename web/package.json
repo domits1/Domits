@@ -3,8 +3,13 @@
   "version": "1.0.0",
   "description": "first open the project directory. in the terminal do the following things to make sure everything runs properly:",
   "main": "index.js",
-  "dependencies": {
+  "peerDependencies": {
     "@aws-amplify/ui-react": "^5.3.3",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/material": "^5.15.14",
+    "@mui/styled-engine-sc": "^6.0.0-alpha.18",
+    "@mui/x-date-pickers": "^7.1.0",
     "@react-google-maps/api": "^2.19.3",
     "@stripe/react-stripe-js": "^2.5.1",
     "@stripe/stripe-js": "^3.0.6",
@@ -14,6 +19,7 @@
     "amplify": "^0.0.11",
     "aws-amplify": "^5.3.12",
     "aws-sdk": "^2.1571.0",
+    "dayjs": "^1.11.10",
     "dotenv": "^16.4.1",
     "fuse.js": "^7.0.0",
     "gh": "^2.8.9",
@@ -29,6 +35,7 @@
     "react-select": "^5.8.0",
     "router": "^1.3.8",
     "stripe": "^14.14.0",
+    "styled-components": "^6.1.8",
     "typescript": "^4.9.5",
     "ui-react": "^1.0.3",
     "web-vitals": "^2.1.4"
