@@ -3,8 +3,6 @@
   margin: 1%;
   margin-top: 10px;
   background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 15px;
   overflow: hidden;
   display: inline-block;
   vertical-align: top;
@@ -12,7 +10,6 @@
 }
 
 .accocard:hover {
-  box-shadow: 3px 12px 10px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
 
@@ -21,12 +18,22 @@
   height: auto;
   aspect-ratio: 1;
   object-fit: cover;
+  border-radius: 15px;
+}
+
+.accocard-link {
+  text-decoration: none;
+  color: black;
+}
+
+.accocard-link:hover {
+  text-decoration: none;
+  color: black;
 }
 
 .accocard-content {
   padding: 15px;
   overflow: hidden;
-  
 }
 
 .accocard-title {
@@ -41,7 +48,7 @@
 
 .accocard-price {
   font-size: 16px;
-  color: #007bff;
+  color: #0D9813;
   margin-bottom: 8px;
 }
 
