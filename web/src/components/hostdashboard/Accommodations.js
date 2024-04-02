@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import './Accommodations.css';
 
 const Accommodations = ({ searchQuery }) => {
@@ -16,7 +17,7 @@ const Accommodations = ({ searchQuery }) => {
             }
             const responseData = await response.json();
             // console.log(responseData);
-    
+
             const formattedData = responseData.map((item, index) => ({ // Use index of map to access img array
                 image: `https://accommodationphotos.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
                 // image: img[index % img.length],
@@ -32,7 +33,7 @@ const Accommodations = ({ searchQuery }) => {
             console.error('Error fetching or processing data:', error);
         }
     };
-    
+
 
     const filteredAccommodations = accolist.filter(accommodation =>
         accommodation.title.toLowerCase().includes(searchQuery.toLowerCase())
@@ -44,13 +45,15 @@ const Accommodations = ({ searchQuery }) => {
         <div id='card-visibility'>
             {filteredAccommodations.map((accommodation, index) => (
                 <div className="accocard" key={index}>
-                    <img src={accommodation.image} alt="Product Image" />
-                    <div className="accocard-content">
-                        <div className="accocard-title">{accommodation.title}</div>
-                        <div className="accocard-price">{accommodation.price}</div>
-                        <div className="accocard-detail">{accommodation.details}</div>
-                        <div className="accocard-size">{accommodation.size}</div>
-                    </div>
+                    <Link to={`/bookingoverview`}>
+                        <img src={accommodation.image} alt="Product Image" />
+                        <div className="accocard-content">
+                            <div className="accocard-title">{accommodation.title}</div>
+                            <div className="accocard-price">{accommodation.price}</div>
+                            <div className="accocard-detail">{accommodation.details}</div>
+                            <div className="accocard-size">{accommodation.size}</div>
+                        </div>
+                    </Link>
                 </div>
             ))}
         </div>
