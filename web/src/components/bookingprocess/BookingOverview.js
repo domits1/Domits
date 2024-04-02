@@ -6,6 +6,7 @@ import bookingimage4 from "../../images/accoimg3.png";
 import bookingimage5 from "../../images/accoimg1.png";
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { id } from '../../components/hostdashboard/Accommodations.js';
 import './BookingOverview.css';
 
 const BookingOverview = () => {
