@@ -43,7 +43,7 @@ const BookingOverview = () => {
     return (
         <div className="booking-container">
             <div className="back-arrow">
-                <a href="/details">
+                <a href="/listingdetails">
                     <img src={backarrow} alt="Back Arrow"/>
                 </a>
             </div>
