@@ -92,6 +92,10 @@
     transition: .3s;
 }
 
+.review-date {
+    color: #0D9813;
+}
+
 @keyframes fade-up {
     0% {
         opacity: 0;

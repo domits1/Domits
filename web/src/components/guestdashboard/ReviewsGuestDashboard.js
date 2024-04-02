@@ -66,8 +66,9 @@ function GuestReviews() {
                             {reviews.length > 0 ? (
                             reviews.map((review, index) => (
                             <div key={index} className="review-tab">
-                            <h2 className="review-header">{review.date}</h2>
+                            <h2 className="review-header">{review.title}</h2>
                             <p className="review-content">{review.content}</p>
+                            <p className="review-date">Written on: {review.date}</p>
                             </div>
                             ))
                             ) : (
