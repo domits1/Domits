@@ -42,10 +42,10 @@ const Accommodations = ({ searchQuery }) => {
     // console.log("Filtered accommodations:", filteredAccommodations);
 
     return (
-        <div id='card-visibility'>
+        <div id="card-visibility">
             {filteredAccommodations.map((accommodation, index) => (
                 <div className="accocard" key={index}>
-                    <Link to={`/bookingoverview`}>
+                    <Link to={`/listingdetails`} className="accocard-link">
                         <img src={accommodation.image} alt="Product Image" />
                         <div className="accocard-content">
                             <div className="accocard-title">{accommodation.title}</div>
