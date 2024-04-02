@@ -3,6 +3,13 @@ Please link to the issue that this pull request is related to. If there is no re
 
 `Related Issue: #[issue number]`
 
+## Type of change
+Please select the type of change.
+
+- [ ] Big change (300+ changes)
+- [ ] Small change (Less than 300 changes)
+- [ ] NPM Packages changed
+
 ## Proposed Changes
 Please provide a detailed description of the changes you're proposing with this pull request. Include any specific changes to the code, new files, or changes to existing files.
 
