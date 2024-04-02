@@ -45,7 +45,7 @@ const Accommodations = ({ searchQuery }) => {
         <div id='card-visibility'>
             {filteredAccommodations.map((accommodation, index) => (
                 <div className="accocard" key={index}>
-                    <Link to={`/bookingoverview`}>
+                    <Link to={`/listingdetails`}>
                         <img src={accommodation.image} alt="Product Image" />
                         <div className="accocard-content">
                             <div className="accocard-title">{accommodation.title}</div>

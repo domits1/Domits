@@ -10,7 +10,7 @@ import adultroom from '../../images/adultacco.png';
 import teenroom from '../../images/teenacco.jpg';
 import kidroom from '../../images/kidacco.jpg';
 import back from '../../images/arrowleft.png';
-import {Link} from "react-router-dom";
+import { Link } from "react-router-dom";
 import telescope from "../../images/telescope.png";
 import smarttv from "../../images/tv.png";
 import sauna from "../../images/thermometer.png";
@@ -33,7 +33,7 @@ const ListingDetails = () => {
                 <div className="listing-details-top">
                     <div className="listing-details-back-arrow">
                         <a href="/">
-                            <img src={backarrow} alt="Back Arrow"/>
+                            <img src={backarrow} alt="Back Arrow" />
                             <div className="listing-details-back-arrow">Back</div>
                         </a>
                     </div>
@@ -43,13 +43,13 @@ const ListingDetails = () => {
                 </div>
                 <div className="listing-details-image-window">
                     <div className="listing-details-big-img">
-                        <img src={detailbigimg} alt="detailbigimg"/>
+                        <img src={detailbigimg} alt="detailbigimg" />
                     </div>
                     <div className="listing-details-side-img">
-                        <img src={detailimg1} alt="detailimg1"/>
-                        <img src={accomap} alt="detailimg2" id="top-right-img"/>
-                        <img src={detailimg3} alt="detailimg3"/>
-                        <img src={detailimg4} alt="detailimg4" id="bottom-right-img"/>
+                        <img src={detailimg1} alt="detailimg1" />
+                        <img src={accomap} alt="detailimg2" id="top-right-img" />
+                        <img src={detailimg3} alt="detailimg3" />
+                        <img src={detailimg4} alt="detailimg4" id="bottom-right-img" />
                     </div>
                 </div>
                 <div className="price-and-rooms-row">
@@ -64,7 +64,7 @@ const ListingDetails = () => {
                         <div className="listing-details-room-bed">Double bed</div>
                         <div className="listing-details-room-text">Enjoy the double bed and sleep like a king</div>
                         <div className="listing-detail-room-image first-room-image">
-                            <img src={adultroom} alt="Room image"/>
+                            <img src={adultroom} alt="Room image" />
                         </div>
                     </div>
                     <div className="listing-details-room">
@@ -72,7 +72,7 @@ const ListingDetails = () => {
                         <div className="listing-details-room-bed">Bunker bed</div>
                         <div className="listing-details-room-text">A room with a bunker bed for your teenagers</div>
                         <div className="listing-detail-room-image">
-                            <img src={teenroom} alt="Room image"/>
+                            <img src={teenroom} alt="Room image" />
                         </div>
                     </div>
                     <div className="listing-details-room">
@@ -80,42 +80,42 @@ const ListingDetails = () => {
                         <div className="listing-details-room-bed">2 single beds</div>
                         <div className="listing-details-room-text">2 single kids themed beds with a nice vibe</div>
                         <div className="listing-detail-room-image last-room-image">
-                            <img src={kidroom} alt="Room image"/>
+                            <img src={kidroom} alt="Room image" />
                         </div>
                     </div>
                 </div>
                 <div className="show-more-button">
                     <button className="listing-details-show-more">
-                        <img src={pluscircle} alt="Plust circle"/>Show more
+                        <img src={pluscircle} alt="Plust circle" />Show more
                     </button>
                 </div>
                 <div className="listing-details-place-offers-text">This place offers the following:</div>
                 <div className="listing-details-place-offers">
                     <div className="listing-details-offer-item">
-                        <img src={smarttv} alt="Smart TV"/> Smart TV
+                        <img src={smarttv} alt="Smart TV" /> Smart TV
                     </div>
                     <div className="listing-details-offer-item">
-                        <img src={sauna} alt="Sauna"/> Sauna
+                        <img src={sauna} alt="Sauna" /> Sauna
                     </div>
                     <div className="listing-details-offer-item">
-                        <img src={vault} alt="Vault"/> Vault
+                        <img src={vault} alt="Vault" /> Vault
                     </div>
                     <div className="listing-details-offer-item">
-                        <img src={welcomegift} alt="Welcome Gift"/> Welcome Gift
+                        <img src={welcomegift} alt="Welcome Gift" /> Welcome Gift
                     </div>
                     <div className="listing-details-offer-item">
-                        <img src={dimmablelight} alt="Dimmable lights"/> Dimmable lights
+                        <img src={dimmablelight} alt="Dimmable lights" /> Dimmable lights
                     </div>
                     <div className="listing-details-offer-item">
-                        <img src={telescope} alt="Telescope"/> Telescope
+                        <img src={telescope} alt="Telescope" /> Telescope
                     </div>
                     <div className="listing-details-offer-item">
-                        <img src={superfastwifi} alt="Super fast WiFi"/> Super fast WiFi
+                        <img src={superfastwifi} alt="Super fast WiFi" /> Super fast WiFi
                     </div>
                 </div>
                 <div className="show-more-button">
                     <button className="listing-details-show-more black-show-more">
-                        <img src={pluscircleblack} alt="Plust circle"/>Show more
+                        <img src={pluscircleblack} alt="Plust circle" />Show more
                     </button>
                 </div>
                 <div className="listing-details-review-card-title">Reviews</div>
@@ -123,7 +123,7 @@ const ListingDetails = () => {
                 <div className="listing-details-review-card">
                     <div className="listing-details-review-title">Clint Eastwood</div>
                     <div className="listing-details-review-rating">
-                        <img src={star} alt="Star"/> 5,00
+                        <img src={star} alt="Star" /> 5,00
                     </div>
                     <div className="listing-details-review-staying-time">Stayed from: 27/11/’23 - 03/12/’23</div>
                     <div className="listing-details-review-text">
@@ -134,7 +134,7 @@ const ListingDetails = () => {
                 <div className="listing-details-review-card">
                     <div className="listing-details-review-title">East Clintwood</div>
                     <div className="listing-details-review-rating">
-                        <img src={star} alt="Star"/> 4,50
+                        <img src={star} alt="Star" /> 4,50
                     </div>
                     <div className="listing-details-review-staying-time">Stayed from: 02/12/’23 - 09/12/’23</div>
                     <div className="listing-details-review-text">
@@ -145,7 +145,7 @@ const ListingDetails = () => {
                 <div className="listing-details-review-card">
                     <div className="listing-details-review-title">Clint Eastwood</div>
                     <div className="listing-details-review-rating">
-                        <img src={star} alt="Star"/> 5,00
+                        <img src={star} alt="Star" /> 5,00
                     </div>
                     <div className="listing-details-review-staying-time">Stayed from: 27/11/’23 - 03/12/’23</div>
                     <div className="listing-details-review-text">
@@ -155,7 +155,7 @@ const ListingDetails = () => {
                 </div>
                 <div className="show-more-button">
                     <button className="listing-details-show-more black-show-more listing-details-extra-margin-top">
-                        <img src={pluscircleblack} alt="Plust circle"/>Show more
+                        <img src={pluscircleblack} alt="Plust circle" />Show more
                     </button>
                 </div>
                 <div className="listing-details-country-place-text">The Netherlands, Haarlem</div>
@@ -174,13 +174,13 @@ const ListingDetails = () => {
                             </div>
                         </div>
                         <div className="listing-details-things-to-do-image">
-                            <img src={goated} alt="Things to do Image"/>
+                            <img src={goated} alt="Things to do Image" />
                         </div>
                     </div>
                 </div>
                 <div className="show-more-button">
                     <button className="listing-details-show-more black-show-more listing-details-extra-margin-top">
-                        <img src={pluscircleblack} alt="Plust circle"/>Show more
+                        <img src={pluscircleblack} alt="Plust circle" />Show more
                     </button>
                 </div>
             </div>
@@ -197,8 +197,8 @@ const ListingDetails = () => {
                     <div className="listing-details-dates-container">
                         <div className="listing-details-checkin-date">15 december 2023</div>
                         <div className="listing-details-amount-of-nights-text">
-                            7<br/>
-                            <img src={arrow} alt="Arrow"/>
+                            7<br />
+                            <img src={arrow} alt="Arrow" />
                             Nights
                         </div>
                         <div className="listing-details-checkout-date">23 december 2023</div>
@@ -213,11 +213,13 @@ const ListingDetails = () => {
                         <div className="listing-details-select">Select...</div>
                     </div>
                     <div className="listing-details-book-button">
-                        <button>Book* <img src={bookarrow} alt="Book Arrow"/></button>
+                        <Link to={`/bookingoverview`}>
+                            <button>Book* <img src={bookarrow} alt="Book Arrow" /></button>
+                        </Link>
                     </div>
                     <div className="listing-details-book-button-star-text">*You wont be charged yet</div>
                     {/*  Horizontal line  */}
-                    <hr/>
+                    <hr />
                     <div className="listing-details-booking-information-section">
                         <div className="listing-details-booking-information-row">
                             <div className="listing-details-booking-information-text">7 nights x $1400 a night</div>
