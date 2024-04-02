@@ -62,17 +62,17 @@ function GuestReviews() {
                 <div className="contentContainer">
                     <div className="reviewColumn">
                         <div className="reviewBox">
-                            <p className="reviewText">Earnings</p>
+                            <p className="reviewText">My reviews({reviews.length})</p>
                             {reviews.length > 0 ? (
                             reviews.map((review, index) => (
-                            <div key={index} className="reviewBox">
-                            <h2>{review.date}</h2>
-                            <p>{review.content}</p>
+                            <div key={index} className="review-tab">
+                            <h2 className="review-header">{review.date}</h2>
+                            <p className="review-content">{review.content}</p>
                             </div>
                             ))
                             ) : (
                             <div className="reviewBox">
-                            <p>It appears that you have not written any reviews yet...</p>
+                            <p className="review-alert">It appears that you have not written any reviews yet...</p>
                             </div>
                             )}
                         </div>
