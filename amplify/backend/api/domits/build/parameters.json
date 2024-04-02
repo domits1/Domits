@@ -1,0 +1,14 @@
+{
+    "AppSyncApiName": "domits",
+    "DynamoDBBillingMode": "PAY_PER_REQUEST",
+    "DynamoDBEnableServerSideEncryption": false,
+    "AuthModeLastUpdated": "2023-12-19T12:13:45.074Z",
+    "AuthCognitoUserPoolId": {
+        "Fn::GetAtt": [
+            "authdomits7b73f586",
+            "Outputs.UserPoolId"
+        ]
+    },
+    "S3DeploymentBucket": "amplify-domits-develop-123953-deployment",
+    "S3DeploymentRootKey": "amplify-appsync-files/dcdef152928ea61ddfdb05266249dabcce480247"
+}

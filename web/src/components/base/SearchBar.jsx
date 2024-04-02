@@ -48,7 +48,7 @@ export const SearchBar = ({ setResults }) => {
             <div className="autocomplete-container">
               <input
                 {...getInputProps({
-                  placeholder: 'Search Places . . .',
+                  placeholder: 'Search Places...',
                   className: 'searchBar',
                 })}
               />
@@ -133,12 +133,12 @@ export const SearchBar = ({ setResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            { value: 'Hotel', label: <><FaMapPin /> Hotel</> }, 
-            { value: 'Apartment', label: <><FaMapPin /> Apartment</> }, 
+            { value: 'Hotel', label: <><FaMapPin /> Hotel</> },
+            { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
             { value: 'Guesthouse', label: <><FaMapPin /> Guesthouse</> },
-            { value: 'Villa', label: <><FaMapPin /> Villa</> }, 
-            { value: 'Resort', label: <><FaMapPin /> Resort</> }, 
-            { value: 'Hostel', label: <><FaMapPin /> Hostel</> }, 
+            { value: 'Villa', label: <><FaMapPin /> Villa</> },
+            { value: 'Resort', label: <><FaMapPin /> Resort</> },
+            { value: 'Hostel', label: <><FaMapPin /> Hostel</> },
           ]}
           placeholder="Type of accommodation"
           isSearchable={true}
@@ -165,9 +165,9 @@ export const SearchBar = ({ setResults }) => {
               borderRadius: '8px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
               padding: '8px',
-              width: '200px', 
-              maxHeight: '300px', 
-              overflowY: 'auto', 
+              width: '200px',
+              maxHeight: '300px',
+              overflowY: 'auto',
             }),
           }}
         />

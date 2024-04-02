@@ -95,10 +95,7 @@ function Header() {
                         </a>
                     </div>
                     <div className='App'>
-                        <div className='search-bar-container'>
                             <SearchBar setResults={setResults} />
-                           
-                        </div>
                     </div>
                     <div className='headerRight'>
                         <button className="headerButtons" onClick={navigateToLanding}>
