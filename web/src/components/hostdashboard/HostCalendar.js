@@ -31,11 +31,6 @@ function HostCalendar() {
                                 <div className="boxColumns locationContent">
                                         <Calendar />
                                 </div>
-                                <div className="boxColumns locationContent">
-                                    <div className="box">
-
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
