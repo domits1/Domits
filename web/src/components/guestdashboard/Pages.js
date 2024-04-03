@@ -19,7 +19,7 @@ function Pages() {
         <img src={dashboard} alt="Profile"></img>
         <p>Dashboard</p>
       </div>
-      <div className="wijzers disabled">
+      <div className="wijzers" onClick={() => navigate("/Chatprototype")}>
         <img src={message} alt="Messages"></img>
         <p>Messages</p>
       </div>

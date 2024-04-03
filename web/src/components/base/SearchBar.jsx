@@ -30,8 +30,17 @@ export const SearchBar = ({ setResults }) => {
     }
   };
 
-  const handleRefreshClick = () => {
-    window.location.reload();
+  //connectie met api gateway
+  const handleSearch = async () => {
+    try {
+      
+      const response = await fetch(`https://00nfpimhyb.execute-api.eu-north-1.amazonaws.com/dev/Search?type=${accommodation}`);
+      const data = await response.json();
+      
+      setResults(data);
+    } catch (error) {
+      console.error('Error fetching accommodations:', error);
+    }
   };
 
   return (
@@ -48,7 +57,7 @@ export const SearchBar = ({ setResults }) => {
             <div className="autocomplete-container">
               <input
                 {...getInputProps({
-                  placeholder: 'Search Places . . .',
+                  placeholder: 'Search Places...',
                   className: 'searchBar',
                 })}
               />
@@ -133,12 +142,12 @@ export const SearchBar = ({ setResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            { value: 'Hotel', label: <><FaMapPin /> Hotel</> }, 
-            { value: 'Apartment', label: <><FaMapPin /> Apartment</> }, 
-            { value: 'Guesthouse', label: <><FaMapPin /> Guesthouse</> },
-            { value: 'Villa', label: <><FaMapPin /> Villa</> }, 
-            { value: 'Resort', label: <><FaMapPin /> Resort</> }, 
-            { value: 'Hostel', label: <><FaMapPin /> Hostel</> }, 
+            { value: 'Hotel', label: <><FaMapPin /> Hotel</> },
+            { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
+            { value: 'House', label: <><FaMapPin /> House</> },
+            { value: 'Villa', label: <><FaMapPin /> Villa</> },
+            { value: 'Boathouse', label: <><FaMapPin /> Boathouse</> },
+            { value: 'Camper', label: <><FaMapPin /> Camper</> },
           ]}
           placeholder="Type of accommodation"
           isSearchable={true}
@@ -165,19 +174,15 @@ export const SearchBar = ({ setResults }) => {
               borderRadius: '8px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
               padding: '8px',
-              width: '200px', 
-              maxHeight: '300px', 
-              overflowY: 'auto', 
+              width: '200px',
+              maxHeight: '300px',
+              overflowY: 'auto',
             }),
           }}
         />
       </div>
-      <button className="searchbar-button" type="button" onClick={handleRefreshClick}>
-        {showResults}
-        <FaSearch
-          style={{ marginRight: '2px', cursor: 'pointer' }}
-
-        />
+      <button className="searchbar-button" type="button" onClick={handleSearch}>
+        <FaSearch style={{ marginRight: '2px', cursor: 'pointer' }} />
       </button>
     </div>
   );

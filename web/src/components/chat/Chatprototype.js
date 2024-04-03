@@ -11,12 +11,14 @@ import django from './django.png';
 import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
+import Pages from "../guestdashboard/Pages";
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from "react";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
 import * as queries from "../../graphql/queries";
+import { Auth } from 'aws-amplify';
 
 function showMessages() {
     var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -33,22 +35,137 @@ function showMessages() {
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
     const [newMessage, setNewMessage] = useState('');
+    const [recipientEmail, setRecipientEmail] = useState('');
+    const [messageSent, setMessageSent] = useState(false);
+    const [showDate, setShowDate] = useState(false);
+    const [unreadMessages, setUnreadMessages] = useState({}); 
+    const [lastMessageDate, setLastMessageDate] = useState(null);
 
+    const signOut = async () => {
+        try {
+            await Auth.signOut(); 
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
+    };
+
+    const signUp = async () => {
+        try {
+         
+            const { user } = await Auth.signUp({
+                username: 'username', 
+                password: 'password', 
+                attributes: {
+                  
+                    email: 'email@example.com'
+                }
+            });
+            console.log("New user signed up:", user);
+        } catch (error) {
+            console.error("Error signing up:", error);
+        }
+    };
+
+  
     useEffect(() => {
         fetchChats();
-    }, []);
+        fetchUnreadMessages();
+    }, [recipientEmail]);
+
 
     const fetchChats = async () => {
         try {
-            const allChats = await API.graphql(graphqlOperation(queries.listChats));
-            setChats(allChats.data.listChats.items);
+            const sentMessages = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                        email: { eq: user.attributes.email },
+                        recipientEmail: { eq: recipientEmail }
+                    }
+                }
+            });
+            const receivedMessages = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                        email: { eq: recipientEmail },
+                        recipientEmail: { eq: user.attributes.email }
+                    }
+                }
+            });
+            const allChats = [...sentMessages.data.listChats.items, ...receivedMessages.data.listChats.items];
+            setChats(allChats);
         } catch (error) {
             console.error("Error fetching chats:", error);
         }
     };
 
+    const fetchUnreadMessages = async () => {
+        try {
+            const unreadMessagesResponse = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                        recipientEmail: { eq: user.attributes.email },
+                        isRead: { eq: false }
+                    }
+                }
+            });
+    
+            const unreadMessagesByEmail = unreadMessagesResponse.data.listChats.items.reduce((acc, chat) => {
+                const { email } = chat;
+                acc[email] = (acc[email] || 0) + 1;
+                return acc;
+            }, {});
+    
+            setUnreadMessages(unreadMessagesByEmail);
+        } catch (error) {
+            console.error("Error fetching unread messages:", error);
+        }
+    };
+    
+    const handleUserClick = async (email) => {
+        setRecipientEmail(email);
+        fetchChats(email); 
+    
+        try {
+            const unreadMessagesIds = chats
+                .filter(chat => chat.recipientEmail === user.attributes.email && chat.isRead === false)
+                .map(chat => chat.id);
+    
+            await Promise.all(unreadMessagesIds.map(async id => {
+                try {
+                    await API.graphql({
+                        query: mutations.updateChat,
+                        variables: {
+                            input: {
+                                id: id,
+                                isRead: true
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error updating read status:", error);
+                }
+            }));
+    
+            setUnreadMessages(prevState => ({
+                ...prevState,
+                [email]: 0 
+            }));
+        } catch (error) {
+            console.error("Error updating read status:", error);
+        } finally {
+            
+            fetchChats(email);
+        }
+    };
+    
+    
+     
+
     const sendMessage = async () => {
-        if (!newMessage.trim()) return;
+        if (!newMessage.trim() || !recipientEmail) return;
         try {
             await API.graphql({
                 query: mutations.createChat,
@@ -56,118 +173,53 @@ const Chat = ({ user }) => {
                     input: {
                         text: newMessage.trim(),
                         email: user.attributes.email,
+                        recipientEmail: recipientEmail.trim(),
+                        isRead: false,
+                        createdAt: currentDate.toISOString()
                     },
                 },
             });
             setNewMessage('');
-            fetchChats();
+            fetchChats(recipientEmail);
         } catch (error) {
             console.error("Error sending message:", error);
         }
+        setShowDate(true);
+        setLastMessageDate(currentDate);
+        setMessageSent(true);
     };
+
+    const currentDate = new Date();
+
+    const options = { month: 'long', day: 'numeric' };
+
+    const formattedDate = currentDate.toLocaleDateString('en-US', options);
+
+
+
+  
+    const chatUsers = [
+        { email: '33580@ma-web.nl', name: 'Sheima Mahmoudi', profilePic: {img1}, lastMessage: 'You got an amazing place and we are loving it!' },
+        { email: 'nabilsalimi0229@gmail.com', name: 'Django Wagner', profilePic: './django.png', lastMessage: 'Happy to hear the stay is going great' },
+    ];
+
+    useEffect(() => {
+        console.log("Unread messages:", unreadMessages);
+    }, [unreadMessages]);
+    
+    
+
 
     return (
         <main className="chat">
             <div className="chat__headerWrapper">
+         
                 <h2 className="chat__heading">Message dashboard</h2>
             </div>
             <section className="chat__container">
-                <article className="chat__sidebar">
-                    <ul className="chat__mobileUl">
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={heart}/>
-                            </div>
-                            <p className="chat__iconText">Favourites</p>
-                        </li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={home}/>
-                            </div>
-                            <p className="chat__iconText">Guests</p>
-                        </li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={eye}/>
-                            </div>
-                            <p className="chat__iconText">Accomm. viewers</p>
-                            <div className="chat__liIcon">
-                                <img src={trash}/>
-                            </div>
-                            <p className="chat__iconText">Deleted</p>
-                            <div className="chat__liIcon">
-                                <img src={alert}/>
-                            </div>
-                            <p className="chat__iconText">Add moderator</p>
-                        </li>
-                    </ul>
-                    <ul className="chat__topUl">
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={heart}/>
-                            </div>
-                            <p className="chat__iconText">Favourites</p>
-                        </li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={home}/>
-                            </div>
-                            <p className="chat__iconText">Guests</p>
-                        </li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={eye}/>
-                            </div>
-                            <p className="chat__iconText">Accomm. viewers</p>
-                        </li>
-                    </ul>
-                    <ul className="chat__midUl">
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={trash}/>
-                            </div>
-                            <p className="chat__iconText">Deleted</p>
-                        </li>
-                    </ul>
-                    <ul className="chat__bottomUl">
-                        <li className="chat__bottomLi chat__bottomLi--text">Need some assistance in<br></br>your messages with you<br></br>tenants?</li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={alert}/>
-                            </div>
-                            <p className="chat__iconText">Add moderator</p>
-                        </li>
-                    </ul>
-                </article>
-                <article className="chat__people">
-                    <ul className="chat__users">
-                        <li className="chat__user" onClick={showMessages}>
-                            <div className="chat__pfp">
-                                <img src={img1} className="chat__img"/>
-                            </div>
-                            <div className="chat__wrapper">
-                                <h2 className="chat__name">Sheima Mahmoudi</h2>
-                                <p className="chat__preview">You got an amazing place and <br></br> we are loving it!</p>
-                            </div>
-                        </li>
-                        <li className="chat__user">
-                            <figure className="chat__notification">1</figure>
-                            <div className="chat__pfp"><img src={django} className="chat__img"/></div>
-                            <div className="chat__wrapper">
-                                <h2 className="chat__name">Django Wagner</h2>
-                                <p className="chat__preview">Happy to hear the stay is<br></br>going great</p>
-                            </div>
-                        </li>
-                        <li className="chat__user">
-                            <figure className="chat__notification">9+</figure>
-                            <div className="chat__pfp"><div className="chat__pfp"><img src={jan} className="chat__img"/></div></div>
-                            <div className="chat__wrapper">
-                                <h2 className="chat__name">Jan Smit</h2>
-                                <p className="chat__preview">Ik kom zo langs om eieren<br></br>te gooien op dat hoofd...</p>
-                            </div>
-                        </li>
-                    </ul>
-                </article>
+               <Pages/>
+              
+
                 <article className="chat__message">
                     <article className="chat__figure">
                         <aside className="chat__aside">
@@ -176,7 +228,7 @@ const Chat = ({ user }) => {
                             </div>
                             <ul className="chat__list">
                                 <li className="chat__listItem">
-                                    <h2 className="chat__name">Sheima Mahmoudi</h2>
+                                    <h2 className="chat__name">{recipientEmail}</h2>
                                 </li>
                                 <li className="chat__listItem">
                                     <img src={smile}/>
@@ -201,36 +253,79 @@ const Chat = ({ user }) => {
                             </ul>
                         </aside>
                         <article className="chat__chatContainer">
-                            <div className="chat__messages">
-                                {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat) => (
-                                    <div
-                                        key={chat.id}
-                                        className={`chat__dialog chat__dialog--${
-                                            chat.email === user.attributes.email ? "user" : "guest"
-                                        }`}
-                                    >
-                                        {chat.text}
-                                        <span>{chat.email.split("@")[0]}</span>
-                                    </div>
-                                ))}
-                            </div>
+                        {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
+        <React.Fragment key={chat.id}>
+            {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
+                <p className="chat__date">
+                    <span>{new Date(chat.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                </p>
+            )}
+            <div
+                className={`chat__dialog chat__dialog--${chat.email === user.attributes.email ? "user" : "guest"}`}
+            >
+                {chat.text}
+                <span>{chat.email.split("@")[0]}</span>
+            </div>
+        </React.Fragment>
+    ))}
+                            </article>
 
-                            <input
-                                className="chat__input"
-                                type="text"
-                                id="search"
-                                name="search"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                onKeyUp={(e) => {
-                                    if (e.key === "Enter") {
-                                        sendMessage();
-                                    }
-                                }}
-                            />
-                        </article>
+                    <input
+                        className="chat__input"
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type your message..."
+                        onKeyUp={(e) => {
+                            if (e.key === "Enter") {
+                                sendMessage();
+                            }
+                        }}
+                    />
+                    {/* <input
+                        className="chat__recipientInput"
+                        type="email"
+                        value={recipientEmail}
+                        onChange={(e) => setRecipientEmail(e.target.value)}
+                        placeholder="Recipient's email..."
+                    /> */}
+                                        <button onClick={sendMessage}>Send</button>
+                            
+                        
                     </article>
+                    <nav className="chat__nav">
+                    <ul className="chat__controls">
+                        <li className="chat__control chat__control--icon">
+                            <img className="chat__icon" src={heart}/>
+                        </li>
+                        <li className="chat__control chat__control--icon">
+                            <img className="chat__icon" src={trash}/>
+                        </li>
+                    </ul>
+                    <div className="chat__buttonWrapper">
+                    <button className="chat__button chat__button--file">add files</button>
+                    <button className="chat__button chat__button--review">Send review link</button>
+                        
+                    </div>
+                    </nav>
                 </article>
+                <article className="chat__people">
+                <ul className="chat__users">
+                    {chatUsers.map((chatUser) => (
+                            <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
+
+                            {unreadMessages[chatUser.email] > 0 && <figure className="chat__notification">{unreadMessages[chatUser.email]}</figure>}
+                            <div className="chat__pfp">
+                                <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
+                            </div>
+                            <div className="chat__wrapper">
+                                <h2 className="chat__name">{chatUser.name}</h2>
+                                <p className="chat__preview">{chatUser.lastMessage}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </article>
             </section>
         </main>
     );

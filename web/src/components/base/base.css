@@ -7,10 +7,10 @@
 
 .header-nav {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     width: 100%;
-    flex-wrap: wrap;
 }
 
 .headerRight {
@@ -145,7 +145,7 @@
         width: 100%;
     }
 
-    .headerButtons, .personalMenu {
+    .headerButtons, .personalMenu, .bar {
         width: 100%;
         margin-top: 10px;
         margin-right: 0;
@@ -317,16 +317,11 @@ a:hover {
 }
 
 .search-bar-container {
-   
     width: 40%;
     padding: 1px;
-    /* margin: auto; */
+    margin: auto;
     display: flex;
     flex-direction: column;
-    /* position: absolute;
-    top: 10px; 
-    left: 43%;  */
-    /* transform: translateX(-50%); */
 }
 
 

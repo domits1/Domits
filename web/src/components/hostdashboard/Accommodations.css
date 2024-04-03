@@ -1,18 +1,20 @@
+.assortment{
+  padding-top: 30px;
+}
+
 .accocard {
   width: 23%;
   margin: 1%;
   margin-top: 10px;
   background-color: #fff;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 15px;
   overflow: hidden;
   display: inline-block;
   vertical-align: top;
   transition: all 0.5s ease-in-out;
+  position: relative;
 }
 
 .accocard:hover {
-  box-shadow: 3px 12px 10px rgba(0, 0, 0, 0.3);
   cursor: pointer;
 }
 
@@ -21,38 +23,75 @@
   height: auto;
   aspect-ratio: 1;
   object-fit: cover;
+  border-radius: 15px;
+  display: block;
+
+}
+
+.accocard-link {
+  text-decoration: none;
+  color: black;
+}
+
+.accocard-link:hover {
+  text-decoration: none;
+  color: black;
 }
 
 .accocard-content {
-  padding: 15px;
+  padding: 15px 0;
   overflow: hidden;
-  
 }
 
 .accocard-title {
+  width: 90%;
+  background: rgba(0, 0, 0, 0.383);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 10px;
+  border-radius: 15px;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis; 
+  position: absolute;
+  bottom: 160px; 
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
   font-size: 18px;
   font-weight: bold;
-  margin-bottom: 10px;
-  white-space: nowrap;
-  overflow: hidden; 
-  text-overflow: ellipsis; 
-  
 }
 
 .accocard-price {
-  font-size: 16px;
-  color: #007bff;
+  font-size: 20px;
+  color: #0D9813;
   margin-bottom: 8px;
 }
 
 .accocard-detail {
   margin-bottom: 8px;
+  width: 300px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Aantal regels dat je wilt tonen */
+  -webkit-box-orient: vertical;  
+  /* white-space: nowrap; */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 3em;
+}
+
+.accocard-specs {
+  display: flex;
+  flex-direction: row;
 }
 
 .accocard-size {
   font-size: 14px;
   color: #777;
+  margin: 0 3% 0 0;
 }
+
 
 @media (max-width: 1292px) {
   .accocard {
@@ -63,5 +102,20 @@
 @media (max-width: 856px) {
   .accocard {
     width: 48%;
+  }
+}
+
+/* @media (max-width: 768px) {
+  .accocard-detail {
+    width: 300px;
+  }
+} */
+
+@media (max-width: 480px) {
+  .accocard-detail {
+    width: 180px;
+  }
+  .accocard-size {
+    font-size: 12px;
   }
 }
