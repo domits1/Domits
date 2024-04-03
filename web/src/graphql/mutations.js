@@ -185,6 +185,7 @@ export const createChat = /* GraphQL */ `mutation CreateChat(
     recipientEmail
     isRead
     sortKey
+    createdAt
   }
 }
 `;

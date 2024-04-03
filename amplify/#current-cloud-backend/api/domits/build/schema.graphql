@@ -1,11 +1,11 @@
-type Chat @aws_iam @aws_cognito_user_pools {
+type Chat @aws_api_key @aws_iam @aws_cognito_user_pools {
   id: ID!
   text: String!
   email: String
   recipientEmail: String
   isRead: Boolean
   sortKey: String
-  createdAt: AWSDateTime!
+  createdAt: String
   updatedAt: AWSDateTime!
 }
 
@@ -183,7 +183,7 @@ enum ModelSortDirection {
   DESC
 }
 
-type ModelChatConnection @aws_iam @aws_cognito_user_pools {
+type ModelChatConnection @aws_api_key @aws_iam @aws_cognito_user_pools {
   items: [Chat]!
   nextToken: String
 }
@@ -195,14 +195,15 @@ input ModelChatFilterInput {
   recipientEmail: ModelStringInput
   isRead: ModelBooleanInput
   sortKey: ModelStringInput
+  createdAt: ModelStringInput
   and: [ModelChatFilterInput]
   or: [ModelChatFilterInput]
   not: ModelChatFilterInput
 }
 
 type Query {
-  getChat(id: ID!): Chat @aws_iam @aws_cognito_user_pools
-  listChats(filter: ModelChatFilterInput, limit: Int, nextToken: String): ModelChatConnection @aws_iam @aws_cognito_user_pools
+  getChat(id: ID!): Chat @aws_api_key @aws_iam @aws_cognito_user_pools
+  listChats(filter: ModelChatFilterInput, limit: Int, nextToken: String): ModelChatConnection @aws_api_key @aws_iam @aws_cognito_user_pools
   getAccommodation(id: ID!): Accommodation @aws_api_key @aws_iam
   listAccommodations(filter: ModelAccommodationFilterInput, limit: Int, nextToken: String): ModelAccommodationConnection @aws_api_key @aws_iam
   getUser(id: ID!): User @aws_api_key @aws_iam
@@ -217,6 +218,7 @@ input ModelChatConditionInput {
   recipientEmail: ModelStringInput
   isRead: ModelBooleanInput
   sortKey: ModelStringInput
+  createdAt: ModelStringInput
   and: [ModelChatConditionInput]
   or: [ModelChatConditionInput]
   not: ModelChatConditionInput
@@ -229,6 +231,7 @@ input CreateChatInput {
   recipientEmail: String
   isRead: Boolean
   sortKey: String
+  createdAt: String
 }
 
 input UpdateChatInput {
@@ -238,6 +241,7 @@ input UpdateChatInput {
   recipientEmail: String
   isRead: Boolean
   sortKey: String
+  createdAt: String
 }
 
 input DeleteChatInput {
@@ -245,9 +249,9 @@ input DeleteChatInput {
 }
 
 type Mutation {
-  createChat(input: CreateChatInput!, condition: ModelChatConditionInput): Chat @aws_iam @aws_cognito_user_pools
-  updateChat(input: UpdateChatInput!, condition: ModelChatConditionInput): Chat @aws_iam @aws_cognito_user_pools
-  deleteChat(input: DeleteChatInput!, condition: ModelChatConditionInput): Chat @aws_iam @aws_cognito_user_pools
+  createChat(input: CreateChatInput!, condition: ModelChatConditionInput): Chat @aws_api_key @aws_iam @aws_cognito_user_pools
+  updateChat(input: UpdateChatInput!, condition: ModelChatConditionInput): Chat @aws_api_key @aws_iam @aws_cognito_user_pools
+  deleteChat(input: DeleteChatInput!, condition: ModelChatConditionInput): Chat @aws_api_key @aws_iam @aws_cognito_user_pools
   createAccommodation(input: CreateAccommodationInput!, condition: ModelAccommodationConditionInput): Accommodation @aws_api_key @aws_iam
   updateAccommodation(input: UpdateAccommodationInput!, condition: ModelAccommodationConditionInput): Accommodation @aws_api_key @aws_iam
   deleteAccommodation(input: DeleteAccommodationInput!, condition: ModelAccommodationConditionInput): Accommodation @aws_api_key @aws_iam
@@ -266,14 +270,15 @@ input ModelSubscriptionChatFilterInput {
   recipientEmail: ModelSubscriptionStringInput
   isRead: ModelSubscriptionBooleanInput
   sortKey: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionChatFilterInput]
   or: [ModelSubscriptionChatFilterInput]
 }
 
 type Subscription {
-  onCreateChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["createChat"]) @aws_iam @aws_cognito_user_pools
-  onUpdateChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["updateChat"]) @aws_iam @aws_cognito_user_pools
-  onDeleteChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["deleteChat"]) @aws_iam @aws_cognito_user_pools
+  onCreateChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["createChat"]) @aws_api_key @aws_iam @aws_cognito_user_pools
+  onUpdateChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["updateChat"]) @aws_api_key @aws_iam @aws_cognito_user_pools
+  onDeleteChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["deleteChat"]) @aws_api_key @aws_iam @aws_cognito_user_pools
   onCreateAccommodation(filter: ModelSubscriptionAccommodationFilterInput): Accommodation @aws_subscribe(mutations: ["createAccommodation"]) @aws_api_key @aws_iam
   onUpdateAccommodation(filter: ModelSubscriptionAccommodationFilterInput): Accommodation @aws_subscribe(mutations: ["updateAccommodation"]) @aws_api_key @aws_iam
   onDeleteAccommodation(filter: ModelSubscriptionAccommodationFilterInput): Accommodation @aws_subscribe(mutations: ["deleteAccommodation"]) @aws_api_key @aws_iam
