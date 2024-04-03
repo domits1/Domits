@@ -1,5 +1,4 @@
 import React from "react";
-
 import dashboard from "../../images/icons/dashboard-icon.png";
 import message from "../../images/icons/message-icon.png";
 import payment from "../../images/icons/payment-icon.png";
@@ -11,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth} from "../base/AuthContext"
 import './HostHomepage.css';
 
-
 function Pages() {
 
   const navigate = useNavigate();
@@ -21,14 +19,12 @@ function Pages() {
   async function createStripeAccount() {
     if (!userEmail) {
       console.error('User email is not defined.');
-      return; // Don't proceed if userEmail is undefined
+      return;
   }
 
   const options = {
       userEmail: userEmail
   };
-  
-    // console.log('Attempting to create Stripe account with email:', userEmail); // Log for debugging
   
     try {
         const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
@@ -85,6 +81,5 @@ function Pages() {
     </div>
   );
 }
-
 
 export default Pages;

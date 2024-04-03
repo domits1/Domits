@@ -57,7 +57,7 @@ const Assortment = () => {
     return (
         <div>
             <div className="assortment">
-                {/* { <CheckoutFrontend/> } */}                
+                {/* { <CheckoutFrontend/> }                 */}
                     <Accommodations searchQuery={searchQuery} filterQuery={filterQuery} />
                 
             </div>
