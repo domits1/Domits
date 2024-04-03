@@ -1,19 +1,15 @@
 .listing-details-container {
     display: flex;
-    margin: 2% 10%;
+    margin: 2% 4%;
 }
 
 .booking-information-section {
-    width: 70%;
-    margin-right: 60px;
-    padding-right: 60px;
+    width: 67%;
 }
 
 .booking-details-section {
-    width: 25%;
     position: fixed;
-    right: 0;
-    margin-right: 10%;
+    right: 15px;
 }
 
 .booking-details-text {
