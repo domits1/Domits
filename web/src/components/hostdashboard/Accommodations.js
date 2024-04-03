@@ -24,7 +24,7 @@ const Accommodations = ({ searchQuery }) => {
                 title: item.Title,
                 details: item.description,
                 size: `${item.Size}m²`,
-                price: `€${item.Price}/night`,
+                price: `€${item.Price} per night`,
                 id: item['#PK'],
                 bathrooms: `${item.Bathrooms} Bathrooms`,
                 bedrooms: `${item.Bedrooms} Bedrooms`,

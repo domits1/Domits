@@ -9,9 +9,6 @@
   border-radius: 30px;
   display: flex;
   font-size: 0.6rem;
-  /* position: fixed; */
-  /* left: 54%; */
-  transform: translateX(-12%);
   height: 55px;
   cursor: 'pointer';
   
