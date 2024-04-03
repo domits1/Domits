@@ -90,6 +90,10 @@ function GuestReviews() {
                             <h2 className="review-header">{review.title}</h2>
                             <p className="review-content">{review.content}</p>
                             <p className="review-date">Written on: {review.date}</p>
+                            <button
+                                      onClick={() => console.log(review)}
+                                      className="review-delete"
+                                    ><h2 className="cross">X</h2></button>
                             </div>
                             ))
                             ) : (

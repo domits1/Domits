@@ -85,6 +85,7 @@
     border-radius: 15px;
     margin: 5%;
     animation: fade-up 1s;
+    padding: 12px;
 }
 
 .review-tab:hover {
@@ -96,6 +97,26 @@
     color: #0D9813;
 }
 
+.review-delete {
+    width: 2.4vw;
+    height: 2.4vw;
+    border-radius: 50%;
+    border: 1px solid red;
+    color: red;
+    display: flex;
+    flex-direction: row;
+}
+
+.review-delete:hover {
+    color: white;
+    background-color: red;
+}
+.cross {
+    font-size: 1em;
+    margin-right: 5%;
+    line-height: 1;
+    width: 100%;
+}
 @keyframes fade-up {
     0% {
         opacity: 0;
