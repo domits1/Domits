@@ -103,6 +103,9 @@ export const getChat = /* GraphQL */ `query GetChat($id: ID!) {
     id
     text
     email
+    recipientEmail
+    isRead
+    sortKey
   }
 }
 `;
@@ -118,6 +121,8 @@ export const listChats = /* GraphQL */ `query ListChats(
       text
       email
       recipientEmail
+      isRead
+      sortKey
       createdAt
       updatedAt
       __typename

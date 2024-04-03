@@ -10,6 +10,7 @@
   display: flex;
   font-size: 0.6rem;
   cursor: 'pointer';
+  height: 55px;
 }
 
 
@@ -40,13 +41,27 @@
 
 ::placeholder {
   font-size: 0.64rem;
+  text-align: center;
+  
   
 }
 .bar>div {
   position: relative;
   transition: background 250ms ease, width 250ms ease;
 }
-
+.bar>div::before {
+  position: absolute;
+  content: "";
+  left: -0.8%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0.9px;
+  height: 60%;
+  background: rgb(88, 153, 22);
+}
+.bar>div:nth-of-type(1)::before {
+  background: transparent;
+}
 .searchbar-button {
   display: inline-block;
   outline: 0;
@@ -91,9 +106,14 @@
   background: none;
   border: none;
   padding: 0.6rem 0 0 0;
-  text-align: center;
+  text-align: left;
   width: 80%;
 }
 .searchBar:focus {
   outline: none;
 }
+.searchBar::placeholder {
+  font-size: 0.64rem;
+  text-align: left;
+}
+

@@ -294,10 +294,10 @@ function OnboardingHost() {
                 );
             case 4:
                 return (
-                    <div class="formContainer">
-                        <div class="form-section">
-                            <h2>Review your information</h2>
-                            <div>
+                    <div className="container" style={{ width: '80%' }}>
+                        <h2>Review your information</h2>
+                        <div className="formRow">
+                            <div className="reviewInfo">
                                 <p>Title: {formData.Title}</p>
                                 <p>Description: {formData.Description}</p>
                                 <p>Rent: {formData.Rent}</p>
@@ -310,16 +310,20 @@ function OnboardingHost() {
                                 <p>Postal Code: {formData.PostalCode}</p>
                                 <p>Street + House Nr.: {formData.Street}</p>
                                 <p>Neighbourhood: {formData.Neighbourhood}</p>
+                            </div>
+                            <div className="reviewInfo">
                                 <p>Features:</p>
                                 <ul>
                                     {Object.entries(formData.Features).map(([feature, value]) => (
-                                        <li key={feature}>{feature}: {value ? 'Yes' : 'No'}</li>
+                                        <p key={feature}>{feature}: {value ? 'Yes' : 'No'}</p>
                                     ))}
                                 </ul>
+                            </div>
+                            <div className="reviewInfo">
                                 <p>System Configuration:</p>
                                 <ul>
                                     {Object.entries(formData.SystemConfiguration).map(([config, value]) => (
-                                        <li key={config}>{config}: {value ? 'Yes' : 'No'}</li>
+                                        <p key={config}>{config}: {value ? 'Yes' : 'No'}</p>
                                     ))}
                                 </ul>
                                 <p>Monthly Discount: {formData.Monthlypercent}%</p>
