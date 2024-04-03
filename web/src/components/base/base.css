@@ -7,6 +7,7 @@
 
 .header-nav {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     width: 100%;
@@ -316,16 +317,11 @@ a:hover {
 }
 
 .search-bar-container {
-   
     width: 40%;
     padding: 1px;
     margin: auto;
     display: flex;
     flex-direction: column;
-    position: absolute;
-    top: 10px; 
-    left: 43%; 
-    transform: translateX(-50%);
 }
 
 
