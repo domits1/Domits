@@ -1,5 +1,5 @@
 import React from "react";
-import huis from "../../images/accom_villaneth.png";
+import huis from "../../images/til-hero.png";
 import growth from "../../images/icons/users-01.png"
 import people from "../../images/icons/trend-up-01.png"
 import cloud from "../../images/icons/cloud-01.png"
@@ -20,7 +20,7 @@ function TravelInnovation() {
 
                     <div className="boxColumn">
                         <div className="titleHolder">
-                            <img className="boxIcon" src={growth}></img>
+                            <img className="boxIcon" src={people}></img>
                             <p className="boxTitle">Growth</p>
                         </div>
 
@@ -31,7 +31,7 @@ function TravelInnovation() {
 
                     <div className="boxColumn">
                         <div className="titleHolder">
-                            <img className="boxIcon" src={people}></img>
+                            <img className="boxIcon" src={growth}></img>
                             <p className="boxTitle">People</p>
                         </div>
 
