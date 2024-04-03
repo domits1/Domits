@@ -1,11 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from 'react-router-dom';
 
 import './landing.css';
+import Select from 'react-select'
+import countryList from 'react-select-country-list'
 
 function OnboardingHost() {
 
     const navigate = useNavigate();
+    const options = useMemo(() => countryList().getData(), [])
 
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
@@ -104,6 +107,14 @@ function OnboardingHost() {
         }
     };
 
+    const handleCountryChange = (selectedOption) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            Country: selectedOption.value
+        }));
+    };
+
+
     const handleSubmit = async () => {
         try {
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
@@ -127,6 +138,8 @@ function OnboardingHost() {
 
     const renderPageContent = (page) => {
         switch (page) {
+
+
             case 1:
                 return (
                     <div>
@@ -150,7 +163,16 @@ function OnboardingHost() {
 
                                 <div class="locationInput">
                                     <h2>Fill in Location</h2>
-                                    <label>Country<input className="textInput locationText" name="Country" onChange={handleInputChange} value={formData.Country}></input></label>
+                                    <label>
+                                        Country
+                                        <Select
+                                            options={options}
+                                            name="Country"
+                                            className="locationText"
+                                            value={options.find(option => option.value === formData.Country)}
+                                            onChange={handleCountryChange}
+                                        />
+                                    </label>
                                     <label>Postal Code <input className="textInput locationText" name="PostalCode" onChange={handleInputChange} value={formData.PostalCode}></input></label>
                                     <label>Street + house nr.<input className="textInput locationText" name="Street" onChange={handleInputChange} value={formData.Street}></input></label>
                                     <label>Neighbourhood<input className="textInput locationText" name="Neighbourhood" onChange={handleInputChange} value={formData.Neighbourhood}></input></label>
@@ -167,6 +189,8 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
+
+
             case 2:
                 return (
                     <div>
@@ -214,6 +238,8 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
+
+
             case 3:
                 return (
                     <div>
@@ -290,11 +316,13 @@ function OnboardingHost() {
                         </div>
 
                     </div>
-
                 );
+
+
             case 4:
                 return (
                     <div className="container" style={{ width: '80%' }}>
+                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">
@@ -338,6 +366,8 @@ function OnboardingHost() {
                         </div>
                     </div >
                 );
+
+
             case 5:
                 return (
                     <div className="container">
