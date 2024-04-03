@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Pages from "./Pages.js";
 import './guestdashboard.css';
 import { Auth } from "aws-amplify";
@@ -6,6 +7,7 @@ import { Auth } from "aws-amplify";
 function GuestReviews() {
     const [reviews, setReviews] = useState([]);
     const [userId, setUserId] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const setUserIdAsync = async () => {
@@ -19,6 +21,25 @@ function GuestReviews() {
 
         setUserIdAsync();
     }, []);
+
+     useEffect(() => {
+            const checkUserLoggedIn = async () => {
+                try {
+                    const userInfo = await Auth.currentUserInfo();
+                    if (userInfo) {
+                        setUserId(userInfo.attributes.sub);
+                    } else {
+                        // If no user info, redirect to the login page
+                        navigate('/login');
+                    }
+                } catch (error) {
+                    console.error("Error checking user login status:", error);
+                    history.push('/login'); // Redirect to login on error
+                }
+            };
+
+            checkUserLoggedIn();
+        }, [history]);
 
     useEffect(() => {
         const retrieveReviews = async () => {
