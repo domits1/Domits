@@ -60,10 +60,17 @@
   margin-bottom: 8px;
 }
 
+.accocard-specs {
+  display: flex;
+  flex-direction: row;
+}
+
 .accocard-size {
   font-size: 14px;
   color: #777;
+  margin: 0 3% 0 0;
 }
+
 
 @media (max-width: 1292px) {
   .accocard {
