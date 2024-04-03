@@ -20,6 +20,12 @@ Mention the person or team responsible for reviewing the proposed changes. This 
 
 `Reviewer(s): @[GitHub username]`
 
+## Delete or keep branch
+Please select if you want to keep the branch you worked on, or have it deleted.
+
+- [ ] Delete my branch
+- [ ] Keep my branch
+
 ## Additional Information
 Include any additional information or context that might be necessary for understanding the pull request.
 
