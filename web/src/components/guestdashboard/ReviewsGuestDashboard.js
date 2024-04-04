@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Pages from "./Pages.js";
+import deleteIcon from "../../images/icons/cross.png";
 import './guestdashboard.css';
 import { Auth } from "aws-amplify";
 
@@ -75,6 +76,11 @@ function GuestReviews() {
             retrieveReviews();
         }
     }, [userId]); // This effect depends on userId, it runs when userId is set
+
+    function asyncDeleteReview(review) {
+        console.log(review);
+        console.log(review['reviewId'])
+    }
     return (
         <div className="container">
             <h2>Reviews</h2>
@@ -91,9 +97,10 @@ function GuestReviews() {
                             <p className="review-content">{review.content}</p>
                             <p className="review-date">Written on: {review.date}</p>
                             <button
-                                      onClick={() => console.log(review)}
+                                      onClick={() => asyncDeleteReview(review)}
                                       className="review-delete"
-                                    ><h2 className="cross">X</h2></button>
+                                    >
+                                    <img src={deleteIcon} className="cross" alt="Delete"></img></button>
                             </div>
                             ))
                             ) : (

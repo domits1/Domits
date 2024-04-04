@@ -81,6 +81,8 @@
 }
 
 .review-tab{
+    display: flex;
+    flex-direction: column;
     border: 2px;
     border-radius: 15px;
     margin: 5%;
@@ -98,24 +100,20 @@
 }
 
 .review-delete {
-    width: 2.4vw;
-    height: 2.4vw;
-    border-radius: 50%;
-    border: 1px solid red;
-    color: red;
-    display: flex;
-    flex-direction: row;
+    align-self: end;
+    width: 40px;
+    height: 40px;
+    box-shadow: none;
+    padding: 0;
 }
 
 .review-delete:hover {
-    color: white;
-    background-color: red;
+    cursor: pointer;
+    transform: scale(1.2);
 }
 .cross {
-    font-size: 1em;
-    margin-right: 5%;
-    line-height: 1;
-    width: 100%;
+    width: 40px;
+    height: 40px;
 }
 @keyframes fade-up {
     0% {
