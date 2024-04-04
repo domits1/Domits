@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import "./listingdetails.css";
 import detailbigimg from '../../images/accobigimg.png';
 import detailimg1 from '../../images/accoimg1.png';
@@ -24,9 +24,22 @@ import backarrow from "../../images/arrowleft.png";
 import pluscircle from "../../images/plus-circle.svg";
 import pluscircleblack from "../../images/plus-circle-black.svg";
 import star from "../../images/Star.svg";
-import arrow from "../../images/arrow.svg"
+import arrow from "../../images/arrow.svg";
+import BookingDetails from "../listingdetails/bookingdetails";
 
 const ListingDetails = () => {
+    const [currentIndex, setCurrentIndex] = useState(0);
+    const [isCarouselActive, setIsCarouselActive] = useState(false);
+
+    const handlePrevImage = () => {
+        setCurrentIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1));
+    };
+
+    const handleNextImage = () => {
+        setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
+    };
+
+    const images = [detailbigimg, detailimg1, accomap, detailimg3, detailimg4];
     return (
         <div className="listing-details-container">
             <div className="booking-information-section">
@@ -41,16 +54,26 @@ const ListingDetails = () => {
                         Minimalistic and cozy place in Haarlem
                     </div>
                 </div>
-                <div className="listing-details-image-window">
+                <div className={`listing-details-image-window ${isCarouselActive ? 'carousel-active' : ''}`}>
                     <div className="listing-details-big-img">
-                        <img src={detailbigimg} alt="detailbigimg" />
+                        <img src={images[currentIndex]} alt="detailbigimg" />
                     </div>
                     <div className="listing-details-side-img">
-                        <img src={detailimg1} alt="detailimg1" />
-                        <img src={accomap} alt="detailimg2" id="top-right-img" />
-                        <img src={detailimg3} alt="detailimg3" />
-                        <img src={detailimg4} alt="detailimg4" id="bottom-right-img" />
+                        {images.map((image, index) => (
+                            <img
+                                key={index}
+                                src={image}
+                                alt={`detailimg${index + 1}`}
+                                className={currentIndex === index ? 'active' : ''}
+                            />
+                        ))}
                     </div>
+                    <button className="carousel-button carousel-button-left" onClick={handlePrevImage}>
+                        <img src={backarrow} alt="Back Arrow" />
+                    </button>
+                    <button className="carousel-button carousel-button-right" onClick={handleNextImage}>
+                        <img src={backarrow} alt="Next Arrow" />
+                    </button>
                 </div>
                 <div className="price-and-rooms-row">
                     <div className="price-per-night-text">$1400 night</div>
@@ -185,65 +208,7 @@ const ListingDetails = () => {
                 </div>
             </div>
             {/* End of the booking-information-section*/}
-
-            {/* Start of the booking-details-section*/}
-            <div className="booking-details-section">
-                <div className="booking-details-text">Booking details</div>
-                <div className="booking-details-card">
-                    <div className="listing-details-check-container">
-                        <div className="listing-details-checkin-text">Check in</div>
-                        <div className="listing-details-checkout-text">Check out</div>
-                    </div>
-                    <div className="listing-details-dates-container">
-                        <div className="listing-details-checkin-date">15 december 2023</div>
-                        <div className="listing-details-amount-of-nights-text">
-                            7<br />
-                            <img src={arrow} alt="Arrow" />
-                            Nights
-                        </div>
-                        <div className="listing-details-checkout-date">23 december 2023</div>
-                    </div>
-                    <div className="listing-details-guests-pets-container">
-                        <div className="listing-details-guests-text">Guests</div>
-                        <div className="listing-details-pets-text">Pets</div>
-                    </div>
-                    <div className="listing-details-guests-pets-content">
-                        <div className="listing-details-amount-of-adults">2 adults</div>
-                        <div className="listing-details-amount-of-kids">2 kids</div>
-                        <div className="listing-details-select">Select...</div>
-                    </div>
-                    <div className="listing-details-book-button">
-                        <Link to={`/bookingoverview`}>
-                            <button>Book* <img src={bookarrow} alt="Book Arrow" /></button>
-                        </Link>
-                    </div>
-                    <div className="listing-details-book-button-star-text">*You wont be charged yet</div>
-                    {/*  Horizontal line  */}
-                    <hr />
-                    <div className="listing-details-booking-information-section">
-                        <div className="listing-details-booking-information-row">
-                            <div className="listing-details-booking-information-text">7 nights x $1400 a night</div>
-                            <div className="listing-details-booking-information-text">$9800</div>
-                        </div>
-                        <div className="listing-details-booking-information-row">
-                            <div className="listing-details-booking-information-text">Season booking discount</div>
-                            <div className="listing-details-booking-information-text">-$75</div>
-                        </div>
-                        <div className="listing-details-booking-information-row">
-                            <div className="listing-details-booking-information-text">Cleaning fee</div>
-                            <div className="listing-details-booking-information-text">$100</div>
-                        </div>
-                        <div className="listing-details-booking-information-row">
-                            <div className="listing-details-booking-information-text">Domits service fee</div>
-                            <div className="listing-details-booking-information-text">$98</div>
-                        </div>
-                        <div className="listing-details-booking-information-row">
-                            <div className="listing-details-booking-total-text">Total</div>
-                            <div className="listing-details-booking-total-price">$9923</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <BookingDetails />
         </div>
     );
 }

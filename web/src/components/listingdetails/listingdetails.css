@@ -110,6 +110,32 @@
     align-items: center; /* Align items vertically */
 }
 
+.carousel-hidden {
+    display: none;
+}
+
+.carousel-visible {
+    display: block;
+}
+
+.carousel-button {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.7);
+    padding: 10px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.carousel-button-left {
+    left: 0;
+}
+
+.carousel-button-right {
+    right: 0;
+}
+
 .price-per-night-text {
     margin-right: 40px;
     color: black;
