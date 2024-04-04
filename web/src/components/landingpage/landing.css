@@ -9,9 +9,11 @@
 }
 
 .calculatorBlock {
-    border: 2px solid #003366;
-    border-radius: 20px;
+    /* border: 1px solid #003366; */
+    border-radius: 15px;
     margin-top: 30px;
+    box-shadow: 0 0 5px #003366;
+    padding: 30px 25px;
 }
 
 .pages {
@@ -21,20 +23,15 @@
 }
 
 .pageButtons {
-    border: 2px solid #003366;
-    border-radius: 10px;
-    box-shadow: none;
-
+    box-shadow: 0 0 5px #003366;
+    border-radius: 5px;
     padding: 10px;
     width: 7%;
     height: 12%;
-    margin-top: 10px;
-    margin-left: 10px;
 }
 
 .pageButtons:hover {
-    background-color: #A187B2;
-    border: 2px solid #A187B2;
+    background-color: #4c7cac;
     color: #fff;
     cursor: pointer;
 }
@@ -53,17 +50,19 @@
     border-radius: 10px;
     box-shadow: none;
     padding: 10px;
+    margin: 10px;
 }
 
 .nextButtons:hover {
-    background-color: #A187B2;
+    background-color: #4c7cac;
     cursor: pointer;
-    transition: background-color 0.5s ease-out;
+    transition: background-color .3s ease-out;
 }
 
 .selected {
     background-color: #003366;
     color: #fff;
+    box-shadow: 0 0 5px #003366;
 }
 
 .cardHolder {
@@ -84,12 +83,16 @@
 }
 
 .card:hover, .selectedCard {
-    border: 3px solid #003366;
+    /* border: 3px solid #003366; */
     border-radius: 10px;
-    box-shadow: none;
+    box-shadow: 0 0 5px #003366;
     cursor: pointer;
-    margin-top: -3px;
     margin-bottom: 27px;
+}
+
+.selectedCard {
+  border: 3px solid #003366;
+  box-shadow: none !important;
 }
 
 .cardImage {
@@ -99,6 +102,7 @@
     height: 100%;
     max-height: 100px;
     object-fit: cover;
+    padding: 5px;
 }
 
 .priceDisplay {

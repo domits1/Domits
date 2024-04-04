@@ -7,6 +7,7 @@ import villa from "../../images/icons/mansion.png";
 import { useNavigate } from 'react-router-dom';
 import FlowContext from '../../FlowContext';
 
+
 function WithNavigate(props) {
   let navigate = useNavigate();
   return <Calculator {...props} navigate={navigate} />;
