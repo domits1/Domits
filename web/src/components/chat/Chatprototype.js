@@ -313,8 +313,12 @@ const Chat = ({ user }) => {
                 <ul className="chat__users">
                     {chatUsers.map((chatUser) => (
                             <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
+                                {unreadMessages[chatUser.email] > 0 && (
+    <figure className="chat__notification">
+        {unreadMessages[chatUser.email] > 9 ? '9+' : unreadMessages[chatUser.email]}
+    </figure>
+)}
 
-                            {unreadMessages[chatUser.email] > 0 && <figure className="chat__notification">{unreadMessages[chatUser.email]}</figure>}
                             <div className="chat__pfp">
                                 <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
                             </div>
