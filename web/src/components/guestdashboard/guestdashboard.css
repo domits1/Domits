@@ -112,8 +112,8 @@
     transform: scale(1.2);
 }
 .cross {
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
 }
 @keyframes fade-up {
     0% {
