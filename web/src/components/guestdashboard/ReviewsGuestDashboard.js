@@ -77,9 +77,31 @@ function GuestReviews() {
         }
     }, [userId]); // This effect depends on userId, it runs when userId is set
 
-    function asyncDeleteReview(review) {
-        console.log(review);
-        console.log(review['reviewId'])
+    const asyncDeleteReview = async (review) => {
+        if(confirm("Are you sure you want to delete this review?") == true) {
+            let reviewId = review["reviewId "];
+
+                    const options = {
+                                    "reviewId ": reviewId
+                                };
+
+                    try {
+                         const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/DeleteReview', {
+                           method: 'DELETE',
+                           body: JSON.stringify(options),
+                           headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                             }
+                          });
+                           if (!response.ok) {
+                               throw new Error(`HTTP error! Status: ${response.status}`);
+                            }
+                            const updatedReviews = reviews.filter(r => r["reviewId "] !== reviewId);
+                            setReviews(updatedReviews);
+                          } catch (error) {
+                            console.error(error);
+                          }
+        }
     }
     return (
         <div className="container">
