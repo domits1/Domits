@@ -24,8 +24,11 @@ const Accommodations = ({ searchQuery }) => {
                 title: item.Title,
                 details: item.description,
                 size: `${item.Size}m²`,
-                price: `€${item.Price}/night`,
+                price: `€${item.Price} per night`,
                 id: item['#PK'],
+                bathrooms: `${item.Bathrooms} Bathrooms`,
+                bedrooms: `${item.Bedrooms} Bedrooms`,
+                persons: `${item.Persons} Persons`,
             }));
             setAccolist(formattedData);
             // console.log("Image URLs:", formattedData.map(item => item.image));
@@ -51,7 +54,11 @@ const Accommodations = ({ searchQuery }) => {
                             <div className="accocard-title">{accommodation.title}</div>
                             <div className="accocard-price">{accommodation.price}</div>
                             <div className="accocard-detail">{accommodation.details}</div>
-                            <div className="accocard-size">{accommodation.size}</div>
+                            <div className="accocard-specs">
+                                <div className="accocard-size">{accommodation.size}</div>
+                                <div className="accocard-size">{accommodation.bathrooms}</div>
+                                <div className="accocard-size">{accommodation.bedrooms}</div>
+                            </div>
                         </div>
                     </Link>
                 </div>

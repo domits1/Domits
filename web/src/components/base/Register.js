@@ -2,11 +2,14 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthContext'; // Import the AuthContext hook
+import FlowContext from '../../FlowContext'; // Ensure this is the correct path
 import './Register.css';
 
 const Register = () => {
     const navigate = useNavigate();
     const { setAuthCredentials } = useAuth(); // Access setAuthCredentials from AuthContext
+    const { flowState } = useContext(FlowContext); // Correctly use useContext at the top level
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -48,7 +51,7 @@ const Register = () => {
         }
 
         try {
-            const groupName = "Traveler";
+            const groupName = flowState.isHost ? "Host" : "Traveler"; // Use flowState.isHost directly
             const data = await Auth.signUp({
                 username: userData.email,
                 email: userData.email,
