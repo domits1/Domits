@@ -81,30 +81,56 @@ function About() {
                     </div>
                     <div class="member">
                         <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
+                        <p>Tim Hart</p>
+                        <p>Product Owner</p>
                     </div>
                     <div class="member">
                         <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
+                        <p>Hamza Zaraoui</p>
+                        <p>Fullstack developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
+                        <p>Sebastiaan van der Wilt</p>
+                        <p>Fullstack developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
+                        <p>Muhammed Çetinkaya</p>
+                        <p>Back-end developer</p>
                     </div>
+                </div>
 
+                <div class="team">
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Kacper Flak</p>
+                        <p>Back-end developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Tim Seijlhouwer</p>
+                        <p>Fullstack developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Chahid Laaouar</p>
+                        <p>Fullstack developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Jiaming Yan</p>
+                        <p>Back-end developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Leila Boutkabout</p>
+                        <p>UX/UI Designer</p>
+                    </div>
                 </div>
 
                 <div class="about">
                     <p>We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.</p>
-                    <br />
                     <p>You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders.</p>
                 </div>
             </div>

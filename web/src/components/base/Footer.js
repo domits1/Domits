@@ -54,7 +54,7 @@ const Footer = () => {
                 <div className="footer-section borderline">
                     <h4 className='footer-headers '>Network</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/guestdashboard" className='footer-links'>Guests</Link></li>
+                        <li><Link to="/guestdashboard" className='footer-links'>Traveller</Link></li>
                         <li><Link to="/landing" className='footer-links'>Hosts</Link></li>
                         <li><Link to="/developers" className='footer-links'>Developers</Link></li>
                         <li><Link to="/partners" className='footer-links'>Partners</Link></li>
@@ -84,7 +84,7 @@ const Footer = () => {
                     </div>
 
                     {/* Currency section */}
-                    <div className="footer-endsection">
+                    {/* <div className="footer-endsection">
                         <h4 className='footer-headers'>Currencies</h4>
                         <select id='currency-dropdown' className='footer-lists footer-select'>
                             <option value="euro">EUR</option>
@@ -92,7 +92,7 @@ const Footer = () => {
                         </select>
                     </div>
 
-                    <img id='appstorebadge' src={Appstorebadge} alt="App Store Badge" className="app-store-badge" />
+                    <img id='appstorebadge' src={Appstorebadge} alt="App Store Badge" className="app-store-badge" /> */}
                 </div>
 
                 {/* Office section */}
@@ -106,14 +106,14 @@ const Footer = () => {
                     </div>
 
                     {/* Languages section */}
-                    <div className="footer-endsection">
+                    {/* <div className="footer-endsection">
                         <h4 className='footer-headers'>Languages</h4>
                         <select id='language-dropdown' className='footer-lists footer-select'>
                             <option value="english">English</option>
                             <option value="dutch">Dutch</option>
                         </select>
                     </div>
-                    <img id='playstorebadge' src={Playstorebadge} alt="Play Store Badge" className="play-store-badge" />
+                    <img id='playstorebadge' src={Playstorebadge} alt="Play Store Badge" className="play-store-badge" /> */}
                 </div>
             </div>
 

@@ -1,5 +1,5 @@
 .aboutus{
-    width: 80%;
+    width: 90%;
     margin: auto;
     margin-top: 40px;
     color: #000;
@@ -20,12 +20,13 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    width: 45%;
+    width: 49%;
     background-color: #0D9813;
     border-radius: 20px;
     padding: 20px;
     margin-top: 20px;
     margin-bottom: 20px;
+    position: relative;
 }
 
 .aboutText {
@@ -39,7 +40,8 @@
 
 .factsTitle {
     margin: 0;
-    font-size: 30px;
+    /* font-size: 22px; */
+    font-size: clamp(0.8rem, 1.2vw + 0.8rem, 1.5rem);    
     color: white;
 }
 
@@ -86,7 +88,17 @@
 
 .about {
     text-align: left;
-    margin-top: 40px;
+    margin-top: 50px;
+    display: flex;
+}
+
+.about p {
+    width: 50%;
+    margin: 0 auto;
+}
+
+.about p:first-child {
+    margin-right: 50px;
 }
 
 @media (max-width: 850px) {
@@ -99,6 +111,18 @@
         align-items: center;
     }
     .awesomefacts {
+        width: 100%;
+    }
+    .factsHeader {
+        flex-direction: column-reverse;
+    }
+    .about {
+        flex-direction: column;
+    }
+    .about p:first-child {
+        margin: 0 0 25px 0;
+    }
+    .about p {
         width: 100%;
     }
 }
