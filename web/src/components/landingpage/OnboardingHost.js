@@ -1,15 +1,25 @@
-import React, { useState } from "react";
-import Page from "./Calculator";
-import FAQ from "./Faq";
+import React, { useState, useMemo } from "react";
+import { useNavigate } from 'react-router-dom';
+
 import './landing.css';
+import Select from 'react-select'
+import countryList from 'react-select-country-list'
+import MapComponent from "./data/MapComponent";
 
 function OnboardingHost() {
 
+    const navigate = useNavigate();
+    const options = useMemo(() => countryList().getData(), [])
+
+    const [location, setLocation] = useState({
+        latitude: 52.3676, // Default latitude for Amsterdam
+        longitude: 4.9041, // Default longitude for Amsterdam
+    });
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
         Title: "",
         Description: "",
-        Rent: 0,
+        Rent: "",
         Ownertype: "",
         Bookingsystem: "",
         Roomtype: "",
@@ -22,7 +32,6 @@ function OnboardingHost() {
         Street: "",
         Neighbourhood: "",
         Bookingsystem: "",
-        Guesttype: "",
         Ownertype: "",
         CancelPolicy: "",
         Features: {
@@ -47,15 +56,33 @@ function OnboardingHost() {
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
+
     });
 
     const pageUpdater = (pageNumber) => {
         setPage(pageNumber);
     };
 
+    const isFormFilled = () => {
+        // Exclude specific fields from the check
+        const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent'];
+
+        for (const key in formData) {
+            // Skip checking for excluded fields
+            if (excludedFields.includes(key)) {
+                continue;
+            }
+
+            // Check if value is empty or zero
+            if (formData[key] === "" || formData[key] === 0) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-
         // For checkboxes, update Features object property directly
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -69,6 +96,13 @@ function OnboardingHost() {
                     [name]: checked,
                 }
             }));
+        } else if (type === 'number' || type === 'range') {
+            // Check if value is 0 and set it to an empty string
+            const newValue = value === '0' ? '' : value;
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: newValue
+            }));
         } else {
             setFormData((prevData) => ({
                 ...prevData,
@@ -76,6 +110,53 @@ function OnboardingHost() {
             }));
         }
     };
+
+    const handleCountryChange = (selectedOption) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            Country: selectedOption.value
+        }));
+    };
+
+    // Update the location state whenever the user changes the location input
+    const handleLocationChange = async (selectedOption) => {
+        // Assuming selectedOption is an object with name and value properties
+        setLocation((prevLocation) => ({
+            ...prevLocation,
+            [selectedOption.name]: selectedOption.value,
+        }));
+
+        // Fetch geocoding data based on the selected location
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${selectedOption.value}`
+            );
+            const data = await response.json();
+
+            // Check if data is received and has valid coordinates
+            if (Array.isArray(data) && data.length > 0 && data[0].lat && data[0].lon) {
+                const { lat, lon } = data[0];
+                // Update location state with new coordinates
+                setLocation((prevLocation) => ({
+                    ...prevLocation,
+                    latitude: lat,
+                    longitude: lon
+                }));
+            } else {
+                console.error('Unable to fetch coordinates for the selected location.');
+            }
+        } catch (error) {
+            console.error('Error fetching geocoding data:', error);
+        }
+    };
+
+
+    const handleCombinedChange = (selectedOption) => {
+        handleCountryChange(selectedOption); // Call the handleCountryChange function with the selected option
+        handleLocationChange(selectedOption); // Call the handleLocationChange function with the selected option
+    };
+
+
 
     const handleSubmit = async () => {
         try {
@@ -100,6 +181,8 @@ function OnboardingHost() {
 
     const renderPageContent = (page) => {
         switch (page) {
+
+
             case 1:
                 return (
                     <div>
@@ -123,7 +206,16 @@ function OnboardingHost() {
 
                                 <div class="locationInput">
                                     <h2>Fill in Location</h2>
-                                    <label>Country<input className="textInput locationText" name="Country" onChange={handleInputChange} value={formData.Country}></input></label>
+                                    <label>
+                                        Country
+                                        <Select
+                                            options={options}
+                                            name="Country"
+                                            className="locationText"
+                                            value={options.find(option => option.value === formData.Country)}
+                                            onChange={handleCombinedChange}
+                                        />
+                                    </label>
                                     <label>Postal Code <input className="textInput locationText" name="PostalCode" onChange={handleInputChange} value={formData.PostalCode}></input></label>
                                     <label>Street + house nr.<input className="textInput locationText" name="Street" onChange={handleInputChange} value={formData.Street}></input></label>
                                     <label>Neighbourhood<input className="textInput locationText" name="Neighbourhood" onChange={handleInputChange} value={formData.Neighbourhood}></input></label>
@@ -131,7 +223,7 @@ function OnboardingHost() {
                             </div>
                             <div class="map-section">
                                 <label>What we show on Domits.com</label>
-                                <div id="map-placeholder">Map is still being worked on</div>
+                                <MapComponent location={location} />
                             </div>
                         </div>
                         <div class="formContainer">
@@ -140,6 +232,8 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
+
+
             case 2:
                 return (
                     <div>
@@ -187,6 +281,8 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
+
+
             case 3:
                 return (
                     <div>
@@ -249,15 +345,27 @@ function OnboardingHost() {
                         </div>
                         <div class="formContainer">
                             <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Enlist</button>
+                            <button
+                                className='nextButtons'
+                                onClick={isFormFilled() ? () => pageUpdater(page + 1) : null}
+                                style={{
+                                    backgroundColor: 'green',
+                                    cursor: isFormFilled() ? 'pointer' : 'not-allowed',
+                                    opacity: isFormFilled() ? 1 : 0.5
+                                }}
+                                disabled={!isFormFilled()}
+                            >Enlist</button>
+
                         </div>
 
                     </div>
-
                 );
+
+
             case 4:
                 return (
                     <div className="container" style={{ width: '80%' }}>
+                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">
@@ -293,12 +401,27 @@ function OnboardingHost() {
                                 <p>Weekly Discount: {formData.Weeklypercent}%</p>
                                 <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
                             </div>
+                            <div className='buttonHolder'>
+                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                                <button
+                                    className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
+                            </div>
                         </div>
+                    </div >
+                );
+
+
+            case 5:
+                return (
+                    <div className="container">
+                        <h2>
+                            Congratulations! Your accommodation is being listed
+                        </h2>
+                        <p>It may take a while before your accommodation is verified</p>
                         <div className='buttonHolder'>
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
+                            <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
                         </div>
-                    </div>
+                    </div >
                 );
             default:
                 return null;
