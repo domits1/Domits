@@ -5,7 +5,7 @@
     margin-bottom: 30px;
 
     text-align: center;
-    font-weight: lighter;
+    font-weight: 400;
 }
 
 .calculatorBlock {
@@ -28,6 +28,9 @@
     padding: 10px;
     width: 7%;
     height: 12%;
+    background-color: white;
+    border: none;
+    margin-right: 2%;
 }
 
 .pageButtons:hover {
@@ -51,6 +54,7 @@
     box-shadow: none;
     padding: 10px;
     margin: 10px;
+    border: none;
 }
 
 .nextButtons:hover {
@@ -62,7 +66,7 @@
 .selected {
     background-color: #003366;
     color: #fff;
-    box-shadow: 0 0 5px #003366;
+    box-shadow: none;
 }
 
 .cardHolder {

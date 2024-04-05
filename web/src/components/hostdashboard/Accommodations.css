@@ -60,13 +60,14 @@
   transform: translateX(-50%);
   color: white;
   font-size: 18px;
-  font-weight: bold;
+  font-weight: 500;
 }
 
 .accocard-price {
-  font-size: 20px;
+  font-size: 18px;
   color: #0D9813;
   margin-bottom: 8px;
+  font-weight: 500;
 }
 
 .accocard-detail {

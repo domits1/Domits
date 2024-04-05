@@ -47,7 +47,7 @@ function About() {
                 </div>
             </div>
 
-            <FAQ />
+            {/* <FAQ /> */}
         </div>
 
 
