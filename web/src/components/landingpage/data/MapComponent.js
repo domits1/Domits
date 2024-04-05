@@ -5,7 +5,7 @@ const MapComponent = ({ location }) => {
         // Create a new map centered at the user's specified location
         const map = new window.google.maps.Map(document.getElementById("map-placeholder"), {
             center: { lat: parseFloat(location.latitude), lng: parseFloat(location.longitude) },
-            zoom: 10, // You can adjust the zoom level as needed
+            zoom: 15, // You can adjust the zoom level as needed
         });
 
         // Add a marker for the user's specified location
