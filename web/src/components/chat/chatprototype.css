@@ -481,6 +481,19 @@ p{
     height: auto;
 }
 
+.chat__date{
+    width: 50%; 
+    text-align: center; 
+    border-bottom: 1px solid #bdbdbd; 
+    line-height: 0.1em;
+    margin: 10px 0 20px;
+}
+
+.chat__date span{
+    background:#fff; 
+    padding:0 10px; 
+}
+
 @media screen and (max-width: 1277px) {
     .chat{
         padding: 0rem;
@@ -536,12 +549,12 @@ p{
     .chat__people{
         width: 100%;
         height: 100%;
-        margin-bottom: 30px;
+        margin-bottom: 200px;
+        display: none;
     }
 
     .chat__message{
         width: 100%;
-        display: none;
     }
 
 
@@ -583,6 +596,10 @@ p{
 
 
 @media screen and (max-width: 450px) {
+
+    .chat__chatContainer{
+        height: 500px;
+    }
 
 
     .chat__notification {
