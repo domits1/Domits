@@ -9,12 +9,13 @@ import MapComponent from "./data/MapComponent";
 function OnboardingHost() {
 
     const navigate = useNavigate();
-    const options = useMemo(() => countryList().getData(), [])
+    const options = useMemo(() => countryList().getLabels(), []);
 
     const [location, setLocation] = useState({
-        latitude: 52.3676, // Default latitude for Amsterdam
-        longitude: 4.9041, // Default longitude for Amsterdam
+        latitude: 0,
+        longitude: 0,
     });
+
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
         Title: "",
@@ -23,14 +24,14 @@ function OnboardingHost() {
         Ownertype: "",
         Bookingsystem: "",
         Roomtype: "",
-        Guests: 0,
-        Bedrooms: 0,
-        Bathrooms: 0,
-        Beds: 0,
+        Guests: "",
+        Bedrooms: "",
+        Bathrooms: "",
+        Beds: "",
         Country: "",
         PostalCode: "",
         Street: "",
-        Neighbourhood: "",
+        City: "",
         Bookingsystem: "",
         Ownertype: "",
         CancelPolicy: "",
@@ -81,9 +82,40 @@ function OnboardingHost() {
         return true;
     };
 
+    const handleLocationChange = async (Country, City, PostalCode, Street) => {
+        const address = `${Country} ${City} ${Street} ${PostalCode}`;
+        console.log(formData)
+
+        try {
+            const response = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+                    address
+                )}&key=AIzaSyDsc4bZSQfuPkpluzSPfT5eYnVRzPWD-ow`
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch geocoding data');
+            }
+
+            const data = await response.json();
+
+            if (data.results && data.results.length > 0) {
+                const location = data.results[0].geometry.location;
+                setLocation({
+                    latitude: location.lat,
+                    longitude: location.lng
+                });
+            } else {
+                console.error('No results found for the provided address');
+            }
+        } catch (error) {
+            console.error('Error fetching geocoding data:', error);
+        }
+    };
+
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-        // For checkboxes, update Features object property directly
+    
         if (type === 'checkbox') {
             setFormData((prevData) => ({
                 ...prevData,
@@ -97,8 +129,7 @@ function OnboardingHost() {
                 }
             }));
         } else if (type === 'number' || type === 'range') {
-            // Check if value is 0 and set it to an empty string
-            const newValue = value === '0' ? '' : value;
+            const newValue = value || '';
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: newValue
@@ -108,55 +139,26 @@ function OnboardingHost() {
                 ...prevData,
                 [name]: value
             }));
+    
+            // Check which input field was changed and call handleLocationChange accordingly
+            if (name === 'City') {
+                handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
+            } else if (name === 'PostalCode') {
+                handleLocationChange(formData.Country, formData.City, value, formData.Street);
+            } else if (name === 'Street') {
+                handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
+            }
         }
     };
+    
 
     const handleCountryChange = (selectedOption) => {
         setFormData((prevData) => ({
             ...prevData,
             Country: selectedOption.value
         }));
+        handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street); // Fetch coordinates based on updated location data
     };
-
-    // Update the location state whenever the user changes the location input
-    const handleLocationChange = async (selectedOption) => {
-        // Assuming selectedOption is an object with name and value properties
-        setLocation((prevLocation) => ({
-            ...prevLocation,
-            [selectedOption.name]: selectedOption.value,
-        }));
-
-        // Fetch geocoding data based on the selected location
-        try {
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${selectedOption.value}`
-            );
-            const data = await response.json();
-
-            // Check if data is received and has valid coordinates
-            if (Array.isArray(data) && data.length > 0 && data[0].lat && data[0].lon) {
-                const { lat, lon } = data[0];
-                // Update location state with new coordinates
-                setLocation((prevLocation) => ({
-                    ...prevLocation,
-                    latitude: lat,
-                    longitude: lon
-                }));
-            } else {
-                console.error('Unable to fetch coordinates for the selected location.');
-            }
-        } catch (error) {
-            console.error('Error fetching geocoding data:', error);
-        }
-    };
-
-
-    const handleCombinedChange = (selectedOption) => {
-        handleCountryChange(selectedOption); // Call the handleCountryChange function with the selected option
-        handleLocationChange(selectedOption); // Call the handleLocationChange function with the selected option
-    };
-
-
 
     const handleSubmit = async () => {
         try {
@@ -181,8 +183,6 @@ function OnboardingHost() {
 
     const renderPageContent = (page) => {
         switch (page) {
-
-
             case 1:
                 return (
                     <div>
@@ -209,16 +209,40 @@ function OnboardingHost() {
                                     <label>
                                         Country
                                         <Select
-                                            options={options}
+                                            options={options.map(country => ({ value: country, label: country }))}
                                             name="Country"
                                             className="locationText"
-                                            value={options.find(option => option.value === formData.Country)}
-                                            onChange={handleCombinedChange}
+                                            value={{ value: formData.Country, label: formData.Country }}
+                                            onChange={handleCountryChange}
                                         />
                                     </label>
-                                    <label>Postal Code <input className="textInput locationText" name="PostalCode" onChange={handleInputChange} value={formData.PostalCode}></input></label>
-                                    <label>Street + house nr.<input className="textInput locationText" name="Street" onChange={handleInputChange} value={formData.Street}></input></label>
-                                    <label>Neighbourhood<input className="textInput locationText" name="Neighbourhood" onChange={handleInputChange} value={formData.Neighbourhood}></input></label>
+                                    <label>
+                                        City
+                                        <input
+                                            className="textInput locationText"
+                                            name="City"
+                                            onChange={handleInputChange}
+                                            value={formData.City}
+                                        />
+                                    </label>
+                                    <label>
+                                        Street + house nr.
+                                        <input
+                                            className="textInput locationText"
+                                            name="Street"
+                                            onChange={handleInputChange}
+                                            value={formData.Street}
+                                        />
+                                    </label>
+                                    <label>
+                                        Postal Code
+                                        <input
+                                            className="textInput locationText"
+                                            name="PostalCode"
+                                            onChange={handleInputChange}
+                                            value={formData.PostalCode}
+                                        />
+                                    </label>
                                 </div>
                             </div>
                             <div class="map-section">
@@ -430,7 +454,7 @@ function OnboardingHost() {
 
     return (
 
-        <div>
+        <div className="container">
             {renderPageContent(page)}
 
         </div>
