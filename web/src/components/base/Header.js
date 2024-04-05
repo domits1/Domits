@@ -94,8 +94,11 @@ function Header() {
                             <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>
+                    <div className='App'>
+                        <SearchBar setResults={setResults} />
+                    </div>
                     <div className='headerRight'>
-                        <button className="headerButtons" onClick={navigateToLanding}>
+                        <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
                             Become a host
                         </button>
                         <button className="headerButtons" onClick={navigateToNinedots}>
@@ -131,9 +134,6 @@ function Header() {
                         </div>
                     </div>
                 </nav>
-                <div className='App'>
-                    <SearchBar setResults={setResults} />
-                </div>
             </header>
         </div>
     );
