@@ -32,11 +32,12 @@ export const SearchBar = ({ setResults }) => {
 
   //connectie met api gateway
   const handleSearch = async () => {
+    const typeQueryParam = accommodation ? `&type=${accommodation}` : '';
+    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}`;
+  
     try {
-      
-      const response = await fetch(`https://00nfpimhyb.execute-api.eu-north-1.amazonaws.com/dev/Search?type=${accommodation}`);
+      const response = await fetch(url);
       const data = await response.json();
-      
       setResults(data);
     } catch (error) {
       console.error('Error fetching accommodations:', error);
@@ -46,7 +47,7 @@ export const SearchBar = ({ setResults }) => {
   return (
     <div className="bar">
       <div className="location">
-        <p>Location</p>
+        <p className="searchTitle">Location</p>
         <PlacesAutocomplete
           value={address}
           onChange={handleChange}
@@ -54,7 +55,7 @@ export const SearchBar = ({ setResults }) => {
           searchOptions={{ language: 'en' }}
         >
           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-            <div className="autocomplete-container">
+            <div className="autocomplete-container searchInputContainer">
               <input
                 {...getInputProps({
                   placeholder: 'Search Places...',
@@ -77,10 +78,7 @@ export const SearchBar = ({ setResults }) => {
                       borderRadius: '1px',
                       margin: '0',
                       display: 'flex',
-                      alignItems: 'center',
                       width: '300px',
-                      zindex: 999,
-
                     };
 
                     return (
@@ -111,8 +109,8 @@ export const SearchBar = ({ setResults }) => {
         </PlacesAutocomplete>
       </div>
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()}>
-        <p>Check in</p>
-        <div>
+        <p className="searchTitleCenter">Check in</p>
+        <div className="searchInputContainer">
           <DatePicker
             className="searchbar-input"
             id="checkInPicker"
@@ -124,8 +122,8 @@ export const SearchBar = ({ setResults }) => {
         </div>
       </div>
       <div className='check-out' onClick={() => document.getElementById('checkOutPicker').click()}>
-        <p>Check out</p>
-        <div>
+        <p className="searchTitleCenter">Check out</p>
+        <div className='searchInputContainer'>
           <DatePicker
             className="searchbar-input"
             id="checkOutPicker"
@@ -136,8 +134,8 @@ export const SearchBar = ({ setResults }) => {
           />
         </div>
       </div>
-      <div className="accommodation">
-        <p>Accommodation</p>
+      <div className="accommodation searchInputContainer">
+        <p className="searchTitle">Accommodation</p>
         <Select
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
@@ -156,13 +154,17 @@ export const SearchBar = ({ setResults }) => {
               ...provided,
               border: 'none',
               boxShadow: 'none',
-              height: '40px',
+              background: 'none',
+              minHeight: '0',
+              padding: '0',
+              margin: '0',
             }),
             indicatorSeparator: () => ({ display: 'none' }),
             dropdownIndicator: () => ({ display: 'none' }),
             placeholder: (provided) => ({
               ...provided,
               color: '#666',
+              background: 'none',
             }),
             option: (provided, state) => ({
               ...provided,
@@ -182,7 +184,7 @@ export const SearchBar = ({ setResults }) => {
         />
       </div>
       <button className="searchbar-button" type="button" onClick={handleSearch}>
-        <FaSearch style={{ marginRight: '2px', cursor: 'pointer' }} />
+        <FaSearch/>
       </button>
     </div>
   );

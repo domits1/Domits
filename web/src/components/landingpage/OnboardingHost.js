@@ -1,28 +1,38 @@
-import React, { useState } from "react";
-import Page from "./Calculator";
-import FAQ from "./Faq";
+import React, { useState, useMemo } from "react";
+import { useNavigate } from 'react-router-dom';
+
 import './landing.css';
+import Select from 'react-select'
+import countryList from 'react-select-country-list'
+import MapComponent from "./data/MapComponent";
 
 function OnboardingHost() {
+
+    const navigate = useNavigate();
+    const options = useMemo(() => countryList().getLabels(), []);
+
+    const [location, setLocation] = useState({
+        latitude: 0,
+        longitude: 0,
+    });
 
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
         Title: "",
         Description: "",
-        Rent: 0,
+        Rent: "",
         Ownertype: "",
         Bookingsystem: "",
         Roomtype: "",
-        Guests: 0,
-        Bedrooms: 0,
-        Bathrooms: 0,
-        Beds: 0,
+        Guests: "",
+        Bedrooms: "",
+        Bathrooms: "",
+        Beds: "",
         Country: "",
         PostalCode: "",
         Street: "",
-        Neighbourhood: "",
+        City: "",
         Bookingsystem: "",
-        Guesttype: "",
         Ownertype: "",
         CancelPolicy: "",
         Features: {
@@ -47,16 +57,65 @@ function OnboardingHost() {
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
+
     });
 
     const pageUpdater = (pageNumber) => {
         setPage(pageNumber);
     };
 
+    const isFormFilled = () => {
+        // Exclude specific fields from the check
+        const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent'];
+
+        for (const key in formData) {
+            // Skip checking for excluded fields
+            if (excludedFields.includes(key)) {
+                continue;
+            }
+
+            // Check if value is empty or zero
+            if (formData[key] === "" || formData[key] === 0) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const handleLocationChange = async (Country, City, PostalCode, Street) => {
+        const address = `${Country} ${City} ${Street} ${PostalCode}`;
+        console.log(formData)
+
+        try {
+            const response = await fetch(
+                `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+                    address
+                )}&key=AIzaSyDsc4bZSQfuPkpluzSPfT5eYnVRzPWD-ow`
+            );
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch geocoding data');
+            }
+
+            const data = await response.json();
+
+            if (data.results && data.results.length > 0) {
+                const location = data.results[0].geometry.location;
+                setLocation({
+                    latitude: location.lat,
+                    longitude: location.lng
+                });
+            } else {
+                console.error('No results found for the provided address');
+            }
+        } catch (error) {
+            console.error('Error fetching geocoding data:', error);
+        }
+    };
+
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-
-        // For checkboxes, update Features object property directly
+    
         if (type === 'checkbox') {
             setFormData((prevData) => ({
                 ...prevData,
@@ -69,12 +128,36 @@ function OnboardingHost() {
                     [name]: checked,
                 }
             }));
+        } else if (type === 'number' || type === 'range') {
+            const newValue = value || '';
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: newValue
+            }));
         } else {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: value
             }));
+    
+            // Check which input field was changed and call handleLocationChange accordingly
+            if (name === 'City') {
+                handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
+            } else if (name === 'PostalCode') {
+                handleLocationChange(formData.Country, formData.City, value, formData.Street);
+            } else if (name === 'Street') {
+                handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
+            }
         }
+    };
+    
+
+    const handleCountryChange = (selectedOption) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            Country: selectedOption.value
+        }));
+        handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street); // Fetch coordinates based on updated location data
     };
 
     const handleSubmit = async () => {
@@ -123,15 +206,48 @@ function OnboardingHost() {
 
                                 <div class="locationInput">
                                     <h2>Fill in Location</h2>
-                                    <label>Country<input className="textInput locationText" name="Country" onChange={handleInputChange} value={formData.Country}></input></label>
-                                    <label>Postal Code <input className="textInput locationText" name="PostalCode" onChange={handleInputChange} value={formData.PostalCode}></input></label>
-                                    <label>Street + house nr.<input className="textInput locationText" name="Street" onChange={handleInputChange} value={formData.Street}></input></label>
-                                    <label>Neighbourhood<input className="textInput locationText" name="Neighbourhood" onChange={handleInputChange} value={formData.Neighbourhood}></input></label>
+                                    <label>
+                                        Country
+                                        <Select
+                                            options={options.map(country => ({ value: country, label: country }))}
+                                            name="Country"
+                                            className="locationText"
+                                            value={{ value: formData.Country, label: formData.Country }}
+                                            onChange={handleCountryChange}
+                                        />
+                                    </label>
+                                    <label>
+                                        City
+                                        <input
+                                            className="textInput locationText"
+                                            name="City"
+                                            onChange={handleInputChange}
+                                            value={formData.City}
+                                        />
+                                    </label>
+                                    <label>
+                                        Street + house nr.
+                                        <input
+                                            className="textInput locationText"
+                                            name="Street"
+                                            onChange={handleInputChange}
+                                            value={formData.Street}
+                                        />
+                                    </label>
+                                    <label>
+                                        Postal Code
+                                        <input
+                                            className="textInput locationText"
+                                            name="PostalCode"
+                                            onChange={handleInputChange}
+                                            value={formData.PostalCode}
+                                        />
+                                    </label>
                                 </div>
                             </div>
                             <div class="map-section">
                                 <label>What we show on Domits.com</label>
-                                <div id="map-placeholder">Map is still being worked on</div>
+                                <MapComponent location={location} />
                             </div>
                         </div>
                         <div class="formContainer">
@@ -140,6 +256,8 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
+
+
             case 2:
                 return (
                     <div>
@@ -187,6 +305,8 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
+
+
             case 3:
                 return (
                     <div>
@@ -249,15 +369,27 @@ function OnboardingHost() {
                         </div>
                         <div class="formContainer">
                             <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Enlist</button>
+                            <button
+                                className='nextButtons'
+                                onClick={isFormFilled() ? () => pageUpdater(page + 1) : null}
+                                style={{
+                                    backgroundColor: 'green',
+                                    cursor: isFormFilled() ? 'pointer' : 'not-allowed',
+                                    opacity: isFormFilled() ? 1 : 0.5
+                                }}
+                                disabled={!isFormFilled()}
+                            >Enlist</button>
+
                         </div>
 
                     </div>
-
                 );
+
+
             case 4:
                 return (
                     <div className="container" style={{ width: '80%' }}>
+                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">
@@ -293,12 +425,27 @@ function OnboardingHost() {
                                 <p>Weekly Discount: {formData.Weeklypercent}%</p>
                                 <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
                             </div>
+                            <div className='buttonHolder'>
+                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                                <button
+                                    className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
+                            </div>
                         </div>
+                    </div >
+                );
+
+
+            case 5:
+                return (
+                    <div className="container">
+                        <h2>
+                            Congratulations! Your accommodation is being listed
+                        </h2>
+                        <p>It may take a while before your accommodation is verified</p>
                         <div className='buttonHolder'>
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
+                            <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
                         </div>
-                    </div>
+                    </div >
                 );
             default:
                 return null;
@@ -307,7 +454,7 @@ function OnboardingHost() {
 
     return (
 
-        <div>
+        <div className="container">
             {renderPageContent(page)}
 
         </div>

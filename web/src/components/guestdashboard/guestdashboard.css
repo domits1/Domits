@@ -19,7 +19,7 @@
     margin-bottom: 10px;
     align-items: center;
     width: 100%;
-    max-width: 200px;
+    min-width: 200px;
 
     border: 0.5px solid black;
     border-radius: 15px;
@@ -136,13 +136,10 @@
     }
 
     .dashboardSections {
-        display: grid;
-        grid-template-columns: auto auto;
-        justify-items: center;
+       
     }
 
     .wijzers {
-
         width: 90%;
     }
 }
