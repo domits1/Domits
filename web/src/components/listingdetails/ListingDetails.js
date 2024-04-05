@@ -27,53 +27,34 @@ import star from "../../images/Star.svg";
 import arrow from "../../images/arrow.svg";
 import BookingDetails from "../listingdetails/bookingdetails";
 
+
 const ListingDetails = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
-    const [isCarouselActive, setIsCarouselActive] = useState(false);
-
-    const handlePrevImage = () => {
-        setCurrentIndex((prevIndex) => (prevIndex === 0 ? images.length - 1 : prevIndex - 1));
-    };
 
     const handleNextImage = () => {
         setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
     };
 
     const images = [detailbigimg, detailimg1, accomap, detailimg3, detailimg4];
+
     return (
         <div className="listing-details-container">
             <div className="booking-information-section">
                 <div className="listing-details-top">
                     <div className="listing-details-back-arrow">
-                        <a href="/">
+                        <Link to="/">
                             <img src={backarrow} alt="Back Arrow" />
                             <div className="listing-details-back-arrow">Back</div>
-                        </a>
+                        </Link>
                     </div>
                     <div className="listing-details-title">
                         Minimalistic and cozy place in Haarlem
                     </div>
                 </div>
-                <div className={`listing-details-image-window ${isCarouselActive ? 'carousel-active' : ''}`}>
-                    <div className="listing-details-big-img">
+                <div className="listing-details-image-window">
+                    <div className="listing-details-big-img" onClick={handleNextImage}>
                         <img src={images[currentIndex]} alt="detailbigimg" />
                     </div>
-                    <div className="listing-details-side-img">
-                        {images.map((image, index) => (
-                            <img
-                                key={index}
-                                src={image}
-                                alt={`detailimg${index + 1}`}
-                                className={currentIndex === index ? 'active' : ''}
-                            />
-                        ))}
-                    </div>
-                    <button className="carousel-button carousel-button-left" onClick={handlePrevImage}>
-                        <img src={backarrow} alt="Back Arrow" />
-                    </button>
-                    <button className="carousel-button carousel-button-right" onClick={handleNextImage}>
-                        <img src={backarrow} alt="Next Arrow" />
-                    </button>
                 </div>
                 <div className="price-and-rooms-row">
                     <div className="price-per-night-text">$1400 night</div>
