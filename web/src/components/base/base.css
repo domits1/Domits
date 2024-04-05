@@ -15,6 +15,8 @@
 
 .headerRight {
     float: right;
+    display: flex;
+    align-items: center;
 }
 
 .headerButtons, .personalMenu {
@@ -39,6 +41,13 @@
     align-items: center;
     gap: 10px;
     display: flex;
+}
+
+.headerHostButton, .headerButtons {
+    border: none;
+    background: none;
+    box-shadow: none;
+    margin-right: 10px;
 }
 
 /* Adjusted CSS for dropdown */
@@ -119,7 +128,8 @@
 }
 
 .headerButtons:hover {
-    background-color: #d3d3d3;
+    background: #3fb3663a;
+    padding: 12px;
 }
 
 .personalMenu:hover {
@@ -140,9 +150,14 @@
 @media screen and (max-width: 650px) {
 
     .header-nav, .headerRight {
-        flex-direction: column;
+        flex-direction: row;
         justify-content: center;
         width: 100%;
+    }
+
+    .headerRight {
+        width: 90%;
+        margin-top: 20px;
     }
 
     .headerButtons, .personalMenu, .bar {
@@ -313,14 +328,5 @@ a:hover {
     }
 
 }
-
-.search-bar-container {
-    width: 40%;
-    padding: 1px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-}
-
 
 /* End of footer */

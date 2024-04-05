@@ -2,7 +2,14 @@
   font-family: "Kanit";
   src: local("KanitRegular"),
    url("./fonts/kanit/Kanit-Regular.ttf") format("truetype");
-  font-weight: bold;
+  font-weight: 500;
+ }
+
+ @font-face {
+  font-family: "Kanit";
+  src: local("KanitBold"),
+   url("./fonts/kanit/Kanit-Bold.ttf") format("truetype");
+  font-weight: 700;
  }
 
 body {

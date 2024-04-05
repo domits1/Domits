@@ -95,10 +95,10 @@ function Header() {
                         </a>
                     </div>
                     <div className='App'>
-                            <SearchBar setResults={setResults} />
+                        <SearchBar setResults={setResults} />
                     </div>
                     <div className='headerRight'>
-                        <button className="headerButtons" onClick={navigateToLanding}>
+                        <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
                             Become a host
                         </button>
                         <button className="headerButtons" onClick={navigateToNinedots}>
