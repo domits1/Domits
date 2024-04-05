@@ -26,16 +26,10 @@ function Pages() {
         console.error("Error setting user id:", error);
       }
     };
-
-    // Call the async function
     setUserEmailAsync();
   }, []);
 
-
-
   const navigate = useNavigate();
-
-  // const userEmail = sessionStorage.getItem('userEmail');
 
   async function createStripeAccount() {
     if (!userEmail) {
@@ -59,7 +53,6 @@ function Pages() {
       if (!result.ok) {
         throw new Error(`HTTP error! Status: ${result.status}`);
       }
-
       const data = await result.json();
       window.location.replace(data.url);
     } catch (error) {
@@ -102,5 +95,4 @@ function Pages() {
     </div>
   );
 }
-
 export default Pages;
