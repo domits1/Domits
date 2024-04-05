@@ -189,7 +189,6 @@
   justify-content: space-between;
   flex-wrap: wrap;
   padding: 20px;
-  width: 80%;
   margin: auto;
 
 }
@@ -200,7 +199,7 @@
 
 .form-section,
 .map-section {
-  width: 45%;
+  min-width: 45%;
 }
 
 .front-section {
@@ -225,14 +224,12 @@
   flex-wrap: wrap;
   margin-bottom: 10px;
   gap: 15px;
-  font-family: "kanitRegular";
 }
 
 .room-type label,
 .room-features label {
   justify-content: flex-start;
   cursor: pointer;
-  font-family: "kanitRegular";
 }
 
 
@@ -281,4 +278,18 @@
 .priceSlider {
   width: 100%;
   cursor: ew-resize;
+}
+
+@media screen and (max-width: 1520px) {
+  .formContainer label {
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+    align-items: flex-start;
+    margin-bottom: 20px;
+    margin-right: 50px;
+  }
+  .formContainer {
+    text-align: left;
+  }
 }
