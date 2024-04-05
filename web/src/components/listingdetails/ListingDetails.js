@@ -181,7 +181,7 @@ const ListingDetails = () => {
                         <img src={pluscircleblack} alt="Plust circle" />Show more
                     </button>
                 </div>
-                <div className="listing-details-country-place-text">The Netherlands, Haarlem</div>
+                {/* <div className="listing-details-country-place-text">The Netherlands, Haarlem</div>
                 <div className="listing-details-things-closeby-text">Things to do closeby:</div>
                 <div className="listing-details-things-to-do-card">
                     <div className="listing-details-things-to-do-title">Goat milking at Timo’s farm</div>
@@ -205,7 +205,7 @@ const ListingDetails = () => {
                     <button className="listing-details-show-more black-show-more listing-details-extra-margin-top">
                         <img src={pluscircleblack} alt="Plust circle" />Show more
                     </button>
-                </div>
+                </div> */}
             </div>
             {/* End of the booking-information-section*/}
             <BookingDetails />

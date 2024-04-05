@@ -12,22 +12,29 @@
     font-weight: 500;
 }
 
-.careerimg{
-    display: flex; /* Add display flex to the parent container */
-    justify-content: flex-end; /* Align #careerimg to the flex end */
+.careerTextFlex {
+    display: flex;
+    flex-direction: row;
+}
+
+.careerTopText {
+    margin-top: 50px;
+}
+
+.careerBottomText {
+    margin-top: 20px;
 }
 
 #careerimg {
     width: 100%;
     max-width: 420px;
     height: 230px;
+    margin-bottom: 50px;
 }
 
-.jobbubbles {
+.jobBubbleFirstRow, .JobBubbleSecondRow {
     display: flex;
     flex-wrap: wrap;
-    margin-left: -20px; /* Offset margin-left from jobbubbles */
-    margin-right: -20px; /* Offset margin-right from jobbubbles */
 }
 
 .jobcat p {
@@ -35,19 +42,21 @@
     background-color: #D6F5DB;
     font-weight: 500;
     border-radius: 15px;
-    width: 50px;
+    display: inline-block;
+    padding: 3px 10px;
 }
 
 .jobbubble {
     border-radius: 15px;
-    border: 0.5px solid #000;
-    padding-left: 20px;
-    margin-left: 20px;
-    margin-bottom: 30px;
+    box-shadow: 0 0 5px #c7c7c7;
+    padding: 10px;
+    margin: 25px;
+    margin-left: 0;
     flex: 1 1 320px; /* Flex item properties */
     width: 100%;
     max-width: calc(33.333% - 20px); /* 33.333% of the container minus margins */
 }
+
 
 #moreinfo {
     color: #000;
@@ -62,6 +71,15 @@
 #openapp {
     margin-top: 100px;
     margin-left: 200px;
+}
+
+@media (max-width: 860px) {
+    .careerTextFlex {
+        flex-direction: column;
+    }
+    #careerimg {
+        margin-top: 25px;
+    }
 }
 
 /* Media query for phone screens */

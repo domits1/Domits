@@ -26,7 +26,7 @@ function ConfirmEmail() {
                 if (result === 'SUCCESS') {
                     setIsConfirmed(true);
                     if (isHost) {
-                        navigate("/hostdashboard/");
+                        navigate("/hostdashboard");
                     }
                     setTimeout(() => navigate('/'), 3000);
                 }

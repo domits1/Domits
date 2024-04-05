@@ -22,6 +22,9 @@
           "deploymentBucketName": "amplify-domits-develop-123953-deployment",
           "s3Key": "amplify-builds/domits7b73f586PreSignup-43714f534742445a6754-build.zip"
         }
+      },
+      "api": {
+        "domits": {}
       }
     }
   }

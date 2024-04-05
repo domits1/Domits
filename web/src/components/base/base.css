@@ -2,15 +2,15 @@
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 16px 50px;
-    text-align: auto;
+    text-align: center;
 }
 
 .header-nav {
     display: flex;
-    justify-content: space-between;
-    align-items: auto;
-    width: 100%;
     flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .headerRight {
@@ -135,24 +135,17 @@
     word-wrap: break-word;
 }
 
-
+/* CSS for the SearchBar */
 
 @media screen and (max-width: 650px) {
 
-    .header-nav, .headerRight, .bar{
+    .header-nav, .headerRight {
         flex-direction: column;
         justify-content: center;
-        width: auto;
-        height: auto;
-    }
-    .location, .check-in, .check-out, .accomodation {
-        width: auto;
-        height: auto;
-        padding: 10px;
-        margin: auto;
+        width: 100%;
     }
 
-    .headerButtons, .personalMenu, .bar{
+    .headerButtons, .personalMenu, .bar {
         width: 100%;
         margin-top: 10px;
         margin-right: 0;
@@ -270,15 +263,13 @@
 }
 
 .footer-terms {
-    margin: auto;
+    margin: 10px auto;
     padding: 0;
-
     width: 90%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-
-    text-decoration-line: underline;
+    /* text-decoration-line: underline; */
     margin-top: 20px;
 }
 
@@ -322,5 +313,14 @@ a:hover {
     }
 
 }
+
+.search-bar-container {
+    width: 40%;
+    padding: 1px;
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+}
+
 
 /* End of footer */
