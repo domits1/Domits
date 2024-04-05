@@ -32,11 +32,12 @@ export const SearchBar = ({ setResults }) => {
 
   //connectie met api gateway
   const handleSearch = async () => {
+    const typeQueryParam = accommodation ? `&type=${accommodation}` : '';
+    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}`;
+  
     try {
-      
-      const response = await fetch(`https://00nfpimhyb.execute-api.eu-north-1.amazonaws.com/dev/Search?type=${accommodation}`);
+      const response = await fetch(url);
       const data = await response.json();
-      
       setResults(data);
     } catch (error) {
       console.error('Error fetching accommodations:', error);
