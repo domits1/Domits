@@ -2,6 +2,7 @@ import React, { useState, FormEvent, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
+import logo from "../../logo.svg";
 
 const Login = () => {
     const navigate = useNavigate();
@@ -71,7 +72,8 @@ const Login = () => {
                 <button onClick={handleSignOut}>Sign out</button>
             ) : (
                 <div className="loginContainer">
-                    <div className="loginTitle">Log in or Sign Up</div>
+                    <img src={logo} alt="Logo Domits" className='loginLogo' />
+                    <div className="loginTitle">Good to see you again</div>
                     <div className="loginForm">
                         <form onSubmit={handleSubmit}>
                             <label>Email:</label>
@@ -100,21 +102,6 @@ const Login = () => {
                             <button type="submit" className="loginButton">
                                 <div className='lbHolder'>
                                     <p className='lbText'>Login</p>
-                                    <svg
-                                        width="24"
-                                        height="59"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        xmlns="http://www.w3.org/2000/svg"
-                                    >
-                                        <path
-                                            d="M12 8L16 12M16 12L12 16M16 12H3M3.33782 7C5.06687 4.01099 8.29859 2 12 2C17.5228 2 22 6.47715 22 12C22 17.5228 17.5228 22 12 22C8.29859 22 5.06687 19.989 3.33782 17"
-                                            stroke="white"
-                                            strokeWidth="2"
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                        />
-                                    </svg>
                                 </div>
                             </button>
                         </form>
