@@ -42,9 +42,9 @@ function Landing() {
                     </div>
                     
                 </div>
-                <div>
+                {/* <div>
                     <FAQ />
-                </div>
+                </div> */}
             </div>
         </div>
     );

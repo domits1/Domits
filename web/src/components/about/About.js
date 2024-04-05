@@ -129,12 +129,40 @@ function About() {
                     </div>
                 </div>
 
+                <div class="team">
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Aniss Bouabdallah</p>
+                        <p>Business developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>Tim Eerdmans</p>
+                        <p>Business developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>This can be you!</p>
+                        <p>We're hiring!</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>This can be you!</p>
+                        <p>We're hiring!</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar"></div>
+                        <p>This can be you!</p>
+                        <p>We're hiring!</p>
+                    </div>
+                </div>
+
                 <div class="about">
                     <p>We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.</p>
                     <p>You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders.</p>
                 </div>
             </div>
-            <FAQ />
+            {/* <FAQ /> */}
         </div>
 
 
