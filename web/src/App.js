@@ -8,6 +8,7 @@ import Home from "./components/home/Home";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomits";
+import Release from "./components/about/release.js";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
@@ -86,6 +87,7 @@ function App() {
                             <Route path="/" element={<Assortment />} />
                             <Route path="/home" element={<Home />} />
                             <Route path="/about" element={<About />} />
+                            <Route path="/release" element={<Release />} />
                             <Route path="/why-domits" element={<Whydomits />} />
                             <Route path="/contact" element={<Contact />} />
                             <Route path="/travelinnovation" element={<Travelinnovation />} />
