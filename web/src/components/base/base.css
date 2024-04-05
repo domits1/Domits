@@ -314,13 +314,4 @@ a:hover {
 
 }
 
-.search-bar-container {
-    width: 40%;
-    padding: 1px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-}
-
-
 /* End of footer */

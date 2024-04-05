@@ -3,57 +3,72 @@
 }
 
 .bar {
-  width: 100%;
-  background: white;
+  width: 65%;
+  margin: 20px auto 10px auto;
+  /* background: white; */
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 30px;
   display: flex;
+  height: 50px;
+  z-index: 999;
   font-size: 0.6rem;
-  height: 55px;
-  cursor: 'pointer';
-  
 }
 
-.bar div {
+.bar .searchInputContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.suggestions-container {
+  position: relative;
+  z-index: 999;
+}
+
+.css-qbdosj-Input {
+  margin: 0 !important;
+}
+
+.autocomplete-container input::placeholder {
   text-align: center;
-  transition: background 250ms ease, width 250ms ease; 
-  border-radius: 30px;
 }
-/* .bar div:hover {
-  background: hsl(0 0% 94%); 
-} */
-.location:hover{
-  width: 38%;
-  
+
+.bar input {
+  margin-top: 0;
+  padding-top: 0;
 }
+
+.searchbar-input::placeholder {
+  font-size: 0.64rem;
+}
+
+.bar .searchTitle, .searchTitleCenter {
+  color: #0D9813;
+  font-size: 0.7rem;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+  padding-top: 10px;
+}
+
 .check-in:hover {
-  width: 20%;
-  cursor: pointer;
+  cursor: 'pointer';
 }
 .check-out:hover{
-  width: 20%;
-  cursor: 'pointer'
-}
-.accommodation:hover {
-  width: 28%;
+  cursor: 'pointer';
 }
 .check-in{
-  width: 17%;
-  align-items: center;
+  width: 20%;
   cursor: pointer;
 }
 .check-out{
-  width: 17%;
-  align-items: center;
+  width: 20%;
   cursor: pointer;
 }
 .location{
   width: 35%;
-  align-items: center;
 }
 .accommodation {
   width: 25%;
-  align-items: center;
 }
 .searchbar-input {
   background: none;
@@ -61,20 +76,11 @@
   padding: 0.6rem 0 0 0;
   text-align: center;
   width: 90%;
-  cursor: pointer;
-  pointer-events: none;
-  
 }
 .searchbar-input:focus {
   outline: none;
 }
 
-::placeholder {
-  font-size: 0.64rem;
-  text-align: center;
-  
-  
-}
 .bar>div {
   position: relative;
   transition: background 250ms ease, width 250ms ease;
@@ -96,7 +102,8 @@
   display: inline-block;
   outline: 0;
   cursor: pointer;
-  padding: 3px ;
+  padding: 3px;
+  margin-right: 1%;
   font-size: 10px;
   line-height: 30px;
   border: 1px solid #0D9813;
@@ -145,4 +152,22 @@
 .searchBar::placeholder {
   font-size: 0.64rem;
   text-align: left;
+}
+
+@media (max-width: 1000px) {
+  .bar {
+    width: 85%;
+  }
+}
+
+@media (max-width: 750px) {
+  .bar {
+    width: 90%;
+  }
+}
+
+@media (max-width: 650px) {
+  .bar {
+    width: 100%;
+  }
 }

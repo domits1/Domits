@@ -94,9 +94,6 @@ function Header() {
                             <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>
-                    <div className='App'>
-                            <SearchBar setResults={setResults} />
-                    </div>
                     <div className='headerRight'>
                         <button className="headerButtons" onClick={navigateToLanding}>
                             Become a host
@@ -134,6 +131,9 @@ function Header() {
                         </div>
                     </div>
                 </nav>
+                <div className='App'>
+                    <SearchBar setResults={setResults} />
+                </div>
             </header>
         </div>
     );
