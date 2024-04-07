@@ -2,51 +2,47 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import './Accommodations.css';
 
-const Accommodations = ({ searchQuery }) => {
+const Accommodations = ({ searchResults }) => {
+    
     const [accolist, setAccolist] = useState([]);
 
     useEffect(() => {
-        fetchData();
-    }, []);
+        console.log('Accommodations received searchResults:', searchResults);
+        const fetchData = async () => {
+            try {
+                const response = await fetch('https://cfeo8gr5y0.execute-api.eu-north-1.amazonaws.com/dev/accommodation');
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                const responseData = await response.json();
 
-    const fetchData = async () => {
-        try {
-            const response = await fetch('https://cfeo8gr5y0.execute-api.eu-north-1.amazonaws.com/dev/accommodation');
-            if (!response.ok) {
-                throw new Error('Failed to fetch data');
+                const formattedData = responseData.map((item, index) => ({
+                    image: `https://accommodationphotos.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
+                    title: item.Title,
+                    details: item.description,
+                    size: `${item.Size}m²`,
+                    price: `€${item.Price} per night`,
+                    id: item['#PK'],
+                    bathrooms: `${item.Bathrooms} Bathrooms`,
+                    bedrooms: `${item.Bedrooms} Bedrooms`,
+                    persons: `${item.Persons} Persons`,
+                }));
+                setAccolist(formattedData);
+            } catch (error) {
+                console.error('Error fetching or processing data:', error);
             }
-            const responseData = await response.json();
-            // console.log(responseData);
+        };
 
-            const formattedData = responseData.map((item, index) => ({ // Use index of map to access img array
-                image: `https://accommodationphotos.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
-                // image: img[index % img.length],
-                title: item.Title,
-                details: item.description,
-                size: `${item.Size}m²`,
-                price: `€${item.Price} per night`,
-                id: item['#PK'],
-                bathrooms: `${item.Bathrooms} Bathrooms`,
-                bedrooms: `${item.Bedrooms} Bedrooms`,
-                persons: `${item.Persons} Persons`,
-            }));
-            setAccolist(formattedData);
-            // console.log("Image URLs:", formattedData.map(item => item.image));
-        } catch (error) {
-            console.error('Error fetching or processing data:', error);
+        if (searchResults && searchResults.length > 0) {
+            setAccolist(searchResults);
+        } else {
+            fetchData();
         }
-    };
-
-
-    const filteredAccommodations = accolist.filter(accommodation =>
-        accommodation.title.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    // console.log("Filtered accommodations:", filteredAccommodations);
+    }, [searchResults]);
 
     return (
         <div id="card-visibility">
-            {filteredAccommodations.map((accommodation, index) => (
+            {accolist.map((accommodation, index) => (
                 <div className="accocard" key={index}>
                     <Link to={`/listingdetails`} className="accocard-link">
                         <img src={accommodation.image} alt="Product Image" />

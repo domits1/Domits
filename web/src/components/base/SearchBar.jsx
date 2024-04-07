@@ -6,7 +6,7 @@ import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
 import './SearchBar.css';
 
-export const SearchBar = ({ setResults }) => {
+export const SearchBar = ({ setSearchResults }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [accommodation, setAccommodation] = useState('');
@@ -30,19 +30,21 @@ export const SearchBar = ({ setResults }) => {
     }
   };
 
-  //connectie met api gateway
+  // Verbinding met API Gateway
   const handleSearch = async () => {
-    const typeQueryParam = accommodation ? `&type=${accommodation}` : '';
+    const typeQueryParam = accommodation ? `type=${accommodation}` : '';
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}`;
-  
+
     try {
-      const response = await fetch(url);
-      const data = await response.json();
-      setResults(data);
+        const response = await fetch(url);
+        const data = await response.json();
+        console.log("Data received:", data);
+        setSearchResults(data.Items);
     } catch (error) {
-      console.error('Error fetching accommodations:', error);
+        console.error('Error fetching accommodations:', error);
+        console.log(typeof setSearchResults);
     }
-  };
+};
 
   return (
     <div className="bar">
@@ -143,7 +145,6 @@ export const SearchBar = ({ setResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            { value: 'Hotel', label: <><FaMapPin /> Hotel</> },
             { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
             { value: 'House', label: <><FaMapPin /> House</> },
             { value: 'Villa', label: <><FaMapPin /> Villa</> },

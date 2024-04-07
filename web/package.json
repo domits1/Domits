@@ -45,7 +45,7 @@
     "@babel/preset-env": "^7.24.0",
     "@babel/preset-react": "^7.23.3",
     "babel-eslint": "^10.1.0",
-    "cypress": "^13.6.2",
+    "cypress": "^13.7.2",
     "eslint": "^8.56.0",
     "eslint-plugin-react": "^7.33.2",
     "faker": "^6.6.6"
