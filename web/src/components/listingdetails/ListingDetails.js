@@ -26,6 +26,7 @@ import pluscircleblack from "../../images/plus-circle-black.svg";
 import star from "../../images/Star.svg";
 import arrow from "../../images/arrow.svg";
 import BookingDetails from "../listingdetails/bookingdetails";
+import FixedCard from "../listingdetails/fixedcard";
 
 
 const ListingDetails = () => {
@@ -190,6 +191,7 @@ const ListingDetails = () => {
             </div>
             {/* End of the booking-information-section*/}
             <BookingDetails />
+            <FixedCard />
         </div>
     );
 }

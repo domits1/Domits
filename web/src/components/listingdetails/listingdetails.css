@@ -455,6 +455,25 @@
     border-radius: 15px;
 }
 
+.fixed-card {
+    display: none; /* Initially hide the fixed card */
+    position: fixed;
+    bottom: 0;
+    background-color: black;
+    width: 100%;
+    height: 60px;
+}
+
+@media (max-width: 768px) {
+    .booking-details-card {
+        display: none;
+    }
+
+    .fixed-card {
+        display: block; /* Show the fixed card on smaller screens */
+    }
+}
+
 .listing-details-check-container {
     display: flex;
 }
