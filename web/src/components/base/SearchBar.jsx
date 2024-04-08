@@ -38,7 +38,7 @@ export const SearchBar = ({ setSearchResults }) => {
     try {
         const response = await fetch(url);
         const data = await response.json();
-        console.log("Data received in SearchBar:", data);
+        // console.log("Data received in SearchBar:", data);
         setSearchResults(data); // Dit stuurt de data naar de App component
     } catch (error) {
         console.error('Error fetching accommodations:', error);

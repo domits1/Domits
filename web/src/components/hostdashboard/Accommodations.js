@@ -20,7 +20,7 @@ const Accommodations = ({ searchResults }) => {
   };
 
   useEffect(() => {
-    console.log('Nieuwe searchResults ontvangen in Accommodations:', searchResults);
+    // console.log('Nieuwe searchResults ontvangen in Accommodations:', searchResults);
 
     const fetchData = async () => {
       try {
