@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useState, useEffect} from "react";
 import "./listingdetails.css";
 import detailbigimg from '../../images/accobigimg.png';
 import detailimg1 from '../../images/accoimg1.png';
@@ -10,7 +10,7 @@ import adultroom from '../../images/adultacco.png';
 import teenroom from '../../images/teenacco.jpg';
 import kidroom from '../../images/kidacco.jpg';
 import back from '../../images/arrowleft.png';
-import { Link } from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import telescope from "../../images/telescope.png";
 import smarttv from "../../images/tv.png";
 import sauna from "../../images/thermometer.png";
@@ -25,8 +25,48 @@ import pluscircle from "../../images/plus-circle.svg";
 import pluscircleblack from "../../images/plus-circle-black.svg";
 import star from "../../images/Star.svg";
 import arrow from "../../images/arrow.svg"
+import { useLocation } from 'react-router-dom';
 
 const ListingDetails = () => {
+    const { search } = useLocation();
+    const searchParams = new URLSearchParams(search);
+    const pk = searchParams.get('pk');
+    const sk = searchParams.get('sk');
+
+    const [details, setDetails] = useState(null);
+    console.log(sk, pk)
+
+    useEffect(() => {
+
+        const apiUrl = 'https://ifas5yup7h23iph6phpczxdqsq0yeaxs.lambda-url.eu-north-1.on.aws/';
+
+        const fetchDetails = async () => {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', // Indicates that the request body format is JSON
+                    },
+                    body: JSON.stringify({ pk: pk, sk: sk }) // Convert the payload to a JSON string
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server responded with status: ' + response.status);
+                }
+
+                const data = await response.json();
+                setDetails(data);
+                console.log('Fetched accommodation details:', data);
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        };
+
+        fetchDetails();
+    }, [pk,sk]); // Ensure this effect does not have dependencies unless intended to run more than once
+
+
     return (
         <div className="listing-details-container">
             <div className="booking-information-section">
