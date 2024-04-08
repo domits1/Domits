@@ -151,7 +151,7 @@ export const SearchBar = ({ setSearchResults }) => {
             { value: 'Camper', label: <><FaMapPin /> Camper</> },
           ]}
           placeholder="Type of accommodation"
-          isSearchable={true}
+          isSearchable={false}
           styles={{
             control: (provided) => ({
               ...provided,
