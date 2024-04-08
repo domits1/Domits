@@ -50,10 +50,10 @@ Modal.setAppElement('#root');
 
 function App() {
     const [searchResults, setSearchResults] = useState([]);
-    
     useEffect(() => {
+        // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
-    }, []);
+    }, [searchResults]);
 
     const currentPath = window.location.pathname;
 

@@ -34,17 +34,16 @@ export const SearchBar = ({ setSearchResults }) => {
   const handleSearch = async () => {
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}`;
-
+  
     try {
         const response = await fetch(url);
         const data = await response.json();
-        console.log("Data received:", data);
-        setSearchResults(data.Items);
+        console.log("Data received in SearchBar:", data);
+        setSearchResults(data); // Dit stuurt de data naar de App component
     } catch (error) {
         console.error('Error fetching accommodations:', error);
-        console.log(typeof setSearchResults);
     }
-};
+  };
 
   return (
     <div className="bar">
