@@ -47,7 +47,7 @@ const Accommodations = ({ searchResults }) => {
     <div id="card-visibility">
       {accolist.map((accommodation, index) => (
         <div className="accocard" key={index}>
-          <Link to={`/listingdetails/${accommodation.id}`} className="accocard-link">
+          <Link to={`/listingdetails/`} className="accocard-link">
             <img src={accommodation.image} alt={accommodation.title} />
             <div className="accocard-content">
               <div className="accocard-title">{accommodation.title}</div>
