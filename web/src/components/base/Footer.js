@@ -19,11 +19,11 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 className='footer-headers'>Navigation</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/" className='footer-links'>How it works</Link></li>
+                        <li><Link to="/howitworks" className='footer-links'>How it works</Link></li>
                         <li><Link to="/why-domits" className='footer-links'>Why Domits</Link></li>
                         <li><Link to="/career" className='footer-links'>Jobs</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
-                        <li><Link to="/" className='footer-links'>Release</Link></li>
+                        <li><Link to="/release" className='footer-links'>Release</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
                         <br />
                     </ul>
@@ -35,7 +35,7 @@ const Footer = () => {
                     <h4 className='footer-headers'>Guest</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>Search and book</Link></li>
-                        <li><Link to="/" className='footer-links'>Helpdesk</Link></li>
+                        <li><Link to="/helpdesk" className='footer-links'>Helpdesk</Link></li>
                     </ul>
                 </div>
 
