@@ -47,8 +47,6 @@ import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDas
 import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
 
-export const stripe = new Stripe(process.env.STRIPE_TEST_KEY);
-
 // Set the app element for react-modal
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
 
