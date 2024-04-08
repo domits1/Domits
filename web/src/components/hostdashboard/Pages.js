@@ -72,6 +72,10 @@ function Pages() {
         <img src={settings} alt="Settings"></img>
         <p>Settings</p>
       </div>
+      <div className="wijzer" onClick={() => navigate("/hostdashboard/reviews")}>
+              <img src={listings} alt="Reviews"></img>
+              <p>Reviews</p>
+            </div>
       <div className="wijzer-grn" onClick={() => createStripeAccount()}>
         <div className="stripe-icon-div">
         <img src={stripe} className="stripe-icon" alt="Stripe"></img>
