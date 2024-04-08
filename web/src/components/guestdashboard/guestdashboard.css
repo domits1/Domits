@@ -105,6 +105,8 @@
     height: 40px;
     box-shadow: none;
     padding: 0;
+    border: none;
+    background-color: white;
 }
 
 .review-delete:hover {
