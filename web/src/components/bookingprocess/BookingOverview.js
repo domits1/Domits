@@ -4,14 +4,16 @@ import bookingimage2 from "../../images/adultacco.png";
 import bookingimage3 from "../../images/accoimg4.png";
 import bookingimage4 from "../../images/accoimg3.png";
 import bookingimage5 from "../../images/accoimg1.png";
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { id } from '../../components/hostdashboard/Accommodations.js';
 import './BookingOverview.css';
 
 const BookingOverview = () => {
     return (
         <div className="booking-container">
             <div className="back-arrow">
-                <a href="/listingdetails">
+                <a href="/details">
                     <img src={backarrow} alt="Back Arrow"/>
                 </a>
             </div>
