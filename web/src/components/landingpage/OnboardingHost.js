@@ -57,6 +57,8 @@ function OnboardingHost() {
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
+        AccommodationType: "",
+        Measurement: "",
 
     });
 
@@ -115,7 +117,7 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-    
+
         if (type === 'checkbox') {
             setFormData((prevData) => ({
                 ...prevData,
@@ -139,7 +141,7 @@ function OnboardingHost() {
                 ...prevData,
                 [name]: value
             }));
-    
+
             // Check which input field was changed and call handleLocationChange accordingly
             if (name === 'City') {
                 handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
@@ -150,7 +152,7 @@ function OnboardingHost() {
             }
         }
     };
-    
+
 
     const handleCountryChange = (selectedOption) => {
         setFormData((prevData) => ({
@@ -181,6 +183,28 @@ function OnboardingHost() {
         }
     };
 
+
+    const [selectedFiles, setSelectedFiles] = useState([]);
+
+    const handleFileChange = (event) => {
+        const files = Array.from(event.target.files).filter(
+          (file) => file.type.startsWith('image/') 
+        );
+    
+        if (files.length + selectedFiles.length > 5) {
+          alert('You can only upload up to 5 images.');
+          return;
+        } else {
+            setSelectedFiles([...selectedFiles, ...files]);
+        }
+      };
+    
+      const handleDelete = (index) => {
+        const updatedFiles = [...selectedFiles];
+        updatedFiles.splice(index, 1);
+        setSelectedFiles(updatedFiles);
+      };
+      
     const renderPageContent = (page) => {
         switch (page) {
             case 1:
@@ -188,6 +212,7 @@ function OnboardingHost() {
                     <div>
                         <div class="formContainer">
                             <div class="form-section">
+                                <h2 className="onboardingTitle">Fill in ammendities</h2>
                                 <div className="formRow">
                                     <div class="room-type">
                                         <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "entireHouse"} value="entireHouse"></input> Entire house</label>
@@ -246,7 +271,7 @@ function OnboardingHost() {
                                 </div>
                             </div>
                             <div class="map-section">
-                                <label>What we show on Domits.com</label>
+                                <h2 className="onboardingTitle">What we show on Domits.com</h2>
                                 <MapComponent location={location} />
                             </div>
                         </div>
@@ -263,8 +288,7 @@ function OnboardingHost() {
                     <div>
                         <div class="formContainer">
                             <div class="form-section">
-                                <label>Add accomodation features</label>
-                                <h2>Fill in ammendities</h2>
+                                <h2 className="onboardingTitle">Add accomodation features</h2>
                                 <div class="room-features formRow">
                                     <div>
                                         <label><input type="checkbox" className="radioInput" name="Wifi" onChange={handleInputChange} checked={formData.Features.Wifi}></input>Wifi</label>
@@ -291,12 +315,32 @@ function OnboardingHost() {
                             </div>
                             <div class="front-section">
                                 <div className="room-info">
-                                    <label>Add accomodation information</label>
+                                    <h2 className="onboardingTitle">Add accomodation information</h2>
                                     <label>Title<input className="textInput locationText" name="Title" onChange={handleInputChange} value={formData.Title}></input></label>
                                     <label style={{ alignItems: 'start' }}>Description<textarea className="textInput locationText" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea></label>
-
-                                    <div id="map-placeholder">Images are still being worked on</div>
                                 </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label className="nextButtons"><input type="file" name="images" className="file-input" accept="image/*" onChange={handleFileChange}></input>Add your images</label>
+                            <div className="flex-row">
+                                {[...Array(5)].map((_, index) => (
+                                    <div key={index} className="image-container">
+                                        {selectedFiles[index] && (
+                                            <>
+                                                <img
+                                                    src={URL.createObjectURL(selectedFiles[index])}
+                                                    alt={`Image ${index + 1}`}
+                                                    className="image"
+                                                />
+                                                <button className="delete-button" onClick={() => handleDelete(index)}>
+                                                    Delete
+                                                </button>
+                                            </>
+                                        )}
+                                        {!selectedFiles[index] && <div className="placeholder">Placeholder</div>}
+                                    </div>
+                                ))}
                             </div>
                         </div>
                         <div class="formContainer">
@@ -312,7 +356,7 @@ function OnboardingHost() {
                     <div>
                         <div class="formContainer">
                             <div className="formHolder">
-                                <h2>Systems and configurations</h2>
+                                <h2 className="onboardingTitle">Systems and configurations</h2>
                                 <div className="formRow">
                                     <div class="room-features formRow">
                                         <div className="configurations">
@@ -340,7 +384,7 @@ function OnboardingHost() {
                             <p>Rent: {formData.Rent}</p>
                             <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="0" max="10000" step="100" />
                             <div className="formHolder">
-                                <h2>Discounts and Policies</h2>
+                                <h2>Details and Policies</h2>
                                 <div className="formRow">
                                     <div class="room-features formRow">
                                         <div className="configurations">
@@ -352,9 +396,21 @@ function OnboardingHost() {
                                     </div>
                                     <div class="room-features formRow">
                                         <div className="configurations">
-                                            <label><input type="number" className="textInput" name="Monthlypercent" onChange={handleInputChange} value={formData.Monthlypercent} disabled={!formData.SystemConfiguration.Monthlydiscount}></input>%</label>
-                                            <label><input type="number" className="textInput" name="Weeklypercent" onChange={handleInputChange} value={formData.Weeklypercent} disabled={!formData.SystemConfiguration.Weeklydiscount}></input>%</label>
-                                            <label><input type="number" className="textInput" name="FirstBookerpercent" onChange={handleInputChange} value={formData.FirstBookerpercent} disabled={!formData.SystemConfiguration.FirstBookerdiscount}></input>%</label>
+                                            <label>What are the measurements?</label>
+                                            <input className="textInput" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
+                                            <label>Accommodation Type</label>
+                                            <select
+                                                value={formData.AccommodationType}
+                                                onChange={handleInputChange}
+                                                className="textInput"
+                                                name="AccommodationType"
+                                            >
+                                                <option value="House">House</option>
+                                                <option value="Apartment">Apartment</option>
+                                                <option value="Villa">Villa</option>
+                                                <option value="Cottage">Cottage</option>
+                                                <option value="Hotel">Hotel</option>
+                                            </select>
                                         </div>
                                     </div>
                                     <div class="room-features formRow">

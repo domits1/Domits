@@ -245,6 +245,30 @@
   cursor: ew-resize;
 }
 
+.onboardingTitle {
+  margin-top: 0;
+}
+
+.file-upload {
+  background-color: #003366;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.file-upload:hover {
+  background-color: #001f4d; /* Darken the background color on hover */
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
 @media screen and (max-width: 1520px) {
   .formContainer label {
     display: flex;
@@ -257,4 +281,63 @@
   .formContainer {
     text-align: left;
   }
+}
+
+.file-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.custom-file-upload {
+  background-color: #003366;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.custom-file-upload:hover {
+  background-color: #001f4d;
+}
+
+.flex-row {
+  display: flex;
+}
+
+.image-container {
+  position: relative;
+  margin: 10px;
+}
+
+.image {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+}
+
+.delete-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #cc0000;
+}
+
+.placeholder {
+  width: 150px;
+  height: 150px;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
