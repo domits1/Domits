@@ -116,8 +116,6 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-        console.log(value)
-        console.log(formData.AccommodationType)
 
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -446,7 +444,6 @@ function OnboardingHost() {
             case 4:
                 return (
                     <div className="container" style={{ width: '80%' }}>
-                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">
