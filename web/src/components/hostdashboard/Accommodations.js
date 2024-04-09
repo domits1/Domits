@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import './Accommodations.css';
 
 const Accommodations = ({ searchQuery }) => {
     const [accolist, setAccolist] = useState([]);
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchData();
@@ -16,39 +17,38 @@ const Accommodations = ({ searchQuery }) => {
                 throw new Error('Failed to fetch data');
             }
             const responseData = await response.json();
-            // console.log(responseData);
 
-            const formattedData = responseData.map((item, index) => ({ // Use index of map to access img array
+            const formattedData = responseData.map((item, index) => ({
                 image: `https://accommodationphotos.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
-                // image: img[index % img.length],
                 title: item.Title,
                 details: item.description,
                 size: `${item.Size}m²`,
                 price: `€${item.Price} per night`,
-                id: item['#PK'],
+                PK: item.PK,
+                Sk: item.Sk,
                 bathrooms: `${item.Bathrooms} Bathrooms`,
                 bedrooms: `${item.Bedrooms} Bedrooms`,
                 persons: `${item.Persons} Persons`,
             }));
             setAccolist(formattedData);
-            // console.log("Image URLs:", formattedData.map(item => item.image));
         } catch (error) {
             console.error('Error fetching or processing data:', error);
         }
     };
 
-
     const filteredAccommodations = accolist.filter(accommodation =>
         accommodation.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
-    // console.log("Filtered accommodations:", filteredAccommodations);
+    const handleClick = (pk, sk) => {
+        navigate(`/listingdetails?pk=${encodeURIComponent(pk)}&sk=${encodeURIComponent(sk)}`);
+    };
 
     return (
         <div id="card-visibility">
             {filteredAccommodations.map((accommodation, index) => (
-                <div className="accocard" key={index}>
-                    <Link to={`/listingdetails`} className="accocard-link">
+                <div className="accocard" key={index} onClick={() => handleClick(accommodation.PK, accommodation.Sk)}>
+                    <div className="accocard-link">
                         <img src={accommodation.image} alt="Product Image" />
                         <div className="accocard-content">
                             <div className="accocard-title">{accommodation.title}</div>
@@ -60,7 +60,7 @@ const Accommodations = ({ searchQuery }) => {
                                 <div className="accocard-size">{accommodation.bedrooms}</div>
                             </div>
                         </div>
-                    </Link>
+                    </div>
                 </div>
             ))}
         </div>

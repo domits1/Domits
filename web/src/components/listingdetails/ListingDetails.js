@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useState, useEffect} from "react";
 import "./listingdetails.css";
 import detailbigimg from '../../images/accobigimg.png';
 import detailimg1 from '../../images/accoimg1.png';
@@ -10,7 +10,7 @@ import adultroom from '../../images/adultacco.png';
 import teenroom from '../../images/teenacco.jpg';
 import kidroom from '../../images/kidacco.jpg';
 import back from '../../images/arrowleft.png';
-import { Link } from "react-router-dom";
+import {Link, useParams} from "react-router-dom";
 import telescope from "../../images/telescope.png";
 import smarttv from "../../images/tv.png";
 import sauna from "../../images/thermometer.png";
@@ -24,37 +24,72 @@ import backarrow from "../../images/arrowleft.png";
 import pluscircle from "../../images/plus-circle.svg";
 import pluscircleblack from "../../images/plus-circle-black.svg";
 import star from "../../images/Star.svg";
-import arrow from "../../images/arrow.svg";
-import BookingDetails from "../listingdetails/bookingdetails";
-import FixedCard from "../listingdetails/fixedcard";
-
+import arrow from "../../images/arrow.svg"
+import { useLocation } from 'react-router-dom';
 
 const ListingDetails = () => {
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const { search } = useLocation();
+    const searchParams = new URLSearchParams(search);
+    const pk = searchParams.get('pk');
+    const sk = searchParams.get('sk');
 
-    const handleNextImage = () => {
-        setCurrentIndex((prevIndex) => (prevIndex === images.length - 1 ? 0 : prevIndex + 1));
-    };
+    const [details, setDetails] = useState(null);
+    console.log(sk, pk)
 
-    const images = [detailbigimg, detailimg1, accomap, detailimg3, detailimg4];
+    useEffect(() => {
+
+        const apiUrl = 'https://ifas5yup7h23iph6phpczxdqsq0yeaxs.lambda-url.eu-north-1.on.aws/';
+
+        const fetchDetails = async () => {
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json', // Indicates that the request body format is JSON
+                    },
+                    body: JSON.stringify({ pk: pk, sk: sk }) // Convert the payload to a JSON string
+                });
+
+                if (!response.ok) {
+                    throw new Error('Server responded with status: ' + response.status);
+                }
+
+                const data = await response.json();
+                setDetails(data);
+                console.log('Fetched accommodation details:', data);
+
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        };
+
+        fetchDetails();
+    }, [pk,sk]); // Ensure this effect does not have dependencies unless intended to run more than once
+
 
     return (
         <div className="listing-details-container">
             <div className="booking-information-section">
                 <div className="listing-details-top">
                     <div className="listing-details-back-arrow">
-                        <Link to="/">
+                        <a href="/">
                             <img src={backarrow} alt="Back Arrow" />
                             <div className="listing-details-back-arrow">Back</div>
-                        </Link>
+                        </a>
                     </div>
                     <div className="listing-details-title">
                         Minimalistic and cozy place in Haarlem
                     </div>
                 </div>
                 <div className="listing-details-image-window">
-                    <div className="listing-details-big-img" onClick={handleNextImage}>
-                        <img src={images[currentIndex]} alt="detailbigimg" />
+                    <div className="listing-details-big-img">
+                        <img src={detailbigimg} alt="detailbigimg" />
+                    </div>
+                    <div className="listing-details-side-img">
+                        <img src={detailimg1} alt="detailimg1" />
+                        <img src={accomap} alt="detailimg2" id="top-right-img" />
+                        <img src={detailimg3} alt="detailimg3" />
+                        <img src={detailimg4} alt="detailimg4" id="bottom-right-img" />
                     </div>
                 </div>
                 <div className="price-and-rooms-row">
@@ -190,8 +225,65 @@ const ListingDetails = () => {
                 </div> */}
             </div>
             {/* End of the booking-information-section*/}
-            <BookingDetails />
-            <FixedCard />
+
+            {/* Start of the booking-details-section*/}
+            <div className="booking-details-section">
+                <div className="booking-details-text">Booking details</div>
+                <div className="booking-details-card">
+                    <div className="listing-details-check-container">
+                        <div className="listing-details-checkin-text">Check in</div>
+                        <div className="listing-details-checkout-text">Check out</div>
+                    </div>
+                    <div className="listing-details-dates-container">
+                        <div className="listing-details-checkin-date">15 december 2023</div>
+                        <div className="listing-details-amount-of-nights-text">
+                            7<br />
+                            <img src={arrow} alt="Arrow" />
+                            Nights
+                        </div>
+                        <div className="listing-details-checkout-date">23 december 2023</div>
+                    </div>
+                    <div className="listing-details-guests-pets-container">
+                        <div className="listing-details-guests-text">Guests</div>
+                        <div className="listing-details-pets-text">Pets</div>
+                    </div>
+                    <div className="listing-details-guests-pets-content">
+                        <div className="listing-details-amount-of-adults">2 adults</div>
+                        <div className="listing-details-amount-of-kids">2 kids</div>
+                        <div className="listing-details-select">Select...</div>
+                    </div>
+                    <div className="listing-details-book-button">
+                        <Link to={`/bookingoverview`}>
+                            <button>Book* <img src={bookarrow} alt="Book Arrow" /></button>
+                        </Link>
+                    </div>
+                    <div className="listing-details-book-button-star-text">*You wont be charged yet</div>
+                    {/*  Horizontal line  */}
+                    <hr />
+                    <div className="listing-details-booking-information-section">
+                        <div className="listing-details-booking-information-row">
+                            <div className="listing-details-booking-information-text">7 nights x $1400 a night</div>
+                            <div className="listing-details-booking-information-text">$9800</div>
+                        </div>
+                        <div className="listing-details-booking-information-row">
+                            <div className="listing-details-booking-information-text">Season booking discount</div>
+                            <div className="listing-details-booking-information-text">-$75</div>
+                        </div>
+                        <div className="listing-details-booking-information-row">
+                            <div className="listing-details-booking-information-text">Cleaning fee</div>
+                            <div className="listing-details-booking-information-text">$100</div>
+                        </div>
+                        <div className="listing-details-booking-information-row">
+                            <div className="listing-details-booking-information-text">Domits service fee</div>
+                            <div className="listing-details-booking-information-text">$98</div>
+                        </div>
+                        <div className="listing-details-booking-information-row">
+                            <div className="listing-details-booking-total-text">Total</div>
+                            <div className="listing-details-booking-total-price">$9923</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }
