@@ -459,18 +459,32 @@
     display: none; /* Initially hide the fixed card */
     position: fixed;
     bottom: 0;
-    background-color: black;
+    left: 0;
+    right: 0;
+    background-color: white;
     width: 100%;
     height: 60px;
 }
 
 @media (max-width: 768px) {
-    .booking-details-card {
+    .booking-details-card,
+    .booking-details-text {
         display: none;
     }
 
     .fixed-card {
         display: block; /* Show the fixed card on smaller screens */
+    }
+
+    .listing-details-book-button {
+        /* width: 200px; */
+        display: flex;
+        justify-content: flex-end;
+        margin: 10px;
+    }
+
+    .listing-details-booking-information-row {
+        display: flex;
     }
 }
 
@@ -608,7 +622,7 @@
 }
 
 .listing-details-book-button button {
-    margin-top: 30px;
+    /* margin-top: 30px; */
     width: 100%;
     padding: 10px 30px;
     background: #0D9813;
