@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import dashboard from "../../images/icons/dashboard-icon.png";
 import message from "../../images/icons/message-icon.png";
 import payment from "../../images/icons/payment-icon.png";
@@ -7,42 +7,56 @@ import calendar from "../../images/icons/calendar-icon.png";
 import settings from "../../images/icons/settings-icon.png";
 import stripe from "../../images/icons/stripe-icon.png";
 import { useNavigate } from 'react-router-dom';
-import { useAuth} from "../base/AuthContext"
+import { Auth } from "aws-amplify";
+import { useAuth } from "../base/AuthContext"
 import './HostHomepage.css';
 
 function Pages() {
+  const [userEmail, setUserEmail] = useState(null);
+
+  useEffect(() => {
+    const setUserEmailAsync = async () => {
+      try {
+        const userInfo = await Auth.currentUserInfo();
+        console.log(userInfo);
+
+        setUserEmail(userInfo.attributes.email);
+
+      } catch (error) {
+        console.error("Error setting user id:", error);
+      }
+    };
+    setUserEmailAsync();
+  }, []);
 
   const navigate = useNavigate();
-
-  const userEmail = sessionStorage.getItem('userEmail');
 
   async function createStripeAccount() {
     if (!userEmail) {
       console.error('User email is not defined.');
       return;
-  }
+    }
 
-  const options = {
+    const options = {
       userEmail: userEmail
-  };
-  
+    };
+
     try {
-        const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
-            method: 'POST',
-            body: JSON.stringify(options),
-            headers: {
-                'Content-type': 'application/json; charset=UTF-8',
-            },
-        });
-  
-        if (!result.ok) {
-            throw new Error(`HTTP error! Status: ${result.status}`);
-        }
-  
-        const data = await result.json();
-        window.location.replace(data.url);
+      const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
+        method: 'POST',
+        body: JSON.stringify(options),
+        headers: {
+          'Content-type': 'application/json; charset=UTF-8',
+        },
+      });
+
+      if (!result.ok) {
+        throw new Error(`HTTP error! Status: ${result.status}`);
+      }
+      const data = await result.json();
+      window.location.replace(data.url);
     } catch (error) {
-        console.log(error);
+      console.log(error);
     }
   }
 
@@ -78,12 +92,11 @@ function Pages() {
             </div>
       <div className="wijzer-grn" onClick={() => createStripeAccount()}>
         <div className="stripe-icon-div">
-        <img src={stripe} className="stripe-icon" alt="Stripe"></img>
+          <img src={stripe} className="stripe-icon" alt="Stripe"></img>
         </div>
         <p className="stripe-btn">Create Stripe Account</p>
       </div>
     </div>
   );
 }
-
 export default Pages;
