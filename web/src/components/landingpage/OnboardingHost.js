@@ -1,13 +1,13 @@
-import React, { useState, useMemo } from "react";
+import React, {useState, useMemo, useEffect} from "react";
 import { useNavigate } from 'react-router-dom';
 
 import './landing.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
+import {Auth} from "aws-amplify";
 
 function OnboardingHost() {
-
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
 
@@ -15,7 +15,19 @@ function OnboardingHost() {
         latitude: 0,
         longitude: 0,
     });
-
+    let [userId, setUserId] = useState(null);
+    useEffect(() => {
+        Auth.currentUserInfo().then(user => {
+            if (user) {
+                setUserId(user.attributes.sub);
+            } else {
+                navigate('/login'); // Redirect to login if not logged in
+            }
+        }).catch(error => {
+            console.error("Error setting user id:", error);
+            navigate('/login'); // Redirect on error
+        });
+    }, [navigate]);
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
         Title: "",
@@ -57,9 +69,9 @@ function OnboardingHost() {
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
-        AccommodationType: "",
+        AccommodationType: "House",
         Measurement: "",
-
+        OwnerId: ""
     });
 
     const pageUpdater = (pageNumber) => {
@@ -67,8 +79,9 @@ function OnboardingHost() {
     };
 
     const isFormFilled = () => {
+        console.log(formData.OwnerId)
         // Exclude specific fields from the check
-        const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent'];
+        const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent', 'OwnerId'];
 
         for (const key in formData) {
             // Skip checking for excluded fields
@@ -81,8 +94,16 @@ function OnboardingHost() {
                 return false;
             }
         }
+
         return true;
     };
+
+    const appendUserId = () => {
+        setFormData((prevData) => ({
+            ...prevData,
+            OwnerId: userId
+        }));
+    }
 
     const handleLocationChange = async (Country, City, PostalCode, Street) => {
         const address = `${Country} ${City} ${Street} ${PostalCode}`;
@@ -151,12 +172,13 @@ function OnboardingHost() {
                 handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
             }
         }
+        console.log(formData)
     };
 
 
     const handleCountryChange = (selectedOption) => {
-        setFormData((prevData) => ({
-            ...prevData,
+        setFormData(currentFormData => ({
+            ...currentFormData,
             Country: selectedOption.value
         }));
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street); // Fetch coordinates based on updated location data
@@ -400,7 +422,7 @@ function OnboardingHost() {
                                             <input className="textInput" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
                                             <label>Accommodation Type</label>
                                             <select
-                                                value={formData.AccommodationType}
+                                                defaultValue={formData.AccommodationType}
                                                 onChange={handleInputChange}
                                                 className="textInput"
                                                 name="AccommodationType"
@@ -427,7 +449,12 @@ function OnboardingHost() {
                             <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
                             <button
                                 className='nextButtons'
-                                onClick={isFormFilled() ? () => pageUpdater(page + 1) : null}
+                                onClick={() => {
+                                    if (isFormFilled()) {
+                                        appendUserId(); // First action
+                                        pageUpdater(page + 1); // Second action
+                                    }
+                                }}
                                 style={{
                                     backgroundColor: 'green',
                                     cursor: isFormFilled() ? 'pointer' : 'not-allowed',
