@@ -40,7 +40,7 @@ import ConfirmRegister from "./components/base/ConfirmRegister";
 import Error from "./components/errorpage/errorpage";
 import Stripe from 'stripe';
 import { AuthProvider } from './components/base/AuthContext';
-import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard"; // Import the AuthProvider
+import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 import Chat from "./components/chat/Chat";
 import Chatprototype from "./components/chat/Chatprototype.js";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
@@ -51,27 +51,19 @@ import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashb
 Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
 
 function App() {
+    const [searchResults, setSearchResults] = useState([]);
     useEffect(() => {
-        return () => {
-            document.title = 'Domits';
-        };
-    }, []);
+        // console.log('Updated searchResults:', searchResults);
+        document.title = 'Domits';
+    }, [searchResults]);
 
-    // Conditionally render the Header based on the current route
-    const renderHeader = () => {
-        const currentPath = window.location.pathname;
-        if (currentPath === '/admin') {
-            return null;
-        }
-        return <Header />;
-    };
+    const currentPath = window.location.pathname;
 
     const renderFooter = () => {
-        const currentPath = window.location.pathname;
-        if (currentPath === '/admin' || currentPath === '/bookingoverview' || currentPath === '/bookingpayment') {
-            return null; // Don't render Footer for certain routes
+        if (['/admin', '/bookingoverview', '/bookingpayment'].includes(currentPath)) {
+            return null;
         }
-        return <Footer />; // Render Footer for other routes
+        return <Footer />;
     };
 
     const [flowState, setFlowState] = useState({ isHost: false });
@@ -79,12 +71,11 @@ function App() {
     return (
         <FlowContext.Provider value={{ flowState, setFlowState }}>
             <Router>
-                <AuthProvider> {/* Wrap your entire application with the AuthProvider */}
+                <AuthProvider>
                     <div className="App">
-                        {renderHeader()}
+                        {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} />}
                         <Routes>
-                            {/* General Routes */}
-                            <Route path="/" element={<Assortment />} />
+                            <Route path="/" element={<Assortment searchResults={searchResults} />} />
                             <Route path="/home" element={<Home />} />
                             <Route path="/about" element={<About />} />
                             <Route path="/release" element={<Release />} />
@@ -94,33 +85,22 @@ function App() {
                             <Route path="/contact" element={<Contact />} />
                             <Route path="/travelinnovation" element={<Travelinnovation />} />
                             <Route path="/landing" element={<Landing />} />
-
-                            {/* Authentication & User Account Management */}
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/confirm-email" element={<ConfirmRegister />} />
                             <Route path="/error" element={<Error />} />
-                            {/*<Route path="/release" element={<Release/>}/>*/}
-
-                            {/* Booking */}
                             <Route path="/booking" element={<Booking />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
                             <Route path="/bookingoverview" element={<BookingOverview />} />
                             <Route path="/bookingpayment" element={<BookingPayment />} />
                             <Route path="/bookingconfirmed" element={<BookingConfirmed />} />
                             <Route path="/bookingdeclined" element={<BookingDeclined />} />
-
-                            {/* Chat */}
                             <Route path="/chatprototype" element={<Chatprototype />} />
-
-                            {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
-
-                            {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
                             <Route path="/hostdashboard" element={<HostDashboard />} />
                             <Route path="/hostdashboard/listings" element={<HostListings />} />
@@ -128,14 +108,10 @@ function App() {
                             <Route path="/hostdashboard/messages" element={<HostMessages />} />
                             <Route path="/hostdashboard/payments" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
-
-                            {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />
                             <Route path="/policy" element={<Policy />} />
                             <Route path="/terms" element={<Terms />} />
                             <Route path="/disclaimers" element={<Disclaimers />} />
-
-                            {/* Admin Routes */}
                             <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard />} redirectTo='/' />} />
                         </Routes>
                         {renderFooter()}
@@ -143,9 +119,7 @@ function App() {
                 </AuthProvider>
             </Router>
         </FlowContext.Provider>
-
     );
 }
-
 export default App;
 
