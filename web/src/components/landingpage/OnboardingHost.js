@@ -188,15 +188,15 @@ function OnboardingHost() {
 
     const handleFileChange = (event) => {
         const files = Array.from(event.target.files).filter(
-          (file) => file.type.startsWith('image/') // Filter only image files
+          (file) => file.type.startsWith('image/') 
         );
     
         if (files.length + selectedFiles.length > 5) {
           alert('You can only upload up to 5 images.');
           return;
+        } else {
+            setSelectedFiles([...selectedFiles, ...files]);
         }
-    
-        setSelectedFiles([...selectedFiles, ...files]);
       };
     
       const handleDelete = (index) => {
