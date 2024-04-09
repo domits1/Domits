@@ -1,12 +1,63 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Pages from "./Pages";
 import './HostHomepage.css'
 import add from "../../images/icons/host-add.png";
 import { useNavigate } from 'react-router-dom';
+import { Auth } from "aws-amplify";
 
 function HostListings() {
-
+    const [accommodations, setAccommodations] = useState([]);
+    const [userId, setUserId] = useState(null);
     const navigate = useNavigate();
+    useEffect(() => {
+        const setUserIdAsync = async () => {
+            try {
+                const userInfo = await Auth.currentUserInfo();
+                setUserId(userInfo.attributes.sub);
+            } catch (error) {
+                console.error("Error setting user id:", error);
+            }
+        };
+
+        setUserIdAsync();
+    }, []);
+
+    useEffect(() => {
+        const fetchAccommodations = async () => {
+            if (!userId) {
+                console.log("No user id")
+                return;
+            }
+
+            const options = {
+                userIdFrom: userId
+            };
+
+            try {
+                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
+                    method: 'POST',
+                    body: JSON.stringify(options),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                setAccommodations(data);
+                console.log(data)
+            } catch (error) {
+                console.error(error);
+            }
+        };
+
+        if (userId) {
+            fetchAccommodations();
+        }
+    }, [userId]);
+
 
     return (
         <div className="container">
