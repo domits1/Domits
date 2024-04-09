@@ -80,11 +80,11 @@ class Calculator extends Component {
           <div>
             <p>What type of real-estate do you want to host?</p>
             <div className='cardHolder'>
-              {this.renderCard(0, "House", huis, selectedCards[1] === 0, 1500)}
-              {this.renderCard(1, "Appartement", appartement, selectedCards[1] === 1, 950)}
-              {this.renderCard(2, "Camper", camper, selectedCards[1] === 2, 1700)}
-              {this.renderCard(3, "Boat", boothuis, selectedCards[1] === 3, 720)}
-              {this.renderCard(4, "Villa", villa, selectedCards[1] === 4, 10500)}
+              {this.renderCard(0, "House", huis, selectedCards[1] === 0, 150)}
+              {this.renderCard(1, "Appartement", appartement, selectedCards[1] === 1, 95)}
+              {this.renderCard(2, "Camper", camper, selectedCards[1] === 2, 170)}
+              {this.renderCard(3, "Boat", boothuis, selectedCards[1] === 3, 72)}
+              {this.renderCard(4, "Villa", villa, selectedCards[1] === 4, 205)}
             </div>
             <div className='buttonHolder'>
             <button className='nextButtons' onClick={this.resetCalculator}>Reset</button>
@@ -95,7 +95,7 @@ class Calculator extends Component {
       case 2:
         return (
           <div>
-            <p>How mant reserved nights?</p>
+            <p>How many reserved nights?</p>
             <div className='cardHolder'>
               {this.renderCard(0, '1', null, selectedCards[2] === 0, 1)}
               {this.renderCard(1, '2', null, selectedCards[2] === 1, 2)}
@@ -143,7 +143,7 @@ class Calculator extends Component {
         return (
           <div>
             <div className='priceDisplay'>
-              <h2>Est. ${this.calculatePrice()} per month</h2>
+              <h2>Est. ${this.calculatePrice()} per night</h2>
             </div>
             <div className='infoHolder'>
               <h4 className="infoHeader">Based on:</h4>
