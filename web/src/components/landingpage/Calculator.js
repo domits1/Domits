@@ -95,13 +95,13 @@ class Calculator extends Component {
       case 2:
         return (
           <div>
-            <p>What are the measurements of this real-estate?</p>
+            <p>How mant reserved nights?</p>
             <div className='cardHolder'>
-              {this.renderCard(0, '< 25m²', null, selectedCards[2] === 0, 0.80)}
-              {this.renderCard(1, '25 - 50 m²', null, selectedCards[2] === 1, 0.95)}
-              {this.renderCard(2, '50 - 75 m²', null, selectedCards[2] === 2, 1)}
-              {this.renderCard(3, '75 - 100 m²', null, selectedCards[2] === 3, 1.15)}
-              {this.renderCard(4, '> 100 m²', null, selectedCards[2] === 4, 1.30)}
+              {this.renderCard(0, '1', null, selectedCards[2] === 0, 1)}
+              {this.renderCard(1, '2', null, selectedCards[2] === 1, 2)}
+              {this.renderCard(2, '3', null, selectedCards[2] === 2, 3)}
+              {this.renderCard(3, '4', null, selectedCards[2] === 3, 4)}
+              {this.renderCard(4, '5 or more', null, selectedCards[2] === 4, 5)}
             </div>
             <div className='buttonHolder'>
               <button className='nextButtons' onClick={() => this.pageUpdater(page - 1)}>Previous</button>
@@ -148,7 +148,7 @@ class Calculator extends Component {
             <div className='infoHolder'>
               <h4 className="infoHeader">Based on:</h4>
               <p className="info">Real Estate Type: {this.displayInfo(1)}</p>
-              <p className="info">Measurements: {this.displayInfo(2)}</p>
+              <p className="info">Reserved nights: {this.displayInfo(2)}</p>
               <p className="info">Sleeping Places: {this.displayInfo(3)}</p>
               <p className="info">Service fees: 12%</p>
               <p>If this estimation interests you, please consider hosting on Domits!</p>

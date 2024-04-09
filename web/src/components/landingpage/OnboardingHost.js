@@ -57,7 +57,7 @@ function OnboardingHost() {
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
-        AccommodationType: "",
+        AccommodationType: "House",
         Measurement: "",
 
     });
@@ -86,7 +86,6 @@ function OnboardingHost() {
 
     const handleLocationChange = async (Country, City, PostalCode, Street) => {
         const address = `${Country} ${City} ${Street} ${PostalCode}`;
-        console.log(formData)
 
         try {
             const response = await fetch(
@@ -117,6 +116,8 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
+        console.log(value)
+        console.log(formData.AccommodationType)
 
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -400,7 +401,7 @@ function OnboardingHost() {
                                             <input className="textInput" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
                                             <label>Accommodation Type</label>
                                             <select
-                                                value={formData.AccommodationType}
+                                                defaultValue={formData.AccommodationType}
                                                 onChange={handleInputChange}
                                                 className="textInput"
                                                 name="AccommodationType"
