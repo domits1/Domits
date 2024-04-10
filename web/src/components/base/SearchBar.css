@@ -3,13 +3,12 @@
 }
 
 .bar {
-  width: 600px;
+  width: 700px;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 30px;
   display: flex;
-  height: 50px;
-  z-index: 999;
+  height: 55px;
   font-size: 0.6rem;
 }
 .searchTitleAccommodation {
@@ -133,10 +132,11 @@
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
   height: 38px;
   width: 38px;
-  margin-top: 6px;
+  margin-top: 9px;
 }
 .searchbar-button:hover {
   background-color: #0a770f;
+  border-color: #0a770f;
   transition-duration: 0.3s
 }
 .searchbar-button svg {
@@ -147,16 +147,22 @@
   animation: bounce 0.7s ease 1;
 }
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
+  0%, 100% {
     transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-  40% {
+  20% {
     transform: translateY(-5px);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-  60% {
+  50%, 80% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  20% {
     transform: translateY(-3px);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-  
 }
 .searchBar {
   background: none;

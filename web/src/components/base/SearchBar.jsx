@@ -184,7 +184,7 @@ export const SearchBar = ({ setSearchResults }) => {
             option: (provided, state) => ({
               ...provided,
               backgroundColor: state.isFocused ? '#0fa616' : provided.backgroundColor,
-              color: state.isFocused ? '#yourHoverTextColor' : provided.color,
+              color: state.isFocused ? 'black' : provided.color,
               borderRadius:  state.isFocused ?'10px': provided.borderRadius,
               fontWeight: state.isSelected ? 'bold' : 'normal',
             }),
