@@ -30,7 +30,7 @@ function HostListings() {
             }
 
             const options = {
-                userIdFrom: userId
+                OwnerId: userId
             };
 
             try {
@@ -38,7 +38,7 @@ function HostListings() {
                     method: 'POST',
                     body: JSON.stringify(options),
                     headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
+                        'Content-type': 'application/json'
                     }
                 });
                 if (!response.ok) {
