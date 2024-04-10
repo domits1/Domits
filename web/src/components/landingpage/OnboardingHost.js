@@ -1,21 +1,32 @@
-import React, {useState, useMemo, useEffect} from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
+
 
 import './landing.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
-import {Auth} from "aws-amplify";
+import { Auth } from "aws-amplify";
 
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
-
     const [location, setLocation] = useState({
         latitude: 0,
         longitude: 0,
     });
+
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     let [userId, setUserId] = useState(null);
+    const [selectedFiles, setSelectedFiles] = useState([]);
+
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
@@ -28,8 +39,10 @@ function OnboardingHost() {
             navigate('/login'); // Redirect on error
         });
     }, [navigate]);
+
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
+        accommodationKey: generateUUID(),
         Title: "",
         Description: "",
         Rent: "",
@@ -66,6 +79,13 @@ function OnboardingHost() {
             Weeklydiscount: false,
             FirstBookerdiscount: false,
         },
+        Images: {
+            image1: "",
+            image2: "",
+            image3: "",
+            image4: "",
+            image5: "",
+        },
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
@@ -79,7 +99,6 @@ function OnboardingHost() {
     };
 
     const isFormFilled = () => {
-        console.log(formData.OwnerId)
         // Exclude specific fields from the check
         const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent', 'OwnerId'];
 
@@ -88,8 +107,6 @@ function OnboardingHost() {
             if (excludedFields.includes(key)) {
                 continue;
             }
-
-            // Check if value is empty or zero
             if (formData[key] === "" || formData[key] === 0) {
                 return false;
             }
@@ -107,7 +124,6 @@ function OnboardingHost() {
 
     const handleLocationChange = async (Country, City, PostalCode, Street) => {
         const address = `${Country} ${City} ${Street} ${PostalCode}`;
-
         try {
             const response = await fetch(
                 `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
@@ -118,9 +134,7 @@ function OnboardingHost() {
             if (!response.ok) {
                 throw new Error('Failed to fetch geocoding data');
             }
-
             const data = await response.json();
-
             if (data.results && data.results.length > 0) {
                 const location = data.results[0].geometry.location;
                 setLocation({
@@ -162,7 +176,6 @@ function OnboardingHost() {
                 [name]: value
             }));
 
-            // Check which input field was changed and call handleLocationChange accordingly
             if (name === 'City') {
                 handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
             } else if (name === 'PostalCode') {
@@ -180,12 +193,12 @@ function OnboardingHost() {
             ...currentFormData,
             Country: selectedOption.value
         }));
-        handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street); // Fetch coordinates based on updated location data
+        handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
     };
 
     const handleSubmit = async () => {
         try {
-            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
+            const response = await fetch('API', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -195,7 +208,7 @@ function OnboardingHost() {
 
             if (response.ok) {
                 console.log('Form data saved successfully');
-                // Reset form data or navigate to next page
+
             } else {
                 console.error('Error saving form data');
             }
@@ -204,28 +217,59 @@ function OnboardingHost() {
         }
     };
 
+    // const handleFileSubmit = async () => {
+    //     try {
+    //         const UserID = userId; // Assuming userId is available in scope
+    //         const AccoID = formData.ID;
 
-    const [selectedFiles, setSelectedFiles] = useState([]);
+    //         const updatedFormData = { ...formData }; // Copy the original formData object
+
+    //         for (let i = 0; i < selectedFiles.length; i++) {
+    //             const file = selectedFiles[i];
+    //             const params = {
+    //                 Bucket: 'accommodation',
+    //                 Key: `images/${UserID}/${AccoID}/Image-${i + 1}`, // Numerical names for images
+    //                 Body: file
+    //             };
+    //             const data = await s3.upload(params).promise();
+    //             console.log(`Uploaded file ${i + 1}:`, data.Location);
+
+    //             // Update the corresponding property in the formData object
+    //             updatedFormData.Images[`image${i + 1}`] = data.Location;
+    //         }
+
+    //         // Set the updated formData object with image paths
+    //         setFormData(updatedFormData);
+
+    //         // Reset selectedFiles after successful upload
+    //         setSelectedFiles([]);
+    //     } catch (error) {
+    //         console.error('Error uploading files:', error);
+    //     }
+    // };
 
     const handleFileChange = (event) => {
         const files = Array.from(event.target.files).filter(
-          (file) => file.type.startsWith('image/') 
+            (file) => file.type.startsWith('image/')
         );
-    
         if (files.length + selectedFiles.length > 5) {
-          alert('You can only upload up to 5 images.');
-          return;
-        } else {
-            setSelectedFiles([...selectedFiles, ...files]);
+            alert('You can only upload up to 5 images.');
+            return;
         }
-      };
-    
-      const handleDelete = (index) => {
+        setSelectedFiles([...selectedFiles, ...files]);
+    };
+
+    const handleDelete = (index) => {
         const updatedFiles = [...selectedFiles];
         updatedFiles.splice(index, 1);
         setSelectedFiles(updatedFiles);
-      };
-      
+    };
+
+    const combinedSubmit = () => {
+        handleFileSubmit()
+        handleSubmit()
+    }
+
     const renderPageContent = (page) => {
         switch (page) {
             case 1:
@@ -506,12 +550,12 @@ function OnboardingHost() {
                                 <p>Weekly Discount: {formData.Weeklypercent}%</p>
                                 <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
                             </div>
-                            <div className='buttonHolder'>
-                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                                <button
-                                    className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
-                            </div>
                         </div>
+                        <div className='buttonHolder'>
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                            <button className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
+                        </div>
+                        <p>Your accommodation ID: {formData.ID}</p>
                     </div >
                 );
 
