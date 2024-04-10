@@ -107,7 +107,6 @@ function OnboardingHost() {
 
     const handleLocationChange = async (Country, City, PostalCode, Street) => {
         const address = `${Country} ${City} ${Street} ${PostalCode}`;
-        console.log(formData)
 
         try {
             const response = await fetch(
@@ -472,7 +471,6 @@ function OnboardingHost() {
             case 4:
                 return (
                     <div className="container" style={{ width: '80%' }}>
-                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">

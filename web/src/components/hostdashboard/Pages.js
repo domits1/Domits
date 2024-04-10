@@ -18,8 +18,6 @@ function Pages() {
     const setUserEmailAsync = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
-        console.log(userInfo);
-
         setUserEmail(userInfo.attributes.email);
 
       } catch (error) {
