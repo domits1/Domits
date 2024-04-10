@@ -42,7 +42,7 @@ function OnboardingHost() {
 
     const [page, setPage] = useState(1); // Track the current page
     const [formData, setFormData] = useState({
-        accommodationKey: generateUUID(),
+        ID: generateUUID(),
         Title: "",
         Description: "",
         Rent: "",
@@ -198,7 +198,7 @@ function OnboardingHost() {
 
     const handleSubmit = async () => {
         try {
-            const response = await fetch('API', {
+            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -568,6 +568,7 @@ function OnboardingHost() {
                         </h2>
                         <p>It may take a while before your accommodation is verified</p>
                         <div className='buttonHolder'>
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
                             <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
                         </div>
                     </div >
