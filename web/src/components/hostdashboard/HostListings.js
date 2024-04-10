@@ -13,7 +13,8 @@ function HostListings() {
         const setUserIdAsync = async () => {
             try {
                 const userInfo = await Auth.currentUserInfo();
-                setUserId(userInfo.attributes.sub);
+                await setUserId(userInfo.attributes.sub);
+                console.log(userInfo);
             } catch (error) {
                 console.error("Error setting user id:", error);
             }
@@ -72,6 +73,17 @@ function HostListings() {
                         </div>
                         <div className="box fullBox">
                             <p className="">Current listings</p>
+                            {accommodations.length > 0 ? (
+                                accommodations.map((accommodation, index) => (
+                                    <div key={index} className="review-tab">
+                                        Accommodation
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="reviewBox">
+                                    <p className="review-alert">It appears that you have not listed any accommodations yet...</p>
+                                </div>
+                            )}
                         </div>
                         <div className="box">
                             <p className="">Pending</p>
