@@ -54,9 +54,10 @@ export const SearchBar = ({ setSearchResults }) => {
         <PlacesAutocomplete value={address} onChange={handleChange} onSelect={handleSelect} searchOptions={{ language: 'en' }}>
           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
             <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px' }}>
-              <input {...getInputProps({ placeholder: 'Search Places ....',
-                  className: 'searchBar',
-                })}
+              <input {...getInputProps({
+                placeholder: 'Search Places ....',
+                className: 'searchBar',
+              })}
               />
               <div
                 className="suggestions-container"
@@ -143,62 +144,72 @@ export const SearchBar = ({ setSearchResults }) => {
         <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p>
 
         <Select
-          value={accommodation ? { label: accommodation, value: accommodation } : null}
-          onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
-          options={[
-            { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
-            { value: 'House', label: <><FaMapPin /> House</> },
-            { value: 'Villa', label: <><FaMapPin /> Villa</> },
-            { value: 'Boathouse', label: <><FaMapPin /> Boathouse</> },
-            { value: 'Camper', label: <><FaMapPin /> Camper</> },
-          ]}
-          placeholder="Type of accommodation"
-          isSearchable={false}
-          styles={{
-            control: (provided) => ({
-              ...provided,
-              border: 'none',
-              boxShadow: 'none',
-              background: 'none',
-              minHeight: '0',
-              padding: '0',
-              margin: '0',
-              cursor: 'pointer',
-              width: '150px',
-            }),
-            indicatorSeparator: () => ({ display: 'none' }),
-            dropdownIndicator: () => ({ display: 'none' }),
-            placeholder: (provided) => ({
-              ...provided,
-              color: 'gray',
-              background: 'none',
-            }),
-            option: (provided, state) => ({
-              ...provided,
-              backgroundColor: state.isSelected ? '#0fa616' : state.isFocused ? '#0fa616' : provided.backgroundColor,
-              color: state.isSelected || state.isFocused ? 'black' : provided.color,
-              borderRadius: state.isSelected ? '10px' : state.isFocused ? '10px' : '0px',
-              fontWeight: state.isSelected ? 'bold' : 'normal',
-            }),
-            menu: (provided) => ({
-              ...provided,
-              backgroundColor: '#ffff',
-              borderRadius: '8px',
-              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-              padding: '5px',
-              width: '187px',
-              maxHeight: '300px',
-              marginRight: '40px',
-              borderRadius: '15px',
-              textAlign: 'left',
-            }),
-            singleValue: (provided) => ({
-              ...provided,
-              fontWeight: 'normal',
-              fontSize: '13px',
-            }),
-          }}
-        />
+  value={accommodation ? { label: accommodation, value: accommodation } : null}
+  onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
+  options={[
+    { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
+    { value: 'House', label: <><FaMapPin /> House</> },
+    { value: 'Villa', label: <><FaMapPin /> Villa</> },
+    { value: 'Boathouse', label: <><FaMapPin /> Boathouse</> },
+    { value: 'Camper', label: <><FaMapPin /> Camper</> },
+  ]}
+  placeholder="Type of accommodation"
+  isSearchable={false}
+  isClearable={true}
+  styles={{
+    control: (provided) => ({
+      ...provided,
+      border: 'none',
+      boxShadow: 'none',
+      background: 'none',
+      minHeight: '0',
+      padding: '0',
+      margin: '0',
+      cursor: 'pointer',
+      width: '150px',
+      position: 'relative',  // Zorgt ervoor dat de absolute positionering binnen deze context werkt
+    }),
+    indicatorSeparator: () => ({ display: 'none' }),
+    dropdownIndicator: () => ({ display: 'none' }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: 'gray',
+      background: 'none',
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected ? '#0fa616' : state.isFocused ? '#0fa616' : provided.backgroundColor,
+      color: state.isSelected || state.isFocused ? 'black' : provided.color,
+      borderRadius: state.isSelected ? '10px' : state.isFocused ? '10px' : '0px',
+      fontWeight: state.isSelected ? 'bold' : 'normal',
+    }),
+    menu: (provided) => ({
+      ...provided,
+      backgroundColor: '#ffff',
+      borderRadius: '8px',
+      boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+      padding: '5px',
+      width: '187px',
+      maxHeight: '300px',
+      marginRight: '40px',
+      borderRadius: '15px',
+      textAlign: 'left',
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      fontWeight: 'normal',
+      fontSize: '13px',
+    }),
+    clearIndicator: (provided) => ({
+      ...provided,
+      color: 'red',
+      position: 'absolute', 
+      left: '0px',  
+      top: '50%',  
+      transform: 'translateY(-50%)', 
+    }),
+  }}
+/>
       </div>
 
       <button className="searchbar-button" type="button" onClick={handleSearch}>
