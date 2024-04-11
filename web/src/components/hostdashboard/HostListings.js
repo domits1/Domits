@@ -5,9 +5,11 @@ import add from "../../images/icons/host-add.png";
 import { useNavigate } from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import house from "../../images/house1.jpeg";
+import spinner from "../../images/spinnner.gif";
 
 function HostListings() {
     const [accommodations, setAccommodations] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState(null);
     const navigate = useNavigate();
     const formatDate = (dateString) => {
@@ -38,38 +40,44 @@ function HostListings() {
 
     useEffect(() => {
         const fetchAccommodations = async () => {
+            setIsLoading(true);
             if (!userId) {
                 console.log("No user id")
                 return;
-            }
-            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
-                method: 'POST',
-                body: JSON.stringify({ OwnerId: userId }),
-                headers: {'Content-type': 'application/json; charset=UTF-8',
-            }
-         });
-            if (!response.ok) {
-                throw new Error('Failed to fetch');
-        }
-            // Extracting the response body
-            const data = await response.json();
-
-            // Now 'responseData' should contain your {statusCode, headers, body}
-            // Check if 'responseData.body' exists and is a string
-            if (data.body && typeof data.body === 'string') {
-                // Parse the JSON string inside 'responseData.body'
-                const accommodationsArray = JSON.parse(data.body);
-                // Ensure the parsed data is an array before setting the state
-                if (Array.isArray(accommodationsArray)) {
-                    setAccommodations(accommodationsArray);
-                } else {
-                    // Handle the case where the parsed data is not an array
-                    console.error("Parsed data is not an array:", accommodationsArray);
-                    setAccommodations([]); // Setting a default or handling as needed
-                }
             } else {
-                // Handle unexpected structure
-                console.error("Unexpected responseData structure:", data);
+                try {
+                    const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
+                        method: 'POST',
+                        body: JSON.stringify({ OwnerId: userId }),
+                        headers: {'Content-type': 'application/json; charset=UTF-8',
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch');
+                    }
+                    // Extracting the response body
+                    const data = await response.json();
+
+                    // Now 'responseData' should contain your {statusCode, headers, body}
+                    // Check if 'responseData.body' exists and is a string
+                    if (data.body && typeof data.body === 'string') {
+                        // Parse the JSON string inside 'responseData.body'
+                        const accommodationsArray = JSON.parse(data.body);
+                        // Ensure the parsed data is an array before setting the state
+                        if (Array.isArray(accommodationsArray)) {
+                            setAccommodations(accommodationsArray);
+                        } else {
+                            // Handle the case where the parsed data is not an array
+                            console.error("Parsed data is not an array:", accommodationsArray);
+                            setAccommodations([]); // Setting a default or handling as needed
+                        }
+                    }
+                } catch (error) {
+                    // Error Handling
+                    console.error("Unexpected error:", error);
+                } finally {
+                    setIsLoading(false); // End loading regardless of promise outcome
+                }
             }
         };
 
@@ -92,7 +100,11 @@ function HostListings() {
                         </div>
                         <div className="box fullBox">
                             <p className="header">Current listings</p>
-                            {accommodations.length > 0 ? (
+                            {isLoading ? (
+                                <div>
+                                    <img src={spinner}/>
+                                </div>
+                            ) : accommodations.length > 0 ? (
                                 accommodations.map((accommodation) => (
                                     <div key={accommodation.ID} className="accommodation-tab">
                                         <div className="accommodation-left">
