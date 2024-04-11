@@ -12,15 +12,15 @@
   font-size: 0.6rem;
 }
 .searchTitleAccommodation {
-  padding: 6px;
+  padding: 7px;
 }
 .searchTitleCenterAcco{
   color: #0D9813;
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 0%; /* Verkleind van 10px naar 5px */
-  margin-top: 0px; /* Verkleind van 1px naar 0px */
+  padding-top: 0%; 
+  margin-top: 0px; 
 }
 
 .bar .searchInputContainer {
@@ -50,6 +50,7 @@
 
 .searchbar-input::placeholder {
   font-size: 0.64rem;
+  margin-top: 0px; 
 }
 
 .bar .searchTitle, .searchTitleCenter {
@@ -57,8 +58,8 @@
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 3px; /* Verkleind van 10px naar 5px */
-  margin-top: 0px; /* Verkleind van 1px naar 0px */
+  padding-top: 3px; 
+  margin-top: 0px; 
 }
 
 
@@ -86,7 +87,7 @@
 }
 .accommodation {
   width: 25%;
-  cursor: pointer;
+  
 }
 
 .searchbar-input {
@@ -130,9 +131,9 @@
   color: #ffffff;
   background-color: #0fa616;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  height: 38px;
-  width: 38px;
-  margin-top: 9px;
+  height: 41px;
+  width: 41px;
+  margin-top:8px;
 }
 .searchbar-button:hover {
   background-color: #0a770f;
@@ -167,20 +168,17 @@
 .searchBar {
   background: none;
   border: none;
-  padding-top: 0.5rem; 
-  padding-bottom: 0rem; 
+  padding-top: 1rem;
+  padding-bottom: 0.4rem; 
   text-align: left;
   margin-bottom: 10px;
   width: 85%;
-  
 }
- 
 .searchBar:focus {
   outline: none;
 }
 .searchBar::placeholder {
   font-size: 0.64rem;
-  text-align: left;
 }
 
 @media (max-width: 1000px) {
