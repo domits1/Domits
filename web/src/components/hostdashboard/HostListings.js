@@ -14,7 +14,6 @@ function HostListings() {
             try {
                 const userInfo = await Auth.currentUserInfo();
                 await setUserId(userInfo.attributes.sub);
-                console.log(userInfo);
             } catch (error) {
                 console.error("Error setting user id:", error);
             }
@@ -29,33 +28,39 @@ function HostListings() {
                 console.log("No user id")
                 return;
             }
+            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
+                method: 'POST',
+                body: JSON.stringify({ OwnerId: userId }),
+                headers: {'Content-type': 'application/json; charset=UTF-8',
+            }
+         });
+            if (!response.ok) {
+                throw new Error('Failed to fetch');
+        }
+            // Extracting the response body
+            const data = await response.json();
 
-            const options = {
-                OwnerId: userId
-            };
-
-            try {
-                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
-                    method: 'POST',
-                    body: JSON.stringify(options),
-                    headers: {
-                        'Content-type': 'application/json'
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+            // Now 'responseData' should contain your {statusCode, headers, body}
+            // Check if 'responseData.body' exists and is a string
+            if (data.body && typeof data.body === 'string') {
+                // Parse the JSON string inside 'responseData.body'
+                const accommodationsArray = JSON.parse(data.body);
+                // Ensure the parsed data is an array before setting the state
+                if (Array.isArray(accommodationsArray)) {
+                    setAccommodations(accommodationsArray);
+                } else {
+                    // Handle the case where the parsed data is not an array
+                    console.error("Parsed data is not an array:", accommodationsArray);
+                    setAccommodations([]); // Setting a default or handling as needed
                 }
-
-                const data = await response.json();
-                setAccommodations(data);
-                console.log(data)
-            } catch (error) {
-                console.error(error);
+            } else {
+                // Handle unexpected structure
+                console.error("Unexpected responseData structure:", data);
             }
         };
 
         if (userId) {
-            fetchAccommodations();
+            fetchAccommodations().catch(console.error);
         }
     }, [userId]);
 
@@ -74,9 +79,13 @@ function HostListings() {
                         <div className="box fullBox">
                             <p className="">Current listings</p>
                             {accommodations.length > 0 ? (
-                                accommodations.map((accommodation, index) => (
-                                    <div key={index} className="review-tab">
-                                        Accommodation
+                                accommodations.map((accommodation) => (
+                                    <div key={accommodation.ID} className="review-tab">
+                                        <p>Accommodation: {accommodation.Title}</p>
+                                        <p>Location: {accommodation.Country}, {accommodation.City}, {accommodation.Street}</p>
+                                        <p>Type: {accommodation.Type}</p>
+                                        <p>Room Type: {accommodation.Roomtype}</p>
+                                        <p>Guests Allowed: {accommodation.Guests}</p>
                                     </div>
                                 ))
                             ) : (
