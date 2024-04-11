@@ -403,3 +403,14 @@
 .reviewbox1 {
 
 }
+
+.email{
+    width: 60px;
+    height: 60px;
+    border-radius: 2rem;
+    border: 1.5px solid black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}

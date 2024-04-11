@@ -21,7 +21,15 @@ import light from "../../images/light.png";
 import goated from "../../images/goated.jpg"
 import bookarrow from "../../images/whitearrow.png"
 
+
+const hostEmail = "nabilsalimi0229@gmail.com";
+
 const Details = () => {
+
+    const handleClick = () => {
+        history.push(`/guestdashboard/chatprototype?recipient=${hostEmail}`);
+      };
+
     return (
         <div className="detailpage">
             <div className="topdetails">
@@ -53,6 +61,12 @@ const Details = () => {
                         <p>Select...</p>
                     </div>
 
+                </div>
+               
+                <div className="email">
+                    <Link to={`/guestdashboard/chatprototype?recipient=${hostEmail}`}>
+                    <img src={wifi} alt="" />
+                    </Link>
                 </div>
                 <button>Book* <img id="buttonimg" src={bookarrow} alt="" /></button>
                 <p id="footbutton">*You wont be charged yet</p>
@@ -193,5 +207,5 @@ const Details = () => {
         </div>
     );
 }
-
 export default Details;
+export { hostEmail };

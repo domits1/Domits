@@ -110,7 +110,6 @@ function App() {
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
-                            <Route path="/chatprototype" element={<Chatprototype />} />
 
                             {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
@@ -118,6 +117,7 @@ function App() {
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
+                            <Route path="/guestdashboard/chatprototype" element={<Chatprototype />} />
 
                             {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />

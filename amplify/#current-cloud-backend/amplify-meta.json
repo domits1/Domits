@@ -51,12 +51,12 @@
       },
       "providerPlugin": "awscloudformation",
       "service": "AppSync",
-      "lastPushTimeStamp": "2024-04-04T14:48:11.274Z",
+      "lastPushTimeStamp": "2024-04-11T12:58:20.238Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/api/cloudformation-template.json",
         "logicalId": "apidomits"
       },
-      "lastPushDirHash": "mtFBlKOrIudi5Apfj4UjtPYRegE="
+      "lastPushDirHash": "5x7cLgTX3pJ+gGVsV6SpU5Q4SMA="
     }
   },
   "auth": {
@@ -104,7 +104,7 @@
         "IdentityPoolName": "domits7b73f586_identitypool_7b73f586__develop",
         "UserPoolName": "domits7b73f586_userpool_7b73f586"
       },
-      "lastPushTimeStamp": "2024-04-04T14:48:11.139Z",
+      "lastPushTimeStamp": "2024-04-11T12:58:17.944Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/auth/domits7b73f586-cloudformation-template.json",
         "logicalId": "authdomits7b73f586"
@@ -129,7 +129,7 @@
         "acceptanceGroupRole": "arn:aws:iam::115462458880:role/eu-north-1_mPxNhvSFX-acceptanceGroupRole",
         "acceptanceUserPoolsGroupRole": "arn:aws:iam::115462458880:role/eu-north-1_mPxNhvSFX-acceptanceUserPoolsGroupRole"
       },
-      "lastPushTimeStamp": "2024-04-04T14:48:11.142Z",
+      "lastPushTimeStamp": "2024-04-11T12:58:17.982Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/auth/userPoolGroups-cloudformation-template.json",
         "logicalId": "authuserPoolGroups"
@@ -159,7 +159,7 @@
         "Name": "domits7b73f586PreSignup-develop",
         "LambdaExecutionRole": "domits7b73f586PreSignup-develop"
       },
-      "lastPushTimeStamp": "2024-04-04T14:48:11.144Z",
+      "lastPushTimeStamp": "2024-04-11T12:58:17.989Z",
       "providerMetadata": {
         "s3TemplateURL": "https://s3.amazonaws.com/amplify-domits-develop-123953-deployment/amplify-cfn-templates/function/domits7b73f586PreSignup-cloudformation-template.json",
         "logicalId": "functiondomits7b73f586PreSignup"
