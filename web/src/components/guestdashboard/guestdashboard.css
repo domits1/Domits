@@ -118,7 +118,7 @@
 
 .bookingBox {
     /* Adjust the percentage to increase the height relative to .leftContent */
-    height: 60%;
+    /* height: 60%; */
     /* Example adjustment */
     margin-bottom: 20px;
     /* Maintain spacing between boxes */
@@ -127,8 +127,9 @@
 }
 
 .messageBoxes {
-    height: 40%;
+    /* height: 40%; */
     overflow: auto;
+    
 }
 
 .bookingBox,
@@ -142,7 +143,7 @@
 }
 
 .bookingBox img {
-    width: 20%;
+    width: 50%;
     height: auto;
     border-radius: 15px;
     margin-top: 10px;
