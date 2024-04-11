@@ -5,7 +5,7 @@
     margin-bottom: 30px;
 
     text-align: center;
-    font-weight: lighter;
+    font-weight: 400;
 }
 
 .calculatorBlock {
@@ -28,6 +28,9 @@
     padding: 10px;
     width: 7%;
     height: 12%;
+    background-color: white;
+    border: none;
+    margin-right: 2%;
 }
 
 .pageButtons:hover {
@@ -51,6 +54,7 @@
     box-shadow: none;
     padding: 10px;
     margin: 10px;
+    border: none;
 }
 
 .nextButtons:hover {
@@ -62,7 +66,7 @@
 .selected {
     background-color: #003366;
     color: #fff;
-    box-shadow: 0 0 5px #003366;
+    box-shadow: none;
 }
 
 .cardHolder {
@@ -145,51 +149,11 @@
     margin-bottom: 10px;
 }
 
-.faq-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 50px;
-    margin-bottom: 50px;
-  }
-  
-  .faq-box {
-    width: 80%;
-    border: 2px solid #003366;
-    border-radius: 10px;
-    margin: 10px;
-    padding: 15px;
-    cursor: pointer;
-    max-height: 60px; 
-    overflow: hidden;
-    transition: max-height 2s ease; 
-  }
-  
-  .faq-box:hover {
-    max-height: 200px; 
-  }
-  
-  .question {
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-  
-  .answer {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 2s ease; 
-  }
-  
-  .faq-box:hover .answer {
-    max-height: 200px; 
-  }
-
 .formContainer {
   display: flex;
   justify-content: space-between;
   flex-wrap: wrap;
   padding: 20px;
-  width: 80%;
   margin: auto;
 
 }
@@ -200,41 +164,29 @@
 
 .form-section,
 .map-section {
-  width: 45%;
+  min-width: 45%;
 }
 
 .front-section {
   width: 50%;
 }
 
-#map-placeholder {
-  width: 100%;
-  height: 300px;
-  background-color: #e0e0e0;
-  text-align: center;
-  line-height: 300px;
-  color: #333;
-  margin-top: 20px;
-}
-
 .formContainer label {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
   gap: 15px;
-  font-family: "kanitRegular";
+  font-size: 20px;
 }
 
 .room-type label,
 .room-features label {
   justify-content: flex-start;
   cursor: pointer;
-  font-family: "kanitRegular";
 }
 
+.room-type {
+  display: flex;
+  flex-direction: column;
+  margin-right: 100px;
+}
 
 .formRow {
   display: flex;
@@ -250,15 +202,15 @@
 
 .textInput,
 .radioInput {
-  width: auto;
+  width: 25%;
   padding: 11px 15px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-  border-radius: 15px;
-  border: 1px solid black;
+  /* box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); */
+  border-radius: 5px;
+  border: 1px solid var(--secondary-color);
 }
 
 .radioInput {
-  width: 20px;
+  width: 15px;
   height: 20px;
   cursor: pointer;
 }
@@ -281,4 +233,102 @@
 .priceSlider {
   width: 100%;
   cursor: ew-resize;
+}
+
+.onboardingSectionTitle {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--secondary-color)
+}
+
+.file-upload {
+  background-color: #003366;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.file-upload:hover {
+  background-color: #001f4d; /* Darken the background color on hover */
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
+@media screen and (max-width: 1520px) {
+  .formContainer label {
+    display: flex;
+    flex-direction: row;
+    text-align: left;
+    align-items: flex-start;
+    margin-bottom: 20px;
+  }
+  .formContainer {
+    text-align: left;
+  }
+}
+
+.file-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.custom-file-upload {
+  background-color: #003366;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.custom-file-upload:hover {
+  background-color: #001f4d;
+}
+
+.flex-row {
+  display: flex;
+}
+
+.image-container {
+  position: relative;
+  margin: 10px;
+}
+
+.image {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+}
+
+.delete-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #cc0000;
+}
+
+.placeholder {
+  width: 150px;
+  height: 150px;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

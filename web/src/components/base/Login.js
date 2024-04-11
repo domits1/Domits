@@ -100,9 +100,7 @@ const Login = () => {
                                 <div className="errorText">{errorMessage}</div>
                             )}
                             <button type="submit" className="loginButton">
-                                <div className='lbHolder'>
-                                    <p className='lbText'>Login</p>
-                                </div>
+                                Login
                             </button>
                         </form>
                         <div className="noAccountText">

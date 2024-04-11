@@ -33,7 +33,7 @@ function Landing() {
                     <div class='infoCard'>
                         <img src={chat}></img>
                         <h4>Domits Message centre</h4>
-                        <p>Message centre including chat moderator support to make communicating with guests easy and safe!</p>    
+                        <p>Message centre including chat moderator support to make communicating with a traveller easy and safe!</p>    
                     </div>
                     <div class='infoCard'>
                         <img src={monitor}></img>
@@ -42,9 +42,9 @@ function Landing() {
                     </div>
                     
                 </div>
-                <div>
+                {/* <div>
                     <FAQ />
-                </div>
+                </div> */}
             </div>
         </div>
     );
