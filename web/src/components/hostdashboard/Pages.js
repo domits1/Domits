@@ -88,7 +88,7 @@ function Pages() {
         <div className="stripe-icon-div">
           <img src={stripe} className="stripe-icon" alt="Stripe"></img>
         </div>
-        <p className="stripe-btn">Create Stripe Account</p>
+        <p className="stripe-btn">Set Up Payments</p>
       </div>
     </div>
   );

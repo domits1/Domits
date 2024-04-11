@@ -57,7 +57,7 @@ function OnboardingHost() {
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
-        AccommodationType: "House",
+        AccommodationType: "",
         Measurement: "",
 
     });
@@ -86,6 +86,7 @@ function OnboardingHost() {
 
     const handleLocationChange = async (Country, City, PostalCode, Street) => {
         const address = `${Country} ${City} ${Street} ${PostalCode}`;
+        console.log(formData)
 
         try {
             const response = await fetch(
@@ -413,7 +414,7 @@ function OnboardingHost() {
                                             <input className="textInput" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
                                             <label>Accommodation Type</label>
                                             <select
-                                                defaultValue={formData.AccommodationType}
+                                                value={formData.AccommodationType}
                                                 onChange={handleInputChange}
                                                 className="textInput"
                                                 name="AccommodationType"
@@ -458,6 +459,7 @@ function OnboardingHost() {
             case 4:
                 return (
                     <div className="container" style={{ width: '80%' }}>
+                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">

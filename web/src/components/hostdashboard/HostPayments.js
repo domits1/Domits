@@ -13,8 +13,8 @@ function HostPayments() {
                 <div className="contentContainer">
                     <div className="boxColumns fullColumn">
                         <div className="box fullBox">
-                            <p>Ready to be withdrawn</p>
-                            <div className="withdrawContain">
+                            <p>No payments yet, they will appear here once data is available.</p>  {/* original text: Ready to be withdrawn  */}
+                            {/* <div className="withdrawContain">
                                 <p className="priceText">$6000</p>
                                 <p className="withdrawText">Ready for payout</p>
                             </div>
@@ -33,15 +33,15 @@ function HostPayments() {
                             <div className="withdrawContain">
                                 <p className="priceText">$1250</p>
                                 <p className="withdrawText">Ready for payout</p>
-                            </div>
+                            </div> */}
                         </div>
-                        <button id="withdrawButton">Withdraw</button>
-                        <div className="box fullBox">
+                        {/* <button id="withdrawButton">Withdraw</button> */}
+                        {/* <div className="box fullBox">
                             <p>Completed payments</p>
                         </div>
                         <div className="box fullBox">
                             <p>Cancelled payments</p>
-                        </div>
+                        </div> */}
                     </div>
 
                 </div>

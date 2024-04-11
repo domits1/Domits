@@ -3,7 +3,7 @@
 }
 
 .bar {
-  width: 600px;
+  width: 100%;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 30px;
@@ -12,23 +12,11 @@
   z-index: 999;
   font-size: 0.6rem;
 }
-.searchTitleAccommodation {
-  padding: 6px;
-}
-.searchTitleCenterAcco{
-  color: #0D9813;
-  font-size: 0.7rem;
-  font-family: 'Kanit', sans-serif;
-  font-weight: 700;
-  padding-top: 0%; /* Verkleind van 10px naar 5px */
-  margin-top: 0px; /* Verkleind van 1px naar 0px */
-}
 
 .bar .searchInputContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 5px;
 }
 
 .suggestions-container {
@@ -41,7 +29,7 @@
 }
 
 .autocomplete-container input::placeholder {
-  text-align: left;
+  text-align: center;
 }
 
 .bar input {
@@ -58,28 +46,21 @@
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 3px; /* Verkleind van 10px naar 5px */
-  margin-top: 0px; /* Verkleind van 1px naar 0px */
+  padding-top: 10px;
 }
-
 
 .check-in:hover {
   cursor: 'pointer';
-  /* background-color: #f0f0f0; */
-  border-radius: 15px;
-  
 }
 .check-out:hover{
   cursor: 'pointer';
-  /* background-color: #f0f0f0; */
-  border-radius: 15px;
 }
 .check-in{
-  width: 16%;
+  width: 20%;
   cursor: pointer;
 }
 .check-out{
-  width: 16%;
+  width: 20%;
   cursor: pointer;
 }
 .location{
@@ -87,9 +68,7 @@
 }
 .accommodation {
   width: 25%;
-  cursor: pointer;
 }
-
 .searchbar-input {
   background: none;
   border: none;
@@ -126,22 +105,24 @@
   margin-right: 1%;
   font-size: 10px;
   line-height: 30px;
-  border: 1px solid #0fa616;
+  border: 1px solid #0D9813;
   border-radius: 50%;
   color: #ffffff;
-  background-color: #0fa616;
+  background-color: transparent;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  height: 38px;
-  width: 38px;
-  margin-top: 6px;
+  transition: 0.2s cubic-bezier(0.3, 0, 0.5, 1);
+  transition-property: color;
+  height: 33px;
+  width: 33px;
+  margin-top: 10px;
 }
 .searchbar-button:hover {
-  background-color: #0a770f;
-  transition-duration: 0.3s
+  background-color: #0D9813;
+  border-color: #0D9813;
+  transition-duration: 0.4s;
 }
 .searchbar-button svg {
-  color: rgb(255, 255, 255);
-  margin-top: 10px;
+  color: black; /* Zwarte kleur voor FaSearch-icoon */
 }
 .searchbar-button:hover svg {
   animation: bounce 0.7s ease 1;
@@ -156,19 +137,14 @@
   60% {
     transform: translateY(-3px);
   }
-  
 }
 .searchBar {
   background: none;
   border: none;
-  padding-top: 0.5rem; 
-  padding-bottom: 0rem; 
+  padding: 0.6rem 0 0 0;
   text-align: left;
-  margin-bottom: 10px;
-  width: 85%;
-  
+  width: 80%;
 }
- 
 .searchBar:focus {
   outline: none;
 }
