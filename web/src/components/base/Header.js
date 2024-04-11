@@ -19,9 +19,8 @@ function Header({ setSearchResults }) {
     const navigateToRegister = () => {
         navigate('/register');
     };
-    //op verzoek van Tim S veranderd van landing naar enlist
     const navigateToLanding = () => {
-        navigate('/enlist');
+        navigate('/landing');
     };
     const navigateToNinedots = () => {
         navigate('/travelinnovation');
