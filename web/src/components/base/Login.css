@@ -1,50 +1,49 @@
-/* Login.css */
-.lbHolder {
-    width: auto;
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    margin-top: 10px;
-}
-
 .loginLogo {
     width: 15%;
     margin-top: 25px;
 }
 
-.lbText {
-    width: 20px;
-    color: white;
-}
-
 .loginButton {
     width: 100%;
-    background: #0D9813;
-    /* border-radius: 15px; */
+    padding: 8px 15px;
+    background: var(--primary-color);
+    border-radius: 5px;
+    border: none;
+    box-shadow: none;
     color: white;
     font-size: 18px;
     cursor: pointer; 
+    margin-top: 15px;
+}
+
+.loginButton:hover {
+    background: #6fb873;
 }
 
 .registerButtonLogin {
     width: 100%;
     padding: 8px 15px;
-    background: #003366;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
-    border: 0;
+    background: var(--secondary-color);
+    box-shadow: none;
+    border-radius: 5px;
+    border: none;
     color: white;
     font-size: 18px;
     display: block;
-    text-align: center; /* Center the text within the button */
-    text-decoration: none; /* Remove the default underline on anchor tags */
+    text-align: center;
+    text-decoration: none; 
     cursor: pointer;
+    margin-top: 15px;
+}
+
+.registerButtonLogin:hover {
+    background: #4a86c3;
 }
 
 .loginTitle {
     color: black;
-    font-size: 36px;
-    font-family: Kanit, sans-serif;
+    font-size: 30px;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 54px;
     word-wrap: break-word;
@@ -62,28 +61,25 @@
 .loginForm {
     min-width: 300px;
     width: 25%;
-    margin-top: 20px;
-    padding: 30px;
-    /* background: #EBFAED; */
-    border-radius: 15px;
+    padding: 15px 30px;
+    border-radius: 5px;
     margin-bottom: 50px;
     box-sizing: border-box;
 }
 
 label {
-    font-size: 24px;
+    font-size: 18px;
 }
 
 .loginInput {
     width: 100%;
     height: auto;
-    padding: 11px 15px;
+    padding: 8px 15px;
     margin-top: 10px;
     margin-bottom: 10px;
     background: white;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
-    border: 1px solid black;
+    border-radius: 5px;
+    border: 1px solid var(--primary-color);
     justify-content: flex-start;
     align-items: center;
     display: inline-flex;
@@ -93,7 +89,7 @@ label {
     color: black;
     margin-top: 20px;
     font-size: 14px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 18px;
     word-wrap: break-word;
@@ -109,5 +105,5 @@ label {
     background: red;
     opacity: 0.7;
     color: white;
-    border-radius: 15px;
+    border-radius: 5px;
 }

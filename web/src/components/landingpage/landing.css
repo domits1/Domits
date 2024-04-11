@@ -182,13 +182,8 @@
 }
 
 .formContainer label {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
   gap: 15px;
+  font-size: 20px;
 }
 
 .room-type label,
@@ -197,6 +192,11 @@
   cursor: pointer;
 }
 
+.room-type {
+  display: flex;
+  flex-direction: column;
+  margin-right: 100px;
+}
 
 .formRow {
   display: flex;
@@ -212,15 +212,15 @@
 
 .textInput,
 .radioInput {
-  width: auto;
+  width: 25%;
   padding: 11px 15px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-  border-radius: 15px;
-  border: 1px solid black;
+  /* box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); */
+  border-radius: 5px;
+  border: 1px solid var(--secondary-color);
 }
 
 .radioInput {
-  width: 20px;
+  width: 15px;
   height: 20px;
   cursor: pointer;
 }
@@ -245,10 +245,36 @@
   cursor: ew-resize;
 }
 
+.onboardingSectionTitle {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--secondary-color)
+}
+
+.file-upload {
+  background-color: #003366;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.file-upload:hover {
+  background-color: #001f4d; /* Darken the background color on hover */
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  opacity: 0;
+}
+
 @media screen and (max-width: 1520px) {
   .formContainer label {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     text-align: left;
     align-items: flex-start;
     margin-bottom: 20px;
@@ -257,4 +283,63 @@
   .formContainer {
     text-align: left;
   }
+}
+
+.file-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.custom-file-upload {
+  background-color: #003366;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+.custom-file-upload:hover {
+  background-color: #001f4d;
+}
+
+.flex-row {
+  display: flex;
+}
+
+.image-container {
+  position: relative;
+  margin: 10px;
+}
+
+.image {
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+}
+
+.delete-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #ff0000;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.delete-button:hover {
+  background-color: #cc0000;
+}
+
+.placeholder {
+  width: 150px;
+  height: 150px;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }

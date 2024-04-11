@@ -3,22 +3,27 @@
 .registerButton {
     width: 100%;
     padding: 8px 15px;
-    background: #003366;
-    box-shadow: 0 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
-    border: 0;
+    margin-top: 15px;
+    background: var(--secondary-color);
+    box-shadow: none;
+    border-radius: 5px;
+    border: none;
     color: white;
     font-size: 18px;
     display: block;
-    text-align: center; /* Center the text within the button */
-    text-decoration: none; /* Remove the default underline on anchor tags */
+    text-align: center; 
+    text-decoration: none; 
     cursor: pointer;
+}
+
+.registerButton:hover {
+    background: #4a86c3;
 }
 
 .registerTitle {
     color: black;
-    font-size: 36px;
-    font-family: Kanit, sans-serif;
+    font-size: 30px;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 54px;
     word-wrap: break-word;
@@ -37,26 +42,24 @@
     margin-top: 20px;
     min-width: 300px;
     width: 25%;
-    padding: 30px;
-    background: #EBFAED;
-    border-radius: 15px;
+    padding: 10px 30px;
     margin-bottom: 50px;
 }
 
 label {
-    font-size: 24px;
+    font-size: 18px;
 }
 
 .registerInput {
     width: 100%;
     height: auto;
-    padding: 11px 15px;
+    padding: 8px 15px;
     margin-top: 5px;
     margin-bottom: 5px;
     background: white;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-    border-radius: 15px;
-    border: 1px solid black;
+    box-shadow: none;
+    border-radius: 5px;
+    border: 1px solid var(--secondary-color);
     justify-content: flex-start;
     align-items: center;
     display: inline-flex;
@@ -66,7 +69,7 @@ label {
     color: black;
     margin-top: 10px;
     font-size: 14px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 18px;
     word-wrap: break-word;
