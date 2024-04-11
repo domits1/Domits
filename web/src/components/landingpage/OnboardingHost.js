@@ -24,6 +24,12 @@ function OnboardingHost() {
         });
     }
 
+    const s3 = new AWS.S3({
+        accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
+        region: process.env.REACT_APP_AWS_REGION
+      });
+
     let [userId, setUserId] = useState(null);
     const [selectedFiles, setSelectedFiles] = useState([]);
 
@@ -184,7 +190,6 @@ function OnboardingHost() {
                 handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
             }
         }
-        console.log(formData)
     };
 
 
@@ -217,36 +222,31 @@ function OnboardingHost() {
         }
     };
 
-    // const handleFileSubmit = async () => {
-    //     try {
-    //         const UserID = userId; // Assuming userId is available in scope
-    //         const AccoID = formData.ID;
-
-    //         const updatedFormData = { ...formData }; // Copy the original formData object
-
-    //         for (let i = 0; i < selectedFiles.length; i++) {
-    //             const file = selectedFiles[i];
-    //             const params = {
-    //                 Bucket: 'accommodation',
-    //                 Key: `images/${UserID}/${AccoID}/Image-${i + 1}`, // Numerical names for images
-    //                 Body: file
-    //             };
-    //             const data = await s3.upload(params).promise();
-    //             console.log(`Uploaded file ${i + 1}:`, data.Location);
-
-    //             // Update the corresponding property in the formData object
-    //             updatedFormData.Images[`image${i + 1}`] = data.Location;
-    //         }
-
-    //         // Set the updated formData object with image paths
-    //         setFormData(updatedFormData);
-
-    //         // Reset selectedFiles after successful upload
-    //         setSelectedFiles([]);
-    //     } catch (error) {
-    //         console.error('Error uploading files:', error);
-    //     }
-    // };
+    const handleFileSubmit = async () => {
+        try {
+            const UserID = userId; // Assuming userId is available in scope
+            const AccoID = formData.ID;
+            const updatedFormData = { ...formData }; // Copy the original formData object
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const params = {
+                    Bucket: 'accommodation',
+                    Key: `images/${UserID}/${AccoID}/Image-${i + 1}.jpg`, // Include file extension ".jpg"
+                    Body: file
+                };
+                const data = await s3.upload(params).promise();
+                // Update the corresponding property in the formData object
+                updatedFormData.Images[`image${i + 1}`] = data.Location;
+            }
+            // Set the updated formData object with image paths
+            setFormData(updatedFormData);
+            // Reset selectedFiles after successful upload
+            setSelectedFiles([]);
+        } catch (error) {
+            console.error('Error uploading files:', error);
+        }
+    };
+    
 
     const handleFileChange = (event) => {
         const files = Array.from(event.target.files).filter(
@@ -265,10 +265,11 @@ function OnboardingHost() {
         setSelectedFiles(updatedFiles);
     };
 
-    const combinedSubmit = () => {
-        handleFileSubmit()
-        handleSubmit()
+    const combinedSubmit = async () => {
+        await handleFileSubmit(); // Wait for handleFileSubmit to complete
+        handleSubmit(); // Then execute handleSubmit
     }
+    
 
     const renderPageContent = (page) => {
         switch (page) {
@@ -553,7 +554,7 @@ function OnboardingHost() {
                         </div>
                         <div className='buttonHolder'>
                             <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
+                            <button className='nextButtons' onClick={() => { combinedSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
                         </div>
                         <p>Your accommodation ID: {formData.ID}</p>
                     </div >
