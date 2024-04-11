@@ -1,4 +1,6 @@
 import './App.css';
+import HostProtectedRoute from './HostProtectedRoute';
+import { UserProvider } from './UserContext';
 import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
@@ -47,8 +49,7 @@ import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDas
 import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
 
-// Set the app element for react-modal
-Modal.setAppElement('#root'); // Assuming your root element has the id 'root'
+Modal.setAppElement('#root');
 
 function App() {
     const [searchResults, setSearchResults] = useState([]);
@@ -72,6 +73,7 @@ function App() {
         <FlowContext.Provider value={{ flowState, setFlowState }}>
             <Router>
                 <AuthProvider>
+                <UserProvider>
                     <div className="App">
                         {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} />}
                         <Routes>
@@ -102,7 +104,11 @@ function App() {
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
                             <Route path="/enlist" element={<HostOnboarding />} />
-                            <Route path="/hostdashboard" element={<HostDashboard />} />
+                            <Route path="/hostdashboard" element={
+                                    <HostProtectedRoute>
+                                        <HostDashboard />
+                                    </HostProtectedRoute>
+                                } />
                             <Route path="/hostdashboard/listings" element={<HostListings />} />
                             <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
                             <Route path="/hostdashboard/messages" element={<HostMessages />} />
@@ -116,6 +122,7 @@ function App() {
                         </Routes>
                         {renderFooter()}
                     </div>
+                    </UserProvider>
                 </AuthProvider>
             </Router>
         </FlowContext.Provider>
