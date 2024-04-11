@@ -12,7 +12,7 @@ export const SearchBar = ({ setSearchResults }) => {
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
   const [showResults, setShowResults] = useState(false);
-  
+
 
   const handleChange = (address) => {
     setAddress(address);
@@ -26,7 +26,7 @@ export const SearchBar = ({ setSearchResults }) => {
       // console.log('Geocode Success', latLng);
       setShowResults(true);
     } catch (error) {
-      console.error('Error', error);
+      // console.error('Error', error);
       setShowResults(false);
     }
   };
@@ -43,7 +43,7 @@ export const SearchBar = ({ setSearchResults }) => {
       // console.log("Data received in SearchBar:", data);
       setSearchResults(data); // Dit stuurt de data naar de App component
     } catch (error) {
-      console.error('Error fetching accommodations:', error);
+      // console.error('Error fetching accommodations:', error);
     }
   };
 
@@ -51,6 +51,7 @@ export const SearchBar = ({ setSearchResults }) => {
     <div className="bar">
       <div className="location">
         <p className="searchTitle">Location</p>
+
         <PlacesAutocomplete
           value={address}
           onChange={handleChange}
@@ -65,9 +66,15 @@ export const SearchBar = ({ setSearchResults }) => {
                   className: 'searchBar',
                 })}
               />
-              <div className="suggestions-container" style={{ marginTop: '25px', fontWeight: 'bold', }}>
+              <div
+                className="suggestions-container"
+                style={{
+                  marginTop: '20px',
+                  fontWeight: 'bold',
+                  marginLeft: '25%', // Linkermarge toegevoegd
+                }}
+              >
                 {loading && <div>Loading...</div>}
-
                 {suggestions.map((suggestion) => {
                   if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
                     const parts = suggestion.description.split(', ');
@@ -84,7 +91,7 @@ export const SearchBar = ({ setSearchResults }) => {
                             transition: 'background-color 0.2s ease',
                             fontSize: '15px',
                             color: '#000',
-                            borderRadius: '1px',
+                            borderRadius: '3px',
                             margin: '0',
                             display: 'flex',
                             width: '300px',
@@ -110,10 +117,9 @@ export const SearchBar = ({ setSearchResults }) => {
               </div>
             </div>
           )}
-
         </PlacesAutocomplete>
       </div>
-      <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()}>
+      <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
         <p className="searchTitleCenter">Check in</p>
         <div className="searchInputContainer">
           <DatePicker
@@ -127,6 +133,7 @@ export const SearchBar = ({ setSearchResults }) => {
           />
         </div>
       </div>
+
       <div className='check-out' onClick={() => document.getElementById('checkOutPicker').click()}>
         <p className="searchTitleCenter">Check out</p>
         <div className='searchInputContainer'>
@@ -140,8 +147,10 @@ export const SearchBar = ({ setSearchResults }) => {
           />
         </div>
       </div>
+
+
       <div className="accommodation searchInputContainer">
-        <p className="searchTitle">Accommodation</p>
+        <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p>
         <Select
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
@@ -169,11 +178,14 @@ export const SearchBar = ({ setSearchResults }) => {
             dropdownIndicator: () => ({ display: 'none' }),
             placeholder: (provided) => ({
               ...provided,
-              color: '#666',
+              color: 'gray',
               background: 'none',
             }),
             option: (provided, state) => ({
               ...provided,
+              backgroundColor: state.isFocused ? '#0fa616' : provided.backgroundColor,
+              color: state.isFocused ? '#yourHoverTextColor' : provided.color,
+              borderRadius:  state.isFocused ?'10px': provided.borderRadius,
               fontWeight: state.isSelected ? 'bold' : 'normal',
             }),
             menu: (provided) => ({
@@ -181,14 +193,17 @@ export const SearchBar = ({ setSearchResults }) => {
               backgroundColor: '#ffff',
               borderRadius: '8px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-              padding: '8px',
-              width: '200px',
+              padding: '5px',
+              width: '187px',
               maxHeight: '300px',
-              overflowY: 'auto',
+              marginRight: '40px',
+              borderRadius: '15px',
+              textAlign: 'left',
             }),
           }}
         />
       </div>
+
       <button className="searchbar-button" type="button" onClick={handleSearch}>
         <FaSearch />
       </button>
