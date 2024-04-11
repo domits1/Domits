@@ -10,17 +10,21 @@ import {
 import Icon from 'react-native-vector-icons/FontAwesome';
 
 const amenitiesData = [
-    { key: 'wifi', name: 'WiFi', iconName: 'wifi' },
-    { key: 'pool', name: 'Swimming Pool', iconName: 'swimming-pool' },
-    { key: 'gym', name: 'Gym', iconName: 'dumbbell' },
-    // Add more amenities as needed
+  {key: 'wifi', name: 'WiFi', iconName: 'wifi'},
+  {key: 'pool', name: 'Swimming Pool', iconName: 'swimming-pool'},
+  {key: 'gym', name: 'Gym', iconName: 'dumbbell'},
+  // Add more amenities as needed
 ];
 
 const safetyData = [
-    { key: 'smoke_detector', name: 'Smoke Detector', iconName: 'shield' },
-    { key: 'fire_extinguisher', name: 'Fire Extinguisher', iconName: 'fire-extinguisher' },
-    { key: 'first_aid_kit', name: 'First Aid Kit', iconName: 'first-aid' },
-    // Add more safety measures as needed
+  {key: 'smoke_detector', name: 'Smoke Detector', iconName: 'shield'},
+  {
+    key: 'fire_extinguisher',
+    name: 'Fire Extinguisher',
+    iconName: 'fire-extinguisher',
+  },
+  {key: 'first_aid_kit', name: 'First Aid Kit', iconName: 'first-aid'},
+  // Add more safety measures as needed
 ];
 
 function SelectAmenitiesScreen({navigation}) {
@@ -50,44 +54,41 @@ function SelectAmenitiesScreen({navigation}) {
   };
 
   // Placeholder functions for navigation
-  const goToPreviousStep = () => {
-    /* ... */
-  };
+  const goToPreviousStep = () => navigation.goBack();
+
   const goToNextStep = () => {
-    /* ... */
+    navigation.navigate('PriceProperty');
   };
 
-    const renderAmenity = (item) => (
-        <TouchableOpacity
-            style={styles.item}
-            onPress={() => toggleAmenity(item.key)}>
-            <Icon
-                name={selectedAmenities.has(item.key) ? 'check-square-o' : 'square-o'}
-                size={24}
-                style={styles.icon}
-            />
-            <Text style={styles.itemText}>{item.name}</Text>
-        </TouchableOpacity>
-    );
+  const renderAmenity = item => (
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => toggleAmenity(item.key)}>
+      <Icon
+        name={selectedAmenities.has(item.key) ? 'check-square-o' : 'square-o'}
+        size={24}
+        style={styles.icon}
+      />
+      <Text style={styles.itemText}>{item.name}</Text>
+    </TouchableOpacity>
+  );
 
-    const renderSafetyMeasure = (item) => (
-        <TouchableOpacity
-            style={styles.item}
-            onPress={() => toggleSafetyMeasure(item.key)}>
-            <Icon
-                name={
-                    selectedSafetyMeasures.has(item.key) ? 'check-square-o' : 'square-o'
-                }
-                size={24}
-                style={styles.icon}
-            />
-            <Text style={styles.itemText}>{item.name}</Text>
-        </TouchableOpacity>
-    );
+  const renderSafetyMeasure = item => (
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => toggleSafetyMeasure(item.key)}>
+      <Icon
+        name={
+          selectedSafetyMeasures.has(item.key) ? 'check-square-o' : 'square-o'
+        }
+        size={24}
+        style={styles.icon}
+      />
+      <Text style={styles.itemText}>{item.name}</Text>
+    </TouchableOpacity>
+  );
 
-
-
-    return (
+  return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollContainer}>
         <Text style={styles.header}>Select available amenities</Text>
