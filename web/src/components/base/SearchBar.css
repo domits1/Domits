@@ -1,7 +1,6 @@
 * {
   box-sizing: border-box;
 }
-
 .bar {
   width: 700px;
   margin: auto;
@@ -22,37 +21,30 @@
   padding-top: 0%; 
   margin-top: 0px; 
 }
-
 .bar .searchInputContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 5px;
 }
-
 .suggestions-container {
   position: relative;
   z-index: 999;
 }
-
 .css-qbdosj-Input {
   margin: 0 !important;
 }
-
 .autocomplete-container input::placeholder {
   text-align: left;
 }
-
 .bar input {
   margin-top: 0;
   padding-top: 0;
 }
-
 .searchbar-input::placeholder {
   font-size: 0.64rem;
   margin-top: 0px; 
 }
-
 .bar .searchTitle, .searchTitleCenter {
   color: #0D9813;
   font-size: 0.7rem;
@@ -61,8 +53,6 @@
   padding-top: 3px; 
   margin-top: 0px; 
 }
-
-
 .check-in:hover {
   cursor: 'pointer';
   /* background-color: #f0f0f0; */
@@ -87,9 +77,7 @@
 }
 .accommodation {
   width: 25%;
-  
 }
-
 .searchbar-input {
   background: none;
   border: none;

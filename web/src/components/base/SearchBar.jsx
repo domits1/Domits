@@ -13,7 +13,6 @@ export const SearchBar = ({ setSearchResults }) => {
   const [address, setAddress] = useState('');
   const [showResults, setShowResults] = useState(false);
 
-
   const handleChange = (address) => {
     setAddress(address);
   };
@@ -52,17 +51,10 @@ export const SearchBar = ({ setSearchResults }) => {
       <div className="location">
         <p className="searchTitle">Location</p>
 
-        <PlacesAutocomplete
-          value={address}
-          onChange={handleChange}
-          onSelect={handleSelect}
-          searchOptions={{ language: 'en' }}
-        >
+        <PlacesAutocomplete value={address} onChange={handleChange} onSelect={handleSelect} searchOptions={{ language: 'en' }}>
           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-           <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px' }}>
-              <input
-                {...getInputProps({
-                  placeholder: 'Search Places ....',
+            <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px' }}>
+              <input {...getInputProps({ placeholder: 'Search Places ....',
                   className: 'searchBar',
                 })}
               />
@@ -71,7 +63,7 @@ export const SearchBar = ({ setSearchResults }) => {
                 style={{
                   marginTop: '15px',
                   fontWeight: 'bold',
-                  marginLeft: '15%', 
+                  marginLeft: '15%',
                 }}
               >
                 {loading && <div>Loading...</div>}
@@ -120,18 +112,18 @@ export const SearchBar = ({ setSearchResults }) => {
         </PlacesAutocomplete>
       </div>
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
-  <p className="searchTitleCenter">Check in</p>
-  <div className="searchInputContainer" style={{ marginTop: '10px' }}> 
-    <DatePicker
-      className="searchbar-input"
-      id="checkInPicker"
-      selected={checkIn}
-      onChange={(date) => setCheckIn(date)}
-      placeholderText="Start date"
-      dateFormat="dd/MM/yyyy"
-    />
-  </div>
-</div>
+        <p className="searchTitleCenter">Check in</p>
+        <div className="searchInputContainer" style={{ marginTop: '10px' }}>
+          <DatePicker
+            className="searchbar-input"
+            id="checkInPicker"
+            selected={checkIn}
+            onChange={(date) => setCheckIn(date)}
+            placeholderText="Start date"
+            dateFormat="dd/MM/yyyy"
+          />
+        </div>
+      </div>
 
       <div className='check-out' onClick={() => document.getElementById('checkOutPicker').click()}>
         <p className="searchTitleCenter">Check out</p>
@@ -151,66 +143,67 @@ export const SearchBar = ({ setSearchResults }) => {
         <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p>
 
         <Select
-  value={accommodation ? { label: accommodation, value: accommodation } : null}
-  onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
-  options={[
-    { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
-    { value: 'House', label: <><FaMapPin /> House</> },
-    { value: 'Villa', label: <><FaMapPin /> Villa</> },
-    { value: 'Boathouse', label: <><FaMapPin /> Boathouse</> },
-    { value: 'Camper', label: <><FaMapPin /> Camper</> },
-  ]}
-  placeholder="Type of accommodation"
-  isSearchable={false}
-  styles={{
-    control: (provided) => ({
-      ...provided,
-      border: 'none',
-      boxShadow: 'none',
-      background: 'none',
-      minHeight: '0',
-      padding: '0',
-      margin: '0',
-      cursor: 'pointer',
-      width: '150px',
-    }),
-    indicatorSeparator: () => ({ display: 'none' }),
-    dropdownIndicator: () => ({ display: 'none' }),
-    placeholder: (provided) => ({
-      ...provided,
-      color: 'gray',
-      background: 'none',
-    }),
-    option: (provided, state) => ({
-      ...provided,
-      backgroundColor: state.isSelected ? '#0fa616' : state.isFocused ? '#0fa616' : provided.backgroundColor,
-      color: state.isSelected || state.isFocused ? 'black' : provided.color,
-      borderRadius: state.isSelected ? '10px' : state.isFocused ? '10px' : '0px',
-      fontWeight: state.isSelected ? 'bold' : 'normal',
-    }),
-    menu: (provided) => ({
-      ...provided,
-      backgroundColor: '#ffff',
-      borderRadius: '8px',
-      boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-      padding: '5px',
-      width: '187px',
-      maxHeight: '300px',
-      marginRight: '40px',
-      borderRadius: '15px',
-      textAlign: 'left',
-    }),
-    singleValue: (provided) => ({
-      ...provided,
-      fontWeight: 'normal', 
-      fontSize: '13px',
-    }),
-  }}
-/>
+          value={accommodation ? { label: accommodation, value: accommodation } : null}
+          onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
+          options={[
+            { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
+            { value: 'House', label: <><FaMapPin /> House</> },
+            { value: 'Villa', label: <><FaMapPin /> Villa</> },
+            { value: 'Boathouse', label: <><FaMapPin /> Boathouse</> },
+            { value: 'Camper', label: <><FaMapPin /> Camper</> },
+          ]}
+          placeholder="Type of accommodation"
+          isSearchable={false}
+          styles={{
+            control: (provided) => ({
+              ...provided,
+              border: 'none',
+              boxShadow: 'none',
+              background: 'none',
+              minHeight: '0',
+              padding: '0',
+              margin: '0',
+              cursor: 'pointer',
+              width: '150px',
+            }),
+            indicatorSeparator: () => ({ display: 'none' }),
+            dropdownIndicator: () => ({ display: 'none' }),
+            placeholder: (provided) => ({
+              ...provided,
+              color: 'gray',
+              background: 'none',
+            }),
+            option: (provided, state) => ({
+              ...provided,
+              backgroundColor: state.isSelected ? '#0fa616' : state.isFocused ? '#0fa616' : provided.backgroundColor,
+              color: state.isSelected || state.isFocused ? 'black' : provided.color,
+              borderRadius: state.isSelected ? '10px' : state.isFocused ? '10px' : '0px',
+              fontWeight: state.isSelected ? 'bold' : 'normal',
+            }),
+            menu: (provided) => ({
+              ...provided,
+              backgroundColor: '#ffff',
+              borderRadius: '8px',
+              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
+              padding: '5px',
+              width: '187px',
+              maxHeight: '300px',
+              marginRight: '40px',
+              borderRadius: '15px',
+              textAlign: 'left',
+            }),
+            singleValue: (provided) => ({
+              ...provided,
+              fontWeight: 'normal',
+              fontSize: '13px',
+            }),
+          }}
+        />
       </div>
 
       <button className="searchbar-button" type="button" onClick={handleSearch}>
-        <FaSearchLocation size={16} style={{ position: 'relative', top: '-2px' }} />      </button>
+        <FaSearchLocation size={16} style={{ position: 'relative', top: '-2px' }} />
+      </button>
     </div>
   );
 };
