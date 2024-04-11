@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaSearchLocation, FaMapMarkerAlt, FaMapPin } from 'react-icons/fa';
+import { FaTimes ,FaSearchLocation, FaMapMarkerAlt, FaMapPin } from 'react-icons/fa';
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -52,65 +52,81 @@ export const SearchBar = ({ setSearchResults }) => {
         <p className="searchTitle">Location</p>
 
         <PlacesAutocomplete value={address} onChange={handleChange} onSelect={handleSelect} searchOptions={{ language: 'en' }}>
-          {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-            <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px' }}>
-              <input {...getInputProps({
-                placeholder: 'Search Places ....',
-                className: 'searchBar',
-              })}
-              />
-              <div
-                className="suggestions-container"
-                style={{
-                  marginTop: '15px',
-                  fontWeight: 'bold',
-                  marginLeft: '15%',
-                }}
-              >
-                {loading && <div>Loading...</div>}
-                {suggestions.map((suggestion) => {
-                  if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
-                    const parts = suggestion.description.split(', ');
-                    const filteredDescription = parts.length > 1 ? `${parts[0]}, ${parts[parts.length - 1]}` : parts[0];
+  {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+    <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px', position: 'relative' }}>
+      <input {...getInputProps({
+        placeholder: 'Search Places ....',
+        className: 'searchBar',
+      })}
+      />
+      {address && (
+        <button
+          onClick={() => handleChange('')}
+          style={{
+            position: 'absolute',
+            right: '10px',
+            top: '50%',
+            transform: 'translateY(-50%)',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+          }}
+        >
+          <FaTimes  style={{ color: 'red', fontSize: '16px', marginBottom: '25px' }} />
+        </button>
+      )}
+      <div
+        className="suggestions-container"
+        style={{
+          marginTop: '15px',
+          fontWeight: 'bold',
+          marginLeft: '15%',
+        }}
+      >
+        {loading && <div>Loading...</div>}
+        {suggestions.map((suggestion) => {
+          if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
+            const parts = suggestion.description.split(', ');
+            const filteredDescription = parts.length > 1 ? `${parts[0]}, ${parts[parts.length - 1]}` : parts[0];
 
-                    return (
-                      <div
-                        {...getSuggestionItemProps(suggestion, {
-                          style: {
-                            backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                            padding: '18px 10px',
-                            borderBottom: '2px solid #ddd',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s ease',
-                            fontSize: '15px',
-                            color: '#000',
-                            borderRadius: '3px',
-                            margin: '0',
-                            display: 'flex',
-                            width: '300px',
-                          }
-                        })}
-                        className="suggestion-item"
-                      >
-                        <FaMapMarkerAlt style={{
-                          marginRight: '10px',
-                          backgroundColor: 'lightgray',
-                          border: '1px solid #ccc',
-                          borderRadius: '25%',
-                          padding: '5px',
-                          fontSize: '20px',
-                          color: '#000'
-                        }} />
-                        {filteredDescription}
-                      </div>
-                    );
+            return (
+              <div
+                {...getSuggestionItemProps(suggestion, {
+                  style: {
+                    backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
+                    padding: '18px 10px',
+                    borderBottom: '2px solid #ddd',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease',
+                    fontSize: '15px',
+                    color: '#000',
+                    borderRadius: '3px',
+                    margin: '0',
+                    display: 'flex',
+                    width: '300px',
                   }
-                  return null;
                 })}
+                className="suggestion-item"
+              >
+                <FaMapMarkerAlt style={{
+                  marginRight: '10px',
+                  backgroundColor: 'lightgray',
+                  border: '1px solid #ccc',
+                  borderRadius: '25%',
+                  padding: '5px',
+                  fontSize: '20px',
+                  color: '#000'
+                }} />
+                {filteredDescription}
               </div>
-            </div>
-          )}
-        </PlacesAutocomplete>
+            );
+          }
+          return null;
+        })}
+      </div>
+    </div>
+  )}
+</PlacesAutocomplete>
       </div>
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
         <p className="searchTitleCenter">Check in</p>
