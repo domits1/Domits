@@ -12,7 +12,6 @@ export const SearchBar = ({ setSearchResults }) => {
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
   const [showResults, setShowResults] = useState(false);
-  
 
   const handleChange = (address) => {
     setAddress(address);
@@ -23,7 +22,7 @@ export const SearchBar = ({ setSearchResults }) => {
     try {
       const results = await geocodeByAddress(address);
       const latLng = await getLatLng(results[0]);
-      // console.log('Geocode Success', latLng);
+      console.log('Geocode Success', latLng);
       setShowResults(true);
     } catch (error) {
       console.error('Error', error);
@@ -34,16 +33,15 @@ export const SearchBar = ({ setSearchResults }) => {
   // Verbinding met API Gateway
   const handleSearch = async () => {
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
-    const locationQueryParam = address ? `&searchTerm=${address}` : '';
-    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}${locationQueryParam}`;
-
+    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}`;
+  
     try {
-      const response = await fetch(url);
-      const data = await response.json();
-      // console.log("Data received in SearchBar:", data);
-      setSearchResults(data); // Dit stuurt de data naar de App component
+        const response = await fetch(url);
+        const data = await response.json();
+        // console.log("Data received in SearchBar:", data);
+        setSearchResults(data); // Dit stuurt de data naar de App component
     } catch (error) {
-      console.error('Error fetching accommodations:', error);
+        console.error('Error fetching accommodations:', error);
     }
   };
 
@@ -66,42 +64,41 @@ export const SearchBar = ({ setSearchResults }) => {
                 })}
               />
               <div className="suggestions-container" style={{ marginTop: '25px', fontWeight: 'bold', }}>
-                {loading && <div>Loading...</div>}
+                {loading ? <div>Loading...</div> : null}
 
                 {suggestions.map((suggestion) => {
                   if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
-                    const parts = suggestion.description.split(', ');
-                    const filteredDescription = parts.length > 1 ? `${parts[0]}, ${parts[parts.length - 1]}` : parts[0];
+                    const style = {
+                      backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
+                      padding: '18px 10px',
+                      borderBottom: '2px solid #ddd',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s ease',
+                      fontSize: '15px',
+                      color: '#000',
+                      borderRadius: '1px',
+                      margin: '0',
+                      display: 'flex',
+                      width: '300px',
+                    };
 
                     return (
                       <div
-                        {...getSuggestionItemProps(suggestion, {
-                          style: {
-                            backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                            padding: '18px 10px',
-                            borderBottom: '2px solid #ddd',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s ease',
-                            fontSize: '15px',
-                            color: '#000',
-                            borderRadius: '1px',
-                            margin: '0',
-                            display: 'flex',
-                            width: '300px',
-                          }
-                        })}
+                        {...getSuggestionItemProps(suggestion, { style })}
                         className="suggestion-item"
                       >
-                        <FaMapMarkerAlt style={{
-                          marginRight: '10px',
-                          backgroundColor: 'lightgray',
-                          border: '1px solid #ccc',
-                          borderRadius: '25%',
-                          padding: '5px',
-                          fontSize: '20px',
-                          color: '#000'
-                        }} />
-                        {filteredDescription}
+                        <FaMapMarkerAlt
+                          style={{
+                            marginRight: '10px',
+                            backgroundColor: 'lightgray',
+                            border: '1px solid #ccc',
+                            borderRadius: '25%',
+                            padding: '5px',
+                            fontSize: '20px',
+                            color: '#000'
+                          }}
+                        />
+                        {suggestion.description}
                       </div>
                     );
                   }
@@ -110,7 +107,6 @@ export const SearchBar = ({ setSearchResults }) => {
               </div>
             </div>
           )}
-
         </PlacesAutocomplete>
       </div>
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()}>
@@ -123,7 +119,6 @@ export const SearchBar = ({ setSearchResults }) => {
             onChange={(date) => setCheckIn(date)}
             placeholderText="Start date"
             dateFormat="dd/MM/yyyy"
-
           />
         </div>
       </div>
@@ -163,7 +158,6 @@ export const SearchBar = ({ setSearchResults }) => {
               minHeight: '0',
               padding: '0',
               margin: '0',
-              cursor: 'pointer',
             }),
             indicatorSeparator: () => ({ display: 'none' }),
             dropdownIndicator: () => ({ display: 'none' }),
@@ -190,7 +184,7 @@ export const SearchBar = ({ setSearchResults }) => {
         />
       </div>
       <button className="searchbar-button" type="button" onClick={handleSearch}>
-        <FaSearch />
+        <FaSearch/>
       </button>
     </div>
   );

@@ -9,10 +9,10 @@ const Accommodations = ({ searchResults }) => {
     return items.map((item) => ({
       image: `https://accommodationphotos.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
       title: item.Title,
-      details: item.description, 
+      details: item.description, // belangrijk voor om de details te krijgen
       size: `${item.Size}m²`,
       price: `€${item.Price} per night`,
-      id: item['#PK'], 
+      id: item['#PK'], // belangrijk voor om de details te krijgen
       bathrooms: `${item.Bathrooms} Bathrooms`,
       bedrooms: `${item.Bedrooms} Bedrooms`,
       persons: `${item.Persons} Persons`,
@@ -35,7 +35,6 @@ const Accommodations = ({ searchResults }) => {
       }
     };
 
-    //ophalen van de input en verwerken in resultaten
     if (searchResults && searchResults.length > 0) {
       setAccolist(formatData(searchResults));
     } else {
@@ -53,6 +52,7 @@ const Accommodations = ({ searchResults }) => {
               <div className="accocard-title">{accommodation.title}</div>
               <div className="accocard-price">{accommodation.price}</div>
               <div className="accocard-detail">{accommodation.details}</div>
+
               <div className="accocard-specs">
                 <div className="accocard-size">{accommodation.size}</div>
                 <div className="accocard-size">{accommodation.bathrooms}</div>

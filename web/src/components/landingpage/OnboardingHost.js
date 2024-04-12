@@ -95,7 +95,7 @@ function OnboardingHost() {
         Monthlypercent: 0,
         Weeklypercent: 0,
         FirstBookerpercent: 0,
-        AccommodationType: "House",
+        AccommodationType: "",
         Measurement: "",
         OwnerId: ""
     });
@@ -277,26 +277,40 @@ function OnboardingHost() {
                 return (
                     <div>
                         <div class="formContainer">
-                            <div class="form-section">
-                                <h2 className="onboardingTitle">Fill in ammendities</h2>
+                            <div class="form-section"> 
                                 <div className="formRow">
                                     <div class="room-type">
-                                        <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "entireHouse"} value="entireHouse"></input> Entire house</label>
-                                        <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "room"} value="room"></input> Room</label>
-                                        <label><input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "sharedRoom"} value="sharedRoom"></input> Shared room</label>
+                                    <h2 className="onboardingSectionTitle">Select room type</h2>
+                                        <label>
+                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "entireHouse"} value="entireHouse"></input> Entire house
+                                        </label>
+                                        <label>
+                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "room"} value="room"></input> Room
+                                        </label>
+                                        <label>
+                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "sharedRoom"} value="sharedRoom"></input> Shared room
+                                        </label>
                                     </div>
 
-
                                     <div class="quantity">
-                                        <label>How many guests? <input className="textInput" type="number" name="Guests" onChange={handleInputChange} value={formData.Guests} min={0}></input></label>
-                                        <label>How many bedrooms? <input className="textInput" type="number" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input></label>
-                                        <label>How many bathrooms? <input className="textInput" type="number" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input></label>
-                                        <label>How many fixed beds? <input className="textInput" type="number" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input></label>
+                                        <h2 className="onboardingSectionTitle">Define quantity</h2>
+                                        <label>How many guests? 
+                                            <input className="textInput" type="number" name="Guests" onChange={handleInputChange} value={formData.Guests} min={0}></input>
+                                        </label>
+                                        <label>How many bedrooms? 
+                                            <input className="textInput" type="number" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input>
+                                        </label>
+                                        <label>How many bathrooms? 
+                                            <input className="textInput" type="number" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input>
+                                        </label>
+                                        <label>How many fixed beds? 
+                                            <input className="textInput" type="number" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input>
+                                        </label>
                                     </div>
                                 </div>
 
                                 <div class="locationInput">
-                                    <h2>Fill in Location</h2>
+                                    <h2 className="onboardingSectionTitle">Fill in Location</h2>
                                     <label>
                                         Country
                                         <Select
@@ -337,7 +351,7 @@ function OnboardingHost() {
                                 </div>
                             </div>
                             <div class="map-section">
-                                <h2 className="onboardingTitle">What we show on Domits.com</h2>
+                                <h2 className="onboardingSectionTitle">What we show on Domits</h2>
                                 <MapComponent location={location} />
                             </div>
                         </div>
@@ -466,7 +480,7 @@ function OnboardingHost() {
                                             <input className="textInput" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
                                             <label>Accommodation Type</label>
                                             <select
-                                                defaultValue={formData.AccommodationType}
+                                                value={formData.AccommodationType}
                                                 onChange={handleInputChange}
                                                 className="textInput"
                                                 name="AccommodationType"
@@ -516,6 +530,7 @@ function OnboardingHost() {
             case 4:
                 return (
                     <div className="container" style={{ width: '80%' }}>
+                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">
