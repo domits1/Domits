@@ -6,7 +6,7 @@ import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
 import Assortment from './components/assortment/Assortment';
-import Home from "./components/home/Home";
+import Home from "./components/home/Accommodations";
 import Booking from "./components/booking/Booking";
 import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomits";
