@@ -131,6 +131,7 @@ function App() {
                             <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
                             <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
                             <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
+                            <Route path="/hostdashboard/chatprototype" element={<Chatprototype />} />
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />

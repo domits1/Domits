@@ -43,6 +43,7 @@ const Chat = ({ user }) => {
     const [selectedImage, setSelectedImage] = useState(null); // State to store the selected image file
     const [imageUrl, setImageUrl] = useState("");
     const [recipientEmail, setRecipientEmail] = useState('');
+    const [chatUsers, setChatUsers] = useState([]);
     
     const navigate = useNavigate(); // Get the navigate function
     const location = useLocation();
@@ -135,6 +136,17 @@ const chatContainerRef = useRef(null);
             });
             const allChats = [...sentMessages.data.listChats.items, ...receivedMessages.data.listChats.items];
             setChats(allChats);
+            const newChatUsers = allChats.reduce((users, chat) => {
+                if (!users.find(user => user.email === chat.recipientEmail)) {
+                    users.push({
+                        email: chat.recipientEmail,
+                        name: chat.recipientName, // Add recipient name if available
+                        profilePic: chat.recipientProfilePic // Add recipient profile picture if available
+                    });
+                }
+                return users;
+            }, []);
+            setChatUsers(newChatUsers);
         } catch (error) {
             console.error("Error fetching chats:", error);
         }
@@ -239,10 +251,7 @@ const chatContainerRef = useRef(null);
 
 
   
-    const chatUsers = [
-        { email: '33580@ma-web.nl', name: 'Sheima Mahmoudi', profilePic: {img1}, lastMessage: 'You got an amazing place and we are loving it!' },
-        { email: hostEmail, name: 'Django Wagner', profilePic: './django.png', lastMessage: 'Happy to hear the stay is going great' },
-    ];
+
 
     useEffect(() => {
         console.log("Unread messages:", unreadMessages);
@@ -373,19 +382,18 @@ const chatContainerRef = useRef(null);
                 <article className="chat__people">
                 <ul className="chat__users">
                     {chatUsers.map((chatUser) => (
-                            <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
-                                {unreadMessages[chatUser.email] > 0 && (
-    <figure className="chat__notification">
-        {unreadMessages[chatUser.email] > 9 ? '9+' : unreadMessages[chatUser.email]}
-    </figure>
-)}
-
+                        <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
+                            {unreadMessages[chatUser.email] > 0 && (
+                                <figure className="chat__notification">
+                                    {unreadMessages[chatUser.email] > 9 ? '9+' : unreadMessages[chatUser.email]}
+                                </figure>
+                            )}
                             <div className="chat__pfp">
                                 <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
                             </div>
                             <div className="chat__wrapper">
                                 <h2 className="chat__name">{chatUser.name}</h2>
-                                <p className="chat__preview">{chatUser.lastMessage}</p>
+                                {/* Display last message preview here */}
                             </div>
                         </li>
                     ))}
