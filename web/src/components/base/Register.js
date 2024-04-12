@@ -52,7 +52,6 @@ const Register = () => {
 
         try {
             const groupName = flowState.isHost ? "Host" : "Traveler";
-            // const groupName = "Traveler"
             const data = await Auth.signUp({
                 username: userData.email,
                 email: userData.email,

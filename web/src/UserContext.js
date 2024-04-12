@@ -8,18 +8,22 @@ export const useUser = () => useContext(UserContext);
 export const UserProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [role, setRole] = useState(null);
-
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const checkUser = async () => {
             try {
-                const userInfo = await Auth.currentAuthenticatedUser();
-                setUser(userInfo);
-                const userRole = userInfo.attributes['custom:group'] || 'guest';
-                setRole(userRole);
+                const userInfo = await Auth.currentAuthenticatedUser({ bypassCache: true });
+                if (userInfo && userInfo.attributes && 'custom:group' in userInfo.attributes) {
+                    setUser(userInfo);
+                    setRole(userInfo.attributes['custom:group']);
+                } else {
+                    console.error('User role attribute missing, handling as guest');
+                    setUser(userInfo);
+                    setRole('Traveler');
+                }
             } catch (error) {
-                console.log(error);
+                console.error("Error fetching user's role:", error);
                 setUser(null);
                 setRole(null);
             } finally {
@@ -29,5 +33,9 @@ export const UserProvider = ({ children }) => {
         checkUser();
     }, []);
     
-    return <UserContext.Provider value={{ user, role, isLoading }}>{children}</UserContext.Provider>;
+    return (
+        <UserContext.Provider value={{ user, role, isLoading }}>
+            {children}
+        </UserContext.Provider>
+    );
 };
