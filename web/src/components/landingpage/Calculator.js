@@ -6,6 +6,7 @@ import camper from "../../images/icons/camper-van.png";
 import villa from "../../images/icons/mansion.png";
 import { useNavigate } from 'react-router-dom';
 import FlowContext from '../../FlowContext';
+import { Auth } from 'aws-amplify';
 
 
 function WithNavigate(props) {
@@ -36,13 +37,37 @@ class Calculator extends Component {
     };
   }
 
-  static contextType = FlowContext; // Assigning context to the class
+  static contextType = FlowContext;
 
-    navigateToRegister = () => {
-    const { setFlowState } = this.context; // Accessing context
-    setFlowState({ isHost: true });
-    this.props.navigate('/register'); // Corrected to use navigate from props
+  navigateToRegister = () => {
+    const { setFlowState } = this.context;
+  
+    Auth.currentAuthenticatedUser({
+      bypassCache: false
+    })
+    .then(user => {
+      const userGroup = user.attributes['custom:group'];
+      if (userGroup !== 'Host') {
+        Auth.updateUserAttributes(user, {
+          'custom:group': 'Host'
+        }).then(() => {
+          this.props.navigate('/hostdashboard');
+        }).catch(error => {
+          console.error('Error updating user attributes:', error);
+          setFlowState({ isHost: true });
+          this.props.navigate('/register');
+        });
+      } else {
+        this.props.navigate('/hostdashboard');
+      }
+    })
+    .catch(err => {
+      console.error('Error fetching authenticated user:', err);
+      setFlowState({ isHost: true });
+      this.props.navigate('/register');
+    });
   };
+  
   pageUpdater = (pageNumber) => {
     this.setState({
       page: pageNumber
