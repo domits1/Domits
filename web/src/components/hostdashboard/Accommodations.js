@@ -20,8 +20,6 @@ const Accommodations = ({ searchResults }) => {
   };
 
   useEffect(() => {
-    // console.log('Nieuwe searchResults ontvangen in Accommodations:', searchResults);
-
     const fetchData = async () => {
       try {
         const response = await fetch('https://cfeo8gr5y0.execute-api.eu-north-1.amazonaws.com/dev/accommodation');
@@ -35,7 +33,6 @@ const Accommodations = ({ searchResults }) => {
       }
     };
 
-    //ophalen van de input en verwerken in resultaten
     if (searchResults && searchResults.length > 0) {
       setAccolist(formatData(searchResults));
     } else {
@@ -45,23 +42,27 @@ const Accommodations = ({ searchResults }) => {
 
   return (
     <div id="card-visibility">
-      {accolist.map((accommodation, index) => (
-        <div className="accocard" key={index}>
-          <Link to={`/listingdetails/`} className="accocard-link">
-            <img src={accommodation.image} alt={accommodation.title} />
-            <div className="accocard-content">
-              <div className="accocard-title">{accommodation.title}</div>
-              <div className="accocard-price">{accommodation.price}</div>
-              <div className="accocard-detail">{accommodation.details}</div>
-              <div className="accocard-specs">
-                <div className="accocard-size">{accommodation.size}</div>
-                <div className="accocard-size">{accommodation.bathrooms}</div>
-                <div className="accocard-size">{accommodation.bedrooms}</div>
+      {accolist.length === 0 ? (
+        <div className="no-results">Geen accommodaties gevonden</div>
+      ) : (
+        accolist.map((accommodation, index) => (
+          <div className="accocard" key={index}>
+            <Link to={`/listingdetails/`} className="accocard-link">
+              <img src={accommodation.image} alt={accommodation.title} />
+              <div className="accocard-content">
+                <div className="accocard-title">{accommodation.title}</div>
+                <div className="accocard-price">{accommodation.price}</div>
+                <div className="accocard-detail">{accommodation.details}</div>
+                <div className="accocard-specs">
+                  <div className="accocard-size">{accommodation.size}</div>
+                  <div className="accocard-size">{accommodation.bathrooms}</div>
+                  <div className="accocard-size">{accommodation.bedrooms}</div>
+                </div>
               </div>
-            </div>
-          </Link>
-        </div>
-      ))}
+            </Link>
+          </div>
+        ))
+      )}
     </div>
   );
 };

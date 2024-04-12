@@ -11,7 +11,7 @@
   font-size: 0.6rem;
 }
 .searchTitleAccommodation {
-  padding: 7px;
+  padding: 10px;
 }
 .searchTitleCenterAcco{
   color: #0D9813;
@@ -185,4 +185,10 @@
   .bar {
     width: 100%;
   }
+}
+.faTimesIcon {
+  color: 'blue';
+  font-size: 12px;
+  margin-bottom: 50px;
+
 }
