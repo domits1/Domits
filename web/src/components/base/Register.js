@@ -109,7 +109,7 @@ const Register = () => {
             ) : (
                 <div className="registerContainer">
                     {/* <button onClick={testFunc}>testacc</button> */}
-                    <div className="registerTitle">Sign Up</div>
+                    <div className="registerTitle">Create an account on Domits</div>
                     <div className="registerForm">
                         <form onSubmit={onSubmit}>
                             <label>Username:</label>
