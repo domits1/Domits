@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import "./listingdetails.css";
 import huubHomer from '../../images/huubHomerSmall.png';
 import detailbigimg from '../../images/accobigimg.png';
@@ -49,48 +49,8 @@ const images = [
 ];
 
 
-const ListingDetails = ({ searchResults }) => {
-    const [accolist, setAccolist] = useState([]);
-
-  const formatData = (items) => {
-    return items.map((item) => ({
-      image: `https://accommodationphotos.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
-      title: item.Title,
-      details: item.description, // belangrijk voor om de details te krijgen
-      size: `${item.Size}m²`,
-      price: `€${item.Price} per night`,
-      id: item['#PK'], // belangrijk voor om de details te krijgen
-      bathrooms: `${item.Bathrooms} Bathrooms`,
-      bedrooms: `${item.Bedrooms} Bedrooms`,
-      persons: `${item.Persons} Persons`,
-      description: item.description,
-      host: item.Host,
-      subtitle: item.Subtitle,
-    }));
-  };
-
-  useEffect(() => {
-    // console.log('Nieuwe searchResults ontvangen in Accommodations:', searchResults);
-
-    const fetchData = async () => {
-      try {
-        const response = await fetch('https://cfeo8gr5y0.execute-api.eu-north-1.amazonaws.com/dev/accommodation');
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-        const responseData = await response.json();
-        setAccolist(formatData(responseData));
-      } catch (error) {
-        console.error('Error fetching or processing data:', error);
-      }
-    };
-
-    if (searchResults && searchResults.length > 0) {
-      setAccolist(formatData(searchResults));
-    } else {
-      fetchData();
-    }
-  }, [searchResults]);
+const ListingDetails = () => {
+   
 
     return (
         <div className="listing-details-container">
