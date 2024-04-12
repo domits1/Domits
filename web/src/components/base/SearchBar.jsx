@@ -72,7 +72,7 @@ export const SearchBar = ({ setSearchResults }) => {
             cursor: 'pointer',
           }}
         >
-          <FaTimes  style={{ color: 'red', fontSize: '16px', marginBottom: '25px' }} />
+          <FaTimes  style={{ color: '#000', fontSize: '16px', marginBottom: '25px' }} />
         </button>
       )}
       <div
@@ -223,6 +223,7 @@ export const SearchBar = ({ setSearchResults }) => {
       left: '0px',  
       top: '50%',  
       transform: 'translateY(-50%)', 
+      fontSize: '26px',
     }),
   }}
 />
