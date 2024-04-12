@@ -1,30 +1,17 @@
 .listing-details-container {
     display: flex;
-    margin: 2% 4%;
+    /* margin: 2% 4%; */
 }
 
 .booking-information-section {
-    width: 67%;
-}
-
-.booking-details-section {
-    position: fixed;
-    right: 15px;
-}
-
-.booking-details-text {
-    color: black;
-    font-size: 18px;
-    font-family: Kanit, sans-serif;
-    font-weight: 400;
-    line-height: 24px;
-    word-wrap: break-word
+    width: 93%;
+    margin: 25px auto;
 }
 
 .listing-details-top {
     display: flex;
     align-items: center;
-    margin-bottom: 10px; /* Add margin between title/back arrow and image section */
+    margin-bottom: 10px; 
 }
 
 .listing-details-back-arrow {
@@ -52,20 +39,19 @@
 .listing-details-title {
     color: black;
     font-size: 24px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
-    line-height: 24px;
-    word-wrap: break-word;
 }
 
 .listing-details-image-window {
-    margin-top: 20px;
     display: flex;
+    justify-content: center;
     width: 100%;
     gap: 10px;
+    margin-bottom: 5px;
 }
 
-.listing-details-big-img {
+/* .listing-details-big-img {
     flex: 1;
 }
 
@@ -98,38 +84,68 @@
 
 #bottom-right-img {
     border-bottom-right-radius: 15px;
-}
+} */
 
 .price-and-rooms-row {
-    margin-top: 20px;
-    display: flex; /* Use flexbox to create a row */
-    align-items: center; /* Align items vertically */
+    display: flex;
+    align-items: center;
+    margin-top: 15px;
 }
 
 .price-per-night-text {
     margin-right: 40px;
-    color: black;
+    color: var(--primary-color);
     font-size: 24px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 24px;
     word-wrap: break-word
 }
 
 .guest-and-rooms-text {
+    margin-right: 40px;
     color: black;
-    font-size: 16px;
-    font-family: Kanit, sans-serif;
+    font-size: 14px;
+    font-family: 'Kanit', sans-serif;
     font-weight: 300;
     line-height: 24px;
     word-wrap: break-word
+}
+
+.listing-details-hostDetails {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 40px;
+}
+
+.detailsHostImg {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    margin-right: 20px;
+}
+
+.hostDetailsHeading {
+    font-size: 24px;
+    margin: 0;
+    font-weight: 500;
+}
+
+.listing-details-services-container {
+    margin-top: 25px;
+}
+
+.listing-details-services-header {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--primary-color);
 }
 
 .accommodation-detais-text {
     margin-top: 20px;
     color: black;
     font-size: 24px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 24px;
     word-wrap: break-word
@@ -259,7 +275,7 @@
     padding: 20px;
     color: black;
     font-size: 16px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 300;
     line-height: 24px;
     word-wrap: break-word;
@@ -529,7 +545,7 @@
 
     color: black;
     font-size: 20px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 24px;
     word-wrap: break-word;
@@ -558,7 +574,7 @@
 
     color: black;
     font-size: 14px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 300;
     word-wrap: break-word
 }
@@ -579,13 +595,12 @@
 
     color: rgba(0, 0, 0, 0.25);
     font-size: 14px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 300;
     word-wrap: break-word;
 }
 
 .listing-details-book-button button {
-    margin-top: 30px;
     width: 100%;
     padding: 10px 30px;
     background: #0D9813;
@@ -597,9 +612,10 @@
     display: inline-flex;
     border: none;
 
+    cursor: pointer;
     color: white;
     font-size: 20px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 24px;
     word-wrap: break-word;
@@ -611,7 +627,7 @@
     text-align: center;
     color: black;
     font-size: 14px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 300;
     word-wrap: break-word;
 }
@@ -619,7 +635,7 @@
 .listing-details-booking-information-text {
     color: black;
     font-size: 14px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 300;
     word-wrap: break-word;
 }
@@ -634,7 +650,7 @@
     margin-top: 5px;
     color: black;
     font-size: 20px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
     line-height: 24px;
     word-wrap: break-word;
@@ -644,8 +660,23 @@
     margin-top: 5px;
     color: black;
     font-size: 16px;
-    font-family: Kanit, sans-serif;
+    font-family: 'Kanit', sans-serif;
     font-weight: 500;
     text-decoration: underline;
     word-wrap: break-word
+}
+
+@media (max-width: 768px) {
+    .price-and-rooms-row {
+        flex-wrap: wrap;
+    }
+    .price-and-rooms-row button {
+        margin-top: 15px;
+    }
+}
+
+@media (max-width: 425px) {
+    .listing-details-offer-item {
+        margin-right: 60px;
+    }
 }
