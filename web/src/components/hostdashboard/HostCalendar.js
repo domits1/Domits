@@ -119,20 +119,21 @@ function HostCalendar() {
                                 <p className="undo-txt">Undo</p>
                             </button>
                         </div>
+                        {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
                         <div className="box">
-                            {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
-                                <p>Booking availability for
+                            <p>Booking availability for
                                     {" " + selectedAccommodation.Title}
-                                </p>
-                            ) : (
-                                <p>Please select your Accommodation</p>
-                            )}
+                            </p>
                             <div className="locationBox">
                                 <div className="boxColumns locationContent">
                                     <Calendar/>
                                 </div>
                             </div>
                         </div>
+                            ) : (
+                                <div>Please select your Accommodation first</div>
+                            )
+                        }
                     </div>
                 </div>}
             </div>
