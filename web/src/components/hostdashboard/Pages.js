@@ -8,53 +8,63 @@ import settings from "../../images/icons/settings-icon.png";
 import stripe from "../../images/icons/stripe-icon.png";
 import { useNavigate } from 'react-router-dom';
 import { Auth } from "aws-amplify";
-import { useAuth } from "../base/AuthContext"
 import './HostHomepage.css';
 
 function Pages() {
   const [userEmail, setUserEmail] = useState(null);
+  const [stripeAccountId, setStripeAccountId] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const setUserEmailAsync = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
         setUserEmail(userInfo.attributes.email);
-
+        const userSub = userInfo.attributes.sub;
+        const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+            method: 'POST',
+            headers: {
+                'Content-type': 'application/json; charset=UTF-8',
+            },
+            body: JSON.stringify({ sub: userSub }),
+        });
+        const data = await response.json();
+        if (data.hasStripeAccount) {
+          setStripeAccountId(data.accountId);
+        }
       } catch (error) {
-        console.error("Error setting user id:", error);
+        console.error("Error setting user email or fetching Stripe status:", error);
       }
     };
     setUserEmailAsync();
   }, []);
 
-  const navigate = useNavigate();
-
-  async function createStripeAccount() {
-    if (!userEmail) {
-      console.error('User email is not defined.');
-      return;
-    }
-
-    const options = {
-      userEmail: userEmail
-    };
-
-    try {
-      const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
-        method: 'POST',
-        body: JSON.stringify(options),
-        headers: {
-          'Content-type': 'application/json; charset=UTF-8',
-        },
-      });
-
-      if (!result.ok) {
-        throw new Error(`HTTP error! Status: ${result.status}`);
+  async function handleStripeAction() {
+    if (stripeAccountId) {
+      const stripeDashboardUrl = `https://connect.stripe.com/app/express/${stripeAccountId}/overview`;
+      window.open(stripeDashboardUrl, '_blank');
+    } else if (userEmail) {
+      const options = {
+        userEmail: userEmail
+      };
+      try {
+        const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
+          method: 'POST',
+          body: JSON.stringify(options),
+          headers: {
+            'Content-type': 'application/json; charset=UTF-8',
+          },
+        });
+        if (!result.ok) {
+          throw new Error(`HTTP error! Status: ${result.status}`);
+        }
+        const data = await result.json();
+        window.location.replace(data.url);
+      } catch (error) {
+        console.log(error);
       }
-      const data = await result.json();
-      window.location.replace(data.url);
-    } catch (error) {
-      console.log(error);
+    } else {
+      console.error('User email is not defined.');
     }
   }
 
@@ -84,13 +94,14 @@ function Pages() {
         <img src={settings} alt="Settings"></img>
         <p>Settings</p>
       </div>
-      <div className="wijzer-grn" onClick={() => createStripeAccount()}>
+      <div className="wijzer-grn" onClick={handleStripeAction}>
         <div className="stripe-icon-div">
           <img src={stripe} className="stripe-icon" alt="Stripe"></img>
         </div>
-        <p className="stripe-btn">Set Up Payments</p>
+        <p className="stripe-btn">{stripeAccountId ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>
       </div>
     </div>
   );
 }
+
 export default Pages;
