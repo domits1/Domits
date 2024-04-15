@@ -23,6 +23,7 @@ import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
 import ListingDetails from './components/listingdetails/ListingDetails';
+import DynamicListing from './components/listingdetails/dynamicListingDetails.js';
 import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
@@ -93,6 +94,7 @@ function App() {
                             <Route path="/error" element={<Error />} />
                             <Route path="/booking" element={<Booking />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
+                            <Route path="/dynamicListing" element={<DynamicListing />} />
                             <Route path="/bookingoverview" element={<BookingOverview />} />
                             <Route path="/bookingpayment" element={<BookingPayment />} />
                             <Route path="/bookingconfirmed" element={<BookingConfirmed />} />
