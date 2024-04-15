@@ -10,7 +10,7 @@ import {
   Button,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 
 function ListProperty({navigation}) {
   const [roomType, setRoomType] = useState(undefined);
@@ -21,7 +21,6 @@ function ListProperty({navigation}) {
   const [isPickerVisible, setPickerVisible] = useState(false);
   const [currentPicker, setCurrentPicker] = useState(null);
   const [tempValue, setTempValue] = useState(null); // Temporary state for picker value
-
 
   // Define the list of options
   const options = {
@@ -52,7 +51,7 @@ function ListProperty({navigation}) {
     setPickerVisible(false); // Close the picker modal
   };
 
-  const handlePickerSelect = (itemValue) => {
+  const handlePickerSelect = itemValue => {
     // Update temp value on picker scroll
     setTempValue(itemValue);
   };
@@ -118,11 +117,11 @@ function ListProperty({navigation}) {
         <View style={styles.quantityContainer}>
           <Text style={styles.quantityLabel}>How many travelers?</Text>
           <TouchableOpacity
-              style={styles.dropdownButton}
-              onPress={() => {
-                setCurrentPicker('bedrooms');
-                setPickerVisible(true);
-              }}>
+            style={styles.dropdownButton}
+            onPress={() => {
+              setCurrentPicker('bedrooms');
+              setPickerVisible(true);
+            }}>
             <Text style={styles.dropdownText}>{bedrooms || 'Select'}</Text>
           </TouchableOpacity>
         </View>
@@ -136,7 +135,7 @@ function ListProperty({navigation}) {
             <View style={styles.modalView}>
               {currentPicker && (
                   <Picker
-                      selectedValue={pickerState[currentPicker][0]} // Keep current value
+                      selectedValue={tempValue}
                       onValueChange={handlePickerSelect}
                       mode="dropdown">
                     {renderPickerItems(currentPicker)}
@@ -151,7 +150,9 @@ function ListProperty({navigation}) {
           <TouchableOpacity style={styles.footerButton}>
             <Text style={styles.footerButtonText}>Previous step</Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={navigateToLocationFillIn} style={styles.footerButton}>
+          <TouchableOpacity
+            onPress={navigateToLocationFillIn}
+            style={styles.footerButton}>
             <Text style={styles.footerButtonText}>Next step</Text>
           </TouchableOpacity>
         </View>
@@ -230,7 +231,10 @@ const styles = StyleSheet.create({
   modalView: {
     margin: 20,
     backgroundColor: 'white',
+    minWidth: 300,
+    padding: 20,
   },
+
   dropdownButton: {
     borderWidth: 1,
     borderColor: '#000',
