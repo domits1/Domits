@@ -196,7 +196,6 @@ input ModelChatFilterInput {
   isRead: ModelBooleanInput
   sortKey: ModelStringInput
   createdAt: ModelStringInput
-  updatedAt: ModelStringInput
   and: [ModelChatFilterInput]
   or: [ModelChatFilterInput]
   not: ModelChatFilterInput
@@ -223,7 +222,6 @@ input ModelChatConditionInput {
   and: [ModelChatConditionInput]
   or: [ModelChatConditionInput]
   not: ModelChatConditionInput
-  updatedAt: ModelStringInput
 }
 
 input CreateChatInput {
@@ -273,7 +271,6 @@ input ModelSubscriptionChatFilterInput {
   isRead: ModelSubscriptionBooleanInput
   sortKey: ModelSubscriptionStringInput
   createdAt: ModelSubscriptionStringInput
-  updatedAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionChatFilterInput]
   or: [ModelSubscriptionChatFilterInput]
 }
@@ -302,8 +299,6 @@ input ModelAccommodationFilterInput {
   id: ModelIDInput
   accommodation: ModelStringInput
   description: ModelStringInput
-  createdAt: ModelStringInput
-  updatedAt: ModelStringInput
   and: [ModelAccommodationFilterInput]
   or: [ModelAccommodationFilterInput]
   not: ModelAccommodationFilterInput
@@ -315,8 +310,6 @@ input ModelAccommodationConditionInput {
   and: [ModelAccommodationConditionInput]
   or: [ModelAccommodationConditionInput]
   not: ModelAccommodationConditionInput
-  createdAt: ModelStringInput
-  updatedAt: ModelStringInput
 }
 
 input CreateAccommodationInput {
@@ -339,8 +332,6 @@ input ModelSubscriptionAccommodationFilterInput {
   id: ModelSubscriptionIDInput
   accommodation: ModelSubscriptionStringInput
   description: ModelSubscriptionStringInput
-  createdAt: ModelSubscriptionStringInput
-  updatedAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionAccommodationFilterInput]
   or: [ModelSubscriptionAccommodationFilterInput]
 }
@@ -354,8 +345,6 @@ input ModelUserFilterInput {
   id: ModelIDInput
   email: ModelStringInput
   password: ModelStringInput
-  createdAt: ModelStringInput
-  updatedAt: ModelStringInput
   and: [ModelUserFilterInput]
   or: [ModelUserFilterInput]
   not: ModelUserFilterInput
@@ -367,8 +356,6 @@ input ModelUserConditionInput {
   and: [ModelUserConditionInput]
   or: [ModelUserConditionInput]
   not: ModelUserConditionInput
-  createdAt: ModelStringInput
-  updatedAt: ModelStringInput
 }
 
 input CreateUserInput {
@@ -391,8 +378,6 @@ input ModelSubscriptionUserFilterInput {
   id: ModelSubscriptionIDInput
   email: ModelSubscriptionStringInput
   password: ModelSubscriptionStringInput
-  createdAt: ModelSubscriptionStringInput
-  updatedAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionUserFilterInput]
   or: [ModelSubscriptionUserFilterInput]
 }
@@ -406,8 +391,6 @@ input ModelTodoFilterInput {
   id: ModelIDInput
   name: ModelStringInput
   description: ModelStringInput
-  createdAt: ModelStringInput
-  updatedAt: ModelStringInput
   and: [ModelTodoFilterInput]
   or: [ModelTodoFilterInput]
   not: ModelTodoFilterInput
@@ -419,8 +402,6 @@ input ModelTodoConditionInput {
   and: [ModelTodoConditionInput]
   or: [ModelTodoConditionInput]
   not: ModelTodoConditionInput
-  createdAt: ModelStringInput
-  updatedAt: ModelStringInput
 }
 
 input CreateTodoInput {
@@ -443,8 +424,6 @@ input ModelSubscriptionTodoFilterInput {
   id: ModelSubscriptionIDInput
   name: ModelSubscriptionStringInput
   description: ModelSubscriptionStringInput
-  createdAt: ModelSubscriptionStringInput
-  updatedAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionTodoFilterInput]
   or: [ModelSubscriptionTodoFilterInput]
 }

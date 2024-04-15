@@ -1,3 +1,4 @@
+import React, { useEffect, useState, useRef  } from "react";
 import "./chatprototype.css";
 import img1 from './image22.png';
 import heart from './Icon.png';
@@ -12,13 +13,13 @@ import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
 import Pages from "../guestdashboard/Pages";
-import { useNavigate } from 'react-router-dom';
-import React, { useState, useEffect } from "react";
+import { hostEmail } from "../details/Details";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
 import * as queries from "../../graphql/queries";
 import { Auth } from 'aws-amplify';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function showMessages() {
     var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -35,11 +36,51 @@ function showMessages() {
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
     const [newMessage, setNewMessage] = useState('');
-    const [recipientEmail, setRecipientEmail] = useState('');
     const [messageSent, setMessageSent] = useState(false);
     const [showDate, setShowDate] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState({}); 
     const [lastMessageDate, setLastMessageDate] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null); // State to store the selected image file
+    const [imageUrl, setImageUrl] = useState("");
+    const [recipientEmail, setRecipientEmail] = useState('');
+    const [chatUsers, setChatUsers] = useState([]);
+    
+    const navigate = useNavigate(); // Get the navigate function
+    const location = useLocation();
+    const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
+
+    // Function to update the URL with the recipient's email
+    const updateRecipientEmailInUrl = (email) => {
+        navigate(`?recipient=${email}`);
+    };
+
+    useEffect(() => {
+        // Set recipientEmail when it's available in the URL
+        const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
+        if (recipientEmailFromUrl) {
+            setRecipientEmail(recipientEmailFromUrl);
+        }
+    }, [location.search]);
+
+  useEffect(() => {
+    // Scroll chat container to bottom when component mounts or chats state updates
+    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+}, [chats]);
+
+// Reference to the chat container
+const chatContainerRef = useRef(null);
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        setSelectedImage(file);
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setImageUrl(reader.result); // Set the URL of the selected image
+        };
+        reader.readAsDataURL(file); // Read the selected file as a data URL
+    };
+
 
     const signOut = async () => {
         try {
@@ -95,6 +136,17 @@ const Chat = ({ user }) => {
             });
             const allChats = [...sentMessages.data.listChats.items, ...receivedMessages.data.listChats.items];
             setChats(allChats);
+            const newChatUsers = allChats.reduce((users, chat) => {
+                if (!users.find(user => user.email === chat.recipientEmail)) {
+                    users.push({
+                        email: chat.recipientEmail,
+                        name: chat.recipientName, // Add recipient name if available
+                        profilePic: chat.recipientProfilePic // Add recipient profile picture if available
+                    });
+                }
+                return users;
+            }, []);
+            setChatUsers(newChatUsers);
         } catch (error) {
             console.error("Error fetching chats:", error);
         }
@@ -127,6 +179,7 @@ const Chat = ({ user }) => {
     const handleUserClick = async (email) => {
         setRecipientEmail(email);
         fetchChats(email); 
+        updateRecipientEmailInUrl(email);
     
         try {
             const unreadMessagesIds = chats
@@ -198,15 +251,27 @@ const Chat = ({ user }) => {
 
 
   
-    const chatUsers = [
-        { email: '33580@ma-web.nl', name: 'Sheima Mahmoudi', profilePic: {img1}, lastMessage: 'You got an amazing place and we are loving it!' },
-        { email: 'nabilsalimi0229@gmail.com', name: 'Django Wagner', profilePic: './django.png', lastMessage: 'Happy to hear the stay is going great' },
-    ];
+
 
     useEffect(() => {
         console.log("Unread messages:", unreadMessages);
     }, [unreadMessages]);
     
+    const isToday = (date) => {
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+    };
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            // Force re-render by updating state
+            setShowDate(prevState => !prevState);
+        }, 24 * 60 * 60 * 1000); // 24 hours
+    
+        return () => clearInterval(interval);
+    }, []);
     
 
 
@@ -252,22 +317,26 @@ const Chat = ({ user }) => {
                                 </li>
                             </ul>
                         </aside>
-                        <article className="chat__chatContainer">
+                        <article className="chat__chatContainer"  ref={chatContainerRef}>
                         {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
-        <React.Fragment key={chat.id}>
-            {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
-                <p className="chat__date">
-                    <span>{new Date(chat.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
-                </p>
-            )}
-            <div
-                className={`chat__dialog chat__dialog--${chat.email === user.attributes.email ? "user" : "guest"}`}
-            >
-                {chat.text}
-                <span>{chat.email.split("@")[0]}</span>
-            </div>
-        </React.Fragment>
-    ))}
+    <React.Fragment key={chat.id}>
+        {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
+            <p className="chat__date">
+                <span>
+                    {isToday(new Date(chat.createdAt)) ? "Today" : new Date(chat.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+            </p>
+        )}
+        <div
+            className={`chat__dialog chat__dialog--${chat.email === user.attributes.email ? "user" : "guest"}`}
+        >
+            {chat.text}
+            <span>{chat.email.split("@")[0]}</span>
+        </div>
+    </React.Fragment>
+))}
+{imageUrl && <img src={imageUrl} alt="Selected" style={{ maxWidth: "100%", maxHeight: "200px" }} />} {/* Display the selected image */}
+
                             </article>
 
                     <input
@@ -303,7 +372,8 @@ const Chat = ({ user }) => {
                         </li>
                     </ul>
                     <div className="chat__buttonWrapper">
-                    <button className="chat__button chat__button--file">add files</button>
+                    <button className="chat__button chat__button--file">add files
+                    <input type="file" onChange={handleImageUpload} /></button>
                     <button className="chat__button chat__button--review">Send review link</button>
                         
                     </div>
@@ -312,19 +382,18 @@ const Chat = ({ user }) => {
                 <article className="chat__people">
                 <ul className="chat__users">
                     {chatUsers.map((chatUser) => (
-                            <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
-                                {unreadMessages[chatUser.email] > 0 && (
-    <figure className="chat__notification">
-        {unreadMessages[chatUser.email] > 9 ? '9+' : unreadMessages[chatUser.email]}
-    </figure>
-)}
-
+                        <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
+                            {unreadMessages[chatUser.email] > 0 && (
+                                <figure className="chat__notification">
+                                    {unreadMessages[chatUser.email] > 9 ? '9+' : unreadMessages[chatUser.email]}
+                                </figure>
+                            )}
                             <div className="chat__pfp">
                                 <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
                             </div>
                             <div className="chat__wrapper">
                                 <h2 className="chat__name">{chatUser.name}</h2>
-                                <p className="chat__preview">{chatUser.lastMessage}</p>
+                                {/* Display last message preview here */}
                             </div>
                         </li>
                     ))}

@@ -97,12 +97,19 @@ function App() {
                             <Route path="/bookingpayment" element={<BookingPayment />} />
                             <Route path="/bookingconfirmed" element={<BookingConfirmed />} />
                             <Route path="/bookingdeclined" element={<BookingDeclined />} />
-                            <Route path="/chatprototype" element={<Chatprototype />} />
+
+                            {/* Chat */}
+                            <Route path="/chat" element={<Chat />} />
+
+                            {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
+                            <Route path="/guestdashboard/chatprototype" element={<Chatprototype />} />
+
+                            {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
                             <Route path="/hostdashboard" element={
                                     <HostProtectedRoute>
