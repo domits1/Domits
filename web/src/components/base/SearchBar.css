@@ -190,14 +190,14 @@
 
 .button-section p,
 .guestCounter p {
-  margin: 0; /* Verenigt de marge-instellingen voor alle <p> in gastsecties */
+  margin: 0; 
   padding: 0;
 }
 
 .guest-dropdown {
   display: none;
   position: absolute;
-  top: calc(100% + 10px); /* Aangepast om te standaardiseren */
+  top: calc(100% + 10px); 
   left: 69%;
   transform: translateX(-50%);
   background: white;
@@ -284,7 +284,7 @@
 }
 
 .button-section .searchTitleGuest {
-  margin-bottom: 13px; /* Voeg meer afstand toe onder de titel */
+  margin-bottom: 13px; 
 }
 
 .guestP{
