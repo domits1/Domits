@@ -5,6 +5,7 @@ import { DateRangePicker } from 'react-date-range';
 import { addDays, addWeeks, addMonths } from 'date-fns';
 
 function Calendar({passedProp}) {
+    const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState([
     {
       startDate: new Date(),
@@ -28,9 +29,26 @@ function Calendar({passedProp}) {
     );
   };
 
-  const handleSubmit = () => {
+  const asyncSetDate = async () => {
     console.log('Selected Dates:', dateRange);
-    // further processing logic goes here, such as sending data to a backend server
+      try {
+          const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/UpdateAccommodation', {
+              method: 'PUT',
+              body: JSON.stringify(dateRange),
+              headers: {'Content-type': 'application/json; charset=UTF-8',
+              }
+          });
+          if (!response.ok) {
+              throw new Error('Failed to fetch');
+          } else {
+              console.log(response);
+          }
+      } catch (error) {
+          // Error Handling
+          console.error("Unexpected error:", error);
+      } finally {
+          setIsLoading(false); // End loading regardless of promise outcome
+      }
   };
 
   // Function to handle clicks on custom static range labels
@@ -88,7 +106,7 @@ function Calendar({passedProp}) {
           }
         ]}
       />
-      <button onClick={handleSubmit}>Submit</button>
+      <button onClick={asyncSetDate}>Submit</button>
     </div>
   );
 }
