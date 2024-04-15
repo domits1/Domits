@@ -13,13 +13,19 @@ function HostCalendar() {
     const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState(null);
     const [selectedAccommodation, setSelectedAccommodation] = useState(null);
-    let selectedAccommodationCopy = null;
 
     const handleSelectAccommodation = (event) => {
         const accommodationId = event.target.value;
-        const accommodation = accommodations.find(acc => acc.id === accommodationId);
+        console.log(event.target.value);
+        const accommodation = accommodations.find(accommodation => accommodation.ID === accommodationId);
         setSelectedAccommodation(accommodation);
+        console.log(accommodation);
     };
+    useEffect(() => {
+        if (selectedAccommodation) {
+            console.log(selectedAccommodation);
+        }
+    }, [selectedAccommodation]);
 
     useEffect(() => {
         const setUserIdAsync = async () => {
@@ -62,7 +68,6 @@ function HostCalendar() {
                         // Ensure the parsed data is an array before setting the state
                         if (Array.isArray(accommodationsArray)) {
                             setAccommodations(accommodationsArray);
-                            console.log(accommodations[0]);
                         } else {
                             // Handle the case where the parsed data is not an array
                             console.error("Parsed data is not an array:", accommodationsArray);
@@ -100,7 +105,7 @@ function HostCalendar() {
                                 <option value="">Select an Accommodation</option>
                                 {accommodations.map(accommodation => (
                                     <option key={accommodation.ID}
-                                            value={selectedAccommodation ? selectedAccommodation.ID : ''}>
+                                            value={accommodation.ID}>
                                         {accommodation.Title},
                                         {" " + accommodation.Country},
                                         {" " + accommodation.City},
@@ -115,9 +120,13 @@ function HostCalendar() {
                             </button>
                         </div>
                         <div className="box">
-                            <p>Booking availability for
-                                {selectedAccommodation}
-                            </p>
+                            {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
+                                <p>Booking availability for
+                                    {" " + selectedAccommodation.Title}
+                                </p>
+                            ) : (
+                                <p>Please select your Accommodation</p>
+                            )}
                             <div className="locationBox">
                                 <div className="boxColumns locationContent">
                                     <Calendar/>
