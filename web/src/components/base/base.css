@@ -1,7 +1,7 @@
 /* CSS for the header */
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
-    padding: 16px 50px;
+    padding: 20px 50px;
     text-align: center;
 }
 
@@ -149,7 +149,7 @@
     word-wrap: break-word;
 }
 
-/* CSS for the SearchBar */
+
 
 @media screen and (max-width: 650px) {
 
@@ -277,7 +277,6 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 24px;
-    /* 150% */
     letter-spacing: 0.16px;
 }
 

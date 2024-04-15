@@ -1,8 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 
-
-import './landing.css';
+import './onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
@@ -294,60 +293,72 @@ function OnboardingHost() {
 
                                     <div class="quantity">
                                         <h2 className="onboardingSectionTitle">Define quantity</h2>
-                                        <label>How many guests? 
-                                            <input className="textInput" type="number" name="Guests" onChange={handleInputChange} value={formData.Guests} min={0}></input>
-                                        </label>
-                                        <label>How many bedrooms? 
-                                            <input className="textInput" type="number" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input>
-                                        </label>
-                                        <label>How many bathrooms? 
-                                            <input className="textInput" type="number" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input>
-                                        </label>
-                                        <label>How many fixed beds? 
-                                            <input className="textInput" type="number" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input>
-                                        </label>
+                                        <div className="input-group">
+                                            <label for="guests">How many guests?</label>
+                                            <input className="textInput" type="number" id="guests" name="Guests" onChange={handleInputChange} value={formData.Guests} min={0}></input>
+                                        </div>
+                                        <div className="input-group">
+                                            <label for="bedrooms">How many bedrooms?</label>
+                                            <input className="textInput" type="number" id="bedrooms" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input>
+                                        </div>
+                                        <div className="input-group">
+                                            <label for="bathrooms">How many bathrooms?</label>
+                                            <input className="textInput" type="number" id="bathrooms" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input>
+                                        </div>
+                                        <div className="input-group">
+                                            <label for="beds">How many fixed beds?</label>
+                                            <input className="textInput" type="number" id="beds" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input>
+                                        </div>
                                     </div>
                                 </div>
 
                                 <div class="locationInput">
                                     <h2 className="onboardingSectionTitle">Fill in Location</h2>
-                                    <label>
-                                        Country
-                                        <Select
+                                    <div className="input-group">
+                                    <label for="country">Country</label>
+                                    <Select
                                             options={options.map(country => ({ value: country, label: country }))}
                                             name="Country"
                                             className="locationText"
                                             value={{ value: formData.Country, label: formData.Country }}
                                             onChange={handleCountryChange}
+                                            id="country"
                                         />
-                                    </label>
-                                    <label>
-                                        City
-                                        <input
+                                    </div>
+                                    <div className="input-group">
+                                    <label for="city">City</label>
+                                    <input
                                             className="textInput locationText"
                                             name="City"
                                             onChange={handleInputChange}
                                             value={formData.City}
+                                            id="city"
                                         />
-                                    </label>
-                                    <label>
+                                    </div>
+                                    <div className="input-group">
+                                    <label for="street">
                                         Street + house nr.
-                                        <input
+                                    </label>
+                                    <input
                                             className="textInput locationText"
                                             name="Street"
                                             onChange={handleInputChange}
                                             value={formData.Street}
+                                            id="street"
                                         />
-                                    </label>
-                                    <label>
+                                    </div>
+                                    <div className="input-group">
+                                    <label for="postal">
                                         Postal Code
-                                        <input
+                                    </label>
+                                    <input
                                             className="textInput locationText"
                                             name="PostalCode"
                                             onChange={handleInputChange}
                                             value={formData.PostalCode}
+                                            id="postal"
                                         />
-                                    </label>
+                                    </div>
                                 </div>
                             </div>
                             <div class="map-section">
@@ -366,9 +377,9 @@ function OnboardingHost() {
             case 2:
                 return (
                     <div>
-                        <div class="formContainer">
+                        <div class="formContainer mBottom">
                             <div class="form-section">
-                                <h2 className="onboardingTitle">Add accomodation features</h2>
+                                <h2 className="onboardingSectionTitle">Add accomodation features</h2>
                                 <div class="room-features formRow">
                                     <div>
                                         <label><input type="checkbox" className="radioInput" name="Wifi" onChange={handleInputChange} checked={formData.Features.Wifi}></input>Wifi</label>
@@ -382,7 +393,7 @@ function OnboardingHost() {
                                         <label><input type="checkbox" className="radioInput" name="Homeoffice" onChange={handleInputChange} checked={formData.Features.Homeoffice}></input>Home office</label>
                                     </div>
                                 </div>
-                                <h2>Fill in safety measures</h2>
+                                <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
                                 <div class="room-features formRow">
                                     <div>
                                         <label><input type="checkbox" className="radioInput" name="Smokedetector" onChange={handleInputChange} checked={formData.Features.Smokedetector}></input>Smoke detector</label>
@@ -395,10 +406,12 @@ function OnboardingHost() {
                             </div>
                             <div class="front-section">
                                 <div className="room-info">
-                                    <h2 className="onboardingTitle">Add accomodation information</h2>
-                                    <label>Title<input className="textInput locationText" name="Title" onChange={handleInputChange} value={formData.Title}></input></label>
-                                    <label style={{ alignItems: 'start' }}>Description<textarea className="textInput locationText" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea></label>
-                                </div>
+                                    <h2 className="onboardingSectionTitle">Add accomodation information</h2>
+                                        <label for="title">Title</label>
+                                        <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
+                                        <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
+                                        <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
+                               </div>
                             </div>
                         </div>
                         <div>
@@ -436,7 +449,7 @@ function OnboardingHost() {
                     <div>
                         <div class="formContainer">
                             <div className="formHolder">
-                                <h2 className="onboardingTitle">Systems and configurations</h2>
+                                <h2 className="onboardingSectionTitle">Systems and configurations</h2>
                                 <div className="formRow">
                                     <div class="room-features formRow">
                                         <div className="configurations">
@@ -461,10 +474,10 @@ function OnboardingHost() {
                                     </div>
                                 </div>
                             </div>
-                            <p>Rent: {formData.Rent}</p>
+                            <p>Price: {formData.Rent}</p>
                             <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="0" max="10000" step="100" />
                             <div className="formHolder">
-                                <h2>Details and Policies</h2>
+                                <h2 className="onboardingSectionTitle">Details and Policies</h2>
                                 <div className="formRow">
                                     <div class="room-features formRow">
                                         <div className="configurations">
