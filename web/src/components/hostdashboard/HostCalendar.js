@@ -12,12 +12,13 @@ function HostCalendar() {
     const [accommodations, setAccommodations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState(null);
-    let selectedAccommodation = null;
+    const [selectedAccommodation, setSelectedAccommodation] = useState(null);
     let selectedAccommodationCopy = null;
 
-    const handleSelectAccommodation = async (accommodation) => {
-        selectedAccommodation = {...accommodation};
-        selectedAccommodationCopy = {...accommodation};
+    const handleSelectAccommodation = (event) => {
+        const accommodationId = event.target.value;
+        const accommodation = accommodations.find(acc => acc.id === accommodationId);
+        setSelectedAccommodation(accommodation);
     };
 
     useEffect(() => {
@@ -96,8 +97,10 @@ function HostCalendar() {
                         <div className="box locationBox">
                             <select className="locationBox"
                                     onChange={handleSelectAccommodation}>
+                                <option value="">Select an Accommodation</option>
                                 {accommodations.map(accommodation => (
-                                    <option key={accommodation.ID} value={accommodation.ID}>
+                                    <option key={accommodation.ID}
+                                            value={selectedAccommodation ? selectedAccommodation.ID : ''}>
                                         {accommodation.Title},
                                         {" " + accommodation.Country},
                                         {" " + accommodation.City},
