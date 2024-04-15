@@ -16,16 +16,9 @@ function HostCalendar() {
 
     const handleSelectAccommodation = (event) => {
         const accommodationId = event.target.value;
-        console.log(event.target.value);
         const accommodation = accommodations.find(accommodation => accommodation.ID === accommodationId);
         setSelectedAccommodation(accommodation);
-        console.log(accommodation);
     };
-    useEffect(() => {
-        if (selectedAccommodation) {
-            console.log(selectedAccommodation);
-        }
-    }, [selectedAccommodation]);
 
     useEffect(() => {
         const setUserIdAsync = async () => {
@@ -126,12 +119,12 @@ function HostCalendar() {
                             </p>
                             <div className="locationBox">
                                 <div className="boxColumns locationContent">
-                                    <Calendar/>
+                                    <Calendar passedProp={selectedAccommodation}/>
                                 </div>
                             </div>
                         </div>
                             ) : (
-                                <div>Please select your Accommodation first</div>
+                                <div className="alert-message">Please select your Accommodation first</div>
                             )
                         }
                     </div>

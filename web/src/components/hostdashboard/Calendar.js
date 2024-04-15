@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
 import { DateRangePicker } from 'react-date-range';
 import { addDays, addWeeks, addMonths } from 'date-fns';
 
-function Calendar() {
+function Calendar({passedProp}) {
   const [dateRange, setDateRange] = useState([
     {
       startDate: new Date(),
@@ -13,6 +13,11 @@ function Calendar() {
     }
   ]);
 
+    useEffect(() => {
+        if (passedProp) {
+            console.log(passedProp);
+        }
+    }, []);
   // Custom rendering for the static range labels
   const renderStaticRangeLabel = () => {
     return (

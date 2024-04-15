@@ -267,7 +267,11 @@
   border-radius: 15px;
   justify-content: space-between;
 }
-
+.alert-message {
+  margin: 15px;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
 .undo-btn:hover {
   background-color: white;
   box-shadow: 4px 4px #003366;
