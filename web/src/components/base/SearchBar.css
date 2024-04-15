@@ -11,7 +11,7 @@
   font-size: 0.6rem;
 }
 .searchTitleAccommodation {
-  padding: 10px;
+  padding: 12px;
 }
 .searchTitleCenterAcco{
   color: #0D9813;
@@ -19,7 +19,7 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding-top: 0%; 
-  margin-top: 0px; 
+  margin-bottom: -2px; 
 }
 .bar .searchInputContainer {
   display: flex;
@@ -111,7 +111,7 @@
   outline: 0;
   cursor: pointer;
   padding: 3px;
-  margin-right: 1%;
+  /* margin-left: 20px; */
   font-size: 10px;
   line-height: 30px;
   border: 1px solid #0fa616;
@@ -168,6 +168,153 @@
 .searchBar::placeholder {
   font-size: 0.64rem;
 }
+
+
+
+
+.button-section {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  padding: 26px;
+  user-select: none; 
+   background-color: #fff;
+   border-radius: 20px;
+   width: 17%;
+   
+}
+
+.button-section p,
+.guestCounter p {
+  margin: 0; /* Verenigt de marge-instellingen voor alle <p> in gastsecties */
+  padding: 0;
+}
+
+.guest-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px); /* Aangepast om te standaardiseren */
+  left: 69%;
+  transform: translateX(-50%);
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  border-radius: 25px;
+  padding: 25px;
+  z-index: 1000;
+  width: 370px;
+  min-width: 250px;
+  box-sizing: border-box;
+  cursor: auto;
+}
+
+.button-section.active .guest-dropdown {
+  display: block;
+}
+
+.guestCounter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.guestCounter:last-child {
+  border-bottom: none;
+}
+
+.guestLabel {
+  font-size: 16px;
+  color: #000;
+  text-align: left;
+}
+
+.guestDescription {
+  font-size: 10px;
+  color: #666;
+}
+
+.guestCounter .controls {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.guestCounter .controls span {
+  margin: 0 10px;
+  font-size: 16px;
+}
+
+.guestCounter .controls button {
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background-color: #fff;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #000;
+}
+
+.guestCounter .controls button:hover {
+  border-color: #000;
+}
+
+.guestCounter .controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.searchTitleGuest{
+  color: #0D9813;
+  font-size: 0.7rem;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+  padding-top: 0%; 
+  margin-bottom: -2px; 
+  padding: 12px;
+}
+
+.button-section .searchTitleGuest {
+  margin-bottom: 13px; /* Voeg meer afstand toe onder de titel */
+}
+
+.guestP{
+  font-size: 11px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Media queries for responsive design */
+@media (max-width: 1000px) {
+  .guest-dropdown {
+    width: calc(100% - 30px); /* Adjust width for mobile */
+    left: 15px; 
+    transform: none; 
+  }
+}
+
+
 
 @media (max-width: 1000px) {
   .bar {
