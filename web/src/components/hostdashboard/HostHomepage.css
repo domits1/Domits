@@ -122,7 +122,9 @@
   align-items: center;
   justify-content: space-between;
   overflow: hidden;
+  font-size: 1.1em;
 }
+
 
 .boxText {
   width: 80%;
@@ -213,6 +215,20 @@
   border-radius: 15px;
   max-height: 15vh;
   max-width: 25vw;
+}
+.undo-btn {
+  display: flex;
+  flex-direction: row;
+  border-radius: 15px;
+  justify-content: space-between;
+}
+
+.undo-btn:hover {
+  background-color: white;
+  box-shadow: 4px 4px #003366;
+}
+.undo-txt {
+  font-size: 15px;
 }
 @media screen and (max-width: 830px) {
 
