@@ -20,7 +20,7 @@ const ListingDetails = () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify(id)
+                    body: JSON.stringify({ ID: id }) // Corrected this line
                 });
                 if (!response.ok) {
                     throw new Error('Failed to fetch accommodation data');
@@ -36,6 +36,7 @@ const ListingDetails = () => {
 
         fetchAccommodation();
     }, [id]);
+
 
     return (
         <div className="listing-details-container">
