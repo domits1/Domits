@@ -120,3 +120,14 @@
     font-size: 12px;
   }
 }
+
+.no-results {
+  text-align: center; /* Centreert de tekst */
+  color: #D8000C; /* Rode kleur voor de tekst */
+  font-size: 1.5rem; /* Grotere tekstgrootte */
+  margin: 20px; /* Voegt wat ruimte rondom de tekst toe */
+  padding: 10px; /* Voegt padding binnen de tekstcontainer toe */
+  background-color: #FFBABA; /* Lichtrode achtergrondkleur */
+  border: 1px solid #D8000C; /* Rode rand rondom de tekst */
+  border-radius: 5px; /* Maakt de hoeken van de rand rond */
+}
