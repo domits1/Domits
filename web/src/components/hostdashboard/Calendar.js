@@ -6,19 +6,34 @@ import { addDays, addWeeks, addMonths } from 'date-fns';
 
 function Calendar({passedProp}) {
     const [isLoading, setIsLoading] = useState(true);
-  const [dateRange, setDateRange] = useState([
-    {
-      startDate: new Date(),
-      endDate: addDays(new Date(), 7),
-      key: 'selection'
-    }
-  ]);
+    const [dateRange, setDateRange] = useState([
+        {
+            startDate: new Date(),
+            endDate: new Date().setDate(new Date().getDate() + 7),
+            key: 'selection'
+        }
+    ]);
 
     useEffect(() => {
-        if (passedProp) {
-            console.log(passedProp);
+        const existingStartDate = passedProp.StartDate;
+        const existingEndDate = passedProp.EndDate;
+
+        // Check if both startDate and endDate exist
+        if (existingStartDate && existingEndDate) {
+            // Convert passedProp dates from string to Date objects if necessary
+            const newStartDate = new Date(existingStartDate);
+            const newEndDate = new Date(existingEndDate);
+
+            // Update the dateRange state to use the new start and end dates
+            setDateRange([
+                {
+                    startDate: newStartDate,
+                    endDate: newEndDate,
+                    key: 'selection'
+                }
+            ]);
         }
-    }, []);
+    }, [passedProp]);
   // Custom rendering for the static range labels
   const renderStaticRangeLabel = () => {
     return (
@@ -31,17 +46,24 @@ function Calendar({passedProp}) {
 
   const asyncSetDate = async () => {
     console.log('Selected Dates:', dateRange);
+    const body = {
+        StartDate: dateRange[0].startDate,
+        EndDate: dateRange[0].endDate,
+        ID: passedProp.ID
+    }
+      setIsLoading(true);
       try {
+          console.log(body);
           const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/UpdateAccommodation', {
               method: 'PUT',
-              body: JSON.stringify(dateRange),
+              body: JSON.stringify(body),
               headers: {'Content-type': 'application/json; charset=UTF-8',
               }
           });
           if (!response.ok) {
               throw new Error('Failed to fetch');
           } else {
-              console.log(response);
+              console.log(response.body);
           }
       } catch (error) {
           // Error Handling
