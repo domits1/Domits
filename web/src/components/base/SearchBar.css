@@ -269,6 +269,7 @@
   border-color: #000;
 }
 
+/* test */
 .guestCounter .controls button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
