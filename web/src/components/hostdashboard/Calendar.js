@@ -8,8 +8,8 @@ function Calendar({passedProp}) {
     const [isLoading, setIsLoading] = useState(true);
     const [dateRange, setDateRange] = useState([
         {
-            startDate: new Date(),
-            endDate: new Date().setDate(new Date().getDate() + 7),
+            startDate: null,
+            endDate: null,
             key: 'selection'
         }
     ]);
@@ -20,9 +20,24 @@ function Calendar({passedProp}) {
 
         // Check if both startDate and endDate exist
         if (existingStartDate && existingEndDate) {
+            console.log("StartDate: " + existingStartDate);
+            console.log("EndDate: " + existingEndDate);
             // Convert passedProp dates from string to Date objects if necessary
             const newStartDate = new Date(existingStartDate);
             const newEndDate = new Date(existingEndDate);
+
+            // Update the dateRange state to use the new start and end dates
+            setDateRange([
+                {
+                    startDate: newStartDate,
+                    endDate: newEndDate,
+                    key: 'selection'
+                }
+            ]);
+        } else {
+            console.log("No dates found, setting dates automatically.");
+            const newStartDate = new Date();
+            const newEndDate = new Date().setDate(new Date().getDate() + 7);
 
             // Update the dateRange state to use the new start and end dates
             setDateRange([
