@@ -20,19 +20,9 @@ query ListAccommodations {
 }
 `;
 
-const fetchAccommodations = async () => {
-    try {
-        // Fetch data from API Gateway
-        const response = await fetch('https://cfeo8gr5y0.execute-api.eu-north-1.amazonaws.com/dev/accommodation?PK=ACCOMMODATION%2328');
-        const data = await response.json();
-        console.log("Accommodations:", data);
-    } catch (error) {
-        console.error("Error listing accommodations:", error);
-    }
-};
-
 const GuestDashboard = () => {
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
+    const [booking, setBooking] = useState(null);
 
     useEffect(() => {
         fetchAccommodations();
@@ -47,11 +37,38 @@ const GuestDashboard = () => {
                 name: userInfo.attributes['custom:username'],
                 address: userInfo.attributes.address,
                 phone: userInfo.attributes.phone_number,
-                family: "2 adults - 2 kids" // needs to be calculated later on
+                family: "2 adults - 2 kids"
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
         }
+    };
+
+    const fetchAccommodations = async () => {
+        try {
+            const response = await fetch('https://j6jrtl31pj.execute-api.eu-north-1.amazonaws.com/dev/HostBookingTab?ID=ba854300-01d2-47a7-85f0-890af0ac35fe');
+            const data = await response.json();
+            if (data && data.length > 0) {
+                const formattedBooking = formatData(data[0]);
+                setBooking(formattedBooking);
+            }
+        } catch (error) {
+            console.error("Error listing bookings:", error);
+        }
+    };
+
+    const formatData = (item) => {
+        return {
+            image: item.Images.image1, // Use the image URLs from the Images object
+            title: item.Title,
+            details: item.Description, // Use the Description property
+            size: `${item.Measurements}m²`, // Use the Measurements property
+            price: `€${item.Rent} per night`, // Use the Rent property
+            id: item.ID, // Use the ID property
+            bathrooms: `${item.Bathrooms} Bathrooms`,
+            bedrooms: `${item.Bedrooms} Bedrooms`,
+            persons: `${item.Guests} Persons`, // Use the Guests property
+        };
     };
 
     const navigate = useNavigate();
@@ -61,18 +78,18 @@ const GuestDashboard = () => {
             <div className="dashboard">
                 <Pages />
                 <div className="content">
-
                     <div className="leftContent">
                         <div className="bookingBox">
                             <h4>Current Booking</h4>
-                            <p>Tropical 12 person villa with pool</p>
-                            <img src={accommodationImg} alt="Booking" />
-                            <p>Host: John Doe</p>
-                        </div>
-                        <div className="messageBoxes">
-                            <h4>Messages (9+)</h4>
-                            <p>Go to message centre</p>
-                            <button>Go</button>
+                            {booking ? (
+                                <>
+                                    <p>{booking.accommodation}</p>
+                                    <img src={accommodationImg} alt="Booking" />
+                                    <p>Host: {booking.host}</p>
+                                </>
+                            ) : (
+                                <p>No current booking</p>
+                            )}
                         </div>
                     </div>
                     <div className="personalInfoContent">
@@ -88,5 +105,4 @@ const GuestDashboard = () => {
         </div>
     );
 }
-
 export default GuestDashboard;

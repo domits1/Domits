@@ -20,8 +20,6 @@ const Accommodations = ({ searchResults }) => {
   };
 
   useEffect(() => {
-    // console.log('Nieuwe searchResults ontvangen in Accommodations:', searchResults);
-
     const fetchData = async () => {
       try {
         const response = await fetch('https://cfeo8gr5y0.execute-api.eu-north-1.amazonaws.com/dev/accommodation');
