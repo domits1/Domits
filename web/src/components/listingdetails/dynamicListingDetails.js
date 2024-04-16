@@ -1,21 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./listingdetails.css";
 import ImageGallery from 'react-image-gallery';
 import "react-image-gallery/styles/css/image-gallery.css";
 
 const ListingDetails = () => {
-    const { id } = useParams();
+    const { search } = useLocation();
+    const searchParams = new URLSearchParams(search);
+    const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
 
     useEffect(() => {
         const fetchAccommodation = async () => {
+            console.log(id)
             try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation/${id}`); // Replace 'API' with your actual API endpoint
+                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(id)
+                });
                 if (!response.ok) {
                     throw new Error('Failed to fetch accommodation data');
                 }
-                const data = await response.json();
+                const responseData = await response.json();
+                const data = JSON.parse(responseData.body)
+                console.log(data)
                 setAccommodation(data);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
