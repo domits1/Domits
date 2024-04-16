@@ -62,12 +62,7 @@ const GuestDashboard = () => {
             image: item.Images.image1, // Use the image URLs from the Images object
             title: item.Title,
             details: item.Description, // Use the Description property
-            size: `${item.Measurements}m²`, // Use the Measurements property
-            price: `€${item.Rent} per night`, // Use the Rent property
-            id: item.ID, // Use the ID property
-            bathrooms: `${item.Bathrooms} Bathrooms`,
-            bedrooms: `${item.Bedrooms} Bedrooms`,
-            persons: `${item.Guests} Persons`, // Use the Guests property
+            id: item.ID,
         };
     };
 
@@ -83,8 +78,8 @@ const GuestDashboard = () => {
                             <h4>Current Booking</h4>
                             {booking ? (
                                 <>
-                                    <p>{booking.accommodation}</p>
-                                    <img src={accommodationImg} alt="Booking" />
+                                    <p>{booking.title}</p>
+                                    <img src={booking.image} alt={booking.title} />
                                     <p>Host: {booking.host}</p>
                                 </>
                             ) : (
