@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from "react-router-dom";
 import { Link, useLocation } from "react-router-dom";
-import "./listingdetails.css";
+import "./listing.css";
 import ImageGallery from 'react-image-gallery';
 import "react-image-gallery/styles/css/image-gallery.css";
 
@@ -10,6 +10,7 @@ const ListingDetails = () => {
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
+    const [images, setImages] = useState([]);
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -29,29 +30,35 @@ const ListingDetails = () => {
                 const data = JSON.parse(responseData.body)
                 console.log(data)
                 setAccommodation(data);
+
+                const galleryImages = Object.values(data.Images).map(url => ({
+                    original: url,
+                    thumbnail: url
+                }));
+                setImages(galleryImages);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
         };
-
         fetchAccommodation();
     }, [id]);
-
-
+    
     return (
         <div className="listing-details-container">
             {accommodation && (
                 <div className="booking-information-section">
                     <div className="listing-details-top">
                         <div className="listing-details-back-arrow">
-                            {/* Back button */}
+                            <Link to="/home">
+                                <button>Back</button>
+                            </Link>
                         </div>
                         <h1 className="listing-details-title">
                             {accommodation.Title}
                         </h1>
                     </div>
                     <div className="listing-details-image-window">
-                        {/* Image gallery */}
+                        <ImageGallery items={images} thumbnailPosition="right" />
                     </div>
                     <div className="price-and-rooms-row">
                         <p className="price-per-night-text">{`€${accommodation.Rent} per night`}</p>
@@ -60,22 +67,23 @@ const ListingDetails = () => {
                         <p className="guest-and-rooms-text">{`${accommodation.Bedrooms} bedrooms`}</p>
                         <p className="guest-and-rooms-text">{`${accommodation.Bathrooms} bathrooms`}</p>
                         <div className="listing-details-book-button">
-                            {/* Book button */}
+                            <button>Book Now</button>
                         </div>
                     </div>
                     <div className="listing-details-services-container">
-                        <div className="listing-details-hostDetails">
-                            {/* Host details */}
-                        </div>
                         <div className="listing-description">
                             <p>{accommodation.Description}</p>
                         </div>
                         <h3 className="listing-details-services-header">This place offers the following:</h3>
                         <ul className="listing-details-place-offers">
-                            {/* List of amenities */}
+                            {Object.entries(accommodation.Features).map(([feature, value]) => (
+                                <li key={feature} className="listing-details-offer-item">
+                                    <span>{value ? '✓' : '✗'}</span> {feature}
+                                </li>
+                            ))}
                         </ul>
                         <div className="show-more-button">
-                            {/* Show more button */}
+                            <button>Show more</button>
                         </div>
                     </div>
                 </div>

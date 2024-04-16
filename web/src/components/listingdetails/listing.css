@@ -1,0 +1,73 @@
+.listing-details-container {
+  width: 80%;
+  margin: auto;
+  padding: 20px;
+}
+
+.listing-details-top {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.listing-details-back-arrow {
+  margin-right: 20px;
+}
+
+.listing-details-title {
+  font-size: 24px;
+}
+
+.listing-details-image-window {
+  margin-bottom: 20px;
+}
+
+.price-and-rooms-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.price-per-night-text {
+  margin-right: 20px;
+}
+
+.listing-details-book-button button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.listing-details-services-container {
+  margin-bottom: 20px;
+}
+
+.listing-description p {
+  margin-bottom: 20px;
+}
+
+.listing-details-services-header {
+  font-size: 20px;
+  margin-bottom: 10px;
+}
+
+.listing-details-place-offers {
+  list-style: none;
+  padding: 0;
+}
+
+.listing-details-offer-item {
+  margin-bottom: 5px;
+}
+
+.show-more-button button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
