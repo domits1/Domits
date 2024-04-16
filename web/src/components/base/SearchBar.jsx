@@ -1,7 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaTimes, FaSearchLocation, FaMapPin, FaSpinner } from 'react-icons/fa';
-import ReactCountryFlag from "react-country-flag";
+import { 
+  FaTimes, 
+  FaSearchLocation, 
+  FaMapPin, 
+  FaSpinner,
+  FaBuilding,
+  FaHome,        
+  FaCaravan,     
+  FaHotel,
+  FaShip,      
+} from 'react-icons/fa';import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
@@ -220,11 +229,11 @@ export const SearchBar = ({ setSearchResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
-            { value: 'House', label: <><FaMapPin /> House</> },
-            { value: 'Villa', label: <><FaMapPin /> Villa</> },
-            { value: 'Boathouse', label: <><FaMapPin /> Boathouse</> },
-            { value: 'Camper', label: <><FaMapPin /> Camper</> },
+            { value: 'Apartment', label: <><FaBuilding /> Apartment</> },
+            { value: 'House', label: <><FaHome /> House</> },
+            { value: 'Villa', label: <><FaHotel /> Villa</> },
+            { value: 'Boathouse', label: <><FaShip /> Boathouse</> },
+            { value: 'Camper', label: <><FaCaravan /> Camper</> },
           ]}
           placeholder="Type of Accommodation"
           isSearchable={false}
@@ -334,8 +343,8 @@ export const SearchBar = ({ setSearchResults }) => {
               label="Infants"
               description="Ages 0–4"
               value={infants}
-              onIncrement={() => setInfants(children + 1)}
-              onDecrement={() => setInfants(children - 1)}
+              onIncrement={() => setInfants(infants + 1)}
+              onDecrement={() => setInfants(infants - 1)}
             />
 
             <GuestCounter
