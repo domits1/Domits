@@ -4,7 +4,7 @@
 .bar {
   width: 700px;
   margin: auto;
-  box-shadow: 0 0 5px hsl(0 0% 78%);
+  box-shadow: 0 0 5px hsl(0 0% 68%);
   border-radius: 30px;
   display: flex;
   height: 55px;
@@ -56,28 +56,36 @@
 .check-in:hover {
   cursor: 'pointer';
   /* background-color: #f0f0f0; */
-  border-radius: 15px;
+  border-radius: 20px;
   
 }
-.check-out:hover{
-  cursor: 'pointer';
-  /* background-color: #f0f0f0; */
-  border-radius: 15px;
-}
+
 .check-in{
   width: 16%;
   cursor: pointer;
+  border-radius: 20px;
+
 }
-.check-out{
-  width: 16%;
-  cursor: pointer;
-}
+
 .location{
   width: 35%;
+  border-radius: 20px;
 }
+/* .location:hover{
+  background-color: #f0f0f0;
+  
+} */
 .accommodation {
-  width: 25%;
+  width: 20%;
+  border-radius: 20px;
+  border:none;
+  height: 50px;
+
 }
+
+/* .accommodation:hover{
+  background-color: #f0f0f0;
+} */
 .searchbar-input {
   background: none;
   border: none;
@@ -91,7 +99,7 @@
 
 .bar>div {
   position: relative;
-  transition: background 250ms ease, width 250ms ease;
+  transition: background 150ms ease, width 150ms ease;
 }
 .bar>div::before {
   position: absolute;
@@ -184,9 +192,13 @@
   user-select: none; 
    background-color: #fff;
    border-radius: 20px;
-   width: 17%;
+   width: 21%;
    
 }
+
+/* .button-section:hover {
+background-color: #f0f0f0;
+} */
 
 .button-section p,
 .guestCounter p {

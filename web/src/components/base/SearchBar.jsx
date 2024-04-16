@@ -1,16 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DatePicker from 'react-datepicker';
-import { 
-  FaTimes, 
-  FaSearchLocation, 
-  FaMapPin, 
-  FaSpinner,
-  FaBuilding,
-  FaHome,        
-  FaCaravan,     
-  FaHotel,
-  FaShip,      
-} from 'react-icons/fa';import ReactCountryFlag from "react-country-flag";
+import { FaTimes, FaSearchLocation, FaMapPin, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip } from 'react-icons/fa';
+import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
@@ -43,10 +34,10 @@ export const SearchBar = ({ setSearchResults }) => {
   const [showResults, setShowResults] = useState(false);
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
-  const [infants,setInfants] = useState(0);
-
+  const [infants, setInfants] = useState(0);
   const [pets, setPets] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
+  const totalGuestsDescription = createGuestDescription(adults, children, infants, pets);
 
   const guestDropdownRef = useRef();
 
@@ -55,7 +46,17 @@ export const SearchBar = ({ setSearchResults }) => {
     setShowGuestDropdown(prevState => !prevState);
   };
 
-  // Attach or detach the event listener based on the state of showGuestDropdown
+  const totalGuests = adults + children + infants + pets;
+
+  function createGuestDescription(adults, children, infants, pets) {
+    const parts = [];
+    if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
+    if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
+    if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
+    if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
+    return parts.join(', ');
+  }
+
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (!guestDropdownRef.current.contains(e.target)) {
@@ -260,10 +261,12 @@ export const SearchBar = ({ setSearchResults }) => {
             }),
             option: (provided, state) => ({
               ...provided,
-              backgroundColor: state.isSelected ? '#ffff' : state.isFocused ? '#d0d0d0' : provided.backgroundColor,
+              backgroundColor: state.isSelected ? '#ffff' : state.isFocused ? '#f0f0f0' : provided.backgroundColor,
               color: state.isSelected || state.isFocused ? 'black' : provided.color,
               borderRadius: state.isSelected ? '10px' : state.isFocused ? '10px' : '0px',
               fontWeight: state.isSelected ? 'bold' : 'normal',
+              fontSize: '12px',
+              padding: '10px',
             }),
             menu: (provided) => ({
               ...provided,
@@ -276,29 +279,25 @@ export const SearchBar = ({ setSearchResults }) => {
               marginRight: '40px',
               borderRadius: '15px',
               textAlign: 'left',
-            }),
-            singleValue: (provided) => ({
-              ...provided,
-              fontWeight: 'normal',
-              fontSize: '13px',
+              marginTop: '15px',
             }),
             clearIndicator: (provided) => ({
               ...provided,
               color: 'black',
               position: 'absolute',
-              right: '-8px',
+              right: '0px',
               transform: 'translateY(-50%)',
               width: '32px',
               height: '32px',
             }),
             singleValue: (provided) => ({
               ...provided,
-              textAlign: 'left', 
-              fontSize: '13px',
+              marginRight: '40%', 
+              fontSize: '14px',
             }),
             placeholder: (provided) => ({
               ...provided,
-              textAlign: 'left', 
+              textAlign: 'center', 
             }),
           }}
         />
@@ -319,44 +318,42 @@ export const SearchBar = ({ setSearchResults }) => {
       </div>
 
       <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
-        <p className="searchTitleGuest ">Guests</p>
-        <p className='guestP'>Add guests</p>
+        <p className="searchTitleGuest">Guests</p>
+        <p className='guestP'>{totalGuestsDescription || 'Add guests'}</p>
         {showGuestDropdown && (
-          <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
-            <GuestCounter
-              label="Adults"
-              description="Ages 16 or above"
-              value={adults}
-              onIncrement={() => setAdults(adults + 1)}
-              onDecrement={() => setAdults(adults - 1)}
-            />
+    <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+      <GuestCounter
+        label="Adults"
+        description="Ages 16 or above"
+        value={adults}
+        onIncrement={() => setAdults(adults + 1)}
+        onDecrement={() => setAdults(adults - 1)}
+      />
+      <GuestCounter
+        label="Children"
+        description="Ages 4–16"
+        value={children}
+        onIncrement={() => setChildren(children + 1)}
+        onDecrement={() => setChildren(children - 1)}
+      />
+      <GuestCounter
+        label="Infants"
+        description="Ages 0–4"
+        value={infants}
+        onIncrement={() => setInfants(infants + 1)}
+        onDecrement={() => setInfants(infants - 1)}
+      />
+      <GuestCounter
+        label="Pets"
+        description="Normal sized pets"
+        value={pets}
+        onIncrement={() => setPets(pets + 1)}
+        onDecrement={() => setPets(pets - 1)}
+      />
+    </div>
+  )}
+</div>
 
-            <GuestCounter
-              label="Children"
-              description="Ages 4–16"
-              value={children}
-              onIncrement={() => setChildren(children + 1)}
-              onDecrement={() => setChildren(children - 1)}
-            />
-
-            <GuestCounter
-              label="Infants"
-              description="Ages 0–4"
-              value={infants}
-              onIncrement={() => setInfants(infants + 1)}
-              onDecrement={() => setInfants(infants - 1)}
-            />
-
-            <GuestCounter
-              label="Pets"
-              description="Normal sized pets"
-              value={pets}
-              onIncrement={() => setPets(pets + 1)}
-              onDecrement={() => setPets(pets - 1)}
-            />
-          </div>
-        )}
-      </div>
 
 
 
