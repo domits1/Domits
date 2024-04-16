@@ -99,11 +99,15 @@
     margin-top: 0;
     margin-bottom: 10px;
     background: #0D9813;
+    border: none;
+    box-shadow: none;
 }
 
 .dropdownRegisterButton, .dropdownLogoutButton {
-    margin-top: 0;
+    margin-top: 10px;
     background-color: #49146A;
+    border: none;
+    box-shadow: none;
 }
 
 .dropdownLogoutButton {

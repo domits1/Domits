@@ -6,6 +6,7 @@ import camper from "../../images/icons/camper-van.png";
 import villa from "../../images/icons/mansion.png";
 import { useNavigate } from 'react-router-dom';
 import FlowContext from '../../FlowContext';
+import { Auth } from 'aws-amplify';
 
 
 function WithNavigate(props) {
@@ -36,13 +37,37 @@ class Calculator extends Component {
     };
   }
 
-  static contextType = FlowContext; // Assigning context to the class
+  static contextType = FlowContext;
 
-    navigateToRegister = () => {
-    const { setFlowState } = this.context; // Accessing context
-    setFlowState({ isHost: true });
-    this.props.navigate('/register'); // Corrected to use navigate from props
+  navigateToRegister = () => {
+    const { setFlowState } = this.context;
+  
+    Auth.currentAuthenticatedUser({
+      bypassCache: false
+    })
+    .then(user => {
+      const userGroup = user.attributes['custom:group'];
+      if (userGroup !== 'Host') {
+        Auth.updateUserAttributes(user, {
+          'custom:group': 'Host'
+        }).then(() => {
+          this.props.navigate('/hostdashboard');
+        }).catch(error => {
+          console.error('Error updating user attributes:', error);
+          setFlowState({ isHost: true });
+          this.props.navigate('/register');
+        });
+      } else {
+        this.props.navigate('/hostdashboard');
+      }
+    })
+    .catch(err => {
+      console.error('Error fetching authenticated user:', err);
+      setFlowState({ isHost: true });
+      this.props.navigate('/register');
+    });
   };
+  
   pageUpdater = (pageNumber) => {
     this.setState({
       page: pageNumber
@@ -80,11 +105,11 @@ class Calculator extends Component {
           <div>
             <p>What type of real-estate do you want to host?</p>
             <div className='cardHolder'>
-              {this.renderCard(0, "House", huis, selectedCards[1] === 0, 150)}
-              {this.renderCard(1, "Appartement", appartement, selectedCards[1] === 1, 95)}
-              {this.renderCard(2, "Camper", camper, selectedCards[1] === 2, 170)}
-              {this.renderCard(3, "Boat", boothuis, selectedCards[1] === 3, 72)}
-              {this.renderCard(4, "Villa", villa, selectedCards[1] === 4, 205)}
+              {this.renderCard(0, "House", huis, selectedCards[1] === 0, 110)}
+              {this.renderCard(1, "Appartement", appartement, selectedCards[1] === 1, 90)}
+              {this.renderCard(2, "Camper", camper, selectedCards[1] === 2, 75)}
+              {this.renderCard(3, "Boat", boothuis, selectedCards[1] === 3, 80)}
+              {this.renderCard(4, "Villa", villa, selectedCards[1] === 4, 150)}
             </div>
             <div className='buttonHolder'>
             <button className='nextButtons' onClick={this.resetCalculator}>Reset</button>
@@ -95,13 +120,13 @@ class Calculator extends Component {
       case 2:
         return (
           <div>
-            <p>How many reserved nights?</p>
+            <p>What are the measurements of this real-estate?</p>
             <div className='cardHolder'>
-              {this.renderCard(0, '1', null, selectedCards[2] === 0, 1)}
-              {this.renderCard(1, '2', null, selectedCards[2] === 1, 2)}
-              {this.renderCard(2, '3', null, selectedCards[2] === 2, 3)}
-              {this.renderCard(3, '4', null, selectedCards[2] === 3, 4)}
-              {this.renderCard(4, '5 or more', null, selectedCards[2] === 4, 5)}
+              {this.renderCard(0, '< 25m²', null, selectedCards[2] === 0, 0.80)}
+              {this.renderCard(1, '25 - 50 m²', null, selectedCards[2] === 1, 0.95)}
+              {this.renderCard(2, '50 - 75 m²', null, selectedCards[2] === 2, 1)}
+              {this.renderCard(3, '75 - 100 m²', null, selectedCards[2] === 3, 1.15)}
+              {this.renderCard(4, '> 100 m²', null, selectedCards[2] === 4, 1.30)}
             </div>
             <div className='buttonHolder'>
               <button className='nextButtons' onClick={() => this.pageUpdater(page - 1)}>Previous</button>
@@ -115,10 +140,10 @@ class Calculator extends Component {
             <p>How many sleeping places does your real-estate have?</p>
             <div className='cardHolder'>
               {this.renderCard(0, '1', null, selectedCards[3] === 0, 1)}
-              {this.renderCard(1, '2', null, selectedCards[3] === 1, 1.05)}
-              {this.renderCard(2, '3', null, selectedCards[3] === 2, 1.20)}
-              {this.renderCard(3, '4', null, selectedCards[3] === 3, 1.23)}
-              {this.renderCard(4, '5 or more', null, selectedCards[3] === 4, 1.50)}
+              {this.renderCard(1, '2', null, selectedCards[3] === 1, 1.50)}
+              {this.renderCard(2, '3', null, selectedCards[3] === 2, 2)}
+              {this.renderCard(3, '4', null, selectedCards[3] === 3, 2.50)}
+              {this.renderCard(4, '5 or more', null, selectedCards[3] === 4, 3)}
             </div>
             <div className='buttonHolder'>
               <button className='nextButtons' onClick={() => this.pageUpdater(page - 1)}>Previous</button>
@@ -143,12 +168,12 @@ class Calculator extends Component {
         return (
           <div>
             <div className='priceDisplay'>
-              <h2>Est. ${this.calculatePrice()} per night</h2>
+              <h2>Est. ${this.calculatePrice()} Total Earning Potential</h2>
             </div>
             <div className='infoHolder'>
               <h4 className="infoHeader">Based on:</h4>
               <p className="info">Real Estate Type: {this.displayInfo(1)}</p>
-              <p className="info">Reserved nights: {this.displayInfo(2)}</p>
+              <p className="info">Measurements: {this.displayInfo(2)}</p>
               <p className="info">Sleeping Places: {this.displayInfo(3)}</p>
               <p className="info">Service fees: 12%</p>
               <p>If this estimation interests you, please consider hosting on Domits!</p>

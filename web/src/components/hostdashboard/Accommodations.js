@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import './Accommodations.css';
 
 const Accommodations = ({ searchResults }) => {
-  const [accolist, setAccolist] = useState([]);
+    const [accolist, setAccolist] = useState([]);
+    const navigate = useNavigate();
 
   const formatData = (items) => {
     return items.map((item) => ({

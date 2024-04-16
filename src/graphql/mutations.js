@@ -10,6 +10,8 @@ export const createChat = /* GraphQL */ `
       id
       text
       email
+      recipientEmail
+      isRead
       sortKey
       createdAt
       updatedAt
@@ -26,6 +28,8 @@ export const updateChat = /* GraphQL */ `
       id
       text
       email
+      recipientEmail
+      isRead
       sortKey
       createdAt
       updatedAt
@@ -42,6 +46,8 @@ export const deleteChat = /* GraphQL */ `
       id
       text
       email
+      recipientEmail
+      isRead
       sortKey
       createdAt
       updatedAt

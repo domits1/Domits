@@ -52,7 +52,6 @@ const Register = () => {
 
         try {
             const groupName = flowState.isHost ? "Host" : "Traveler";
-            // const groupName = "Traveler"
             const data = await Auth.signUp({
                 username: userData.email,
                 email: userData.email,
@@ -109,7 +108,7 @@ const Register = () => {
             ) : (
                 <div className="registerContainer">
                     {/* <button onClick={testFunc}>testacc</button> */}
-                    <div className="registerTitle">Sign Up</div>
+                    <div className="registerTitle">Create an account on Domits</div>
                     <div className="registerForm">
                         <form onSubmit={onSubmit}>
                             <label>Username:</label>
