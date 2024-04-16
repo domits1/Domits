@@ -2,7 +2,7 @@
   box-sizing: border-box;
 }
 .bar {
-  width: 700px;
+  width: 730px;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 68%);
   border-radius: 30px;
@@ -61,14 +61,14 @@
 }
 
 .check-in{
-  width: 16%;
+  width: 19%;
   cursor: pointer;
   border-radius: 20px;
 
 }
 
 .location{
-  width: 35%;
+  width: 32%;
   border-radius: 20px;
 }
 /* .location:hover{
@@ -192,7 +192,7 @@
   user-select: none; 
    background-color: #fff;
    border-radius: 20px;
-   width: 21%;
+   width: 22%;
    
 }
 
@@ -210,13 +210,13 @@ background-color: #f0f0f0;
   display: none;
   position: absolute;
   top: calc(100% + 10px); 
-  left: 69%;
+  left: 77%;
   transform: translateX(-50%);
   background: white;
   box-shadow: 0 4px 8px rgba(0,0,0,0.4);
   border-radius: 25px;
   padding: 25px;
-  z-index: 1000;
+  z-index: 1;
   width: 370px;
   min-width: 250px;
   box-sizing: border-box;
@@ -233,7 +233,7 @@ background-color: #f0f0f0;
   justify-content: space-between;
   margin-bottom: 20px;
   padding: 10px 0;
-  border-bottom: 1px solid #ccc;
+  border-bottom: 1px solid #0a770f;
 }
 
 .guestCounter:last-child {
@@ -242,7 +242,7 @@ background-color: #f0f0f0;
 
 .guestLabel {
   font-size: 16px;
-  color: #000;
+  color: #0a770f;
   text-align: left;
 }
 
@@ -263,7 +263,7 @@ background-color: #f0f0f0;
 }
 
 .guestCounter .controls button {
-  border: 2px solid #ccc;
+  border: 2px solid #cccccc;
   border-radius: 50%;
   background-color: #fff;
   padding: 0;
@@ -278,7 +278,7 @@ background-color: #f0f0f0;
 }
 
 .guestCounter .controls button:hover {
-  border-color: #000;
+  border-color: #0a770f;
 }
 
 /* test */
@@ -305,8 +305,88 @@ background-color: #f0f0f0;
 }
 
 
+/* Vergroot de kalender en voeg moderne styling toe */
+.react-datepicker {
+  transform: scale(1.2); /* Vergroot de kalender met 20% */
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  cursor:auto;
+  top: 40px;
+}
+
+.react-datepicker__header {
+  background-color: #ffffff;
+  border-bottom: none;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header,
+.react-datepicker-year-header {
+  color: #333333;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.react-datepicker__day-name, 
+.react-datepicker__day, 
+.react-datepicker__time-name {
+  color: #333333;
+  font-size: 14px;
+}
+
+.react-datepicker__day--selected, 
+.react-datepicker__day--in-range, 
+.react-datepicker__day--keyboard-selected {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.react-datepicker__day:hover,
+.react-datepicker__day--selected:hover,
+.react-datepicker__day--in-range:hover,
+.react-datepicker__day--keyboard-selected:hover {
+  background-color: #084298;
+}
+
+/* Pas de navigatieknoppen aan */
+.react-datepicker__navigation--previous {
+  border-right-color: #0d6efd;
+}
+
+.react-datepicker__navigation--next {
+  border-left-color: #0d6efd;
+}
 
 
+.react-datepicker__navigation:hover,
+.react-datepicker__navigation:focus {
+  background-color: transparent;
+}
+.react-datepicker__header .react-datepicker__current-month,
+.react-datepicker__header .react-datepicker-year-header {
+    /* Verberg de dropdown pijl */
+    background-image: none;
+    
+    /* Als de pijl een pseudo-element is: */
+    position: relative;
+}
+
+.react-datepicker__header .react-datepicker__current-month::after,
+.react-datepicker__header .react-datepicker-year-header::after {
+    display: none;
+}
+
+.date-reset-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: absolute;
+  right: 0%; 
+  top: 40%;
+  transform: translateY(-20%);
+}
 
 
 

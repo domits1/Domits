@@ -12,6 +12,7 @@ const handleButtonClick = (e) => {
   e.stopPropagation();
 };
 
+
 const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) => (
   <div className="guestCounter" onClick={handleButtonClick}>
     <div>
@@ -28,9 +29,12 @@ const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) =
 
 export const SearchBar = ({ setSearchResults }) => {
   const [checkIn, setCheckIn] = useState(null);
+  const [checkOut, setCheckOut] = useState(null);
+  const [dateRange, setDateRange] = useState([null, null]);
   const [guests, setGuests] = useState(1);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
@@ -38,8 +42,26 @@ export const SearchBar = ({ setSearchResults }) => {
   const [pets, setPets] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const totalGuestsDescription = createGuestDescription(adults, children, infants, pets);
+  const [startDate, endDate] = dateRange;
+  const [accommodationFocused, setAccommodationFocused] = useState(false);
+
 
   const guestDropdownRef = useRef();
+  const resetGuests = (e) => {
+    e.stopPropagation();
+
+    setAdults(0);
+    setChildren(0);
+    setInfants(0);
+    setPets(0);
+  };
+
+  const resetDates = (e) => {
+    e.stopPropagation();
+    setDateRange([null, null]);
+    setCheckIn(null);
+    setCheckOut(null);
+  };
 
   const toggleGuestDropdown = (e) => {
     e.stopPropagation();
@@ -77,6 +99,28 @@ export const SearchBar = ({ setSearchResults }) => {
     setAddress(address);
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
+
+  const handleAccommodationFocus = () => {
+    setAccommodationFocused(true);
+  };
+
+  const handleAccommodationBlur = () => {
+    setAccommodationFocused(false);
+  };
+
+  const clearAccommodation = () => {
+    setAccommodation('');
+    setAccommodationFocused(false); z
+  };
+
+
   const handleSelect = async (address) => {
     setAddress(address);
     try {
@@ -86,6 +130,12 @@ export const SearchBar = ({ setSearchResults }) => {
     } catch (error) {
       setShowResults(false);
     }
+  };
+
+  const handleClear = (event) => {
+    event.preventDefault(); // Voorkom dat de focus verloren gaat
+    setAddress('');
+    setIsFocused(false);
   };
 
   // Verbinding met API Gateway
@@ -115,9 +165,7 @@ export const SearchBar = ({ setSearchResults }) => {
       'VIETNAM': 'VN',
       'VATICAN CITY': 'VA',
       'VENEZUELA': 'VE',
-
       //hier kan je landen toevoegen waarvan vlaggen missen
-
     };
 
     let country = countries.all.find((c) => c.name.toUpperCase() === countryName.toUpperCase());
@@ -134,23 +182,24 @@ export const SearchBar = ({ setSearchResults }) => {
     return country ? country.alpha2 : "";
   };
 
-
   return (
     <div className="bar">
       <div className="location">
         <p className="searchTitle">Location</p>
-
         <PlacesAutocomplete value={address} onChange={handleChange} onSelect={handleSelect} searchOptions={{ language: 'en' }}>
           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
             <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px', position: 'relative' }}>
-              <input {...getInputProps({
-                placeholder: 'Search Places ....',
-                className: 'searchBar',
-              })}
+              <input
+                {...getInputProps({
+                  placeholder: 'Search Places ....',
+                  className: 'searchBar',
+                  onFocus: handleFocus,
+                  onBlur: handleBlur,
+                })}
               />
-              {address && (
+              {address && isFocused && (
                 <button
-                  onClick={() => handleChange('')}
+                  onMouseDown={handleClear}
                   style={{
                     position: 'absolute',
                     right: '10px',
@@ -225,7 +274,6 @@ export const SearchBar = ({ setSearchResults }) => {
 
       <div className="accommodation searchInputContainer">
         <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p>
-
         <Select
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
@@ -274,9 +322,9 @@ export const SearchBar = ({ setSearchResults }) => {
               borderRadius: '8px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
               padding: '5px',
-              width: '187px',
+              width: '200px',
               maxHeight: '300px',
-              marginRight: '40px',
+              right: '-15%',
               borderRadius: '15px',
               textAlign: 'left',
               marginTop: '15px',
@@ -292,12 +340,12 @@ export const SearchBar = ({ setSearchResults }) => {
             }),
             singleValue: (provided) => ({
               ...provided,
-              marginRight: '40%', 
+              marginRight: '10%',
               fontSize: '14px',
             }),
             placeholder: (provided) => ({
               ...provided,
-              textAlign: 'center', 
+              textAlign: 'center',
             }),
           }}
         />
@@ -310,52 +358,76 @@ export const SearchBar = ({ setSearchResults }) => {
             className="searchbar-input"
             id="checkInPicker"
             selected={checkIn}
-            onChange={(date) => setCheckIn(date)}
             placeholderText="Start-End date"
-            dateFormat="dd/MM/yyyy"
+            showYearDropdown={false}
+            showMonthDropdown={true}
+            dateFormat="MM/dd"
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={update => setDateRange(update)}
           />
+          {startDate && endDate && (
+  <button onClick={resetDates} className="date-reset-button">
+    <FaTimes />
+  </button>
+)}
         </div>
       </div>
 
       <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
         <p className="searchTitleGuest">Guests</p>
+        {totalGuests > 0 && (
+          <button
+            className="clear-guests"
+            onClick={resetGuests}
+            style={{
+              position: 'absolute',
+              right: '10px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+            }}
+          >
+            <FaTimes />
+          </button>
+        )}
         <p className='guestP'>{totalGuestsDescription || 'Add guests'}</p>
         {showGuestDropdown && (
-    <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
-      <GuestCounter
-        label="Adults"
-        description="Ages 16 or above"
-        value={adults}
-        onIncrement={() => setAdults(adults + 1)}
-        onDecrement={() => setAdults(adults - 1)}
-      />
-      <GuestCounter
-        label="Children"
-        description="Ages 4–16"
-        value={children}
-        onIncrement={() => setChildren(children + 1)}
-        onDecrement={() => setChildren(children - 1)}
-      />
-      <GuestCounter
-        label="Infants"
-        description="Ages 0–4"
-        value={infants}
-        onIncrement={() => setInfants(infants + 1)}
-        onDecrement={() => setInfants(infants - 1)}
-      />
-      <GuestCounter
-        label="Pets"
-        description="Normal sized pets"
-        value={pets}
-        onIncrement={() => setPets(pets + 1)}
-        onDecrement={() => setPets(pets - 1)}
-      />
-    </div>
-  )}
-</div>
-
-
-
+          <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+            <GuestCounter
+              label="Adults"
+              description="Ages 16 or above"
+              value={adults}
+              onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
+              onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
+            />
+            <GuestCounter
+              label="Children"
+              description="Ages 2–16"
+              value={children}
+              onIncrement={() => setChildren(children < 13 ? children + 1 : children)}
+              onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
+            />
+            <GuestCounter
+              label="Infants"
+              description="Ages 0–2"
+              value={infants}
+              onIncrement={() => setInfants(infants < 13 ? infants + 1 : infants)}
+              onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
+            />
+            <GuestCounter
+              label="Pets"
+              description="Normal sized pets"
+              value={pets}
+              onIncrement={() => setPets(pets < 13 ? pets + 1 : pets)}
+              onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
+            />
+          </div>
+        )}
+      </div>
 
       <button className="searchbar-button" type="button" onClick={handleSearch}>
         <FaSearchLocation size={16} style={{ position: 'relative', top: '-2px' }} />
