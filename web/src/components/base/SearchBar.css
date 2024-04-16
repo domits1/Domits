@@ -2,7 +2,7 @@
   box-sizing: border-box;
 }
 .bar {
-  width: 100%;
+  width: 700px;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 30px;
@@ -11,7 +11,7 @@
   font-size: 0.6rem;
 }
 .searchTitleAccommodation {
-  padding: 10px;
+  padding: 12px;
 }
 .searchTitleCenterAcco{
   color: #0D9813;
@@ -19,12 +19,13 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding-top: 0%; 
-  margin-top: 0px; 
+  margin-bottom: -2px; 
 }
 .bar .searchInputContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 5px;
 }
 .suggestions-container {
   position: relative;
@@ -34,7 +35,7 @@
   margin: 0 !important;
 }
 .autocomplete-container input::placeholder {
-  text-align: center;
+  text-align: left;
 }
 .bar input {
   margin-top: 0;
@@ -49,21 +50,26 @@
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 10px;
+  padding-top: 3px; 
+  margin-top: 0px; 
 }
-
 .check-in:hover {
   cursor: 'pointer';
+  /* background-color: #f0f0f0; */
+  border-radius: 15px;
+  
 }
 .check-out:hover{
   cursor: 'pointer';
+  /* background-color: #f0f0f0; */
+  border-radius: 15px;
 }
 .check-in{
-  width: 20%;
+  width: 16%;
   cursor: pointer;
 }
 .check-out{
-  width: 20%;
+  width: 16%;
   cursor: pointer;
 }
 .location{
@@ -105,27 +111,26 @@
   outline: 0;
   cursor: pointer;
   padding: 3px;
-  margin-right: 1%;
+  /* margin-left: 20px; */
   font-size: 10px;
   line-height: 30px;
-  border: 1px solid #0D9813;
+  border: 1px solid #0fa616;
   border-radius: 50%;
   color: #ffffff;
-  background-color: transparent;
+  background-color: #0fa616;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  transition: 0.2s cubic-bezier(0.3, 0, 0.5, 1);
-  transition-property: color;
-  height: 33px;
-  width: 33px;
-  margin-top: 10px;
+  height: 41px;
+  width: 41px;
+  margin-top:8px;
 }
 .searchbar-button:hover {
-  background-color: #0D9813;
-  border-color: #0D9813;
-  transition-duration: 0.4s;
+  background-color: #0a770f;
+  border-color: #0a770f;
+  transition-duration: 0.3s
 }
 .searchbar-button svg {
-  color: black; /* Zwarte kleur voor FaSearch-icoon */
+  color: rgb(255, 255, 255);
+  margin-top: 10px;
 }
 .searchbar-button:hover svg {
   animation: bounce 0.7s ease 1;
@@ -151,9 +156,11 @@
 .searchBar {
   background: none;
   border: none;
-  padding: 0.6rem 0 0 0;
+  padding-top: 1rem;
+  padding-bottom: 0.4rem; 
   text-align: left;
-  width: 80%;
+  margin-bottom: 10px;
+  width: 85%;
 }
 .searchBar:focus {
   outline: none;
@@ -161,6 +168,154 @@
 .searchBar::placeholder {
   font-size: 0.64rem;
 }
+
+
+
+
+.button-section {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  padding: 26px;
+  user-select: none; 
+   background-color: #fff;
+   border-radius: 20px;
+   width: 17%;
+   
+}
+
+.button-section p,
+.guestCounter p {
+  margin: 0; 
+  padding: 0;
+}
+
+.guest-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 10px); 
+  left: 69%;
+  transform: translateX(-50%);
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  border-radius: 25px;
+  padding: 25px;
+  z-index: 1000;
+  width: 370px;
+  min-width: 250px;
+  box-sizing: border-box;
+  cursor: auto;
+}
+
+.button-section.active .guest-dropdown {
+  display: block;
+}
+
+.guestCounter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding: 10px 0;
+  border-bottom: 1px solid #ccc;
+}
+
+.guestCounter:last-child {
+  border-bottom: none;
+}
+
+.guestLabel {
+  font-size: 16px;
+  color: #000;
+  text-align: left;
+}
+
+.guestDescription {
+  font-size: 10px;
+  color: #666;
+}
+
+.guestCounter .controls {
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.guestCounter .controls span {
+  margin: 0 10px;
+  font-size: 16px;
+}
+
+.guestCounter .controls button {
+  border: 2px solid #ccc;
+  border-radius: 50%;
+  background-color: #fff;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  color: #000;
+}
+
+.guestCounter .controls button:hover {
+  border-color: #000;
+}
+
+/* test */
+.guestCounter .controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.searchTitleGuest{
+  color: #0D9813;
+  font-size: 0.7rem;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+  padding-top: 0%; 
+  margin-bottom: -2px; 
+  padding: 12px;
+}
+
+.button-section .searchTitleGuest {
+  margin-bottom: 13px; 
+}
+
+.guestP{
+  font-size: 11px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* Media queries for responsive design */
+@media (max-width: 1000px) {
+  .guest-dropdown {
+    width: calc(100% - 30px); /* Adjust width for mobile */
+    left: 15px; 
+    transform: none; 
+  }
+}
+
+
 
 @media (max-width: 1000px) {
   .bar {
