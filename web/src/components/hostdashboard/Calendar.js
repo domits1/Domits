@@ -139,11 +139,15 @@ function Calendar({passedProp}) {
                   }
               ]}
           />
-          <button className="submit-btn" onClick={asyncSetDate}>Submit</button>
-          <button className="undo-btn" onClick={resetDates}>
-              <img src={returner} alt="Return"></img>
-              <p className="undo-txt">Undo</p>
-          </button>
+          <div className="button-box">
+              <button className="undo-btn" onClick={resetDates}>
+                  <img src={returner} className="returner" alt="Return"></img>
+                  <p className="btn-text">Undo</p>
+              </button>
+              <button className="save-btn" onClick={asyncSetDate}>
+                  <p className="btn-text">Save</p>
+              </button>
+          </div>
       </div>
   );
 }
