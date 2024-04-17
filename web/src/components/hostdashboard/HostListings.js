@@ -57,7 +57,6 @@ function HostListings() {
                     }
                     // Extracting the response body
                     const data = await response.json();
-
                     // Now 'responseData' should contain your {statusCode, headers, body}
                     // Check if 'responseData.body' exists and is a string
                     if (data.body && typeof data.body === 'string') {
@@ -77,6 +76,9 @@ function HostListings() {
                     console.error("Unexpected error:", error);
                 } finally {
                     setIsLoading(false); // End loading regardless of promise outcome
+                    for (let acc in accommodations) {
+                        console.log(accommodations[acc].Images)
+                    }
                 }
             }
         };
@@ -114,10 +116,11 @@ function HostListings() {
                                                 {accommodation.Street},
                                                 {accommodation.PostalCode}
                                             </p>
-                                            <img src={house} alt="icon" className="accommodation-img"/>
+                                            <img src={accommodation.Images.image1} alt="icon"
+                                                 className="accommodation-img"/>
                                         </div>
                                         <div className="accommodation-right">
-                                            <p>Description: {accommodation.Description}</p>
+                                        <p>Description: {accommodation.Description}</p>
                                             <p>Listed on: {formatDate(accommodation.createdAt)}</p>
                                             <p>Measurements: {accommodation.Measurements}m²</p>
                                             <p>Features: {accommodation.Features.length > 0 ? (
