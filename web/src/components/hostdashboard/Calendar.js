@@ -20,8 +20,6 @@ function Calendar({passedProp}) {
 
         // Check if both startDate and endDate exist
         if (existingStartDate && existingEndDate) {
-            console.log("StartDate: " + existingStartDate);
-            console.log("EndDate: " + existingEndDate);
             // Convert passedProp dates from string to Date objects if necessary
             const newStartDate = new Date(existingStartDate);
             const newEndDate = new Date(existingEndDate);
@@ -35,7 +33,7 @@ function Calendar({passedProp}) {
                 }
             ]);
         } else {
-            console.log("No dates found, setting dates automatically.");
+            // If the dates are not set yet, set the date automatically and let the host decide.
             const newStartDate = new Date();
             const newEndDate = new Date().setDate(new Date().getDate() + 7);
 
@@ -48,7 +46,7 @@ function Calendar({passedProp}) {
                 }
             ]);
         }
-    }, [passedProp]);
+    }, [passedProp.ID]);
   // Custom rendering for the static range labels
   const renderStaticRangeLabel = () => {
     return (
@@ -60,10 +58,9 @@ function Calendar({passedProp}) {
   };
 
   const asyncSetDate = async () => {
-    console.log('Selected Dates:', dateRange);
     const body = {
-        StartDate: dateRange[0].startDate,
-        EndDate: dateRange[0].endDate,
+        StartDate: dateRange[0].startDate.toISOString(),
+        EndDate: dateRange[0].endDate.toISOString(),
         ID: passedProp.ID
     }
       setIsLoading(true);
@@ -78,7 +75,16 @@ function Calendar({passedProp}) {
           if (!response.ok) {
               throw new Error('Failed to fetch');
           } else {
-              console.log(response.body);
+              const data = await response.json(); // Parse JSON response
+              const jsonData = JSON.parse(data.body);
+              if (jsonData.updatedAttributes) {
+                  const updatedAttributes = jsonData.updatedAttributes;
+                  passedProp.StartDate = updatedAttributes.StartDate;
+                  passedProp.EndDate = updatedAttributes.EndDate;
+              } else {
+                  console.log("updatedAttributes is missing in the response");
+                  // Handle the absence of expected data, e.g., by setting defaults or showing an error message
+              }
           }
       } catch (error) {
           // Error Handling
