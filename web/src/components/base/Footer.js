@@ -119,7 +119,7 @@ const Footer = () => {
 
             <div className='footer-terms'>
                 <div className="logo">
-                    <img src={logo} width={25} alt="Logo" />
+                    <img src={logo} width={100} alt="Logo" />
                 </div>
                 <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
                 <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>

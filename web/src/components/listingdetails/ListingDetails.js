@@ -50,43 +50,7 @@ const images = [
 
 
 const ListingDetails = () => {
-    const { search } = useLocation();
-    const searchParams = new URLSearchParams(search);
-    const pk = searchParams.get('pk');
-    const sk = searchParams.get('sk');
-
-    const [details, setDetails] = useState(null);
-
-    useEffect(() => {
-        const apiUrl = 'https://ifas5yup7h23iph6phpczxdqsq0yeaxs.lambda-url.eu-north-1.on.aws/';
-
-        const fetchDetails = async () => {
-            try {
-                const response = await fetch(apiUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ pk: pk, sk: sk })
-                });
-
-                if (!response.ok) {
-                    throw new Error('Server responded with status: ' + response.status);
-                }
-
-                const data = await response.json();
-                setDetails(data);
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        };
-
-        fetchDetails();
-    }, [pk, sk]);
-
-    if (!details) {
-        return <div>Loading...</div>;
-    }
+   
 
     return (
         <div className="listing-details-container">
@@ -111,7 +75,6 @@ const ListingDetails = () => {
                 <div className="price-and-rooms-row">
                     <p className="price-per-night-text">$1400 per night</p>
                     <p className="guest-and-rooms-text">8 guests</p>
-                    <p className="guest-and-rooms-text">8 beds</p>
                     <p className="guest-and-rooms-text">4 bedrooms</p>
                     <p className="guest-and-rooms-text">4 bathrooms</p>
                     <div className="listing-details-book-button">
@@ -161,8 +124,8 @@ const ListingDetails = () => {
                             <img src={pluscircleblack} alt="Plust circle" />Show more
                         </button>
                     </div>
-                </div>       
-            </div>
+                </div>
+            </div> 
         </div>
     );
 }
