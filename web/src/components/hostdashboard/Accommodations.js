@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import './Accommodations.css';
-import SkeletonLoader from '../base/SkeletonLoader'; // Zorg ervoor dat dit component bestaat
+import SkeletonLoader from '../base/SkeletonLoader'; 
 
 const Accommodations = ({ searchResults, loading }) => {
   const [accolist, setAccolist] = useState([]);
