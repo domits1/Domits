@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import house from "../../images/house1.jpeg";
 import spinner from "../../images/spinnner.gif";
+import ImageSlider from "./ImageSlider";
 
 function HostListings() {
     const [accommodations, setAccommodations] = useState([]);
@@ -76,9 +77,6 @@ function HostListings() {
                     console.error("Unexpected error:", error);
                 } finally {
                     setIsLoading(false); // End loading regardless of promise outcome
-                    for (let acc in accommodations) {
-                        console.log(accommodations[acc].Images)
-                    }
                 }
             }
         };
@@ -116,8 +114,7 @@ function HostListings() {
                                                 {accommodation.Street},
                                                 {accommodation.PostalCode}
                                             </p>
-                                            <img src={accommodation.Images.image1} alt="icon"
-                                                 className="accommodation-img"/>
+                                            <ImageSlider images={accommodation.Images} />
                                         </div>
                                         <div className="accommodation-right">
                                         <p>Description: {accommodation.Description}</p>
