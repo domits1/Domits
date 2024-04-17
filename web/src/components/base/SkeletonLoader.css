@@ -1,0 +1,79 @@
+.skeleton-card {
+  width: 21.7rem; 
+  margin: 1%; 
+  background-color: #eee; 
+  border-radius: 15px; 
+  overflow: hidden;
+  display: inline-block; 
+  vertical-align: top;
+  position: relative;
+  transition: all 0.5s ease-in-out; 
+  height: auto; 
+}
+
+.skeleton-image {
+  width: 100%;
+  height: 235px; 
+  background-color: #ddd; 
+  border-radius: 15px 15px 0 0; 
+}
+
+.skeleton-content {
+  padding: 15px 0; 
+}
+
+.skeleton-title {
+  width: 90%; 
+  height: 20px; 
+  background-color: #ccc;
+  margin: 10px auto; 
+  border-radius: 4px; 
+}
+
+.skeleton-detail {
+  width: 80%; 
+  height: 20px; 
+  background-color: #ccc;
+  margin: 10px auto; 
+  border-radius: 4px; 
+}
+
+.skeleton-specs {
+  display: flex;
+  justify-content: space-around; 
+  padding: 0 15px;
+}
+
+.skeleton-size {
+  width: 28%; 
+  height: 20px; 
+  background-color: #ccc;
+  border-radius: 4px; 
+}
+
+
+
+@media (max-width: 1292px) {
+  .skeleton-card {
+    flex: 0 1 31%; 
+  }
+  .skeleton-card:not(:nth-child(3n)) {
+    margin-right: 2%; 
+  }
+}
+
+@media (max-width: 856px) {
+  .skeleton-card {
+    flex: 0 1 48%; 
+  }
+  .skeleton-card:not(:nth-child(2n)) {
+    margin-right: 2%; 
+  }
+}
+
+@media (max-width: 480px) {
+  .skeleton-card {
+    flex: 0 1 100%; 
+    margin-right: 0; 
+  }
+}
