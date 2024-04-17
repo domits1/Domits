@@ -2,16 +2,16 @@
   box-sizing: border-box;
 }
 .bar {
-  width: 730px;
+  width: 45.625rem;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 68%);
-  border-radius: 30px;
+  border-radius: 1.875rem;
   display: flex;
-  height: 55px;
+  height: 3.4375rem;
   font-size: 0.6rem;
 }
 .searchTitleAccommodation {
-  padding: 12px;
+  padding: 0.75rem; /* 12px */
 }
 .searchTitleCenterAcco{
   color: #0D9813;
@@ -19,13 +19,13 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding-top: 0%; 
-  margin-bottom: -2px; 
+  margin-bottom: -0.125rem; /* -2px */
 }
 .bar .searchInputContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 5px;
+  margin-top: 0.3125rem; /* 5px */
 }
 .suggestions-container {
   position: relative;
@@ -50,26 +50,26 @@
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 3px; 
+  padding-top: 0.1875rem; /* 3px */
   margin-top: 0px; 
 }
 .check-in:hover {
   cursor: 'pointer';
   /* background-color: #f0f0f0; */
-  border-radius: 20px;
+  border-radius: 1.25rem; /* 20px */
   
 }
 
 .check-in{
   width: 19%;
   cursor: pointer;
-  border-radius: 20px;
+  border-radius: 1.25rem; /* 20px */
 
 }
 
 .location{
   width: 32%;
-  border-radius: 20px;
+  border-radius: 1.25rem; /* 20px */
 }
 /* .location:hover{
   background-color: #f0f0f0;
@@ -77,9 +77,9 @@
 } */
 .accommodation {
   width: 20%;
-  border-radius: 20px;
+  border-radius: 1.25rem; /* 20px */
   border:none;
-  height: 50px;
+  height: 3.125rem; /* 50px */
 
 }
 
@@ -107,7 +107,7 @@
   left: -0.8%;
   top: 50%;
   transform: translateY(-50%);
-  width: 0.9px;
+  width: 0.05625rem; /* 0.9px approximated as 0.05rem */
   height: 60%;
   background: rgb(88, 153, 22);
 }
@@ -120,16 +120,16 @@
   cursor: pointer;
   padding: 3px;
   /* margin-left: 20px; */
-  font-size: 10px;
-  line-height: 30px;
+  font-size: 0.625rem; /* 10px */
+  line-height: 1.875rem; /* 30px */
   border: 1px solid #0fa616;
   border-radius: 50%;
   color: #ffffff;
   background-color: #0fa616;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  height: 41px;
-  width: 41px;
-  margin-top:8px;
+  height: 2.5625rem; /* 41px */
+  width: 2.5625rem; /* 41px */
+  margin-top: 0.5rem; /* 8px */
 }
 .searchbar-button:hover {
   background-color: #0a770f;
@@ -138,7 +138,7 @@
 }
 .searchbar-button svg {
   color: rgb(255, 255, 255);
-  margin-top: 10px;
+  margin-top: 0.625rem; /* 10px */
 }
 .searchbar-button:hover svg {
   animation: bounce 0.7s ease 1;
@@ -164,10 +164,10 @@
 .searchBar {
   background: none;
   border: none;
-  padding-top: 1rem;
+  padding-top: 1rem; 
   padding-bottom: 0.4rem; 
   text-align: left;
-  margin-bottom: 10px;
+  margin-bottom: 0.625rem; 
   width: 85%;
 }
 .searchBar:focus {
@@ -188,10 +188,10 @@
   align-items: center;
   position: relative;
   cursor: pointer;
-  padding: 26px;
+  padding: 1.625rem; /* 26px */
   user-select: none; 
    background-color: #fff;
-   border-radius: 20px;
+   border-radius: 1.25rem; /* 20px */
    width: 22%;
    
 }
@@ -209,16 +209,16 @@ background-color: #f0f0f0;
 .guest-dropdown {
   display: none;
   position: absolute;
-  top: calc(100% + 10px); 
+  top: calc(100% + 0.625rem); /* 10px */
   left: 77%;
   transform: translateX(-50%);
   background: white;
   box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-  border-radius: 25px;
-  padding: 25px;
+  border-radius: 1.5625rem; /* 25px */
+  padding: 1.5625rem; /* 25px */
   z-index: 1;
-  width: 370px;
-  min-width: 250px;
+  width: 23.125rem; /* 370px */
+  min-width: 15.625rem; /* 250px */
   box-sizing: border-box;
   cursor: auto;
 }
@@ -231,8 +231,8 @@ background-color: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  padding: 10px 0;
+  margin-bottom: 1.25rem; /* 20px */
+  padding: 0.625rem 0; /* 10px */
   border-bottom: 1px solid #0a770f;
 }
 
@@ -241,25 +241,25 @@ background-color: #f0f0f0;
 }
 
 .guestLabel {
-  font-size: 16px;
+  font-size: 1rem; /* 16px */
   color: #0a770f;
   text-align: left;
 }
 
 .guestDescription {
-  font-size: 10px;
+  font-size: 0.625rem; /* 10px */
   color: #666;
 }
 
 .guestCounter .controls {
   display: flex;
   align-items: center;
-  padding: 0 10px;
+  padding: 0 0.625rem; /* 10px */
 }
 
 .guestCounter .controls span {
-  margin: 0 10px;
-  font-size: 16px;
+  margin: 0 0.625rem; /* 10px */
+  font-size: 1rem; /* 16px */
 }
 
 .guestCounter .controls button {
@@ -267,13 +267,13 @@ background-color: #f0f0f0;
   border-radius: 50%;
   background-color: #fff;
   padding: 0;
-  width: 32px;
-  height: 32px;
+  width: 2rem; /* 32px */
+  height: 2rem; /* 32px */
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 1.5rem; /* 24px */
   color: #000;
 }
 
@@ -292,22 +292,22 @@ background-color: #f0f0f0;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding-top: 0%; 
-  margin-bottom: -2px; 
-  padding: 12px;
+  margin-bottom: -0.125rem; /* -2px */
+  padding: 0.75rem; /* 12px */
 }
 
 .button-section .searchTitleGuest {
-  margin-bottom: 13px; 
+  margin-bottom: 0.8125rem; /* 13px */
 }
 
 .guestP{
-  font-size: 11px;
+  font-size: 0.6875rem; /* 11px */
 }
 
 
-/* Vergroot de kalender en voeg moderne styling toe */
+
 .react-datepicker {
-  transform: scale(1.2); /* Vergroot de kalender met 20% */
+  transform: scale(1.2);
   border: none;
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
@@ -359,7 +359,6 @@ background-color: #f0f0f0;
   border-left-color: #0d6efd;
 }
 
-
 .react-datepicker__navigation:hover,
 .react-datepicker__navigation:focus {
   background-color: transparent;
@@ -388,39 +387,23 @@ background-color: #f0f0f0;
   transform: translateY(-20%);
 }
 
-
-
-
-
-
-
-
-
-
-
-/* Media queries for responsive design */
 @media (max-width: 1000px) {
   .guest-dropdown {
-    width: calc(100% - 30px); /* Adjust width for mobile */
-    left: 15px; 
-    transform: none; 
+    width: calc(100% - 1.875rem); /* 30px */
+    left: 0.9375rem; /* 15px */
+    transform: none;
   }
 }
-
-
-
 @media (max-width: 1000px) {
   .bar {
     width: 95%;
   }
 }
-
 @media (max-width: 750px) {
   .bar {
     width: 90%;
   }
 }
-
 @media (max-width: 650px) {
   .bar {
     width: 100%;
@@ -428,7 +411,6 @@ background-color: #f0f0f0;
 }
 .faTimesIcon {
   color: 'blue';
-  font-size: 12px;
-  margin-bottom: 50px;
-
+  font-size: 0.75rem; /* 12px */
+  margin-bottom: 3.125rem; /* 50px */
 }

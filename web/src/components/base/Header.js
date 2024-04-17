@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
 import {Auth} from "aws-amplify";
 
-function Header({ setSearchResults }) {
+function Header({ setSearchResults, setLoading }) {
     const navigate = useNavigate();
 
     const navigateToLogin = () => {
@@ -96,7 +96,7 @@ function Header({ setSearchResults }) {
                         </a>
                     </div>
                     <div className='App'>
-                    <SearchBar setSearchResults={setSearchResults} />
+                    <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
                     </div>
                     <div className='headerRight'>
                         <button className="headerButtons headerHostButton" onClick={navigateToLanding}>

@@ -27,7 +27,7 @@ const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) =
   </div>
 );
 
-export const SearchBar = ({ setSearchResults }) => {
+export const SearchBar = ({ setSearchResults, setLoading }) => { 
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
@@ -140,6 +140,7 @@ export const SearchBar = ({ setSearchResults }) => {
 
   // Verbinding met API Gateway
   const handleSearch = async () => {
+    setLoading(true); // Activeer de laadstatus
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
     const locationQueryParam = address ? `&searchTerm=${address}` : '';
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}${locationQueryParam}`;
@@ -147,10 +148,15 @@ export const SearchBar = ({ setSearchResults }) => {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setSearchResults(data); // Dit stuurt de data naar de App component
+      setTimeout(() => {  // Voeg vertraging toe voor het testen
+        setSearchResults(data);
+        setLoading(false); // Deactiveer de laadstatus na voltooiing
+      }, 100);  // Vertraging van 2000 ms (2 seconden)
     } catch (error) {
+      console.error('Error during fetch:', error);
+      setLoading(false); // Zorg ervoor dat loading wordt uitgezet bij een fout
     }
-  };
+};
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {

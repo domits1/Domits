@@ -1,19 +1,19 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import './Accommodations.css';
+import SkeletonLoader from '../base/SkeletonLoader'; // Zorg ervoor dat dit component bestaat
 
-const Accommodations = ({ searchResults }) => {
-    const [accolist, setAccolist] = useState([]);
-    const navigate = useNavigate();
+const Accommodations = ({ searchResults, loading }) => {
+  const [accolist, setAccolist] = useState([]);
 
   const formatData = (items) => {
     return items.map((item) => ({
       image: `https://accommodationphotos.s3.eu-north-1.amazonaws.com/${item.PhotoUrls}`,
       title: item.Title,
-      details: item.description, 
+      details: item.description,
       size: `${item.Size}m²`,
       price: `€${item.Price} per night`,
-      id: item['#PK'], 
+      id: item['#PK'],
       bathrooms: `${item.Bathrooms} Bathrooms`,
       bedrooms: `${item.Bedrooms} Bedrooms`,
       persons: `${item.Persons} Persons`,
@@ -41,11 +41,17 @@ const Accommodations = ({ searchResults }) => {
     }
   }, [searchResults]);
 
+  if (loading) {
+    return (
+      <div id="card-visibility">
+        {Array(8).fill().map((_, index) => <SkeletonLoader key={index} />)}
+      </div>
+    );
+  }
+
   return (
     <div id="card-visibility">
-      {accolist.length === 0 ? (
-        <div className="no-results">Geen accommodaties gevonden</div>
-      ) : (
+      {accolist.length > 0 ? (
         accolist.map((accommodation, index) => (
           <div className="accocard" key={index}>
             <Link to={`/listingdetails/`} className="accocard-link">
@@ -63,6 +69,8 @@ const Accommodations = ({ searchResults }) => {
             </Link>
           </div>
         ))
+      ) : (
+        <div className="no-results">Geen accommodaties gevonden</div>
       )}
     </div>
   );
