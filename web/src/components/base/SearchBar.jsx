@@ -140,7 +140,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
   // Verbinding met API Gateway
   const handleSearch = async () => {
-    setLoading(true); // Activeer de laadstatus
+    setLoading(true); 
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
     const locationQueryParam = address ? `&searchTerm=${address}` : '';
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}${locationQueryParam}`;
@@ -148,13 +148,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setTimeout(() => {  // Voeg vertraging toe voor het testen
+      setTimeout(() => {  
         setSearchResults(data);
-        setLoading(false); // Deactiveer de laadstatus na voltooiing
-      }, 100);  // Vertraging van 2000 ms (2 seconden)
+        setLoading(false); 
+      }, 100);  
     } catch (error) {
       console.error('Error during fetch:', error);
-      setLoading(false); // Zorg ervoor dat loading wordt uitgezet bij een fout
+      setLoading(false); 
     }
 };
 
