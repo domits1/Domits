@@ -4,7 +4,6 @@ import './HostHomepage.css'
 import add from "../../images/icons/host-add.png";
 import { useNavigate } from 'react-router-dom';
 import { Auth } from "aws-amplify";
-import house from "../../images/house1.jpeg";
 import spinner from "../../images/spinnner.gif";
 
 function HostListings() {
@@ -114,7 +113,7 @@ function HostListings() {
                                                 {accommodation.Street},
                                                 {accommodation.PostalCode}
                                             </p>
-                                            <img src={house} alt="icon" className="accommodation-img"/>
+                                            <img src={accommodation.Images.image1} alt="icon" className="accommodation-img"/>
                                         </div>
                                         <div className="accommodation-right">
                                             <p>Description: {accommodation.Description}</p>

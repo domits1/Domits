@@ -13,7 +13,6 @@ import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
 import Pages from "../guestdashboard/Pages";
-import { hostEmail } from "../details/Details";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
