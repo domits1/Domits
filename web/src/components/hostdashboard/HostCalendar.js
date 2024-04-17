@@ -2,7 +2,6 @@ import React, {useEffect, useState} from "react";
 import Pages from "./Pages";
 import Calendar from "./Calendar";
 import chevron from "../../images/icons/chevron-horizontal.png";
-import returner from "../../images/icons/return-icon.png";
 import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
@@ -107,10 +106,7 @@ function HostCalendar() {
                                     </option>
                                 ))}
                             </select>
-                            <button className="undo-btn">
-                                <img src={returner} alt="Return"></img>
-                                <p className="undo-txt">Undo</p>
-                            </button>
+
                         </div>
                         {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
                         <div className="box">
