@@ -124,6 +124,14 @@ function HostListings() {
                                                 getFeatures(accommodation.Features)) : ('none')}
                                             </p>
                                             <p>Rent: ${accommodation.Rent}</p>
+                                            { accommodation.StartDate && accommodation.EndDate ?
+                                                (<p>
+                                                    Available from
+                                                    {" " + formatDate(accommodation.StartDate) + " "}
+                                                    to {" " + formatDate(accommodation.EndDate) + " "}
+                                                </p>) :
+                                                (<p>Date range not set</p>)
+                                            }
                                         </div>
                                     </div>
                                 ))
