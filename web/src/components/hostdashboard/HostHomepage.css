@@ -43,6 +43,10 @@
   background-color: #3da942;
 }
 
+.StripeSpinner {
+  height: 4vw;
+}
+
 .container {
   width: 90%;
   margin: auto;

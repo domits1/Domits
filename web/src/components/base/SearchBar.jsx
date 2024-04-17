@@ -1,19 +1,76 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaTimes, FaSearchLocation, FaMapPin, FaSpinner } from 'react-icons/fa';
-import ReactCountryFlag from "react-country-flag";
+import { 
+  FaTimes, 
+  FaSearchLocation, 
+  FaMapPin, 
+  FaSpinner,
+  FaBuilding,
+  FaHome,        
+  FaCaravan,     
+  FaHotel,
+  FaShip,      
+} from 'react-icons/fa';import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
 import 'react-datepicker/dist/react-datepicker.css';
 import './SearchBar.css';
 
+const handleButtonClick = (e) => {
+  e.stopPropagation();
+};
+
+const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) => (
+  <div className="guestCounter" onClick={handleButtonClick}>
+    <div>
+      <p className="guestLabel">{label}</p>
+      <p className="guestDescription">{description}</p>
+    </div>
+    <div className="controls">
+      <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
+      <span>{value}</span>
+      <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
+    </div>
+  </div>
+);
+
 export const SearchBar = ({ setSearchResults }) => {
   const [checkIn, setCheckIn] = useState(null);
-  const [checkOut, setCheckOut] = useState(null);
+  const [guests, setGuests] = useState(1);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
   const [showResults, setShowResults] = useState(false);
+  const [adults, setAdults] = useState(0);
+  const [children, setChildren] = useState(0);
+  const [infants,setInfants] = useState(0);
+
+  const [pets, setPets] = useState(0);
+  const [showGuestDropdown, setShowGuestDropdown] = useState(false);
+
+  const guestDropdownRef = useRef();
+
+  const toggleGuestDropdown = (e) => {
+    e.stopPropagation();
+    setShowGuestDropdown(prevState => !prevState);
+  };
+
+  // Attach or detach the event listener based on the state of showGuestDropdown
+  useEffect(() => {
+    const handleOutsideClick = (e) => {
+      if (!guestDropdownRef.current.contains(e.target)) {
+        setShowGuestDropdown(false);
+      }
+    };
+
+    if (showGuestDropdown) {
+      document.addEventListener('mousedown', handleOutsideClick);
+    } else {
+      document.removeEventListener('mousedown', handleOutsideClick);
+    }
+
+    return () => document.removeEventListener('mousedown', handleOutsideClick);
+  }, [showGuestDropdown]);
 
   const handleChange = (address) => {
     setAddress(address);
@@ -33,8 +90,9 @@ export const SearchBar = ({ setSearchResults }) => {
   // Verbinding met API Gateway
   const handleSearch = async () => {
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
-    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}`;
-  
+    const locationQueryParam = address ? `&searchTerm=${address}` : '';
+    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}${locationQueryParam}`;
+
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -74,8 +132,8 @@ export const SearchBar = ({ setSearchResults }) => {
 
     return country ? country.alpha2 : "";
   };
-  
-  
+
+
   return (
     <div className="bar">
       <div className="location">
@@ -163,32 +221,6 @@ export const SearchBar = ({ setSearchResults }) => {
           )}
         </PlacesAutocomplete>
       </div>
-      <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()}>
-        <p className="searchTitleCenter">Check in</p>
-        <div className="searchInputContainer" style={{ marginTop: '10px' }}>
-          <DatePicker
-            className="searchbar-input"
-            id="checkInPicker"
-            selected={checkIn}
-            onChange={(date) => setCheckIn(date)}
-            placeholderText="Start date"
-            dateFormat="dd/MM/yyyy"
-          />
-        </div>
-      </div>
-      <div className='check-out' onClick={() => document.getElementById('checkOutPicker').click()}>
-        <p className="searchTitleCenter">Check out</p>
-        <div className='searchInputContainer' style={{ marginTop: '10px' }}>
-          <DatePicker
-            className="searchbar-input"
-            id="checkOutPicker"
-            selected={checkOut}
-            onChange={(date) => setCheckOut(date)}
-            placeholderText="End date"
-            dateFormat="dd/MM/yyyy"
-          />
-        </div>
-      </div>
 
       <div className="accommodation searchInputContainer">
         <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p>
@@ -197,11 +229,11 @@ export const SearchBar = ({ setSearchResults }) => {
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
           options={[
-            { value: 'Apartment', label: <><FaMapPin /> Apartment</> },
-            { value: 'House', label: <><FaMapPin /> House</> },
-            { value: 'Villa', label: <><FaMapPin /> Villa</> },
-            { value: 'Boathouse', label: <><FaMapPin /> Boathouse</> },
-            { value: 'Camper', label: <><FaMapPin /> Camper</> },
+            { value: 'Apartment', label: <><FaBuilding /> Apartment</> },
+            { value: 'House', label: <><FaHome /> House</> },
+            { value: 'Villa', label: <><FaHotel /> Villa</> },
+            { value: 'Boathouse', label: <><FaShip /> Boathouse</> },
+            { value: 'Camper', label: <><FaCaravan /> Camper</> },
           ]}
           placeholder="Type of Accommodation"
           isSearchable={false}
@@ -254,14 +286,80 @@ export const SearchBar = ({ setSearchResults }) => {
               ...provided,
               color: 'black',
               position: 'absolute',
-              left: '-10px',
-              transform: 'translateY(-45%)', // Schaal de indicator met 1.5
-              width: '32px', // Stel een specifieke breedte in
+              right: '-8px',
+              transform: 'translateY(-50%)',
+              width: '32px',
               height: '32px',
+            }),
+            singleValue: (provided) => ({
+              ...provided,
+              textAlign: 'left', 
+              fontSize: '13px',
+            }),
+            placeholder: (provided) => ({
+              ...provided,
+              textAlign: 'left', 
             }),
           }}
         />
       </div>
+
+      <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
+        <p className="searchTitleCenter">Check in/out</p>
+        <div className="searchInputContainer" style={{ marginTop: '10px' }}>
+          <DatePicker
+            className="searchbar-input"
+            id="checkInPicker"
+            selected={checkIn}
+            onChange={(date) => setCheckIn(date)}
+            placeholderText="Start-End date"
+            dateFormat="dd/MM/yyyy"
+          />
+        </div>
+      </div>
+
+      <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
+        <p className="searchTitleGuest ">Guests</p>
+        <p className='guestP'>Add guests</p>
+        {showGuestDropdown && (
+          <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+            <GuestCounter
+              label="Adults"
+              description="Ages 16 or above"
+              value={adults}
+              onIncrement={() => setAdults(adults + 1)}
+              onDecrement={() => setAdults(adults - 1)}
+            />
+
+            <GuestCounter
+              label="Children"
+              description="Ages 4–16"
+              value={children}
+              onIncrement={() => setChildren(children + 1)}
+              onDecrement={() => setChildren(children - 1)}
+            />
+
+            <GuestCounter
+              label="Infants"
+              description="Ages 0–4"
+              value={infants}
+              onIncrement={() => setInfants(infants + 1)}
+              onDecrement={() => setInfants(infants - 1)}
+            />
+
+            <GuestCounter
+              label="Pets"
+              description="Normal sized pets"
+              value={pets}
+              onIncrement={() => setPets(pets + 1)}
+              onDecrement={() => setPets(pets - 1)}
+            />
+          </div>
+        )}
+      </div>
+
+
+
       <button className="searchbar-button" type="button" onClick={handleSearch}>
         <FaSearchLocation size={16} style={{ position: 'relative', top: '-2px' }} />
       </button>
