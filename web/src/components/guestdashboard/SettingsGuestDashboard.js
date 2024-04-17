@@ -1,16 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './settingsguestdashboard.css';
-
 import './guestdashboard.css';
 import Pages from "./Pages.js";
-
 import { useNavigate } from 'react-router-dom';
 import faceHappyIcon from "../../images/icons/face-happy.png";
 import settingsIcon from "../../images/icons/settings-04.png";
-
+import { Auth } from 'aws-amplify';
 
 const SettingsTab = () => {
     const navigate = useNavigate();
+    const [showMailSettings, setShowMailSettings] = useState(false);
 
     return (
         <div className="guestdashboard">
@@ -20,10 +19,20 @@ const SettingsTab = () => {
                     <div className="settingsContent">
                         <h1>Lotte’s Settings</h1>
                         <div className="settingsOptions">
-                            <div className="settingsOption" onClick={() => { /* Implement logic */ }}>
+                            {/* Dropdown for mail settings */}
+                            <div className="settingsOption" onClick={() => setShowMailSettings(!showMailSettings)}>
                                 <img src={settingsIcon} alt="Settings Icon" className="icon" />
                                 Change mail settings and frequency
                             </div>
+                            {showMailSettings && (
+                                <div className="settingsOption">
+                                    <input type="text" placeholder="Enter new email address" />
+                                    <input type="text" placeholder="Confirm new email address" />
+                                    <button onClick={() => { /* Implement logic */ }}>Save</button>
+                                </div>
+                            )}
+                            {/* End of mail settings dropdown */}
+
                             <div className="settingsOption" onClick={() => { /* Implement logic */ }}>
                                 <img src={settingsIcon} alt="Globe Icon" className="icon" />
                                 Change region and language
