@@ -4,7 +4,6 @@ import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 
 const Accommodations = ({ searchResults }) => {
-const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -26,7 +25,6 @@ const Accommodations = ({ searchResults }) => {
   useEffect(() => {  
     const fetchData = async () => {
       try {
-        const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation');
         const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation');
         if (!response.ok) {
           throw new Error('Failed to fetch data');
