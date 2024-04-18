@@ -1,12 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Pages from "./Pages.js";
+import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
 import '../guestdashboard/guestdashboard.css';
 import { Auth } from "aws-amplify";
 
 function GuestReviews() {
     const [reviews, setReviews] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [isLoading2, setIsLoading2] = useState(true);
     const [receivedReviews, setReceivedReviews] = useState([]);
     const [userId, setUserId] = useState(null);
     const navigate = useNavigate();
@@ -53,7 +56,7 @@ function GuestReviews() {
             const options = {
                 userIdFrom: userId
             };
-
+            setIsLoading(true);
             try {
                 const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews', {
                     method: 'POST',
@@ -70,6 +73,8 @@ function GuestReviews() {
                 setReviews(data);
             } catch (error) {
                 console.error(error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -87,7 +92,7 @@ function GuestReviews() {
             const options = {
                 itemIdTo: userId
             };
-
+            setIsLoading2(true);
             try {
                 const response = await fetch('https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReceivedReviews', {
                     method: 'POST',
@@ -104,6 +109,8 @@ function GuestReviews() {
                 setReceivedReviews(data);
             } catch (error) {
                 console.error(error);
+            } finally {
+                setIsLoading2(false);
             }
         };
 
@@ -147,7 +154,12 @@ function GuestReviews() {
                     <div className="reviewColumn">
                         <div className="reviewBox">
                             <p className="reviewText">My reviews({reviews.length})</p>
-                            {reviews.length > 0 ? (
+                            {isLoading ? (
+                                    <div>
+                                        <img src={spinner}/>
+                                    </div>
+                                ) :
+                            reviews.length > 0 ? (
                                 reviews.map((review, index) => (
                                     <div key={index} className="review-tab">
                                         <h2 className="review-header">{review.title}</h2>
@@ -166,7 +178,12 @@ function GuestReviews() {
                         </div>
                         <div className="reviewBox">
                             <p className="reviewText">Received reviews({receivedReviews.length})</p>
-                            {receivedReviews.length > 0 ? (
+                            {isLoading ? (
+                                    <div>
+                                        <img src={spinner}/>
+                                    </div>
+                                ) :
+                            receivedReviews.length > 0 ? (
                                 receivedReviews.map((receivedReview, index) => (
                                     <div key={index} className="review-tab">
                                         <h2 className="review-header">{receivedReview.title}</h2>
