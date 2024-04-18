@@ -47,10 +47,8 @@ const Accommodations = ({ searchResults }) => {
 
   if (loading) {
     return (
-      <div className="full-visibility">
-        {Array(8).fill().map((_, index) => (
-              <SkeletonLoader />
-        ))}
+      <div id="card-visibility-loading">
+        {Array(8).fill().map((_, index) => <SkeletonLoader key={index} />)}
       </div>
     );
   }
