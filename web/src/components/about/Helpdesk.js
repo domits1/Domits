@@ -6,8 +6,8 @@ const Helpdesk = ({ onSearch }) => {
 
 
   return (
-    <div className="helpContainer">
-      <div className="helpSearchWrapper">
+    <main className="helpContainer">
+      <section className="helpSearchWrapper">
         <input
             type="text"
             placeholder="What do you need help with?"
@@ -16,12 +16,12 @@ const Helpdesk = ({ onSearch }) => {
         <button type="submit" className="helpSearchButton">
             Search
         </button>
-      </div>
+      </section>
 
-        <div>
+        <article>
             <FAQ />
-        </div>
-    </div>
+        </article>
+    </main>
   );
 };
 
