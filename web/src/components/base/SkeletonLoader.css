@@ -1,20 +1,21 @@
 .skeleton-card {
-  width: 23%;
-  margin: 1%;
-  margin-top: 10px;
-  background-color: #fff;
+  width: 21.7rem; 
+  margin: 1%; 
+  background-color: #eee; 
+  border-radius: 15px; 
   overflow: hidden;
-  display: inline-block;
+  display: inline-block; 
   vertical-align: top;
-  transition: all 0.5s ease-in-out;
   position: relative;
+  transition: all 0.5s ease-in-out; 
+  height: auto; 
 }
 
 .skeleton-image {
   width: 100%;
-  aspect-ratio: 1;
+  height: 235px; 
   background-color: #ddd; 
-  border-radius: 1.5rem; 
+  border-radius: 15px 15px 0 0; 
 }
 
 .skeleton-content {
@@ -25,7 +26,7 @@
   width: 90%; 
   height: 20px; 
   background-color: #ccc;
-  margin: 10px; 
+  margin: 10px auto; 
   border-radius: 4px; 
 }
 
@@ -33,14 +34,14 @@
   width: 80%; 
   height: 20px; 
   background-color: #ccc;
-  margin: 10px; 
+  margin: 10px auto; 
   border-radius: 4px; 
 }
 
 .skeleton-specs {
   display: flex;
-  justify-content: space-around;
-  width: 90%; 
+  justify-content: space-around; 
+  padding: 0 15px;
 }
 
 .skeleton-size {
