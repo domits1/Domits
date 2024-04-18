@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import './guestdashboard.css';
 import Pages from "./Pages.js";
 import './paymentsguestdashboard.css';
+import villaImage from '../../images/accommodationtestpic1.png'; // Assuming this is the villa image
 
 const PaymentsGuestDashboard = () => {
     const navigate = useNavigate();
@@ -18,6 +19,11 @@ const PaymentsGuestDashboard = () => {
                             <h2>Fulfilled payments</h2>
                             <div className="payment-item">
                                 <h3>Tropical 12 person villa with pool</h3>
+                                <img
+                                    src={villaImage}
+                                    alt="Villa"
+                                    style={{ width: '100px', height: 'auto' }}
+                                />
                                 <p>Total: $3460,49-</p>
                                 <button className="add-payment-button">+</button>
                             </div>
