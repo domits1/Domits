@@ -8,8 +8,9 @@
 import * as React from "react";
 import { Button, Flex, Grid, TextField } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
-import { API } from "aws-amplify";
+import { generateClient } from "aws-amplify/api";
 import { createTodo } from "../graphql/mutations";
+const client = generateClient();
 export default function TodoCreateForm(props) {
   const {
     clearOnSuccess = true,
@@ -96,7 +97,7 @@ export default function TodoCreateForm(props) {
               modelFields[key] = null;
             }
           });
-          await API.graphql({
+          await client.graphql({
             query: createTodo.replaceAll("__typename", ""),
             variables: {
               input: {

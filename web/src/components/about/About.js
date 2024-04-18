@@ -1,12 +1,11 @@
 import React from "react";
 import './about.css'
-import FAQ from "../landingpage/Faq";
 import vision from '../../images/icons/vision.png';
 import whatwedo from '../../images/icons/route.png';
 
 function About() {
     return (
-        <div className="aboutus">
+        <main className="aboutus">
             <div>
                 <h2>About Domits</h2>
             </div>
@@ -14,7 +13,7 @@ function About() {
                 <h3>Tailor made partnership</h3>
             </div>
 
-            <div className="underbigtext">
+            <section className="underbigtext">
                 <p className="aboutText">
                     <p>
                         Domits is a platform to list, search and book holiday accommodations.
@@ -40,14 +39,14 @@ function About() {
                 <p className="aboutText">
                     By charging one-time service fees, we can keep our platform running and provide services such as support.
                 </p>
-            </div>
+            </section>
             <br />
-            <div className="factsbox">
-                <div className="awesomefacts">
-                    <div className="factsHeader">
+            <section className="factsbox">
+                <section className="awesomefacts">
+                    <article className="factsHeader">
                         <p className="factsTitle">Vision</p>
                         <img className="factsImage" src={vision}></img>
-                    </div>
+                    </article>
                     <p className="factsTitle">A healthy, safe and future-proof travel world</p>
                     <p className="factsText">
                         Our vision is a travel world that has less problems with health, safety and future-proofing.
@@ -55,115 +54,115 @@ function About() {
                         Everyone takes into account how people deal with these problems and their options.
                         Together with partners, we work every day to simplify travel.
                     </p>
-                </div>
-                <div className="awesomefacts">
-                    <div className="factsHeader">
+                </section>
+                <section className="awesomefacts">
+                    <article className="factsHeader">
                         <p className="factsTitle">What we do</p>
                         <img className="factsImage" src={whatwedo}></img>
-                    </div>
+                    </article>
                     <p className="factsTitle">Together with partners we provide travel solutions</p>
                     <p className="factsText">
                         We build our travel platform to list, search and book accommodations.
                         Besides that we are providing traveltech development and consultancy for a select group of partners.
                         We are open to cooperate through ventures and our travel innovation labs.
                     </p>
-                </div>
-            </div>
-            <div className="crew">
+                </section>
+            </section>
+            <article className="crew">
                 <h1>Who we are</h1>
                 <p>We are all conscious founders.</p>
 
-                <div class="team">
-                    <div class="member">
+                <section class="team">
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Stefan Hopman</p>
                         <p>Founder and CEO</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Tim Hart</p>
                         <p>Product Owner</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Hamza Zaraoui</p>
                         <p>Fullstack developer</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Sebastiaan van der Wilt</p>
                         <p>Fullstack developer</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Muhammed Çetinkaya</p>
                         <p>Back-end developer</p>
-                    </div>
-                </div>
+                    </section>
+                </section>
 
-                <div class="team">
-                    <div class="member">
+                <section class="team">
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Kacper Flak</p>
                         <p>Back-end developer</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Tim Seijlhouwer</p>
                         <p>Fullstack developer</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Chahid Laaouar</p>
                         <p>Fullstack developer</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Jiaming Yan</p>
                         <p>Back-end developer</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Leila Boutkabout</p>
                         <p>UX/UI Designer</p>
-                    </div>
-                </div>
+                    </section>
+                </section>
 
-                <div class="team">
+                <section class="team">
                     <div class="member">
                         <div class="avatar"></div>
                         <p>Aniss Bouabdallah</p>
                         <p>Business developer</p>
                     </div>
-                    <div class="member">
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>Tim Eerdmans</p>
                         <p>Business developer</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
+                        <div class="avatar"></div>
+                        <p>Dani van der Mijl</p>
+                        <p>Front-end Developer</p>
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>This can be you!</p>
                         <p>We're hiring!</p>
-                    </div>
-                    <div class="member">
+                    </section>
+                    <section class="member">
                         <div class="avatar"></div>
                         <p>This can be you!</p>
                         <p>We're hiring!</p>
-                    </div>
-                    <div class="member">
-                        <div class="avatar"></div>
-                        <p>This can be you!</p>
-                        <p>We're hiring!</p>
-                    </div>
-                </div>
+                    </section>
+                </section>
 
-                <div class="about">
+                <section class="about">
                     <p>We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.</p>
                     <p>You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders.</p>
-                </div>
-            </div>
+                </section>
+            </article>
             {/* <FAQ /> */}
-        </div>
+        </main>
 
 
     );
