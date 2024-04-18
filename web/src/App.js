@@ -53,6 +53,7 @@ Modal.setAppElement('#root');
 
 function App() {
     const [searchResults, setSearchResults] = useState([]);
+    const [loading, setLoading] = useState(false); 
     useEffect(() => {
         // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
@@ -75,9 +76,9 @@ function App() {
                 <AuthProvider>
                 <UserProvider>
                     <div className="App">
-                        {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} />}
+                    {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
                         <Routes>
-                            <Route path="/" element={<Assortment searchResults={searchResults} />} />
+                        <Route path="/" element={<Assortment searchResults={searchResults} loading={loading} />} />
                             <Route path="/home" element={<Home />} />
                             <Route path="/about" element={<About />} />
                             <Route path="/release" element={<Release />} />
@@ -97,12 +98,19 @@ function App() {
                             <Route path="/bookingpayment" element={<BookingPayment />} />
                             <Route path="/bookingconfirmed" element={<BookingConfirmed />} />
                             <Route path="/bookingdeclined" element={<BookingDeclined />} />
-                            <Route path="/chatprototype" element={<Chatprototype />} />
+
+                            {/* Chat */}
+                            <Route path="/chat" element={<Chat />} />
+
+                            {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
+                            <Route path="/guestdashboard/chatprototype" element={<Chatprototype />} />
+
+                            {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
                             <Route path="/hostdashboard" element={
                                     <HostProtectedRoute>

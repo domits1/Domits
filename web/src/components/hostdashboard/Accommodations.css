@@ -2,6 +2,10 @@
   padding-top: 30px;
 }
 
+.full-visibility {
+  width: 100%;
+}
+
 .accocard {
   width: 23%;
   margin: 1%;
@@ -26,16 +30,6 @@
   border-radius: 15px;
   display: block;
 
-}
-
-.accocard-link {
-  text-decoration: none;
-  color: black;
-}
-
-.accocard-link:hover {
-  text-decoration: none;
-  color: black;
 }
 
 .accocard-content {
@@ -105,12 +99,6 @@
     width: 48%;
   }
 }
-
-/* @media (max-width: 768px) {
-  .accocard-detail {
-    width: 300px;
-  }
-} */
 
 @media (max-width: 480px) {
   .accocard-detail {
