@@ -27,7 +27,7 @@ function OnboardingHost() {
         accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
         region: process.env.REACT_APP_AWS_REGION
-    });
+      });
 
     let [userId, setUserId] = useState(null);
     const [selectedFiles, setSelectedFiles] = useState([]);
@@ -104,26 +104,21 @@ function OnboardingHost() {
     };
 
     const isFormFilled = () => {
+        // Exclude specific fields from the check
         const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent', 'OwnerId'];
-        
-        // Check if all fields except excluded ones are filled
+
         for (const key in formData) {
+            // Skip checking for excluded fields
             if (excludedFields.includes(key)) {
                 continue;
             }
-            if (key === 'Images') {
-                // Check if all keys inside the Images object are filled
-                for (const imageKey in formData.Images) {
-                    if (formData.Images[imageKey] === '') {
-                        return false;
-                    }
-                }
-            } else if (formData[key] === "" || formData[key] === 0) {
+            if (formData[key] === "" || formData[key] === 0) {
                 return false;
             }
         }
+
         return true;
-    };    
+    };
 
     const appendUserId = () => {
         setFormData((prevData) => ({
@@ -250,7 +245,7 @@ function OnboardingHost() {
             console.error('Error uploading files:', error);
         }
     };
-
+    
 
     const handleFileChange = (event) => {
         const files = Array.from(event.target.files).filter(
@@ -260,44 +255,20 @@ function OnboardingHost() {
             alert('You can only upload up to 5 images.');
             return;
         }
-    
-        // Update formData.Images with the selected files
-        const updatedImages = { ...formData.Images };
-        files.forEach((file, index) => {
-            updatedImages[`image${selectedFiles.length + index + 1}`] = file.name;
-        });
-    
-        setFormData((prevData) => ({
-            ...prevData,
-            Images: updatedImages
-        }));
-    
         setSelectedFiles([...selectedFiles, ...files]);
     };
-    
+
     const handleDelete = (index) => {
         const updatedFiles = [...selectedFiles];
-        const imageKeys = Object.keys(formData.Images);
         updatedFiles.splice(index, 1);
-    
-        // Update the corresponding image key to an empty string
-        const updatedImages = { ...formData.Images };
-        updatedImages[imageKeys[index]] = '';
-    
         setSelectedFiles(updatedFiles);
-        setFormData((prevData) => ({
-            ...prevData,
-            Images: updatedImages,
-        }));
     };
-    
-    
 
     const combinedSubmit = async () => {
         await handleFileSubmit(); // Wait for handleFileSubmit to complete
         handleSubmit(); // Then execute handleSubmit
     }
-
+    
 
     const renderPageContent = (page) => {
         switch (page) {
@@ -305,10 +276,10 @@ function OnboardingHost() {
                 return (
                     <div>
                         <div class="formContainer">
-                            <div class="form-section">
+                            <div class="form-section"> 
                                 <div className="formRow">
                                     <div class="room-type">
-                                        <h2 className="onboardingSectionTitle">Select room type</h2>
+                                    <h2 className="onboardingSectionTitle">Select room type</h2>
                                         <label>
                                             <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "entireHouse"} value="entireHouse"></input> Entire house
                                         </label>
@@ -344,8 +315,8 @@ function OnboardingHost() {
                                 <div class="locationInput">
                                     <h2 className="onboardingSectionTitle">Fill in Location</h2>
                                     <div className="input-group">
-                                        <label for="country">Country</label>
-                                        <Select
+                                    <label for="country">Country</label>
+                                    <Select
                                             options={options.map(country => ({ value: country, label: country }))}
                                             name="Country"
                                             className="locationText"
@@ -355,8 +326,8 @@ function OnboardingHost() {
                                         />
                                     </div>
                                     <div className="input-group">
-                                        <label for="city">City</label>
-                                        <input
+                                    <label for="city">City</label>
+                                    <input
                                             className="textInput locationText"
                                             name="City"
                                             onChange={handleInputChange}
@@ -365,10 +336,10 @@ function OnboardingHost() {
                                         />
                                     </div>
                                     <div className="input-group">
-                                        <label for="street">
-                                            Street + house nr.
-                                        </label>
-                                        <input
+                                    <label for="street">
+                                        Street + house nr.
+                                    </label>
+                                    <input
                                             className="textInput locationText"
                                             name="Street"
                                             onChange={handleInputChange}
@@ -377,10 +348,10 @@ function OnboardingHost() {
                                         />
                                     </div>
                                     <div className="input-group">
-                                        <label for="postal">
-                                            Postal Code
-                                        </label>
-                                        <input
+                                    <label for="postal">
+                                        Postal Code
+                                    </label>
+                                    <input
                                             className="textInput locationText"
                                             name="PostalCode"
                                             onChange={handleInputChange}
@@ -436,11 +407,11 @@ function OnboardingHost() {
                             <div class="front-section">
                                 <div className="room-info">
                                     <h2 className="onboardingSectionTitle">Add accomodation information</h2>
-                                    <label for="title">Title</label>
-                                    <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
-                                    <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
-                                    <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
-                                </div>
+                                        <label for="title">Title</label>
+                                        <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
+                                        <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
+                                        <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
+                               </div>
                             </div>
                         </div>
                         <div>

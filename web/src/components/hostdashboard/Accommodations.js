@@ -3,7 +3,7 @@ import './Accommodations.css';
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 
-const Accommodations = ({ searchResults }) => {
+const Accommodations = ({ searchResults, loading }) => {
   const [accolist, setAccolist] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -25,7 +25,7 @@ const Accommodations = ({ searchResults }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation');
+        const response = await fetch('https://cfeo8gr5y0.execute-api.eu-north-1.amazonaws.com/dev/accommodation');
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
@@ -39,6 +39,7 @@ const Accommodations = ({ searchResults }) => {
         setLoading(false);
       }
     };
+
     if (searchResults && searchResults.length > 0) {
       setAccolist(formatData(searchResults));
     } else {
@@ -56,10 +57,6 @@ const Accommodations = ({ searchResults }) => {
     );
   }
   
-
-  const handleClick = (ID) => {
-    navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
-  };
 
   return (
     <div id="card-visibility">

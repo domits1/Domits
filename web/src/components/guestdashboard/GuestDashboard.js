@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import accommodationImg from "../../images/accommodationtestpic1.png";
 import editIcon from "../../images/icons/edit-05.png";
 import { useNavigate } from 'react-router-dom';
 import { API, graphqlOperation, Auth } from "aws-amplify";
@@ -67,6 +68,7 @@ const GuestDashboard = () => {
                         <div className="bookingBox">
                             <h3>Current Booking</h3>
                             <p>Tropical 12 person villa with pool</p>
+                            <img src={accommodationImg} alt="Booking" />
                             <p>Host: John Doe</p>
                         </div>
                         <div className="messageBoxes">
