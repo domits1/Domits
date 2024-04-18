@@ -7,7 +7,7 @@ import returner from "../../images/icons/return-icon.png";
 
 /**
  * @author Chahid Laauoar & Jiaming Yan
- * @param passedProp = the Accommodation object you want to edit
+ * @param passedProp =
  * @returns {Element}
  * @constructor
  */
@@ -35,7 +35,6 @@ function Calendar({passedProp}) {
             setOldDateRange(newDateRange);
         }
     }, [passedProp.ID]);
-  // Custom rendering for the static range labels
   const renderStaticRangeLabel = () => {
     return (
       <div>
@@ -63,7 +62,7 @@ function Calendar({passedProp}) {
               alert("Something went wrong, please try again later...")
               throw new Error('Failed to fetch');
           } else {
-              const data = await response.json(); // Parse JSON response
+              const data = await response.json();
               const jsonData = JSON.parse(data.body);
               if (jsonData.updatedAttributes) {
                   const updatedAttributes = jsonData.updatedAttributes;
@@ -73,18 +72,15 @@ function Calendar({passedProp}) {
               } else {
                   alert("Something went wrong, please try again later...")
                   console.log("updatedAttributes is missing in the response");
-                  // Handle the absence of expected data, e.g., by setting defaults or showing an error message
               }
           }
       } catch (error) {
-          // Error Handling
           console.error("Unexpected error:", error);
       } finally {
-          setIsLoading(false); // End loading regardless of promise outcome
+          setIsLoading(false);
       }
   };
 
-  // Function to handle clicks on custom static range labels
   const handleStaticRangeClick = (rangeType) => {
     let startDate, endDate;
 
@@ -115,27 +111,27 @@ function Calendar({passedProp}) {
                   {
                       label: 'Today',
                       range: () => ({startDate: new Date(), endDate: new Date()}),
-                      isSelected: () => false // Add isSelected function to prevent error
+                      isSelected: () => false
                   },
                   {
                       label: 'This Week',
                       range: () => ({startDate: new Date(), endDate: addWeeks(new Date(), 1)}),
-                      isSelected: () => false // Add isSelected function to prevent error
+                      isSelected: () => false
                   },
                   {
                       label: 'Next Week',
                       range: () => ({startDate: addWeeks(new Date(), 1), endDate: addWeeks(new Date(), 2)}),
-                      isSelected: () => false // Add isSelected function to prevent error
+                      isSelected: () => false
                   },
                   {
                       label: 'This Month',
                       range: () => ({startDate: new Date(), endDate: addMonths(new Date(), 1)}),
-                      isSelected: () => false // Add isSelected function to prevent error
+                      isSelected: () => false
                   },
                   {
                       label: 'Next Month',
                       range: () => ({startDate: addMonths(new Date(), 1), endDate: addMonths(new Date(), 2)}),
-                      isSelected: () => false // Add isSelected function to prevent error
+                      isSelected: () => false
                   }
               ]}
           />

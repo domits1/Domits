@@ -31,7 +31,6 @@ const Accommodations = ({ searchResults }) => {
         }
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
-        console.log(data);
         setAccolist(formatData(data));
       } catch (error) {
         console.error('Error fetching or processing data:', error);
@@ -48,10 +47,8 @@ const Accommodations = ({ searchResults }) => {
 
   if (loading) {
     return (
-      <div className="full-visibility">
-        {Array(8).fill().map((_, index) => (
-              <SkeletonLoader />
-        ))}
+      <div id="card-visibility-loading">
+        {Array(8).fill().map((_, index) => <SkeletonLoader key={index} />)}
       </div>
     );
   }
@@ -85,4 +82,3 @@ const Accommodations = ({ searchResults }) => {
 };
 
 export default Accommodations;
-

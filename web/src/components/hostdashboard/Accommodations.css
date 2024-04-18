@@ -68,9 +68,9 @@
   margin-bottom: 8px;
   width: 300px;
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* Aantal regels dat je wilt tonen */
-  -webkit-box-orient: vertical;  
-  /* white-space: nowrap; */
+  -webkit-line-clamp: 2; /* Aantal regels dat je wilt tonen /
+  -webkit-box-orient: vertical;
+  / white-space: nowrap; */
   overflow: hidden;
   text-overflow: ellipsis;
   height: 3em;

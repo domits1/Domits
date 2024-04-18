@@ -1,56 +1,55 @@
 .skeleton-card {
-  width: 23%;
-  margin: 1%;
-  margin-top: 10px;
-  background-color: #fff;
+  width: 21.7rem; 
+  margin: 1%; 
+  background-color: #eee; 
+  border-radius: 0.9375rem; 
   overflow: hidden;
-  display: inline-block;
+  display: inline-block; 
   vertical-align: top;
-  transition: all 0.5s ease-in-out;
   position: relative;
+  transition: all 0.5s ease-in-out; 
+  height: auto; 
 }
 
 .skeleton-image {
   width: 100%;
-  aspect-ratio: 1;
+  height: 14.6875rem;
   background-color: #ddd; 
-  border-radius: 1.5rem; 
+  border-radius: 0.9375rem 0.9375rem 0 0; 
 }
 
 .skeleton-content {
-  padding: 15px 0; 
+  padding: 0.9375rem 0; 
 }
 
 .skeleton-title {
   width: 90%; 
-  height: 20px; 
+  height: 1.25rem; 
   background-color: #ccc;
-  margin: 10px; 
-  border-radius: 4px; 
+  margin: 0.625rem auto; 
+  border-radius: 0.25rem; 
 }
 
 .skeleton-detail {
   width: 80%; 
-  height: 20px; 
+  height: 1.25rem;
   background-color: #ccc;
-  margin: 10px; 
-  border-radius: 4px; 
+  margin: 0.625rem auto; 
+  border-radius: 0.25rem; 
 }
 
 .skeleton-specs {
   display: flex;
-  justify-content: space-around;
-  width: 90%; 
+  justify-content: space-around; 
+  padding: 0 0.9375rem; 
 }
 
 .skeleton-size {
   width: 28%; 
-  height: 20px; 
+  height: 1.25rem; 
   background-color: #ccc;
-  border-radius: 4px; 
+  border-radius: 0.25rem; 
 }
-
-
 
 @media (max-width: 1292px) {
   .skeleton-card {
