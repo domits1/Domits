@@ -32,7 +32,7 @@ function Pages() {
         });
         const data = await response.json();
         if (data.hasStripeAccount) {
-          setStripeLoginUrl(data.loginLinkUrl); // Save the Stripe login URL
+          setStripeLoginUrl(data.loginLinkUrl);
         }
       } catch (error) {
         console.error("Error fetching user data or Stripe status:", error);
@@ -45,7 +45,7 @@ function Pages() {
 
   async function handleStripeAction() {
     if (stripeLoginUrl) {
-      window.open(stripeLoginUrl, '_blank'); // Redirect to Stripe using the login URL
+      window.open(stripeLoginUrl, '_blank');
     } else if (userEmail) {
       const options = {
         userEmail: userEmail

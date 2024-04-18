@@ -49,28 +49,21 @@ function HostCalendar() {
                     if (!response.ok) {
                         throw new Error('Failed to fetch');
                     }
-                    // Extracting the response body
                     const data = await response.json();
 
-                    // Now 'responseData' should contain your {statusCode, headers, body}
-                    // Check if 'responseData.body' exists and is a string
                     if (data.body && typeof data.body === 'string') {
-                        // Parse the JSON string inside 'responseData.body'
                         const accommodationsArray = JSON.parse(data.body);
-                        // Ensure the parsed data is an array before setting the state
                         if (Array.isArray(accommodationsArray)) {
                             setAccommodations(accommodationsArray);
                         } else {
-                            // Handle the case where the parsed data is not an array
                             console.error("Parsed data is not an array:", accommodationsArray);
-                            setAccommodations([]); // Setting a default or handling as needed
+                            setAccommodations([]);
                         }
                     }
                 } catch (error) {
-                    // Error Handling
                     console.error("Unexpected error:", error);
                 } finally {
-                    setIsLoading(false); // End loading regardless of promise outcome
+                    setIsLoading(false);
                 }
             }
         };
