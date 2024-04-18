@@ -6,7 +6,7 @@ import deleteIcon from "../../images/icons/cross.png";
 import '../guestdashboard/guestdashboard.css';
 import { Auth } from "aws-amplify";
 
-function GuestReviews() {
+function HostReviews() {
     const [reviews, setReviews] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isLoading2, setIsLoading2] = useState(true);
@@ -211,4 +211,4 @@ function GuestReviews() {
     );
 }
 
-export default GuestReviews;
+export default HostReviews;
