@@ -4,7 +4,6 @@ import './HostHomepage.css'
 import add from "../../images/icons/host-add.png";
 import { useNavigate } from 'react-router-dom';
 import { Auth } from "aws-amplify";
-import house from "../../images/house1.jpeg";
 import spinner from "../../images/spinnner.gif";
 import ImageSlider from "./ImageSlider";
 
