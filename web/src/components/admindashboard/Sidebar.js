@@ -27,13 +27,13 @@ const Sidebar = () => {
     ];
 
     return (
-        <div className="manage-list">
+        <main className="manage-list">
             {list.map(item => (
-                <div className="item-preview" key={item.id}>
+                <section className="item-preview" key={item.id}>
                     <h2>{item.title}</h2>
-                </div>
+                </section>
             ))}
-        </div>
+        </main>
     );
 }
 

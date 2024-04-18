@@ -8,10 +8,10 @@ const Navbar = () => {
             <Link to="/admin">
                 <img className="img" src={logo} alt="logo.png" height={50} />
             </Link>
-            <div className="nav">
+            <section className="nav">
                 Tim Hart :cape:<br/>
                 <b>Superadmin</b>
-            </div>
+            </section>
         </nav>
     );
 }

@@ -6,17 +6,17 @@ import './AdminDashboard.css';
 
 function HomeDashboard() {
     return (
-        <div className="grid-container">
-            <div className="header">
+        <main className="grid-container">
+            <section className="header">
                 <Navbar />
-            </div>
-            <div className="menu">
+            </section>
+            <section className="menu">
                 <Sidebar />
-            </div>
-            <div className="main">
+            </section>
+            <section className="main">
                 Hier komt de uiteindelijke code
-            </div>
-        </div>
+            </section>
+        </main>
     );
 }
 
