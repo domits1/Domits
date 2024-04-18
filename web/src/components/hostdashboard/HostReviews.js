@@ -126,9 +126,7 @@ function GuestReviews() {
                             </div>
                             ))
                             ) : (
-                            <div className="reviewBox">
                             <p className="review-alert">It appears that you have not written any reviews yet...</p>
-                            </div>
                             )}
                         </div>
                     </div>

@@ -108,7 +108,9 @@
     border: none;
     background-color: white;
 }
-
+.review-alert {
+    margin: 10%;
+}
 .review-delete:hover {
     cursor: pointer;
     transform: scale(1.2);
@@ -120,7 +122,7 @@
 @keyframes fade-up {
     0% {
         opacity: 0;
-        transform: translateY(30px) scale (0.9);
+        transform: translateY(30px) scale(0.9);
     }
 
     100% {
