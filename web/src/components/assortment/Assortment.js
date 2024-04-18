@@ -5,11 +5,11 @@ import './assortment.css';
 function Assortment({ searchResults, loading }) {
     // console.log('Assortment received searchResults:', searchResults);
     return (
-        <div>
-            <div className="assortment">
+        <main>
+            <section className="assortment">
             <Accommodations searchResults={searchResults} loading={loading} />
-            </div>
-        </div>
+            </section>
+        </main>
     );
 };
 
