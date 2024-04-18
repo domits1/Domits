@@ -10,15 +10,15 @@ const Accommodations = ({ searchResults }) => {
 
   const formatData = (items) => {
     return items.map((item) => ({
-      image: item.Images.image1, // Use the image URLs from the Images object
+      image: item.Images.image1,
       title: item.Title,
-      details: item.Description, // Use the Description property
-      size: `${item.Measurements}m²`, // Use the Measurements property
-      price: `€${item.Rent} per night`, // Use the Rent property
-      id: item.ID, // Use the ID property
+      details: item.Description,
+      size: `${item.Measurements}m²`,
+      price: `€${item.Rent} per night`,
+      id: item.ID,
       bathrooms: `${item.Bathrooms} Bathrooms`,
       bedrooms: `${item.Bedrooms} Bedrooms`,
-      persons: `${item.Guests} Persons`, // Use the Guests property
+      persons: `${item.Guests} Persons`,
     }));
   };
 
@@ -30,13 +30,13 @@ const Accommodations = ({ searchResults }) => {
           throw new Error('Failed to fetch data');
         }
         const responseData = await response.json();
-        const data = JSON.parse(responseData.body); // Parse JSON from the body property
+        const data = JSON.parse(responseData.body);
         console.log(data);
         setAccolist(formatData(data));
       } catch (error) {
         console.error('Error fetching or processing data:', error);
       } finally {
-        setLoading(false); // Set loading back to false when fetching is completed
+        setLoading(false);
       }
     };
     if (searchResults && searchResults.length > 0) {
