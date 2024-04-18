@@ -15,8 +15,8 @@ function HostListings() {
     const navigate = useNavigate();
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        const day = date.getDate().toString().padStart(2, '0'); // Ensures the day is two digits
-        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // getMonth() is zero-based; +1 to make it 1-based
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
         const year = date.getFullYear();
 
         return `${day}/${month}/${year}`;
