@@ -43,6 +43,7 @@ Modal.setAppElement('#root');
 
 function App() {
     const [searchResults, setSearchResults] = useState([]);
+    const [loading, setLoading] = useState(false); 
     useEffect(() => {
         // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
@@ -65,7 +66,7 @@ function App() {
                 <AuthProvider>
                 <UserProvider>
                     <div className="App">
-                        {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} />}
+                    {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
                         <Routes>
                             <Route path="/" element={<Assortment searchResults={searchResults} />} />
                             <Route path="/about" element={<About />} />

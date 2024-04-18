@@ -5,6 +5,7 @@ import add from "../../images/icons/host-add.png";
 import { useNavigate } from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
+import ImageSlider from "./ImageSlider";
 
 function HostListings() {
     const [accommodations, setAccommodations] = useState([]);
@@ -56,7 +57,6 @@ function HostListings() {
                     }
                     // Extracting the response body
                     const data = await response.json();
-
                     // Now 'responseData' should contain your {statusCode, headers, body}
                     // Check if 'responseData.body' exists and is a string
                     if (data.body && typeof data.body === 'string') {
@@ -113,16 +113,24 @@ function HostListings() {
                                                 {accommodation.Street},
                                                 {accommodation.PostalCode}
                                             </p>
-                                            <img src={accommodation.Images.image1} alt="icon" className="accommodation-img"/>
+                                            <ImageSlider images={accommodation.Images} />
                                         </div>
                                         <div className="accommodation-right">
-                                            <p>Description: {accommodation.Description}</p>
+                                        <p>Description: {accommodation.Description}</p>
                                             <p>Listed on: {formatDate(accommodation.createdAt)}</p>
                                             <p>Measurements: {accommodation.Measurements}m²</p>
                                             <p>Features: {accommodation.Features.length > 0 ? (
                                                 getFeatures(accommodation.Features)) : ('none')}
                                             </p>
                                             <p>Rent: ${accommodation.Rent}</p>
+                                            { accommodation.StartDate && accommodation.EndDate ?
+                                                (<p>
+                                                    Available from
+                                                    {" " + formatDate(accommodation.StartDate) + " "}
+                                                    to {" " + formatDate(accommodation.EndDate) + " "}
+                                                </p>) :
+                                                (<p>Date range not set</p>)
+                                            }
                                         </div>
                                     </div>
                                 ))

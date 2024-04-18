@@ -171,7 +171,9 @@
   align-items: center;
   justify-content: space-between;
   overflow: hidden;
+  font-size: 1.1em;
 }
+
 
 .boxText {
   width: 80%;
@@ -262,6 +264,55 @@
   border-radius: 15px;
   max-height: 15vh;
   max-width: 25vw;
+  height: auto;
+  transition: opacity 1s ease-in-out;
+  opacity: 0;
+}
+.visible {
+  opacity: 1;
+}
+.button-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.undo-btn {
+  display: flex;
+  flex-direction: row;
+  border-radius: 15px;
+  justify-content: space-between;
+}
+.undo-btn:hover {
+  background-color: red;
+  box-shadow: 4px 4px #003366;
+  .btn-text {
+    color: white;
+  }
+}
+.returner {
+  max-height: 5vh;
+}
+.save-btn {
+  border-radius: 15px;
+  width: 5vw;
+}
+.btn-text {
+  font-size: 1rem;
+}
+.save-btn:hover {
+  background-color: #0D9813;
+  box-shadow: 4px 4px #003366;
+  .btn-text {
+    color: white;
+  }
+}
+.alert-message {
+  margin: 15px;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+.undo-txt {
+  font-size: 15px;
 }
 @media screen and (max-width: 830px) {
 

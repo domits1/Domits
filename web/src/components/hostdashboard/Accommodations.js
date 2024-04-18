@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import './Accommodations.css';
+import SkeletonLoader from '../base/SkeletonLoader'; 
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
@@ -41,6 +42,14 @@ const Accommodations = ({ searchResults }) => {
       fetchData();
     }
   }, [searchResults]);
+
+  if (loading) {
+    return (
+      <div id="card-visibility">
+        {Array(8).fill().map((_, index) => <SkeletonLoader key={index} />)}
+      </div>
+    );
+  }
 
   const handleClick = (ID) => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);

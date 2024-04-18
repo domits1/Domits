@@ -62,7 +62,6 @@ const Register = () => {
                 },
             });
 
-            // Store the email and password in the AuthContext
             setAuthCredentials(userData.email, userData.password);
 
             sessionStorage.setItem('userEmail', userData.email);
@@ -107,7 +106,6 @@ const Register = () => {
                 <button onClick={handleSignOut}>Sign out</button>
             ) : (
                 <div className="registerContainer">
-                    {/* <button onClick={testFunc}>testacc</button> */}
                     <div className="registerTitle">Create an account on Domits</div>
                     <div className="registerForm">
                         <form onSubmit={onSubmit}>

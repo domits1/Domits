@@ -1,16 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DatePicker from 'react-datepicker';
-import { 
-  FaTimes, 
-  FaSearchLocation, 
-  FaMapPin, 
-  FaSpinner,
-  FaBuilding,
-  FaHome,        
-  FaCaravan,     
-  FaHotel,
-  FaShip,      
-} from 'react-icons/fa';import ReactCountryFlag from "react-country-flag";
+import { FaTimes, FaSearchLocation, FaMapPin, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip } from 'react-icons/fa';
+import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
@@ -20,6 +11,7 @@ import './SearchBar.css';
 const handleButtonClick = (e) => {
   e.stopPropagation();
 };
+
 
 const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) => (
   <div className="guestCounter" onClick={handleButtonClick}>
@@ -35,27 +27,58 @@ const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) =
   </div>
 );
 
-export const SearchBar = ({ setSearchResults }) => {
+export const SearchBar = ({ setSearchResults, setLoading }) => { 
   const [checkIn, setCheckIn] = useState(null);
+  const [checkOut, setCheckOut] = useState(null);
+  const [dateRange, setDateRange] = useState([null, null]);
   const [guests, setGuests] = useState(1);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
-  const [infants,setInfants] = useState(0);
-
+  const [infants, setInfants] = useState(0);
   const [pets, setPets] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
+  const totalGuestsDescription = createGuestDescription(adults, children, infants, pets);
+  const [startDate, endDate] = dateRange;
+  const [accommodationFocused, setAccommodationFocused] = useState(false);
+
 
   const guestDropdownRef = useRef();
+  const resetGuests = (e) => {
+    e.stopPropagation();
+
+    setAdults(0);
+    setChildren(0);
+    setInfants(0);
+    setPets(0);
+  };
+
+  const resetDates = (e) => {
+    e.stopPropagation();
+    setDateRange([null, null]);
+    setCheckIn(null);
+    setCheckOut(null);
+  };
 
   const toggleGuestDropdown = (e) => {
     e.stopPropagation();
     setShowGuestDropdown(prevState => !prevState);
   };
 
-  // Attach or detach the event listener based on the state of showGuestDropdown
+  const totalGuests = adults + children + infants + pets;
+
+  function createGuestDescription(adults, children, infants, pets) {
+    const parts = [];
+    if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
+    if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
+    if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
+    if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
+    return parts.join(', ');
+  }
+
   useEffect(() => {
     const handleOutsideClick = (e) => {
       if (!guestDropdownRef.current.contains(e.target)) {
@@ -76,6 +99,28 @@ export const SearchBar = ({ setSearchResults }) => {
     setAddress(address);
   };
 
+  const handleFocus = () => {
+    setIsFocused(true);
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+  };
+
+  const handleAccommodationFocus = () => {
+    setAccommodationFocused(true);
+  };
+
+  const handleAccommodationBlur = () => {
+    setAccommodationFocused(false);
+  };
+
+  const clearAccommodation = () => {
+    setAccommodation('');
+    setAccommodationFocused(false); z
+  };
+
+
   const handleSelect = async (address) => {
     setAddress(address);
     try {
@@ -87,8 +132,15 @@ export const SearchBar = ({ setSearchResults }) => {
     }
   };
 
+  const handleClear = (event) => {
+    event.preventDefault(); // Voorkom dat de focus verloren gaat
+    setAddress('');
+    setIsFocused(false);
+  };
+
   // Verbinding met API Gateway
   const handleSearch = async () => {
+    setLoading(true); 
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
     const locationQueryParam = address ? `&searchTerm=${address}` : '';
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}${locationQueryParam}`;
@@ -96,10 +148,15 @@ export const SearchBar = ({ setSearchResults }) => {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setSearchResults(data); // Dit stuurt de data naar de App component
+      setTimeout(() => {  
+        setSearchResults(data);
+        setLoading(false); 
+      }, 100);  
     } catch (error) {
+      console.error('Error during fetch:', error);
+      setLoading(false); 
     }
-  };
+};
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -114,9 +171,7 @@ export const SearchBar = ({ setSearchResults }) => {
       'VIETNAM': 'VN',
       'VATICAN CITY': 'VA',
       'VENEZUELA': 'VE',
-
       //hier kan je landen toevoegen waarvan vlaggen missen
-
     };
 
     let country = countries.all.find((c) => c.name.toUpperCase() === countryName.toUpperCase());
@@ -133,23 +188,24 @@ export const SearchBar = ({ setSearchResults }) => {
     return country ? country.alpha2 : "";
   };
 
-
   return (
     <div className="bar">
       <div className="location">
         <p className="searchTitle">Location</p>
-
         <PlacesAutocomplete value={address} onChange={handleChange} onSelect={handleSelect} searchOptions={{ language: 'en' }}>
           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
             <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px', position: 'relative' }}>
-              <input {...getInputProps({
-                placeholder: 'Search Places ....',
-                className: 'searchBar',
-              })}
+              <input
+                {...getInputProps({
+                  placeholder: 'Search Places ....',
+                  className: 'searchBar',
+                  onFocus: handleFocus,
+                  onBlur: handleBlur,
+                })}
               />
-              {address && (
+              {address && isFocused && (
                 <button
-                  onClick={() => handleChange('')}
+                  onMouseDown={handleClear}
                   style={{
                     position: 'absolute',
                     right: '10px',
@@ -224,7 +280,6 @@ export const SearchBar = ({ setSearchResults }) => {
 
       <div className="accommodation searchInputContainer">
         <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p>
-
         <Select
           value={accommodation ? { label: accommodation, value: accommodation } : null}
           onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
@@ -260,10 +315,12 @@ export const SearchBar = ({ setSearchResults }) => {
             }),
             option: (provided, state) => ({
               ...provided,
-              backgroundColor: state.isSelected ? '#ffff' : state.isFocused ? '#d0d0d0' : provided.backgroundColor,
+              backgroundColor: state.isSelected ? '#ffff' : state.isFocused ? '#f0f0f0' : provided.backgroundColor,
               color: state.isSelected || state.isFocused ? 'black' : provided.color,
               borderRadius: state.isSelected ? '10px' : state.isFocused ? '10px' : '0px',
               fontWeight: state.isSelected ? 'bold' : 'normal',
+              fontSize: '12px',
+              padding: '10px',
             }),
             menu: (provided) => ({
               ...provided,
@@ -271,34 +328,30 @@ export const SearchBar = ({ setSearchResults }) => {
               borderRadius: '8px',
               boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
               padding: '5px',
-              width: '187px',
+              width: '200px',
               maxHeight: '300px',
-              marginRight: '40px',
+              right: '-15%',
               borderRadius: '15px',
               textAlign: 'left',
-            }),
-            singleValue: (provided) => ({
-              ...provided,
-              fontWeight: 'normal',
-              fontSize: '13px',
+              marginTop: '15px',
             }),
             clearIndicator: (provided) => ({
               ...provided,
               color: 'black',
               position: 'absolute',
-              right: '-8px',
+              right: '0px',
               transform: 'translateY(-50%)',
               width: '32px',
               height: '32px',
             }),
             singleValue: (provided) => ({
               ...provided,
-              textAlign: 'left', 
-              fontSize: '13px',
+              marginRight: '10%',
+              fontSize: '14px',
             }),
             placeholder: (provided) => ({
               ...provided,
-              textAlign: 'left', 
+              textAlign: 'center',
             }),
           }}
         />
@@ -311,54 +364,76 @@ export const SearchBar = ({ setSearchResults }) => {
             className="searchbar-input"
             id="checkInPicker"
             selected={checkIn}
-            onChange={(date) => setCheckIn(date)}
             placeholderText="Start-End date"
-            dateFormat="dd/MM/yyyy"
+            showYearDropdown={false}
+            showMonthDropdown={true}
+            dateFormat="MM/dd"
+            selectsRange={true}
+            startDate={startDate}
+            endDate={endDate}
+            onChange={update => setDateRange(update)}
           />
+          {startDate && endDate && (
+  <button onClick={resetDates} className="date-reset-button">
+    <FaTimes />
+  </button>
+)}
         </div>
       </div>
 
       <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
-        <p className="searchTitleGuest ">Guests</p>
-        <p className='guestP'>Add guests</p>
+        <p className="searchTitleGuest">Guests</p>
+        {totalGuests > 0 && (
+          <button
+            className="clear-guests"
+            onClick={resetGuests}
+            style={{
+              position: 'absolute',
+              right: '10px',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+            }}
+          >
+            <FaTimes />
+          </button>
+        )}
+        <p className='guestP'>{totalGuestsDescription || 'Add guests'}</p>
         {showGuestDropdown && (
           <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
             <GuestCounter
               label="Adults"
               description="Ages 16 or above"
               value={adults}
-              onIncrement={() => setAdults(adults + 1)}
-              onDecrement={() => setAdults(adults - 1)}
+              onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
+              onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
             />
-
             <GuestCounter
               label="Children"
-              description="Ages 4–16"
+              description="Ages 2–16"
               value={children}
-              onIncrement={() => setChildren(children + 1)}
-              onDecrement={() => setChildren(children - 1)}
+              onIncrement={() => setChildren(children < 13 ? children + 1 : children)}
+              onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
             />
-
             <GuestCounter
               label="Infants"
-              description="Ages 0–4"
+              description="Ages 0–2"
               value={infants}
-              onIncrement={() => setInfants(infants + 1)}
-              onDecrement={() => setInfants(infants - 1)}
+              onIncrement={() => setInfants(infants < 13 ? infants + 1 : infants)}
+              onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
             />
-
             <GuestCounter
               label="Pets"
               description="Normal sized pets"
               value={pets}
-              onIncrement={() => setPets(pets + 1)}
-              onDecrement={() => setPets(pets - 1)}
+              onIncrement={() => setPets(pets < 13 ? pets + 1 : pets)}
+              onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
             />
           </div>
         )}
       </div>
-
-
 
       <button className="searchbar-button" type="button" onClick={handleSearch}>
         <FaSearchLocation size={16} style={{ position: 'relative', top: '-2px' }} />
