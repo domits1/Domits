@@ -10,94 +10,100 @@ import './BookingConfirmedDeclined.css';
 
 const BookingDeclined = () => {
     return (
-        <div className="booking-container">
-            <div className="image-section booking-confirmedw-image-section">
+        <main className="booking-container">
+            <article className="image-section booking-confirmedw-image-section">
                 <img src={bookingimage1} alt="Booking Image 1" className="booking-image1"/>
-                <div className="imageWindow">
+                <article className="imageWindow">
                     <img src={bookingimage2} alt="Booking Image 2"/>
                     <img src={bookingimage3} alt="Booking Image 3"/>
                     <img src={bookingimage4} alt="Booking Image 4" className="booking-image4"/>
                     <img src={bookingimage5} alt="Booking Image 5" className="booking-image5"/>
-                </div>
-            </div>
-            <div className="info-section">
+                </article>
+            </article>
+            <section className="info-section">
                 <div className="booking-supertitle">
                     Minimalistic and cozy place in Haarlem
+                    {/* div met text aanpassen */}
                 </div>
-                <div className="booking-declined-section">
-                    <div className="booking-declined-content">
+                <article className="booking-declined-section">
+                    <article className="booking-declined-content">
                         <div className="booking-declined-title">Something went wrong.</div>
-                        <div className="booking-declined-subtitle">
+                    {/* div met text aanpassen */}
+
+                        <article className="booking-declined-subtitle">
                             <span className="booking-declined-underline">No money was deducted</span>
                             from Mastercard [ L.Summer ] [0123 xxxx xxxx 2345]
-                        </div>
-                    </div>
-                    <div className="booking-declined-alert">
+                        </article>
+                    </article>
+                    <article className="booking-declined-alert">
                         <img src={alertcircle} alt="Alert Circle"/>
-                    </div>
-                </div>
-                <div className="booking-overview-section">
+                    </article>
+                </article>
+                <section className="booking-overview-section">
                     <div className="section-titles">Price Details</div>
+                    {/* div met text aanpassen */}
                     <div className="small-information-text">2 adults - 2 kids | 3 night</div>
-                    <div className="details-row">
-                        <div className="left-column">
-                            <div className="row">
+                    {/* div met text aanpassen */}
+                    <section className="details-row">
+                        <article className="left-column">
+                            <article className="row">
                                 <span className="detail">$140 night x 3</span>
-                            </div>
-                            <div className="row">
+                            </article>
+                            <article className="row">
                                 <span className="detail">Cleaning fee</span>
-                            </div>
-                            <div className="row">
+                            </article>
+                            <article className="row">
                                 <span className="detail">Cat tax</span>
-                            </div>
-                            <div className="domits-service-fee">
+                            </article>
+                            <article className="domits-service-fee">
                                 <span className="detail">Domits service fee:</span>
-                            </div>
-                        </div>
-                        <div className="right-column">
-                            <div className="row">
+                            </article>
+                        </article>
+                        <article className="right-column">
+                            <article className="row">
                                 <span>$420,00</span>
-                            </div>
-                            <div className="row">
+                            </article>
+                            <article className="row">
                                 <span>$50,00</span>
-                            </div>
-                            <div className="row">
+                            </article>
+                            <article className="row">
                                 <span>$17,50</span>
-                            </div>
-                            <div className="domits-service-fee">
+                            </article>
+                            <article className="domits-service-fee">
                                 <span>$39,50</span>
-                            </div>
-                        </div>
-                    </div>
+                            </article>
+                        </article>
+                    </section>
                     <hr/>
-                    <div className="total-row">
-                        <div className="row">
+                    <section className="total-row">
+                        <section className="row">
                             <span className="total-detail total-booking-price">Total (DOL)</span>
-                        </div>
-                        <div className="row">
+                        </section>
+                        <section className="row">
                             <span className="total-detail">$527,00</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="payment-method-container">
+                        </section>
+                    </section>
+                </section>
+                <section className="payment-method-container">
                     <div className="payment-method-header">
                         Payment Method
+                        {/* div met text moet aangepast worden */}
                     </div>
-                    <div className="payment-method-section">
-                        <div className="payment-information-section">
+                    <section className="payment-method-section">
+                        <article className="payment-information-section">
                             <div className="payment-type-text">Mastercard</div>
                             <div className="payment-info-text">[ L.Summer ] [0123 xxxx xxxx 2345]</div>
-                        </div>
+                        </article>
                         <button className="change-payment-button">Change</button>
-                    </div>
-                </div>
+                    </section>
+                </section>
                 <div className="try-again-section">
                     <div className="try-again-button">
                         <button>Try again</button>
                     </div>
                 </div>
-            </div>
-        </div>
+            </section>
+        </main>
     );
 }
 

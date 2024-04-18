@@ -10,94 +10,102 @@ import './BookingConfirmedDeclined.css';
 
 const BookingConfirmed = () => {
     return (
-        <div className="booking-container">
-            <div className="image-section booking-confirmed-image-section">
+        <main className="booking-container">
+            <article className="image-section booking-confirmed-image-section">
                 <img src={bookingimage1} alt="Booking Image 1" className="booking-image1"/>
-                <div className="imageWindow">
+                <article className="imageWindow">
                     <img src={bookingimage2} alt="Booking Image 2"/>
                     <img src={bookingimage3} alt="Booking Image 3"/>
                     <img src={bookingimage4} alt="Booking Image 4" className="booking-image4"/>
                     <img src={bookingimage5} alt="Booking Image 5" className="booking-image5"/>
-                </div>
-            </div>
-            <div className="info-section">
+                </article>
+            </article>
+            <section className="info-section">
                 <div className="booking-supertitle">
+                    {/* divs met text moet aangepast worden */}
+
                     Minimalistic and cozy place in Haarlem
                 </div>
-                <div className="booking-confirmed-section">
-                    <div className="booking-confirmed-content">
+                <article className="booking-confirmed-section">
+                    <section className="booking-confirmed-content">
                         <div className="booking-confirmed-title">Booking Confirmed!</div>
+                    {/* divs met text moet aangepast worden */}
                         <div className="booking-confirmed-subtitle">You paid with Mastercard [ L.Summer ] [0123 xxxx xxxx 2345]</div>
-                    </div>
-                    <div className="booking-confirmed-check">
+                    </section>
+                    <aritcle className="booking-confirmed-check">
                         <img src={checkcirlce} alt="Checkmark"/>
-                    </div>
-                </div>
+                    </aritcle>
+                </article>
                 <div className="booking-confirmation-details">
                     Payment and booking details are send to lotte_summer@gmail.com
+                    {/* divs met text moet aangepast worden */}
                     <a>Resend confirmation</a>
                 </div>
-                <div className="booking-overview-section">
+                <section className="booking-overview-section">
                     <div className="section-titles">Price Details</div>
+                    {/* divs met text moet aangepast worden */}
                     <div className="small-information-text">2 adults - 2 kids | 3 night</div>
-                    <div className="details-row">
-                        <div className="left-column">
-                            <div className="row">
+
+                    <section className="details-row">
+                        <article className="left-column">
+                            <section className="row">
                                 <span className="detail">$140 night x 3</span>
-                            </div>
-                            <div className="row">
+                            </section>
+                            <section className="row">
                                 <span className="detail">Cleaning fee</span>
-                            </div>
-                            <div className="row">
+                            </section>
+                            <section className="row">
                                 <span className="detail">Cat tax</span>
-                            </div>
-                            <div className="domits-service-fee">
+                            </section>
+                            <section className="domits-service-fee">
                                 <span className="detail">Domits service fee:</span>
-                            </div>
-                        </div>
-                        <div className="right-column">
-                            <div className="row">
+                            </section>
+                        </article>
+                        <article className="right-column">
+                            <section className="row">
                                 <span>$420,00</span>
-                            </div>
-                            <div className="row">
+                            </section>
+                            <section className="row">
                                 <span>$50,00</span>
-                            </div>
-                            <div className="row">
+                            </section>
+                            <section className="row">
                                 <span>$17,50</span>
-                            </div>
-                            <div className="domits-service-fee">
+                            </section>
+                            <section className="domits-service-fee">
                                 <span>$39,50</span>
-                            </div>
-                        </div>
-                    </div>
+                            </section>
+                        </article>
+                    </section>
                     <hr/>
-                    <div className="total-row">
-                        <div className="row">
+                    <article className="total-row">
+                        <section className="row">
                             <span className="total-detail total-booking-price">Total (DOL)</span>
-                        </div>
-                        <div className="row">
+                        </section>
+                        <section className="row">
                             <span className="total-detail">$527,00</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="payment-method-container">
+                        </section>
+                    </article>
+                </section>
+                <article className="payment-method-container">
                     <div className="payment-method-header">
                         Payment Method
+                        {/* text met div moet aangepast worden */}
                     </div>
-                    <div className="payment-method-section">
-                        <div className="payment-information-section">
+                    <aritcle className="payment-method-section">
+                        <section className="payment-information-section">
                             <div className="payment-type-text">Mastercard</div>
+                        {/* text met div moet aangepast worden */}
                             <div className="payment-info-text">[ L.Summer ] [0123 xxxx xxxx 2345]</div>
-                        </div>
-                    </div>
-                </div>
-                <div className="view-booking-section">
+                        </section>
+                    </aritcle>
+                </article>
+                <article className="view-booking-section">
                     <div className="view-booking-button">
                         <button>View booking</button>
                     </div>
-                </div>
-            </div>
-        </div>
+                </article>
+            </section>
+        </main>
     );
 }
 

@@ -17,4 +17,6 @@ const SkeletonLoader = () => (
   </div>
 );
 
+
 export default SkeletonLoader;
+{/* Ik weet niet waar deze divs voor gebruikt worden dus laat ik ze staan. Divs aanpassen waarnodig*/}

@@ -105,8 +105,9 @@ const Register = () => {
             {isAuthenticated ? (
                 <button onClick={handleSignOut}>Sign out</button>
             ) : (
-                <div className="registerContainer">
+                <main className="registerContainer">
                     <div className="registerTitle">Create an account on Domits</div>
+                    {/* div met text, weet niet waar het voor gebruikt wordt moet worden aangepast */}
                     <div className="registerForm">
                         <form onSubmit={onSubmit}>
                             <label>Username:</label>
@@ -151,6 +152,8 @@ const Register = () => {
                             <br />
                             <div className="alreadyAccountText">
                                 Already have an account? <a href="/login">Log in here</a>.
+                    {/* div met text, weet niet waar het voor gebruikt wordt moet worden aangepast */}
+
                             </div>
                             {errorMessage && (
                                 <div className="errorText">{errorMessage}</div>
@@ -160,7 +163,7 @@ const Register = () => {
                             </button>
                         </form>
                     </div>
-                </div>
+                </main>
             )}
         </>
     )

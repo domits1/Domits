@@ -87,33 +87,36 @@ function Header({ setSearchResults, setLoading }) {
     };
 
     return (
-        <div className="App">
+        <main className="App">
             <header className="app-header">
                 <nav className="header-nav">
-                    <div className="logo">
+                    <section className="logo">
                         <a href="/">
                             <img src={logo} width={150} alt="Logo" />
                         </a>
-                    </div>
-                    <div className='App'>
+                    </section>
+                    <section className='App'>
                     <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
-                    </div>
-                    <div className='headerRight'>
+                    </section>
+                    <section className='headerRight'>
                         <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
                             Become a host
                         </button>
                         <button className="headerButtons" onClick={navigateToNinedots}>
                             <img src={nineDots} alt={nineDots} />
                         </button>
-                        <div className="personalMenuDropdown">
+                        <article className="personalMenuDropdown">
                             <button className="personalMenu" onClick={toggleDropdown}>
                                 <img src={profile} alt={profile}/>
                                 <img src={arrowDown} alt={arrowDown}/>
                             </button>
-                            <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
+                            <section className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                 {isLoggedIn ? (
                                     <>
-                                        <div className="helloUsername">Hello {username}!</div>
+                                        <div className="helloUsername">Hello {username}!
+                    {/* Div met text? ik weet niet precies waar het voor gebruikt wordt dus deze moet nog aangepast worden */}
+                                        
+                                        </div>
                                         <button onClick={navigateToProfile} className="dropdownLoginButton">Profile</button>
                                         <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
                                         <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
@@ -131,12 +134,12 @@ function Header({ setSearchResults, setLoading }) {
                                         </button>
                                     </>
                                 )}
-                            </div>
-                        </div>
-                    </div>
+                            </section>
+                        </article>
+                    </section>
                 </nav>
             </header>
-        </div>
+        </main>
     );
 }
 

@@ -45,11 +45,12 @@ function ConfirmEmail() {
     };
 
     const form = (
-        <div className="confirmEmailContainer">
-            <div className="confirmEmailTitle">Verify your registration</div>
+        <main className="confirmEmailContainer">
+            <div className="confirmEmailTitle">Verify your registration</div> {/* Div met text? ik weet niet precies waar het voor gebruikt wordt dus deze moet nog aangepast worden */}
             <form className="confirmEmailForm" onSubmit={onSubmit}>
                 <div className="enter6DigitText">
                     Enter 6 digit code sent to your email
+                    {/* Div met text? ik weet niet precies waar het voor gebruikt wordt dus deze moet nog aangepast worden */}
                 </div>
                 <DigitInputs amount={6} inputRef={inputRef} />
                 {errorMessage && (
@@ -58,17 +59,19 @@ function ConfirmEmail() {
                 <button className="verifyRegisterButton" type="submit">Verify registration</button>
                 <div className="notReceivedCodeText">
                     Not received a code? Check your spam folder or let us resend a code.
+                    {/* Div met text? ik weet niet precies waar het voor gebruikt wordt dus deze moet nog aangepast worden */}
                 </div>
+                
                 <button className="resendCodeButton" onClick={handleResendCode}>Resend code</button>
             </form>
-        </div>
+        </main>
     );
 
     const confirmedPopup = (
-        <div className="confirmemail-container">
+        <section className="confirmemail-container">
             <p className="confirmemail-card_title">Success!</p>
             <p className="confirmemail-card_text">Your email is now verified! You will be redirected shortly</p>
-        </div>
+        </section>
     );
 
     return isConfirmed ? confirmedPopup : form;

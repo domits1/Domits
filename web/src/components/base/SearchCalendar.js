@@ -23,13 +23,13 @@ const SearchCalendar = () => {
   };
 
   return (
-    <div className="search-calendar">
-      <div>
+    <main className="search-calendar">
+      <section>
         <p>Select your dates:</p>
         <p>Start Date: {startDate ? startDate.toDateString() : 'Select start date'}</p>
         <p>End Date: {endDate ? endDate.toDateString() : 'Select end date'}</p>
-      </div>
-      <div className="date-grid">
+      </section>
+      <article className="date-grid">
         {Array.from({ length: 30 }, (_, i) => new Date(2024, 0, i + 1)).map(date => (
           <button
             key={date.toISOString()}
@@ -39,8 +39,8 @@ const SearchCalendar = () => {
             {date.getDate()}
           </button>
         ))}
-      </div>
-    </div>
+      </article>
+    </main>
   );
 };
 

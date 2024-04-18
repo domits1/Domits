@@ -71,10 +71,12 @@ const Login = () => {
             {isAuthenticated ? (
                 <button onClick={handleSignOut}>Sign out</button>
             ) : (
-                <div className="loginContainer">
+                <main className="loginContainer">
                     <img src={logo} alt="Logo Domits" className='loginLogo' />
-                    <div className="loginTitle">Good to see you again</div>
-                    <div className="loginForm">
+                    <div className="loginTitle">Good to see you again
+                    {/* div met text, weet niet waar het voor gebruikt wordt moet worden aangepast */}
+                    </div>
+                    <article className="loginForm">
                         <form onSubmit={handleSubmit}>
                             <label>Email:</label>
                             <br />
@@ -105,6 +107,8 @@ const Login = () => {
                         </form>
                         <div className="noAccountText">
                             No account yet? Register for free!
+                    {/* div met text, weet niet waar het voor gebruikt wordt moet worden aangepast */}
+
                         </div>
                     
                         <button
@@ -113,8 +117,8 @@ const Login = () => {
                         >
                             Register
                         </button>
-                    </div>
-                </div>
+                    </article>
+                </main>
             )}
         </>
     );

@@ -13,10 +13,10 @@ const currentYear = new Date().getFullYear();
 const Footer = () => {
     return (
         <footer className='main-footer'>
-            <div className='footer-content'>
+            <section className='footer-content'>
 
                 {/* Navigation section */}
-                <div className="footer-section">
+                <article className="footer-section">
                     <h4 className='footer-headers'>Navigation</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/howitworks" className='footer-links'>How it works</Link></li>
@@ -28,30 +28,30 @@ const Footer = () => {
                         <br />
                     </ul>
 
-                </div>
+                </article>
 
                 {/* Guests section */}
-                <div className="footer-section">
+                <article className="footer-section">
                     <h4 className='footer-headers'>Guest</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>Search and book</Link></li>
                         <li><Link to="/helpdesk" className='footer-links'>Helpdesk</Link></li>
                     </ul>
-                </div>
+                </article>
 
                 {/* Hosts section */}
-                <div className="footer-section">
+                <article className="footer-section">
                     <h4 className='footer-headers'>Hosts</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/landing" className='footer-links'>Become a host</Link></li>
                         <li><Link to="/" className='footer-links'>Helpdesk for hosts</Link></li>
                     </ul>
-                </div>
+                </article>
 
 
 
                 {/* Network section */}
-                <div className="footer-section borderline">
+                <article className="footer-section borderline">
                     <h4 className='footer-headers '>Network</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/guestdashboard" className='footer-links'>Traveller</Link></li>
@@ -61,13 +61,13 @@ const Footer = () => {
                         <li><Link to="/students" className='footer-links'>Students</Link></li>
                         <li><Link to="/startups" className='footer-links'>Startups</Link></li>
                     </ul>
-                </div>
+                </article>
 
 
 
                 {/* Socials section */}
-                <div className="footer-section-grid">
-                    <div className="footer-section">
+                <section className="footer-section-grid">
+                    <article className="footer-section">
                         <h4 className='footer-headers'>Socials</h4>
                         <ul className='footer-lists'>
                             <li>
@@ -81,7 +81,7 @@ const Footer = () => {
                                 </a>
                             </li>
                         </ul>
-                    </div>
+                    </article>
 
                     {/* Currency section */}
                     {/* <div className="footer-endsection">
@@ -93,17 +93,17 @@ const Footer = () => {
                     </div>
 
                     <img id='appstorebadge' src={Appstorebadge} alt="App Store Badge" className="app-store-badge" /> */}
-                </div>
+                </section>
 
                 {/* Office section */}
-                <div className="footer-section-grid">
-                    <div className="footer-section">
+                <article className="footer-section-grid">
+                    <section className="footer-section">
                         <h4 className='footer-headers'>Office</h4>
                         <ul className='footer-lists'>
                             <li className='footer-links'>2013 AS, Haarlem</li>
                             <li className='footer-links'>Kinderhuissingel 6-K</li>
                         </ul>
-                    </div>
+                    </section>
 
                     {/* Languages section */}
                     {/* <div className="footer-endsection">
@@ -114,23 +114,23 @@ const Footer = () => {
                         </select>
                     </div>
                     <img id='playstorebadge' src={Playstorebadge} alt="Play Store Badge" className="play-store-badge" /> */}
-                </div>
-            </div>
+                </article>
+            </section>
 
-            <div className='footer-terms'>
-                <div className="logo">
+            <section className='footer-terms'>
+                <article className="logo">
                     <img src={logo} width={100} alt="Logo" />
-                </div>
+                </article>
                 <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
                 <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>
                 <a><Link to="/disclaimers" className='footer-links'>Disclaimer</Link></a>
                 <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Sitemap</a>
-            </div>
+            </section>
 
             {/* Copyright Block */}
-            <div className='footer-copyright'>
+            <section className='footer-copyright'>
                 <p className='footer-copyright-text'>Rights reserved, Domits.com ©{currentYear}</p>
-            </div>
+            </section>
         </footer>
     );
 };
