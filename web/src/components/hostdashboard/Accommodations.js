@@ -43,7 +43,7 @@ const Accommodations = ({ searchResults, loading }) => {
 
   if (loading) {
     return (
-      <div id="card-visibility">
+      <div id="card-visibility-loading">
         {Array(8).fill().map((_, index) => <SkeletonLoader key={index} />)}
       </div>
     );
