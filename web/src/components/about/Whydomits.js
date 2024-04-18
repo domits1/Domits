@@ -5,15 +5,15 @@ import barchart from '../../images/icons/bar-chart.png';
 
 function About() {
     return (
-        <div className="aboutus">
-            <div>
+        <main className="aboutus">
+            <section>
                 <h2>Why choose for Domits</h2>
-            </div>
-            <div>
+            </section>
+            <section>
                 <h3>One of the fastest improving travel platforms.</h3>
-            </div>
+            </section>
 
-            <div className="underbigtext">
+            <article className="underbigtext">
                 <p className="aboutText">
                     Mission: Simplify travel for 1 million people.
                 </p>
@@ -26,29 +26,29 @@ function About() {
                     There are no hidden costs or percentage cuts. Save administrative time. Make use of our global payment methods.
                     Enjoy our warmhearted customer centric approach. Try it out for free.
                 </p>
-            </div>
+            </article>
             <br />
-            <div className="factsbox">
-            <div className="awesomefacts">
-                    <div className="factsHeader">
+            <section className="factsbox">
+            <article className="awesomefacts">
+                    <article className="factsHeader">
                         <p className="factsTitle">
                             Our motto is 1% better every day in product development, integrations, security and intellectual travel leadership.
                         </p>
                         <img className="factsImage" src={barchart}></img>
-                    </div>
-                </div>
-                <div className="awesomefacts">
-                    <div className="factsHeader">
+                    </article>
+                </article>
+                <article className="awesomefacts">
+                    <article className="factsHeader">
                         <p className="factsTitle">
                             Our motto is 1% better every day in product development, integrations, security and intellectual travel leadership.
                         </p>
                         <img className="factsImage" src={barchart}></img>
-                    </div>
-                </div>
-            </div>
+                    </article>
+                </article>
+            </section>
 
             {/* <FAQ /> */}
-        </div>
+        </main>
 
 
     );

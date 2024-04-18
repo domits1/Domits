@@ -1,5 +1,6 @@
 import React from "react";
 import './release.css'
+import FAQ from "../landingpage/Faq";
 
 function Release() {
     return (
