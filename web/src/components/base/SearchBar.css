@@ -1,74 +1,91 @@
 * {
   box-sizing: border-box;
 }
-
 .bar {
-  width: 100%;
+  width: 45.625rem;
   margin: auto;
-  box-shadow: 0 0 5px hsl(0 0% 78%);
-  border-radius: 30px;
+  box-shadow: 0 0 5px hsl(0 0% 68%);
+  border-radius: 1.875rem;
   display: flex;
-  height: 50px;
-  z-index: 999;
+  height: 3.4375rem;
   font-size: 0.6rem;
 }
-
+.searchTitleAccommodation {
+  padding: 0.75rem; /* 12px */
+}
+.searchTitleCenterAcco{
+  color: #0D9813;
+  font-size: 0.7rem;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+  padding-top: 0%; 
+  margin-bottom: -0.125rem; /* -2px */
+}
 .bar .searchInputContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
+  margin-top: 0.3125rem; /* 5px */
 }
-
 .suggestions-container {
   position: relative;
   z-index: 999;
 }
-
 .css-qbdosj-Input {
   margin: 0 !important;
 }
-
 .autocomplete-container input::placeholder {
-  text-align: center;
+  text-align: left;
 }
-
 .bar input {
   margin-top: 0;
   padding-top: 0;
 }
-
 .searchbar-input::placeholder {
   font-size: 0.64rem;
+  margin-top: 0px; 
 }
-
 .bar .searchTitle, .searchTitleCenter {
   color: #0D9813;
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 10px;
+  padding-top: 0.1875rem; /* 3px */
+  margin-top: 0px; 
 }
-
 .check-in:hover {
   cursor: 'pointer';
+  /* background-color: #f0f0f0; */
+  border-radius: 1.25rem; /* 20px */
+  
 }
-.check-out:hover{
-  cursor: 'pointer';
-}
+
 .check-in{
-  width: 20%;
+  width: 19%;
   cursor: pointer;
+  border-radius: 1.25rem; /* 20px */
+
 }
-.check-out{
-  width: 20%;
-  cursor: pointer;
-}
+
 .location{
-  width: 35%;
+  width: 32%;
+  border-radius: 1.25rem; /* 20px */
 }
+/* .location:hover{
+  background-color: #f0f0f0;
+  
+} */
 .accommodation {
-  width: 25%;
+  width: 20%;
+  border-radius: 1.25rem; /* 20px */
+  border:none;
+  height: 3.125rem; /* 50px */
+
 }
+
+/* .accommodation:hover{
+  background-color: #f0f0f0;
+} */
 .searchbar-input {
   background: none;
   border: none;
@@ -82,7 +99,7 @@
 
 .bar>div {
   position: relative;
-  transition: background 250ms ease, width 250ms ease;
+  transition: background 150ms ease, width 150ms ease;
 }
 .bar>div::before {
   position: absolute;
@@ -90,7 +107,7 @@
   left: -0.8%;
   top: 50%;
   transform: translateY(-50%);
-  width: 0.9px;
+  width: 0.05625rem; /* 0.9px approximated as 0.05rem */
   height: 60%;
   background: rgb(88, 153, 22);
 }
@@ -102,71 +119,298 @@
   outline: 0;
   cursor: pointer;
   padding: 3px;
-  margin-right: 1%;
-  font-size: 10px;
-  line-height: 30px;
-  border: 1px solid #0D9813;
+  /* margin-left: 20px; */
+  font-size: 0.625rem; /* 10px */
+  line-height: 1.875rem; /* 30px */
+  border: 1px solid #0fa616;
   border-radius: 50%;
   color: #ffffff;
-  background-color: transparent;
+  background-color: #0fa616;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  transition: 0.2s cubic-bezier(0.3, 0, 0.5, 1);
-  transition-property: color;
-  height: 33px;
-  width: 33px;
-  margin-top: 10px;
+  height: 2.5625rem; /* 41px */
+  width: 2.5625rem; /* 41px */
+  margin-top: 0.5rem; /* 8px */
 }
 .searchbar-button:hover {
-  background-color: #0D9813;
-  border-color: #0D9813;
-  transition-duration: 0.4s;
+  background-color: #0a770f;
+  border-color: #0a770f;
+  transition-duration: 0.3s
 }
 .searchbar-button svg {
-  color: black; /* Zwarte kleur voor FaSearch-icoon */
+  color: rgb(255, 255, 255);
+  margin-top: 0.625rem; /* 10px */
 }
 .searchbar-button:hover svg {
   animation: bounce 0.7s ease 1;
 }
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
+  0%, 100% {
     transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-  40% {
+  20% {
     transform: translateY(-5px);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-  60% {
+  50%, 80% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  20% {
     transform: translateY(-3px);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 }
 .searchBar {
   background: none;
   border: none;
-  padding: 0.6rem 0 0 0;
+  padding-top: 1rem; 
+  padding-bottom: 0.4rem; 
   text-align: left;
-  width: 80%;
+  margin-bottom: 0.625rem; 
+  width: 85%;
 }
 .searchBar:focus {
   outline: none;
 }
 .searchBar::placeholder {
   font-size: 0.64rem;
+}
+
+
+
+
+.button-section {
+  border: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  padding: 1.625rem; /* 26px */
+  user-select: none; 
+   background-color: #fff;
+   border-radius: 1.25rem; /* 20px */
+   width: 22%;
+   
+}
+
+/* .button-section:hover {
+background-color: #f0f0f0;
+} */
+
+.button-section p,
+.guestCounter p {
+  margin: 0; 
+  padding: 0;
+}
+
+.guest-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.625rem); /* 10px */
+  left: 77%;
+  transform: translateX(-50%);
+  background: white;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  border-radius: 1.5625rem; /* 25px */
+  padding: 1.5625rem; /* 25px */
+  z-index: 1;
+  width: 23.125rem; /* 370px */
+  min-width: 15.625rem; /* 250px */
+  box-sizing: border-box;
+  cursor: auto;
+}
+
+.button-section.active .guest-dropdown {
+  display: block;
+}
+
+.guestCounter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem; /* 20px */
+  padding: 0.625rem 0; /* 10px */
+  border-bottom: 1px solid #0a770f;
+}
+
+.guestCounter:last-child {
+  border-bottom: none;
+}
+
+.guestLabel {
+  font-size: 1rem; /* 16px */
+  color: #0a770f;
   text-align: left;
 }
 
+.guestDescription {
+  font-size: 0.625rem; /* 10px */
+  color: #666;
+}
+
+.guestCounter .controls {
+  display: flex;
+  align-items: center;
+  padding: 0 0.625rem; /* 10px */
+}
+
+.guestCounter .controls span {
+  margin: 0 0.625rem; /* 10px */
+  font-size: 1rem; /* 16px */
+}
+
+.guestCounter .controls button {
+  border: 2px solid #cccccc;
+  border-radius: 50%;
+  background-color: #fff;
+  padding: 0;
+  width: 2rem; /* 32px */
+  height: 2rem; /* 32px */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem; /* 24px */
+  color: #000;
+}
+
+.guestCounter .controls button:hover {
+  border-color: #0a770f;
+}
+
+/* test */
+.guestCounter .controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+.searchTitleGuest{
+  color: #0D9813;
+  font-size: 0.7rem;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+  padding-top: 0%; 
+  margin-bottom: -0.125rem; /* -2px */
+  padding: 0.75rem; /* 12px */
+}
+
+.button-section .searchTitleGuest {
+  margin-bottom: 0.8125rem; /* 13px */
+}
+
+.guestP{
+  font-size: 0.6875rem; /* 11px */
+}
+
+
+
+.react-datepicker {
+  transform: scale(1.2);
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  cursor:auto;
+  top: 40px;
+}
+
+.react-datepicker__header {
+  background-color: #ffffff;
+  border-bottom: none;
+}
+
+.react-datepicker__current-month,
+.react-datepicker-time__header,
+.react-datepicker-year-header {
+  color: #333333;
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.react-datepicker__day-name, 
+.react-datepicker__day, 
+.react-datepicker__time-name {
+  color: #333333;
+  font-size: 14px;
+}
+
+.react-datepicker__day--selected, 
+.react-datepicker__day--in-range, 
+.react-datepicker__day--keyboard-selected {
+  background-color: #0d6efd;
+  color: white;
+}
+
+.react-datepicker__day:hover,
+.react-datepicker__day--selected:hover,
+.react-datepicker__day--in-range:hover,
+.react-datepicker__day--keyboard-selected:hover {
+  background-color: #084298;
+}
+
+/* Pas de navigatieknoppen aan */
+.react-datepicker__navigation--previous {
+  border-right-color: #0d6efd;
+}
+
+.react-datepicker__navigation--next {
+  border-left-color: #0d6efd;
+}
+
+.react-datepicker__navigation:hover,
+.react-datepicker__navigation:focus {
+  background-color: transparent;
+}
+.react-datepicker__header .react-datepicker__current-month,
+.react-datepicker__header .react-datepicker-year-header {
+    /* Verberg de dropdown pijl */
+    background-image: none;
+    
+    /* Als de pijl een pseudo-element is: */
+    position: relative;
+}
+
+.react-datepicker__header .react-datepicker__current-month::after,
+.react-datepicker__header .react-datepicker-year-header::after {
+    display: none;
+}
+
+.date-reset-button {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  position: absolute;
+  right: 0%; 
+  top: 40%;
+  transform: translateY(-20%);
+}
+
+@media (max-width: 1000px) {
+  .guest-dropdown {
+    width: calc(100% - 1.875rem); /* 30px */
+    left: 0.9375rem; /* 15px */
+    transform: none;
+  }
+}
 @media (max-width: 1000px) {
   .bar {
     width: 95%;
   }
 }
-
 @media (max-width: 750px) {
   .bar {
     width: 90%;
   }
 }
-
 @media (max-width: 650px) {
   .bar {
     width: 100%;
   }
+}
+.faTimesIcon {
+  color: 'blue';
+  font-size: 0.75rem; /* 12px */
+  margin-bottom: 3.125rem; /* 50px */
 }

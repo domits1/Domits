@@ -1,3 +1,52 @@
+.StripeModal {
+  z-index: 2;
+  left: 0;
+  width: 100%;
+  height: 2vw;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: #0D9813;
+  color: white;
+  padding: 20px;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border-radius: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: transform 0.3s ease-out;
+  transform: translateY(-100%);
+  opacity: 0;
+}
+
+.StripeModal-open {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.StripeModal h2 {
+  font-size: 1.4em;
+  margin: 0 15px;
+  flex-grow: 1;
+}
+
+.StripeModal button {
+  background-color: #0D9813;
+  border: none;
+  border-radius: 40px;
+  font-size: 1.5em;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.StripeModal button:hover {
+  background-color: #3da942;
+}
+
+.StripeSpinner {
+  height: 4vw;
+}
+
 .container {
   width: 90%;
   margin: auto;
@@ -178,7 +227,42 @@
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Change to your preferred focus shadow */
 }
 
+.header {
+  font-size: 1.75em;
+}
 
+.accommodation-title {
+  font-size: 1.2em;
+  font-weight: bolder;
+}
+.accommodation-tab {
+  border-radius: 15px;
+  border: 1px solid gray;
+  padding: 15px;
+  display: flex;
+  flex-direction: row;
+  gap: 40px;
+  margin: 10px;
+}
+.accommodation-left {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+.accommodation-right {
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+}
+.accommodation-tab:hover {
+  box-shadow: 4px 4px #003366;
+}
+.accommodation-img {
+  padding: 5px;
+  border-radius: 15px;
+  max-height: 15vh;
+  max-width: 25vw;
+}
 @media screen and (max-width: 830px) {
 
   .dashboard {
