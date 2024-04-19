@@ -14,28 +14,28 @@ function Pages() {
   const navigate = useNavigate();
 
   return (
-    <div className="dashboardSections">
-      <div className="wijzers" onClick={() => navigate("/guestdashboard")}>
+    <main className="dashboardSections">
+      <article className="wijzers" onClick={() => navigate("/guestdashboard")}>
         <img src={dashboard} alt="Profile"></img>
         <p>Dashboard</p>
-      </div>
-      <div className="wijzers" onClick={() => navigate("/guestdashboard/Chatprototype")}>
+      </article>
+      <article className="wijzers" onClick={() => navigate("/guestdashboard/Chatprototype")}>
         <img src={message} alt="Messages"></img>
         <p>Messages</p>
-      </div>
-      <div className="wijzers" onClick={() => navigate("/guestdashboard/payments")}>
+      </article>
+      <article className="wijzers" onClick={() => navigate("/guestdashboard/payments")}>
         <img src={payment} alt="Payments"></img>
         <p>Payments</p>
-      </div>
-      <div className="wijzers" onClick={() => navigate("/guestdashboard/reviews")}>
+      </article>
+      <article className="wijzers" onClick={() => navigate("/guestdashboard/reviews")}>
         <img src={listings} alt="Listing"></img>
         <p>Reviews</p>
-      </div>
-      <div className="wijzers" onClick={() => navigate("/guestdashboard/settings")}>
+      </article>
+      <article className="wijzers" onClick={() => navigate("/guestdashboard/settings")}>
         <img src={settings} alt="Settings"></img>
         <p>Settings</p>
-      </div>
-    </div>
+      </article>
+    </main>
   );
 }
 

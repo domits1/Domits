@@ -9,13 +9,13 @@ import './BookingPayment.css';
 
 const BookingPayment = () => {
     return (
-        <div className="booking-container">
-            <div className="back-arrow">
+        <main className="booking-container">
+            <article className="back-arrow">
                 <a href="/bookingoverview">
                     <img src={backarrow} alt="Back Arrow"/>
                 </a>
-            </div>
-            <div className="image-section">
+            </article>
+            <section className="image-section">
                 <img src={bookingimage1} alt="Booking Image 1" className="booking-image1"/>
                 <div className="imageWindow">
                     <img src={bookingimage2} alt="Booking Image 2"/>
@@ -23,82 +23,87 @@ const BookingPayment = () => {
                     <img src={bookingimage4} alt="Booking Image 4" className="booking-image4"/>
                     <img src={bookingimage5} alt="Booking Image 5" className="booking-image5"/>
                 </div>
-            </div>
-            <div className="info-section">
-                <div className="title-section">
+            </section>
+            <section className="info-section">
+                <section className="title-section">
                     <div className="section-titles">Payment in process</div>
                     <div className="booking-subtitle">Choose your payment method and pay safely through Stripe
                     </div>
-                </div>
-                <div className="booking-overview-section">
+                </section>
+                <section className="booking-overview-section">
                     <div className="section-titles">Price Details</div>
+                    {/* div in text kan niet moet aangepast worden */}
                     <div className="small-information-text">2 adults - 2 kids | 3 night</div>
-                    <div className="details-row">
-                        <div className="left-column">
-                            <div className="row">
+                    <section className="details-row">
+                        <section className="left-column">
+                            <article className="row">
                                 <span className="detail">$140 night x 3</span>
-                            </div>
-                            <div className="row">
+                            </article>
+                            <article className="row">
                                 <span className="detail">Cleaning fee</span>
-                            </div>
-                            <div className="row">
+                            </article>
+                            <article className="row">
                                 <span className="detail">Cat tax</span>
-                            </div>
-                            <div className="domits-service-fee">
+                            </article>
+                            <article className="domits-service-fee">
                                 <span className="detail">Domits service fee:</span>
-                            </div>
-                        </div>
-                        <div className="right-column">
-                            <div className="row">
+                            </article>
+                        </section>
+                        <section className="right-column">
+                            <section className="row">
                                 <span>$420,00</span>
-                            </div>
-                            <div className="row">
+                            </section>
+                            <section className="row">
                                 <span>$50,00</span>
-                            </div>
-                            <div className="row">
+                            </section>
+                            <section className="row">
                                 <span>$17,50</span>
-                            </div>
-                            <div className="domits-service-fee">
+                            </section>
+                            <article className="domits-service-fee">
                                 <span>$39,50</span>
-                            </div>
-                        </div>
-                    </div>
+                            </article>
+                        </section>
+                    </section>
                     <hr/>
-                    <div className="total-row">
-                        <div className="row">
+                    <section className="total-row">
+                        <section className="row">
                             <span className="total-detail total-booking-price">Total (DOL)</span>
-                        </div>
-                        <div className="row">
+                        </section>
+                        <section className="row">
                             <span className="total-detail">$527,00</span>
-                        </div>
-                    </div>
-                </div>
-                <div className="payment-method-container">
+                        </section>
+                    </section>
+                </section>
+                <section className="payment-method-container">
                     <div className="payment-method-header">
                         Payment Method
                     </div>
-                    <div className="payment-method-section">
-                        <div className="payment-information-section">
+
+                    {/* div met text moet aangepast worden */}
+                    <section className="payment-method-section">
+                        <article className="payment-information-section">
                             <div className="payment-type-text">Mastercard</div>
+                    {/* div met text moet aangepast worden */}
+
                             <div className="payment-info-text">[ L.Summer ] [0123 xxxx xxxx 2345]</div>
-                        </div>
+                        </article>
                         <button className="change-payment-button">Change</button>
-                    </div>
-                </div>
-                <div className="confirm-booking-payment-section">
-                    <div className="accept-personal-data-terms">
+                    </section>
+                </section>
+                <section className="confirm-booking-payment-section">
+                    <article className="accept-personal-data-terms">
                         <input type="checkbox" />
                         I have read and accept the <a>personal data terms </a> on how we collect and proccess your data
-                    </div>
-                    <div className="proceed-to-pay-button">
+                    </article>
+                    <article className="proceed-to-pay-button">
                         <button>Proceed to pay*</button>
-                    </div>
-                    <div className="proceed-to-pay-text">
+                    </article>
+                    <article className="proceed-to-pay-text">
                         *Secure payment gateway powered by Stripe.com
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </article>
+                </section>
+            </section>
+        </main>
     );
 }
 

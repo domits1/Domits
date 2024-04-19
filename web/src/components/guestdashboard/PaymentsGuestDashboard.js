@@ -10,14 +10,14 @@ const PaymentsGuestDashboard = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="guestdashboard">
-            <div className='dashboards'>
+        <main className="guestdashboard">
+            <section className='dashboards'>
                 <Pages />
-                <div className="content">
-                    <div className="payments-content">
-                        <div className="fulfilled-payments">
+                <article className="content">
+                    <article className="payments-content">
+                        <article className="fulfilled-payments">
                             <h2>Fulfilled payments</h2>
-                            <div className="payment-item">
+                            <article className="payment-item">
                                 <h3>Tropical 12 person villa with pool</h3>
                                 <img
                                     src={villaImage}
@@ -26,41 +26,44 @@ const PaymentsGuestDashboard = () => {
                                 />
                                 <p>Total: $3460,49-</p>
                                 <button className="add-payment-button">+</button>
-                            </div>
+                            </article>
                             {/* Additional fulfilled payments here */}
-                        </div>
-                        <div className="payment-methods">
+                        </article>
+                        <article className="payment-methods">
                             <h2>Payment methods</h2>
-                            <div className="payment-method-box">
+                            <article className="payment-method-box">
                                 <div className="payment-method-title">Mastercard</div>
-                                <div className="payment-method-details">
+                                {/* div met text moet worden aangepast */}
+                                <article className="payment-method-details">
                                     <p>L.Summer</p>
                                     <p>[0123 xxxx xxxx 2345]</p>
                                     <p>[10/27]</p>
                                     {/* Icon for editing or removing */}
-                                </div>
-                            </div>
-                            <div className="payment-method-box">
+                                </article>
+                            </article>
+                            <article className="payment-method-box">
                                 <div className="payment-method-title">Klarna Afterpay</div>
-                                <div className="payment-method-details">
+                                {/* div met text moet worden aangepast */}
+                                <article className="payment-method-details">
                                     <p>Active since November 2023</p>
                                     {/* Icon for editing or removing */}
-                                </div>
-                            </div>
-                            <div className="payment-method-box">
+                                </article>
+                            </article>
+                            <article className="payment-method-box">
                                 <div className="payment-method-title">Domits coins</div>
-                                <div className="payment-method-details">
+                                {/* div met text moet worden aangepast */}
+                                <article className="payment-method-details">
                                     <p>1 coin = 1 EUR</p>
                                     <p>700 coins</p>
                                     {/* Icon for adding coins */}
-                                </div>
-                            </div>
+                                </article>
+                            </article>
                             <button className="add-payment-method">Add payment method</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </article>
+                    </article>
+                </article>
+            </section>
+        </main>
     );
 }
 

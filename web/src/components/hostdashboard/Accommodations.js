@@ -56,16 +56,16 @@ const Accommodations = ({ searchResults, loading }) => {
           <div className="accocard" key={index}>
             <Link to={`/listingdetails/`} className="accocard-link">
               <img src={accommodation.image} alt={accommodation.title} />
-              <div className="accocard-content">
-                <div className="accocard-title">{accommodation.title}</div>
-                <div className="accocard-price">{accommodation.price}</div>
-                <div className="accocard-detail">{accommodation.details}</div>
-                <div className="accocard-specs">
-                  <div className="accocard-size">{accommodation.size}</div>
-                  <div className="accocard-size">{accommodation.bathrooms}</div>
-                  <div className="accocard-size">{accommodation.bedrooms}</div>
-                </div>
-              </div>
+              <article className="accocard-content">
+                <article className="accocard-title">{accommodation.title}</article>
+                <article className="accocard-price">{accommodation.price}</article>
+                <article className="accocard-detail">{accommodation.details}</article>
+                <article className="accocard-specs">
+                  <article className="accocard-size">{accommodation.size}</article>
+                  <article className="accocard-size">{accommodation.bathrooms}</article>
+                  <article className="accocard-size">{accommodation.bedrooms}</article>
+                </article>
+              </article>
             </Link>
           </div>
         ))

@@ -14,7 +14,7 @@ function Contact() {
     };
 
     return (
-        <div className="contact">
+        <main className="contact">
             <h1>Contact our specialists</h1>
             <p>
                 We are 24/7 available to ensure optimal reachability across all time zones.
@@ -24,8 +24,8 @@ function Contact() {
             </p>
             
                 <form onSubmit={handleSubmit}>
-                    <div className="contactform">
-                    <div className="namemessage">
+                    <article className="contactform">
+                    <article className="namemessage">
                         <label htmlFor="name">Name</label>
                         <input type="text" id="name" placeholder="ex. Lotte Summer" />
 
@@ -34,12 +34,12 @@ function Contact() {
 
                         <label htmlFor="email">Enter your email</label>
                         <input type="email" id="email" placeholder="ex. lotte_summer@gmail.com" />
-                    </div>
+                    </article>
 
-            <div className="biginput">
+            <article className="biginput">
                 <label htmlFor="message">Your message</label>
                 <textarea id="message" placeholder="ex. I am still waiting to get paid and would like a follow up or open a dispute about this..."></textarea>
-                <div className="formbuttons">
+                <article className="formbuttons">
                     <input type="file" id="fileInput" style={{ display: 'none' }} multiple />
                     <button 
                         type="button" 
@@ -48,13 +48,13 @@ function Contact() {
                         Add attachments
                     </button>
                     <button type="submit" id="sendbutton">Send message</button>
-                </div>
-            </div>
-                </div>
+                </article>
+            </article>
+                </article>
             </form>
             
             
-        </div>
+        </main>
     );
 }
 

@@ -4,11 +4,11 @@ import { Link } from "react-router-dom";
 
 function errorpage () {
     return(
-        <div className="errorpage">
+        <main className="errorpage">
             <h1>ERROR 404</h1>
             <h2>Oh no... you are lost</h2>
             <h3>This page does not exist or is offline for maintenance. We do have a couple of suggestions for you to go to:</h3>
-            <div>
+            <article>
                 <Link to="/home">
                     <button>Find accommodation</button>
                 </Link>
@@ -21,8 +21,8 @@ function errorpage () {
                 <Link to="/contact">
                     <button>Contact</button>
                 </Link>
-            </div>
-        </div>
+            </article>
+        </main>
 
     );
 }

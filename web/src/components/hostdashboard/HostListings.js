@@ -88,26 +88,26 @@ function HostListings() {
 
 
     return (
-        <div className="container">
+        <main className="container">
             <h2>Listings</h2>
-            <div className="dashboard">
+            <section className="dashboard">
                 <Pages />
-                <div className="contentContainer">
-                    <div className="boxColumns fullColumn">
-                        <div className="wijzer addAcco" onClick={() => navigate("/enlist")} style={{maxWidth: 250,}}>
+                <article className="contentContainer">
+                    <article className="boxColumns fullColumn">
+                        <article className="wijzer addAcco" onClick={() => navigate("/enlist")} style={{maxWidth: 250,}}>
                             <img src={add} alt="add"></img>
                             <p>Add new accommodation</p>
-                        </div>
-                        <div className="box fullBox">
+                        </article>
+                        <article className="box fullBox">
                             <p className="header">Current listings</p>
                             {isLoading ? (
-                                <div>
+                                <article>
                                     <img src={spinner}/>
-                                </div>
+                                </article>
                             ) : accommodations.length > 0 ? (
                                 accommodations.map((accommodation) => (
-                                    <div key={accommodation.ID} className="accommodation-tab">
-                                        <div className="accommodation-left">
+                                    <article key={accommodation.ID} className="accommodation-tab">
+                                        <article className="accommodation-left">
                                             <p className="accommodation-title">{accommodation.Title}</p>
                                             <p>{accommodation.Country},
                                                 {accommodation.City},
@@ -115,8 +115,8 @@ function HostListings() {
                                                 {accommodation.PostalCode}
                                             </p>
                                             <ImageSlider images={accommodation.Images} />
-                                        </div>
-                                        <div className="accommodation-right">
+                                        </article>
+                                        <article className="accommodation-right">
                                         <p>Description: {accommodation.Description}</p>
                                             <p>Listed on: {formatDate(accommodation.createdAt)}</p>
                                             <p>Measurements: {accommodation.Measurements}m²</p>
@@ -132,23 +132,23 @@ function HostListings() {
                                                 </p>) :
                                                 (<p>Date range not set</p>)
                                             }
-                                        </div>
-                                    </div>
+                                        </article>
+                                    </article>
                                 ))
                             ) : (
-                                <div className="accommodation-box">
+                                <article className="accommodation-box">
                                     <p className="accommodation-alert">It appears that you have not listed any accommodations yet...</p>
-                                </div>
+                                </article>
                             )}
-                        </div>
-                        <div className="box">
+                        </article>
+                        <article className="box">
                             <p className="header">Pending</p>
-                        </div>
-                    </div>
-                </div>
+                        </article>
+                    </article>
+                </article>
 
-            </div>
-        </div>
+            </section>
+        </main>
     );
 }
 

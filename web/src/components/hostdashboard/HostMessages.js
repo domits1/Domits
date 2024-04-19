@@ -5,15 +5,15 @@ import './HostHomepage.css'
 function HostMessages() {
 
     return (
-        <div className="container">
+        <main className="container">
             <h2>Dashboard</h2>
-            <div className="dashboard">
+            <article className="dashboard">
                 <Pages />
-                <div className="contentContainer">
+                <article className="contentContainer">
                     <div></div>
-                </div>
-            </div>
-        </div>
+                </article>
+            </article>
+        </main>
     );
 }
 

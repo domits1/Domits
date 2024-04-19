@@ -277,10 +277,10 @@ const chatContainerRef = useRef(null);
 
     return (
         <main className="chat">
-            <div className="chat__headerWrapper">
+            <article className="chat__headerWrapper">
          
                 <h2 className="chat__heading">Message dashboard</h2>
-            </div>
+            </article>
             <section className="chat__container">
                <Pages/>
               
@@ -371,12 +371,12 @@ const chatContainerRef = useRef(null);
                             <img className="chat__icon" src={trash}/>
                         </li>
                     </ul>
-                    <div className="chat__buttonWrapper">
+                    <article className="chat__buttonWrapper">
                     <button className="chat__button chat__button--file">add files
                     <input type="file" onChange={handleImageUpload} /></button>
                     <button className="chat__button chat__button--review">Send review link</button>
                         
-                    </div>
+                    </article>
                     </nav>
                 </article>
                 <article className="chat__people">
@@ -388,13 +388,13 @@ const chatContainerRef = useRef(null);
                                     {unreadMessages[chatUser.email] > 9 ? '9+' : unreadMessages[chatUser.email]}
                                 </figure>
                             )}
-                            <div className="chat__pfp">
+                            <article className="chat__pfp">
                                 <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
-                            </div>
-                            <div className="chat__wrapper">
+                            </article>
+                            <article className="chat__wrapper">
                                 <h2 className="chat__name">{chatUser.name}</h2>
                                 {/* Display last message preview here */}
-                            </div>
+                            </article>
                         </li>
                     ))}
                 </ul>

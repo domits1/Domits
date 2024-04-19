@@ -59,7 +59,7 @@ const Faq = () => {
   };
 
   return (
-    <div className="faq-container">
+    <main className="faq-container">
       <h3 className="faqHeader3">FAQ - Frequently Asked Questions</h3>
       {faqs.map((faq, index) => (
         <FaqItem 
@@ -70,7 +70,7 @@ const Faq = () => {
           toggleOpen={() => toggleOpen(index)}
         />
       ))}
-    </div>
+    </main>
   );
 };
 

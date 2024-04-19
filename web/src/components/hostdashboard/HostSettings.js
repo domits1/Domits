@@ -12,13 +12,13 @@ const HostSettings = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="container">
+        <main className="container">
             <h2>Huub's Settings</h2>
-            <div className='dashboards'>
+            <section className='dashboards'>
                 <Pages />
-                <div className="content">
-                    <div className="settingsContent">
-                        <div className="settingsOptions">
+                <article className="content">
+                    <article className="settingsContent">
+                        <article className="settingsOptions">
                             <div className="settingsOption" onClick={() => { /* Implement logic */ }}>
                                 <img src={settingsIcon} alt="Settings Icon" className="icon" />
                                 Change mail settings and frequency
@@ -41,8 +41,8 @@ const HostSettings = () => {
                                 <img src={settingsIcon} alt="Helpdesk Icon" className="icon" />
                                 Q&A Helpdesk
                             </div>
-                        </div>
-                        <div className="dataRemovalSection">
+                        </article>
+                        <article className="dataRemovalSection">
                             <h2>Remove your data</h2>
                             <div className="dataRemovalOption" onClick={() => { /* Implement logic */ }}>
                                 <img src={settingsIcon} alt="Remove Reviews Icon" className="icon" />
@@ -56,19 +56,19 @@ const HostSettings = () => {
                                 <img src={settingsIcon} alt="Delete Account Icon" className="icon" />
                                 Request account deletion
                             </div>
-                        </div>
-                    </div>
-                    <div className="publicProfileContent">
+                        </article>
+                    </article>
+                    <article className="publicProfileContent">
                         <h2>Public profile</h2>
-                        <div className="profileField">
-                        </div>
-                        <div className="profilePicture">
+                        <article className="profileField">
+                        </article>
+                        <article className="profilePicture">
                             <img src={faceHappyIcon} alt="Profile" className="icon" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </article>
+                    </article>
+                </article>
+            </section>
+        </main>
     );
 };
 

@@ -5,30 +5,29 @@ import './guestdashboard.css';
 function GuestReviews() {
 
     return (
-        <div className="container">
+        <main className="container">
             <h2>Reviews</h2>
-            <div className="dashboards">
+            <section className="dashboards">
                 <Pages />
 
-                <div className="contentContainer">
-                    <div className="reviewColumn">
-                        <div className="reviewBox">
+                <article className="contentContainer">
+                    <article className="reviewColumn">
+                        <article className="reviewBox">
                             <p className="reviewText">Earnings</p>
-                        </div>
-                    </div>
+                        </article>
+                    </article>
 
-                    <div className="reviewColumn">
-                        <div className="reviewBox">
+                    <article className="reviewColumn">
+                        <article className="reviewBox">
                             <p className="reviewText">Disputes</p>
-                        </div>
-                        <div className="reviewBox">
+                        </article>
+                        <article className="reviewBox">
                             <p className="reviewText">Recent reviews</p>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-        </div>
+                        </article>
+                    </article>
+                </article>
+            </section>
+        </main>
     );
 }
 

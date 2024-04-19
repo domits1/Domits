@@ -5,14 +5,14 @@ import './HostHomepage.css'
 function HostPayments() {
 
     return (
-        <div className="container">
+        <main className="container">
             <h2>Payments</h2>
-            <div className="dashboard">
+            <section className="dashboard">
                 <Pages />
 
-                <div className="contentContainer">
-                    <div className="boxColumns fullColumn">
-                        <div className="box fullBox">
+                <section className="contentContainer">
+                    <section className="boxColumns fullColumn">
+                        <article className="box fullBox">
                             <p>No payments yet, they will appear here once data is available.</p>  {/* original text: Ready to be withdrawn  */}
                             {/* <div className="withdrawContain">
                                 <p className="priceText">$6000</p>
@@ -34,7 +34,7 @@ function HostPayments() {
                                 <p className="priceText">$1250</p>
                                 <p className="withdrawText">Ready for payout</p>
                             </div> */}
-                        </div>
+                        </article>
                         {/* <button id="withdrawButton">Withdraw</button> */}
                         {/* <div className="box fullBox">
                             <p>Completed payments</p>
@@ -42,11 +42,11 @@ function HostPayments() {
                         <div className="box fullBox">
                             <p>Cancelled payments</p>
                         </div> */}
-                    </div>
+                    </section>
 
-                </div>
-            </div>
-        </div>
+                </section>
+            </section>
+        </main>
     );
 }
 

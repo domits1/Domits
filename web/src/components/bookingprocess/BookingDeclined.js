@@ -97,11 +97,11 @@ const BookingDeclined = () => {
                         <button className="change-payment-button">Change</button>
                     </section>
                 </section>
-                <div className="try-again-section">
-                    <div className="try-again-button">
+                <article className="try-again-section">
+                    <article className="try-again-button">
                         <button>Try again</button>
-                    </div>
-                </div>
+                    </article>
+                </article>
             </section>
         </main>
     );

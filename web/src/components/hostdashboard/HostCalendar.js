@@ -80,18 +80,18 @@ function HostCalendar() {
         }
     }, [userId]);
     return (
-        <div className="container">
+        <main className="container">
             <h2>Calendar</h2>
-            <div className="dashboard">
+            <section className="dashboard">
                 <Pages />
                 {isLoading ? (
                         <div>
                             <img src={spinner}/>
                         </div>
                     ) :
-                <div className="contentContainer">
-                    <div className="boxColumns fullColumn">
-                        <div className="box locationBox">
+                <article className="contentContainer">
+                    <article className="boxColumns fullColumn">
+                        <article className="box locationBox">
                             <select className="locationBox"
                                     onChange={handleSelectAccommodation}>
                                 <option value="">Select an Accommodation</option>
@@ -107,26 +107,26 @@ function HostCalendar() {
                                 ))}
                             </select>
 
-                        </div>
+                        </article>
                         {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
-                        <div className="box">
+                        <article className="box">
                             <p>Booking availability for
                                     {" " + selectedAccommodation.Title}
                             </p>
-                            <div className="locationBox">
-                                <div className="boxColumns locationContent">
+                            <article className="locationBox">
+                                <article className="boxColumns locationContent">
                                     <Calendar passedProp={selectedAccommodation}/>
-                                </div>
-                            </div>
-                        </div>
+                                </article>
+                            </article>
+                        </article>
                             ) : (
                                 <div className="alert-message">Please select your Accommodation first</div>
                             )
                         }
-                    </div>
-                </div>}
-            </div>
-        </div>
+                    </article>
+                </article>}
+            </section>
+        </main>
     );
 }
 

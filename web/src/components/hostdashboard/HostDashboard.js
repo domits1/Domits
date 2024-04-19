@@ -32,40 +32,40 @@ function HostDashboard() {
     }, []);
 
     return (
-        <div className="container">
+        <main className="container">
             <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)} />
             <h2>Dashboard</h2>
-            <div className="dashboard">
+            <section className="dashboard">
                 <Pages />
 
-                <div className="contentContainer">
-                    <div className="boxColumns">
-                        <div className="box">
+                <article className="contentContainer">
+                    <article className="boxColumns">
+                        <article className="box">
                             <p className="boxText">Dashboard</p>
-                        </div>
-                        <div className="box">
+                        </article>
+                        <article className="box">
                             <p className="boxText">Pending guests</p>
-                        </div>
-                    </div>
+                        </article>
+                    </article>
 
-                    <div className="boxColumns">
-                        <div className="box">
+                    <article className="boxColumns">
+                        <article className="box">
                             <p className="boxText">Earnings</p>
-                        </div>
-                    </div>
+                        </article>
+                    </article>
 
-                    <div className="boxColumns">
-                        <div className="box">
+                    <article className="boxColumns">
+                        <article className="box">
                             <p className="boxText">Disputes</p>
-                        </div>
-                        <div className="box">
+                        </article>
+                        <article className="box">
                             <p className="boxText">Recent reviews</p>
-                        </div>
+                        </article>
 
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </article>
+                </article>
+            </section>
+        </main>
     );
 }
 

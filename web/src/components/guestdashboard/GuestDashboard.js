@@ -59,36 +59,36 @@ const GuestDashboard = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="guestdashboard">
-            <div className="dashboard">
+        <main className="guestdashboard">
+            <section className="dashboard">
                 <Pages />
-                <div className="content">
+                <section className="content">
 
-                    <div className="leftContent">
-                        <div className="bookingBox">
+                    <article className="leftContent">
+                        <article className="bookingBox">
                             <h3>Current Booking</h3>
                             <p>Tropical 12 person villa with pool</p>
                             <img src={accommodationImg} alt="Booking" />
                             <p>Host: John Doe</p>
-                        </div>
-                        <div className="messageBoxes">
+                        </article>
+                        <article className="messageBoxes">
                             <h3>Messages (9+)</h3>
                             <p>Go to message centre</p>
                             <button>Go</button>
-                        </div>
-                    </div>
-                    <div className="personalInfoContent">
+                        </article>
+                    </article>
+                    <article className="personalInfoContent">
                         <h3>Personal Information</h3>
-                        <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</div>
+                        <article className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</article>
                         {/*custom attributes need to be called slightly different */}
-                        <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> {user.name}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> {user.address}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> {user.phone}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Family Icon" /><span>Family:</span> {user.family}</div>
-                    </div>
-                </div>
-            </div>
-        </div>
+                        <article className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> {user.name}</article>
+                        <article className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> {user.address}</article>
+                        <article className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> {user.phone}</article>
+                        <article className="infoBox"><img src={editIcon} alt="Family Icon" /><span>Family:</span> {user.family}</article>
+                    </article>
+                </section>
+            </section>
+        </main>
     );
 }
 

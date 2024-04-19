@@ -3,7 +3,7 @@ import './disclaimers.css'
 
 const Terms = () =>{
     return(
-        <div className="terms">
+        <main className="terms">
             <h1>Domits Terms and Conditions</h1>
             <input type="text" placeholder="Search within terms of conditions..." />
             <br />
@@ -48,7 +48,7 @@ const Terms = () =>{
 
             The Company may use copyrighted material which has not always been specifically authorized by the copyright owner. The Company is making such material available for criticism, comment, news reporting, teaching, scholarship, or research.
             If You wish to use copyrighted material from the Service for your own purposes that go beyond fair use, You must obtain permission from the copyright owner.
-        </div>
+        </main>
     );
 }
 

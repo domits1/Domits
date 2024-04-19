@@ -93,21 +93,21 @@ const ListingDetails = ({ searchResults }) => {
   }, [searchResults]);
 
     return (
-        <div className="listing-details-container">
-            <div className="booking-information-section">
-                <div className="listing-details-top">
-                    <div className="listing-details-back-arrow">
+        <main className="listing-details-container">
+            <section className="booking-information-section">
+                <article className="listing-details-top">
+                    <article className="listing-details-back-arrow">
                         <a href="/">
                             <img src={backarrow} alt="Back Arrow" />
                             <div className="listing-details-back-arrow">Back</div>
                         </a>
-                    </div>
+                    </article>
                     <h1 className="listing-details-title">
                         {/* Large white villa in Athens */}
                         {accommodation.subtitle}
                     </h1>
-                </div>
-                <div className="listing-details-image-window">
+                </article>
+                <article className="listing-details-image-window">
                 <ImageGallery 
                     items={images} 
                     thumbnailPosition="right" 
@@ -121,18 +121,18 @@ const ListingDetails = ({ searchResults }) => {
                         <img src={detailimg3} alt="detailimg3" />
                         <img src={detailimg4} alt="detailimg4" id="bottom-right-img" />
                     </div> */}
-                </div>
-                <div className="price-and-rooms-row">
+                </article>
+                <article className="price-and-rooms-row">
                     <p className="price-per-night-text">$1400 per night</p>
                     <p className="guest-and-rooms-text">8 guests</p>
                     <p className="guest-and-rooms-text">4 bedrooms</p>
                     <p className="guest-and-rooms-text">4 bathrooms</p>
-                    <div className="listing-details-book-button">
+                    <article className="listing-details-book-button">
                         <Link to={`/bookingoverview`}>
                             <button>Book* <img src={bookarrow} alt="Book Arrow" /></button>
                         </Link>
-                    </div>
-                </div>
+                    </article>
+                </article>
 
                 {/* Ik weet niet of we dit ooit nodig gaan hebben  */}
 
@@ -169,17 +169,17 @@ const ListingDetails = ({ searchResults }) => {
                         <img src={pluscircle} alt="Plust circle" />Show more
                     </button>
                 </div> */}
-                <div className="listing-details-services-container">
-                    <div className="listing-details-hostDetails">
+                <section className="listing-details-services-container">
+                    <article className="listing-details-hostDetails">
                         <img src={huubHomer} alt="Profile picture of host" className="detailsHostImg" />
-                        <div className="hostDetailsColumn">
+                        <article className="hostDetailsColumn">
                             <h3 className="hostDetailsHeading">Hosted by Huub</h3>
                             <span>Verified host</span>
-                        </div>
-                    </div>
-                    <div className="listing-description">
+                        </article>
+                    </article>
+                    <article className="listing-description">
                         <p>A sleek, white minimalist home stands under a clear blue sky, accented by a solitary tree.</p>
-                    </div>
+                    </article>
                     <h3 className="listing-details-services-header">This place offers the following:</h3>
                     <ul className="listing-details-place-offers">
                         <li className="listing-details-offer-item">
@@ -204,12 +204,12 @@ const ListingDetails = ({ searchResults }) => {
                             <img src={superfastwifi} alt="Super fast WiFi" /> <span>Super fast WiFi</span>
                         </li>
                     </ul>
-                    <div className="show-more-button">
+                    <article className="show-more-button">
                         <button className="listing-details-show-more black-show-more">
                             <img src={pluscircleblack} alt="Plust circle" />Show more
                         </button>
-                    </div>
-                </div>
+                    </article>
+                </section>
 
                 {/* Het gedeelte reviews heb ik uitgecomment. Dit moet later toegevoegd worden als het werkt */}
 
@@ -282,7 +282,7 @@ const ListingDetails = ({ searchResults }) => {
                         <img src={pluscircleblack} alt="Plust circle" />Show more
                     </button>
                 </div> */}
-            </div>
+            </section>
             {/* End of the booking-information-section*/}
 
 
@@ -346,7 +346,7 @@ const ListingDetails = ({ searchResults }) => {
                     </div>
                 </div>
             </div> */}
-        </div>
+        </main>
     );
 }
 

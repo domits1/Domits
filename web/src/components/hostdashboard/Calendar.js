@@ -100,7 +100,7 @@ function Calendar({passedProp}) {
   };
 
   return (
-      <div>
+      <main>
           <DateRangePicker
               onChange={item => setDateRange([item.selection])}
               showSelectionPreview={true}
@@ -139,7 +139,7 @@ function Calendar({passedProp}) {
                   }
               ]}
           />
-          <div className="button-box">
+          <article className="button-box">
               <button className="undo-btn" onClick={resetDates}>
                   <img src={returner} className="returner" alt="Return"></img>
                   <p className="btn-text">Undo</p>
@@ -147,8 +147,8 @@ function Calendar({passedProp}) {
               <button className="save-btn" onClick={asyncSetDate}>
                   <p className="btn-text">Save</p>
               </button>
-          </div>
-      </div>
+          </article>
+      </main>
   );
 }
 

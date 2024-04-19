@@ -102,50 +102,50 @@ class Calculator extends Component {
     switch (page) {
       case 1:
         return (
-          <div>
+          <section>
             <p>What type of real-estate do you want to host?</p>
-            <div className='cardHolder'>
+            <article className='cardHolder'>
               {this.renderCard(0, "House", huis, selectedCards[1] === 0, 110)}
               {this.renderCard(1, "Appartement", appartement, selectedCards[1] === 1, 90)}
               {this.renderCard(2, "Camper", camper, selectedCards[1] === 2, 75)}
               {this.renderCard(3, "Boat", boothuis, selectedCards[1] === 3, 80)}
               {this.renderCard(4, "Villa", villa, selectedCards[1] === 4, 150)}
-            </div>
-            <div className='buttonHolder'>
+            </article>
+            <article className='buttonHolder'>
             <button className='nextButtons' onClick={this.resetCalculator}>Reset</button>
               <button className='nextButtons' onClick={() => this.pageUpdater(page + 1)}>Next</button>
-            </div>
-          </div>
+            </article>
+          </section>
         );
       case 2:
         return (
-          <div>
+          <section>
             <p>What are the measurements of this real-estate?</p>
-            <div className='cardHolder'>
+            <article className='cardHolder'>
               {this.renderCard(0, '< 25m²', null, selectedCards[2] === 0, 0.80)}
               {this.renderCard(1, '25 - 50 m²', null, selectedCards[2] === 1, 0.95)}
               {this.renderCard(2, '50 - 75 m²', null, selectedCards[2] === 2, 1)}
               {this.renderCard(3, '75 - 100 m²', null, selectedCards[2] === 3, 1.15)}
               {this.renderCard(4, '> 100 m²', null, selectedCards[2] === 4, 1.30)}
-            </div>
-            <div className='buttonHolder'>
+            </article>
+            <article className='buttonHolder'>
               <button className='nextButtons' onClick={() => this.pageUpdater(page - 1)}>Previous</button>
               <button className='nextButtons' onClick={() => this.pageUpdater(page + 1)}>Next</button>
-            </div>
-          </div>
+            </article>
+          </section>
         );
       case 3:
         return (
-          <div>
+          <section>
             <p>How many sleeping places does your real-estate have?</p>
-            <div className='cardHolder'>
+            <article className='cardHolder'>
               {this.renderCard(0, '1', null, selectedCards[3] === 0, 1)}
               {this.renderCard(1, '2', null, selectedCards[3] === 1, 1.50)}
               {this.renderCard(2, '3', null, selectedCards[3] === 2, 2)}
               {this.renderCard(3, '4', null, selectedCards[3] === 3, 2.50)}
               {this.renderCard(4, '5 or more', null, selectedCards[3] === 4, 3)}
-            </div>
-            <div className='buttonHolder'>
+            </article>
+            <article className='buttonHolder'>
               <button className='nextButtons' onClick={() => this.pageUpdater(page - 1)}>Previous</button>
 
               <button
@@ -160,29 +160,29 @@ class Calculator extends Component {
               >
                 Calculate
               </button>
-            </div>
-          </div>
+            </article>
+          </section>
 
         );
       case 4:
         return (
-          <div>
-            <div className='priceDisplay'>
+          <article>
+            <article className='priceDisplay'>
               <h2>Est. ${this.calculatePrice()} Total Earning Potential</h2>
-            </div>
-            <div className='infoHolder'>
+            </article>
+            <article className='infoHolder'>
               <h4 className="infoHeader">Based on:</h4>
               <p className="info">Real Estate Type: {this.displayInfo(1)}</p>
               <p className="info">Measurements: {this.displayInfo(2)}</p>
               <p className="info">Sleeping Places: {this.displayInfo(3)}</p>
               <p className="info">Service fees: 12%</p>
               <p>If this estimation interests you, please consider hosting on Domits!</p>
-            </div>
-            <div className='buttonHolder'>
+            </article>
+            <article className='buttonHolder'>
             <button className='nextButtons' onClick={this.resetCalculator}>Reset</button>
             <button className='nextButtons' onClick={this.navigateToRegister}>Enlist</button>
-            </div>
-          </div>
+            </article>
+          </article>
         );
       default:
         return null;
@@ -191,14 +191,14 @@ class Calculator extends Component {
 
   renderCard = (index, text, image, isSelected, price) => {
     return (
-      <div
+      <article
         key={index}
         className={`card ${isSelected ? 'selectedCard' : ''}`}
         onClick={() => this.handleCardClick(index, price, text)}
       >
         <p>{text}</p>
         {image && <img className="cardImage" src={image} alt={text} />}
-      </div>
+      </article>
 
     );
   };
@@ -233,8 +233,8 @@ class Calculator extends Component {
     const { page } = this.state;
 
     return (
-      <div>
-        <div className="pages">
+      <article>
+        <article className="pages">
           <button
             className={`pageButtons ${page === 1 ? 'selected' : ''}`}
             onClick={() => this.pageUpdater(1)}
@@ -253,12 +253,12 @@ class Calculator extends Component {
           >
             3
           </button>
-        </div>
+        </article>
 
-        <div className="page">
+        <article className="page">
           {this.renderPageContent(page)}
-        </div>
-      </div>
+        </article>
+      </article>
     );
   }
 }

@@ -3,7 +3,7 @@ import './disclaimers.css'
 
 const Disclaimer = () =>{
     return(
-        <div className="disclaimers">
+        <main className="disclaimers">
             <h1>Domits Disclaimer</h1>
             <br />
             <input type="text" placeholder="Search within disclaimer..." />
@@ -48,7 +48,7 @@ const Disclaimer = () =>{
 
             The Company may use copyrighted material which has not always been specifically authorized by the copyright owner. The Company is making such material available for criticism, comment, news reporting, teaching, scholarship, or research.
             If You wish to use copyrighted material from the Service for your own purposes that go beyond fair use, You must obtain permission from the copyright owner.
-        </div>
+        </main>
     );
 }
 
