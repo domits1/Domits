@@ -6,7 +6,7 @@ function Assortment({ searchResults, loading }) {
     // console.log('Assortment received searchResults:', searchResults);
     return (
         <div>
-            <div className="assortment">
+            <div>
             <Accommodations searchResults={searchResults} loading={loading} />
             </div>
         </div>

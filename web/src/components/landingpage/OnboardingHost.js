@@ -49,12 +49,11 @@ function OnboardingHost() {
     const [formData, setFormData] = useState({
         ID: generateUUID(),
         Title: "",
+        Subtitle: "",
         Description: "",
         Rent: "",
-        Ownertype: "",
-        Bookingsystem: "",
-        Roomtype: "",
-        Guests: "",
+        Guesttype: "",
+        Guestamount: "",
         Bedrooms: "",
         Bathrooms: "",
         Beds: "",
@@ -62,8 +61,6 @@ function OnboardingHost() {
         PostalCode: "",
         Street: "",
         City: "",
-        Bookingsystem: "",
-        Ownertype: "",
         CancelPolicy: "",
         Features: {
             Wifi: false,
@@ -77,13 +74,6 @@ function OnboardingHost() {
             FirstAidkit: false,
             Fireextinguisher: false,
         },
-        SystemConfiguration: {
-            UnverifiedGuest: false,
-            VerifiedGuest: false,
-            Monthlydiscount: false,
-            Weeklydiscount: false,
-            FirstBookerdiscount: false,
-        },
         Images: {
             image1: "",
             image2: "",
@@ -91,9 +81,6 @@ function OnboardingHost() {
             image4: "",
             image5: "",
         },
-        Monthlypercent: 0,
-        Weeklypercent: 0,
-        FirstBookerpercent: 0,
         AccommodationType: "",
         Measurement: "",
         OwnerId: ""
@@ -104,7 +91,7 @@ function OnboardingHost() {
     };
 
     const isFormFilled = () => {
-        const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent', 'OwnerId'];
+        const excludedFields = ['OwnerId'];
         
         // Check if all fields except excluded ones are filled
         for (const key in formData) {
@@ -161,6 +148,7 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
+        console.log(formData)
 
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -307,24 +295,11 @@ function OnboardingHost() {
                         <div class="formContainer">
                             <div class="form-section">
                                 <div className="formRow">
-                                    <div class="room-type">
-                                        <h2 className="onboardingSectionTitle">Select room type</h2>
-                                        <label>
-                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "entireHouse"} value="entireHouse"></input> Entire house
-                                        </label>
-                                        <label>
-                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "room"} value="room"></input> Room
-                                        </label>
-                                        <label>
-                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "sharedRoom"} value="sharedRoom"></input> Shared room
-                                        </label>
-                                    </div>
-
                                     <div class="quantity">
                                         <h2 className="onboardingSectionTitle">Define quantity</h2>
                                         <div className="input-group">
-                                            <label for="guests">How many guests?</label>
-                                            <input className="textInput" type="number" id="guests" name="Guests" onChange={handleInputChange} value={formData.Guests} min={0}></input>
+                                            <label for="guests">Maximun amount of guests?</label>
+                                            <input className="textInput" type="number" id="guests" name="Guestamount" onChange={handleInputChange} value={formData.Guests} min={0}></input>
                                         </div>
                                         <div className="input-group">
                                             <label for="bedrooms">How many bedrooms?</label>
@@ -340,7 +315,6 @@ function OnboardingHost() {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="locationInput">
                                     <h2 className="onboardingSectionTitle">Fill in Location</h2>
                                     <div className="input-group">
@@ -439,7 +413,7 @@ function OnboardingHost() {
                                     <label for="title">Title</label>
                                     <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
                                     <label for="Subtitle">Subtitle</label>
-                                    <input className="textInput locationText" id="Subtitle" name="Title" onChange={handleInputChange} value={formData.Title}></input>
+                                    <input className="textInput locationText" id="Subtitle" name="Subtitle" onChange={handleInputChange} value={formData.Subtitle}></input>
                                     <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
                                     <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
                                 </div>
@@ -484,40 +458,18 @@ function OnboardingHost() {
                                 <div className="formRow">
                                     <div class="room-features formRow">
                                         <div className="configurations">
-                                            <label>Preferred booking system</label>
-                                            <label><input type="radio" className="radioInput" name="Bookingsystem" onChange={handleInputChange} checked={formData.Bookingsystem === "Guests book immediately"} value="Guests book immediately"></input>Let guests book immediately</label>
-                                            <label><input type="radio" className="radioInput" name="Bookingsystem" onChange={handleInputChange} checked={formData.Bookingsystem === "Booking request"} value="Booking request"></input>Review a booking request</label>
-                                        </div>
-                                    </div>
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
                                             <label>Guest type</label>
-                                            <label><input type="checkbox" className="radioInput" name="UnverifiedGuest" onChange={handleInputChange} checked={formData.SystemConfiguration.UnverifiedGuest}></input>Unverified guest</label>
-                                            <label><input type="checkbox" className="radioInput" name="VerifiedGuest" onChange={handleInputChange} checked={formData.SystemConfiguration.VerifiedGuest}></input>Verified Domits guest</label>
-                                        </div>
-                                    </div>
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>Enlist as</label>
-                                            <label><input type="radio" className="radioInput" name="Ownertype" onChange={handleInputChange} checked={formData.Ownertype === "Private owner"} value="Private owner"></input>Private owner</label>
-                                            <label><input type="radio" className="radioInput" name="Ownertype" onChange={handleInputChange} checked={formData.Ownertype === "Corporation"} value="Corporation"></input>Corporation</label>
+                                            <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Any guest"} value="Any guest"></input>Any Guest</label>
+                                            <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Verified Domits guest"} value="Verified Domits guest"></input>Verified Domits guest</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <p>Price: {formData.Rent}</p>
-                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="0" max="10000" step="100" />
+                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="40" max="1000" step="10" />
                             <div className="formHolder">
                                 <h2 className="onboardingSectionTitle">Details and Policies</h2>
                                 <div className="formRow">
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>Do you offer discounts?</label>
-                                            <label><input type="checkbox" className="radioInput" name="Monthlydiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.Monthlydiscount}></input>Monthly discount</label>
-                                            <label><input type="checkbox" className="radioInput" name="Weeklydiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.Weeklydiscount}></input>Weekly discount</label>
-                                            <label><input type="checkbox" className="radioInput" name="FirstBookerdiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.FirstBookerdiscount}></input>First Booker discount</label>
-                                        </div>
-                                    </div>
                                     <div class="room-features formRow">
                                         <div className="configurations">
                                             <label>What are the measurements?</label>
@@ -529,6 +481,8 @@ function OnboardingHost() {
                                                 className="textInput"
                                                 name="AccommodationType"
                                             >
+                                                <option value="Room">Room</option>
+                                                <option value="Shared Room">Shared Room</option>
                                                 <option value="House">House</option>
                                                 <option value="Apartment">Apartment</option>
                                                 <option value="Villa">Villa</option>
