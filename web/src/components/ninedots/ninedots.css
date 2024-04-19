@@ -1,4 +1,4 @@
-.imageContainer h1, h3 {
+.imageContainer h1, .imageContainer h3 {
     font-size: clamp(1.5rem, 3vw + 1rem, 4rem);
 }
 
