@@ -438,6 +438,8 @@ function OnboardingHost() {
                                     <h2 className="onboardingSectionTitle">Add accomodation information</h2>
                                     <label for="title">Title</label>
                                     <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
+                                    <label for="Subtitle">Subtitle</label>
+                                    <input className="textInput locationText" id="Subtitle" name="Title" onChange={handleInputChange} value={formData.Title}></input>
                                     <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
                                     <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
                                 </div>
