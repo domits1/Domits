@@ -20,6 +20,7 @@ import HostPayments from "./components/hostdashboard/HostPayments";
 import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
+import HostReviews from "./components/hostdashboard/HostReviews";
 import ListingDetails from './components/listingdetails/ListingDetails';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
@@ -105,6 +106,9 @@ function App() {
                             <Route path="/hostdashboard/messages" element={<HostMessages />} />
                             <Route path="/hostdashboard/payments" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
+                            <Route path="/hostdashboard/reviews" element={<HostReviews />} />
+
+                            {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />
                             <Route path="/policy" element={<Policy />} />
                             <Route path="/terms" element={<Terms />} />

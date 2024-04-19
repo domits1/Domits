@@ -72,44 +72,48 @@ function Pages() {
   }
 
   return (
-    <div className="dashboardSection section-1">
-      <div className="wijzer" onClick={() => navigate("/hostdashboard")}>
-        <img src={dashboard} alt="Dashboard"></img>
-        <p>Dashboard</p>
-      </div>
-      <div className="wijzer" onClick={() => navigate("/hostdashboard/Chatprototype")}>
-        <img src={message} alt="Messages"></img>
-        <p>Messages</p>
-      </div>
-      <div className="wijzer" onClick={() => navigate("/hostdashboard/payments")}>
-        <img src={payment} alt="Payments"></img>
-        <p>Payments</p>
-      </div>
-      <div className="wijzer" onClick={() => navigate("/hostdashboard/listings")}>
-        <img src={listings} alt="Listing"></img>
-        <p>Listing</p>
-      </div>
-      <div className="wijzer" onClick={() => navigate("/hostdashboard/calendar")}>
-        <img src={calendar} alt="Calendar"></img>
-        <p>Calendar</p>
-      </div>
-      <div className="wijzer" onClick={() => navigate("/hostdashboard/settings")}>
-        <img src={settings} alt="Settings"></img>
-        <p>Settings</p>
-      </div>
-      {loading ? (
-        <div className="spinner">
-          <img src={spinner} alt="Loading" />
+      <div className="dashboardSection section-1">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard")}>
+          <img src={dashboard} alt="Dashboard"></img>
+          <p>Dashboard</p>
         </div>
-      ) : (
-        <div className="wijzer-grn" onClick={handleStripeAction}>
-          <div className="stripe-icon-div">
-            <img src={stripe} className="stripe-icon" alt="Stripe" />
-          </div>
-          <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/Chatprototype")}>
+          <img src={message} alt="Messages"></img>
+          <p>Messages</p>
         </div>
-      )}
-    </div>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/payments")}>
+          <img src={payment} alt="Payments"></img>
+          <p>Payments</p>
+        </div>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/listings")}>
+          <img src={listings} alt="Listing"></img>
+          <p>Listing</p>
+        </div>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/calendar")}>
+          <img src={calendar} alt="Calendar"></img>
+          <p>Calendar</p>
+        </div>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/settings")}>
+          <img src={settings} alt="Settings"></img>
+          <p>Settings</p>
+        </div>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/reviews")}>
+          <img src={listings} alt="Reviews"></img>
+          <p>Reviews</p>
+        </div>
+        {loading ? (
+            <div className="spinner">
+              <img src={spinner} alt="Loading"/>
+            </div>
+        ) : (
+            <div className="wijzer-grn" onClick={handleStripeAction}>
+              <div className="stripe-icon-div">
+                <img src={stripe} className="stripe-icon" alt="Stripe"/>
+              </div>
+              <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>
+            </div>
+        )}
+      </div>
   );
 }
 
