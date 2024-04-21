@@ -298,8 +298,8 @@ function OnboardingHost() {
                                     <div class="quantity">
                                         <h2 className="onboardingSectionTitle">Define quantity</h2>
                                         <div className="input-group">
-                                            <label for="guests">Maximun amount of guests?</label>
-                                            <input className="textInput" type="number" id="guests" name="Guestamount" onChange={handleInputChange} value={formData.Guests} min={0}></input>
+                                            <label for="guests">Maximum amount of guests?</label>
+                                            <input className="textInput" type="number" id="guests" name="Guestamount" onChange={handleInputChange} value={formData.Guestamount} min={0}></input>
                                         </div>
                                         <div className="input-group">
                                             <label for="bedrooms">How many bedrooms?</label>
@@ -536,7 +536,7 @@ function OnboardingHost() {
                                 <p>Description: {formData.Description}</p>
                                 <p>Rent: {formData.Rent}</p>
                                 <p>Room Type: {formData.Roomtype}</p>
-                                <p>Number of Guests: {formData.Guests}</p>
+                                <p>Number of Guests: {formData.Guestamount}</p>
                                 <p>Number of Bedrooms: {formData.Bedrooms}</p>
                                 <p>Number of Bathrooms: {formData.Bathrooms}</p>
                                 <p>Number of Fixed Beds: {formData.Beds}</p>
@@ -552,17 +552,6 @@ function OnboardingHost() {
                                         <p key={feature}>{feature}: {value ? 'Yes' : 'No'}</p>
                                     ))}
                                 </ul>
-                            </div>
-                            <div className="reviewInfo">
-                                <p>System Configuration:</p>
-                                <ul>
-                                    {Object.entries(formData.SystemConfiguration).map(([config, value]) => (
-                                        <p key={config}>{config}: {value ? 'Yes' : 'No'}</p>
-                                    ))}
-                                </ul>
-                                <p>Monthly Discount: {formData.Monthlypercent}%</p>
-                                <p>Weekly Discount: {formData.Weeklypercent}%</p>
-                                <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
                             </div>
                         </div>
                         <div className='buttonHolder'>
