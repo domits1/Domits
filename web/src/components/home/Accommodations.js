@@ -12,13 +12,15 @@ const Accommodations = ({ searchResults }) => {
     return items.map((item) => ({
       image: item.Images.image1,
       title: item.Title,
+      city: item.City,
+      country: item.Country,
       details: item.Description,
       size: `${item.Measurements}m²`,
       price: `€${item.Rent} per night`,
       id: item.ID,
       bathrooms: `${item.Bathrooms} Bathrooms`,
       bedrooms: `${item.Bedrooms} Bedrooms`,
-      persons: `${item.Guests} Persons`,
+      persons: `${item.GuestAmount} Persons`,
     }));
   };
 
@@ -67,7 +69,7 @@ const Accommodations = ({ searchResults }) => {
         <div className="accocard" key={index} onClick={() => handleClick(accommodation.id)}>
           <img src={accommodation.image} alt={accommodation.title} />
           <div className="accocard-content">
-            <div className="accocard-title">{accommodation.title}</div>
+            <div className="accocard-title">{accommodation.city}, {accommodation.country}</div>
             <div className="accocard-price">{accommodation.price}</div>
             <div className="accocard-detail">{accommodation.details}</div>
 

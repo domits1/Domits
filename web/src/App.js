@@ -5,7 +5,7 @@ import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
-import Assortment from './components/assortment/Assortment';
+import Home from './components/home/Accommodations';
 import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomits";
 import Release from "./components/about/release.js";
@@ -69,7 +69,7 @@ function App() {
                     <div className="App">
                     {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
                         <Routes>
-                            <Route path="/" element={<Assortment searchResults={searchResults} />} />
+                            <Route path="/" element={<Home searchResults={searchResults} />} />
                             <Route path="/about" element={<About />} />
                             <Route path="/release" element={<Release />} />
                             <Route path="/helpdesk" element={<Helpdesk />} />
