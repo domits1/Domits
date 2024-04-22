@@ -155,14 +155,11 @@
   margin-top: 20px;
   padding: 10px;
   width: 20vw;
-
 }
 
 .fullBox {
   width: auto;
-  min-height: 200px;
-  overflow: scroll;
-  overflow-x: hidden;
+  max-height: none;
 }
 
 .locationBox {

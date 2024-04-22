@@ -140,7 +140,7 @@ function HostListings() {
                                 </div>
                             )}
                         </div>
-                        <div className="box">
+                        <div className="box fullBox">
                             <p className="header">Pending</p>
                         </div>
                     </div>
