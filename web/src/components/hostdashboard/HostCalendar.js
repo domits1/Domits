@@ -81,13 +81,17 @@ function HostCalendar() {
                         <div>
                             <img src={spinner}/>
                         </div>
+                    ) : accommodations.length < 1 ? (
+                        <p>No accommodations found...</p>
                     ) :
                 <div className="contentContainer">
                     <div className="boxColumns fullColumn">
-                        <div className="box locationBox">
+                        <div className="box locationBox selector">
                             <select className="locationBox"
                                     onChange={handleSelectAccommodation}>
-                                <option value="">Select an Accommodation</option>
+                                <option value="" className="select-option">
+                                    <p className="select-text">Select your Accommodation</p>
+                                </option>
                                 {accommodations.map(accommodation => (
                                     <option key={accommodation.ID}
                                             value={accommodation.ID}>

@@ -228,6 +228,20 @@
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Change to your preferred focus shadow */
 }
 
+.review-content {
+  text-align: start;
+}
+
+.selector {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.select-option {
+  display: flex;
+  text-align: center;
+}
 .header {
   font-size: 1.75em;
 }
