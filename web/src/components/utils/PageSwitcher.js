@@ -2,6 +2,13 @@ import React, { useState } from "react";
 import ImageSlider from "./ImageSlider";
 import './PageSwitcher.css';
 
+/**
+ *
+ * @param accommodations = An array of accommodations for listing
+ * @param amount = The amount of accommodations you want to display per page
+ * @returns {Element}
+ * @constructor
+ */
 function PageSwitcher({accommodations, amount}) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = amount;
