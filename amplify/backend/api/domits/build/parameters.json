@@ -15,5 +15,5 @@
         "Ref": "UnauthRoleName"
     },
     "S3DeploymentBucket": "amplify-domits-develop-123953-deployment",
-    "S3DeploymentRootKey": "amplify-appsync-files/d0d976e17742b9f3a361870cc49d8615af92aaa2"
+    "S3DeploymentRootKey": "amplify-appsync-files/b7f4baa9e427e2c171b54bf433cba73cb056e925"
 }
