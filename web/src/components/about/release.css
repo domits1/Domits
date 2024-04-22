@@ -1,8 +1,11 @@
-.releasecontainer {
-    margin-top: 50px;
-    margin-left: 50px;
+.release {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 50vh;
 }
 
-.releaseversion {
-    margin-bottom: 10px;
+.release h1 {
+    font-weight: 500;
 }

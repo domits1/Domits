@@ -102,8 +102,8 @@ function Pages() {
           <p>Reviews</p>
         </div>
         {loading ? (
-            <div className="spinner">
-              <img src={spinner} alt="Loading"/>
+            <div className="spinnerdiv">
+              <img className="spinner" src={spinner} alt="Loading"/>
             </div>
         ) : (
             <div className="wijzer-grn" onClick={handleStripeAction}>

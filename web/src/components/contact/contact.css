@@ -15,9 +15,9 @@
     margin-top: 25px;
   }
   
-  .contactform h2 {
-    font-weight: 600;
-    width: 100%;
+  .contact h1 {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
   }
   
   .namemessage,
@@ -52,7 +52,7 @@
     border: 0;
     display: flex;
     justify-content: flex-start;
-    flex-wrap: wrap;
+    flex-wrap: wrap; 
   }
   
   #attachmentsbutton,
@@ -65,23 +65,25 @@
     flex-shrink: 0;
     color: #FFF;
     border-radius: 10px;
+    border: none;
+    box-shadow: none;
   }
   
   #attachmentsbutton {
-    background: #003366;
+    background: var(--secondary-color);
   }
   
   #sendbutton {
-    background: #0D9813;
+    background: var(--primary-color);
   }
   
   #attachmentsbutton:hover {
-    background: #003366;
+    background: #3e85cb;
     cursor: pointer;
   }
   
   #sendbutton:hover {
-    background: #09770f;
+    background: #46c54c;
     cursor: pointer;
   }
   
