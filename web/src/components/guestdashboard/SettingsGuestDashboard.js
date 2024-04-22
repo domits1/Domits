@@ -5,7 +5,6 @@ import Pages from "./Pages.js";
 import { Link, useNavigate } from 'react-router-dom';
 import faceHappyIcon from "../../images/icons/face-happy.png";
 import settingsIcon from "../../images/icons/settings-04.png";
-import { changeEmail, confirmEmailChange } from './emailSettings.js';
 import { Auth } from 'aws-amplify';
 
 const SettingsTab = () => {
@@ -16,17 +15,18 @@ const SettingsTab = () => {
     const [verificationCode, setVerificationCode] = useState('');
     const [showVerificationCodeInput, setShowVerificationCodeInput] = useState(false);
     const [username, setUsername] = useState('');
+    const [newUsername, setNewUsername] = useState('');
 
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
                 const user = await Auth.currentAuthenticatedUser();
-                setUsername(user.attributes['custom:username']); 
+                setUsername(user.attributes['custom:username']);
             } catch (error) {
                 console.error('Error fetching user info:', error);
             }
         };
-        
+
         fetchUserInfo();
     }, []);
 
@@ -36,24 +36,53 @@ const SettingsTab = () => {
             return;
         }
 
-        const { success, error } = await changeEmail(newEmail);
-        if (success) {
-            setShowVerificationCodeInput(true);
-        } else {
-            console.error('Failed to change email:', error);
+        try {
+            const response = await fetch('https://z0j63xfxrb.execute-api.eu-north-1.amazonaws.com/dev/changeEmail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ newEmail }),
+            });
+
+            if (response.ok) {
+                setShowVerificationCodeInput(true);
+            } else {
+                const data = await response.json();
+                console.error('Failed to change email:', data.error);
+            }
+        } catch (error) {
+            console.error('Error changing email:', error);
+        }
+    };
+
+    const handleChangeUsername = async () => {
+        // Add validation for newUsername if needed
+
+        try {
+            // Assuming there's an API endpoint for changing username
+            const response = await fetch('YOUR_CHANGE_USERNAME_API_ENDPOINT', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ newUsername }),
+            });
+
+            if (response.ok) {
+                setUsername(newUsername);
+                console.log('Username changed successfully');
+            } else {
+                const data = await response.json();
+                console.error('Failed to change username:', data.error);
+            }
+        } catch (error) {
+            console.error('Error changing username:', error);
         }
     };
 
     const handleConfirmEmailChange = async () => {
-        const { success, error } = await confirmEmailChange(verificationCode);
-        if (success) {
-            console.log('Email change confirmed');
-            setNewEmail('');
-            setConfirmEmail('');
-            setShowVerificationCodeInput(false);
-        } else {
-            console.error('Failed to confirm email change:', error);
-        }
+        // Implement this function if needed
     };
 
     return (
@@ -70,6 +99,13 @@ const SettingsTab = () => {
                             </div>
                             {showMailSettings && (
                                 <div className="settingsOption">
+                                    <input
+                                        type="text"
+                                        placeholder="Enter new username"
+                                        value={newUsername}
+                                        onChange={(e) => setNewUsername(e.target.value)}
+                                    />
+                                    <button onClick={handleChangeUsername}>Change Username</button>
                                     <input
                                         type="text"
                                         placeholder="Enter new email address"
