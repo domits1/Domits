@@ -159,12 +159,14 @@
 }
 
 .fullBox {
+  width: auto;
   min-height: 200px;
   overflow: scroll;
   overflow-x: hidden;
 }
 
 .locationBox {
+  width: auto;
   height: auto;
   display: flex;
   flex-direction: row;
@@ -174,7 +176,6 @@
   overflow: hidden;
   font-size: 1.1em;
 }
-
 
 .boxText {
   width: 80%;

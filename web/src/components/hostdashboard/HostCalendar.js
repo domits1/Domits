@@ -102,7 +102,7 @@ function HostCalendar() {
 
                         </div>
                         {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
-                        <div className="box">
+                        <div className="calendar-box">
                             <p>Booking availability for
                                     {" " + selectedAccommodation.Title}
                             </p>
