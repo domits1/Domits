@@ -154,16 +154,16 @@
   margin-right: 10px;
   margin-top: 20px;
   padding: 10px;
-
+  width: 20vw;
 }
 
 .fullBox {
-  min-height: 200px;
-  overflow: scroll;
-  overflow-x: hidden;
+  width: auto;
+  max-height: none;
 }
 
 .locationBox {
+  width: auto;
   height: auto;
   display: flex;
   flex-direction: row;
@@ -173,7 +173,6 @@
   overflow: hidden;
   font-size: 1.1em;
 }
-
 
 .boxText {
   width: 80%;
@@ -229,6 +228,20 @@
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Change to your preferred focus shadow */
 }
 
+.review-content {
+  text-align: start;
+}
+
+.selector {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+}
+
+.select-option {
+  display: flex;
+  text-align: center;
+}
 .header {
   font-size: 1.75em;
 }
