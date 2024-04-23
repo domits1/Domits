@@ -89,11 +89,6 @@ const SettingsTab = () => {
                                         onChange={(e) => setConfirmEmail(e.target.value)}
                                     />
                                     <button onClick={handleChangeEmail}>Save</button>
-                                </div>
-                            )}
-
-                            {showVerificationCodeInput && (
-                                <div className="settingsOption">
                                     <input
                                         type="text"
                                         placeholder="Enter Verification Code"
