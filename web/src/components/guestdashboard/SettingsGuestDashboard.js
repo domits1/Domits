@@ -15,13 +15,14 @@ const SettingsTab = () => {
     const [verificationCode, setVerificationCode] = useState('');
     const [showVerificationCodeInput, setShowVerificationCodeInput] = useState(false);
     const [username, setUsername] = useState('');
-    const [newUsername, setNewUsername] = useState('');
+    const [userId, setUserId] = useState('');
 
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
                 const user = await Auth.currentAuthenticatedUser();
                 setUsername(user.attributes['custom:username']);
+                setUserId(user.attributes.sub);
             } catch (error) {
                 console.error('Error fetching user info:', error);
             }
@@ -42,8 +43,10 @@ const SettingsTab = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ newEmail }),
+                body: JSON.stringify({ newEmail, userId }),
             });
+
+            console.log(response);
 
             if (response.ok) {
                 setShowVerificationCodeInput(true);
@@ -56,33 +59,7 @@ const SettingsTab = () => {
         }
     };
 
-    const handleChangeUsername = async () => {
-        // Add validation for newUsername if needed
-
-        try {
-            // Assuming there's an API endpoint for changing username
-            const response = await fetch('YOUR_CHANGE_USERNAME_API_ENDPOINT', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ newUsername }),
-            });
-
-            if (response.ok) {
-                setUsername(newUsername);
-                console.log('Username changed successfully');
-            } else {
-                const data = await response.json();
-                console.error('Failed to change username:', data.error);
-            }
-        } catch (error) {
-            console.error('Error changing username:', error);
-        }
-    };
-
     const handleConfirmEmailChange = async () => {
-        // Implement this function if needed
     };
 
     return (
@@ -99,13 +76,6 @@ const SettingsTab = () => {
                             </div>
                             {showMailSettings && (
                                 <div className="settingsOption">
-                                    <input
-                                        type="text"
-                                        placeholder="Enter new username"
-                                        value={newUsername}
-                                        onChange={(e) => setNewUsername(e.target.value)}
-                                    />
-                                    <button onClick={handleChangeUsername}>Change Username</button>
                                     <input
                                         type="text"
                                         placeholder="Enter new email address"
