@@ -12,6 +12,7 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2
         versionName "1.1"
+        missingDimensionStrategy 'react-native-camera', 'general' // Specify the dimension strategy for react-native-camera
     }
 
     signingConfigs {
@@ -31,7 +32,21 @@ android {
         }
     }
 
-    // Optional: Add configurations for packagingOptions, dexOptions, lintOptions, etc. if needed.
+    configurations.all {
+        resolutionStrategy {
+            eachDependency { DependencyResolveDetails details ->
+                if (details.requested.group == 'project :react-native-camera') {
+                    details.useTarget "project :react-native-camera", {
+                        attributes {
+                            attribute(Attribute.of("com.android.build.api.attributes.BuildTypeAttr", String.class), "debug")
+                            attribute(Attribute.of("com.android.build.api.attributes.AgpVersionAttr", String.class), "8.1.1")
+                            attribute(Attribute.of("org.jetbrains.kotlin.platform.type", String.class), "androidJvm")
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 
 dependencies {
@@ -43,7 +58,8 @@ dependencies {
     } else {
         implementation("org.webkit:android-jsc:+")
     }
-    // Add other dependencies here
+
+    implementation project(':react-native-camera') // Ensure this matches how it's linked in your settings.gradle
 }
 
 apply from: file("../../node_modules/@react-native-community/cli-platform-android/native_modules.gradle");
