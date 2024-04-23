@@ -1,12 +1,15 @@
-import React, { useState, FormEvent, useEffect } from 'react';
+import React, { useState, FormEvent, useEffect, useContext } from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthContext'; // Import the AuthContext hook
+import { useAuth } from './AuthContext';
+import FlowContext from '../../FlowContext';
 import './Register.css';
 
 const Register = () => {
     const navigate = useNavigate();
-    const { setAuthCredentials } = useAuth(); // Access setAuthCredentials from AuthContext
+    const { setAuthCredentials } = useAuth();
+    const { flowState } = useContext(FlowContext);
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -48,7 +51,8 @@ const Register = () => {
         }
 
         try {
-            const groupName = "Traveler";
+            const groupName = flowState.isHost ? "Host" : "Traveler";
+            // const groupName = "Traveler"
             const data = await Auth.signUp({
                 username: userData.email,
                 email: userData.email,
@@ -105,7 +109,7 @@ const Register = () => {
             ) : (
                 <div className="registerContainer">
                     {/* <button onClick={testFunc}>testacc</button> */}
-                    <div className="registerTitle">Sign Up</div>
+                    <div className="registerTitle">Create an account on Domits</div>
                     <div className="registerForm">
                         <form onSubmit={onSubmit}>
                             <label>Username:</label>

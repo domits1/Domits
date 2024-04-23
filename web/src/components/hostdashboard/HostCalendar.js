@@ -1,5 +1,6 @@
 import React from "react";
 import Pages from "./Pages";
+import Calendar from "./Calendar";
 import chevron from "../../images/icons/chevron-horizontal.png";
 import returner from "../../images/icons/return-icon.png";
 import './HostHomepage.css'
@@ -28,14 +29,7 @@ function HostCalendar() {
                             <p>Booking availability for Kinderhuissingel 6k, Haarlem</p>
                             <div className="locationBox">
                                 <div className="boxColumns locationContent">
-                                    <div className="box">
-                                    <input type="date" id="date" name="date"></input>
-                                    </div>
-                                </div>
-                                <div className="boxColumns locationContent">
-                                    <div className="box">
-
-                                    </div>
+                                        <Calendar />
                                 </div>
                             </div>
                         </div>

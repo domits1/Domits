@@ -1,50 +1,78 @@
 * {
   box-sizing: border-box;
 }
-
 .bar {
   width: 100%;
-  background: white;
+  margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 30px;
   display: flex;
-  font-size: 0.6rem;
-  cursor: 'pointer';
   height: 55px;
+  font-size: 0.6rem;
 }
 
-
-
-.bar div {
+.bar .searchInputContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.suggestions-container {
+  position: relative;
+  z-index: 999;
+}
+.css-qbdosj-Input {
+  margin: 0 !important;
+}
+.autocomplete-container input::placeholder {
   text-align: center;
-  transition: background 250ms ease, width 250ms ease; 
-  border-radius: 30px;
 }
-/* .bar div:hover {
-  background: hsl(0 0% 94%); 
-} */
+.bar input {
+  margin-top: 0;
+  padding-top: 0;
+}
+.searchbar-input::placeholder {
+  font-size: 0.64rem;
+  margin-top: 0px; 
+}
+.bar .searchTitle, .searchTitleCenter {
+  color: #0D9813;
+  font-size: 0.7rem;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 700;
+  padding-top: 10px;
+}
 
-
+.check-in:hover {
+  cursor: 'pointer';
+}
+.check-out:hover{
+  cursor: 'pointer';
+}
+.check-in{
+  width: 20%;
+  cursor: pointer;
+}
+.check-out{
+  width: 20%;
+  cursor: pointer;
+}
+.location{
+  width: 35%;
+}
+.accommodation {
+  width: 25%;
+}
 .searchbar-input {
   background: none;
   border: none;
   padding: 0.6rem 0 0 0;
   text-align: center;
   width: 90%;
-  cursor: pointer;
-  pointer-events: none;
-  
 }
 .searchbar-input:focus {
   outline: none;
 }
 
-::placeholder {
-  font-size: 0.64rem;
-  text-align: center;
-  
-  
-}
 .bar>div {
   position: relative;
   transition: background 250ms ease, width 250ms ease;
@@ -66,7 +94,8 @@
   display: inline-block;
   outline: 0;
   cursor: pointer;
-  padding: 3px ;
+  padding: 3px;
+  margin-right: 1%;
   font-size: 10px;
   line-height: 30px;
   border: 1px solid #0D9813;
@@ -92,14 +121,21 @@
   animation: bounce 0.7s ease 1;
 }
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% {
+  0%, 100% {
     transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-  40% {
+  20% {
     transform: translateY(-5px);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-  60% {
+  50%, 80% {
+    transform: translateY(0);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+  }
+  20% {
     transform: translateY(-3px);
+    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
 }
 .searchBar {
@@ -114,6 +150,22 @@
 }
 .searchBar::placeholder {
   font-size: 0.64rem;
-  text-align: left;
 }
 
+@media (max-width: 1000px) {
+  .bar {
+    width: 95%;
+  }
+}
+
+@media (max-width: 750px) {
+  .bar {
+    width: 90%;
+  }
+}
+
+@media (max-width: 650px) {
+  .bar {
+    width: 100%;
+  }
+}

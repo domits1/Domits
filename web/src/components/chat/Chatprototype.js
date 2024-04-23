@@ -11,6 +11,7 @@ import django from './django.png';
 import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
+import Pages from "../guestdashboard/Pages";
 import { useNavigate } from 'react-router-dom';
 import React, { useState, useEffect } from "react";
 import { API, graphqlOperation } from "aws-amplify";
@@ -38,6 +39,7 @@ const Chat = ({ user }) => {
     const [messageSent, setMessageSent] = useState(false);
     const [showDate, setShowDate] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState({}); 
+    const [lastMessageDate, setLastMessageDate] = useState(null);
 
     const signOut = async () => {
         try {
@@ -172,7 +174,8 @@ const Chat = ({ user }) => {
                         text: newMessage.trim(),
                         email: user.attributes.email,
                         recipientEmail: recipientEmail.trim(),
-                        isRead: false
+                        isRead: false,
+                        createdAt: currentDate.toISOString()
                     },
                 },
             });
@@ -182,6 +185,7 @@ const Chat = ({ user }) => {
             console.error("Error sending message:", error);
         }
         setShowDate(true);
+        setLastMessageDate(currentDate);
         setMessageSent(true);
     };
 
@@ -209,94 +213,12 @@ const Chat = ({ user }) => {
     return (
         <main className="chat">
             <div className="chat__headerWrapper">
-            <button onClick={signOut}>Log Out</button>
-                        <button onClick={signUp}>Create New User</button>
+         
                 <h2 className="chat__heading">Message dashboard</h2>
             </div>
             <section className="chat__container">
-                <article className="chat__sidebar">
-                    <ul className="chat__mobileUl">
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={heart}/>
-                            </div>
-                            <p className="chat__iconText">Favourites</p>
-                        </li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={home}/>
-                            </div>
-                            <p className="chat__iconText">Guests</p>
-                        </li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={eye}/>
-                            </div>
-                            <p className="chat__iconText">Accomm. viewers</p>
-                            <div className="chat__liIcon">
-                                <img src={trash}/>
-                            </div>
-                            <p className="chat__iconText">Deleted</p>
-                            <div className="chat__liIcon">
-                                <img src={alert}/>
-                            </div>
-                            <p className="chat__iconText">Add moderator</p>
-                        </li>
-                    </ul>
-                    <ul className="chat__topUl">
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={heart}/>
-                            </div>
-                            <p className="chat__iconText">Favourites</p>
-                        </li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={home}/>
-                            </div>
-                            <p className="chat__iconText">Guests</p>
-                        </li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={eye}/>
-                            </div>
-                            <p className="chat__iconText">Accomm. viewers</p>
-                        </li>
-                    </ul>
-                    <ul className="chat__midUl">
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={trash}/>
-                            </div>
-                            <p className="chat__iconText">Deleted</p>
-                        </li>
-                    </ul>
-                    <ul className="chat__bottomUl">
-                        <li className="chat__bottomLi chat__bottomLi--text">Need some assistance in<br></br>your messages with you<br></br>tenants?</li>
-                        <li className="chat__topLi">
-                            <div className="chat__liIcon">
-                                <img src={alert}/>
-                            </div>
-                            <p className="chat__iconText">Add moderator</p>
-                        </li>
-                    </ul>
-                </article>
-                <article className="chat__people">
-                <ul className="chat__users">
-                    {chatUsers.map((chatUser) => (
-                        <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
-                            {unreadMessages[chatUser.email] > 0 && <figure className="chat__notification">{unreadMessages[chatUser.email]}</figure>}
-                            <div className="chat__pfp">
-                                <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
-                            </div>
-                            <div className="chat__wrapper">
-                                <h2 className="chat__name">{chatUser.name}</h2>
-                                <p className="chat__preview">{chatUser.lastMessage}</p>
-                            </div>
-                        </li>
-                    ))}
-                </ul>
-            </article>
+               <Pages/>
+              
 
                 <article className="chat__message">
                     <article className="chat__figure">
@@ -331,24 +253,23 @@ const Chat = ({ user }) => {
                             </ul>
                         </aside>
                         <article className="chat__chatContainer">
-                        {messageSent && (
+                        {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
+        <React.Fragment key={chat.id}>
+            {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
                 <p className="chat__date">
-                    <span>March 19</span>
+                    <span>{new Date(chat.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                 </p>
             )}
-                        <div className="chat__messages">
-                        {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat) => (
-                            <div
-                                key={chat.id}
-                                className={`chat__dialog chat__dialog--${
-                                    chat.email === user.attributes.email ? "user" : "guest"
-                                }`}
-                            >
-                                {chat.text}
-                                <span>{chat.email.split("@")[0]}</span>
-                            </div>
-                        ))}
-                    </div>
+            <div
+                className={`chat__dialog chat__dialog--${chat.email === user.attributes.email ? "user" : "guest"}`}
+            >
+                {chat.text}
+                <span>{chat.email.split("@")[0]}</span>
+            </div>
+        </React.Fragment>
+    ))}
+                            </article>
+
                     <input
                         className="chat__input"
                         type="text"
@@ -370,7 +291,6 @@ const Chat = ({ user }) => {
                     /> */}
                                         <button onClick={sendMessage}>Send</button>
                             
-                        </article>
                         
                     </article>
                     <nav className="chat__nav">
@@ -389,6 +309,27 @@ const Chat = ({ user }) => {
                     </div>
                     </nav>
                 </article>
+                <article className="chat__people">
+                <ul className="chat__users">
+                    {chatUsers.map((chatUser) => (
+                            <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
+                                {unreadMessages[chatUser.email] > 0 && (
+    <figure className="chat__notification">
+        {unreadMessages[chatUser.email] > 9 ? '9+' : unreadMessages[chatUser.email]}
+    </figure>
+)}
+
+                            <div className="chat__pfp">
+                                <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
+                            </div>
+                            <div className="chat__wrapper">
+                                <h2 className="chat__name">{chatUser.name}</h2>
+                                <p className="chat__preview">{chatUser.lastMessage}</p>
+                            </div>
+                        </li>
+                    ))}
+                </ul>
+            </article>
             </section>
         </main>
     );

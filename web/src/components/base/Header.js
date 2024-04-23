@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
 import {Auth} from "aws-amplify";
 
-function Header() {
+function Header({ setSearchResults }) {
     const navigate = useNavigate();
 
     const navigateToLogin = () => {
@@ -19,8 +19,9 @@ function Header() {
     const navigateToRegister = () => {
         navigate('/register');
     };
+    //op verzoek van Tim S veranderd van landing naar enlist
     const navigateToLanding = () => {
-        navigate('/landing');
+        navigate('/enlist');
     };
     const navigateToNinedots = () => {
         navigate('/travelinnovation');
@@ -95,10 +96,10 @@ function Header() {
                         </a>
                     </div>
                     <div className='App'>
-                            <SearchBar setResults={setResults} />
+                    <SearchBar setSearchResults={setSearchResults} />
                     </div>
                     <div className='headerRight'>
-                        <button className="headerButtons" onClick={navigateToLanding}>
+                        <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
                             Become a host
                         </button>
                         <button className="headerButtons" onClick={navigateToNinedots}>

@@ -34,7 +34,8 @@ import paymentDeclined from '../screens/bookingprocess/paymentDeclined';
 import bookedAccommodation from '../screens/bookingprocess/bookedAccommodation';
 import ListProperty from '../screens/hostonboarding/listProperty';
 import LocationFillIn from '../screens/hostonboarding/LocationFillIn';
-import selectAmenities from "../screens/hostonboarding/selectAmenities";
+import selectAmenities from '../screens/hostonboarding/selectAmenities';
+import PriceProperty from '../screens/hostonboarding/PriceProperty';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -84,8 +85,8 @@ function HomeStack() {
       <Stack.Screen name="HostRevenue" component={HostRevenue} />
       <Stack.Screen name="ListProperty" component={ListProperty} />
       <Stack.Screen name="LocationFillIn" component={LocationFillIn} />
-        <Stack.Screen name="selectAmenities" component={selectAmenities} />
-
+      <Stack.Screen name="selectAmenities" component={selectAmenities} />
+      <Stack.Screen name="PriceProperty" component={PriceProperty} />
     </Stack.Navigator>
   );
 }

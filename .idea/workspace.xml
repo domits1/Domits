@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard">
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="App werkend door build.gradle aan te passen">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -25,7 +25,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="AppHome" />
+        <entry key="$PROJECT_DIR$" value="bookingProcessDynamic" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -40,6 +40,7 @@
   &quot;associatedIndex&quot;: 1
 }</component>
   <component name="ProjectId" id="2c2oNNmoxvvszmjcyuNYFsp66CD" />
+  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -52,8 +53,9 @@
     "WebServerToolWindowFactoryState": "false",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "AppHomme",
-    "last_opened_file_path": "C:/Users/hamza/IdeaProjects/Domits2",
+    "git-widget-placeholder": "appHamza",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "/Users/hamzatjo/IdeaProjects/Domits",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -63,7 +65,7 @@
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.0",
     "settings.editor.selected.configurable": "AndroidSdkUpdater",
-    "ts.external.directory.path": "C:\\Users\\hamza\\IdeaProjects\\Domits2\\app\\Domits\\node_modules\\typescript\\lib",
+    "ts.external.directory.path": "/Users/hamzatjo/IdeaProjects/Domits/web/node_modules/typescript/lib",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -80,6 +82,19 @@
     <configuration name="index.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/Domits/web/build/index.html" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JavaScript Debug.index.html" />
+        <item itemvalue="JavaScript Debug.index.html" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="jdk-19.0.2-corretto-19.0.2-4caba194b151-be841094" />
+      </set>
+    </attachedChunks>
   </component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
@@ -112,6 +127,8 @@
       <workItem from="1710761764892" duration="2751000" />
       <workItem from="1710842102273" duration="6001000" />
       <workItem from="1710858244143" duration="1721000" />
+      <workItem from="1713363852908" duration="1543000" />
+      <workItem from="1713779598996" duration="2493000" />
     </task>
     <task id="LOCAL-00001" summary="android app development">
       <created>1709138237032</created>
@@ -162,7 +179,23 @@
       <option name="project" value="LOCAL" />
       <updated>1710858328718</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="Ik heb Chahid gecarried">
+      <option name="closed" value="true" />
+      <created>1713264562583</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1713264562583</updated>
+    </task>
+    <task id="LOCAL-00009" summary="App werkend door build.gradle aan te passen">
+      <option name="closed" value="true" />
+      <created>1713797462689</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1713797462689</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -192,6 +225,12 @@
     <MESSAGE value="bookingProcess is done, last page is still getting updated." />
     <MESSAGE value="build.gradle has correct build and safeareaview implemented in guesttdashboard" />
     <MESSAGE value="SafeAreaView toegepast in hostDashboard" />
-    <option name="LAST_COMMIT_MESSAGE" value="SafeAreaView toegepast in hostDashboard" />
+    <MESSAGE value="Ik heb Chahid gecarried" />
+    <MESSAGE value="App werkend door build.gradle aan te passen" />
+    <option name="LAST_COMMIT_MESSAGE" value="App werkend door build.gradle aan te passen" />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
 </project>

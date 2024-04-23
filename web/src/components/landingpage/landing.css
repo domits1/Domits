@@ -5,13 +5,15 @@
     margin-bottom: 30px;
 
     text-align: center;
-    font-weight: lighter;
+    font-weight: 400;
 }
 
 .calculatorBlock {
-    border: 2px solid #003366;
-    border-radius: 20px;
+    /* border: 1px solid #003366; */
+    border-radius: 15px;
     margin-top: 30px;
+    box-shadow: 0 0 5px #003366;
+    padding: 30px 25px;
 }
 
 .pages {
@@ -21,20 +23,18 @@
 }
 
 .pageButtons {
-    border: 2px solid #003366;
-    border-radius: 10px;
-    box-shadow: none;
-
+    box-shadow: 0 0 5px #003366;
+    border-radius: 5px;
     padding: 10px;
     width: 7%;
     height: 12%;
-    margin-top: 10px;
-    margin-left: 10px;
+    background-color: white;
+    border: none;
+    margin-right: 2%;
 }
 
 .pageButtons:hover {
-    background-color: #A187B2;
-    border: 2px solid #A187B2;
+    background-color: #4c7cac;
     color: #fff;
     cursor: pointer;
 }
@@ -53,17 +53,20 @@
     border-radius: 10px;
     box-shadow: none;
     padding: 10px;
+    margin: 10px;
+    border: none;
 }
 
 .nextButtons:hover {
-    background-color: #A187B2;
+    background-color: #4c7cac;
     cursor: pointer;
-    transition: background-color 0.5s ease-out;
+    transition: background-color .3s ease-out;
 }
 
 .selected {
     background-color: #003366;
     color: #fff;
+    box-shadow: none;
 }
 
 .cardHolder {
@@ -84,12 +87,16 @@
 }
 
 .card:hover, .selectedCard {
-    border: 3px solid #003366;
+    /* border: 3px solid #003366; */
     border-radius: 10px;
-    box-shadow: none;
+    box-shadow: 0 0 5px #003366;
     cursor: pointer;
-    margin-top: -3px;
     margin-bottom: 27px;
+}
+
+.selectedCard {
+  border: 3px solid #003366;
+  box-shadow: none !important;
 }
 
 .cardImage {
@@ -99,6 +106,7 @@
     height: 100%;
     max-height: 100px;
     object-fit: cover;
+    padding: 5px;
 }
 
 .priceDisplay {
@@ -139,142 +147,4 @@
     color: green;
     font-size: 1.5rem;
     margin-bottom: 10px;
-}
-
-.faq-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-top: 50px;
-    margin-bottom: 50px;
-  }
-  
-  .faq-box {
-    width: 80%;
-    border: 2px solid #003366;
-    border-radius: 10px;
-    margin: 10px;
-    padding: 15px;
-    cursor: pointer;
-    max-height: 60px; 
-    overflow: hidden;
-    transition: max-height 2s ease; 
-  }
-  
-  .faq-box:hover {
-    max-height: 200px; 
-  }
-  
-  .question {
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-  
-  .answer {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 2s ease; 
-  }
-  
-  .faq-box:hover .answer {
-    max-height: 200px; 
-  }
-
-.formContainer {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  padding: 20px;
-  width: 80%;
-  margin: auto;
-
-}
-
-.formHolder {
-  width: 100%;
-}
-
-.form-section,
-.map-section {
-  width: 45%;
-}
-
-.front-section {
-  width: 50%;
-}
-
-#map-placeholder {
-  width: 100%;
-  height: 300px;
-  background-color: #e0e0e0;
-  text-align: center;
-  line-height: 300px;
-  color: #333;
-  margin-top: 20px;
-}
-
-.formContainer label {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-  gap: 15px;
-  font-family: "kanitRegular";
-}
-
-.room-type label,
-.room-features label {
-  justify-content: flex-start;
-  cursor: pointer;
-  font-family: "kanitRegular";
-}
-
-
-.formRow {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  flex-wrap: wrap;
-}
-
-.reviewInfo {
-  text-align: left;
-  margin-bottom: 20px;
-}
-
-.textInput,
-.radioInput {
-  width: auto;
-  padding: 11px 15px;
-  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
-  border-radius: 15px;
-  border: 1px solid black;
-}
-
-.radioInput {
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-}
-
-.locationText {
-  min-width: 173px;
-  width: 60%;
-}
-
-.configurations label{
-    min-width: 250px;
-    margin-left: auto;
-    margin-right: auto;
-    font-size: 20px;
-    margin-bottom: 20px; 
-    white-space: nowrap;
-    
-}
-
-.priceSlider {
-  width: 100%;
-  cursor: ew-resize;
 }
