@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaTimes, FaSearchLocation, FaMapPin, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip } from 'react-icons/fa';
+import { FaTimes, FaSearchLocation, FaMapPin, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
@@ -27,7 +27,7 @@ const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) =
   </div>
 );
 
-export const SearchBar = ({ setSearchResults, setLoading }) => { 
+export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
@@ -133,14 +133,14 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   };
 
   const handleClear = (event) => {
-    event.preventDefault(); // Voorkom dat de focus verloren gaat
+    event.preventDefault();
     setAddress('');
     setIsFocused(false);
   };
 
   // Verbinding met API Gateway
   const handleSearch = async () => {
-    setLoading(true); 
+    setLoading(true);
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
     const locationQueryParam = address ? `&searchTerm=${address}` : '';
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}${locationQueryParam}`;
@@ -148,15 +148,15 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setTimeout(() => {  
+      setTimeout(() => {
         setSearchResults(data);
-        setLoading(false); 
-      }, 100);  
+        setLoading(false);
+      }, 100);
     } catch (error) {
       console.error('Error during fetch:', error);
-      setLoading(false); 
+      setLoading(false);
     }
-};
+  };
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -187,7 +187,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
-
+  
   return (
     <div className="bar">
       <div className="location">
@@ -243,13 +243,17 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                             padding: '18px 10px',
                             borderBottom: '2px solid #ddd',
                             cursor: 'pointer',
-                            transition: 'background-color 0.2s ease',
+                            transition: 'background-color 0.2s ease, transform 0.2s ease',
                             fontSize: '15px',
                             color: '#000',
                             borderRadius: '3px',
                             margin: '0',
                             display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
                             width: '300px',
+                            transform: suggestion.active ? 'scale(1.02)' : 'none',
+                            zIndex: suggestion.active ? '1' : '0',
                           }
                         })}
                         className="suggestion-item"
@@ -289,6 +293,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             { value: 'Villa', label: <><FaHotel /> Villa</> },
             { value: 'Boathouse', label: <><FaShip /> Boathouse</> },
             { value: 'Camper', label: <><FaCaravan /> Camper</> },
+            { value: 'Cottage', label: <><FaTree /> Cottage</> },
           ]}
           placeholder="Type of Accommodation"
           isSearchable={false}
@@ -315,25 +320,36 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             }),
             option: (provided, state) => ({
               ...provided,
-              backgroundColor: state.isSelected ? '#ffff' : state.isFocused ? '#f0f0f0' : provided.backgroundColor,
-              color: state.isSelected || state.isFocused ? 'black' : provided.color,
-              borderRadius: state.isSelected ? '10px' : state.isFocused ? '10px' : '0px',
-              fontWeight: state.isSelected ? 'bold' : 'normal',
-              fontSize: '12px',
-              padding: '10px',
+              backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : 'white',
+              color: state.isFocused ? 'black' : '#666',
+              fontWeight: state.isFocused ? '600' : 'normal',
+              fontSize: '14px',
+              padding: '10px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              gap: '15px',
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              '&:hover': {
+                color: 'black',
+                backgroundColor: '#e6e6e6',
+                transform: 'scale(1.04)'
+              },
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
             }),
             menu: (provided) => ({
               ...provided,
-              backgroundColor: '#ffff',
+              backgroundColor: 'white',
               borderRadius: '8px',
-              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-              padding: '5px',
-              width: '200px',
-              maxHeight: '300px',
-              right: '-15%',
-              borderRadius: '15px',
-              textAlign: 'left',
-              marginTop: '15px',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
+              marginTop: '20px',
+              width: '220px',
+              overflowX: 'hidden',
+              overflowY: 'auto',
             }),
             clearIndicator: (provided) => ({
               ...provided,
@@ -346,15 +362,12 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             }),
             singleValue: (provided) => ({
               ...provided,
-              marginRight: '10%',
+              color: '#333',
               fontSize: '14px',
-            }),
-            placeholder: (provided) => ({
-              ...provided,
-              textAlign: 'center',
             }),
           }}
         />
+
       </div>
 
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
@@ -374,10 +387,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             onChange={update => setDateRange(update)}
           />
           {startDate && endDate && (
-  <button onClick={resetDates} className="date-reset-button">
-    <FaTimes />
-  </button>
-)}
+            <button onClick={resetDates} className="date-reset-button">
+              <FaTimes />
+            </button>
+          )}
         </div>
       </div>
 
