@@ -27,7 +27,7 @@ function OnboardingHost() {
         accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
         region: process.env.REACT_APP_AWS_REGION
-      });
+    });
 
     let [userId, setUserId] = useState(null);
     const [selectedFiles, setSelectedFiles] = useState([]);
@@ -49,12 +49,11 @@ function OnboardingHost() {
     const [formData, setFormData] = useState({
         ID: generateUUID(),
         Title: "",
+        Subtitle: "",
         Description: "",
         Rent: "",
-        Ownertype: "",
-        Bookingsystem: "",
-        Roomtype: "",
-        Guests: "",
+        Guesttype: "",
+        Guestamount: "",
         Bedrooms: "",
         Bathrooms: "",
         Beds: "",
@@ -62,8 +61,6 @@ function OnboardingHost() {
         PostalCode: "",
         Street: "",
         City: "",
-        Bookingsystem: "",
-        Ownertype: "",
         CancelPolicy: "",
         Features: {
             Wifi: false,
@@ -77,13 +74,6 @@ function OnboardingHost() {
             FirstAidkit: false,
             Fireextinguisher: false,
         },
-        SystemConfiguration: {
-            UnverifiedGuest: false,
-            VerifiedGuest: false,
-            Monthlydiscount: false,
-            Weeklydiscount: false,
-            FirstBookerdiscount: false,
-        },
         Images: {
             image1: "",
             image2: "",
@@ -91,9 +81,6 @@ function OnboardingHost() {
             image4: "",
             image5: "",
         },
-        Monthlypercent: 0,
-        Weeklypercent: 0,
-        FirstBookerpercent: 0,
         AccommodationType: "",
         Measurement: "",
         OwnerId: ""
@@ -104,21 +91,26 @@ function OnboardingHost() {
     };
 
     const isFormFilled = () => {
-        // Exclude specific fields from the check
-        const excludedFields = ['Monthlypercent', 'Weeklypercent', 'FirstBookerpercent', 'OwnerId'];
-
+        const excludedFields = ['OwnerId'];
+        
+        // Check if all fields except excluded ones are filled
         for (const key in formData) {
-            // Skip checking for excluded fields
             if (excludedFields.includes(key)) {
                 continue;
             }
-            if (formData[key] === "" || formData[key] === 0) {
+            if (key === 'Images') {
+                // Check if all keys inside the Images object are filled
+                for (const imageKey in formData.Images) {
+                    if (formData.Images[imageKey] === '') {
+                        return false;
+                    }
+                }
+            } else if (formData[key] === "" || formData[key] === 0) {
                 return false;
             }
         }
-
         return true;
-    };
+    };    
 
     const appendUserId = () => {
         setFormData((prevData) => ({
@@ -156,6 +148,7 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
+        console.log(formData)
 
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -245,7 +238,7 @@ function OnboardingHost() {
             console.error('Error uploading files:', error);
         }
     };
-    
+
 
     const handleFileChange = (event) => {
         const files = Array.from(event.target.files).filter(
@@ -255,20 +248,44 @@ function OnboardingHost() {
             alert('You can only upload up to 5 images.');
             return;
         }
+    
+        // Update formData.Images with the selected files
+        const updatedImages = { ...formData.Images };
+        files.forEach((file, index) => {
+            updatedImages[`image${selectedFiles.length + index + 1}`] = file.name;
+        });
+    
+        setFormData((prevData) => ({
+            ...prevData,
+            Images: updatedImages
+        }));
+    
         setSelectedFiles([...selectedFiles, ...files]);
     };
-
+    
     const handleDelete = (index) => {
         const updatedFiles = [...selectedFiles];
+        const imageKeys = Object.keys(formData.Images);
         updatedFiles.splice(index, 1);
+    
+        // Update the corresponding image key to an empty string
+        const updatedImages = { ...formData.Images };
+        updatedImages[imageKeys[index]] = '';
+    
         setSelectedFiles(updatedFiles);
+        setFormData((prevData) => ({
+            ...prevData,
+            Images: updatedImages,
+        }));
     };
+    
+    
 
     const combinedSubmit = async () => {
         await handleFileSubmit(); // Wait for handleFileSubmit to complete
         handleSubmit(); // Then execute handleSubmit
     }
-    
+
 
     const renderPageContent = (page) => {
         switch (page) {
@@ -276,26 +293,13 @@ function OnboardingHost() {
                 return (
                     <div>
                         <div class="formContainer">
-                            <div class="form-section"> 
+                            <div class="form-section">
                                 <div className="formRow">
-                                    <div class="room-type">
-                                    <h2 className="onboardingSectionTitle">Select room type</h2>
-                                        <label>
-                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "entireHouse"} value="entireHouse"></input> Entire house
-                                        </label>
-                                        <label>
-                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "room"} value="room"></input> Room
-                                        </label>
-                                        <label>
-                                            <input className="radioInput" type="radio" name="Roomtype" onChange={handleInputChange} checked={formData.Roomtype === "sharedRoom"} value="sharedRoom"></input> Shared room
-                                        </label>
-                                    </div>
-
                                     <div class="quantity">
                                         <h2 className="onboardingSectionTitle">Define quantity</h2>
                                         <div className="input-group">
-                                            <label for="guests">How many guests?</label>
-                                            <input className="textInput" type="number" id="guests" name="Guests" onChange={handleInputChange} value={formData.Guests} min={0}></input>
+                                            <label for="guests">Maximum amount of guests?</label>
+                                            <input className="textInput" type="number" id="guests" name="Guestamount" onChange={handleInputChange} value={formData.Guestamount} min={0}></input>
                                         </div>
                                         <div className="input-group">
                                             <label for="bedrooms">How many bedrooms?</label>
@@ -311,12 +315,11 @@ function OnboardingHost() {
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="locationInput">
                                     <h2 className="onboardingSectionTitle">Fill in Location</h2>
                                     <div className="input-group">
-                                    <label for="country">Country</label>
-                                    <Select
+                                        <label for="country">Country</label>
+                                        <Select
                                             options={options.map(country => ({ value: country, label: country }))}
                                             name="Country"
                                             className="locationText"
@@ -326,8 +329,8 @@ function OnboardingHost() {
                                         />
                                     </div>
                                     <div className="input-group">
-                                    <label for="city">City</label>
-                                    <input
+                                        <label for="city">City</label>
+                                        <input
                                             className="textInput locationText"
                                             name="City"
                                             onChange={handleInputChange}
@@ -336,10 +339,10 @@ function OnboardingHost() {
                                         />
                                     </div>
                                     <div className="input-group">
-                                    <label for="street">
-                                        Street + house nr.
-                                    </label>
-                                    <input
+                                        <label for="street">
+                                            Street + house nr.
+                                        </label>
+                                        <input
                                             className="textInput locationText"
                                             name="Street"
                                             onChange={handleInputChange}
@@ -348,10 +351,10 @@ function OnboardingHost() {
                                         />
                                     </div>
                                     <div className="input-group">
-                                    <label for="postal">
-                                        Postal Code
-                                    </label>
-                                    <input
+                                        <label for="postal">
+                                            Postal Code
+                                        </label>
+                                        <input
                                             className="textInput locationText"
                                             name="PostalCode"
                                             onChange={handleInputChange}
@@ -407,11 +410,13 @@ function OnboardingHost() {
                             <div class="front-section">
                                 <div className="room-info">
                                     <h2 className="onboardingSectionTitle">Add accomodation information</h2>
-                                        <label for="title">Title</label>
-                                        <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
-                                        <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
-                                        <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
-                               </div>
+                                    <label for="title">Title</label>
+                                    <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
+                                    <label for="Subtitle">Subtitle</label>
+                                    <input className="textInput locationText" id="Subtitle" name="Subtitle" onChange={handleInputChange} value={formData.Subtitle}></input>
+                                    <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
+                                    <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
+                                </div>
                             </div>
                         </div>
                         <div>
@@ -453,40 +458,18 @@ function OnboardingHost() {
                                 <div className="formRow">
                                     <div class="room-features formRow">
                                         <div className="configurations">
-                                            <label>Preferred booking system</label>
-                                            <label><input type="radio" className="radioInput" name="Bookingsystem" onChange={handleInputChange} checked={formData.Bookingsystem === "Guests book immediately"} value="Guests book immediately"></input>Let guests book immediately</label>
-                                            <label><input type="radio" className="radioInput" name="Bookingsystem" onChange={handleInputChange} checked={formData.Bookingsystem === "Booking request"} value="Booking request"></input>Review a booking request</label>
-                                        </div>
-                                    </div>
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
                                             <label>Guest type</label>
-                                            <label><input type="checkbox" className="radioInput" name="UnverifiedGuest" onChange={handleInputChange} checked={formData.SystemConfiguration.UnverifiedGuest}></input>Unverified guest</label>
-                                            <label><input type="checkbox" className="radioInput" name="VerifiedGuest" onChange={handleInputChange} checked={formData.SystemConfiguration.VerifiedGuest}></input>Verified Domits guest</label>
-                                        </div>
-                                    </div>
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>Enlist as</label>
-                                            <label><input type="radio" className="radioInput" name="Ownertype" onChange={handleInputChange} checked={formData.Ownertype === "Private owner"} value="Private owner"></input>Private owner</label>
-                                            <label><input type="radio" className="radioInput" name="Ownertype" onChange={handleInputChange} checked={formData.Ownertype === "Corporation"} value="Corporation"></input>Corporation</label>
+                                            <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Any guest"} value="Any guest"></input>Any Guest</label>
+                                            <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Verified Domits guest"} value="Verified Domits guest"></input>Verified Domits guest</label>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                             <p>Price: {formData.Rent}</p>
-                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="0" max="10000" step="100" />
+                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="40" max="1000" step="10" />
                             <div className="formHolder">
                                 <h2 className="onboardingSectionTitle">Details and Policies</h2>
                                 <div className="formRow">
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>Do you offer discounts?</label>
-                                            <label><input type="checkbox" className="radioInput" name="Monthlydiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.Monthlydiscount}></input>Monthly discount</label>
-                                            <label><input type="checkbox" className="radioInput" name="Weeklydiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.Weeklydiscount}></input>Weekly discount</label>
-                                            <label><input type="checkbox" className="radioInput" name="FirstBookerdiscount" onChange={handleInputChange} checked={formData.SystemConfiguration.FirstBookerdiscount}></input>First Booker discount</label>
-                                        </div>
-                                    </div>
                                     <div class="room-features formRow">
                                         <div className="configurations">
                                             <label>What are the measurements?</label>
@@ -498,6 +481,8 @@ function OnboardingHost() {
                                                 className="textInput"
                                                 name="AccommodationType"
                                             >
+                                                <option value="Room">Room</option>
+                                                <option value="Shared Room">Shared Room</option>
                                                 <option value="House">House</option>
                                                 <option value="Apartment">Apartment</option>
                                                 <option value="Villa">Villa</option>
@@ -551,7 +536,7 @@ function OnboardingHost() {
                                 <p>Description: {formData.Description}</p>
                                 <p>Rent: {formData.Rent}</p>
                                 <p>Room Type: {formData.Roomtype}</p>
-                                <p>Number of Guests: {formData.Guests}</p>
+                                <p>Number of Guests: {formData.Guestamount}</p>
                                 <p>Number of Bedrooms: {formData.Bedrooms}</p>
                                 <p>Number of Bathrooms: {formData.Bathrooms}</p>
                                 <p>Number of Fixed Beds: {formData.Beds}</p>
@@ -567,17 +552,6 @@ function OnboardingHost() {
                                         <p key={feature}>{feature}: {value ? 'Yes' : 'No'}</p>
                                     ))}
                                 </ul>
-                            </div>
-                            <div className="reviewInfo">
-                                <p>System Configuration:</p>
-                                <ul>
-                                    {Object.entries(formData.SystemConfiguration).map(([config, value]) => (
-                                        <p key={config}>{config}: {value ? 'Yes' : 'No'}</p>
-                                    ))}
-                                </ul>
-                                <p>Monthly Discount: {formData.Monthlypercent}%</p>
-                                <p>Weekly Discount: {formData.Weeklypercent}%</p>
-                                <p>First Booker Discount: {formData.FirstBookerpercent}%</p>
                             </div>
                         </div>
                         <div className='buttonHolder'>

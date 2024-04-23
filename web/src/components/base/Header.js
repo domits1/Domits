@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import './base.css'
 import logo from "../../logo.svg";
 import nineDots from '../../images/dots-grid.svg';
@@ -6,12 +6,15 @@ import profile from '../../images/profile-icon.svg';
 import arrowDown from '../../images/arrow-down-icon.svg';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
-import { useNavigate } from 'react-router-dom';
+import FlowContext from '../../FlowContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
-import {Auth} from "aws-amplify";
+import { Auth } from "aws-amplify";
 
-function Header({ setSearchResults }) {
+function Header({ setSearchResults, setLoading }) {
     const navigate = useNavigate();
+    const { setFlowState } = useContext(FlowContext);
+
 
     const navigateToLogin = () => {
         navigate('/login');
@@ -41,12 +44,28 @@ function Header({ setSearchResults }) {
     const navigateToSettings = () => {
         navigate('/guestdashboard/settings');
     };
+    const navigateToDashboard = () => {
+        if (!isLoggedIn) {
+            setFlowState({ isHost: true });
+            navigate('/register');
+        } else {
+            const onAnyDashboard = location.pathname.includes('dashboard');
+            if (!onAnyDashboard && group === 'Host') {
+                navigate('/hostdashboard');
+            } else if (location.pathname.includes('hostdashboard')) {
+                navigate('/guestdashboard');
+            } else {
+                navigate('/hostdashboard');
+            }
+        }
+    };
 
-    const [dropdownVisible, setDropdownVisible] = useState(false);
+
+    const location = useLocation();
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [group, setGroup] = useState(''); // State to store user group
-    const [username, setUsername] = useState(''); // State to store username
-    const [results, setResults] = useState([]);
+    const [group, setGroup] = useState('');
+    const [username, setUsername] = useState('');
+    const [dropdownVisible, setDropdownVisible] = useState(false);
 
     useEffect(() => {
         checkAuthentication();
@@ -96,19 +115,21 @@ function Header({ setSearchResults }) {
                         </a>
                     </div>
                     <div className='App'>
-                    <SearchBar setSearchResults={setSearchResults} />
+                        <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
                     </div>
                     <div className='headerRight'>
-                        <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                            Become a host
-                        </button>
+                        <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
+                            {!isLoggedIn ? 'Become a Host' :
+                                (!location.pathname.includes('dashboard') && group === 'Host') ? 'Go to Dashboard' :
+                                    (group === 'Host' ? 'Switch Dashboard' : 'Become a Host')}
+                        </button> 
                         <button className="headerButtons" onClick={navigateToNinedots}>
                             <img src={nineDots} alt={nineDots} />
                         </button>
                         <div className="personalMenuDropdown">
                             <button className="personalMenu" onClick={toggleDropdown}>
-                                <img src={profile} alt={profile}/>
-                                <img src={arrowDown} alt={arrowDown}/>
+                                <img src={profile} alt={profile} />
+                                <img src={arrowDown} alt={arrowDown} />
                             </button>
                             <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                 {isLoggedIn ? (
@@ -120,14 +141,14 @@ function Header({ setSearchResults }) {
                                         <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
                                         <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
                                         <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
-                                            src={logoutArrow} alt="Logout Arrow"/></button>
+                                            src={logoutArrow} alt="Logout Arrow" /></button>
                                     </>
                                 ) : (
                                     <>
                                         <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img
-                                            src={loginArrow} alt="Login Arrow"/></button>
+                                            src={loginArrow} alt="Login Arrow" /></button>
                                         <button onClick={navigateToRegister}
-                                                className="dropdownRegisterButton">Register
+                                            className="dropdownRegisterButton">Register
                                         </button>
                                     </>
                                 )}

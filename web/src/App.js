@@ -5,9 +5,7 @@ import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
-import Assortment from './components/assortment/Assortment';
-import Home from "./components/home/Home";
-import Booking from "./components/booking/Booking";
+import Home from './components/home/Accommodations';
 import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomits";
 import Release from "./components/about/release.js";
@@ -22,25 +20,18 @@ import HostPayments from "./components/hostdashboard/HostPayments";
 import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
+import HostReviews from "./components/hostdashboard/HostReviews";
 import ListingDetails from './components/listingdetails/ListingDetails';
-import HomeDashboard from "./components/admindashboard/HomeDashboard";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import BookingOverview from "./components/bookingprocess/BookingOverview";
-import BookingPayment from "./components/bookingprocess/BookingPayment";
-import BookingConfirmed from "./components/bookingprocess/BookingConfirmed";
-import BookingDeclined from "./components/bookingprocess/BookingDeclined";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
-import { ProtectedRoute } from "./components/protectedroute/ProtectedRoute.tsx";
 import Disclaimers from "./components/disclaimers/Disclaimers";
 import Policy from "./components/disclaimers/Policy";
 import Terms from "./components/disclaimers/Terms";
 import Login from "./components/base/Login";
 import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
-import Error from "./components/errorpage/errorpage";
-import Stripe from 'stripe';
 import { AuthProvider } from './components/base/AuthContext';
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 import Chat from "./components/chat/Chat";
@@ -53,6 +44,7 @@ Modal.setAppElement('#root');
 
 function App() {
     const [searchResults, setSearchResults] = useState([]);
+    const [loading, setLoading] = useState(false); 
     useEffect(() => {
         // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
@@ -75,10 +67,9 @@ function App() {
                 <AuthProvider>
                 <UserProvider>
                     <div className="App">
-                        {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} />}
+                    {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
                         <Routes>
-                            <Route path="/" element={<Assortment searchResults={searchResults} />} />
-                            <Route path="/home" element={<Home />} />
+                            <Route path="/" element={<Home searchResults={searchResults} />} />
                             <Route path="/about" element={<About />} />
                             <Route path="/release" element={<Release />} />
                             <Route path="/helpdesk" element={<Helpdesk />} />
@@ -90,19 +81,20 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/confirm-email" element={<ConfirmRegister />} />
-                            <Route path="/error" element={<Error />} />
-                            <Route path="/booking" element={<Booking />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
-                            <Route path="/bookingoverview" element={<BookingOverview />} />
-                            <Route path="/bookingpayment" element={<BookingPayment />} />
-                            <Route path="/bookingconfirmed" element={<BookingConfirmed />} />
-                            <Route path="/bookingdeclined" element={<BookingDeclined />} />
-                            <Route path="/chatprototype" element={<Chatprototype />} />
+
+                            {/* Chat */}
+                            <Route path="/chat" element={<Chat />} />
+
+                            {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
+                            <Route path="/guestdashboard/chatprototype" element={<Chatprototype />} />
+
+                            {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
                             <Route path="/hostdashboard" element={
                                     <HostProtectedRoute>
@@ -114,11 +106,13 @@ function App() {
                             <Route path="/hostdashboard/messages" element={<HostMessages />} />
                             <Route path="/hostdashboard/payments" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
+                            <Route path="/hostdashboard/reviews" element={<HostReviews />} />
+
+                            {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />
                             <Route path="/policy" element={<Policy />} />
                             <Route path="/terms" element={<Terms />} />
                             <Route path="/disclaimers" element={<Disclaimers />} />
-                            <Route path="/admin" element={<ProtectedRoute allowedRoles={["Admin"]} page={<HomeDashboard />} redirectTo='/' />} />
                         </Routes>
                         {renderFooter()}
                     </div>

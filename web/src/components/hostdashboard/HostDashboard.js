@@ -13,7 +13,7 @@ function HostDashboard() {
                 const userInfo = await Auth.currentAuthenticatedUser();
                 const cognitoUserId = userInfo.attributes.sub;
 
-                const response = await fetch(`https://fe3alokx8h.execute-api.eu-north-1.amazonaws.com/CheckIfStripeExists`, {
+                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
                     method: 'POST',
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
@@ -33,8 +33,8 @@ function HostDashboard() {
 
     return (
         <div className="container">
-            <h2>Dashboard</h2>
             <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)} />
+            <h2>Dashboard</h2>
             <div className="dashboard">
                 <Pages />
 

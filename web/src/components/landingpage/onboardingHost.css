@@ -175,6 +175,9 @@
 .flex-row {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  margin: auto;
 }
 
 .image-container {
