@@ -43,7 +43,7 @@ const SettingsTab = () => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ newEmail, userId }),
+                body: JSON.stringify({ newEmail, userId, username }),
             });
 
             console.log(response);
