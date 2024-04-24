@@ -24,3 +24,18 @@
 .listing {
     box-shadow: none;
 }
+.listing-delete {
+    background-color: red;
+    color: white;
+    display:inline-block;
+    padding:0.35em 1.2em;
+    border:0.1em solid black;
+    margin:0 0.3em 0.3em 0;
+    border-radius:0.12em;
+    box-sizing: border-box;
+    transition: all 0.2s;
+    max-width: 12em;
+}
+.listing-delete:hover {
+    background-color: darkred;
+}

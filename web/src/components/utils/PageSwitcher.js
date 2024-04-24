@@ -36,6 +36,31 @@ function PageSwitcher({accommodations, amount}) {
 
         return `${day}/${month}/${year}`;
     }
+    const asyncDeleteAccommodation = async (accommodation) => {
+        if(confirm("Are you sure you want to remove this item from your listing?") === true) {
+            let accId = accommodation.ID;
+
+            const options = {
+                id: accId
+            };
+
+            try {
+                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/DeleteAccommodation', {
+                    method: 'DELETE',
+                    body: JSON.stringify(options),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                accommodations = accommodations.filter(acc => acc.ID !== accId);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+    }
     return (
         <div className="dashboardSection section-1">
             <div className="box fullBox listing">
@@ -68,6 +93,7 @@ function PageSwitcher({accommodations, amount}) {
                                 (<p>Date range not set</p>)
                             }
                         </div>
+                        <button className="listing-delete" onClick={() => asyncDeleteAccommodation(accommodation)}>Remove from listing</button>
                     </div>
                 ))}
             </div>
