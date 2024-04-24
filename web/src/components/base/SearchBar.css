@@ -11,7 +11,7 @@
   font-size: 0.6rem;
 }
 .searchTitleAccommodation {
-  padding: 0.75rem; /* 12px */
+  padding: 0.75rem; 
 }
 .searchTitleCenterAcco{
   color: #0D9813;
@@ -19,13 +19,13 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding-top: 0%; 
-  margin-bottom: -0.125rem; /* -2px */
+  margin-bottom: -0.125rem; 
 }
 .bar .searchInputContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 0.3125rem; /* 5px */
+  margin-top: 0.3125rem; 
 }
 .suggestions-container {
   position: relative;
@@ -50,42 +50,33 @@
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 0.1875rem; /* 3px */
+  padding-top: 0.1875rem; 
   margin-top: 0px; 
 }
 .check-in:hover {
   cursor: 'pointer';
-  /* background-color: #f0f0f0; */
-  border-radius: 1.25rem; /* 20px */
+  border-radius: 1.25rem; 
   
 }
 
 .check-in{
   width: 19%;
   cursor: pointer;
-  border-radius: 1.25rem; /* 20px */
-
+  border-radius: 1.25rem; 
 }
 
 .location{
   width: 32%;
-  border-radius: 1.25rem; /* 20px */
+  border-radius: 1.25rem; 
 }
-/* .location:hover{
-  background-color: #f0f0f0;
-  
-} */
+
 .accommodation {
   width: 20%;
-  border-radius: 1.25rem; /* 20px */
+  border-radius: 1.25rem; 
   border:none;
-  height: 3.125rem; /* 50px */
-
+  height: 3.125rem; 
 }
 
-/* .accommodation:hover{
-  background-color: #f0f0f0;
-} */
 .searchbar-input {
   background: none;
   border: none;
@@ -107,7 +98,7 @@
   left: -0.8%;
   top: 50%;
   transform: translateY(-50%);
-  width: 0.05625rem; /* 0.9px approximated as 0.05rem */
+  width: 0.05625rem; 
   height: 60%;
   background: rgb(88, 153, 22);
 }
@@ -119,17 +110,16 @@
   outline: 0;
   cursor: pointer;
   padding: 3px;
-  /* margin-left: 20px; */
-  font-size: 0.625rem; /* 10px */
-  line-height: 1.875rem; /* 30px */
+  font-size: 0.625rem;
+  line-height: 1.875rem; 
   border: 1px solid #0fa616;
   border-radius: 50%;
   color: #ffffff;
   background-color: #0fa616;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  height: 2.5625rem; /* 41px */
-  width: 2.5625rem; /* 41px */
-  margin-top: 0.5rem; /* 8px */
+  height: 2.5625rem; 
+  width: 2.5625rem; 
+  margin-top: 0.5rem;
 }
 .searchbar-button:hover {
   background-color: #0a770f;
@@ -138,7 +128,7 @@
 }
 .searchbar-button svg {
   color: rgb(255, 255, 255);
-  margin-top: 0.625rem; /* 10px */
+  margin-top: 0.625rem; 
 }
 .searchbar-button:hover svg {
   animation: bounce 0.7s ease 1;
@@ -177,9 +167,6 @@
   font-size: 0.64rem;
 }
 
-
-
-
 .button-section {
   border: none;
   display: flex;
@@ -188,17 +175,12 @@
   align-items: center;
   position: relative;
   cursor: pointer;
-  padding: 1.625rem; /* 26px */
+  padding: 1.625rem; 
   user-select: none; 
    background-color: #fff;
-   border-radius: 1.25rem; /* 20px */
+   border-radius: 1.25rem; 
    width: 22%;
-   
 }
-
-/* .button-section:hover {
-background-color: #f0f0f0;
-} */
 
 .button-section p,
 .guestCounter p {
@@ -209,16 +191,16 @@ background-color: #f0f0f0;
 .guest-dropdown {
   display: none;
   position: absolute;
-  top: calc(100% + 0.625rem); /* 10px */
+  top: calc(100% + 0.625rem); 
   left: 77%;
   transform: translateX(-50%);
   background: white;
   box-shadow: 0 4px 8px rgba(0,0,0,0.4);
-  border-radius: 1.5625rem; /* 25px */
-  padding: 1.5625rem; /* 25px */
+  border-radius: 1.5625rem;
+  padding: 1.5625rem;
   z-index: 1;
-  width: 23.125rem; /* 370px */
-  min-width: 15.625rem; /* 250px */
+  width: 23.125rem; 
+  min-width: 15.625rem;
   box-sizing: border-box;
   cursor: auto;
 }
@@ -231,8 +213,8 @@ background-color: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem; /* 20px */
-  padding: 0.625rem 0; /* 10px */
+  margin-bottom: 1.25rem;
+  padding: 0.625rem 0; 
   border-bottom: 1px solid #0a770f;
 }
 
@@ -241,25 +223,25 @@ background-color: #f0f0f0;
 }
 
 .guestLabel {
-  font-size: 1rem; /* 16px */
+  font-size: 1rem;
   color: #0a770f;
   text-align: left;
 }
 
 .guestDescription {
-  font-size: 0.625rem; /* 10px */
+  font-size: 0.625rem; 
   color: #666;
 }
 
 .guestCounter .controls {
   display: flex;
   align-items: center;
-  padding: 0 0.625rem; /* 10px */
+  padding: 0 0.625rem; 
 }
 
 .guestCounter .controls span {
-  margin: 0 0.625rem; /* 10px */
-  font-size: 1rem; /* 16px */
+  margin: 0 0.625rem; 
+  font-size: 1rem; 
 }
 
 .guestCounter .controls button {
@@ -267,13 +249,13 @@ background-color: #f0f0f0;
   border-radius: 50%;
   background-color: #fff;
   padding: 0;
-  width: 2rem; /* 32px */
-  height: 2rem; /* 32px */
+  width: 2rem; 
+  height: 2rem; 
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem; /* 24px */
+  font-size: 1.5rem; 
   color: #000;
 }
 
@@ -292,19 +274,17 @@ background-color: #f0f0f0;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding-top: 0%; 
-  margin-bottom: -0.125rem; /* -2px */
-  padding: 0.75rem; /* 12px */
+  margin-bottom: -0.125rem;
+  padding: 0.75rem; 
 }
 
 .button-section .searchTitleGuest {
-  margin-bottom: 0.8125rem; /* 13px */
+  margin-bottom: 0.8125rem; 
 }
 
 .guestP{
-  font-size: 0.6875rem; /* 11px */
+  font-size: 0.6875rem; 
 }
-
-
 
 .react-datepicker {
   transform: scale(1.2);
@@ -312,8 +292,16 @@ background-color: #f0f0f0;
   border-radius: 8px;
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
   font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  cursor:auto;
+  cursor: auto;
   top: 40px;
+  position: relative; 
+  overflow: hidden;
+}
+.react-datepicker__day--selected {
+  background-color: #0d6efd;
+  color: white;
+  position: relative;
+  z-index: 1; 
 }
 
 .react-datepicker__header {
@@ -350,7 +338,6 @@ background-color: #f0f0f0;
   background-color: #084298;
 }
 
-/* Pas de navigatieknoppen aan */
 .react-datepicker__navigation--previous {
   border-right-color: #0d6efd;
 }
@@ -365,10 +352,7 @@ background-color: #f0f0f0;
 }
 .react-datepicker__header .react-datepicker__current-month,
 .react-datepicker__header .react-datepicker-year-header {
-    /* Verberg de dropdown pijl */
     background-image: none;
-    
-    /* Als de pijl een pseudo-element is: */
     position: relative;
 }
 
@@ -376,7 +360,6 @@ background-color: #f0f0f0;
 .react-datepicker__header .react-datepicker-year-header::after {
     display: none;
 }
-
 .date-reset-button {
   border: none;
   background: transparent;
