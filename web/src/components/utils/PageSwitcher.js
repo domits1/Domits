@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import ImageSlider from "./ImageSlider";
 import './PageSwitcher.css';
 
@@ -9,7 +9,7 @@ import './PageSwitcher.css';
  * @returns {Element}
  * @constructor
  */
-function PageSwitcher({accommodations, amount}) {
+function PageSwitcher({accommodations, amount, onDelete}) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = amount;
     // Calculate the number of pages
@@ -36,31 +36,14 @@ function PageSwitcher({accommodations, amount}) {
 
         return `${day}/${month}/${year}`;
     }
-    const asyncDeleteAccommodation = async (accommodation) => {
-        if(confirm("Are you sure you want to remove this item from your listing?") === true) {
-            let accId = accommodation.ID;
 
-            const options = {
-                id: accId
-            };
-
-            try {
-                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/DeleteAccommodation', {
-                    method: 'DELETE',
-                    body: JSON.stringify(options),
-                    headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
-                }
-                accommodations = accommodations.filter(acc => acc.ID !== accId);
-            } catch (error) {
-                console.error(error);
-            }
+    useEffect(() => {
+        if (currentItems.length === 0 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
         }
-    }
+    }, [currentItems.length, currentPage]);
+
+
     return (
         <div className="dashboardSection section-1">
             <div className="box fullBox listing">
@@ -93,7 +76,7 @@ function PageSwitcher({accommodations, amount}) {
                                 (<p>Date range not set</p>)
                             }
                         </div>
-                        <button className="listing-delete" onClick={() => asyncDeleteAccommodation(accommodation)}>Remove from listing</button>
+                        <button className="listing-delete" onClick={() => onDelete(accommodation)}>Remove from listing</button>
                     </div>
                 ))}
             </div>

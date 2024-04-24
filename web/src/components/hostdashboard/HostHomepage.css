@@ -245,7 +245,16 @@
 .header {
   font-size: 1.75em;
 }
-
+.refresh-btn {
+  padding: 1em;
+  border-radius: 15%;
+  background-color: #0D9813;
+  color: white;
+  margin-left: 75%;
+}
+.refresh-btn:hover {
+  background-color: limegreen;
+}
 .accommodation-title {
   font-size: 1.2em;
   font-weight: bolder;
