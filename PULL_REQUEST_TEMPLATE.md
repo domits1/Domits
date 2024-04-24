@@ -1,3 +1,8 @@
+## Your name
+Please enter your name here.
+
+`Name: #[example]`
+
 ## Related Issue
 Please link to the issue that this pull request is related to. If there is no related issue, please explain why this change is necessary.
 
@@ -6,7 +11,11 @@ Please link to the issue that this pull request is related to. If there is no re
 ## Change type
 - [ ] Big change (300+)
 - [ ] Small change (less than 300)
-- [ ] NPM Packages installed or removed
+
+## Npm packages 
+- [ ] NPM Packages installed
+- [ ] NPM Packages removed
+- [ ] Did you check for vulnerabilities using "npm audit"?
 
 ## Proposed Changes
 Please provide a detailed description of the changes you're proposing with this pull request. Include any specific changes to the code, new files, or changes to existing files.
