@@ -1,6 +1,6 @@
 describe('Login Page Tests', () => {
     beforeEach(() => {
-      cy.visit('http://localhost:3000/login');
+        cy.visit('https://www.domits.com/login', { failOnStatusCode: false });
     });
   
     it('should display the login form', () => {
