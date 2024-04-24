@@ -195,27 +195,6 @@ function OnboardingHost() {
 
     const handleSubmit = async () => {
         try {
-            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
-            });
-
-            if (response.ok) {
-                console.log('Form data saved successfully');
-
-            } else {
-                console.error('Error saving form data');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-        }
-    };
-
-    const handleFileSubmit = async () => {
-        try {
             const UserID = userId; // Assuming userId is available in scope
             const AccoID = formData.ID;
             const updatedFormData = { ...formData }; // Copy the original formData object
@@ -234,11 +213,25 @@ function OnboardingHost() {
             setFormData(updatedFormData);
             // Reset selectedFiles after successful upload
             setSelectedFiles([]);
+
+            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(formData),
+            });
+
+            if (response.ok) {
+                console.log('Form data saved successfully');
+
+            } else {
+                console.error('Error saving form data');
+            }
         } catch (error) {
-            console.error('Error uploading files:', error);
+            console.error('Error:', error);
         }
     };
-
 
     const handleFileChange = (event) => {
         const files = Array.from(event.target.files).filter(
@@ -268,7 +261,6 @@ function OnboardingHost() {
         const imageKeys = Object.keys(formData.Images);
         updatedFiles.splice(index, 1);
     
-        // Update the corresponding image key to an empty string
         const updatedImages = { ...formData.Images };
         updatedImages[imageKeys[index]] = '';
     
@@ -278,14 +270,6 @@ function OnboardingHost() {
             Images: updatedImages,
         }));
     };
-    
-    
-
-    const combinedSubmit = async () => {
-        await handleFileSubmit(); // Wait for handleFileSubmit to complete
-        handleSubmit(); // Then execute handleSubmit
-    }
-
 
     const renderPageContent = (page) => {
         switch (page) {
@@ -556,7 +540,7 @@ function OnboardingHost() {
                         </div>
                         <div className='buttonHolder'>
                             <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => { combinedSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
+                            <button className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
                         </div>
                         <p>Your accommodation ID: {formData.ID}</p>
                     </div >
