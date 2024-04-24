@@ -27,14 +27,15 @@
 .listing-delete {
     background-color: red;
     color: white;
-    display:inline-block;
-    padding:0.35em 1.2em;
-    border:0.1em solid black;
-    margin:0 0.3em 0.3em 0;
-    border-radius:0.12em;
+    display: inline-block;
+    padding: 0.35em 1.2em;
+    border: none;
+    margin: 0 0.3em 0.3em 0;
+    border-radius: 2em;
     box-sizing: border-box;
     transition: all 0.2s;
-    max-width: 12em;
+    max-width: 6em;
+    max-height: 2em;
 }
 .listing-delete:hover {
     background-color: darkred;

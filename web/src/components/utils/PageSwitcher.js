@@ -76,7 +76,7 @@ function PageSwitcher({accommodations, amount, onDelete}) {
                                 (<p>Date range not set</p>)
                             }
                         </div>
-                        <button className="listing-delete" onClick={() => onDelete(accommodation)}>Remove from listing</button>
+                        <button className="listing-delete" onClick={() => onDelete(accommodation)}>Remove</button>
                     </div>
                 ))}
             </div>
