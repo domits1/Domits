@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, {useEffect, useState} from "react";
 import ImageSlider from "./ImageSlider";
 import './PageSwitcher.css';
 
@@ -9,7 +9,7 @@ import './PageSwitcher.css';
  * @returns {Element}
  * @constructor
  */
-function PageSwitcher({accommodations, amount}) {
+function PageSwitcher({accommodations, amount, onDelete}) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = amount;
     // Calculate the number of pages
@@ -36,6 +36,14 @@ function PageSwitcher({accommodations, amount}) {
 
         return `${day}/${month}/${year}`;
     }
+
+    useEffect(() => {
+        if (currentItems.length === 0 && currentPage > 1) {
+            setCurrentPage(currentPage - 1);
+        }
+    }, [currentItems.length, currentPage]);
+
+
     return (
         <div className="dashboardSection section-1">
             <div className="box fullBox listing">
@@ -68,6 +76,7 @@ function PageSwitcher({accommodations, amount}) {
                                 (<p>Date range not set</p>)
                             }
                         </div>
+                        <button className="listing-delete" onClick={() => onDelete(accommodation)}>Remove</button>
                     </div>
                 ))}
             </div>
