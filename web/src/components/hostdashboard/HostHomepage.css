@@ -247,10 +247,11 @@
 }
 .refresh-btn {
   padding: 1em;
-  border-radius: 15%;
+  border-radius: 1.25em;
+  border: none;
   background-color: #0D9813;
   color: white;
-  margin-left: 75%;
+  margin-left: 85%;
 }
 .refresh-btn:hover {
   background-color: limegreen;
