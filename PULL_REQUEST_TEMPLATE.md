@@ -1,7 +1,7 @@
 ## Your name
 Please enter your name here.
 
-`Name: #[example]`
+`Name: @[GitHub username]`
 
 ## Related Issue
 Please link to the issue that this pull request is related to. If there is no related issue, please explain why this change is necessary.
