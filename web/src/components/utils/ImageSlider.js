@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
 /**
- * @param images
+ * @param images = images you want to slide through
+ * @param seconds = interval for switching images
  * @returns {Element}
  * @constructor
  */
-function ImageSlider({ images }) {
+function ImageSlider({ images, seconds }) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
+    const ms = seconds * 1000;
 
     useEffect(() => {
         const imageKeys = Object.keys(images).filter(key => key.startsWith('image'));
@@ -22,12 +24,12 @@ function ImageSlider({ images }) {
                 setCurrentImageIndex(prevIndex => (prevIndex + 1) % totalImages);
                 setIsVisible(true);
             }, 1000);
-        }, 5000);
+        }, ms);
 
         return () => {
             clearInterval(intervalId);
         };
-    }, [images]);
+    }, [images, seconds]);
 
     const imageSrc = images[`image${currentImageIndex + 1}`];
 

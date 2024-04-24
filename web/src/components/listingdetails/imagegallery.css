@@ -1,0 +1,28 @@
+.image-gallery-container {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .selected-image img {
+    width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+  }
+  
+  .image-thumbnails {
+    display: flex;
+    overflow-x: auto;
+  }
+  
+  .image-thumbnails img {
+    width: 100px;
+    height: 100px;
+    margin-right: 10px;
+    cursor: pointer;
+    opacity: 0.6;
+  }
+  
+  .image-thumbnails img.active,
+  .image-thumbnails img:hover {
+    opacity: 1;
+  }
