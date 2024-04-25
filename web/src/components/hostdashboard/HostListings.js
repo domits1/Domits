@@ -26,51 +26,79 @@ function HostListings() {
     }, []);
 
     useEffect(() => {
-        const fetchAccommodations = async () => {
-            setIsLoading(true);
-            if (!userId) {
-                console.log("No user id")
-                return;
-            } else {
-                try {
-                    const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
-                        method: 'POST',
-                        body: JSON.stringify({ OwnerId: userId }),
-                        headers: {'Content-type': 'application/json; charset=UTF-8',
-                        }
-                    });
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch');
-                    }
-                    // Extracting the response body
-                    const data = await response.json();
-                    // Now 'responseData' should contain your {statusCode, headers, body}
-                    // Check if 'responseData.body' exists and is a string
-                    if (data.body && typeof data.body === 'string') {
-                        // Parse the JSON string inside 'responseData.body'
-                        const accommodationsArray = JSON.parse(data.body);
-                        // Ensure the parsed data is an array before setting the state
-                        if (Array.isArray(accommodationsArray)) {
-                            setAccommodations(accommodationsArray);
-                        } else {
-                            // Handle the case where the parsed data is not an array
-                            console.error("Parsed data is not an array:", accommodationsArray);
-                            setAccommodations([]); // Setting a default or handling as needed
-                        }
-                    }
-                } catch (error) {
-                    // Error Handling
-                    console.error("Unexpected error:", error);
-                } finally {
-                    setIsLoading(false); // End loading regardless of promise outcome
-                }
-            }
-        };
-
+        fetchAccommodations();
         if (userId) {
             fetchAccommodations().catch(console.error);
         }
     }, [userId]);
+    const fetchAccommodations = async () => {
+        setIsLoading(true);
+        if (!userId) {
+            console.log("No user id")
+            return;
+        } else {
+            try {
+                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
+                    method: 'POST',
+                    body: JSON.stringify({ OwnerId: userId }),
+                    headers: {'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch');
+                }
+                // Extracting the response body
+                const data = await response.json();
+                // Now 'responseData' should contain your {statusCode, headers, body}
+                // Check if 'responseData.body' exists and is a string
+                if (data.body && typeof data.body === 'string') {
+                    // Parse the JSON string inside 'responseData.body'
+                    const accommodationsArray = JSON.parse(data.body);
+                    // Ensure the parsed data is an array before setting the state
+                    if (Array.isArray(accommodationsArray)) {
+                        setAccommodations(accommodationsArray);
+                    } else {
+                        // Handle the case where the parsed data is not an array
+                        console.error("Parsed data is not an array:", accommodationsArray);
+                        setAccommodations([]); // Setting a default or handling as needed
+                    }
+                }
+            } catch (error) {
+                // Error Handling
+                console.error("Unexpected error:", error);
+            } finally {
+                setIsLoading(false); // End loading regardless of promise outcome
+            }
+        }
+    };
+    const asyncDeleteAccommodation = async (accommodation) => {
+        if(confirm("Are you sure you want to remove this item from your listing?") === true) {
+            let accId = accommodation.ID;
+
+            const options = {
+                id: accId
+            };
+            setIsLoading(true);
+            try {
+                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/DeleteAccommodation', {
+                    method: 'DELETE',
+                    body: JSON.stringify(options),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                setAccommodations(prevAccommodations => prevAccommodations.filter(item => item.ID !== accId));
+                alert('This item has been successfully removed from your listing!');
+            } catch (error) {
+                console.error(error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+    }
 
 
     return (
@@ -86,12 +114,13 @@ function HostListings() {
                         </div>
                         <div className="box fullBox">
                             <p className="header">Current listings</p>
+                            <button className="refresh-btn" onClick={fetchAccommodations}>Refresh</button>
                             {isLoading ? (
                                 <div>
                                     <img src={spinner}/>
                                 </div>
                             ) : accommodations.length > 0 ? (
-                                <PageSwitcher accommodations={accommodations} amount={5}/>
+                                <PageSwitcher accommodations={accommodations} amount={5} onDelete={asyncDeleteAccommodation}/>
                             ) : (
                                 <div className="accommodation-box">
                                     <p className="accommodation-alert">It appears that you have not listed any accommodations yet...</p>
