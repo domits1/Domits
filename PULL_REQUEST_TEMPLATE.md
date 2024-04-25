@@ -15,6 +15,7 @@ Please link to the issue that this pull request is related to. If there is no re
 ## Npm packages 
 - [ ] NPM Packages installed
 - [ ] NPM Packages removed
+- [ ] NPM Packages updated/removed
 - [ ] Did you check for vulnerabilities using "npm audit"?
 
 ## Proposed Changes
