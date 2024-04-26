@@ -1,7 +1,16 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from 'react-native';
+import {useNavigation} from "@react-navigation/native";
 
 const LoginScreen = () => {
+  const navigation = useNavigation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -35,7 +44,7 @@ const LoginScreen = () => {
       <TouchableOpacity onPress={() => {}}>
         <Text style={styles.linkText}>Forgot your password?</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => {}}>
+      <TouchableOpacity onPress={() => {navigation.navigate('SignupScreen')}}>
         <Text style={styles.linkText}>Don't have an account? Sign up!</Text>
       </TouchableOpacity>
       <View style={styles.dividerRow}>
@@ -48,9 +57,9 @@ const LoginScreen = () => {
         <Text style={styles.googleSignInText}>Sign in with Google</Text>
       </TouchableOpacity> */}
       <View style={styles.buttonAlignment}>
-      <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-        <Text style={styles.loginButtonText}>Log in</Text>
-      </TouchableOpacity>
+        <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
+          <Text style={styles.loginButtonText}>Log in</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -135,7 +144,7 @@ const styles = StyleSheet.create({
   buttonAlignment: {
     flex: 1,
     alignItems: 'center',
-  }
+  },
 });
 
 export default LoginScreen;
