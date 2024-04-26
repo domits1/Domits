@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaTimes, FaSearchLocation, FaMapPin, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
+import { FaTimes, FaSearchLocation,FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
@@ -13,25 +13,26 @@ const handleButtonClick = (e) => {
 };
 
 
-const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) => (
-  <div className="guestCounter" onClick={handleButtonClick}>
-    <div>
-      <p className="guestLabel">{label}</p>
-      <p className="guestDescription">{description}</p>
+const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
+  return (
+    <div className="guestCounter" onClick={handleButtonClick}>
+      <div>
+        <p className="guestLabel">{label}</p>
+        <p className="guestDescription">{description}</p>
+      </div>
+      <div className="controls">
+        <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
+        <span>{value}</span>
+        <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
+      </div>
     </div>
-    <div className="controls">
-      <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
-      <span>{value}</span>
-      <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
-    </div>
-  </div>
-);
+  );
+});
 
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
-  const [guests, setGuests] = useState(1);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -43,18 +44,20 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const totalGuestsDescription = createGuestDescription(adults, children, infants, pets);
   const [startDate, endDate] = dateRange;
-  const [accommodationFocused, setAccommodationFocused] = useState(false);
+  const [error, setError] = useState(""); 
+
+  
 
 
   const guestDropdownRef = useRef();
-  const resetGuests = (e) => {
+  const resetGuests = useCallback((e) => {
     e.stopPropagation();
-
     setAdults(0);
     setChildren(0);
     setInfants(0);
     setPets(0);
-  };
+  }, []);
+  
 
   const resetDates = (e) => {
     e.stopPropagation();
@@ -63,10 +66,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setCheckOut(null);
   };
 
-  const toggleGuestDropdown = (e) => {
+  const toggleGuestDropdown = useCallback((e) => {
     e.stopPropagation();
     setShowGuestDropdown(prevState => !prevState);
-  };
+  }, []);
 
   const totalGuests = adults + children + infants + pets;
 
@@ -107,20 +110,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
-  const handleAccommodationFocus = () => {
-    setAccommodationFocused(true);
-  };
-
-  const handleAccommodationBlur = () => {
-    setAccommodationFocused(false);
-  };
-
-  const clearAccommodation = () => {
-    setAccommodation('');
-    setAccommodationFocused(false); z
-  };
-
-
   const handleSelect = async (address) => {
     setAddress(address);
     try {
@@ -141,19 +130,20 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   // Verbinding met API Gateway
   const handleSearch = async () => {
     setLoading(true);
+    setError("");  
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
     const locationQueryParam = address ? `&searchTerm=${address}` : '';
-    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}${locationQueryParam}`;
-
+    const queryParams = [typeQueryParam, locationQueryParam].filter(Boolean).join('&');
+    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+  
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setTimeout(() => {
-        setSearchResults(data);
-        setLoading(false);
-      }, 100);
+      setSearchResults(data);
     } catch (error) {
       console.error('Error during fetch:', error);
+      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+    } finally {
       setLoading(false);
     }
   };
@@ -190,6 +180,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   
   return (
     <div className="bar">
+      {error && <div className="error-message">{error}</div>}
       <div className="location">
         <p className="searchTitle">Location</p>
         <PlacesAutocomplete value={address} onChange={handleChange} onSelect={handleSelect} searchOptions={{ language: 'en' }}>
@@ -291,7 +282,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             { value: 'Apartment', label: <><FaBuilding /> Apartment</> },
             { value: 'House', label: <><FaHome /> House</> },
             { value: 'Villa', label: <><FaHotel /> Villa</> },
-            { value: 'Boathouse', label: <><FaShip /> Boathouse</> },
+            { value: 'Boat', label: <><FaShip /> Boat</> },
             { value: 'Camper', label: <><FaCaravan /> Camper</> },
             { value: 'Cottage', label: <><FaTree /> Cottage</> },
           ]}
