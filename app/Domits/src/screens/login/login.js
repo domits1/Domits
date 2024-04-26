@@ -1,18 +1,21 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-
+import React, {useState} from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const navigation = useNavigation();
 
-  const handleLogin = () => {
+  const handleLogin = () => {};
 
-  };
-
-  const handleGoogleSignIn = () => {
-
-  };
+  const handleGoogleSignIn = () => {};
 
   return (
     <View style={styles.container}>
@@ -33,7 +36,10 @@ const LoginScreen = () => {
       <TouchableOpacity onPress={() => {}}>
         <Text style={styles.forgotPasswordText}>Forgot your password?</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => {}}>
+      <TouchableOpacity
+        onPress={() => {
+          navigation.navigate('SignupScreen');
+        }}>
         <Text style={styles.signupText}>Don't have an account? Sign up!</Text>
       </TouchableOpacity>
       <View style={styles.divider} />

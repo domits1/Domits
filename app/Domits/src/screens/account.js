@@ -16,10 +16,10 @@ const Account = () => {
           title="Go to Guest Dashboard"
           onPress={() => navigation.navigate('GuestDashboard')}
         />
-          <Button
-              title = "Login"
-              onPress={() => navigation.navigate('LoginScreen')}
-          />
+        <Button
+          title="Login"
+          onPress={() => navigation.navigate('LoginScreen')}
+        />
       </View>
     </SafeAreaView>
   );
