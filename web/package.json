@@ -67,6 +67,7 @@
     ]
   },
   "dependencies": {
+    "@types/node-fetch": "^2.6.11",
     "country-data": "^0.0.31",
     "date-fns": "^3.6.0",
     "immer": "^10.0.4",
