@@ -380,7 +380,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             placeholderText="Start-End date"
             showYearDropdown={false}
             showMonthDropdown={true}
-            dateFormat="MM/dd"
+            dateFormat="d MMMM"
             selectsRange={true}
             startDate={startDate}
             endDate={endDate}

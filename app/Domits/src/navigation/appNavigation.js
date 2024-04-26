@@ -38,6 +38,8 @@ import selectAmenities from '../screens/hostonboarding/selectAmenities';
 import PriceProperty from '../screens/hostonboarding/PriceProperty';
 import LoginScreen from '../screens/login/login';
 import SignupScreen from '../screens/login/signup';
+=======
+import LoginScreen from '../screens/login/loginScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
