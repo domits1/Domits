@@ -36,7 +36,7 @@ import ListProperty from '../screens/hostonboarding/listProperty';
 import LocationFillIn from '../screens/hostonboarding/LocationFillIn';
 import selectAmenities from '../screens/hostonboarding/selectAmenities';
 import PriceProperty from '../screens/hostonboarding/PriceProperty';
-import LoginScreen from '../screens/login/login';
+import LoginScreen from '../screens/login/loginScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
