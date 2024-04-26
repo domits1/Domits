@@ -18,6 +18,7 @@ const Account = () => {
         />
           <Button
               title = "Login"
+              onPress={() => navigation.navigate('LoginScreen')}
           />
       </View>
     </SafeAreaView>
