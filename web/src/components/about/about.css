@@ -1,10 +1,14 @@
 .aboutus{
-    width: 80%;
+    width: 90%;
     margin: auto;
     margin-top: 40px;
     color: #000;
     font-size: 20px;
     font-style: normal;
+}
+
+.aboutus h3 {
+    font-family: 'Kanit', sans-serif;
     font-weight: 400;
 }
 
@@ -20,12 +24,13 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    width: 45%;
+    width: 49%;
     background-color: #0D9813;
     border-radius: 20px;
     padding: 20px;
     margin-top: 20px;
     margin-bottom: 20px;
+    position: relative;
 }
 
 .aboutText {
@@ -34,11 +39,14 @@
 
 .factsText {
     margin-top: 20px;
+    color: white;
 }
 
 .factsTitle {
     margin: 0;
-    font-size: 30px;
+    /* font-size: 22px; */
+    font-size: clamp(0.8rem, 1.2vw + 0.8rem, 1.5rem);    
+    color: white;
 }
 
 .factsHeader {
@@ -73,18 +81,38 @@
     margin-bottom: 20px;
 }
 
+.member > p:nth-of-type(1) {
+    color: var(--primary-color);
+}
+
 .avatar {
     height: 100px;
     width: 100px;
-    background-color: #ccc;
+    background-color: white;
     border-radius: 50%;
     margin: auto;
     margin-bottom: 10px;
 }
 
+.avatar img {
+    height: 100px;
+    width: 100px;
+    border-radius: 50%;
+}
+
 .about {
     text-align: left;
-    margin-top: 40px;
+    margin: 50px 0;
+    display: flex;
+}
+
+.about p {
+    width: 50%;
+    margin: 0 auto;
+}
+
+.about p:first-child {
+    margin-right: 50px;
 }
 
 @media (max-width: 850px) {
@@ -97,6 +125,18 @@
         align-items: center;
     }
     .awesomefacts {
+        width: 100%;
+    }
+    .factsHeader {
+        flex-direction: column-reverse;
+    }
+    .about {
+        flex-direction: column;
+    }
+    .about p:first-child {
+        margin: 0 0 25px 0;
+    }
+    .about p {
         width: 100%;
     }
 }

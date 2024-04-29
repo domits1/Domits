@@ -13,8 +13,11 @@ import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
 import Pages from "../guestdashboard/Pages";
+<<<<<<< HEAD
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { hostEmail } from "../details/Details";
+=======
+>>>>>>> 7dc05d55c6a1cd6abb5cea8b078d8d6b0e95b377
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";

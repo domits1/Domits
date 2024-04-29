@@ -6,36 +6,39 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const Dashboard = () => {
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Dashboard</Text>
-      </View>
-      <View style={styles.avatarContainer}>
-        <TouchableOpacity style={styles.avatarView}>
-          <View style={[styles.avatar, styles.blueBackground]}>
-            <Text style={styles.placeholderText}>Icon</Text>
-            <Text style={styles.placeholderText}>Total Earnings</Text>
-          </View>
-        </TouchableOpacity>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Dashboard</Text>
+        </View>
+        <View style={styles.avatarContainer}>
+          <TouchableOpacity style={styles.avatarView}>
+            <View style={[styles.avatar, styles.blueBackground]}>
+              <Text style={styles.placeholderText}>Icon</Text>
+              <Text style={styles.placeholderText}>Total Earnings</Text>
+            </View>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.avatarView}>
-          <View style={[styles.avatar, styles.darkBlueBackground]}>
-            <Text style={styles.placeholderText}>Icon</Text>
-            <Text style={styles.placeholderText}>Total Rented</Text>
-          </View>
-        </TouchableOpacity>
+          <TouchableOpacity style={styles.avatarView}>
+            <View style={[styles.avatar, styles.darkBlueBackground]}>
+              <Text style={styles.placeholderText}>Icon</Text>
+              <Text style={styles.placeholderText}>Total Rented</Text>
+            </View>
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.avatarView}>
-          <View style={[styles.avatar, styles.lightBlueBackground]}>
-            <Text style={styles.placeholderText}>Icon</Text>
-            <Text style={styles.placeholderText}>Most-recent Review</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <TouchableOpacity style={styles.avatarView}>
+            <View style={[styles.avatar, styles.lightBlueBackground]}>
+              <Text style={styles.placeholderText}>Icon</Text>
+              <Text style={styles.placeholderText}>Most-recent Review</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -43,7 +46,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  
+
   header: {
     alignItems: 'center',
     paddingVertical: 10,
@@ -86,7 +89,7 @@ const styles = StyleSheet.create({
     color: '#bdc3c7',
     fontSize: 16,
     marginBottom: 5,
-    
+
     textAlign: 'center',
   },
 });

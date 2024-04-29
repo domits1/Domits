@@ -7,44 +7,49 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const Profile = () => {
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Profile</Text>
-      </View>
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Profile</Text>
+        </View>
 
-      <View>
-        <View style={styles.avatarContainer}>
+        <View>
+          <View style={styles.avatarContainer}>
+            <TouchableOpacity style={styles.listItem}>
+              <Text style={styles.listItemText}>Avatar</Text>
+              <MaterialIcons name="chevron-right" size={22} color="#000" />
+            </TouchableOpacity>
+            <Text style={styles.listItemTitle}>Avatar</Text>
+          </View>
           <TouchableOpacity style={styles.listItem}>
-            <Text style={styles.listItemText}>Avatar</Text>
+            <Text style={styles.listItemText}>Email Adress</Text>
             <MaterialIcons name="chevron-right" size={22} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.listItemTitle}>Avatar</Text>
+          <TouchableOpacity style={styles.listItem}>
+            <Text style={styles.listItemText}>Password</Text>
+            <MaterialIcons name="chevron-right" size={22} color="#000" />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.listItem}>
+            <Text style={styles.listItemText}>Logout</Text>
+            <MaterialIcons name="chevron-right" size={22} color="#000" />
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Email Adress</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Password</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Logout</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-      </View>
 
-      <View>
-        <Text style={styles.listItemTitle}>Deactivate your account for 30 days</Text>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.deactivateText}>Deactivate Account</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+        <View>
+          <Text style={styles.listItemTitle}>
+            Deactivate your account for 30 days
+          </Text>
+          <TouchableOpacity style={styles.listItem}>
+            <Text style={styles.deactivateText}>Deactivate Account</Text>
+            <MaterialIcons name="chevron-right" size={22} color="#000" />
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
@@ -93,6 +98,5 @@ const styles = StyleSheet.create({
     color: 'red',
   },
 });
-
 
 export default Profile;

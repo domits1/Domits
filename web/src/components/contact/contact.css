@@ -1,37 +1,29 @@
 .contact {
-    padding: 50px;
-    margin-left: 100px;
-    margin-right: 100px;
-    margin-bottom: 100px;
-    margin: 50px auto; /* Adjusted margin for laptops */
-    color: #000;
-    font-size: 20px;
-    font-weight: 400;
-    line-height: 150%;
+    width: 93%;
+    margin: 50px auto;
+  }
+
+  .contact p {
+    width: 50%;
+    color: #1a1a1a;
+    font-size: 1.1em;
   }
   
   .contactform {
-    border-radius: 15px;
-    background: #EBFAED;
-    padding: 50px;
     display: flex;
     flex-wrap: wrap;
+    margin-top: 25px;
   }
   
-  .contactform h2 {
-    font-weight: 600;
-    /* font-size: 20px; Adjusted font size for laptops */
-    width: 100%;
+  .contact h1 {
+    font-family: 'Kanit', sans-serif;
+    font-weight: 500;
   }
   
   .namemessage,
   .biginput {
-    flex: 1 1 calc(50% - 20px); /* Adjusted flex calculation for laptops */
+    flex: 1 1 calc(50% - 20px);
     margin-right: 20px;
-  }
-  
-  ::placeholder {
-    text-align: left;
   }
   
   .biginput textarea {
@@ -40,25 +32,27 @@
     box-sizing: border-box;
     text-align: left;
     padding: 10px;
-    border: 1px solid #000;
     border-radius: 10px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
+  }
+
+  .contactform input::placeholder,
+  .contactform textarea::placeholder {
+  text-align: left;
   }
   
   .contactform input:not(.biginput input) {
     border-radius: 10px;
-    border: 1px solid #000;
     background: #FFF;
     padding: 10px;
     width: 100%;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.25);
+    margin: 15px 0 10px 0; 
   }
   
   .formbuttons {
     border: 0;
     display: flex;
     justify-content: flex-start;
-    flex-wrap: wrap;
+    flex-wrap: wrap; 
   }
   
   #attachmentsbutton,
@@ -71,28 +65,32 @@
     flex-shrink: 0;
     color: #FFF;
     border-radius: 10px;
+    border: none;
+    box-shadow: none;
   }
   
   #attachmentsbutton {
-    background: #003366;
+    background: var(--secondary-color);
   }
   
   #sendbutton {
-    background: #0D9813;
+    background: var(--primary-color);
   }
   
   #attachmentsbutton:hover {
-    background: #003366;
+    background: #3e85cb;
     cursor: pointer;
   }
   
   #sendbutton:hover {
-    background: #09770f;
+    background: #46c54c;
     cursor: pointer;
   }
   
-  input[type="text"] {
-    text-align: left;
+  @media (max-width: 860px) {
+    .contact p {
+      width: 100%;
+    }
   }
   
   /* Media query for phone screens */

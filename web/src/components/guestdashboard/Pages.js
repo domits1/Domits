@@ -23,10 +23,10 @@ function Pages() {
         <img src={message} alt="Messages"></img>
         <p>Messages</p>
       </div>
-      <div className="wijzers" onClick={() => navigate("/guestdashboard/payments")}>
+      {/* <div className="wijzers" onClick={() => navigate("/guestdashboard/payments")}>
         <img src={payment} alt="Payments"></img>
         <p>Payments</p>
-      </div>
+      </div> */}
       <div className="wijzers" onClick={() => navigate("/guestdashboard/reviews")}>
         <img src={listings} alt="Listing"></img>
         <p>Reviews</p>

@@ -1,28 +1,37 @@
-import React, { useState, FormEvent, useEffect } from 'react';
+import React, { useState, FormEvent, useEffect, useContext } from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from './AuthContext'; // Import the AuthContext hook
+import { useAuth } from './AuthContext';
+import FlowContext from '../../FlowContext';
 import './Register.css';
+import { flow } from 'lodash';
 
 const Register = () => {
     const navigate = useNavigate();
-    const { setAuthCredentials } = useAuth(); // Access setAuthCredentials from AuthContext
+    const { setAuthCredentials } = useAuth();
+    const { flowState, setFlowState } = useContext(FlowContext)
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
         repeatPassword: '',
+        username: ''
     });
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
         });
     };
 
-    const onSubmit = async (e: FormEvent) => {
+    const handleHostChange = (e) => {
+        setFlowState({ ...flowState, isHost: e.target.checked });
+    };
+
+    const onSubmit = async (e) => {
         e.preventDefault();
 
         const userData = {
@@ -32,23 +41,23 @@ const Register = () => {
             repeatPassword: formData.repeatPassword,
         };
 
-        if (userData.email === "" || userData.email === null) {
+        if (!userData.email) {
             setErrorMessage('Email can\'t be empty!');
             return;
         }
 
-        if (userData.password === "" || userData.password === null || userData.repeatPassword === "" || userData.repeatPassword === null) {
+        if (!userData.password || !userData.repeatPassword) {
             setErrorMessage('Password can\'t be empty!');
             return;
         }
 
         if (userData.password !== userData.repeatPassword) {
-            setErrorMessage('Passwords does not match!');
+            setErrorMessage('Passwords do not match!');
             return;
         }
 
         try {
-            const groupName = "Traveler";
+            const groupName = flowState.isHost ? "Host" : "Traveler";
             const data = await Auth.signUp({
                 username: userData.email,
                 email: userData.email,
@@ -59,9 +68,7 @@ const Register = () => {
                 },
             });
 
-            // Store the email and password in the AuthContext
             setAuthCredentials(userData.email, userData.password);
-
             navigate('/confirm-email', {
                 state: { email: userData.email, username: data.user.getUsername() },
             });
@@ -71,15 +78,6 @@ const Register = () => {
             } else {
                 console.error("Error:", error);
             }
-        }
-    };
-
-    const handleSignOut = async () => {
-        try {
-            await Auth.signOut();
-            setIsAuthenticated(false);
-        } catch (error) {
-            console.error('Error signing out:', error);
         }
     };
 
@@ -99,67 +97,60 @@ const Register = () => {
     return (
         <>
             {isAuthenticated ? (
-                <button onClick={handleSignOut}>Sign out</button>
+                <button onClick={() => Auth.signOut()}>Sign out</button>
             ) : (
                 <div className="registerContainer">
-                    <div className="registerTitle">Sign Up</div>
-                    <div className="registerForm">
-                        <form onSubmit={onSubmit}>
-                            <label>Username:</label>
-                            <br />
+                    <div className="registerTitle">Create an account on Domits</div>
+                    <form onSubmit={onSubmit} className="registerForm">
+                        <label>Username:</label>
+                        <input
+                            className="registerInput"
+                            type="text"
+                            name="username"
+                            value={formData.username}
+                            onChange={handleChange}
+                        />
+                        <label>Email:</label>
+                        <input
+                            className="registerInput"
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                        />
+                        <label>Password:</label>
+                        <input
+                            className="registerInput"
+                            type="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                        />
+                        <label>Repeat Password:</label>
+                        <input
+                            className="registerInput"
+                            type="password"
+                            name="repeatPassword"
+                            value={formData.repeatPassword}
+                            onChange={handleChange}
+                        />
+                        <label className="hostCheckbox">
                             <input
-                                className="registerInput"
-                                type="text"
-                                name="username"
-                                value={formData.username}
-                                onChange={handleChange}
-                            />
-                            <br />
-                            <label>Email:</label>
-                            <br />
-                            <input
-                                className="registerInput"
-                                type="email"
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                            />
-                            <br />
-                            <label className="passwordLabel">Password:</label>
-                            <br />
-                            <input
-                                className="registerInput"
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                            />
-                            <br />
-                            <label className="passwordLabel">Repeat Password:</label>
-                            <br />
-                            <input
-                                className="registerInput"
-                                type="password"
-                                name="repeatPassword"
-                                value={formData.repeatPassword}
-                                onChange={handleChange}
-                            />
-                            <br />
-                            <div className="alreadyAccountText">
-                                Already have an account? <a href="/login">Log in here</a>.
-                            </div>
-                            {errorMessage && (
-                                <div className="errorText">{errorMessage}</div>
-                            )}
-                            <button type="submit" className="registerButton">
-                                Sign Up
-                            </button>
-                        </form>
-                    </div>
+                                type="checkbox"
+                                checked={flowState.isHost}
+                                onChange={handleHostChange}
+                            /> Become a Host
+                        </label>
+                        <div className="alreadyAccountText">
+                            Already have an account? <a href="/login">Log in here</a>.
+                        </div>
+                        {errorMessage && <div className="errorText">{errorMessage}</div>}
+                        <button type="submit" className="registerButton">Sign Up</button>
+                    </form>
                 </div>
             )}
         </>
-    )
+    );
 };
 
 export default Register;

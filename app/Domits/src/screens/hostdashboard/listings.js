@@ -7,32 +7,40 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
 
 const Listings = () => {
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Listings</Text>
-      </View>
-      <TouchableOpacity style={styles.listItem}>
-        <Text style={styles.listItemText}>Add new accommodation</Text>
-        <MaterialIcons name="chevron-right" size={22} color="#000" />
-      </TouchableOpacity>
-      <View style={styles.boxColumns}>
-        <View style={styles.box}>
-          <Text style={styles.boxText}>Current Listings</Text>
-          <Text>Listings Info</Text>
-        </View>
-        <View style={styles.box}>
-          <Text style={styles.boxText}>Pending</Text>
-          <Text>Listings Info</Text>
-        </View>
-      </View>
+  const navigation = useNavigation(); // Use the hook to get the navigation object
 
-    </ScrollView>
+  const addAccommodation = () => {
+    navigation.navigate('ListProperty'); // Use the navigation object to navigate
+  };
+
+  return (
+    <SafeAreaView style={{flex: 1}}>
+      <ScrollView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Listings</Text>
+        </View>
+        <TouchableOpacity onPress={addAccommodation} style={styles.listItem}>
+          <Text style={styles.listItemText}>Add new accommodation</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <View style={styles.boxColumns}>
+          <View style={styles.box}>
+            <Text style={styles.boxText}>Current Listings</Text>
+            <Text>Listings Info</Text>
+          </View>
+          <View style={styles.box}>
+            <Text style={styles.boxText}>Pending</Text>
+            <Text>Listings Info</Text>
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -87,6 +95,5 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 });
-
 
 export default Listings;

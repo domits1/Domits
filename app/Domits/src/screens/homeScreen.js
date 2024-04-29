@@ -1,18 +1,7 @@
 import React from 'react';
-import {
-  View,
-  ScrollView,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  Button,
-  SafeAreaView
-} from 'react-native';
+import { View, ScrollView, Text, Image, StyleSheet, TouchableOpacity, Button, SafeAreaView, Linking, Vibration } from 'react-native';
 import Header from '../header/header';
-import SearchBarApp from '../header/SearchBarApp';
-
-
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 
 function HomeScreen({ navigation }) {
   const images = [
@@ -20,23 +9,31 @@ function HomeScreen({ navigation }) {
     require('./pictures/image2.jpg'),
     require('./pictures/image3.jpg'),
     require('./pictures/image4.jpg'),
+    require('./pictures/image5.jpg'),
+    require('./pictures/image6.jpg'),
   ];
 
   const handleDetailpagePress = () => {
     navigation.navigate('Detailpage');
   };
 
+  const handleLongPress = () => {
+    Vibration.vibrate(50);
+  };
+
   return (
     <SafeAreaView style={styles.container}>
-      <SearchBarApp />
       <ScrollView stickyHeaderIndices={[0]}>
         <Header />
         <View style={styles.imageContainer}>
           {images.map((image, index) => (
-            <TouchableOpacity key={index} onPress={handleDetailpagePress}>
+            <TouchableOpacity 
+              key={index} 
+              onLongPress={handleLongPress}
+              onPress={handleDetailpagePress} 
+              activeOpacity={1}>
               <Image source={image} style={styles.image} />
               <Text style={styles.imageText}>Kinderhuissingle 6k</Text>
-
               <View
                 style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={styles.imageText}>Host: Unknown</Text>
@@ -65,8 +62,8 @@ function HomeScreen({ navigation }) {
             onPress={() => navigation.navigate('GuestDashboard')}
           />
         </View>
-        
       </ScrollView>
+      
     </SafeAreaView>
   );
 }
@@ -77,7 +74,7 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     flexDirection: 'column',
-    padding: 15,
+    padding: 10,
     marginTop: '0%',
   },
   buttonContainer: {
@@ -113,6 +110,34 @@ const styles = StyleSheet.create({
     marginTop: 0,
     color: 'black',
     fontFamily: 'MotivaSansRegular.woff',
+  },
+
+
+  bookContainer: {
+    position: 'absolute',
+    bottom: 20,
+    width: '100%',
+    alignItems: 'center',
+  },
+  book: {
+    width: 95,
+    borderWidth: 1,
+    borderColor: '#319914',
+    borderRadius: 13,
+    padding: 10,
+    height: 45,
+    backgroundColor: '#319914',
+  },
+  bookText2: {
+    color: 'white',
+    fontSize: 16,
+    textAlign: 'center',
+    fontFamily: 'MotivaSansRegular.woff',
+    marginRight: 10,
+  },
+  iconamenities: {
+
+    marginVertical: 1,
   },
 });
 

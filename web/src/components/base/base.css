@@ -1,12 +1,13 @@
 /* CSS for the header */
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
-    padding: 16px 50px;
+    padding: 20px 50px;
     text-align: center;
 }
 
 .header-nav {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
     width: 100%;
@@ -14,6 +15,8 @@
 
 .headerRight {
     float: right;
+    display: flex;
+    align-items: center;
 }
 
 .headerButtons, .personalMenu {
@@ -38,6 +41,13 @@
     align-items: center;
     gap: 10px;
     display: flex;
+}
+
+.headerHostButton, .headerButtons {
+    border: none;
+    background: none;
+    box-shadow: none;
+    margin-right: 10px;
 }
 
 /* Adjusted CSS for dropdown */
@@ -65,7 +75,7 @@
     top: calc(100% + 25px); /* Position below the personalMenu button */
     right: 10px; /* Align with the left edge of the button */
     border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px ;
+    border-bottom-right-radius: 15px;
 }
 
 .personalMenuDropdownContent button {
@@ -89,10 +99,15 @@
     margin-top: 0;
     margin-bottom: 10px;
     background: #0D9813;
+    border: none;
+    box-shadow: none;
 }
+
 .dropdownRegisterButton, .dropdownLogoutButton {
-    margin-top: 0;
+    margin-top: 10px;
     background-color: #49146A;
+    border: none;
+    box-shadow: none;
 }
 
 .dropdownLogoutButton {
@@ -103,8 +118,22 @@
     opacity: 90%;
 }
 
+.headerButtons button{
+    width: 100%;
+    height: 100%;
+    padding: 5px 15px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 0.50px #49146A solid;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
+}
+
 .headerButtons:hover {
-    background-color: #d3d3d3;
+    background: #3fb3663a;
+    padding: 12px;
 }
 
 .personalMenu:hover {
@@ -120,20 +149,25 @@
     word-wrap: break-word;
 }
 
-/* CSS for the SearchBar */
+
 
 @media screen and (max-width: 650px) {
 
     .header-nav, .headerRight {
-        flex-direction: column;
+        flex-direction: row;
         justify-content: center;
         width: 100%;
     }
 
-    .headerButtons, .personalMenu {
+    .headerRight {
+        width: 90%;
+        margin-top: 20px;
+    }
+
+    .headerButtons, .personalMenu, .bar {
         width: 100%;
         margin-top: 10px;
-        margin-right: 0px;
+        margin-right: 0;
         justify-content: center;
         float: none;
     }
@@ -243,20 +277,17 @@
     font-size: 16px;
     font-weight: 400;
     line-height: 24px;
-    /* 150% */
     letter-spacing: 0.16px;
 }
 
 .footer-terms {
-    margin: auto;
+    margin: 10px auto;
     padding: 0;
-
     width: 90%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-
-    text-decoration-line: underline;
+    /* text-decoration-line: underline; */
     margin-top: 20px;
 }
 
@@ -300,19 +331,5 @@ a:hover {
     }
 
 }
-
-.search-bar-container {
-    /* padding-top: 20vh; */
-    width: 40%;
-    padding: 1px;
-    margin: auto;
-    display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 10px; /* Pas de gewenste bovenste positie aan */
-    left: 40%; /* Plaats in het midden of pas aan zoals gewenst */
-    transform: translateX(-50%);
-}
-
 
 /* End of footer */

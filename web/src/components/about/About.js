@@ -3,6 +3,17 @@ import './about.css'
 import FAQ from "../landingpage/Faq";
 import vision from '../../images/icons/vision.png';
 import whatwedo from '../../images/icons/route.png';
+import stefan from '../../images/stefan.jpeg';
+import tim from '../../images/tim.png';
+import chahid from '../../images/chahid.png';
+import leila from '../../images/leila.png';
+import muhammed from '../../images/Muhammed.png';
+import timE from '../../images/timE.png';
+import kacper from '../../images/kacper.png';
+import sebastiaan from '../../images/sebastiaan.png';
+import standard from '../../images/standard.png';
+import nick from '../../images/nick.png';
+import jiaming from '../../images/jiaming.png';
 
 function About() {
     return (
@@ -75,40 +86,124 @@ function About() {
 
                 <div class="team">
                     <div class="member">
-                        <div class="avatar"></div>
+                        <div class="avatar">
+                            <img src={stefan} alt="" />
+                        </div>
                         <p>Stefan Hopman</p>
                         <p>Founder and CEO</p>
                     </div>
                     <div class="member">
-                        <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
+                        <div class="avatar">
+                            <img src={tim} alt="" />
+                        </div>
+                        <p>Tim Hart</p>
+                        <p>Product Owner</p>
                     </div>
                     <div class="member">
-                        <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
+                        <div class="avatar">
+                            <img src={standard} alt="" />
+                        </div>
+                        <p>Hamza Zaraoui</p>
+                        <p>Fullstack developer</p>
                     </div>
                     <div class="member">
-                        <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
+                        <div class="avatar">
+                            <img src={sebastiaan} alt="" />
+                        </div>
+                        <p>Sebastiaan van der Wilt</p>
+                        <p>Fullstack developer</p>
                     </div>
                     <div class="member">
-                        <div class="avatar"></div>
-                        <p>Employee 8</p>
-                        <p>Marketing Specialist</p>
+                        <div class="avatar">
+                            <img src={muhammed} alt="" />
+                        </div>
+                        <p>Muhammed Çetinkaya</p>
+                        <p>Back-end developer</p>
                     </div>
+                </div>
 
+                <div class="team">
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={kacper} alt="" />
+                        </div>
+                        <p>Kacper Flak</p>
+                        <p>Back-end developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={standard} alt="" />
+                        </div>
+                        <p>Tim Seijlhouwer</p>
+                        <p>Fullstack developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={chahid} alt="" />
+                        </div>
+                        <p>Chahid Laaouar</p>
+                        <p>Fullstack developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={jiaming} alt="" />
+                        </div>
+                        <p>Jiaming Yan</p>
+                        <p>Back-end developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={leila} alt="" />
+                        </div>
+                        <p>Leila Boutkabout</p>
+                        <p>UX/UI Designer</p>
+                    </div>
+                </div>
+
+                <div class="team">
+                    <div class="member">
+                        <div class="avatar">
+                        <img src={standard} alt="" />
+                        </div>
+                            <p>Aniss Bouabdallah</p>
+                        <p>Business developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={timE} alt="" />
+                        </div>
+                        <p>Tim Eerdmans</p>
+                        <p>Business developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={nick} alt="" />
+                        </div>
+                        <p>Nick Ryan</p>
+                        <p>Back-end developer</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={standard} alt="" />
+                        </div>
+                        <p>This can be you!</p>
+                        <p>We're hiring!</p>
+                    </div>
+                    <div class="member">
+                        <div class="avatar">
+                            <img src={standard} alt="" />
+                        </div>
+                        <p>This can be you!</p>
+                        <p>We're hiring!</p>
+                    </div>
                 </div>
 
                 <div class="about">
                     <p>We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.</p>
-                    <br />
                     <p>You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders.</p>
                 </div>
             </div>
-            <FAQ />
+            {/* <FAQ /> */}
         </div>
 
 

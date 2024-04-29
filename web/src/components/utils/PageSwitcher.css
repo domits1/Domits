@@ -1,0 +1,146 @@
+.pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+.pagination button {
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: none;
+    background-color: #f4f4f4;
+    cursor: pointer;
+}
+
+.pagination button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.pagination button:hover:not(:disabled) {
+    background-color: #ddd;
+}
+.listing {
+    box-shadow: none;
+}
+.listing-delete {
+    background-color: red;
+    color: white;
+    display: inline-block;
+    padding: 0.35em 1.2em;
+    border: none;
+    margin-right: 0;
+    border-radius: 2em;
+    box-sizing: border-box;
+    transition: all 0.2s;
+    max-width: 6em;
+    max-height: 2em;
+}
+.listing-delete:hover {
+    background-color: darkred;
+}
+
+@media (max-width: 480px) {
+    .App {
+        padding: 0;
+        margin: 0;
+    }
+    h2 {
+        margin: 0;
+    }
+    .wijzer {
+        display: flex;
+        flex-direction: column;
+    }
+    div.box {
+        margin: 0;
+        padding: 0;
+    }
+    .boxColumns {
+        margin: 0;
+    }
+    .fullBox {
+        box-shadow: none;
+    }
+    .page-body {
+        display: flex;
+        flex-direction: column;
+    }
+    .dashboard {
+        width: auto;
+    }
+    .dashboardSection.section-1 {
+        margin: 0;
+        padding: 0;
+        grid-template-columns: 0.5fr 0.5fr;
+    }
+    .contentContainer {
+        margin: 0;
+        padding: 0;
+        text-align: left;
+    }
+    .accommodation-tab {
+        margin: 0;
+        padding: 0;
+        flex-direction: column;
+        border-radius: 0.5em;
+        justify-content: space-around;
+        gap: 0.1em;
+        margin-bottom: 1em;
+        max-width: none;
+        p {
+            font-size: 0.8em;
+        }
+        .accommodation-left {
+            padding: 0;
+        }
+        .accommodation-right {
+            padding: 1em;
+        }
+        .accommodation-title {
+            display: inline-block;
+            color: white;
+            margin: 0;
+            position: absolute;
+            font-size: 0.75em;
+            align-self: center;
+        }
+        .accommodation-location {
+            color: white;
+            align-self: center;
+            position: absolute;
+            font-size: 0.6em;
+            margin-top: 5%;
+        }
+        .accommodation-img {
+            border-radius: 0.5em 0.5em 0 0;
+            padding: 0;
+            align-self: center;
+            width: 100%;
+            max-width: none;
+            max-height: none;
+            height: auto;
+        }
+        .listing-delete {
+            margin: 1em;
+        }
+    }
+    .pagination {
+        padding: 0;
+    }
+    .listing {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    .refresh-btn {
+        margin: 1em;
+        place-self: center;
+    }
+
+}

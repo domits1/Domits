@@ -1,69 +1,93 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  Image,
-  TouchableOpacity,
-} from 'react-native';
-import AntDesign from 'react-native-vector-icons/AntDesign';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-const Detailpage = ({navigation}) => {
+const Detailpage = ({ navigation }) => {
   const images = [
     require('./pictures/detailPhoto.jpg'),
     require('./pictures/detailPhoto2.jpg'),
     require('./pictures/detailPhoto3.jpg'),
+    require('./pictures/detailPhoto4.jpg'),
+    require('./pictures/detailPhoto5.jpg'),
   ];
+
+  const [currentPage, setCurrentPage] = useState(0);
 
   const handleHomeScreenPress = () => {
     navigation.navigate('HomeScreen');
   };
+  const handleMessagesPress = () => {
+    navigation.navigate('Messages');
+  };
+  const handleSettingsPress = () => {
+    navigation.navigate('Settings');
+  };
   const handleonBoarding1Press = () => {
     navigation.navigate('onBoarding1');
   };
+
+  const handleScroll = (event) => {
+    const page = Math.round(event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width);
+    setCurrentPage(page);
+  };
+
+  // Dynamically calculate image width based on screen width
+  const imageWidth = Dimensions.get('window').width;
+
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={handleHomeScreenPress}>
-          <AntDesign
-            name="leftcircleo"
-            size={24}
-            color="black"
-            style={styles.icon}
-          />
-        </TouchableOpacity>
-
-        <View style={styles.iconContainer}>
-          <FeatherIcon
-            name="message-square"
-            size={24}
-            color="black"
-            style={styles.icon1}
-          />
-          <FeatherIcon
-            name="settings"
-            size={24}
-            color="black"
-            style={styles.icon2}
-          />
+    <SafeAreaView style={{ flex: 1 }}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleHomeScreenPress}>
+            <Ionicons
+              name="chevron-back-outline"
+              size={24}
+              color="black"
+              style={styles.icon}
+            />
+          </TouchableOpacity>
+          <View style={styles.iconContainer}>
+            <TouchableOpacity onPress={handleMessagesPress}>
+              <FeatherIcon
+                name="message-square"
+                size={24}
+                color="black"
+                style={styles.icon1}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={handleSettingsPress}>
+              <FeatherIcon
+                name="settings"
+                size={24}
+                color="black"
+                style={styles.icon2}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      <ScrollView>
-        <ScrollView
-          horizontal={true}
-          contentContainerStyle={styles.imageContainer}>
-          {images.map((image, index) => (
-            <View key={index} style={styles.imageWrapper}>
-              <Image source={image} style={styles.image} />
-            </View>
-          ))}
-        </ScrollView>
+        <ScrollView style={{ flex: 1 }}>
+          <ScrollView
+            horizontal={true}
+            contentContainerStyle={styles.imageContainer}
+            pagingEnabled={true}
+            onScroll={handleScroll}
+            scrollEventThrottle={100}
+          >
+            {images.map((image, index) => (
+              <View key={index} style={styles.imageWrapper}>
+                <Image source={image} style={[styles.image, { width: imageWidth }]} />
+              </View>
+            ))}
+          </ScrollView>
+          <View style={styles.counterContainer}>
+            <Text style={styles.counterText}>{currentPage + 1}/{images.length}</Text>
+          </View>
+
 
         <View>
           <Text style={styles.text}>
@@ -160,7 +184,7 @@ const Detailpage = ({navigation}) => {
             </View>
           </View>
 
-          {/* Tweede amenities sectie voor de rechterkant, (Dit is tijdelijk)*/}
+          {/*  (Dit is tijdelijk)*/}
           <View style={styles.amenities}>
             <View style={styles.iconItem}>
               <MaterialCommunityIcons
@@ -214,6 +238,7 @@ const Detailpage = ({navigation}) => {
         </View>
       </ScrollView>
     </View>
+    </SafeAreaView>
   );
 };
 
@@ -275,18 +300,19 @@ const styles = StyleSheet.create({
     marginLeft: 17,
     fontFamily: 'MotivaSansRegular.woff',
   },
-
+//padding for so that image wont touch phone wall
   imageContainer: {
-    padding: 15,
     flexDirection: 'row',
   },
+  // marginRight 32 for more spacing between pics
   imageWrapper: {
-    marginRight: 10,
+    position: 'relative',
+    
   },
+  //resolution 360 to bring back old slide
   image: {
-    width: 360,
     height: 250,
-    borderRadius: 15,
+    
   },
   borderContainer: {
     flexDirection: 'row',
@@ -357,11 +383,11 @@ const styles = StyleSheet.create({
   book: {
     width: 80,
     borderWidth: 2,
-    borderColor: '#f0f0f0',
+    borderColor: 'green',
     borderRadius: 25,
-    padding: 10,
-    marginLeft: 50,
-    height: 38,
+    padding: 8,
+    marginLeft: 45,
+    height: 37,
     backgroundColor: 'green',
   },
   newBedroomsText: {
@@ -378,8 +404,10 @@ const styles = StyleSheet.create({
   },
   bookText2: {
     color: 'white',
-    fontSize: 12,
+    fontSize: 13,
     textAlign: 'center',
+     marginLeft: 5,
+
     fontFamily: 'MotivaSansRegular.woff',
   },
   horizontalLine: {
@@ -394,7 +422,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: 'black',
     marginVertical: -10,
-    marginBottom: 10, // this is for test so that i can scroll up and down (can be removed later)
+    marginBottom: 5,
     alignSelf: 'center',
     width: 330,
   },
@@ -456,16 +484,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginHorizontal: 25,
-    marginBottom: 20, // Pas de waarde aan op basis van je ontwerp
+    marginBottom: 20,
   },
   randomTextWrapper: {
     flex: 1,
-    marginLeft: 20, // Pas de waarde aan op basis van je ontwerp
+    marginLeft: 20, 
   },
   randomText: {
     fontSize: 12,
     color: 'black',
     fontFamily: 'MotivaSansRegular.woff',
+  },
+  counterContainer: {
+    position: 'absolute',
+    top: 208,
+    right: 12,
+    width: 50,
+    height: 30,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.0)',
+    borderTopLeftRadius: 8, 
+    borderBottomRightRadius: 8, 
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  counterText: {
+    fontSize: 16,
+    color: 'white',
+    fontFamily: 'MotivaSansRegular.woff',
+    marginLeft: 2,
   },
 });
 

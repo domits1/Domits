@@ -1,16 +1,16 @@
 import React from 'react';
 import {loadStripe} from '@stripe/stripe-js';
-const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3');
+const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
 function CheckoutFrontend() {
     const initiateStripeCheckout = async () => {
         const checkoutData = {
-            amount: 2000, // Example: 2000 cents = $20
+            amount: 50, // In centen
             currency: 'eur',
-            productName: 'Example Product',
+            productName: 'EERSTE BETALING JONGENS',
             successUrl: 'https://example.com/success',
             cancelUrl: 'https://example.com/cancel',
-            connectedAccountId: 'acct_1Oqu7a2fpL8pTlTk'
+            connectedAccountId: 'acct_1P15xO2enydXJo9e'
         };
     
         try {

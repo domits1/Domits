@@ -19,11 +19,11 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 className='footer-headers'>Navigation</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/" className='footer-links'>How it works</Link></li>
+                        <li><Link to="/howitworks" className='footer-links'>How it works</Link></li>
                         <li><Link to="/why-domits" className='footer-links'>Why Domits</Link></li>
-                        <li><Link to="/" className='footer-links'>Jobs</Link></li>
+                        <li><Link to="/career" className='footer-links'>Jobs</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
-                        <li><Link to="/" className='footer-links'>Release</Link></li>
+                        <li><Link to="/release" className='footer-links'>Release</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
                         <br />
                     </ul>
@@ -35,7 +35,7 @@ const Footer = () => {
                     <h4 className='footer-headers'>Guest</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>Search and book</Link></li>
-                        <li><Link to="/" className='footer-links'>Helpdesk</Link></li>
+                        <li><Link to="/helpdesk" className='footer-links'>Helpdesk</Link></li>
                     </ul>
                 </div>
 
@@ -43,7 +43,7 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 className='footer-headers'>Hosts</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/" className='footer-links'>Become a host</Link></li>
+                        <li><Link to="/landing" className='footer-links'>Become a host</Link></li>
                         <li><Link to="/" className='footer-links'>Helpdesk for hosts</Link></li>
                     </ul>
                 </div>
@@ -54,7 +54,7 @@ const Footer = () => {
                 <div className="footer-section borderline">
                     <h4 className='footer-headers '>Network</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/" className='footer-links'>Guests</Link></li>
+                        <li><Link to="/guestdashboard" className='footer-links'>Traveller</Link></li>
                         <li><Link to="/landing" className='footer-links'>Hosts</Link></li>
                         <li><Link to="/developers" className='footer-links'>Developers</Link></li>
                         <li><Link to="/partners" className='footer-links'>Partners</Link></li>
@@ -84,7 +84,7 @@ const Footer = () => {
                     </div>
 
                     {/* Currency section */}
-                    <div className="footer-endsection">
+                    {/* <div className="footer-endsection">
                         <h4 className='footer-headers'>Currencies</h4>
                         <select id='currency-dropdown' className='footer-lists footer-select'>
                             <option value="euro">EUR</option>
@@ -92,7 +92,7 @@ const Footer = () => {
                         </select>
                     </div>
 
-                    <img id='appstorebadge' src={Appstorebadge} alt="App Store Badge" className="app-store-badge" />
+                    <img id='appstorebadge' src={Appstorebadge} alt="App Store Badge" className="app-store-badge" /> */}
                 </div>
 
                 {/* Office section */}
@@ -106,20 +106,20 @@ const Footer = () => {
                     </div>
 
                     {/* Languages section */}
-                    <div className="footer-endsection">
+                    {/* <div className="footer-endsection">
                         <h4 className='footer-headers'>Languages</h4>
                         <select id='language-dropdown' className='footer-lists footer-select'>
                             <option value="english">English</option>
                             <option value="dutch">Dutch</option>
                         </select>
                     </div>
-                    <img id='playstorebadge' src={Playstorebadge} alt="Play Store Badge" className="play-store-badge" />
+                    <img id='playstorebadge' src={Playstorebadge} alt="Play Store Badge" className="play-store-badge" /> */}
                 </div>
             </div>
 
             <div className='footer-terms'>
                 <div className="logo">
-                    <img src={logo} width={25} alt="Logo" />
+                    <img src={logo} width={100} alt="Logo" />
                 </div>
                 <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
                 <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>

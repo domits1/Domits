@@ -1,0 +1,110 @@
+.assortment{
+  padding-top: 30px;
+}
+
+.full-visibility {
+  width: 100%;
+}
+
+.accocard {
+  width: 23%;
+  margin: 1%;
+  margin-top: 10px;
+  background-color: #fff;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: top;
+  transition: all 0.5s ease-in-out;
+  position: relative;
+}
+
+.accocard:hover {
+  cursor: pointer;
+}
+
+.accocard img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+  border-radius: 15px;
+  display: block;
+
+}
+
+.accocard-content {
+  padding: 15px 0;
+  overflow: hidden;
+}
+
+.accocard-title {
+  width: 90%;
+  background: rgba(0, 0, 0, 0.383);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+  padding: 10px;
+  border-radius: 15px;
+  text-align: center;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis; 
+  position: absolute;
+  bottom: 160px; 
+  left: 50%;
+  transform: translateX(-50%);
+  color: white;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.accocard-price {
+  font-size: 18px;
+  color: #0D9813;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+.accocard-detail {
+  margin-bottom: 8px;
+  width: 300px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2; /* Aantal regels dat je wilt tonen */
+  -webkit-box-orient: vertical;  
+  /* white-space: nowrap; */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: 3em;
+}
+
+.accocard-specs {
+  display: flex;
+  flex-direction: row;
+}
+
+.accocard-size {
+  font-size: 14px;
+  color: #777;
+  margin: 0 3% 0 0;
+}
+
+
+@media (max-width: 1292px) {
+  .accocard {
+    width: 31%;
+  }
+}
+
+@media (max-width: 856px) {
+  .accocard {
+    width: 48%;
+  }
+}
+
+@media (max-width: 480px) {
+  .accocard-detail {
+    width: 180px;
+  }
+  .accocard-size {
+    font-size: 12px;
+  }
+}

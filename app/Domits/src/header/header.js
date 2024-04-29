@@ -7,6 +7,8 @@ import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
+import SearchBarApp from '../header/SearchBarApp';
+
 
 function Header() {
   const navigation = useNavigation();
@@ -29,8 +31,10 @@ function Header() {
 
   return (
       <View style={styles.headerContainer}>
+        <SearchBarApp />
         <View style={styles.contentContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        
+         
             <View style={styles.squareContainer}>
               <TouchableOpacity onPress={handleScanPress} style={styles.itemContainer}>
                 <MaterialCommunityIconsIcon name="qrcode-scan" size={30} color="black" />
@@ -52,7 +56,7 @@ function Header() {
                 <Text style={styles.itemText}>Pocket</Text>
               </TouchableOpacity>
             </View>
-          </ScrollView>
+         
         </View>
       </View>
   );
@@ -61,8 +65,8 @@ function Header() {
 const styles = StyleSheet.create({
   headerContainer: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    
+    
     backgroundColor: '#f0f0f0',
   },
   contentContainer: {
@@ -76,7 +80,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     width: '100%',
     paddingHorizontal: 10,
-    marginTop: 75,
+    marginTop: 15,
   },
   itemContainer: {
     justifyContent: 'center',
