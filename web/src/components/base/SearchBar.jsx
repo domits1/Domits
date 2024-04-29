@@ -237,7 +237,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
                     return (
                       <div
-                        key={index} // Voeg hier een unieke key prop toe
+                        key={index} 
                         {...getSuggestionItemProps(suggestion, {
                           style: {
                             backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
