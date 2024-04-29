@@ -5,7 +5,7 @@ describe('Date Picker Tests', () => {
     });
   
     it('Allows the user to select check-in and check-out dates', () => {
-      cy.get('#checkInPicker').click();
+      cy.get('.check-in').click();
   
       cy.get('div.react-datepicker__day--015').first().click(); 
       cy.get('div.react-datepicker__day--020').first().click(); 

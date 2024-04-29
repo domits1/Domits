@@ -117,7 +117,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
   const clearAccommodation = () => {
     setAccommodation('');
-    setAccommodationFocused(false); z
+    setAccommodationFocused(false); 
   };
 
 
