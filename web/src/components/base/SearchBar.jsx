@@ -376,6 +376,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             startDate={startDate}
             endDate={endDate}
             onChange={update => setDateRange(update)}
+            readOnly={false}
           />
           {startDate && endDate && (
             <button onClick={resetDates} className="date-reset-button">

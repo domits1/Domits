@@ -60,6 +60,7 @@
 }
 
 .check-in{
+  border:none;
   width: 19%;
   cursor: pointer;
   border-radius: 1.25rem; 
@@ -83,10 +84,12 @@
   padding: 0.6rem 0 0 0;
   text-align: center;
   width: 90%;
+  pointer-events: none;
 }
 .searchbar-input:focus {
   outline: none;
 }
+
 
 .bar>div {
   position: relative;
