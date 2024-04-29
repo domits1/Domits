@@ -263,11 +263,13 @@
 .accommodation-tab {
   border-radius: 15px;
   border: 1px solid gray;
-  padding: 15px;
+  text-align: left;
+  padding: 1.5em;
   display: flex;
   flex-direction: row;
-  gap: 40px;
-  margin: 10px;
+  justify-content: space-between;
+  gap: 2em;
+  margin: 1em;
 }
 .accommodation-left {
   display: flex;
@@ -283,8 +285,8 @@
   box-shadow: 4px 4px #003366;
 }
 .accommodation-img {
-  padding: 5px;
-  border-radius: 15px;
+  padding: 1em;
+  border-radius: 2em;
   max-height: 15vh;
   max-width: 25vw;
   height: auto;
@@ -354,4 +356,14 @@
   .wijzer {
     width: 90%;
   }
+
+  .accommodation-tab {
+    max-width: 80%;
+  }
+
+  .accommodation-img {
+    max-height: 20vh;
+    max-width: 30vw;
+  }
+
 }
