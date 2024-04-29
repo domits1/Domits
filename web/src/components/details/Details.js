@@ -27,7 +27,7 @@ const hostEmail = "nabilsalimi0229@gmail.com";
 const Details = () => {
 
     const handleClick = () => {
-        history.push(`/guestdashboard/chatprototype?recipient=${hostEmail}`);
+        history.push(`/guestdashboard/chat?recipient=${hostEmail}`);
       };
 
     return (

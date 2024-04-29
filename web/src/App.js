@@ -42,7 +42,6 @@ import Stripe from 'stripe';
 import { AuthProvider } from './components/base/AuthContext';
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard"; // Import the AuthProvider
 import Chat from "./components/chat/Chat";
-import Chatprototype from "./components/chat/Chatprototype.js";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
@@ -117,7 +116,7 @@ function App() {
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
-                            <Route path="/guestdashboard/chatprototype" element={<Chatprototype />} />
+                            <Route path="/guestdashboard/Chat" element={<Chat />} />
 
                             {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
@@ -131,7 +130,7 @@ function App() {
                             <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
                             <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
                             <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
-                            <Route path="/hostdashboard/chatprototype" element={<Chatprototype />} />
+                            <Route path="/hostdashboard/Chat" element={<Chat />} />
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />
