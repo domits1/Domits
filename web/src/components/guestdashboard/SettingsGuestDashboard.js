@@ -10,6 +10,7 @@ import { Auth } from 'aws-amplify';
 const SettingsTab = () => {
     const navigate = useNavigate();
     const [showMailSettings, setShowMailSettings] = useState(false);
+    const [showPhotoSettings, setShowPhotoSettings] = useState(false);
     const [newEmail, setNewEmail] = useState('');
     const [confirmEmail, setConfirmEmail] = useState('');
     const [verificationCode, setVerificationCode] = useState('');
@@ -103,6 +104,18 @@ const SettingsTab = () => {
                                 <img src={settingsIcon} alt="Globe Icon" className="icon" />
                                 Change region and language
                             </div>
+                            <div className="settingsOption" onClick={() => setShowPhotoSettings(!showPhotoSettings)}>
+                                <img src={settingsIcon} alt="Globe Icon" className="icon" />
+                                Change profile picture
+                            </div>
+                            {showPhotoSettings && (
+                                <div className="settingsOption">
+                                    <input
+                                        type="text"
+                                        placeholder="Enter new email address"
+                                    />
+                                </div>
+                            )}
                             <div className="horizontalOptions">
                                 <div className="settingsOption" onClick={() => { }}>
                                     <img src={settingsIcon} alt="Currency Icon" className="icon" />
