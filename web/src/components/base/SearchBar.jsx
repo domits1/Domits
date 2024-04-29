@@ -117,7 +117,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
   const clearAccommodation = () => {
     setAccommodation('');
-    setAccommodationFocused(false); 
+    setAccommodationFocused(false);
   };
 
 
@@ -187,7 +187,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
-  
+
   return (
     <div className="bar">
       <div className="location">
@@ -228,7 +228,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 }}
               >
                 {loading && <div> <FaSpinner /></div>}
-                {suggestions.map((suggestion) => {
+                {suggestions.map((suggestion, index) => {
                   if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
                     const parts = suggestion.description.split(', ');
                     const countryName = parts[parts.length - 1].trim();
@@ -237,6 +237,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
                     return (
                       <div
+                        key={index} // Voeg hier een unieke key prop toe
                         {...getSuggestionItemProps(suggestion, {
                           style: {
                             backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
@@ -276,6 +277,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   }
                   return null;
                 })}
+
               </div>
             </div>
           )}
