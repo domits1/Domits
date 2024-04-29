@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaTimes, FaSearchLocation, FaMapPin, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip } from 'react-icons/fa';
+import { FaTimes, FaSearchLocation,FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
@@ -13,25 +13,26 @@ const handleButtonClick = (e) => {
 };
 
 
-const GuestCounter = ({ label, value, onIncrement, onDecrement, description }) => (
-  <div className="guestCounter" onClick={handleButtonClick}>
-    <div>
-      <p className="guestLabel">{label}</p>
-      <p className="guestDescription">{description}</p>
+const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
+  return (
+    <div className="guestCounter" onClick={handleButtonClick}>
+      <div>
+        <p className="guestLabel">{label}</p>
+        <p className="guestDescription">{description}</p>
+      </div>
+      <div className="controls">
+        <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
+        <span>{value}</span>
+        <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
+      </div>
     </div>
-    <div className="controls">
-      <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
-      <span>{value}</span>
-      <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
-    </div>
-  </div>
-);
+  );
+});
 
-export const SearchBar = ({ setSearchResults, setLoading }) => { 
+export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
-  const [guests, setGuests] = useState(1);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -43,18 +44,20 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const totalGuestsDescription = createGuestDescription(adults, children, infants, pets);
   const [startDate, endDate] = dateRange;
-  const [accommodationFocused, setAccommodationFocused] = useState(false);
+  const [error, setError] = useState(""); 
+
+  
 
 
   const guestDropdownRef = useRef();
-  const resetGuests = (e) => {
+  const resetGuests = useCallback((e) => {
     e.stopPropagation();
-
     setAdults(0);
     setChildren(0);
     setInfants(0);
     setPets(0);
-  };
+  }, []);
+  
 
   const resetDates = (e) => {
     e.stopPropagation();
@@ -63,10 +66,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setCheckOut(null);
   };
 
-  const toggleGuestDropdown = (e) => {
+  const toggleGuestDropdown = useCallback((e) => {
     e.stopPropagation();
     setShowGuestDropdown(prevState => !prevState);
-  };
+  }, []);
 
   const totalGuests = adults + children + infants + pets;
 
@@ -107,20 +110,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
-  const handleAccommodationFocus = () => {
-    setAccommodationFocused(true);
-  };
-
-  const handleAccommodationBlur = () => {
-    setAccommodationFocused(false);
-  };
-
-  const clearAccommodation = () => {
-    setAccommodation('');
-    setAccommodationFocused(false); z
-  };
-
-
   const handleSelect = async (address) => {
     setAddress(address);
     try {
@@ -133,30 +122,31 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   };
 
   const handleClear = (event) => {
-    event.preventDefault(); // Voorkom dat de focus verloren gaat
+    event.preventDefault();
     setAddress('');
     setIsFocused(false);
   };
 
   // Verbinding met API Gateway
   const handleSearch = async () => {
-    setLoading(true); 
+    setLoading(true);
+    setError("");  
     const typeQueryParam = accommodation ? `type=${accommodation}` : '';
     const locationQueryParam = address ? `&searchTerm=${address}` : '';
-    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${typeQueryParam}${locationQueryParam}`;
-
+    const queryParams = [typeQueryParam, locationQueryParam].filter(Boolean).join('&');
+    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+  
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setTimeout(() => {  
-        setSearchResults(data);
-        setLoading(false); 
-      }, 100);  
+      setSearchResults(data);
     } catch (error) {
       console.error('Error during fetch:', error);
-      setLoading(false); 
+      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+    } finally {
+      setLoading(false);
     }
-};
+  };
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -187,9 +177,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
-
+  
   return (
     <div className="bar">
+      {error && <div className="error-message">{error}</div>}
       <div className="location">
         <p className="searchTitle">Location</p>
         <PlacesAutocomplete value={address} onChange={handleChange} onSelect={handleSelect} searchOptions={{ language: 'en' }}>
@@ -243,13 +234,17 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                             padding: '18px 10px',
                             borderBottom: '2px solid #ddd',
                             cursor: 'pointer',
-                            transition: 'background-color 0.2s ease',
+                            transition: 'background-color 0.2s ease, transform 0.2s ease',
                             fontSize: '15px',
                             color: '#000',
                             borderRadius: '3px',
                             margin: '0',
                             display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
                             width: '300px',
+                            transform: suggestion.active ? 'scale(1.02)' : 'none',
+                            zIndex: suggestion.active ? '1' : '0',
                           }
                         })}
                         className="suggestion-item"
@@ -287,8 +282,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             { value: 'Apartment', label: <><FaBuilding /> Apartment</> },
             { value: 'House', label: <><FaHome /> House</> },
             { value: 'Villa', label: <><FaHotel /> Villa</> },
-            { value: 'Boathouse', label: <><FaShip /> Boathouse</> },
+            { value: 'Boat', label: <><FaShip /> Boat</> },
             { value: 'Camper', label: <><FaCaravan /> Camper</> },
+            { value: 'Cottage', label: <><FaTree /> Cottage</> },
           ]}
           placeholder="Type of Accommodation"
           isSearchable={false}
@@ -315,25 +311,36 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             }),
             option: (provided, state) => ({
               ...provided,
-              backgroundColor: state.isSelected ? '#ffff' : state.isFocused ? '#f0f0f0' : provided.backgroundColor,
-              color: state.isSelected || state.isFocused ? 'black' : provided.color,
-              borderRadius: state.isSelected ? '10px' : state.isFocused ? '10px' : '0px',
-              fontWeight: state.isSelected ? 'bold' : 'normal',
-              fontSize: '12px',
-              padding: '10px',
+              backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : 'white',
+              color: state.isFocused ? 'black' : '#666',
+              fontWeight: state.isFocused ? '600' : 'normal',
+              fontSize: '14px',
+              padding: '10px 20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'flex-start',
+              gap: '15px',
+              cursor: 'pointer',
+              transition: 'transform 0.2s',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              '&:hover': {
+                color: 'black',
+                backgroundColor: '#e6e6e6',
+                transform: 'scale(1.04)'
+              },
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
             }),
             menu: (provided) => ({
               ...provided,
-              backgroundColor: '#ffff',
+              backgroundColor: 'white',
               borderRadius: '8px',
-              boxShadow: '0 0 10px rgba(0, 0, 0, 0.1)',
-              padding: '5px',
-              width: '200px',
-              maxHeight: '300px',
-              right: '-15%',
-              borderRadius: '15px',
-              textAlign: 'left',
-              marginTop: '15px',
+              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
+              marginTop: '20px',
+              width: '220px',
+              overflowX: 'hidden',
+              overflowY: 'auto',
             }),
             clearIndicator: (provided) => ({
               ...provided,
@@ -346,15 +353,12 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             }),
             singleValue: (provided) => ({
               ...provided,
-              marginRight: '10%',
+              color: '#333',
               fontSize: '14px',
-            }),
-            placeholder: (provided) => ({
-              ...provided,
-              textAlign: 'center',
             }),
           }}
         />
+
       </div>
 
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
@@ -367,17 +371,18 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             placeholderText="Start-End date"
             showYearDropdown={false}
             showMonthDropdown={true}
-            dateFormat="MM/dd"
+            dateFormat="d MMMM"
             selectsRange={true}
             startDate={startDate}
             endDate={endDate}
             onChange={update => setDateRange(update)}
+            readOnly={false}
           />
           {startDate && endDate && (
-  <button onClick={resetDates} className="date-reset-button">
-    <FaTimes />
-  </button>
-)}
+            <button onClick={resetDates} className="date-reset-button">
+              <FaTimes />
+            </button>
+          )}
         </div>
       </div>
 
