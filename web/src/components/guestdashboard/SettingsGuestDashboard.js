@@ -111,8 +111,8 @@ const SettingsTab = () => {
                             {showPhotoSettings && (
                                 <div className="settingsOption">
                                     <input
-                                        type="text"
-                                        placeholder="Enter new email address"
+                                        type="file"
+                                        placeholder="Please add your profile picture"
                                     />
                                 </div>
                             )}
