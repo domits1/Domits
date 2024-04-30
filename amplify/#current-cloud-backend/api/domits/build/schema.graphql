@@ -6,7 +6,7 @@ type Chat @aws_api_key @aws_iam @aws_cognito_user_pools {
   isRead: Boolean
   sortKey: String
   createdAt: String
-  channelID: ID!
+  channelID: ID
   updatedAt: AWSDateTime!
 }
 
@@ -235,7 +235,7 @@ input CreateChatInput {
   isRead: Boolean
   sortKey: String
   createdAt: String
-  channelID: ID!
+  channelID: ID
 }
 
 input UpdateChatInput {

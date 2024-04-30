@@ -304,7 +304,7 @@ const chatContainerRef = useRef(null);
     
      
 
-    const sendMessage = async (uuid) => {
+    const sendMessage = async (channelID) => {
         if (!newMessage.trim() || !recipientEmail) return;
         try {
             await API.graphql({
@@ -316,12 +316,12 @@ const chatContainerRef = useRef(null);
                         recipientEmail: selectedUser.email,
                         isRead: false,
                         createdAt: currentDate.toISOString(),
-                        channelID: uuid
+                        channelID: channelID
                     },
                 },
             });
             setNewMessage('');
-            fetchChats(selectedUser.email);
+            fetchChats(channelID);
         } catch (error) {
             console.error("Error sending message:", error);
         }

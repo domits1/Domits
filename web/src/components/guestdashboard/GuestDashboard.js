@@ -78,7 +78,6 @@ const GuestDashboard = () => {
             <div className="dashboard">
                 <Pages />
                 <div className="content">
-<<<<<<< HEAD
                     <div className="leftContent">
                         <div className="bookingBox">
                             <h3>Current Booking</h3>
@@ -92,8 +91,6 @@ const GuestDashboard = () => {
                             <button>Go</button>
                         </div>
                     </div>
-=======
->>>>>>> 7dc05d55c6a1cd6abb5cea8b078d8d6b0e95b377
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
                         <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</div>
