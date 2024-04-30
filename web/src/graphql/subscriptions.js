@@ -11,8 +11,6 @@ export const onCreateChat = /* GraphQL */ `
       isRead
       sortKey
       createdAt
-      updatedAt
-      __typename
     }
   }
 `;
@@ -160,3 +158,4 @@ export const onDeleteTodo = /* GraphQL */ `
     }
   }
 `;
+

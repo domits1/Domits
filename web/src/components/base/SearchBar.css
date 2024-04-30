@@ -127,33 +127,36 @@
 .searchbar-button:hover {
   background-color: #0a770f;
   border-color: #0a770f;
-  transition-duration: 0.3s
+  transition-duration: 0.0s
 }
 .searchbar-button svg {
   color: rgb(255, 255, 255);
   margin-top: 0.625rem; 
 }
-.searchbar-button:hover svg {
+/* .searchbar-button:hover svg {
   animation: bounce 0.7s ease 1;
 }
 @keyframes bounce {
   0%, 100% {
     transform: translateY(0);
     animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+
   }
   20% {
     transform: translateY(-5px);
     animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+
   }
-  50%, 80% {
+  50%, 85% {
     transform: translateY(0);
     animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
+
   }
   20% {
     transform: translateY(-3px);
     animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
   }
-}
+} */
 .searchBar {
   background: none;
   border: none;

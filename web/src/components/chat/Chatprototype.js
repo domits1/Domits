@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef  } from "react";
-import "./chatprototype.css";
+import "./chat.css";
 import img1 from './image22.png';
 import heart from './Icon.png';
 import trash from './Icon-1.png';
@@ -17,8 +17,9 @@ import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
 import * as queries from "../../graphql/queries";
+import * as subscriptions from "../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 
 function showMessages() {
     var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -44,7 +45,23 @@ const Chat = ({ user }) => {
     const [recipientEmail, setRecipientEmail] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const [chatUsers, setChatUsers] = useState([]);
+
     
+    useEffect(() => {
+    const subscription = API.graphql(
+        graphqlOperation(subscriptions.onCreateChat)
+    ).subscribe({
+        next: ({ provider, value }) => {
+            // Handle new chat message
+            const newChat = value.data.onCreateChat;
+            setChats(prevChats => [...prevChats, newChat]);
+        },
+        error: error => console.error("Subscription error:", error)
+    });
+
+    return () => subscription.unsubscribe();
+}, []);
+
     
     const navigate = useNavigate(); // Get the navigate function
     const location = useLocation();
@@ -282,14 +299,14 @@ const chatContainerRef = useRef(null);
                     input: {
                         text: newMessage.trim(),
                         email: user.attributes.email,
-                        recipientEmail: recipientEmail.trim(),
+                        recipientEmail: selectedUser.email,
                         isRead: false,
                         createdAt: currentDate.toISOString()
                     },
                 },
             });
             setNewMessage('');
-            fetchChats(recipientEmail);
+            fetchChats(selectedUser.email);
         } catch (error) {
             console.error("Error sending message:", error);
         }
@@ -374,6 +391,14 @@ const chatContainerRef = useRef(null);
                             </ul>
                         </aside>
                         <article className="chat__chatContainer"  ref={chatContainerRef}>
+                        {chatUsers.length === 0 && (
+        <article className="chat__default">
+            <p className="chat__defaultmsg">You have no conversations yet. Initiate a conversation by viewing listings.</p>
+            <p className="chat__cta">
+                <Link target="_blank" to="/">Go to listings</Link>
+            </p>
+        </article>
+    )}
                         {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
     <React.Fragment key={chat.id}>
         {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
