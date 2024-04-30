@@ -83,7 +83,7 @@
   padding: 0.6rem 0 0 0;
   text-align: center;
   width: 90%;
-  
+  pointer-events: none; 
 }
 .searchbar-input:focus {
   outline: none;
@@ -278,7 +278,7 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding-top: 0%; 
-  margin-bottom: -0.125rem;
+  margin-bottom: 0.125rem;
   padding: 0.75rem; 
 }
 
@@ -301,11 +301,13 @@
   position: relative; 
   overflow: hidden;
 }
-.react-datepicker__day--selected {
-  background-color: #0d6efd;
+
+.react-datepicker__day--selected,
+.react-datepicker__day--in-range {
+  background-color: #16e056;
   color: white;
   position: relative;
-  z-index: 1; 
+  z-index: 1;
 }
 
 .react-datepicker__header {
@@ -328,10 +330,8 @@
   font-size: 14px;
 }
 
-.react-datepicker__day--selected, 
-.react-datepicker__day--in-range, 
 .react-datepicker__day--keyboard-selected {
-  background-color: #0d6efd;
+  background-color: #13c84c;
   color: white;
 }
 
@@ -339,30 +339,42 @@
 .react-datepicker__day--selected:hover,
 .react-datepicker__day--in-range:hover,
 .react-datepicker__day--keyboard-selected:hover {
-  background-color: #084298;
+  background-color: #067b12;
+}
+
+.react-datepicker__day--today {
+  font-weight: normal;
+  background-color: transparent;
+  color: #333333;
+}
+
+.react-datepicker__day--today:hover {
+  background-color: #067b12;
+  color: white;
 }
 
 .react-datepicker__navigation--previous {
-  border-right-color: #0d6efd;
+  border-right-color: #13c84c;
 }
 
 .react-datepicker__navigation--next {
-  border-left-color: #0d6efd;
+  border-left-color: #13c84c;
 }
 
 .react-datepicker__navigation:hover,
 .react-datepicker__navigation:focus {
   background-color: transparent;
 }
+
 .react-datepicker__header .react-datepicker__current-month,
 .react-datepicker__header .react-datepicker-year-header {
-    background-image: none;
-    position: relative;
+  background-image: none;
+  position: relative;
 }
 
 .react-datepicker__header .react-datepicker__current-month::after,
 .react-datepicker__header .react-datepicker-year-header::after {
-    display: none;
+  display: none;
 }
 .date-reset-button {
   border: none;
@@ -401,3 +413,4 @@
   font-size: 0.75rem; /* 12px */
   margin-bottom: 3.125rem; /* 50px */
 }
+

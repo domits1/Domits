@@ -33,7 +33,6 @@ const Accommodations = ({ searchResults }) => {
         }
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
-        // console.log(data);
         setAccolist(formatData(data));
       } catch (error) {
         console.error('Error fetching or processing data:', error);
