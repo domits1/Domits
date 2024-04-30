@@ -14,7 +14,6 @@ import eye from './eye.png';
 import alert from './alert.png';
 import Pages from "../guestdashboard/Pages";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import { hostEmail } from "../details/Details";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";

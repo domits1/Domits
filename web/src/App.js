@@ -105,10 +105,7 @@ function App() {
                             <Route path="/hostdashboard/messages" element={<HostMessages />} />
                             <Route path="/hostdashboard/payments" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
-                            <Route path="/hostdashboard/create" element={<CreateAccommodation />} />
-                            <Route path="/hostdashboard/read" element={<ReadAccommodation />} />
-                            <Route path="/hostdashboard/update" element={<UpdateAccommodation />} />
-                            <Route path="/hostdashboard/delete" element={<DeleteAccommodation />} />
+                            <Route path="/hostdashboard/reviews" element={<HostReviews />} />
                             <Route path="/hostdashboard/Chat" element={<Chat />} />
 
                             {/* Career, Policies, and Terms */}
