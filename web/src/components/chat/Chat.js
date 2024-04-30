@@ -1,63 +1,508 @@
-import React from "react";
-import "./chatbox.css";
+import React, { useEffect, useState, useRef  } from "react";
+import "./chat.css";
+import img1 from './image22.png';
+import heart from './Icon.png';
+import trash from './Icon-1.png';
+import smile from './smile.png';
+import users from './users.png';
+import home from './home.png';
+import calendar from './calendar.png';
+import card from './card.png';
+import django from './django.png';
+import jan from './jan.png';
+import eye from './eye.png';
+import alert from './alert.png';
+import Pages from "../guestdashboard/Pages";
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { API, graphqlOperation } from "aws-amplify";
+import { withAuthenticator } from "@aws-amplify/ui-react";
+import * as mutations from "../../graphql/mutations";
+import * as queries from "../../graphql/queries";
+import * as subscriptions from "../../graphql/subscriptions";
+import { Auth } from 'aws-amplify';
+import { useLocation, useNavigate, Link } from 'react-router-dom';
 
-const Chat = () => {
+function showMessages() {
+    var screenWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+
+    if (screenWidth < 1277) {
+        var chatPeople = document.querySelector('.chat__people');
+        var chatMessage = document.querySelector('.chat__message');
+
+        chatPeople.style.display = 'none';
+        chatMessage.style.display = 'block';
+    }
+}
+
+const Chat = ({ user }) => {
+    const [chats, setChats] = useState([]);
+    const [newMessage, setNewMessage] = useState('');
+    const [messageSent, setMessageSent] = useState(false);
+    const [showDate, setShowDate] = useState(false);
+    const [unreadMessages, setUnreadMessages] = useState({}); 
+    const [lastMessageDate, setLastMessageDate] = useState(null);
+    const [selectedImage, setSelectedImage] = useState(null); // State to store the selected image file
+    const [imageUrl, setImageUrl] = useState("");
+    const [recipientEmail, setRecipientEmail] = useState('');
+    const [selectedUser, setSelectedUser] = useState(null);
+    const [chatUsers, setChatUsers] = useState([]);
+    const [channelUUID, setChannelUUID] = useState(null);
+
+    const updateChannelUUID = (uuid) => {
+        setChannelUUID(uuid);
+    };
+
+   
+
+    const getUUIDForUser = (email) => {
+        let uuid = localStorage.getItem(`${email}_uuid`);
+        if (!uuid) {
+          uuid = generateUUID();
+          localStorage.setItem(`${email}_uuid`, uuid);
+        }
+        return uuid;
+      };
+      
+    
+    useEffect(() => {
+    const subscription = API.graphql(
+        graphqlOperation(subscriptions.onCreateChat)
+    ).subscribe({
+        next: ({ provider, value }) => {
+            // Handle new chat message
+            const newChat = value.data.onCreateChat;
+            setChats(prevChats => [...prevChats, newChat]);
+        },
+        error: error => console.error("Subscription error:", error)
+    });
+
+    return () => subscription.unsubscribe();
+}, []);
+
+    
+    const navigate = useNavigate(); // Get the navigate function
+    const location = useLocation();
+    const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
+
+    // Function to update the URL with the recipient's email
+    
+
+    const updateRecipientEmailInUrl = (email) => {
+        const uuid = getUUIDForUser(email);
+        const searchParams = new URLSearchParams(location.search);
+        searchParams.set('recipient', uuid);
+        navigate(`?${searchParams.toString()}`);
+    };
+
+    const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+
+    useEffect(() => {
+        // Set recipientEmail when it's available in the URL
+        const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
+        if (recipientEmailFromUrl) {
+            setRecipientEmail(recipientEmailFromUrl);
+        }
+    }, [location.search]);
+
+  useEffect(() => {
+    // Scroll chat container to bottom when component mounts or chats state updates
+    chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+}, [chats]);
+
+// Reference to the chat container
+const chatContainerRef = useRef(null);
+
+    const handleImageUpload = (e) => {
+        const file = e.target.files[0];
+        setSelectedImage(file);
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setImageUrl(reader.result); // Set the URL of the selected image
+        };
+        reader.readAsDataURL(file); // Read the selected file as a data URL
+    };
+
+
+    const signOut = async () => {
+        try {
+            await Auth.signOut(); 
+        } catch (error) {
+            console.error("Error signing out:", error);
+        }
+    };
+
+    const signUp = async () => {
+        try {
+         
+            const { user } = await Auth.signUp({
+                username: 'username', 
+                password: 'password', 
+                attributes: {
+                  
+                    email: 'email@example.com'
+                }
+            });
+            console.log("New user signed up:", user);
+        } catch (error) {
+            console.error("Error signing up:", error);
+        }
+    };
+
+  
+    useEffect(() => {
+        fetchChats();
+        fetchChatUsers();
+        fetchUnreadMessages();
+    }, []);
+
+    const fetchChats = async (uuid) => {
+        try {
+            const sentMessages = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                      
+                        channelID: { eq: uuid }
+                    }
+                }
+            });
+    
+            const receivedMessages = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                        email: { eq: recipientEmail },
+                        recipientEmail: { eq: user.attributes.email }
+                    }
+                }
+            });
+    
+            const allSentChats = sentMessages.data.listChats.items.map(chat => ({
+                ...chat,
+                isSent: true
+            }));
+    
+            const allReceivedChats = receivedMessages.data.listChats.items.map(chat => ({
+                ...chat,
+                isSent: false
+            }));
+    
+            const allChats = [...allSentChats, ...allReceivedChats];
+    
+            console.log("Sent messages:", allSentChats);
+            console.log("Received messages:", allReceivedChats);
+    
+            setChats(allChats);
+        } catch (error) {
+            console.error("Error fetching messages:", error);
+        }
+    };
+    
+    
+    const fetchChatUsers = async () => {
+        try {
+            const response = await API.graphql({ query: queries.listChats });
+            const allChats = response.data.listChats.items;
+            const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
+    
+            // Filter out null or undefined values
+            const filteredUsers = uniqueUsers.filter(email => email && email !== user.attributes.email);
+    
+            const usersData = filteredUsers.map(email => {
+                const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
+                const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
+                return {
+                    email,
+                    lastMessageTimestamp,
+                };
+            });
+    
+            // Filter out users who haven't exchanged messages with you
+            const filteredUsersData = usersData.filter(userData => {
+                const userChats = allChats.filter(chat => chat.email === userData.email || chat.recipientEmail === userData.email);
+                return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
+            });
+    
+            const sortedUsersData = filteredUsersData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
+    
+            setChatUsers(sortedUsersData);
+        } catch (error) {
+            console.error("Error fetching chat users:", error);
+        }
+    };
+    
+    
+    
+    
+    const fetchUnreadMessages = async () => {
+        try {
+            const unreadMessagesResponse = await API.graphql({
+                query: queries.listChats,
+                variables: {
+                    filter: {
+                        recipientEmail: { eq: user.attributes.email },
+                        isRead: { eq: false }
+                    }
+                }
+            });
+    
+            const unreadMessagesByEmail = unreadMessagesResponse.data.listChats.items.reduce((acc, chat) => {
+                const { email } = chat;
+                acc[email] = (acc[email] || 0) + 1;
+                return acc;
+            }, {});
+    
+            setUnreadMessages(unreadMessagesByEmail);
+        } catch (error) {
+            console.error("Error fetching unread messages:", error);
+        }
+    };
+    
+    const handleUserClick = async (email) => {
+        setRecipientEmail(email);
+        setSelectedUser(chatUsers.find(user => user.email === email));
+        updateRecipientEmailInUrl(email);
+        updateChannelUUID(getUUIDForUser(email)); 
+        fetchChats(getUUIDForUser(email))
+    
+        try {
+            const unreadMessagesIds = chats
+                .filter(chat => chat.recipientEmail === user.attributes.email && chat.isRead === false)
+                .map(chat => chat.id);
+    
+            await Promise.all(unreadMessagesIds.map(async id => {
+                try {
+                    await API.graphql({
+                        query: mutations.updateChat,
+                        variables: {
+                            input: {
+                                id: id,
+                                isRead: true
+                            }
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error updating read status:", error);
+                }
+            }));
+    
+            setUnreadMessages(prevState => ({
+                ...prevState,
+                [email]: 0 
+            }));
+        } catch (error) {
+            console.error("Error updating read status:", error);
+        } finally {
+            
+            fetchChats(email);
+        }
+    };
+    
+    
+     
+
+    const sendMessage = async (uuid) => {
+        if (!newMessage.trim() || !recipientEmail) return;
+        try {
+            await API.graphql({
+                query: mutations.createChat,
+                variables: {
+                    input: {
+                        text: newMessage.trim(),
+                        email: user.attributes.email,
+                        recipientEmail: selectedUser.email,
+                        isRead: false,
+                        createdAt: currentDate.toISOString(),
+                        channelID: uuid // Use the provided channel UUID
+                    },
+                },
+            });
+            setNewMessage('');
+            fetchChats(uuid); // Fetch chats using the channel UUID
+        } catch (error) {
+            console.error("Error sending message:", error);
+        }
+        setShowDate(true);
+        setLastMessageDate(currentDate);
+        setMessageSent(true);
+    };
+
+    const currentDate = new Date();
+
+    const options = { month: 'long', day: 'numeric' };
+
+    const formattedDate = currentDate.toLocaleDateString('en-US', options);
+
+
+
+  
+
+
+    useEffect(() => {
+        console.log("Unread messages:", unreadMessages);
+    }, [unreadMessages]);
+    
+    const isToday = (date) => {
+        const today = new Date();
+        return date.getDate() === today.getDate() &&
+            date.getMonth() === today.getMonth() &&
+            date.getFullYear() === today.getFullYear();
+    };
+
+    useEffect(() => {
+        const interval = setInterval(() => {
+            // Force re-render by updating state
+            setShowDate(prevState => !prevState);
+        }, 24 * 60 * 60 * 1000); // 24 hours
+    
+        return () => clearInterval(interval);
+    }, []);
+    
+
+
     return (
-        <div className="chat">
-            <div className="chat_box">
-                <div className="flex-auto rounded-md p-3 ring-1 ring-inset ring-gray-200 w-3/4 my-2 self-end bg-gray-200">
-                    <div>
-                        <div className="">
-                            <div className="name">
-                                <span className="name">name</span>{" "}
-                            </div>
-                            <time dateTime="2023-01-23T15:56" className="time">
-                                2 minutes ago
-                            </time>
-                        </div>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="689" height="2" viewBox="0 0 689 2" fill="none">
-                            <path d="M1 1L688 0.99994" stroke="black" stroke-width="0.5" stroke-linecap="round"/>
-                        </svg>
-                        <p className="text">
-                            You got an amazing place and we are loving it!
-                        </p>
-                    </div>
-                </div>
-                <div className="input_container">
-                    <input type="text" className="input_field" placeholder="Type your message here..." style={{width: "687px", height: "45px", borderRadius: "15px", border: "0.5px solid #000"}} />
-                    <div>
-
-                        <button type="button" className="send_button"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                            <path d="M10.5004 12.0008H5.00043M4.91577 12.2923L2.58085 19.267C2.39742 19.8149 2.3057 20.0889 2.37152 20.2576C2.42868 20.4041 2.55144 20.5152 2.70292 20.5575C2.87736 20.6061 3.14083 20.4876 3.66776 20.2505L20.3792 12.7303C20.8936 12.4989 21.1507 12.3831 21.2302 12.2224C21.2993 12.0827 21.2993 11.9188 21.2302 11.7792C21.1507 11.6184 20.8936 11.5027 20.3792 11.2712L3.66193 3.74849C3.13659 3.51209 2.87392 3.39389 2.69966 3.44237C2.54832 3.48448 2.42556 3.59527 2.36821 3.74151C2.30216 3.90991 2.3929 4.18328 2.57437 4.73004L4.91642 11.7863C4.94759 11.8802 4.96317 11.9272 4.96933 11.9752C4.97479 12.0178 4.97473 12.0609 4.96916 12.1035C4.96289 12.1515 4.94718 12.1984 4.91577 12.2923Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg></button>
-                    </div>
-                </div>
+        <main className="chat">
+            <div className="chat__headerWrapper">
+         
+                <h2 className="chat__heading">Message dashboard</h2>
             </div>
+            <section className="chat__container">
+               <Pages/>
+              
 
-
-
-            <span className="button_container">
-                <button type="button" className="">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 3H15M3 6H21M19 6L18.2987 16.5193C18.1935 18.0975 18.1409 18.8867 17.8 19.485C17.4999 20.0118 17.0472 20.4353 16.5017 20.6997C15.882 21 15.0911 21 13.5093 21H10.4907C8.90891 21 8.11803 21 7.49834 20.6997C6.95276 20.4353 6.50009 20.0118 6.19998 19.485C5.85911 18.8867 5.8065 18.0975 5.70129 16.5193L5 6M10 10.5V15.5M14 10.5V15.5" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-            </span>
-
-            <span className="button_container">
-                <button type="button" className="">
-                    <svg width="22" height="20" viewBox="0 0 22 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path fill-rule="evenodd" clip-rule="evenodd" d="M10.9932 3.13581C8.9938 0.7984 5.65975 0.169643 3.15469 2.31001C0.649644 4.45038 0.296968 8.02898 2.2642 10.5604C3.89982 12.6651 8.84977 17.1041 10.4721 18.5408C10.6536 18.7016 10.7444 18.7819 10.8502 18.8135C10.9426 18.8411 11.0437 18.8411 11.1361 18.8135C11.2419 18.7819 11.3327 18.7016 11.5142 18.5408C13.1365 17.1041 18.0865 12.6651 19.7221 10.5604C21.6893 8.02898 21.3797 4.42787 18.8316 2.31001C16.2835 0.192157 12.9925 0.7984 10.9932 3.13581Z" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                </button>
-            </span>
-
-            <span className="button_container"><button type="button" className="buttonc add-files-button">Add files</button></span>
-            <span className="button_container"><button type="button" className="buttonc send-review-link">Send reviewlink</button></span>
-
-
+                <article className="chat__message">
+                    <article className="chat__figure">
+                        <aside className="chat__aside">
+                            <div className="chat__pfpSecond">
+                                <img src={img1} className="chat__pfpImg"/>
+                            </div>
+                            <ul className="chat__list">
+                                <li className="chat__listItem">
+                                    <h2 className="chat__name">{selectedUser ? selectedUser.email : ''}</h2>
+                                </li>
+                                <li className="chat__listItem">
+                                    <img src={smile}/>
+                                    <p className="chat__listP">3rd all-time booker</p>
+                                </li>
+                                <li className="chat__listItem">
+                                    <img src={users}/>
+                                    <p className="chat__listP">2 adults, 2 kids</p>
+                                </li>
+                                <li className="chat__listItem">
+                                    <img src={home}/>
+                                    <p className="chat__listP">Kinderhuissingel 6k</p>
+                                </li>
+                                <li className="chat__listItem">
+                                    <img src={calendar}/>
+                                    <p className="chat__listP">21-12-2023 / 28-12-2023</p>
+                                </li>
+                                <li className="chat__listItem">
+                                    <img src={card}/>
+                                    <p className="chat__listP">paid with mastercard</p>
+                                </li>
+                            </ul>
+                        </aside>
+                        <article className="chat__chatContainer"  ref={chatContainerRef}>
+                        {chatUsers.length === 0 && (
+        <article className="chat__default">
+            <p className="chat__defaultmsg">You have no conversations yet. Initiate a conversation by viewing listings.</p>
+            <p className="chat__cta">
+                <Link target="_blank" to="/">Go to listings</Link>
+            </p>
+        </article>
+    )}
+                        {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
+    <React.Fragment key={chat.id}>
+        {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
+            <p className="chat__date">
+                <span>
+                    {isToday(new Date(chat.createdAt)) ? "Today" : new Date(chat.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                </span>
+            </p>
+        )}
+        <div
+            className={`chat__dialog chat__dialog--${chat.email === user.attributes.email ? "user" : "guest"}`}
+        >
+            {chat.text}
+            <span>{chat.email.split("@")[0]}</span>
         </div>
+    </React.Fragment>
+))}
+{imageUrl && <img src={imageUrl} alt="Selected" style={{ maxWidth: "100%", maxHeight: "200px" }} />} {/* Display the selected image */}
+
+                            </article>
+
+                    <input
+                        className="chat__input"
+                        type="text"
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder="Type your message..."
+                        onKeyUp={(e) => {
+                            if (e.key === "Enter") {
+                                sendMessage();
+                            }
+                        }}
+                    />
+                    {/* <input
+                        className="chat__recipientInput"
+                        type="email"
+                        value={recipientEmail}
+                        onChange={(e) => setRecipientEmail(e.target.value)}
+                        placeholder="Recipient's email..."
+                    /> */}
+                                        <button onClick={() => sendMessage(getUUIDForUser(selectedUser.email))}>Send</button>
+                            
+                        
+                    </article>
+                    <nav className="chat__nav">
+                    <ul className="chat__controls">
+                        <li className="chat__control chat__control--icon">
+                            <img className="chat__icon" src={heart}/>
+                        </li>
+                        <li className="chat__control chat__control--icon">
+                            <img className="chat__icon" src={trash}/>
+                        </li>
+                    </ul>
+                    <div className="chat__buttonWrapper">
+                    <button className="chat__button chat__button--file">add files
+                    <input type="file" onChange={handleImageUpload} /></button>
+                    <button className="chat__button chat__button--review">Send review link</button>
+                        
+                    </div>
+                    </nav>
+                </article>
+                <article className="chat__people">
+                <ul className="chat__users">
+                {chatUsers.map((chatUser) => (
+    <li className="chat__user" key={chatUser.email} onClick={() => handleUserClick(chatUser.email)}>
+        {unreadMessages[chatUser.email] > 0 && (
+            <figure className="chat__notification">
+                {unreadMessages[chatUser.email] > 9 ? '9+' : unreadMessages[chatUser.email]}
+            </figure>
+        )}
+        <div className="chat__pfp">
+            <img src={chatUser.profilePic} className="chat__img" alt="Profile"/>
+        </div>
+        <div className="chat__wrapper">
+            <h2 className="chat__name">{chatUser.email}</h2>
+            {/* Display last message preview here */}
+        </div>
+    </li>
+))}
+
+                </ul>
+            </article>
+            </section>
+        </main>
     );
 }
 
-export default Chat;
+export default withAuthenticator(Chat);
