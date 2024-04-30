@@ -7,7 +7,8 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import {useNavigation} from "@react-navigation/native";
+import {useNavigation} from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -16,6 +17,7 @@ const LoginScreen = () => {
 
   const handleLogin = () => {
     // login logic
+    alert('to be done');
   };
 
   const handleGoogleSignIn = () => {
@@ -23,7 +25,7 @@ const LoginScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerText}>Log in or sign up</Text>
       </View>
@@ -41,10 +43,13 @@ const LoginScreen = () => {
         style={styles.input}
         secureTextEntry
       />
-      <TouchableOpacity onPress={() => {}}>
+      <TouchableOpacity onPress={() => {alert('To be done')}}>
         <Text style={styles.linkText}>Forgot your password?</Text>
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => {navigation.navigate('SignupScreen')}}>
+      <TouchableOpacity
+        onPress={() => {
+          navigation.navigate('SignupScreen');
+        }}>
         <Text style={styles.linkText}>Don't have an account? Sign up!</Text>
       </TouchableOpacity>
       <View style={styles.dividerRow}>
@@ -61,7 +66,7 @@ const LoginScreen = () => {
           <Text style={styles.loginButtonText}>Log in</Text>
         </TouchableOpacity>
       </View>
-    </View>
+    </SafeAreaView>
   );
 };
 
