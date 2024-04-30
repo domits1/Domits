@@ -46,7 +46,11 @@ const Chat = ({ user }) => {
     const [recipientEmail, setRecipientEmail] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const [chatUsers, setChatUsers] = useState([]);
-    const [userUUIDs, setUserUUIDs] = useState({});
+    const [channelUUID, setChannelUUID] = useState(null);
+
+    const updateChannelUUID = (uuid) => {
+        setChannelUUID(uuid);
+    };
 
    
 
@@ -158,14 +162,14 @@ const chatContainerRef = useRef(null);
         fetchUnreadMessages();
     }, []);
 
-    const fetchChats = async (recipientEmail) => {
+    const fetchChats = async (uuid) => {
         try {
             const sentMessages = await API.graphql({
                 query: queries.listChats,
                 variables: {
                     filter: {
-                        email: { eq: user.attributes.email },
-                        recipientEmail: { eq: recipientEmail }
+                      
+                        channelID: { eq: uuid }
                     }
                 }
             });
@@ -264,8 +268,9 @@ const chatContainerRef = useRef(null);
     const handleUserClick = async (email) => {
         setRecipientEmail(email);
         setSelectedUser(chatUsers.find(user => user.email === email));
-        fetchChats(email);
         updateRecipientEmailInUrl(email);
+        updateChannelUUID(getUUIDForUser(email)); 
+        fetchChats(getUUIDForUser(email))
     
         try {
             const unreadMessagesIds = chats
@@ -303,7 +308,7 @@ const chatContainerRef = useRef(null);
     
      
 
-    const sendMessage = async (channelID) => {
+    const sendMessage = async (uuid) => {
         if (!newMessage.trim() || !recipientEmail) return;
         try {
             await API.graphql({
@@ -315,12 +320,12 @@ const chatContainerRef = useRef(null);
                         recipientEmail: selectedUser.email,
                         isRead: false,
                         createdAt: currentDate.toISOString(),
-                        channelID: channelID
+                        channelID: uuid // Use the provided channel UUID
                     },
                 },
             });
             setNewMessage('');
-            fetchChats(channelID);
+            fetchChats(uuid); // Fetch chats using the channel UUID
         } catch (error) {
             console.error("Error sending message:", error);
         }
