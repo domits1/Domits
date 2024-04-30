@@ -45,13 +45,12 @@ function PageSwitcher({accommodations, amount, onDelete}) {
 
 
     return (
-        <div className="dashboardSection section-1">
-            <div className="box fullBox listing">
+        <div className="page-body">
                 {currentItems.map((accommodation) => (
                     <div key={accommodation.ID} className="accommodation-tab">
                         <div className="accommodation-left">
                             <p className="accommodation-title">{accommodation.Title}</p>
-                            <p>{accommodation.Country},
+                            <p className="accommodation-location">{accommodation.Country},
                                 {accommodation.City},
                                 {accommodation.Street},
                                 {accommodation.PostalCode}
@@ -79,7 +78,6 @@ function PageSwitcher({accommodations, amount, onDelete}) {
                         <button className="listing-delete" onClick={() => onDelete(accommodation)}>Remove</button>
                     </div>
                 ))}
-            </div>
             <div className="pagination">
                 <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
                     {'<'}
