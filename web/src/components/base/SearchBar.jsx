@@ -110,6 +110,20 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
+  const handleAccommodationFocus = () => {
+    setAccommodationFocused(true);
+  };
+
+  const handleAccommodationBlur = () => {
+    setAccommodationFocused(false);
+  };
+
+  const clearAccommodation = () => {
+    setAccommodation('');
+    setAccommodationFocused(false);
+  };
+
+
   const handleSelect = async (address) => {
     setAddress(address);
     try {
@@ -177,7 +191,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
-  
+
   return (
     <div className="bar">
       {error && <div className="error-message">{error}</div>}
@@ -219,7 +233,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 }}
               >
                 {loading && <div> <FaSpinner /></div>}
-                {suggestions.map((suggestion) => {
+                {suggestions.map((suggestion, index) => {
                   if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
                     const parts = suggestion.description.split(', ');
                     const countryName = parts[parts.length - 1].trim();
@@ -228,6 +242,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
                     return (
                       <div
+                        key={index} 
                         {...getSuggestionItemProps(suggestion, {
                           style: {
                             backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
@@ -267,6 +282,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   }
                   return null;
                 })}
+
               </div>
             </div>
           )}
