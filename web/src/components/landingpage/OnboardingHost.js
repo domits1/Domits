@@ -258,11 +258,13 @@ function OnboardingHost() {
     
     const handleDelete = (index) => {
         const updatedFiles = [...selectedFiles];
-        const imageKeys = Object.keys(formData.Images);
         updatedFiles.splice(index, 1);
     
+        const imageKeys = Object.keys(formData.Images);
         const updatedImages = { ...formData.Images };
-        updatedImages[imageKeys[index]] = '';
+    
+        // Remove the image URL associated with the deleted file
+        delete updatedImages[imageKeys[index]];
     
         setSelectedFiles(updatedFiles);
         setFormData((prevData) => ({
@@ -270,6 +272,7 @@ function OnboardingHost() {
             Images: updatedImages,
         }));
     };
+    
 
     const renderPageContent = (page) => {
         switch (page) {

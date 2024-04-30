@@ -36,6 +36,8 @@ import ListProperty from '../screens/hostonboarding/listProperty';
 import LocationFillIn from '../screens/hostonboarding/LocationFillIn';
 import selectAmenities from '../screens/hostonboarding/selectAmenities';
 import PriceProperty from '../screens/hostonboarding/PriceProperty';
+import SignupScreen from '../screens/login/signup';
+import LoginScreen from '../screens/login/loginScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -48,6 +50,8 @@ function HomeStack() {
       }}>
       <Stack.Screen name="Home" component={HomeScreen} />
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="LoginScreen" component={LoginScreen} />
+      <Stack.Screen name="SignupScreen" component={SignupScreen} />
       <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
       <Stack.Screen name="Scan" component={Scan} />
       <Stack.Screen name="Pay" component={Pay} />

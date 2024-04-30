@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import DatePicker from 'react-datepicker';
-import { FaTimes, FaSearchLocation,FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
+import { FaTimes, FaSearchLocation, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
@@ -42,12 +42,18 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [infants, setInfants] = useState(0);
   const [pets, setPets] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
-  const totalGuestsDescription = createGuestDescription(adults, children, infants, pets);
   const [startDate, endDate] = dateRange;
-  const [error, setError] = useState(""); 
+  const [error, setError] = useState("");
 
-  
 
+  const totalGuestsDescription = useMemo(() => {
+    const parts = [];
+    if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
+    if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
+    if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
+    if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
+    return parts.join(', ');
+  }, [adults, children, infants, pets]);
 
   const guestDropdownRef = useRef();
   const resetGuests = useCallback((e) => {
@@ -57,7 +63,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setInfants(0);
     setPets(0);
   }, []);
-  
 
   const resetDates = (e) => {
     e.stopPropagation();
@@ -72,15 +77,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   }, []);
 
   const totalGuests = adults + children + infants + pets;
-
-  function createGuestDescription(adults, children, infants, pets) {
-    const parts = [];
-    if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
-    if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
-    if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
-    if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
-    return parts.join(', ');
-  }
 
   useEffect(() => {
     const handleOutsideClick = (e) => {
@@ -110,6 +106,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
+
   const handleSelect = async (address) => {
     setAddress(address);
     try {
@@ -130,16 +127,21 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   // Verbinding met API Gateway
   const handleSearch = async () => {
     setLoading(true);
-    setError("");  
-    const typeQueryParam = accommodation ? `type=${accommodation}` : '';
-    const locationQueryParam = address ? `&searchTerm=${address}` : '';
-    const queryParams = [typeQueryParam, locationQueryParam].filter(Boolean).join('&');
-    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
-  
+    setError("");
+
+    const params = new URLSearchParams();
+    if (accommodation) params.append('type', accommodation);
+    if (address) params.append('searchTerm', address);
+    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${params}`;
+
     try {
       const response = await fetch(url);
       const data = await response.json();
-      setSearchResults(data);
+      if (data.length === 0) {
+        setError("Geen resultaten gevonden.");
+      } else {
+        setSearchResults(data);
+      }
     } catch (error) {
       console.error('Error during fetch:', error);
       setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
@@ -177,12 +179,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
-  
+
   return (
     <div className="bar">
       {error && <div className="error-message">{error}</div>}
       <div className="location">
         <p className="searchTitle">Location</p>
+
         <PlacesAutocomplete value={address} onChange={handleChange} onSelect={handleSelect} searchOptions={{ language: 'en' }}>
           {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
             <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px', position: 'relative' }}>
@@ -214,12 +217,11 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 className="suggestions-container"
                 style={{
                   marginTop: '15px',
-                  fontWeight: 'bold',
                   marginLeft: '15%',
                 }}
               >
                 {loading && <div> <FaSpinner /></div>}
-                {suggestions.map((suggestion) => {
+                {suggestions.map((suggestion, index) => {
                   if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
                     const parts = suggestion.description.split(', ');
                     const countryName = parts[parts.length - 1].trim();
@@ -228,6 +230,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
                     return (
                       <div
+                        key={index}
                         {...getSuggestionItemProps(suggestion, {
                           style: {
                             backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
@@ -267,6 +270,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   }
                   return null;
                 })}
+
               </div>
             </div>
           )}
@@ -358,7 +362,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             }),
           }}
         />
-
       </div>
 
       <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
@@ -371,7 +374,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             placeholderText="Start-End date"
             showYearDropdown={false}
             showMonthDropdown={true}
-            dateFormat="d MMMM"
+            dateFormat="d MMM"
             selectsRange={true}
             startDate={startDate}
             endDate={endDate}
