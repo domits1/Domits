@@ -276,277 +276,134 @@ function OnboardingHost() {
         switch (page) {
             case 1:
                 return (
-                    <main className="container">
-                        <section class="formContainer">
-                            <section class="locationInput">
-                                <h2 className="onboardingSectionTitle">Fill in Location</h2>
-                                <p for="country">
-                                    Country
-                                </p>
-                                <Select
-                                    options={options.map(country => ({ value: country, label: country }))}
-                                    name="Country"
-                                    className="locationText"
-                                    value={{ value: formData.Country, label: formData.Country }}
-                                    onChange={handleCountryChange}
-                                    id="country"
-                                />
-                                <p for="city">
-                                    City
-                                </p>
-                                <input
-                                    className="textInput locationText"
-                                    name="City"
-                                    onChange={handleInputChange}
-                                    value={formData.City}
-                                    id="city"
-                                />
-                                <p for="street">
-                                    Street + house nr.
-                                </p>
-                                <input
-                                    className="textInput locationText"
-                                    name="Street"
-                                    onChange={handleInputChange}
-                                    value={formData.Street}
-                                    id="street"
-                                />
-                                <p for="postal">
-                                    Postal Code
-                                </p>
-                                <input
-                                    className="textInput locationText"
-                                    name="PostalCode"
-                                    onChange={handleInputChange}
-                                    value={formData.PostalCode}
-                                    id="postal"
-                                />
-                            </section>
-                            <section class="map-section">
+                    <div>
+                        <div class="formContainer">
+                            <div class="form-section">
+                                <div className="formRow">
+                                    <div class="quantity">
+                                        <h2 className="onboardingSectionTitle">Define quantity</h2>
+                                        <div className="input-group">
+                                            <label for="guests">Maximum amount of guests?</label>
+                                            <input className="textInput" type="number" id="guests" name="Guestamount" onChange={handleInputChange} value={formData.Guestamount} min={0}></input>
+                                        </div>
+                                        <div className="input-group">
+                                            <label for="bedrooms">How many bedrooms?</label>
+                                            <input className="textInput" type="number" id="bedrooms" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input>
+                                        </div>
+                                        <div className="input-group">
+                                            <label for="bathrooms">How many bathrooms?</label>
+                                            <input className="textInput" type="number" id="bathrooms" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input>
+                                        </div>
+                                        <div className="input-group">
+                                            <label for="beds">How many fixed beds?</label>
+                                            <input className="textInput" type="number" id="beds" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="locationInput">
+                                    <h2 className="onboardingSectionTitle">Fill in Location</h2>
+                                    <div className="input-group">
+                                        <label for="country">Country</label>
+                                        <Select
+                                            options={options.map(country => ({ value: country, label: country }))}
+                                            name="Country"
+                                            className="locationText"
+                                            value={{ value: formData.Country, label: formData.Country }}
+                                            onChange={handleCountryChange}
+                                            id="country"
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label for="city">City</label>
+                                        <input
+                                            className="textInput locationText"
+                                            name="City"
+                                            onChange={handleInputChange}
+                                            value={formData.City}
+                                            id="city"
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label for="street">
+                                            Street + house nr.
+                                        </label>
+                                        <input
+                                            className="textInput locationText"
+                                            name="Street"
+                                            onChange={handleInputChange}
+                                            value={formData.Street}
+                                            id="street"
+                                        />
+                                    </div>
+                                    <div className="input-group">
+                                        <label for="postal">
+                                            Postal Code
+                                        </label>
+                                        <input
+                                            className="textInput locationText"
+                                            name="PostalCode"
+                                            onChange={handleInputChange}
+                                            value={formData.PostalCode}
+                                            id="postal"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="map-section">
                                 <h2 className="onboardingSectionTitle">What we show on Domits</h2>
                                 <MapComponent location={location} />
-                            </section>
-                        </section>
-                        <nav class="formContainer">
+                            </div>
+                        </div>
+                        <div class="formContainer">
                             <button className='nextButtons' onClick={() => pageUpdater(page - 1)} disabled={true}>Go back to change</button>
                             <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
-                        </nav>
-                    </main>
+                        </div>
+                    </div>
                 );
 
 
             case 2:
                 return (
-                    <main className="container">
-
-                        <section class="room-features formRow">
-                            <h2 className="onboardingSectionTitle">Systems and configurations</h2>
-                                <p>Cancel policy</p>
-                                <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "Users can cancel anytime"} value="Users can cancel anytime"></input>Users can cancel anytime</label>
-                                <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "No cancel 24h before arrival"} value="No cancel 24h before arrival"></input>No cancel 24h before arrival </label>
-                           
-                                <p>Guest type</p>
-                                <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Any guest"} value="Any guest"></input>Any Guest</label>
-                                <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Verified Domits guest"} value="Verified Domits guest"></input>Verified Domits guest</label>
-
-                            <h2 className="onboardingSectionTitle">Add accomodation features</h2>
-                            <label><input type="checkbox" className="radioInput" name="Wifi" onChange={handleInputChange} checked={formData.Features.Wifi}></input>Wifi</label>
-                            <label><input type="checkbox" className="radioInput" name="Television" onChange={handleInputChange} checked={formData.Features.Television}></input>Television</label>
-                            <label><input type="checkbox" className="radioInput" name="Kitchen" onChange={handleInputChange} checked={formData.Features.Kitchen}></input>Kitchen</label>
-                            <label><input type="checkbox" className="radioInput" name="WashingMachine" onChange={handleInputChange} checked={formData.Features.WashingMachine}></input>Washing machine</label>
-
-                            <label><input type="checkbox" className="radioInput" name="Airconditioning" onChange={handleInputChange} checked={formData.Features.Airconditioning}></input>Airconditioning</label>
-                            <label><input type="checkbox" className="radioInput" name="Onsiteparking" onChange={handleInputChange} checked={formData.Features.Onsiteparking}></input>Onsite parking</label>
-                            <label><input type="checkbox" className="radioInput" name="Homeoffice" onChange={handleInputChange} checked={formData.Features.Homeoffice}></input>Home office</label>
-
-
-                            <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
-                            <label><input type="checkbox" className="radioInput" name="Smokedetector" onChange={handleInputChange} checked={formData.Features.Smokedetector}></input>Smoke detector</label>
-                            <label><input type="checkbox" className="radioInput" name="FirstAidkit" onChange={handleInputChange} checked={formData.Features.FirstAidkit}></input>First Aid kit</label>
-                            <label><input type="checkbox" className="radioInput" name="Fireextinguisher" onChange={handleInputChange} checked={formData.Features.Fireextinguisher}></input>Fire extinguisher</label>
-                        </section>
-
-                        {/* <section>
-                            <p for="measurements">What are the measurements?</p>
-                            <input className="textInput" id="measurement" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
-                        </section> */}
-
-                        <nav class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
-                        </nav>
-                    </main >
-                );
-            case 3:
-                return (
                     <div>
-                        <div className="room-info">
-                            <h2 className="onboardingSectionTitle">Add accomodation information</h2>
-                            <label for="title">Title</label>
-                            <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
-                            <label for="Subtitle">Subtitle</label>
-                            <input className="textInput locationText" id="Subtitle" name="Subtitle" onChange={handleInputChange} value={formData.Subtitle}></input>
-                            <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
-                            <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
-                        </div>
-                        <div class="quantity">
-                            <h2 className="onboardingSectionTitle">Define quantity</h2>
-                            <div className="input-group">
-
-                            </div>
-                            <div className="input-group">
-                                <label for="bedrooms">How many bedrooms?</label>
-                                <input className="textInput" type="number" id="bedrooms" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input>
-                            </div>
-                            <div className="input-group">
-                                <label for="bathrooms">How many bathrooms?</label>
-                                <input className="textInput" type="number" id="bathrooms" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input>
-                            </div>
-                            <div className="input-group">
-                                <label for="beds">How many fixed beds?</label>
-                                <input className="textInput" type="number" id="beds" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input>
-                            </div>
-                        </div>
-                        <div class="formContainer">
-                            <div className="formHolder">
-
-                                <div className="formRow">
-                                    <div class="room-features formRow">
-
+                        <div class="formContainer mBottom">
+                            <div class="form-section">
+                                <h2 className="onboardingSectionTitle">Add accomodation features</h2>
+                                <div class="room-features formRow">
+                                    <div>
+                                        <label><input type="checkbox" className="radioInput" name="Wifi" onChange={handleInputChange} checked={formData.Features.Wifi}></input>Wifi</label>
+                                        <label><input type="checkbox" className="radioInput" name="Television" onChange={handleInputChange} checked={formData.Features.Television}></input>Television</label>
+                                        <label><input type="checkbox" className="radioInput" name="Kitchen" onChange={handleInputChange} checked={formData.Features.Kitchen}></input>Kitchen</label>
+                                        <label><input type="checkbox" className="radioInput" name="WashingMachine" onChange={handleInputChange} checked={formData.Features.WashingMachine}></input>Washing machine</label>
+                                    </div>
+                                    <div>
+                                        <label><input type="checkbox" className="radioInput" name="Airconditioning" onChange={handleInputChange} checked={formData.Features.Airconditioning}></input>Airconditioning</label>
+                                        <label><input type="checkbox" className="radioInput" name="Onsiteparking" onChange={handleInputChange} checked={formData.Features.Onsiteparking}></input>Onsite parking</label>
+                                        <label><input type="checkbox" className="radioInput" name="Homeoffice" onChange={handleInputChange} checked={formData.Features.Homeoffice}></input>Home office</label>
+                                    </div>
+                                </div>
+                                <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
+                                <div class="room-features formRow">
+                                    <div>
+                                        <label><input type="checkbox" className="radioInput" name="Smokedetector" onChange={handleInputChange} checked={formData.Features.Smokedetector}></input>Smoke detector</label>
+                                        <label><input type="checkbox" className="radioInput" name="FirstAidkit" onChange={handleInputChange} checked={formData.Features.FirstAidkit}></input>First Aid kit</label>
+                                    </div>
+                                    <div>
+                                        <label><input type="checkbox" className="radioInput" name="Fireextinguisher" onChange={handleInputChange} checked={formData.Features.Fireextinguisher}></input>Fire extinguisher</label>
                                     </div>
                                 </div>
                             </div>
-                            <p>Price: {formData.Rent}</p>
-                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="40" max="1000" step="10" />
-                            <div className="formHolder">
-                                <h2 className="onboardingSectionTitle">Details and Policies</h2>
-                                <div className="formRow">
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>What are the measurements?</label>
-                                            <input className="textInput" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
-                                            <label>Accommodation Type</label>
-                                            <select
-                                                value={formData.AccommodationType}
-                                                onChange={handleInputChange}
-                                                className="textInput"
-                                                name="AccommodationType"
-                                            >
-                                                <option value="Room">Room</option>
-                                                <option value="Shared Room">Shared Room</option>
-                                                <option value="House">House</option>
-                                                <option value="Apartment">Apartment</option>
-                                                <option value="Villa">Villa</option>
-                                                <option value="Cottage">Cottage</option>
-                                                <option value="Hotel">Hotel</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>Cancel policy</label>
-                                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "Users can cancel anytime"} value="Users can cancel anytime"></input>Users can cancel anytime</label>
-                                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "No cancel 24h before arrival"} value="No cancel 24h before arrival"></input>No cancel 24h before arrival </label>
-                                        </div>
-                                    </div>
+                            <div class="front-section">
+                                <div className="room-info">
+                                    <h2 className="onboardingSectionTitle">Add accomodation information</h2>
+                                    <label for="title">Title</label>
+                                    <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
+                                    <label for="Subtitle">Subtitle</label>
+                                    <input className="textInput locationText" id="Subtitle" name="Subtitle" onChange={handleInputChange} value={formData.Subtitle}></input>
+                                    <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
+                                    <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
                                 </div>
                             </div>
                         </div>
-                        <div class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
-
-                        </div>
-
-                    </div>
-                );
-                case 4:
-                return (
-                    <div>
-                        <div className="room-info">
-                            <h2 className="onboardingSectionTitle">Add accomodation information</h2>
-                            <label for="title">Title</label>
-                            <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
-                            <label for="Subtitle">Subtitle</label>
-                            <input className="textInput locationText" id="Subtitle" name="Subtitle" onChange={handleInputChange} value={formData.Subtitle}></input>
-                            <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
-                            <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
-                        </div>
-                        <div class="quantity">
-                            <h2 className="onboardingSectionTitle">Define quantity</h2>
-                            <div className="input-group">
-
-                            </div>
-                            <div className="input-group">
-                                <label for="bedrooms">How many bedrooms?</label>
-                                <input className="textInput" type="number" id="bedrooms" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input>
-                            </div>
-                            <div className="input-group">
-                                <label for="bathrooms">How many bathrooms?</label>
-                                <input className="textInput" type="number" id="bathrooms" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input>
-                            </div>
-                            <div className="input-group">
-                                <label for="beds">How many fixed beds?</label>
-                                <input className="textInput" type="number" id="beds" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input>
-                            </div>
-                        </div>
-                        <div class="formContainer">
-                            <div className="formHolder">
-
-                                <div className="formRow">
-                                    <div class="room-features formRow">
-
-                                    </div>
-                                </div>
-                            </div>
-                            <p>Price: {formData.Rent}</p>
-                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="40" max="1000" step="10" />
-                            <div className="formHolder">
-                                <h2 className="onboardingSectionTitle">Details and Policies</h2>
-                                <div className="formRow">
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>What are the measurements?</label>
-                                            <input className="textInput" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
-                                            <label>Accommodation Type</label>
-                                            <select
-                                                value={formData.AccommodationType}
-                                                onChange={handleInputChange}
-                                                className="textInput"
-                                                name="AccommodationType"
-                                            >
-                                                <option value="Room">Room</option>
-                                                <option value="Shared Room">Shared Room</option>
-                                                <option value="House">House</option>
-                                                <option value="Apartment">Apartment</option>
-                                                <option value="Villa">Villa</option>
-                                                <option value="Cottage">Cottage</option>
-                                                <option value="Hotel">Hotel</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>Cancel policy</label>
-                                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "Users can cancel anytime"} value="Users can cancel anytime"></input>Users can cancel anytime</label>
-                                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "No cancel 24h before arrival"} value="No cancel 24h before arrival"></input>No cancel 24h before arrival </label>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
-
-                        </div>
-
-                    </div>
-                );
-
-            case 5:
-                return (
-                    <div>
                         <div>
                             <label className="nextButtons"><input type="file" name="images" className="file-input" accept="image/*" onChange={handleFileChange}></input>Add your images</label>
                             <div className="flex-row">
@@ -569,34 +426,17 @@ function OnboardingHost() {
                                 ))}
                             </div>
                         </div>
-                        <div className="room-info">
-                            <h2 className="onboardingSectionTitle">Add accomodation information</h2>
-                            <label for="title">Title</label>
-                            <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
-                            <label for="Subtitle">Subtitle</label>
-                            <input className="textInput locationText" id="Subtitle" name="Subtitle" onChange={handleInputChange} value={formData.Subtitle}></input>
-                            <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
-                            <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
+                        <div class="formContainer">
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
                         </div>
-                        <div class="quantity">
-                            <h2 className="onboardingSectionTitle">Define quantity</h2>
-                            <div className="input-group">
-                                <label for="guests">Maximum amount of guests?</label>
-                                <input className="textInput" type="number" id="guests" name="Guestamount" onChange={handleInputChange} value={formData.Guestamount} min={0}></input>
-                            </div>
-                            <div className="input-group">
-                                <label for="bedrooms">How many bedrooms?</label>
-                                <input className="textInput" type="number" id="bedrooms" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input>
-                            </div>
-                            <div className="input-group">
-                                <label for="bathrooms">How many bathrooms?</label>
-                                <input className="textInput" type="number" id="bathrooms" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input>
-                            </div>
-                            <div className="input-group">
-                                <label for="beds">How many fixed beds?</label>
-                                <input className="textInput" type="number" id="beds" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input>
-                            </div>
-                        </div>
+                    </div>
+                );
+
+
+            case 3:
+                return (
+                    <div>
                         <div class="formContainer">
                             <div className="formHolder">
                                 <h2 className="onboardingSectionTitle">Systems and configurations</h2>
@@ -670,7 +510,7 @@ function OnboardingHost() {
                 );
 
 
-            case 6:
+            case 4:
                 return (
                     <div className="container" style={{ width: '80%' }}>
                         {console.log(formData)}
@@ -708,7 +548,7 @@ function OnboardingHost() {
                 );
 
 
-            case 6:
+            case 5:
                 return (
                     <div className="container">
                         <h2>
@@ -727,7 +567,11 @@ function OnboardingHost() {
     };
 
     return (
-        renderPageContent(page)
+
+        <div className="container">
+            {renderPageContent(page)}
+
+        </div>
     );
 }
 

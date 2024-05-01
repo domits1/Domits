@@ -578,26 +578,3 @@ function OnboardingHost() {
 }
 
 export default OnboardingHost;
-
-// <section className="imageSection">
-//                             <label className="nextButtons"><input type="file" name="images" className="file-input" accept="image/*" onChange={handleFileChange}></input>Add your images</label>
-//                             <div className="flex-row">
-//                                 {[...Array(5)].map((_, index) => (
-//                                     <div key={index} className="image-container">
-//                                         {selectedFiles[index] && (
-//                                             <>
-//                                                 <img
-//                                                     src={URL.createObjectURL(selectedFiles[index])}
-//                                                     alt={`Image ${index + 1}`}
-//                                                     className="image"
-//                                                 />
-//                                                 <button className="delete-button" onClick={() => handleDelete(index)}>
-//                                                     Delete
-//                                                 </button>
-//                                             </>
-//                                         )}
-//                                         {!selectedFiles[index] && <div className="placeholder">Placeholder</div>}
-//                                     </div>
-//                                 ))}
-//                             </div>
-//                         </section>
