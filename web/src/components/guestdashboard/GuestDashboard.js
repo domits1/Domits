@@ -19,14 +19,17 @@ query ListAccommodations {
 }
 `;
 
-const fetchAccommodations = async () => {
-    try {
-        const response = await API.graphql(graphqlOperation(listAccommodationsQuery));
-        console.log("Accommodations:", response.data.listAccommodations.items);
-    } catch (error) {
-        console.error("Error listing accommodations:", error);
+const listChatsQuery = `
+query ListChats($filter: ModelChatFilterInput) {
+  listChats(filter: $filter) {
+    items {
+      id
+      recipientEmail
+      isRead
     }
-};
+  }
+}
+`;
 
 const GuestDashboard = () => {
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
@@ -39,21 +42,34 @@ const GuestDashboard = () => {
     const fetchUserData = async () => {
         try {
             const userInfo = await Auth.currentUserInfo();
-            console.log(userInfo); // This should show the entire userInfo object
-            console.log(userInfo.attributes); // This specifically shows the attributes
-            // Assuming userInfo has the necessary details, adjust the keys based on your user data structure
             setUser({
                 email: userInfo.attributes.email,
-                // because it is a custom attribute it should be called like this
                 name: userInfo.attributes['custom:username'],
                 address: userInfo.attributes.address,
                 phone: userInfo.attributes.phone_number,
-                family: "2 adults - 2 kids" // needs to be calculated later on
+                family: "2 adults - 2 kids"
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
         }
     };
+
+    const fetchAccommodations = async () => {
+        try {
+            const response = await API.graphql(graphqlOperation(listAccommodationsQuery));
+            console.log("Accommodations:", response.data.listAccommodations.items);
+        } catch (error) {
+            console.error("Error listing accommodations:", error);
+        }
+    };
+
+    useEffect(() => {
+    }, [user.email]);
+
+    
+    
+
+    
 
     const navigate = useNavigate();
 
@@ -62,10 +78,11 @@ const GuestDashboard = () => {
             <div className="dashboard">
                 <Pages />
                 <div className="content">
+                    <div className="leftContent">
+                    </div>
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
                         <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</div>
-                        {/*custom attributes need to be called slightly different */}
                         <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> {user.name}</div>
                         <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> {user.address}</div>
                         <div className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> {user.phone}</div>

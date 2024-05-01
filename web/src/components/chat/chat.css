@@ -494,6 +494,34 @@ p{
     padding:0 10px; 
 }
 
+.chat__default{
+    width: 300px;
+    height: 150px;
+    background: #C2E5C4;
+    border-radius: 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.chat__defaultmsg{
+    color: black;
+}
+
+.chat__cta{
+    color: #707070;
+}
+
+a{
+    text-decoration: none;
+    color: inherit;
+}
+
+
+
 @media screen and (max-width: 1277px) {
     .chat{
         padding: 0rem;

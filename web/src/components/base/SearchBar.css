@@ -60,7 +60,6 @@
 }
 
 .check-in{
-  border:none;
   width: 19%;
   cursor: pointer;
   border-radius: 1.25rem; 
@@ -84,12 +83,11 @@
   padding: 0.6rem 0 0 0;
   text-align: center;
   width: 90%;
-  pointer-events: none;
+  pointer-events: none; 
 }
 .searchbar-input:focus {
   outline: none;
 }
-
 
 .bar>div {
   position: relative;
@@ -280,7 +278,7 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding-top: 0%; 
-  margin-bottom: -0.125rem;
+  margin-bottom: 0.125rem;
   padding: 0.75rem; 
 }
 
@@ -378,7 +376,6 @@
 .react-datepicker__header .react-datepicker-year-header::after {
   display: none;
 }
-
 .date-reset-button {
   border: none;
   background: transparent;
@@ -388,7 +385,6 @@
   top: 40%;
   transform: translateY(-20%);
 }
-
 
 @media (max-width: 1000px) {
   .guest-dropdown {
@@ -417,3 +413,4 @@
   font-size: 0.75rem; /* 12px */
   margin-bottom: 3.125rem; /* 50px */
 }
+
