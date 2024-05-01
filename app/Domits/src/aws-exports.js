@@ -29,7 +29,21 @@ const awsmobile = {
     },
     "aws_cognito_verification_mechanisms": [
         "EMAIL"
-    ]
+    ],
+    "API": {
+        "endpoints": [
+            {
+                "name": "HostOnboardingAPI",
+                "endpoint": "https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev",
+                "region": "eu-north-1"
+            },
+            {
+                "name": "CreateCheckout",
+                "endpoint": "https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev",
+                "region": "eu-north-1"
+            }
+        ]
+    }
 };
 
 
