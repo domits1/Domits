@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@aws-amplify/react-native": "^1.0.28",
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-community/blur": "^4.4.0",
     "@react-native-community/masked-view": "^0.1.11",
@@ -19,7 +20,7 @@
     "@react-navigation/native": "^6.1.14",
     "@react-navigation/native-stack": "^6.9.22",
     "@react-navigation/stack": "^6.3.25",
-    "aws-amplify": "^6.0.30",
+    "aws-amplify": "^6.2.0",
     "openai": "^4.32.0",
     "react": "18.2.0",
     "react-native": "^0.73.4",
