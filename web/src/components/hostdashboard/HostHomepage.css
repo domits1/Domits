@@ -367,3 +367,11 @@
   }
 
 }
+@media (max-width: 480px) {
+  .locationBox {
+    option {
+      font-size: 0.5em;
+      padding: 0;
+    }
+  }
+}
