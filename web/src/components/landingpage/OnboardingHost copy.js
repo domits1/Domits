@@ -92,7 +92,7 @@ function OnboardingHost() {
 
     const isFormFilled = () => {
         const excludedFields = ['OwnerId'];
-
+        
         // Check if all fields except excluded ones are filled
         for (const key in formData) {
             if (excludedFields.includes(key)) {
@@ -110,7 +110,7 @@ function OnboardingHost() {
             }
         }
         return true;
-    };
+    };    
 
     const appendUserId = () => {
         setFormData((prevData) => ({
@@ -202,14 +202,16 @@ function OnboardingHost() {
                 const file = selectedFiles[i];
                 const params = {
                     Bucket: 'accommodation',
-                    Key: `images/${UserID}/${AccoID}/Image-${i + 1}`, // Numerical names for images
+                    Key: `images/${UserID}/${AccoID}/Image-${i + 1}.jpg`, // Include file extension ".jpg"
                     Body: file
                 };
                 const data = await s3.upload(params).promise();
+                // Update the corresponding property in the formData object
                 updatedFormData.Images[`image${i + 1}`] = data.Location;
-                console.log(`Uploaded file ${i + 1}:`, data.Location);
             }
+            // Set the updated formData object with image paths
             setFormData(updatedFormData);
+            // Reset selectedFiles after successful upload
             setSelectedFiles([]);
 
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
@@ -239,38 +241,38 @@ function OnboardingHost() {
             alert('You can only upload up to 5 images.');
             return;
         }
-
+    
         // Update formData.Images with the selected files
         const updatedImages = { ...formData.Images };
         files.forEach((file, index) => {
             updatedImages[`image${selectedFiles.length + index + 1}`] = file.name;
         });
-
+    
         setFormData((prevData) => ({
             ...prevData,
             Images: updatedImages
         }));
-
+    
         setSelectedFiles([...selectedFiles, ...files]);
     };
-
+    
     const handleDelete = (index) => {
         const updatedFiles = [...selectedFiles];
         updatedFiles.splice(index, 1);
-
+    
         const imageKeys = Object.keys(formData.Images);
         const updatedImages = { ...formData.Images };
-
+    
         // Remove the image URL associated with the deleted file
         delete updatedImages[imageKeys[index]];
-
+    
         setSelectedFiles(updatedFiles);
         setFormData((prevData) => ({
             ...prevData,
             Images: updatedImages,
         }));
     };
-
+    
 
     const renderPageContent = (page) => {
         switch (page) {

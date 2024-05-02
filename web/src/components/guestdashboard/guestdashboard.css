@@ -258,3 +258,15 @@
     background-color: #f9f9f9;
     /* Example background color */
 }
+
+@media (max-width: 480px) {
+    .reviewColumn {
+        width: 100%;
+        p.reviewText {
+            text-align: center;
+        }
+        h2.review-header {
+            font-size: 1.5em;
+        }
+    }
+}

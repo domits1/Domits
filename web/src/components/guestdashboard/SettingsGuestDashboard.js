@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import Pages from "./Pages.js";
 
-
 const SettingsTab = () => {
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
 
@@ -15,16 +14,14 @@ const SettingsTab = () => {
     const fetchUserData = async () => {
         try {
             const userInfo = await Auth.currentUserInfo();
-            console.log(userInfo); // This should show the entire userInfo object
-            console.log(userInfo.attributes); // This specifically shows the attributes
-            // Assuming userInfo has the necessary details, adjust the keys based on your user data structure
+            console.log(userInfo);
+            console.log(userInfo.attributes); 
             setUser({
                 email: userInfo.attributes.email,
-                // because it is a custom attribute it should be called like this
                 name: userInfo.attributes['custom:username'],
                 address: userInfo.attributes.address,
                 phone: userInfo.attributes.phone_number,
-                family: "2 adults - 2 kids" // needs to be calculated later on
+                family: "2 adults - 2 kids"
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
@@ -41,7 +38,6 @@ const SettingsTab = () => {
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
                         <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</div>
-                        {/*custom attributes need to be called slightly different */}
                         <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> {user.name}</div>
                         <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> {user.address}</div>
                         <div className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> {user.phone}</div>
@@ -54,8 +50,6 @@ const SettingsTab = () => {
 }
 
 export default SettingsTab;
-
-
 
 // import React, { useState, useEffect } from 'react';
 // import './settingsguestdashboard.css';

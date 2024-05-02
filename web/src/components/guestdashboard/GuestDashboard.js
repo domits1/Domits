@@ -79,17 +79,6 @@ const GuestDashboard = () => {
                 <Pages />
                 <div className="content">
                     <div className="leftContent">
-                        <div className="bookingBox">
-                            <h3>Current Booking</h3>
-                            <p>Tropical 12 person villa with pool</p>
-                            <img src={accommodationImg} alt="Booking" />
-                            <p>Host: John Doe</p>
-                        </div>
-                        <div className="messageBoxes">
-                            <h3>Messages:</h3>
-                            <p>Go to message centre</p>
-                            <button>Go</button>
-                        </div>
                     </div>
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>

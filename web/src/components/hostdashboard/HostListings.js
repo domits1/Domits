@@ -74,9 +74,11 @@ function HostListings() {
     const asyncDeleteAccommodation = async (accommodation) => {
         if(confirm("Are you sure you want to remove this item from your listing?") === true) {
             let accId = accommodation.ID;
+            let accImages = accommodation.Images;
 
             const options = {
-                id: accId
+                id: accId,
+                images: accImages
             };
             setIsLoading(true);
             try {
