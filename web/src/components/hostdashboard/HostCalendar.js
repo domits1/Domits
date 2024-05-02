@@ -95,11 +95,7 @@ function HostCalendar() {
                                 {accommodations.map(accommodation => (
                                     <option key={accommodation.ID}
                                             value={accommodation.ID}>
-                                        {accommodation.Title},
-                                        {" " + accommodation.Country},
-                                        {" " + accommodation.City},
-                                        {" " + accommodation.Street},
-                                        {" " + accommodation.PostalCode}
+                                        {accommodation.Title}
                                     </option>
                                 ))}
                             </select>
