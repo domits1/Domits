@@ -4,10 +4,14 @@
   ],
   "projectName": "Domits",
   "version": "3.1",
-  "frontend": "android",
-  "android": {
+  "frontend": "javascript",
+  "javascript": {
+    "framework": "react-native",
     "config": {
-      "ResDir": ""
+      "SourceDir": "src",
+      "DistributionDir": "/",
+      "BuildCommand": "npm.cmd run-script build",
+      "StartCommand": "npm.cmd run-script start"
     }
   }
 }
