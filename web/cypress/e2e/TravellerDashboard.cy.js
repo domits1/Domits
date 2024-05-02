@@ -1,5 +1,4 @@
 it('LoginGuest dashboard testing', () => {
-    console.log('Auth spec');
     cy.visit('https://acceptance.domits.com/');
     cy.wait(1000);
     cy.get('.personalMenu').click();
