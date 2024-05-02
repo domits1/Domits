@@ -46,11 +46,8 @@ const Chat = ({ user }) => {
     const [recipientEmail, setRecipientEmail] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
     const [chatUsers, setChatUsers] = useState([]);
+    const [userUUIDs, setUserUUIDs] = useState({});
     const [channelUUID, setChannelUUID] = useState(null);
-
-    const updateChannelUUID = (uuid) => {
-        setChannelUUID(uuid);
-    };
 
    
 
@@ -62,6 +59,14 @@ const Chat = ({ user }) => {
         }
         return uuid;
       };
+
+      const generateChannelName = (userEmail, recipientEmail) => {
+        // Sort the emails alphabetically to ensure consistency
+        const sortedEmails = [userEmail, recipientEmail].sort();
+        // Concatenate the sorted emails to create the channel name
+        return sortedEmails.join('_');
+    };
+      
       
     
     useEffect(() => {
@@ -93,6 +98,7 @@ const Chat = ({ user }) => {
         searchParams.set('recipient', uuid);
         navigate(`?${searchParams.toString()}`);
     };
+    
 
     const generateUUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -162,14 +168,16 @@ const chatContainerRef = useRef(null);
         fetchUnreadMessages();
     }, []);
 
-    const fetchChats = async (uuid) => {
+ 
+
+    const fetchChats = async (recipientEmail) => {
         try {
             const sentMessages = await API.graphql({
                 query: queries.listChats,
                 variables: {
                     filter: {
-                      
-                        channelID: { eq: uuid }
+                        email: { eq: user.attributes.email },
+                        recipientEmail: { eq: recipientEmail }
                     }
                 }
             });
@@ -266,12 +274,14 @@ const chatContainerRef = useRef(null);
     };
     
     const handleUserClick = async (email) => {
-        setRecipientEmail(email);
-        setSelectedUser(chatUsers.find(user => user.email === email));
-        updateRecipientEmailInUrl(email);
-        updateChannelUUID(getUUIDForUser(email)); 
-        fetchChats(getUUIDForUser(email))
-    
+        setSelectedUser(email); // Update selected user
+        const channelName = generateChannelName(user.attributes.email, email); // Use the clicked user's email
+        setChannelUUID(channelName); // Set the channel UUID to the generated channel name
+        // Fetch chats for the selected user (email) with the generated channel name
+        fetchChats(email, channelName);
+        console.log("Channel Name:", channelName);
+        updateRecipientEmailInUrl(channelName);
+
         try {
             const unreadMessagesIds = chats
                 .filter(chat => chat.recipientEmail === user.attributes.email && chat.isRead === false)
@@ -309,7 +319,7 @@ const chatContainerRef = useRef(null);
      
 
     const sendMessage = async (uuid) => {
-        if (!newMessage.trim() || !recipientEmail) return;
+        if (!newMessage.trim() || !selectedUser || !channelUUID) return;
         try {
             await API.graphql({
                 query: mutations.createChat,
@@ -320,12 +330,13 @@ const chatContainerRef = useRef(null);
                         recipientEmail: selectedUser.email,
                         isRead: false,
                         createdAt: currentDate.toISOString(),
-                        channelID: uuid // Use the provided channel UUID
+                        channelID: channelUUID 
                     },
                 },
             });
             setNewMessage('');
-            fetchChats(uuid); // Fetch chats using the channel UUID
+            await fetchChats(selectedUser, channelUUID);
+            setMessageSent(true);
         } catch (error) {
             console.error("Error sending message:", error);
         }
