@@ -455,7 +455,7 @@ function OnboardingHost() {
             case 3:
                 return (
                     <main className="container">
-                        <section className="formContainer">
+                        <section>
                             <section className="locationInput">
                                 <h2 className="onboardingSectionTitle">Fill in Location</h2>
                                 <label htmlFor="country">Country</label>
@@ -504,41 +504,175 @@ function OnboardingHost() {
                     </main>
                 );
 
-            case 4:
-                return (
-                    <main className="container">
-                        <section class="room-features formRow">
-                            <h2 className="onboardingSectionTitle">Systems and configurations</h2>
-                            <p>Cancel policy</p>
-                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "Users can cancel anytime"} value="Users can cancel anytime"></input>Users can cancel anytime</label>
-                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "No cancel 24h before arrival"} value="No cancel 24h before arrival"></input>No cancel 24h before arrival </label>
-
-                            <p>Guest type</p>
-                            <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Any guest"} value="Any guest"></input>Any Guest</label>
-                            <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Verified Domits guest"} value="Verified Domits guest"></input>Verified Domits guest</label>
-
-                            <h2 className="onboardingSectionTitle">Add accomodation features</h2>
-                            <label><input type="checkbox" className="radioInput" name="Wifi" onChange={handleInputChange} checked={formData.Features.Wifi}></input>Wifi</label>
-                            <label><input type="checkbox" className="radioInput" name="Television" onChange={handleInputChange} checked={formData.Features.Television}></input>Television</label>
-                            <label><input type="checkbox" className="radioInput" name="Kitchen" onChange={handleInputChange} checked={formData.Features.Kitchen}></input>Kitchen</label>
-                            <label><input type="checkbox" className="radioInput" name="WashingMachine" onChange={handleInputChange} checked={formData.Features.WashingMachine}></input>Washing machine</label>
-
-                            <label><input type="checkbox" className="radioInput" name="Airconditioning" onChange={handleInputChange} checked={formData.Features.Airconditioning}></input>Airconditioning</label>
-                            <label><input type="checkbox" className="radioInput" name="Onsiteparking" onChange={handleInputChange} checked={formData.Features.Onsiteparking}></input>Onsite parking</label>
-                            <label><input type="checkbox" className="radioInput" name="Homeoffice" onChange={handleInputChange} checked={formData.Features.Homeoffice}></input>Home office</label>
-
-
-                            <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
-                            <label><input type="checkbox" className="radioInput" name="Smokedetector" onChange={handleInputChange} checked={formData.Features.Smokedetector}></input>Smoke detector</label>
-                            <label><input type="checkbox" className="radioInput" name="FirstAidkit" onChange={handleInputChange} checked={formData.Features.FirstAidkit}></input>First Aid kit</label>
-                            <label><input type="checkbox" className="radioInput" name="Fireextinguisher" onChange={handleInputChange} checked={formData.Features.Fireextinguisher}></input>Fire extinguisher</label>
-                        </section>
-                        <nav class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
-                        </nav>
-                    </main >
-                );
+                case 4:
+                    return (
+                        <main className="container">
+                            <section className="room-features formRow">
+                                <h2 className="onboardingSectionTitle">Systems and configurations</h2>
+                                <div className="form-group">
+                                    <p>Cancel policy</p>
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            className="radioInput"
+                                            name="CancelPolicy"
+                                            onChange={handleInputChange}
+                                            checked={formData.CancelPolicy === "Users can cancel anytime"}
+                                            value="Users can cancel anytime"
+                                        />
+                                        Users can cancel anytime
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            className="radioInput"
+                                            name="CancelPolicy"
+                                            onChange={handleInputChange}
+                                            checked={formData.CancelPolicy === "No cancel 24h before arrival"}
+                                            value="No cancel 24h before arrival"
+                                        />
+                                        No cancel 24h before arrival
+                                    </label>
+                                </div>
+                                <div className="form-group">
+                                    <p>Guest type</p>
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            className="radioInput"
+                                            name="Guesttype"
+                                            onChange={handleInputChange}
+                                            checked={formData.Guesttype === "Any guest"}
+                                            value="Any guest"
+                                        />
+                                        Any Guest
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="radio"
+                                            className="radioInput"
+                                            name="Guesttype"
+                                            onChange={handleInputChange}
+                                            checked={formData.Guesttype === "Verified Domits guest"}
+                                            value="Verified Domits guest"
+                                        />
+                                        Verified Domits guest
+                                    </label>
+                                </div>
+                                <div className="form-group">
+                                    <h2 className="onboardingSectionTitle">Add accommodation features</h2>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="Wifi"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.Wifi}
+                                        />
+                                        Wifi
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="Television"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.Television}
+                                        />
+                                        Television
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="Kitchen"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.Kitchen}
+                                        />
+                                        Kitchen
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="WashingMachine"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.WashingMachine}
+                                        />
+                                        Washing machine
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="Airconditioning"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.Airconditioning}
+                                        />
+                                        Airconditioning
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="Onsiteparking"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.Onsiteparking}
+                                        />
+                                        Onsite parking
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="Homeoffice"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.Homeoffice}
+                                        />
+                                        Home office
+                                    </label>
+                                </div>
+                                <div className="form-group">
+                                    <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="Smokedetector"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.Smokedetector}
+                                        />
+                                        Smoke detector
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="FirstAidkit"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.FirstAidkit}
+                                        />
+                                        First Aid kit
+                                    </label>
+                                    <label>
+                                        <input
+                                            type="checkbox"
+                                            className="radioInput"
+                                            name="Fireextinguisher"
+                                            onChange={handleInputChange}
+                                            checked={formData.Features.Fireextinguisher}
+                                        />
+                                        Fire extinguisher
+                                    </label>
+                                </div>
+                            </section>
+                            <nav className="formContainer">
+                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                                <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
+                            </nav>
+                        </main>
+                    );
+                
 
             case 5:
                 return (
