@@ -1,4 +1,4 @@
-type Chat @aws_api_key @aws_iam @aws_cognito_user_pools {
+type Chat @aws_iam @aws_cognito_user_pools {
   id: ID!
   text: String!
   email: String
@@ -184,7 +184,7 @@ enum ModelSortDirection {
   DESC
 }
 
-type ModelChatConnection @aws_api_key @aws_iam @aws_cognito_user_pools {
+type ModelChatConnection @aws_iam @aws_cognito_user_pools {
   items: [Chat]!
   nextToken: String
 }
@@ -198,14 +198,15 @@ input ModelChatFilterInput {
   sortKey: ModelStringInput
   createdAt: ModelStringInput
   channelID: ModelIDInput
+  updatedAt: ModelStringInput
   and: [ModelChatFilterInput]
   or: [ModelChatFilterInput]
   not: ModelChatFilterInput
 }
 
 type Query {
-  getChat(id: ID!): Chat @aws_api_key @aws_iam @aws_cognito_user_pools
-  listChats(filter: ModelChatFilterInput, limit: Int, nextToken: String): ModelChatConnection @aws_api_key @aws_iam @aws_cognito_user_pools
+  getChat(id: ID!): Chat @aws_iam @aws_cognito_user_pools
+  listChats(filter: ModelChatFilterInput, limit: Int, nextToken: String): ModelChatConnection @aws_iam @aws_cognito_user_pools
   getAccommodation(id: ID!): Accommodation @aws_api_key @aws_iam
   listAccommodations(filter: ModelAccommodationFilterInput, limit: Int, nextToken: String): ModelAccommodationConnection @aws_api_key @aws_iam
   getUser(id: ID!): User @aws_api_key @aws_iam
@@ -225,6 +226,7 @@ input ModelChatConditionInput {
   and: [ModelChatConditionInput]
   or: [ModelChatConditionInput]
   not: ModelChatConditionInput
+  updatedAt: ModelStringInput
 }
 
 input CreateChatInput {
@@ -254,9 +256,9 @@ input DeleteChatInput {
 }
 
 type Mutation {
-  createChat(input: CreateChatInput!, condition: ModelChatConditionInput): Chat @aws_api_key @aws_iam @aws_cognito_user_pools
-  updateChat(input: UpdateChatInput!, condition: ModelChatConditionInput): Chat @aws_api_key @aws_iam @aws_cognito_user_pools
-  deleteChat(input: DeleteChatInput!, condition: ModelChatConditionInput): Chat @aws_api_key @aws_iam @aws_cognito_user_pools
+  createChat(input: CreateChatInput!, condition: ModelChatConditionInput): Chat @aws_iam @aws_cognito_user_pools
+  updateChat(input: UpdateChatInput!, condition: ModelChatConditionInput): Chat @aws_iam @aws_cognito_user_pools
+  deleteChat(input: DeleteChatInput!, condition: ModelChatConditionInput): Chat @aws_iam @aws_cognito_user_pools
   createAccommodation(input: CreateAccommodationInput!, condition: ModelAccommodationConditionInput): Accommodation @aws_api_key @aws_iam
   updateAccommodation(input: UpdateAccommodationInput!, condition: ModelAccommodationConditionInput): Accommodation @aws_api_key @aws_iam
   deleteAccommodation(input: DeleteAccommodationInput!, condition: ModelAccommodationConditionInput): Accommodation @aws_api_key @aws_iam
@@ -277,14 +279,15 @@ input ModelSubscriptionChatFilterInput {
   sortKey: ModelSubscriptionStringInput
   createdAt: ModelSubscriptionStringInput
   channelID: ModelSubscriptionIDInput
+  updatedAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionChatFilterInput]
   or: [ModelSubscriptionChatFilterInput]
 }
 
 type Subscription {
-  onCreateChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["createChat"]) @aws_api_key @aws_iam @aws_cognito_user_pools
-  onUpdateChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["updateChat"]) @aws_api_key @aws_iam @aws_cognito_user_pools
-  onDeleteChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["deleteChat"]) @aws_api_key @aws_iam @aws_cognito_user_pools
+  onCreateChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["createChat"]) @aws_iam @aws_cognito_user_pools
+  onUpdateChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["updateChat"]) @aws_iam @aws_cognito_user_pools
+  onDeleteChat(filter: ModelSubscriptionChatFilterInput): Chat @aws_subscribe(mutations: ["deleteChat"]) @aws_iam @aws_cognito_user_pools
   onCreateAccommodation(filter: ModelSubscriptionAccommodationFilterInput): Accommodation @aws_subscribe(mutations: ["createAccommodation"]) @aws_api_key @aws_iam
   onUpdateAccommodation(filter: ModelSubscriptionAccommodationFilterInput): Accommodation @aws_subscribe(mutations: ["updateAccommodation"]) @aws_api_key @aws_iam
   onDeleteAccommodation(filter: ModelSubscriptionAccommodationFilterInput): Accommodation @aws_subscribe(mutations: ["deleteAccommodation"]) @aws_api_key @aws_iam
@@ -305,6 +308,8 @@ input ModelAccommodationFilterInput {
   id: ModelIDInput
   accommodation: ModelStringInput
   description: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
   and: [ModelAccommodationFilterInput]
   or: [ModelAccommodationFilterInput]
   not: ModelAccommodationFilterInput
@@ -316,6 +321,8 @@ input ModelAccommodationConditionInput {
   and: [ModelAccommodationConditionInput]
   or: [ModelAccommodationConditionInput]
   not: ModelAccommodationConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
 }
 
 input CreateAccommodationInput {
@@ -338,6 +345,8 @@ input ModelSubscriptionAccommodationFilterInput {
   id: ModelSubscriptionIDInput
   accommodation: ModelSubscriptionStringInput
   description: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionAccommodationFilterInput]
   or: [ModelSubscriptionAccommodationFilterInput]
 }
@@ -351,6 +360,8 @@ input ModelUserFilterInput {
   id: ModelIDInput
   email: ModelStringInput
   password: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
   and: [ModelUserFilterInput]
   or: [ModelUserFilterInput]
   not: ModelUserFilterInput
@@ -362,6 +373,8 @@ input ModelUserConditionInput {
   and: [ModelUserConditionInput]
   or: [ModelUserConditionInput]
   not: ModelUserConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
 }
 
 input CreateUserInput {
@@ -384,6 +397,8 @@ input ModelSubscriptionUserFilterInput {
   id: ModelSubscriptionIDInput
   email: ModelSubscriptionStringInput
   password: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionUserFilterInput]
   or: [ModelSubscriptionUserFilterInput]
 }
@@ -397,6 +412,8 @@ input ModelTodoFilterInput {
   id: ModelIDInput
   name: ModelStringInput
   description: ModelStringInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
   and: [ModelTodoFilterInput]
   or: [ModelTodoFilterInput]
   not: ModelTodoFilterInput
@@ -408,6 +425,8 @@ input ModelTodoConditionInput {
   and: [ModelTodoConditionInput]
   or: [ModelTodoConditionInput]
   not: ModelTodoConditionInput
+  createdAt: ModelStringInput
+  updatedAt: ModelStringInput
 }
 
 input CreateTodoInput {
@@ -430,6 +449,8 @@ input ModelSubscriptionTodoFilterInput {
   id: ModelSubscriptionIDInput
   name: ModelSubscriptionStringInput
   description: ModelSubscriptionStringInput
+  createdAt: ModelSubscriptionStringInput
+  updatedAt: ModelSubscriptionStringInput
   and: [ModelSubscriptionTodoFilterInput]
   or: [ModelSubscriptionTodoFilterInput]
 }

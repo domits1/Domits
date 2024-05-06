@@ -13,6 +13,7 @@ export const updateChat = /* GraphQL */ `
       isRead
       sortKey
       createdAt
+      channelID
       updatedAt
       __typename
     }
@@ -31,6 +32,7 @@ export const deleteChat = /* GraphQL */ `
       isRead
       sortKey
       createdAt
+      channelID
       updatedAt
       __typename
     }
@@ -186,6 +188,7 @@ export const createChat = /* GraphQL */ `mutation CreateChat(
     isRead
     sortKey
     createdAt
+    channelID
   }
 }
 `;
