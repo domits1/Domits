@@ -1,18 +1,7 @@
 import React, { useEffect, useState, useRef  } from "react";
-import "./chat.css";
-import img1 from './image22.png';
-import heart from './Icon.png';
-import trash from './Icon-1.png';
-import smile from './smile.png';
-import users from './users.png';
-import home from './home.png';
-import calendar from './calendar.png';
-import card from './card.png';
-import django from './django.png';
-import jan from './jan.png';
-import eye from './eye.png';
-import alert from './alert.png';
-import Pages from "../guestdashboard/Pages";
+import "../chat/chat.css";
+
+import Pages from "../hostdashboard/Pages";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
@@ -34,7 +23,7 @@ function showMessages() {
     }
 }
 
-const Chat = ({ user }) => {
+const HostChat = ({ user }) => {
     const [chats, setChats] = useState([]);
     const [newMessage, setNewMessage] = useState('');
     const [messageSent, setMessageSent] = useState(false);
@@ -515,4 +504,4 @@ const chatContainerRef = useRef(null);
     );
 }
 
-export default withAuthenticator(Chat);
+export default withAuthenticator(HostChat);
