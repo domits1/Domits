@@ -33,7 +33,7 @@ function HomeScreen({ navigation }) {
               onPress={handleDetailpagePress} 
               activeOpacity={1}>
               <Image source={image} style={styles.image} />
-              <Text style={styles.imageText}>Kinderhuissingle 6k</Text>
+              <Text style={styles.imageText}>Kinderhuissingel 6k</Text>
               <View
                 style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={styles.imageText}>Host: Unknown</Text>
