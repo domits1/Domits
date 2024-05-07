@@ -19,7 +19,7 @@ function Pages() {
         <img src={dashboard} alt="Profile"></img>
         <p>Dashboard</p>
       </div>
-      <div className="wijzers" onClick={() => navigate("/guestdashboard/Chat")}>
+      <div className="wijzers" onClick={() => navigate("/guestdashboard/chat")}>
         <img src={message} alt="Messages"></img>
         <p>Messages</p>
       </div>
