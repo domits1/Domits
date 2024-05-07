@@ -212,7 +212,7 @@ function OnboardingHost() {
             setFormData(updatedFormData);
             setSelectedFiles([]);
 
-            const response = await fetch('API', {
+            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
