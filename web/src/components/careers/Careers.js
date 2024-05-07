@@ -4,87 +4,31 @@ import './careers.css'
 
 function Career() {
     return (
-        <div className="careers">
-            <div className="careertext">
-                <h1>Ah, looking for a job?</h1>
-                <div className="careerTextFlex">
-                    <div className="careerTextContainerColumn">
-                        <p className="careerTopText">
-                            Check our open positions below.
-                            If there are none available, please contact us through the contact form with your subject as “open application”</p>
-                        <p className="careerBottomText">Our HR team will reply to your application personally!</p>
-                    </div>
-                <img id="careerimg" src={careerimg} alt="careerimg" />
-            </div>
-        </div>
-
-        <div className="jobBubbleFirstRow">
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Design</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>UI Designer</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
+        <body>
+            <div class="container">
+                <div class="job-box">
+                    <div class="job-title">Software Engineer</div>
+                    <div class="job-location">Amsterdam, NL</div>
+                    <div class="job-description">
+                        We are looking for a talented Software Engineer to join our dynamic team. You will be responsible for developing high-quality software solutions and collaborating with cross-functional teams to define, design, and ship new features.
                     </div>
                 </div>
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>HR</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>Recruiter</h4>
-                        <p>Remote</p>
-                        <p id="moreinfo">More info</p>
+                <div class="job-box">
+                    <div class="job-title">Marketing Specialist</div>
+                    <div class="job-location">Rotterdam, NL</div>
+                    <div class="job-description">
+                        We are seeking a creative Marketing Specialist to develop and implement marketing strategies to promote our products and services. You will work closely with the marketing team to execute campaigns and analyze performance metrics.
                     </div>
                 </div>
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Design</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>Motion Designer</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
+                <div class="job-box">
+                    <div class="job-title">Data Analyst</div>
+                    <div class="job-location">Utrecht, NL</div>
+                    <div class="job-description">
+                        We are hiring a Data Analyst to interpret data, analyze results, and provide insights to drive business decisions. The ideal candidate should have strong analytical skills and be proficient in data visualization tools.
                     </div>
                 </div>
             </div>
-
-            <div className="JobBubbleSecondRow">
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Design</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>UX Designer</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
-
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Allround</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>Internship</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Allround</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>Internship</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </body>
     );
 }
 
