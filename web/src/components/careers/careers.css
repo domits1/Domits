@@ -1,130 +1,35 @@
-.careers {
-    padding: 50px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 100px;
-    max-width: 1200px; /* Set a maximum width for the container */
-}
 
-.careertext {
-    color: #000;
-    font-size: 20px;
-    font-weight: 500;
-}
-
-.careerTextFlex {
-    display: flex;
-    flex-direction: row;
-}
-
-.careerTopText {
-    margin-top: 50px;
-}
-
-.careerBottomText {
-    margin-top: 20px;
-}
-
-#careerimg {
-    width: 100%;
-    max-width: 420px;
-    height: 230px;
-    margin-bottom: 50px;
-}
-
-.jobBubbleFirstRow, .JobBubbleSecondRow {
-    display: flex;
-    flex-wrap: wrap;
-}
-
-.jobcat p {
-    color: #365E3D;
-    background-color: #D6F5DB;
-    font-weight: 500;
-    border-radius: 15px;
+.job-box {
+    width: calc(33.33% - 20px);
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    margin: 10px;
+    box-sizing: border-box;
     display: inline-block;
-    padding: 3px 10px;
+    vertical-align: top;
+    transition: box-shadow 0.3s ease;
 }
-
-.jobbubble {
-    border-radius: 15px;
-    box-shadow: 0 0 5px #c7c7c7;
-    padding: 10px;
-    margin: 25px;
-    margin-left: 0;
-    flex: 1 1 320px; /* Flex item properties */
-    width: 100%;
-    max-width: calc(33.333% - 20px); /* 33.333% of the container minus margins */
+.job-box:hover {
+    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
 }
-
-
-#moreinfo {
-    color: #000;
+.job-title {
     font-size: 18px;
-    font-weight: 500;
-    line-height: 20px;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 10px;
 }
-
-#openapp {
-    margin-top: 100px;
-    margin-left: 200px;
+.job-location {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
 }
-
-@media (max-width: 860px) {
-    .careerTextFlex {
-        flex-direction: column;
-    }
-    #careerimg {
-        margin-top: 25px;
-    }
+.job-description {
+    font-size: 14px;
+    color: #444;
+    display: none;
 }
-
-/* Media query for phone screens */
-@media only screen and (max-width: 600px) {
-    .careers {
-        padding: 20px;
-    }
-
-    .careertext {
-        font-size: 16px;
-    }
-
-    #careerimg {
-        max-width: 100%;
-        height: auto;
-        float: none;
-    }
-
-    .jobbubbles {
-        margin-left: 0;
-        margin-right: 0;
-    }
-
-    .jobbubble {
-        padding-left: 10px;
-        margin-left: 0;
-        margin-bottom: 20px;
-        max-width: 100%;
-    }
-
-    #moreinfo {
-        justify-content: center;
-        margin: 20px 0;
-    }
-
-    #openapp {
-        margin-top: 20px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-}
-
-/* Media query for larger screens */
-@media only screen and (min-width: 601px) {
-    #moreinfo {
-        margin-right: 20px; /* Add margin to the right */
-    }
+.job-box:hover .job-description {
+    display: block;
 }
