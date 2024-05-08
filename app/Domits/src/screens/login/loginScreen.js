@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,17 +7,41 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Auth } from 'aws-amplify';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = () => {
-    // login logic
-    alert('to be done');
+  const handleChange = (name, value) => {
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      [name]: value
+    }));
+  };
+
+
+  const handleLogin = async () => {
+    const { email, password } = formData;
+
+    try {
+      await Auth.signIn(email, password);
+      setIsAuthenticated(true);
+      setErrorMessage('');
+    } catch (error) {
+      console.error('Error logging in:', error);
+      setErrorMessage('Invalid username or password. Please try again.');
+    }
+    if (isAuthenticated) {
+      navigation.navigate('homeScreen');
+    }
   };
 
   const handleGoogleSignIn = () => {
@@ -31,19 +55,19 @@ const LoginScreen = () => {
       </View>
       <TextInput
         placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
+        value={formData.email}
+        onChangeText={(value) => handleChange('email', value)}
         style={styles.input}
         keyboardType="email-address"
       />
       <TextInput
         placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
+        value={formData.password}
+        onChangeText={(value) => handleChange('password', value)}
         style={styles.input}
         secureTextEntry
       />
-      <TouchableOpacity onPress={() => {alert('To be done')}}>
+      <TouchableOpacity onPress={() => { alert('To be done') }}>
         <Text style={styles.linkText}>Forgot your password?</Text>
       </TouchableOpacity>
       <TouchableOpacity
