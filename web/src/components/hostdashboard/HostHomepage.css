@@ -371,6 +371,18 @@
 
 }
 @media (max-width: 480px) {
+  .dashboard-content {
+    margin-top: 2em !important;
+  }
+  .dashboard-section {
+    flex-direction: column !important;
+    justify-content: space-between;
+    gap: 2em;
+    .box {
+      width: 100%;
+      height: 10em;
+    }
+  }
   .selector {
     width: auto;
   }
