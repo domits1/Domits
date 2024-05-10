@@ -37,8 +37,9 @@ function HostDashboard() {
             <h2>Dashboard</h2>
             <div className="dashboard">
                 <Pages />
-                <div className="contentContainer dashboard-section dashboard-content">
-                    <div className="boxColumns dashboard-section">
+
+                <div className="contentContainer">
+                    <div className="boxColumns">
                         <div className="box">
                             <p className="boxText">Dashboard</p>
                         </div>
@@ -60,6 +61,7 @@ function HostDashboard() {
                         <div className="box">
                             <p className="boxText">Recent reviews</p>
                         </div>
+
                     </div>
                 </div>
             </div>

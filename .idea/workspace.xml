@@ -4,7 +4,65 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard" />
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="kleine aanpassing aan loginscreen.js&#10;safeareaview toegepast en alerts op niet bestaande knoppen">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/amplify-meta.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/api/domits/build/cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/api/domits/build/schema.graphql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/auth/domits7b73f586/build/auth-trigger-cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/awscloudformation/build/api/domits/build/cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/amplify-meta.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/build/cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/build/parameters.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/auth/domits7b73f586/build/auth-trigger-cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/awscloudformation/build/api/domits/build/cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/.config/project-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/.config/project-config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/cli-inputs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/cli-inputs.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/resolvers/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/resolvers/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/schema.graphql" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/schema.graphql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/stacks/CustomResources.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/stacks/CustomResources.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/transform.conf.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/transform.conf.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/auth/domits7b73f586/cli-inputs.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/auth/domits7b73f586/cli-inputs.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/backend-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/backend-config.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/amplify.state" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/amplify.state" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/custom-policies.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/custom-policies.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/domits7b73f586PreSignup-cloudformation-template.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/domits7b73f586PreSignup-cloudformation-template.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/function-parameters.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/function-parameters.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/parameters.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/parameters.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/custom.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/custom.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/event.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/event.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/function/domits7b73f586PreSignup/src/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/cli.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/cli.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/team-provider-info.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/team-provider-info.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/ios/Podfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/ios/Podfile.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/login/loginScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/login/loginScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/web/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/web/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/base/SearchBar.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/SearchBar.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/base/SearchBar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/SearchBar.jsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/chat/Chat.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/chat/Chat.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/chat/chat.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/chat/chat.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/guestdashboard/guestdashboard.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/guestdashboard.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/HostDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostDashboard.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/HostHomepage.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostHomepage.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/HostReviews.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostReviews.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/Icon-1.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/Icon.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/alert.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/calendar.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/card.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/eye.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/home.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/send.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/smile.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/users.png" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -23,7 +81,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="bookingProcessDynamic" />
+        <entry key="$PROJECT_DIR$" value="app-login" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -43,30 +101,30 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "appHamza",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/hamzatjo/IdeaProjects/Domits",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "AndroidSdkUpdater",
-    "ts.external.directory.path": "C:\\Users\\chaos\\Documents\\Projects\\Domits\\app\\Domits\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
+    &quot;cf.first.check.clang-format&quot;: &quot;false&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;app-login&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/hamzatjo/IdeaProjects/Domits&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;project.structure.last.edited&quot;: &quot;Project&quot;,
+    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
+    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;AndroidSdkUpdater&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/hamzatjo/IdeaProjects/Domits/web/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
       <recent name="C:\Users\giann\projects\Domits" />
@@ -80,6 +138,11 @@
     <configuration name="index.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/Domits/web/build/index.html" useBuiltInWebServerPort="true">
       <method v="2" />
     </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="JavaScript Debug.index.html" />
+      </list>
+    </recent_temporary>
   </component>
   <component name="SharedIndexes">
     <attachedChunks>
@@ -227,7 +290,7 @@
     <MESSAGE value="SafeAreaView toegepast in hostDashboard" />
     <MESSAGE value="Ik heb Chahid gecarried" />
     <MESSAGE value="App werkend door build.gradle aan te passen" />
-    <option name="LAST_COMMIT_MESSAGE" value="App werkend door build.gradle aan te passen" />
+    <option name="LAST_COMMIT_MESSAGE" value="" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

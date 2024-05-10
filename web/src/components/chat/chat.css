@@ -335,8 +335,8 @@ p{
     justify-content: center;
     align-items: center;
     gap: 15px;
+    padding-left: 20px;
     border-bottom: 1px solid black;
-    padding: 5px;
 }
 
 .chat__pfpImg{
@@ -359,11 +359,9 @@ p{
     align-items: center;
     justify-content: flex-start;
     flex-wrap: wrap;
-    column-gap: 20px;
 }
 
 .chat__listItem{
-    border-bottom: 5px solid #eee;
     padding-left: 10px;
     display: flex;
     justify-content: center;
@@ -374,7 +372,6 @@ p{
 .chat__listP{
     font-size: 0.8rem;
     color: black;
-    visibility: hidden;
 }
 
 .chat__nav{

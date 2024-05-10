@@ -1,4 +1,6 @@
 PODS:
+  - AmplifyRTNCore (1.0.28):
+    - React-Core
   - boost (1.83.0)
   - CocoaAsyncSocket (7.6.5)
   - DoubleConversion (1.1.6)
@@ -956,7 +958,11 @@ PODS:
     - React-Core
   - react-native-camera/RN (4.2.1):
     - React-Core
+  - react-native-get-random-values (1.11.0):
+    - React-Core
   - react-native-maps (1.11.3):
+    - React-Core
+  - react-native-netinfo (11.3.1):
     - React-Core
   - react-native-safe-area-context (4.9.0):
     - React-Core
@@ -1127,6 +1133,10 @@ PODS:
     - React-jsi (= 0.73.4)
     - React-logger (= 0.73.4)
     - React-perflogger (= 0.73.4)
+  - RNAWSCognito (6.3.13):
+    - React-Core
+  - RNCAsyncStorage (1.23.1):
+    - React-Core
   - RNCMaskedView (0.1.11):
     - React
   - RNCPicker (2.7.0):
@@ -1154,6 +1164,7 @@ PODS:
   - Yoga (1.14.0)
 
 DEPENDENCIES:
+  - "AmplifyRTNCore (from `../node_modules/@aws-amplify/react-native`)"
   - boost (from `../node_modules/react-native/third-party-podspecs/boost.podspec`)
   - DoubleConversion (from `../node_modules/react-native/third-party-podspecs/DoubleConversion.podspec`)
   - FBLazyVector (from `../node_modules/react-native/Libraries/FBLazyVector`)
@@ -1208,7 +1219,9 @@ DEPENDENCIES:
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - "react-native-blur (from `../node_modules/@react-native-community/blur`)"
   - react-native-camera (from `../node_modules/react-native-camera`)
+  - react-native-get-random-values (from `../node_modules/react-native-get-random-values`)
   - react-native-maps (from `../node_modules/react-native-maps`)
+  - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
@@ -1230,6 +1243,8 @@ DEPENDENCIES:
   - React-runtimescheduler (from `../node_modules/react-native/ReactCommon/react/renderer/runtimescheduler`)
   - React-utils (from `../node_modules/react-native/ReactCommon/react/utils`)
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
+  - RNAWSCognito (from `../node_modules/amazon-cognito-identity-js`)
+  - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCMaskedView (from `../node_modules/@react-native-community/masked-view`)"
   - "RNCPicker (from `../node_modules/@react-native-picker/picker`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
@@ -1256,6 +1271,8 @@ SPEC REPOS:
     - SocketRocket
 
 EXTERNAL SOURCES:
+  AmplifyRTNCore:
+    :path: "../node_modules/@aws-amplify/react-native"
   boost:
     :podspec: "../node_modules/react-native/third-party-podspecs/boost.podspec"
   DoubleConversion:
@@ -1315,8 +1332,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/blur"
   react-native-camera:
     :path: "../node_modules/react-native-camera"
+  react-native-get-random-values:
+    :path: "../node_modules/react-native-get-random-values"
   react-native-maps:
     :path: "../node_modules/react-native-maps"
+  react-native-netinfo:
+    :path: "../node_modules/@react-native-community/netinfo"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   React-nativeconfig:
@@ -1359,6 +1380,10 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/react/utils"
   ReactCommon:
     :path: "../node_modules/react-native/ReactCommon"
+  RNAWSCognito:
+    :path: "../node_modules/amazon-cognito-identity-js"
+  RNCAsyncStorage:
+    :path: "../node_modules/@react-native-async-storage/async-storage"
   RNCMaskedView:
     :path: "../node_modules/@react-native-community/masked-view"
   RNCPicker:
@@ -1377,6 +1402,7 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon/yoga"
 
 SPEC CHECKSUMS:
+  AmplifyRTNCore: a274cd13fb1bde5fdbad50aeb25b7b40776ec122
   boost: d3f49c53809116a5d38da093a8aa78bf551aed09
   CocoaAsyncSocket: 065fd1e645c7abab64f7a6a2007a48038fdc6a99
   DoubleConversion: fea03f2699887d960129cc54bba7e52542b6f953
@@ -1418,7 +1444,9 @@ SPEC CHECKSUMS:
   React-Mapbuffer: 63913773ed7f96b814a2521e13e6d010282096ad
   react-native-blur: 27113acc008facbc8accae5fb3a78b8424f64cfd
   react-native-camera: 3eae183c1d111103963f3dd913b65d01aef8110f
+  react-native-get-random-values: 21325b2244dfa6b58878f51f9aa42821e7ba3d06
   react-native-maps: 79610ffcd0ec2ca8e0cefb48aa8ae7c62a75d7cc
+  react-native-netinfo: bdb108d340cdb41875c9ced535977cac6d2ff321
   react-native-safe-area-context: b97eb6f9e3b7f437806c2ce5983f479f8eb5de4b
   React-nativeconfig: d7af5bae6da70fa15ce44f045621cf99ed24087c
   React-NativeModulesApple: 0123905d5699853ac68519607555a9a4f5c7b3ac
@@ -1440,6 +1468,8 @@ SPEC CHECKSUMS:
   React-runtimescheduler: ed48e5faac6751e66ee1261c4bd01643b436f112
   React-utils: 6e5ad394416482ae21831050928ae27348f83487
   ReactCommon: 840a955d37b7f3358554d819446bffcf624b2522
+  RNAWSCognito: cb58fd45efe752ea69a806d5e2afe840000e9c20
+  RNCAsyncStorage: 826b603ae9c0f88b5ac4e956801f755109fa4d5c
   RNCMaskedView: 0e1bc4bfa8365eba5fbbb71e07fbdc0555249489
   RNCPicker: b840eb7fb541abe95e6f0a2ef12ac0a4404ac92d
   RNGestureHandler: deda62b8339496ba721a45e0f3e2d7a319932cee
