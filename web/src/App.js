@@ -38,7 +38,7 @@ import Chat from "./components/chat/Chat";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
-import Hostchat from './components/hostdashboard/Hostchat.js';
+import Hostchat from './components/hostdashboard/Hostchat';
 
 Modal.setAppElement('#root');
 
