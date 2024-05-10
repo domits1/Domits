@@ -25,19 +25,23 @@ Please provide a detailed description of the changes you're proposing with this 
 
 ## Console.logs
 - [ ] Console.logs are deleted
-If console.logs are not deleted, you must delete them first before your pull requests can be further reviewed.
+
+(Important) If console.logs are not deleted, you must delete them first before your pull requests can be further reviewed.
 
 ## Comments
 - [ ] Comments are deleted (or not used).
-Commennts must be deleted before your pull request can be reviewed further.
+
+(Important) Commennts must be deleted before your pull request can be reviewed further.
 
 ## Split frontend and back-end
 - [ ] Frontend and back-end are in seperate files
-Frontend and back-end must be split before your pull request can be reviewed further.
+
+(Important) Frontend and back-end must be split before your pull request can be reviewed further.
 
 ## Testing
 - [ ] Jest test is included, and your function is working when tested.
-Without a Jest test, your pull request cannot be accepted.
+
+(Important) Without a Jest test, your pull request cannot be accepted.
 
 ## @Mentions
 Mention the person or team responsible for reviewing the proposed changes. This notifies them that their review is needed.
