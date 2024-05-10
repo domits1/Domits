@@ -153,7 +153,7 @@ function HostReviews() {
                 <div className="contentContainer">
                     <div className="reviewColumn">
                         <div className="reviewBox">
-                            <p className="boxText">My reviews({reviews.length})</p>
+                            <p className="reviewText">My reviews({reviews.length})</p>
                             {isLoading ? (
                                     <div>
                                         <img src={spinner}/>
@@ -177,7 +177,7 @@ function HostReviews() {
                             )}
                         </div>
                         <div className="reviewBox">
-                            <p className="boxText">Received reviews({receivedReviews.length})</p>
+                            <p className="reviewText">Received reviews({receivedReviews.length})</p>
                             {isLoading ? (
                                     <div>
                                         <img src={spinner}/>
@@ -198,10 +198,10 @@ function HostReviews() {
                     </div>
                     <div className="reviewColumn">
                         <div className="reviewBox">
-                            <p className="boxText">Disputes</p>
+                            <p className="reviewText">Disputes</p>
                         </div>
                         <div className="reviewBox">
-                            <p className="boxText">Recent reviews</p>
+                            <p className="reviewText">Recent reviews</p>
                         </div>
 
                     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,9 +7,10 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Auth } from 'aws-amplify';
+import {useNavigation} from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {Auth} from 'aws-amplify';
+import 'react-native-get-random-values';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
@@ -20,30 +21,39 @@ const LoginScreen = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
+  const checkAuthentication = async () => {
+    try {
+      await Auth.currentAuthenticatedUser();
+      setIsAuthenticated(true);
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error('Not signed in', error);
+      setIsAuthenticated(false);
+    }
+  };
+
   const handleChange = (name, value) => {
     setFormData(prevFormData => ({
       ...prevFormData,
-      [name]: value
+      [name]: value,
     }));
   };
 
-
   const handleLogin = async () => {
-    const { email, password } = formData;
+    const {email, password} = formData;
 
     try {
-      await Auth.signIn(email, password);
-      setIsAuthenticated(true);
+      const user = await Auth.signIn(email, password);
+      console.log('User signed in:', user);
+      setIsAuthenticated(true); // Update authentication status
       setErrorMessage('');
+      navigation.navigate('Home'); // Move navigation here
     } catch (error) {
       console.error('Error logging in:', error);
       setErrorMessage('Invalid username or password. Please try again.');
-    }
-    if (isAuthenticated) {
-      navigation.navigate('homeScreen');
+      setIsAuthenticated(false); // Ensure the state is updated appropriately
     }
   };
-
   const handleGoogleSignIn = () => {
     // Google sign-in logic
   };
@@ -56,18 +66,21 @@ const LoginScreen = () => {
       <TextInput
         placeholder="Email"
         value={formData.email}
-        onChangeText={(value) => handleChange('email', value)}
+        onChangeText={value => handleChange('email', value)}
         style={styles.input}
         keyboardType="email-address"
       />
       <TextInput
         placeholder="Password"
         value={formData.password}
-        onChangeText={(value) => handleChange('password', value)}
+        onChangeText={value => handleChange('password', value)}
         style={styles.input}
         secureTextEntry
       />
-      <TouchableOpacity onPress={() => { alert('To be done') }}>
+      <TouchableOpacity
+        onPress={() => {
+          alert('To be done');
+        }}>
         <Text style={styles.linkText}>Forgot your password?</Text>
       </TouchableOpacity>
       <TouchableOpacity
