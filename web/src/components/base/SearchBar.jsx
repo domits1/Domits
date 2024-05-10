@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import DatePicker from 'react-datepicker';
+import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
+import DatePicker from '@hassanmojab/react-modern-calendar-datepicker';
 import { FaTimes, FaSearchLocation, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
-import 'react-datepicker/dist/react-datepicker.css';
 import './SearchBar.css';
+
 
 const handleButtonClick = (e) => {
   e.stopPropagation();
@@ -44,7 +45,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [startDate, endDate] = dateRange;
   const [error, setError] = useState("");
-
+  const [selectedDayRange, setSelectedDayRange] = useState({
+    from: null,
+    to: null,
+  });
 
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
@@ -63,13 +67,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setInfants(0);
     setPets(0);
   }, []);
-
-  const resetDates = (e) => {
-    e.stopPropagation();
-    setDateRange([null, null]);
-    setCheckIn(null);
-    setCheckOut(null);
-  };
 
   const toggleGuestDropdown = useCallback((e) => {
     e.stopPropagation();
@@ -105,7 +102,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const handleBlur = () => {
     setIsFocused(false);
   };
-
 
   const handleSelect = async (address) => {
     setAddress(address);
@@ -180,6 +176,35 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     return country ? country.alpha2 : "";
   };
 
+  useEffect(() => {
+    if (selectedDayRange.from && selectedDayRange.to) {
+      const start = new Date(
+        selectedDayRange.from.year,
+        selectedDayRange.from.month - 1,
+        selectedDayRange.from.day
+      );
+      const end = new Date(
+        selectedDayRange.to.year,
+        selectedDayRange.to.month - 1,
+        selectedDayRange.to.day
+      );
+      setDateRange([start, end]);
+      setCheckIn(start);
+      setCheckOut(end);
+    } else {
+      setDateRange([null, null]);
+      setCheckIn(null);
+      setCheckOut(null);
+    }
+  }, [selectedDayRange]);
+
+  //voor de date format
+  function formatDateToEnglish(date) {
+    const options = { day: 'numeric', month: 'short' };
+    return date.toLocaleDateString('en-GB', options);
+  }
+
+ 
   return (
     <div className="bar">
       {error && <div className="error-message">{error}</div>}
@@ -235,12 +260,12 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                           style: {
                             backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
                             padding: '18px 10px',
-                            borderBottom: '3px solid #ddd',
+                            borderBottom: '2px solid #ddd',
                             cursor: 'pointer',
                             transition: 'background-color 0.2s ease, transform 0.2s ease',
                             fontSize: '15px',
                             color: '#000',
-                            borderRadius: '5px',
+                            borderRadius: '3px',
                             margin: '0',
                             display: 'flex',
                             alignItems: 'center',
@@ -277,7 +302,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         </PlacesAutocomplete>
       </div>
 
-      <div className="accommodation searchInputContainer">
+      <div className=" searchInputContainer">
         <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p>
         <Select
           value={accommodation ? { label: accommodation, value: accommodation } : null}
@@ -331,7 +356,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               '&:hover': {
                 color: 'black',
                 backgroundColor: '#e6e6e6',
-                transform: 'scale(1.04)'
+                transform: 'scale(0.95)'
               },
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -364,29 +389,41 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         />
       </div>
 
-      <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
+      <div className="check-in" >
         <p className="searchTitleCenter">Check in/out</p>
-        <div className="searchInputContainer" style={{ marginTop: '10px' }}>
-          <DatePicker
-            className="searchbar-input"
-            id="checkInPicker"
-            selected={checkIn}
-            placeholderText="Start-End date"
-            showYearDropdown={false}
-            showMonthDropdown={true}
-            dateFormat="d MMM"
-            selectsRange={true}
-            startDate={startDate}
-            endDate={endDate}
-            onChange={update => setDateRange(update)}
-            readOnly={false}
-          />
-          {startDate && endDate && (
-            <button onClick={resetDates} className="date-reset-button">
-              <FaTimes />
-            </button>
+        <input
+          type="text"
+          placeholder="Start-End Date"
+          value={startDate && endDate
+            ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
+            : ''}
+          className="input-calendar"
+        />
+
+        <DatePicker
+          value={selectedDayRange}
+          calendarClassName="responsive-calendar"
+          format="MMM DD, YYYY"
+          onChange={setSelectedDayRange}
+          shouldHighlightWeekends
+          renderFooter={() => (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem 2rem' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedDayRange({ from: null, to: null })}
+                style={{
+                  background: 'rgb(15, 188, 249)',
+                  border: '#d3d9d9',
+                  color: '#fff',
+                  borderRadius: '0.5rem',
+                  padding: '1rem 3rem',
+                }}
+              >
+                Reset Calendar
+              </button>
+            </div>
           )}
-        </div>
+        />
       </div>
 
       <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
