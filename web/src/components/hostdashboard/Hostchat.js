@@ -1,5 +1,13 @@
 import React, { useEffect, useState, useRef  } from "react";
 import "../chat/chat.css";
+import img1 from './image22.png';
+import heart from './Icon.png';
+import trash from './Icon-1.png';
+import smile from './smile.png';
+import users from './users.png';
+import home from './home.png';
+import calendar from './calendar.png';
+import card from './card.png';
 
 import Pages from "../hostdashboard/Pages";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
