@@ -1,35 +1,63 @@
-
 .job-box {
-    width: calc(33.33% - 20px);
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 20px;
-    margin: 10px;
-    box-sizing: border-box;
-    display: inline-block;
-    vertical-align: top;
-    transition: box-shadow 0.3s ease;
+  position: relative;
+  width: calc(33.33% - 20px);
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 20px;
+  margin: 10px;
+  box-sizing: border-box;
+  display: inline-block;
+  vertical-align: top;
 }
-.job-box:hover {
-    box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);
+
+.job-info {
+
 }
-.job-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #333;
-    margin-bottom: 10px;
-}
-.job-location {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 10px;
-}
+
 .job-description {
-    font-size: 14px;
-    color: #444;
-    display: none;
+  font-size: 14px;
+  color: #444;
+  margin-bottom: 10px;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
 }
+
+.apply-button {
+}
+
 .job-box:hover .job-description {
-    display: block;
+  max-height: 200px;
 }
+
+.filterbar {
+    min-width: 250px;
+    width: 30%;
+    padding: 20px;
+  }
+  
+  .sidebar h2 {
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .filter-section {
+    margin-bottom: 20px;
+  }
+  
+  .filter-section h3 {
+    font-size: 16px;
+    margin-bottom: 10px;
+  }
+  
+  .filter-section label {
+    display: block;
+    margin-bottom: 5px;
+  }
+  
+  .job-list {
+    display: flex;
+    flex-direction: row;
+  }
+  

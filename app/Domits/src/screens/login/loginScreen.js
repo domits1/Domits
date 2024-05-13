@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -27,22 +27,39 @@ const LoginScreen = () => {
     }));
   };
 
+  const [user, setUser] = useState({ email: '', name: 'Unregistered User', address: '', phone: '', family: '' });
 
-  const handleLogin = async () => {
-    const { email, password } = formData;
+    const fetchUserData = async () => {
+        try {
+            const userInfo = await Auth.currentUserInfo();
+            setUser({
+                email: userInfo.attributes.email,
+                name: userInfo.attributes['custom:username'],
+                address: userInfo.attributes.address,
+                phone: userInfo.attributes.phone_number,
+                family: "2 adults - 2 kids"
+            });
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    };
 
-    try {
-      await Auth.signIn(email, password);
-      setIsAuthenticated(true);
-      setErrorMessage('');
-    } catch (error) {
-      console.error('Error logging in:', error);
-      setErrorMessage('Invalid username or password. Please try again.');
-    }
-    if (isAuthenticated) {
-      navigation.navigate('homeScreen');
-    }
-  };
+
+    const handleLogin = async () => {
+      const { email, password } = formData;
+    
+      try {
+        await Auth.signIn(email, password);
+        setIsAuthenticated(true);
+        setErrorMessage('');
+        // Fetch user data after successful login
+        fetchUserData();
+      } catch (error) {
+        console.error('Error logging in:', error);
+        setErrorMessage('Invalid username or password. Please try again.');
+      }
+    };
+    
 
   const handleGoogleSignIn = () => {
     // Google sign-in logic
@@ -89,6 +106,9 @@ const LoginScreen = () => {
         <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
           <Text style={styles.loginButtonText}>Log in</Text>
         </TouchableOpacity>
+      </View>
+      <View>
+        <Text>Hello, {user.name}</Text>
       </View>
     </SafeAreaView>
   );
