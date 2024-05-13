@@ -1,15 +1,16 @@
-// App.js
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import AppNavigation from './src/navigation/appNavigation.js';
-// import Header from './src/header/header.js';
+import { AuthProvider } from './src/context/AuthContext'; // Import AuthProvider from the context
+import AppNavigation from './src/navigation/appNavigation'; // Adjust the import if necessary
+
 function App() {
-  return (
-    <NavigationContainer>
-    
-      <AppNavigation />
-    </NavigationContainer>
-  );
+    return (
+        <AuthProvider>
+            <NavigationContainer>
+                <AppNavigation />
+            </NavigationContainer>
+        </AuthProvider>
+    );
 }
 
 export default App;
