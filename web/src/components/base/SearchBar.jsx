@@ -119,12 +119,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const handleSearch = async () => {
     setLoading(true);
     setError("");
-
+  
     const params = new URLSearchParams();
     if (accommodation) params.append('type', accommodation);
     if (address) params.append('searchTerm', address);
+    if (totalGuests > 0) params.append('guests', totalGuests); // Add guests parameter
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${params}`;
-
+  
     try {
       const response = await fetch(url);
       const data = await response.json();
