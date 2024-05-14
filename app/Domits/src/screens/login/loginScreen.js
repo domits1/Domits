@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,59 @@ import {
   StyleSheet,
   Image,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Auth } from 'aws-amplify';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleLogin = () => {
-    // login logic
-    alert('to be done');
+  const handleChange = (name, value) => {
+    setFormData(prevFormData => ({
+      ...prevFormData,
+      [name]: value
+    }));
   };
+
+  const [user, setUser] = useState({ email: '', name: 'Unregistered User', address: '', phone: '', family: '' });
+
+    const fetchUserData = async () => {
+        try {
+            const userInfo = await Auth.currentUserInfo();
+            setUser({
+                email: userInfo.attributes.email,
+                name: userInfo.attributes['custom:username'],
+                address: userInfo.attributes.address,
+                phone: userInfo.attributes.phone_number,
+                family: "2 adults - 2 kids"
+            });
+        } catch (error) {
+            console.error("Error fetching user data:", error);
+        }
+    };
+
+
+    const handleLogin = async () => {
+      const { email, password } = formData;
+    
+      try {
+        await Auth.signIn(email, password);
+        setIsAuthenticated(true);
+        setErrorMessage('');
+        // Fetch user data after successful login
+        fetchUserData();
+      } catch (error) {
+        console.error('Error logging in:', error);
+        setErrorMessage('Invalid username or password. Please try again.');
+      }
+    };
+    
 
   const handleGoogleSignIn = () => {
     // Google sign-in logic
@@ -31,19 +72,19 @@ const LoginScreen = () => {
       </View>
       <TextInput
         placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
+        value={formData.email}
+        onChangeText={(value) => handleChange('email', value)}
         style={styles.input}
         keyboardType="email-address"
       />
       <TextInput
         placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
+        value={formData.password}
+        onChangeText={(value) => handleChange('password', value)}
         style={styles.input}
         secureTextEntry
       />
-      <TouchableOpacity onPress={() => {alert('To be done')}}>
+      <TouchableOpacity onPress={() => { alert('To be done') }}>
         <Text style={styles.linkText}>Forgot your password?</Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -65,6 +106,9 @@ const LoginScreen = () => {
         <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
           <Text style={styles.loginButtonText}>Log in</Text>
         </TouchableOpacity>
+      </View>
+      <View>
+        <Text>Hello, {user.name}</Text>
       </View>
     </SafeAreaView>
   );

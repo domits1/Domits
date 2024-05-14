@@ -391,30 +391,28 @@ const chatContainerRef = useRef(null);
                     <article className="chat__figure">
                         <aside className="chat__aside">
                             <div className="chat__pfpSecond">
-                                <img src={img1} className="chat__pfpImg"/>
+                                {/* <img src={img1} className="chat__pfpImg"/> */}
                             </div>
                             <ul className="chat__list">
                                 <li className="chat__listItem">
                                     <h2 className="chat__name">{selectedUser ? selectedUser.email : ''}</h2>
                                 </li>
                                 <li className="chat__listItem">
-                                    <img src={smile}/>
+
                                     <p className="chat__listP">3rd all-time booker</p>
                                 </li>
                                 <li className="chat__listItem">
-                                    <img src={users}/>
+
                                     <p className="chat__listP">2 adults, 2 kids</p>
                                 </li>
                                 <li className="chat__listItem">
-                                    <img src={home}/>
                                     <p className="chat__listP">Kinderhuissingel 6k</p>
                                 </li>
                                 <li className="chat__listItem">
-                                    <img src={calendar}/>
+            
                                     <p className="chat__listP">21-12-2023 / 28-12-2023</p>
                                 </li>
                                 <li className="chat__listItem">
-                                    <img src={card}/>
                                     <p className="chat__listP">paid with mastercard</p>
                                 </li>
                             </ul>
