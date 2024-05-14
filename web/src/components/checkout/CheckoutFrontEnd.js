@@ -1,15 +1,38 @@
-import React from 'react';
-import {loadStripe} from '@stripe/stripe-js';
-const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
+import React, { useEffect, useState } from 'react';
+import { loadStripe } from '@stripe/stripe-js';
+import { Auth } from 'aws-amplify';
+
+const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3');
 
 function CheckoutFrontend() {
+    const [cognitoUserId, setCognitoUserId] = useState(null);
+
+    useEffect(() => {
+        const fetchUserInfo = async () => {
+            try {
+                const userInfo = await Auth.currentUserInfo();
+                setCognitoUserId(userInfo.attributes.sub);
+            } catch (error) {
+                console.error("Error fetching user info:", error);
+            }
+        };
+    
+        fetchUserInfo();
+    }, []);
+    
     const initiateStripeCheckout = async () => {
+        if (!cognitoUserId) {
+            console.error('Cognito user ID is not available.');
+            return;
+        }
+    
         const checkoutData = {
-            amount: 50, // In centen
+            userId: cognitoUserId,
+            amount: 50,  // example value in cents
             currency: 'eur',
             productName: 'EERSTE BETALING JONGENS',
-            successUrl: 'https://example.com/success',
-            cancelUrl: 'https://example.com/cancel',
+            successUrl: 'https://domits.com/success',
+            cancelUrl: 'https://domits.com/cancel',
             connectedAccountId: 'acct_1P15xO2enydXJo9e'
         };
     
@@ -22,24 +45,25 @@ function CheckoutFrontend() {
                 },
             });
     
-            const result = await response.json();
-    
-            if (response.ok) {
-                const stripe = await stripePromise;
-                const {error} = await stripe.redirectToCheckout({ sessionId: result.id });
-                if (error) {
-                    console.error('Stripe Checkout error:', error.message);
-                }
-            } else {
+            if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+    
+            const result = await response.json();
+            const stripe = await stripePromise;
+            const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
+            
+            if (error) {
+                console.error('Stripe Checkout error:', error.message);
             }
         } catch (error) {
             console.error('Error initiating Stripe Checkout:', error);
         }
     };
+    
 
     return (
-        <button onClick={initiateStripeCheckout}>Test Payment</button>
+        <button onClick={initiateStripeCheckout} disabled={!cognitoUserId}>Test Payment</button>
     );
 }
 
