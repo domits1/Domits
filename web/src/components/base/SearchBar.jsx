@@ -123,7 +123,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     const params = new URLSearchParams();
     if (accommodation) params.append('type', accommodation);
     if (address) params.append('searchTerm', address);
-    if (totalGuests > 0) params.append('guests', totalGuests); // Add guests parameter
+    if (totalGuests > 0) params.append('guests', totalGuests); 
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${params}`;
   
     try {
@@ -197,7 +197,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   //voor de date format
   function formatDateToEnglish(date) {
     const options = { day: 'numeric', month: 'short' };
-    return date.toLocaleDateString('ne-NL', options);
+    return date.toLocaleDateString('en-US', options);
   }
 
   return (
@@ -423,6 +423,21 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         <p className='guestP'>{totalGuestsDescription || 'Add guests'}</p>
         {showGuestDropdown && (
           <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+            
+            <button
+            className="clear-guests"
+            onClick={handleButtonClick}
+            style={{
+              left:'2rem',
+              transform: 'translateY(-50%)',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
+            }}
+          >
+            <FaTimes />
+          </button>
+
             <GuestCounter
               label="Adults"
               description="Ages 16 or above"
