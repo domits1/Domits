@@ -69,6 +69,7 @@
     ]
   },
   "dependencies": {
+    "@hassanmojab/react-modern-calendar-datepicker": "^3.1.7",
     "country-data": "^0.0.31",
     "date-fns": "^3.6.0",
     "immer": "^10.0.4",
