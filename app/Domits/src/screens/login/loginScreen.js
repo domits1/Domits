@@ -5,32 +5,18 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  SafeAreaView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
 import {Auth} from 'aws-amplify';
+import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
 import 'react-native-get-random-values';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const {checkAuth} = useAuth(); // Get the checkAuth method from context
+  const [formData, setFormData] = useState({email: '', password: ''});
   const [errorMessage, setErrorMessage] = useState('');
-
-  const checkAuthentication = async () => {
-    try {
-      await Auth.currentAuthenticatedUser();
-      setIsAuthenticated(true);
-      navigation.navigate('Home');
-    } catch (error) {
-      console.error('Not signed in', error);
-      setIsAuthenticated(false);
-    }
-  };
 
   const handleChange = (name, value) => {
     setFormData(prevFormData => ({
@@ -41,19 +27,16 @@ const LoginScreen = () => {
 
   const handleLogin = async () => {
     const {email, password} = formData;
-
     try {
-      const user = await Auth.signIn(email, password);
-      console.log('User signed in:', user);
-      setIsAuthenticated(true); // Update authentication status
-      setErrorMessage('');
-      navigation.navigate('Home'); // Move navigation here
+      await Auth.signIn(email, password);
+      checkAuth(); // Update the global auth state
+      navigation.navigate('Home');
     } catch (error) {
       console.error('Error logging in:', error);
       setErrorMessage('Invalid username or password. Please try again.');
-      setIsAuthenticated(false); // Ensure the state is updated appropriately
     }
   };
+
   const handleGoogleSignIn = () => {
     // Google sign-in logic
   };
