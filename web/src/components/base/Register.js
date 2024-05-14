@@ -132,7 +132,7 @@ const Register = () => {
                 <button onClick={() => Auth.signOut()}>Sign out</button>
             ) : (
                 <div className="registerContainer">
-                    <div className="registerTitle">Create an account on Domitssss</div>
+                    <div className="registerTitle">Create an account on Domits</div>
                     <form onSubmit={onSubmit} className="registerForm">
                         <label>Username:</label>
                         <input

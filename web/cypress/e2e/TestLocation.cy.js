@@ -16,7 +16,7 @@ describe('SearchBar Input Field Tests', () => {
         .type(testAddress)
         .should('have.value', testAddress);
       
-      cy.get('.faTimesIcon').click(); 
+      cy.get('.ClearButton').click(); 
       cy.get('.searchBar').should('have.value', '');
     });
   });
