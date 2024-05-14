@@ -3,7 +3,7 @@
 }
 
 .bar {
-  width: 90%;
+  width: 45rem;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 68%);
   border-radius: 1.875rem;
@@ -50,8 +50,6 @@
   margin-top: 0;
   padding-top: 0;
 }
-
-
 
 .bar .searchTitle,
 .searchTitleCenter {
@@ -333,7 +331,7 @@
 
 @media (max-width: 768px) {
   .responsive-calendar {
-    font-size: 6px !important;
+    font-size: 9px !important;
   }
 }
 
@@ -458,28 +456,12 @@
 }
 
 @media (max-width: 768px) {
-  .location{
+  .location, .accommodation, .check-in,.searchInputContainer{
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
   }
-  .accommodation{
-    background-color: #f0f0f0;
-    border-radius: 0.8rem;
-    width: 100%;
-    
-  }
-  .check-in{
-    background-color: #f0f0f0;
-    border-radius: 0.8rem;
-    width: 100%;
-  }
-  .searchInputContainer{
-    background-color: #f0f0f0;
-    border-radius: 0.8rem;
-    border-radius: 0.8rem;
-    width: 100%;
-  }
+
   .button-section{
     background-color: #f0f0f0;
     border-radius: 0.8rem;
@@ -505,6 +487,7 @@
 
   }
   .searchTitleGuest{
+    text-align: left;
     transform: translateX(-350%);
   }
   .guestP {
@@ -561,15 +544,15 @@ margin-left: 2rem;
   border: none;
   text-align: center;
   width: auto;
-  transform: translate(-40%, 10px); /* Voeg 10px naar beneden */
+  transform: translate(-40%, 0px); /* Voeg 10px naar beneden */
   margin-top: 2rem;
   height: 2rem;
 }
 
 .DatePicker__input {
   border: solid;
-  transform: translateX(-65%);
-  width: 200%;
+  transform: translateX(-115%);
+  width: 100%;
   height: 3rem;
   
 }
