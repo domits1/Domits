@@ -1,17 +1,16 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import DatePicker from 'react-datepicker';
-import { FaTimes, FaSearchLocation, FaSpinner, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
+import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
+import DatePicker from '@hassanmojab/react-modern-calendar-datepicker';
+import { FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
-import 'react-datepicker/dist/react-datepicker.css';
 import './SearchBar.css';
 
 const handleButtonClick = (e) => {
   e.stopPropagation();
 };
-
 
 const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
   return (
@@ -44,7 +43,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [startDate, endDate] = dateRange;
   const [error, setError] = useState("");
-
+  const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
 
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
@@ -63,13 +62,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setInfants(0);
     setPets(0);
   }, []);
-
-  const resetDates = (e) => {
-    e.stopPropagation();
-    setDateRange([null, null]);
-    setCheckIn(null);
-    setCheckOut(null);
-  };
 
   const toggleGuestDropdown = useCallback((e) => {
     e.stopPropagation();
@@ -106,7 +98,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
-
   const handleSelect = async (address) => {
     setAddress(address);
     try {
@@ -128,12 +119,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const handleSearch = async () => {
     setLoading(true);
     setError("");
-
+  
     const params = new URLSearchParams();
     if (accommodation) params.append('type', accommodation);
     if (address) params.append('searchTerm', address);
+    if (totalGuests > 0) params.append('guests', totalGuests); // Add guests parameter
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${params}`;
-
+  
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -179,6 +171,34 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
+  // calendar gedeelte
+  useEffect(() => {
+    if (selectedDayRange.from && selectedDayRange.to) {
+      const start = new Date(
+        selectedDayRange.from.year,
+        selectedDayRange.from.month - 1,
+        selectedDayRange.from.day
+      );
+      const end = new Date(
+        selectedDayRange.to.year,
+        selectedDayRange.to.month - 1,
+        selectedDayRange.to.day
+      );
+      setDateRange([start, end]);
+      setCheckIn(start);
+      setCheckOut(end);
+    } else {
+      setDateRange([null, null]);
+      setCheckIn(null);
+      setCheckOut(null);
+    }
+  }, [selectedDayRange]);
+
+  //voor de date format
+  function formatDateToEnglish(date) {
+    const options = { day: 'numeric', month: 'short' };
+    return date.toLocaleDateString('ne-NL', options);
+  }
 
   return (
     <div className="bar">
@@ -195,32 +215,36 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   className: 'searchBar',
                   onFocus: handleFocus,
                   onBlur: handleBlur,
+
                 })}
               />
               {address && isFocused && (
-                <button
+                <button className='ClearButton'
                   onMouseDown={handleClear}
                   style={{
                     position: 'absolute',
                     right: '10px',
                     top: '50%',
-                    transform: 'translateY(-50%)',
+                    transform: 'translateY(-150%)',
                     border: 'none',
                     background: 'transparent',
                     cursor: 'pointer',
                   }}
                 >
-                  <FaTimes className='faTimesIcon' />
+                  <FaTimes />
                 </button>
               )}
               <div
                 className="suggestions-container"
                 style={{
-                  marginTop: '15px',
-                  marginLeft: '15%',
+                  position: 'absolute',
+                  top: '100%',
+                  left: 0,
+                  width: '100%',
+
                 }}
               >
-                {loading && <div> <FaSpinner /></div>}
+                {loading && <div> </div>}
                 {suggestions.map((suggestion, index) => {
                   if (suggestion.types.includes('locality') || suggestion.types.includes('country')) {
                     const parts = suggestion.description.split(', ');
@@ -233,24 +257,24 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                         key={index}
                         {...getSuggestionItemProps(suggestion, {
                           style: {
+                            className: "suggestion-item",
                             backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
                             padding: '18px 10px',
-                            borderBottom: '3px solid #ddd',
+                            borderBottom: '2px solid #ddd',
                             cursor: 'pointer',
                             transition: 'background-color 0.2s ease, transform 0.2s ease',
                             fontSize: '15px',
                             color: '#000',
-                            borderRadius: '5px',
+                            borderRadius: '3px',
                             margin: '0',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'flex-start',
-                            width: '300px',
                             transform: suggestion.active ? 'scale(1.02)' : 'none',
                             zIndex: suggestion.active ? '1' : '0',
                           }
                         })}
-                        className="suggestion-item"
+
                       >
                         <ReactCountryFlag
                           countryCode={countryCode}
@@ -269,6 +293,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     );
                   }
                   return null;
+
                 })}
 
               </div>
@@ -277,7 +302,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         </PlacesAutocomplete>
       </div>
 
-      <div className="accommodation searchInputContainer">
+      <div className=" searchInputContainer">
         <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p>
         <Select
           value={accommodation ? { label: accommodation, value: accommodation } : null}
@@ -290,26 +315,48 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             { value: 'Camper', label: <><FaCaravan /> Camper</> },
             { value: 'Cottage', label: <><FaTree /> Cottage</> },
           ]}
-          placeholder="Type of Accommodation"
+          placeholder="Select Accommodation"
           isSearchable={false}
           isClearable={true}
           styles={{
-            control: (provided) => ({
-              ...provided,
-              border: 'none',
-              boxShadow: 'none',
-              background: 'none',
-              minHeight: '0',
-              padding: '0',
-              margin: '0',
-              cursor: 'pointer',
-              width: '150px',
-              position: 'relative',
-            }),
+            control: (provided) => {
+              const isMobile = window.innerWidth <= 768;
+              return {
+                ...provided,
+                width: '350px',
+                border: 'none',
+                boxShadow: 'none',
+                background: 'none',
+                Height: '0',
+                padding: '0',
+                margin: '0',
+                cursor: 'pointer',
+                width: isMobile ? '170%' : '150px',
+                position: 'relative',
+                transform: isMobile ? 'translateX(-46%)' : 'none',
+
+              };
+            },
+            menu: (provided) => {
+              const isMobile = window.innerWidth <= 768;
+              return {
+                ...provided,
+                backgroundColor: 'white',
+                borderRadius: '8px',
+                boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
+                marginTop: '15px',
+                width: '220px',
+                overflowX: 'hidden',
+                overflowY: 'auto',
+                transform: isMobile ? 'translateX(-95px)' : 'none',
+
+              };
+            },
             indicatorSeparator: () => ({ display: 'none' }),
             dropdownIndicator: () => ({ display: 'none' }),
             placeholder: (provided) => ({
               ...provided,
+              textAlign: 'left',
               color: 'gray',
               background: 'none',
             }),
@@ -331,20 +378,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               '&:hover': {
                 color: 'black',
                 backgroundColor: '#e6e6e6',
-                transform: 'scale(1.04)'
+                transform: 'scale(0.95)',
               },
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-            }),
-            menu: (provided) => ({
-              ...provided,
-              backgroundColor: 'white',
-              borderRadius: '8px',
-              boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
-              marginTop: '20px',
-              width: '220px',
-              overflowX: 'hidden',
-              overflowY: 'auto',
             }),
             clearIndicator: (provided) => ({
               ...provided,
@@ -357,6 +392,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             }),
             singleValue: (provided) => ({
               ...provided,
+              textAlign: 'left',
               color: '#333',
               fontSize: '14px',
             }),
@@ -364,30 +400,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         />
       </div>
 
-      <div className='check-in' onClick={() => document.getElementById('checkInPicker').click()} style={{ cursor: 'pointer' }}>
-        <p className="searchTitleCenter">Check in/out</p>
-        <div className="searchInputContainer" style={{ marginTop: '10px' }}>
-          <DatePicker
-            className="searchbar-input"
-            id="checkInPicker"
-            selected={checkIn}
-            placeholderText="Start-End date"
-            showYearDropdown={false}
-            showMonthDropdown={true}
-            dateFormat="d MMM"
-            selectsRange={true}
-            startDate={startDate}
-            endDate={endDate}
-            onChange={update => setDateRange(update)}
-            readOnly={false}
-          />
-          {startDate && endDate && (
-            <button onClick={resetDates} className="date-reset-button">
-              <FaTimes />
-            </button>
-          )}
-        </div>
-      </div>
 
       <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
         <p className="searchTitleGuest">Guests</p>
@@ -443,8 +455,51 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         )}
       </div>
 
+      <div className="check-in" >
+        <p className="searchTitleCenter">Check in/out</p>
+        <input
+          type="text"
+          placeholder="Start-End Date"
+          value={startDate && endDate
+            ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
+            : ''}
+          className="input-calendar"
+          readOnly={true}
+        />
+
+        <DatePicker
+          label="Basic date picker"
+          value={selectedDayRange}
+          calendarClassName="responsive-calendar"
+          format="MMM DD, YYYY"
+          onChange={setSelectedDayRange}
+          shouldHighlightWeekends
+          style={{ transform: 'translateX(-20px)' }}
+          renderFooter={() => (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem 0' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedDayRange({ from: null, to: null })}
+                style={{
+                  border: 'solid',
+                  background: 'rgb(15, 188, 249)',
+                  border: '#d3d9d9',
+                  color: '#fff',
+                  borderRadius: '0.5rem',
+                  padding: '0.5rem 2rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Reset Dates
+              </button>
+            </div>
+          )}
+        />
+      </div>
+
       <button className="searchbar-button" type="button" onClick={handleSearch}>
-        <FaSearchLocation size={16} style={{ position: 'relative', top: '-2px' }} />
+        <span className="search-text">Search</span>
+        <FaSearchLocation size={15} style={{ position: 'relative', right: '-3px' }}className="search-icon" />
       </button>
     </div>
   );
