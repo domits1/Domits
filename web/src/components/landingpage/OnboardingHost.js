@@ -720,7 +720,6 @@ function OnboardingHost() {
             case 6:
                 return (
                     <div className="container" style={{ width: '80%' }}>
-                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">
@@ -758,7 +757,7 @@ function OnboardingHost() {
             case 7:
                 if (isLoading) {
                     return (
-                        <div>
+                        <div className="loading">
                             <p className="spinner-text">Please wait a moment...</p>
                             <img className="spinner" src={spinner}/>
                         </div>
