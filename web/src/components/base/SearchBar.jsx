@@ -44,7 +44,32 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [startDate, endDate] = dateRange;
   const [error, setError] = useState("");
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 730);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize(); 
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const handleSelectChange = (selectedOption) => {
+    setAccommodation(selectedOption ? selectedOption.value : '');
+    setIsOpen(false);
+  };
+
+  const handleButtonClick = (e) => {
+    if (isOpen) {
+      e.stopPropagation();
+    }
+  };
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
     if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
@@ -119,13 +144,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const handleSearch = async () => {
     setLoading(true);
     setError("");
-  
+
     const params = new URLSearchParams();
     if (accommodation) params.append('type', accommodation);
     if (address) params.append('searchTerm', address);
-    if (totalGuests > 0) params.append('guests', totalGuests); 
+    if (totalGuests > 0) params.append('guests', totalGuests);
     const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${params}`;
-  
+
     try {
       const response = await fetch(url);
       const data = await response.json();
@@ -211,7 +236,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px', position: 'relative' }}>
               <input
                 {...getInputProps({
-                  placeholder: 'Search Places ....',
+                  // placeholder: 'Search Places ....',
                   className: 'searchBar',
                   onFocus: handleFocus,
                   onBlur: handleBlur,
@@ -225,7 +250,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     position: 'absolute',
                     right: '10px',
                     top: '50%',
-                    transform: 'translateY(-150%)',
+                    transform: 'translateY(-95%)',
                     border: 'none',
                     background: 'transparent',
                     cursor: 'pointer',
@@ -238,7 +263,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 className="suggestions-container"
                 style={{
                   position: 'absolute',
-                  top: '100%',
+                  top: isMobile ? '100%' : '200%',
                   left: 0,
                   width: '100%',
 
@@ -257,9 +282,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                         key={index}
                         {...getSuggestionItemProps(suggestion, {
                           style: {
-                            className: "suggestion-item",
                             backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                            padding: '18px 10px',
+                            padding: isMobile ? '5px 10px' : '18px 10px',
                             borderBottom: '2px solid #ddd',
                             cursor: 'pointer',
                             transition: 'background-color 0.2s ease, transform 0.2s ease',
@@ -272,7 +296,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                             justifyContent: 'flex-start',
                             transform: suggestion.active ? 'scale(1.02)' : 'none',
                             zIndex: suggestion.active ? '1' : '0',
-                          }
+                          },
+                          className: "suggestion-item", // Altijd de klasse toevoegen
                         })}
 
                       >
@@ -315,15 +340,15 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             { value: 'Camper', label: <><FaCaravan /> Camper</> },
             { value: 'Cottage', label: <><FaTree /> Cottage</> },
           ]}
-          placeholder="Select Accommodation"
           isSearchable={false}
           isClearable={true}
+          placeholder={false}
           styles={{
             control: (provided) => {
-              const isMobile = window.innerWidth <= 768;
+              const isMobile = window.innerWidth <= 730;
               return {
                 ...provided,
-                width: '350px',
+                width: '100%',
                 border: 'none',
                 boxShadow: 'none',
                 background: 'none',
@@ -331,20 +356,20 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 padding: '0',
                 margin: '0',
                 cursor: 'pointer',
-                width: isMobile ? '170%' : '150px',
-                position: 'relative',
-                transform: isMobile ? 'translateX(-46%)' : 'none',
-
+                width: isMobile ? '140%' : '150px',
+                left: isMobile ? '20' : '',
+                position: 'absolutle',
               };
             },
             menu: (provided) => {
-              const isMobile = window.innerWidth <= 768;
+              const isMobile = window.innerWidth <= 730;
               return {
                 ...provided,
                 backgroundColor: 'white',
                 borderRadius: '8px',
                 boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
                 marginTop: '15px',
+                left: '-2rem',
                 width: '220px',
                 overflowX: 'hidden',
                 overflowY: 'auto',
@@ -353,13 +378,11 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               };
             },
             indicatorSeparator: () => ({ display: 'none' }),
-            dropdownIndicator: () => ({ display: 'none' }),
-            placeholder: (provided) => ({
+            dropdownIndicator: (provided) => ({
               ...provided,
-              textAlign: 'left',
-              color: 'gray',
-              background: 'none',
+              display: accommodation ? 'none' : 'block', 
             }),
+
             option: (provided, state) => ({
               ...provided,
               backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : 'white',
@@ -370,6 +393,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'flex-start',
+              borderRadius:'10px',
               gap: '15px',
               cursor: 'pointer',
               transition: 'transform 0.2s',
@@ -386,20 +410,22 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               color: 'black',
               position: 'absolute',
               right: '0px',
-              transform: 'translateY(-50%)',
+              transform: 'translateY(-30%)',
               width: '32px',
               height: '32px',
             }),
             singleValue: (provided) => ({
               ...provided,
-              textAlign: 'left',
+              textAlign: 'center',
               color: '#333',
               fontSize: '14px',
             }),
           }}
         />
+        {isOpen && (
+          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setIsOpen(false)}></div>
+        )}
       </div>
-
 
       <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
         <p className="searchTitleGuest">Guests</p>
@@ -420,23 +446,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             <FaTimes />
           </button>
         )}
-        <p className='guestP'>{totalGuestsDescription || 'Add guests'}</p>
+        <p className='guestP'>{totalGuestsDescription}</p>
         {showGuestDropdown && (
           <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
-            
-            <button
-            className="clear-guests"
-            onClick={handleButtonClick}
-            style={{
-              left:'2rem',
-              transform: 'translateY(-50%)',
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-            }}
-          >
-            <FaTimes />
-          </button>
 
             <GuestCounter
               label="Adults"
@@ -474,7 +486,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         <p className="searchTitleCenter">Check in/out</p>
         <input
           type="text"
-          placeholder="Start-End Date"
+          // placeholder="Start-End Date"
           value={startDate && endDate
             ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
             : ''}
@@ -512,9 +524,11 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         />
       </div>
 
+
+
       <button className="searchbar-button" type="button" onClick={handleSearch}>
         <span className="search-text">Search</span>
-        <FaSearchLocation size={15} style={{ position: 'relative', right: '-3px' }}className="search-icon" />
+        <FaSearchLocation size={15} style={{ position: 'relative', right: '-3px' }} className="search-icon" />
       </button>
     </div>
   );
