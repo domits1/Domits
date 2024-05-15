@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import './Accommodations.css';
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
+import CheckoutFrontend from "../checkout/CheckoutFrontEnd";
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
@@ -64,6 +65,7 @@ const Accommodations = ({ searchResults }) => {
 
   return (
     <div id="card-visibility">
+    {/* <CheckoutFrontend/> */}
       {accolist.map((accommodation) => (
         <div className="accocard" key={accommodation.id} onClick={() => handleClick(accommodation.id)}>
           <img src={accommodation.image} alt={accommodation.title} />
