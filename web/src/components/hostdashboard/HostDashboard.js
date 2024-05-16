@@ -38,7 +38,14 @@ function HostDashboard() {
 
         checkStripeAccount();
     }, []);
+    const formatDate = (dateString) => {
+        const date = new Date(dateString);
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        const year = date.getFullYear();
 
+        return `${day}/${month}/${year}`;
+    }
     useEffect(() => {
         const asyncConfigureUser = async () => {
             try {
@@ -97,7 +104,11 @@ function HostDashboard() {
                 <Pages />
                 <div className="contentContainer">
                     <div className="dashboard-1">
-                        <h3>My recent listings:</h3>
+                        <div className="dashboard-head">
+                            <h3>My recent listings:</h3>
+                            <button className="refresh-btn" onClick={fetchRecentAccommodations}>Refresh</button>
+                            <button className="refresh-btn" onClick={() => navigate("/hostdashboard/listings")}>Go to listing</button>
+                        </div>
                         {isLoading ? (
                             <div>
                                 <img src={spinner}/>
@@ -105,17 +116,30 @@ function HostDashboard() {
                         ) : accommodations.length > 0 ? (
                             accommodations.map((accommodation, index) => (
                                 <div key={index} className="dashboard-card">
-                                    <p>{accommodation.Title}</p>
-                                    <p> {accommodation.City},
-                                        {accommodation.Street},
-                                        {accommodation.PostalCode}
-                                    </p>
+                                    <div className="accommodation-text">
+                                        <p className="accommodation-title">{accommodation.Title}</p>
+                                        <p className="accommodation-location"> {accommodation.City},
+                                            {accommodation.Street},
+                                            {accommodation.PostalCode}
+                                        </p>
+                                    </div>
                                     <ImageSlider images={accommodation.Images} seconds={5}/>
+                                    <div className="accommodation-details">
+                                        <p>Listed on: {formatDate(accommodation.createdAt)}</p>
+                                        {accommodation.StartDate && accommodation.EndDate ?
+                                            (<p>
+                                                Available from
+                                                {" " + formatDate(accommodation.StartDate) + " "}
+                                                to {" " + formatDate(accommodation.EndDate) + " "}
+                                            </p>) :
+                                            (<p>Date range not set</p>)
+                                        }
+                                    </div>
                                 </div>
                             ))
                         ) : (
                             <div className="accommodation-box">
-                                <p className="accommodation-alert">It appears that you have not listed any accommodations yet...</p>
+                                <p className="accommodation-alert">It appears that you have not listed any accommodations recently...</p>
                             </div>
                         )}
                     </div>
