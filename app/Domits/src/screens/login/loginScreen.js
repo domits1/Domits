@@ -1,65 +1,41 @@
-import React, { useEffect, useState } from "react";
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Image,
+  SafeAreaView,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Auth } from 'aws-amplify';
+import {useNavigation} from '@react-navigation/native';
+import {Auth} from 'aws-amplify';
+import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
+import 'react-native-get-random-values';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const {checkAuth} = useAuth(); // Get the checkAuth method from context
+  const [formData, setFormData] = useState({email: '', password: ''});
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (name, value) => {
     setFormData(prevFormData => ({
       ...prevFormData,
-      [name]: value
+      [name]: value,
     }));
   };
 
-  const [user, setUser] = useState({ email: '', name: 'Unregistered User', address: '', phone: '', family: '' });
-
-    const fetchUserData = async () => {
-        try {
-            const userInfo = await Auth.currentUserInfo();
-            setUser({
-                email: userInfo.attributes.email,
-                name: userInfo.attributes['custom:username'],
-                address: userInfo.attributes.address,
-                phone: userInfo.attributes.phone_number,
-                family: "2 adults - 2 kids"
-            });
-        } catch (error) {
-            console.error("Error fetching user data:", error);
-        }
-    };
-
-
-    const handleLogin = async () => {
-      const { email, password } = formData;
-    
-      try {
-        await Auth.signIn(email, password);
-        setIsAuthenticated(true);
-        setErrorMessage('');
-        // Fetch user data after successful login
-        fetchUserData();
-      } catch (error) {
-        console.error('Error logging in:', error);
-        setErrorMessage('Invalid username or password. Please try again.');
-      }
-    };
-    
+  const handleLogin = async () => {
+    const {email, password} = formData;
+    try {
+      await Auth.signIn(email, password);
+      checkAuth(); // Update the global auth state
+      navigation.navigate('Home');
+    } catch (error) {
+      console.error('Error logging in:', error);
+      setErrorMessage('Invalid username or password. Please try again.');
+    }
+  };
 
   const handleGoogleSignIn = () => {
     // Google sign-in logic
@@ -73,18 +49,21 @@ const LoginScreen = () => {
       <TextInput
         placeholder="Email"
         value={formData.email}
-        onChangeText={(value) => handleChange('email', value)}
+        onChangeText={value => handleChange('email', value)}
         style={styles.input}
         keyboardType="email-address"
       />
       <TextInput
         placeholder="Password"
         value={formData.password}
-        onChangeText={(value) => handleChange('password', value)}
+        onChangeText={value => handleChange('password', value)}
         style={styles.input}
         secureTextEntry
       />
-      <TouchableOpacity onPress={() => { alert('To be done') }}>
+      <TouchableOpacity
+        onPress={() => {
+          alert('To be done');
+        }}>
         <Text style={styles.linkText}>Forgot your password?</Text>
       </TouchableOpacity>
       <TouchableOpacity
@@ -106,9 +85,6 @@ const LoginScreen = () => {
         <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
           <Text style={styles.loginButtonText}>Log in</Text>
         </TouchableOpacity>
-      </View>
-      <View>
-        <Text>Hello, {user.name}</Text>
       </View>
     </SafeAreaView>
   );
