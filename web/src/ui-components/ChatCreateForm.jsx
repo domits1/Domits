@@ -6,10 +6,17 @@
 
 /* eslint-disable */
 import * as React from "react";
-import { Button, Flex, Grid, TextField } from "@aws-amplify/ui-react";
+import {
+  Button,
+  Flex,
+  Grid,
+  SwitchField,
+  TextField,
+} from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
-import { API } from "aws-amplify";
+import { generateClient } from "aws-amplify/api";
 import { createChat } from "../graphql/mutations";
+const client = generateClient();
 export default function ChatCreateForm(props) {
   const {
     clearOnSuccess = true,
@@ -24,22 +31,40 @@ export default function ChatCreateForm(props) {
   const initialValues = {
     text: "",
     email: "",
+    recipientEmail: "",
+    isRead: false,
     sortKey: "",
+    createdAt: "",
+    channelID: "",
   };
   const [text, setText] = React.useState(initialValues.text);
   const [email, setEmail] = React.useState(initialValues.email);
+  const [recipientEmail, setRecipientEmail] = React.useState(
+    initialValues.recipientEmail
+  );
+  const [isRead, setIsRead] = React.useState(initialValues.isRead);
   const [sortKey, setSortKey] = React.useState(initialValues.sortKey);
+  const [createdAt, setCreatedAt] = React.useState(initialValues.createdAt);
+  const [channelID, setChannelID] = React.useState(initialValues.channelID);
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
     setText(initialValues.text);
     setEmail(initialValues.email);
+    setRecipientEmail(initialValues.recipientEmail);
+    setIsRead(initialValues.isRead);
     setSortKey(initialValues.sortKey);
+    setCreatedAt(initialValues.createdAt);
+    setChannelID(initialValues.channelID);
     setErrors({});
   };
   const validations = {
     text: [{ type: "Required" }],
     email: [],
-    sortKey: [{ type: "Required" }],
+    recipientEmail: [],
+    isRead: [],
+    sortKey: [],
+    createdAt: [],
+    channelID: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -69,7 +94,11 @@ export default function ChatCreateForm(props) {
         let modelFields = {
           text,
           email,
+          recipientEmail,
+          isRead,
           sortKey,
+          createdAt,
+          channelID,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -99,7 +128,7 @@ export default function ChatCreateForm(props) {
               modelFields[key] = null;
             }
           });
-          await API.graphql({
+          await client.graphql({
             query: createChat.replaceAll("__typename", ""),
             variables: {
               input: {
@@ -134,7 +163,11 @@ export default function ChatCreateForm(props) {
             const modelFields = {
               text: value,
               email,
+              recipientEmail,
+              isRead,
               sortKey,
+              createdAt,
+              channelID,
             };
             const result = onChange(modelFields);
             value = result?.text ?? value;
@@ -160,7 +193,11 @@ export default function ChatCreateForm(props) {
             const modelFields = {
               text,
               email: value,
+              recipientEmail,
+              isRead,
               sortKey,
+              createdAt,
+              channelID,
             };
             const result = onChange(modelFields);
             value = result?.email ?? value;
@@ -176,8 +213,68 @@ export default function ChatCreateForm(props) {
         {...getOverrideProps(overrides, "email")}
       ></TextField>
       <TextField
+        label="Recipient email"
+        isRequired={false}
+        isReadOnly={false}
+        value={recipientEmail}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              text,
+              email,
+              recipientEmail: value,
+              isRead,
+              sortKey,
+              createdAt,
+              channelID,
+            };
+            const result = onChange(modelFields);
+            value = result?.recipientEmail ?? value;
+          }
+          if (errors.recipientEmail?.hasError) {
+            runValidationTasks("recipientEmail", value);
+          }
+          setRecipientEmail(value);
+        }}
+        onBlur={() => runValidationTasks("recipientEmail", recipientEmail)}
+        errorMessage={errors.recipientEmail?.errorMessage}
+        hasError={errors.recipientEmail?.hasError}
+        {...getOverrideProps(overrides, "recipientEmail")}
+      ></TextField>
+      <SwitchField
+        label="Is read"
+        defaultChecked={false}
+        isDisabled={false}
+        isChecked={isRead}
+        onChange={(e) => {
+          let value = e.target.checked;
+          if (onChange) {
+            const modelFields = {
+              text,
+              email,
+              recipientEmail,
+              isRead: value,
+              sortKey,
+              createdAt,
+              channelID,
+            };
+            const result = onChange(modelFields);
+            value = result?.isRead ?? value;
+          }
+          if (errors.isRead?.hasError) {
+            runValidationTasks("isRead", value);
+          }
+          setIsRead(value);
+        }}
+        onBlur={() => runValidationTasks("isRead", isRead)}
+        errorMessage={errors.isRead?.errorMessage}
+        hasError={errors.isRead?.hasError}
+        {...getOverrideProps(overrides, "isRead")}
+      ></SwitchField>
+      <TextField
         label="Sort key"
-        isRequired={true}
+        isRequired={false}
         isReadOnly={false}
         value={sortKey}
         onChange={(e) => {
@@ -186,7 +283,11 @@ export default function ChatCreateForm(props) {
             const modelFields = {
               text,
               email,
+              recipientEmail,
+              isRead,
               sortKey: value,
+              createdAt,
+              channelID,
             };
             const result = onChange(modelFields);
             value = result?.sortKey ?? value;
@@ -200,6 +301,66 @@ export default function ChatCreateForm(props) {
         errorMessage={errors.sortKey?.errorMessage}
         hasError={errors.sortKey?.hasError}
         {...getOverrideProps(overrides, "sortKey")}
+      ></TextField>
+      <TextField
+        label="Created at"
+        isRequired={false}
+        isReadOnly={false}
+        value={createdAt}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              text,
+              email,
+              recipientEmail,
+              isRead,
+              sortKey,
+              createdAt: value,
+              channelID,
+            };
+            const result = onChange(modelFields);
+            value = result?.createdAt ?? value;
+          }
+          if (errors.createdAt?.hasError) {
+            runValidationTasks("createdAt", value);
+          }
+          setCreatedAt(value);
+        }}
+        onBlur={() => runValidationTasks("createdAt", createdAt)}
+        errorMessage={errors.createdAt?.errorMessage}
+        hasError={errors.createdAt?.hasError}
+        {...getOverrideProps(overrides, "createdAt")}
+      ></TextField>
+      <TextField
+        label="Channel id"
+        isRequired={false}
+        isReadOnly={false}
+        value={channelID}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              text,
+              email,
+              recipientEmail,
+              isRead,
+              sortKey,
+              createdAt,
+              channelID: value,
+            };
+            const result = onChange(modelFields);
+            value = result?.channelID ?? value;
+          }
+          if (errors.channelID?.hasError) {
+            runValidationTasks("channelID", value);
+          }
+          setChannelID(value);
+        }}
+        onBlur={() => runValidationTasks("channelID", channelID)}
+        errorMessage={errors.channelID?.errorMessage}
+        hasError={errors.channelID?.hasError}
+        {...getOverrideProps(overrides, "channelID")}
       ></TextField>
       <Flex
         justifyContent="space-between"

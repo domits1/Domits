@@ -5,7 +5,7 @@
  **************************************************************************/
 
 import * as React from "react";
-import { GridProps, TextFieldProps } from "@aws-amplify/ui-react";
+import { GridProps, SwitchFieldProps, TextFieldProps } from "@aws-amplify/ui-react";
 export declare type EscapeHatchProps = {
     [elementHierarchy: string]: Record<string, unknown>;
 } | null;
@@ -24,19 +24,31 @@ export declare type ValidationFunction<T> = (value: T, validationResponse: Valid
 export declare type ChatCreateFormInputValues = {
     text?: string;
     email?: string;
+    recipientEmail?: string;
+    isRead?: boolean;
     sortKey?: string;
+    createdAt?: string;
+    channelID?: string;
 };
 export declare type ChatCreateFormValidationValues = {
     text?: ValidationFunction<string>;
     email?: ValidationFunction<string>;
+    recipientEmail?: ValidationFunction<string>;
+    isRead?: ValidationFunction<boolean>;
     sortKey?: ValidationFunction<string>;
+    createdAt?: ValidationFunction<string>;
+    channelID?: ValidationFunction<string>;
 };
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type ChatCreateFormOverridesProps = {
     ChatCreateFormGrid?: PrimitiveOverrideProps<GridProps>;
     text?: PrimitiveOverrideProps<TextFieldProps>;
     email?: PrimitiveOverrideProps<TextFieldProps>;
+    recipientEmail?: PrimitiveOverrideProps<TextFieldProps>;
+    isRead?: PrimitiveOverrideProps<SwitchFieldProps>;
     sortKey?: PrimitiveOverrideProps<TextFieldProps>;
+    createdAt?: PrimitiveOverrideProps<TextFieldProps>;
+    channelID?: PrimitiveOverrideProps<TextFieldProps>;
 } & EscapeHatchProps;
 export declare type ChatCreateFormProps = React.PropsWithChildren<{
     overrides?: ChatCreateFormOverridesProps | undefined | null;

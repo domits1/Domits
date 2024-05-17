@@ -60,10 +60,10 @@ const Chat = ({ user }) => {
         return uuid;
       };
 
-      const generateChannelName = (userEmail, recipientEmail) => {
-        // Sort the emails alphabetically to ensure consistency
+     
+
+    const generateChannelName = (userEmail, recipientEmail) => {
         const sortedEmails = [userEmail, recipientEmail].sort();
-        // Concatenate the sorted emails to create the channel name
         return sortedEmails.join('_');
     };
       
@@ -107,6 +107,16 @@ const Chat = ({ user }) => {
             return v.toString(16);
         });
     };
+
+    useEffect(() => {
+        const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
+        if (recipientEmailFromUrl) {
+            setSelectedUser(recipientEmailFromUrl);
+            const channelName = generateChannelName(user.attributes.email, recipientEmailFromUrl);
+            setChannelUUID(channelName);
+            fetchChats(recipientEmailFromUrl, channelName);
+        }
+    }, [location.search, user.attributes.email]);
 
     useEffect(() => {
         // Set recipientEmail when it's available in the URL

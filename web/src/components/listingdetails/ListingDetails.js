@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 
@@ -8,6 +8,10 @@ const ListingDetails = () => {
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
+    const navigate = useNavigate();
+
+
+  
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -31,6 +35,14 @@ const ListingDetails = () => {
         };
         fetchAccommodation();
     }, [id]);
+
+    const handleStartChat = () => {
+        // Assuming you have the user's email available
+        const userEmail = "nabilsalimi0229@gmail.com";
+        const recipientEmail = "33580@ma-web.nl"; // Change this to the actual owner email field
+        navigate(`/chat?recipient=${recipientEmail}`);
+    };
+
 
     return (
         <div className="listing-details-container">
@@ -73,6 +85,7 @@ const ListingDetails = () => {
                         </ul>
                         <div className="show-more-button">
                             <button>Show more</button>
+                            <button onClick={handleStartChat}>Start Chat</button>
                         </div>
                     </div>
                 </div>
