@@ -98,16 +98,22 @@ function HostDashboard() {
     };
     return (
         <div className="container">
-            <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)} />
-            <h2>Dashboard</h2>
+            <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)}/>
+            <div className="dashboard-header">
+                <h2>Dashboard</h2>
+                <h3 className="welcome-msg">Welcome {user.name}</h3>
+            </div>
             <div className="dashboard">
-                <Pages />
+                <Pages/>
+
                 <div className="contentContainer">
                     <div className="dashboard-1">
                         <div className="dashboard-head">
                             <h3>My recent listings:</h3>
                             <button className="refresh-btn" onClick={fetchRecentAccommodations}>Refresh</button>
-                            <button className="refresh-btn" onClick={() => navigate("/hostdashboard/listings")}>Go to listing</button>
+                            <button className="refresh-btn" onClick={() => navigate("/hostdashboard/listings")}>Go to
+                                listing
+                            </button>
                         </div>
                         {isLoading ? (
                             <div>
@@ -139,7 +145,8 @@ function HostDashboard() {
                             ))
                         ) : (
                             <div className="accommodation-box">
-                                <p className="accommodation-alert">It appears that you have not listed any accommodations recently...</p>
+                                <p className="accommodation-alert">It appears that you have not listed any
+                                    accommodations recently...</p>
                             </div>
                         )}
                     </div>
