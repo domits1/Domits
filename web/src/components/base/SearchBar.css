@@ -12,10 +12,6 @@
   font-size: 0.6rem;
 }
 
-.searchTitleAccommodation {
-  padding: 0.75rem;
-}
-
 .searchTitleCenterAcco {
   color: #0D9813;
   font-size: 0.7rem;
@@ -23,7 +19,7 @@
   font-weight: 700;
   padding-top: 0%;
   padding: 0.75;
-  margin-bottom: -1.125rem;
+  
 }
 
 .bar .searchInputContainer {
@@ -170,7 +166,21 @@
   border-radius: 1.25rem;
   width: 23%;
 }
-
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 2px solid #f5c6cb;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  position: absolute;
+  z-index: 1; 
+  height: 3rem;
+  transform: translate(100%, 140%);
+  max-width: 400px; 
+  text-align: center; 
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+}
 
 
 .guest-dropdown {
@@ -330,9 +340,6 @@
   }
 }
 
-
-
-
 @media (max-width: 1500px) {
 
   .Calendar__monthSelectorItemText,
@@ -422,14 +429,6 @@
   }
 }
 
-
-
-
-
-
-
-
-
 @media (max-width: 730px) {
 
   /* Verander de .bar-indeling naar een kolomlay-out */
@@ -446,13 +445,11 @@
     align-items: flex-start;
     height: auto;
     padding: 10px;
-  }
-  
+  }  
 }
 
 @media (max-width: 730px) {
 
-  
   .accommodation,
   .button-section,
   .searchInputContainer,
@@ -461,8 +458,6 @@
     border-radius: 0.8rem;
     width: 100%;
     margin-bottom: 0.4rem;
-    
-    
   }
   .check-in{
     height: 3.4rem;
@@ -482,8 +477,6 @@
     width: 90%;
     height: 1.5rem;
   }
-  
-
   .button-section {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
@@ -491,7 +484,6 @@
     padding: 0rem;
     border: none;
     height: 3rem;
-    
   }
   .searchTitleGuest {
     text-align: left;
@@ -501,13 +493,10 @@
     position: absolute; 
   left: 10%;
   }
-  
-
   .searchTitle {
     text-align: left;
     margin-left: 2rem;
   }
-
   .searchTitleCenterAcco {
     transform: translateX(-92%);
     overflow: hidden;
@@ -515,9 +504,7 @@
 
   .searchTitleCenter {
     transform: translateX(-32%);
-
   }
-
   .input-calendar {
     border: none;
     text-align: center;
@@ -534,14 +521,12 @@
     height: 3rem;
 
   }
-
   .searchbar-button {
     height: 2.7rem;
     width: 100%;
     border-radius: 10px;
     transform: translateX(0%);
     margin-top: 0.5rem;
-
   }
 
   .bar>div::before {
@@ -551,9 +536,24 @@
   .ClearButton {
     margin-top: 0.5rem;
   }
-
+  .error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 2px solid #f5c6cb;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    position: absolute;
+    z-index: 1; 
+    height: 3rem;
+    top: 40.6%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 82%; 
+    text-align: center; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+  }
 }
-
 .search-icon {
   margin-right: 8px;
 }
@@ -563,8 +563,6 @@
 }
 
 @media (max-width: 600px) {
-
-  /* Voor mobiele apparaten */
   .search-text {
     display: inline;
   }
