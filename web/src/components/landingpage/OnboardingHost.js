@@ -732,7 +732,9 @@ function OnboardingHost() {
                                    defaultValue={formData.Rent} min="40" max="1000" step="10"/>
                         </section>
                         <h2 className="onboardingSectionTitle">Availabilities</h2>
-                        <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
+                        <section className="listing-calendar">
+                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
+                        </section>
                         <section className="listing-info enlist-info">
                             <img src={info} className="info-icon"/>
                             <p className="info-msg">Fields with * are mandatory</p>
@@ -765,41 +767,102 @@ function OnboardingHost() {
                 return (
                     <div className="container" style={{width: '80%'}}>
                         <h2>Review your information</h2>
-                        <div className="formRow">
-                            <div className="reviewInfo">
-                                <p>Title: {formData.Title}</p>
-                                <p>Description: {formData.Description}</p>
-                                <p>Rent: {formData.Rent}</p>
-                                <p>Room Type: {formData.Roomtype}</p>
-                                {formData.StartDate && formData.EndDate ? (
-                                    <p>Available from {DateFormatter(formData.StartDate)} to {DateFormatter(formData.EndDate)}</p>
-                                ) :
-                                    <p>Date range not set</p>
-                                }
-                                <p>Number of Guests: {formData.Guestamount}</p>
-                                <p>Number of Bedrooms: {formData.Bedrooms}</p>
-                                <p>Number of Bathrooms: {formData.Bathrooms}</p>
-                                <p>Number of Fixed Beds: {formData.Beds}</p>
-                                <p>Country: {formData.Country}</p>
-                                <p>Postal Code: {formData.PostalCode}</p>
-                                <p>Street + House Nr.: {formData.Street}</p>
-                                <p>Neighbourhood: {formData.Neighbourhood}</p>
-                            </div>
-                            <div className="reviewInfo">
-                                <p>Features:</p>
-                                <ul>
-                                    {Object.entries(formData.Features).map(([feature, value]) => (
-                                        <p key={feature}>{feature}: {value ? 'Yes' : 'No'}</p>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                            <tbody>
+                            <tr>
+                                <th style={{
+                                    textAlign: 'left',
+                                    borderBottom: '1px solid #ccc',
+                                    paddingBottom: '8px'
+                                }}>Property Details
+                                </th>
+                                <th style={{
+                                    textAlign: 'left',
+                                    borderBottom: '1px solid #ccc',
+                                    paddingBottom: '8px'
+                                }}>Value
+                                </th>
+                            </tr>
+                            <tr>
+                                <td>Title:</td>
+                                <td>{formData.Title}</td>
+                            </tr>
+                            <tr>
+                                <td>Description:</td>
+                                <td>{formData.Description}</td>
+                            </tr>
+                            <tr>
+                                <td>Rent:</td>
+                                <td>{formData.Rent}</td>
+                            </tr>
+                            <tr>
+                                <td>Room Type:</td>
+                                <td>{formData.AccommodationType}</td>
+                            </tr>
+                            <tr>
+                                <td>Date Range:</td>
+                                <td>
+                                    {formData.StartDate && formData.EndDate ? (
+                                        `Available from ${DateFormatter(formData.StartDate)} to ${DateFormatter(formData.EndDate)}`
+                                    ) : "Date range not set"}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Number of Guests:</td>
+                                <td>{formData.Guestamount}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Bedrooms:</td>
+                                <td>{formData.Bedrooms}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Bathrooms:</td>
+                                <td>{formData.Bathrooms}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Fixed Beds:</td>
+                                <td>{formData.Beds}</td>
+                            </tr>
+                            <tr>
+                                <td>Country:</td>
+                                <td>{formData.Country}</td>
+                            </tr>
+                            <tr>
+                                <td>Postal Code:</td>
+                                <td>{formData.PostalCode}</td>
+                            </tr>
+                            <tr>
+                                <td>Street + House Nr.:</td>
+                                <td>{formData.Street}</td>
+                            </tr>
+                            <tr>
+                                <td>Neighbourhood:</td>
+                                <td>{formData.Neighbourhood}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <h3>Features:</h3>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                            <tbody>
+                            {Object.entries(formData.Features).map(([feature, value]) => (
+                                <tr key={feature}>
+                                    <td style={{borderBottom: '1px solid #ccc'}}>{feature}:</td>
+                                    <td style={{borderBottom: '1px solid #ccc'}}>{value ? 'Yes' : 'No'}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
                         <div className='buttonHolder'>
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+                            </button>
+                            <button className='nextButtons' onClick={() => {
+                                handleSubmit();
+                                pageUpdater(page + 1)
+                            }}>Confirm and proceed
+                            </button>
                         </div>
                         <p>Your accommodation ID: {formData.ID}</p>
-                    </div >
+                    </div>
                 );
 
 
@@ -819,10 +882,14 @@ function OnboardingHost() {
                             </h2>
                             <p>It may take a while before your accommodation is verified</p>
                             <div className='buttonHolder'>
-                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                                <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
+                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to
+                                    change
+                                </button>
+                                <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to
+                                    dashboard
+                                </button>
                             </div>
-                        </div >
+                        </div>
                     );
                 }
             default:
