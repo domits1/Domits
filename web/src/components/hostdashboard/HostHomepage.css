@@ -455,6 +455,9 @@
 
 }
 @media (max-width: 480px) {
+  .contentContainer {
+    gap: 5em !important;
+  }
   .dashboard-header {
     margin: 0;
     padding: 0;
@@ -464,6 +467,24 @@
       padding: 0;
       margin: 0;
       font-size: 1.5em;
+    }
+  }
+  .dashboard-1 {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    .dashboard-card {
+      height: auto !important;
+      width: 100% !important;
+      .accommodation-title {
+        font-size: 1em !important;
+      }
+      .accommodation-location {
+        font-size: 0.75em !important;
+      }
+      .accommodation-img {
+        height: 30vh !important;
+      }
     }
   }
 }
