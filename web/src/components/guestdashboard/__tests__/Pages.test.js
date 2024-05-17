@@ -1,21 +1,23 @@
-import React from 'react';
-import {render, fireEvent, screen} from '@testing-library/react';
-import Pages from '../Pages';
+import { render, screen, fireEvent } from '@testing-library/react';
+import Pages from '../Pages'; // Adjust the import to the actual path of your Pages component
 import { useNavigate } from 'react-router-dom';
 
-jest.mock('react-router-dom', ()=> ({
+jest.mock('react-router-dom', () => ({
     ...jest.requireActual('react-router-dom'),
-    useNavigate: jest.fn(() => jest.fn()),
+    useNavigate: jest.fn(),
 }));
 
 describe('Pages component', () => {
+    const mockNavigate = jest.fn();
+
     beforeEach(() => {
-    useNavigate.mockClear();
+        useNavigate.mockReturnValue(mockNavigate);
+        mockNavigate.mockClear();
     });
 
     it('navigates to /guestdashboard when Dashboard section is clicked', () => {
-        render(<Pages/>)
+        render(<Pages />);
         fireEvent.click(screen.getByText('Dashboard'));
-        expect(useNavigate).toHaveBeenCalledWith('/guestdashboard');
+        expect(mockNavigate).toHaveBeenCalledWith('/guestdashboard');
     });
 });
