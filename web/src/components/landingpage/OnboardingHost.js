@@ -6,6 +6,8 @@ import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
 import { Auth } from "aws-amplify"
+import Calendar from "../hostdashboard/Calendar";
+import DateFormatter from "../utils/DateFormatter";
 
 function OnboardingHost() {
     const navigate = useNavigate();
@@ -81,6 +83,8 @@ function OnboardingHost() {
             image4: "",
             image5: "",
         },
+        StartDate: "",
+        EndDate: "",
         AccommodationType: "",
         Measurement: "",
         OwnerId: ""
@@ -91,7 +95,7 @@ function OnboardingHost() {
     };
 
     const isFormFilled = () => {
-        const excludedFields = ['OwnerId'];
+        const excludedFields = ['OwnerId', 'StartDate', 'EndDate'];
 
         // Check if all fields except excluded ones are filled
         for (const key in formData) {
@@ -148,7 +152,6 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-        console.log(formData)
 
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -205,7 +208,6 @@ function OnboardingHost() {
 
         try {
             const data = await s3.upload(params).promise();
-            console.log(`File uploaded successfully at ${data.Location}`);
             return data.Location;
         } catch (err) {
             console.error("Failed to upload file:", err);
@@ -221,7 +223,6 @@ function OnboardingHost() {
                 const file = imageFiles[i];
                 const location =  await uploadImageToS3(userId, AccoID, file, i);
                 updatedFormData.Images[`image${i + 1}`] = location;
-                console.log(`Uploaded file ${i + 1}:`, location);
             }
             await setFormData(updatedFormData);
             setImageFiles([]);
@@ -273,6 +274,9 @@ function OnboardingHost() {
         setFormData(updatedFormData);
     };
 
+    const updateDates = (start, end) => {
+        setFormData(prev => ({ ...prev, StartDate: start, EndDate: end }));
+    };
     const [isLoading, setIsLoading] = useState(true);
 
     const renderPageContent = (page) => {
@@ -694,6 +698,7 @@ function OnboardingHost() {
                             <p>Price: {formData.Rent}</p>
                             <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="40" max="1000" step="10" />
                         </section>
+                        <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
                         <nav class="formContainer">
 
                             <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
@@ -727,6 +732,11 @@ function OnboardingHost() {
                                 <p>Description: {formData.Description}</p>
                                 <p>Rent: {formData.Rent}</p>
                                 <p>Room Type: {formData.Roomtype}</p>
+                                {formData.StartDate && formData.EndDate ? (
+                                    <p>Available from {DateFormatter(formData.StartDate)} to {DateFormatter(formData.EndDate)}</p>
+                                ) :
+                                    <p>Date range not set</p>
+                                }
                                 <p>Number of Guests: {formData.Guestamount}</p>
                                 <p>Number of Bedrooms: {formData.Bedrooms}</p>
                                 <p>Number of Bathrooms: {formData.Bathrooms}</p>

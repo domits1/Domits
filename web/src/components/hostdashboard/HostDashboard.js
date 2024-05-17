@@ -9,6 +9,7 @@ import spinner from "../../images/spinnner.gif";
 import ImageSlider from "../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
 import PagesDropdown from "./PagesDropdown";
+import DateFormatter from "../utils/DateFormatter";
 
 function HostDashboard() {
     const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
@@ -40,14 +41,6 @@ function HostDashboard() {
 
         checkStripeAccount();
     }, []);
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-
-        return `${day}/${month}/${year}`;
-    }
     useEffect(() => {
         const asyncConfigureUser = async () => {
             try {
@@ -133,12 +126,12 @@ function HostDashboard() {
                                     </div>
                                     <ImageSlider images={accommodation.Images} seconds={5}/>
                                     <div className="accommodation-details">
-                                        <p>Listed on: {formatDate(accommodation.createdAt)}</p>
+                                        <p>Listed on: {DateFormatter(accommodation.createdAt)}</p>
                                         {accommodation.StartDate && accommodation.EndDate ?
                                             (<p>
                                                 Available from
-                                                {" " + formatDate(accommodation.StartDate) + " "}
-                                                to {" " + formatDate(accommodation.EndDate) + " "}
+                                                {" " + DateFormatter(accommodation.StartDate) + " "}
+                                                to {" " + DateFormatter(accommodation.EndDate) + " "}
                                             </p>) :
                                             (<p>Date range not set</p>)
                                         }
