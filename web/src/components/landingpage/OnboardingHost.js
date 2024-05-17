@@ -1,11 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-
+import spinner from "../../images/spinnner.gif";
 import './onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
-import { Auth } from "aws-amplify";
+import { Auth } from "aws-amplify"
 
 function OnboardingHost() {
     const navigate = useNavigate();
@@ -23,6 +23,7 @@ function OnboardingHost() {
         });
     }
 
+    const AWS = require('aws-sdk');
     const s3 = new AWS.S3({
         accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
@@ -30,7 +31,6 @@ function OnboardingHost() {
     });
 
     let [userId, setUserId] = useState(null);
-    const [selectedFiles, setSelectedFiles] = useState([]);
 
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
@@ -193,41 +193,55 @@ function OnboardingHost() {
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
     };
 
+    const uploadImageToS3 = async (userId, accommodationId, image, index) => {
+        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+
+        const params = {
+            Bucket: 'accommodation',
+            Key: key,
+            Body: image,
+            ContentType: 'image/jpeg'
+        };
+
+        try {
+            const data = await s3.upload(params).promise();
+            console.log(`File uploaded successfully at ${data.Location}`);
+            return data.Location;
+        } catch (err) {
+            console.error("Failed to upload file:", err);
+            throw err;
+        }
+    }
     const handleSubmit = async () => {
         try {
-            const UserID = userId; // Assuming userId is available in scope
+            setIsLoading(true);
             const AccoID = formData.ID;
             const updatedFormData = { ...formData }; // Copy the original formData object
-            for (let i = 0; i < selectedFiles.length; i++) {
-                const file = selectedFiles[i];
-                const params = {
-                    Bucket: 'accommodation',
-                    Key: `images/${UserID}/${AccoID}/Image-${i + 1}`, // Numerical names for images
-                    Body: file
-                };
-                const data = await s3.upload(params).promise();
-                updatedFormData.Images[`image${i + 1}`] = data.Location;
-                console.log(`Uploaded file ${i + 1}:`, data.Location);
+            for (let i = 0; i < imageFiles.length; i++) {
+                const file = imageFiles[i];
+                const location =  await uploadImageToS3(userId, AccoID, file, i);
+                updatedFormData.Images[`image${i + 1}`] = location;
+                console.log(`Uploaded file ${i + 1}:`, location);
             }
-            setFormData(updatedFormData);
-            setSelectedFiles([]);
+            await setFormData(updatedFormData);
+            setImageFiles([]);
 
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
                 method: 'POST',
+                body: JSON.stringify(formData),
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
+                }
             });
-
             if (response.ok) {
                 console.log('Form data saved successfully');
-
             } else {
                 console.error('Error saving form data');
             }
         } catch (error) {
             console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -259,8 +273,7 @@ function OnboardingHost() {
         setFormData(updatedFormData);
     };
 
-
-
+    const [isLoading, setIsLoading] = useState(true);
 
     const renderPageContent = (page) => {
         switch (page) {
@@ -672,7 +685,7 @@ function OnboardingHost() {
                             </nav>
                         </main>
                     );
-                
+
 
             case 5:
                 return (
@@ -707,7 +720,6 @@ function OnboardingHost() {
             case 6:
                 return (
                     <div className="container" style={{ width: '80%' }}>
-                        {console.log(formData)}
                         <h2>Review your information</h2>
                         <div className="formRow">
                             <div className="reviewInfo">
@@ -743,18 +755,27 @@ function OnboardingHost() {
 
 
             case 7:
-                return (
-                    <div className="container">
-                        <h2>
-                            Congratulations! Your accommodation is being listed
-                        </h2>
-                        <p>It may take a while before your accommodation is verified</p>
-                        <div className='buttonHolder'>
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
+                if (isLoading) {
+                    return (
+                        <div className="loading">
+                            <p className="spinner-text">Please wait a moment...</p>
+                            <img className="spinner" src={spinner}/>
                         </div>
-                    </div >
-                );
+                    );
+                } else {
+                    return (
+                        <div className="container">
+                            <h2>
+                                Congratulations! Your accommodation is being listed
+                            </h2>
+                            <p>It may take a while before your accommodation is verified</p>
+                            <div className='buttonHolder'>
+                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                                <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
+                            </div>
+                        </div >
+                    );
+                }
             default:
                 return null;
         }

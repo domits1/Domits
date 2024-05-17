@@ -96,3 +96,16 @@
   flex-wrap: wrap;
   margin: auto;
 }
+.loading {
+  display: flex;
+  flex-direction: column;
+  padding: 10em 50em 10em;
+  .spinner-text {
+    font-weight: bold;
+    font-size: 2em;
+  }
+  .spinner {
+    width: 20vw;
+    height: auto;
+  }
+}
