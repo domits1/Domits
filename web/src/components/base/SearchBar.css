@@ -1,8 +1,9 @@
 * {
   box-sizing: border-box;
 }
+
 .bar {
-  width: 45.625rem;
+  width: 45rem;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 68%);
   border-radius: 1.875rem;
@@ -10,84 +11,68 @@
   height: 3.4375rem;
   font-size: 0.6rem;
 }
-.searchTitleAccommodation {
-  padding: 0.75rem; 
-}
-.searchTitleCenterAcco{
+
+.searchTitleCenterAcco {
   color: #0D9813;
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 0%; 
-  margin-bottom: -0.125rem; 
+  padding-top: 0%;
+  padding: 0.75;
+  
 }
+
 .bar .searchInputContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 0.3125rem; 
+  margin-top: 0.3125rem;
 }
+
 .suggestions-container {
   position: relative;
-  z-index: 999;
+  z-index: 1;
 }
+
 .css-qbdosj-Input {
   margin: 0 !important;
 }
+
 .autocomplete-container input::placeholder {
   text-align: left;
 }
+
 .bar input {
   margin-top: 0;
   padding-top: 0;
 }
-.searchbar-input::placeholder {
-  font-size: 0.64rem;
-}
-.bar .searchTitle, .searchTitleCenter {
+
+.bar .searchTitle,
+.searchTitleCenter {
   color: #0D9813;
   font-size: 0.7rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 0.1875rem; 
-  margin-top: 0px; 
-}
-.check-in:hover {
-  cursor: auto;
-  border-radius: 1.25rem; 
-  
+  padding-top: 0.1875rem;
+  margin-top: 2px;
 }
 
-.check-in{
-  width: 19%;
+.check-in {
+  width: 17%;
   cursor: auto;
-  border-radius: 1.25rem; 
 }
 
-.location{
+.location {
   width: 32%;
-  border-radius: 1.25rem; 
 }
 
 .accommodation {
-  width: 20%;
-  border-radius: 1.25rem; 
-  border:none;
-  height: 3.125rem; 
+  width: 25%;
+  border: none;
+  height: 3.125rem;
 }
 
-.searchbar-input {
-  background: none;
-  border: none;
-  padding: 0.6rem 0 0 0;
-  text-align: center;
-  width: 90%;
-  pointer-events: none; 
-}
-.searchbar-input:focus {
-  outline: none;
-}
-.input-calendar{
+.input-calendar {
   background: none;
   border: none;
   padding: 0.6rem 1 0 0;
@@ -98,82 +83,71 @@
 
 .bar>div {
   position: relative;
-  transition: background 150ms ease, width 150ms ease;
+  /* transition: background 150ms ease, width 150ms ease; */
 }
+
 .bar>div::before {
   position: absolute;
   content: "";
-  left: -0.8%;
+  left: 0.4%;
   top: 50%;
   transform: translateY(-50%);
-  width: 0.05625rem; 
+  width: 0.05625rem;
   height: 60%;
   background: rgb(88, 153, 22);
 }
+
 .bar>div:nth-of-type(1)::before {
   background: transparent;
 }
+
 .searchbar-button {
   display: inline-block;
   outline: 0;
   cursor: pointer;
   padding: 3px;
   font-size: 0.625rem;
-  line-height: 1.875rem; 
+  line-height: 1.875rem;
   border: 1px solid #0fa616;
   border-radius: 50%;
   color: #ffffff;
   background-color: #0fa616;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  height: 2.5625rem; 
-  width: 2.5625rem; 
+  height: 2.5625rem;
+  width: 2.5625rem;
   margin-top: 0.5rem;
 }
+
 .searchbar-button:hover {
   background-color: #0a770f;
   border-color: #0a770f;
   transition-duration: 0.0s
 }
+
 .searchbar-button svg {
   color: rgb(255, 255, 255);
-  margin-top: 0.625rem; 
+  margin-top: 0.625rem;
 }
-/* .searchbar-button:hover svg {
-  animation: bounce 0.7s ease 1;
+
+.search-text {
+  font-size: 1rem;
+  margin-right: 1rem;
 }
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
 
-  }
-  20% {
-    transform: translateY(-5px);
-    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
-
-  }
-  50%, 85% {
-    transform: translateY(0);
-    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
-
-  }
-  20% {
-    transform: translateY(-3px);
-    animation-timing-function: cubic-bezier(0.25, 0.8, 0.25, 1);
-  }
-} */
 .searchBar {
   background: none;
   border: none;
-  padding-top: 1rem; 
-  padding-bottom: 0.4rem; 
+  padding-top: 0.4rem;
   text-align: left;
-  margin-bottom: 0.625rem; 
+  margin-bottom: 0rem;
   width: 85%;
+  height: 1.5rem;
 }
+
 .searchBar:focus {
   outline: none;
 }
+
 .searchBar::placeholder {
   font-size: 0.64rem;
 }
@@ -186,31 +160,43 @@
   align-items: center;
   position: relative;
   cursor: pointer;
-  padding: 1.625rem; 
-  user-select: none; 
-   background-color: #fff;
-   border-radius: 1.25rem; 
-   width: 22%;
+  padding: 1.625rem;
+  user-select: none;
+  background-color: #fff;
+  border-radius: 1.25rem;
+  width: 23%;
+}
+.error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 2px solid #f5c6cb;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  position: absolute;
+  z-index: 1; 
+  height: 3rem;
+  transform: translate(100%, 140%);
+  max-width: 400px; 
+  text-align: center; 
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
 }
 
-.button-section p,
-.guestCounter p {
-  margin: 0; 
-  padding: 0;
-}
 
 .guest-dropdown {
   display: none;
   position: absolute;
-  top: calc(100% + 0.625rem); 
-  left: 77%;
+  top: calc(100% + 0.625rem);
+  /* left: 77%; is een tijdelijke oplossing omdat het zorgt voor overflow buiten de schermen dus moet later
+  verplaatst worden */
+  left: 57%;
   transform: translateX(-50%);
   background: white;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
   border-radius: 1.5625rem;
   padding: 1.5625rem;
-  z-index: 1;
-  width: 23.125rem; 
+  z-index: 9999;
+  width: 23.125rem;
   min-width: 15.625rem;
   box-sizing: border-box;
   cursor: auto;
@@ -224,8 +210,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 1.25rem;
-  padding: 0.625rem 0; 
+  margin-top: 1.25rem;
+  padding: 0.625rem 0;
   border-bottom: 1px solid #0a770f;
 }
 
@@ -240,19 +226,19 @@
 }
 
 .guestDescription {
-  font-size: 0.625rem; 
+  font-size: 0.625rem;
   color: #666;
 }
 
 .guestCounter .controls {
   display: flex;
   align-items: center;
-  padding: 0 0.625rem; 
+  padding: 0 0.625rem;
 }
 
 .guestCounter .controls span {
-  margin: 0 0.625rem; 
-  font-size: 1rem; 
+  margin: 0 0.625rem;
+  font-size: 1rem;
 }
 
 .guestCounter .controls button {
@@ -260,13 +246,13 @@
   border-radius: 50%;
   background-color: #fff;
   padding: 0;
-  width: 2rem; 
-  height: 2rem; 
+  width: 2rem;
+  height: 2rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.5rem; 
+  font-size: 1.5rem;
   color: #000;
 }
 
@@ -279,50 +265,56 @@
   cursor: not-allowed;
   opacity: 0.5;
 }
-.searchTitleGuest{
+
+.searchTitleGuest {
+  position: absolute;
   color: #0D9813;
   font-size: 0.7rem;
-  font-family: 'Kanit', sans-serif;
   font-weight: 700;
-  padding-top: 0%; 
-  margin-bottom: 0.125rem;
-  padding: 0.75rem; 
+  padding-top: 0%;
+  padding: 0.75rem;
 }
 
 .button-section .searchTitleGuest {
-  margin-bottom: 0.8125rem; 
+  margin-bottom: 1.8125rem;
 }
 
-.guestP{
-  font-size: 0.6875rem; 
-}
-.react-datepicker {
-  background-color: blue;
-  color: #0D9813;
-}
-.react-datepicker__input {
-  background-color: blue;
-  color: #0D9813;
+.guestP {
+  font-size: 0.6875rem;
+  margin-top: 1.8125rem;
 }
 
-.date-reset-button {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  position: absolute;
-  right: 0%; 
-  top: 40%;
-  transform: translateY(-20%);
-}
+
 .responsive-calendar {
-  font-size: 11px !important; 
-  
-}
-.my-custom-input{
-  background-color: blue;
-  color: #0D9813;
+  font-size: 11px !important;
 }
 
+@media (max-width: 1000px) {
+  .guest-dropdown {
+    width: calc(100% - 1.875rem);
+    left: 0.9375rem;
+    transform: none;
+  }
+}
+
+@media (max-width: 1000px) {
+  .bar {
+    width: 95%;
+  }
+}
+
+/* @media (max-width: 750px) {
+  .bar {
+    width: 90%;
+  }
+}
+@media (max-width: 650px) {
+  .bar {
+    width: 100%;
+  }
+} */
+
+/* responsive calendar (fonts) */
 @media (max-width: 1500px) {
   .responsive-calendar {
     font-size: 8px !important;
@@ -335,9 +327,9 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 730px) {
   .responsive-calendar {
-    font-size: 6px !important;
+    font-size: 9px !important;
   }
 }
 
@@ -348,49 +340,230 @@
   }
 }
 
+@media (max-width: 1500px) {
 
-@media (max-width: 1000px) {
-  .guest-dropdown {
-    width: calc(100% - 1.875rem); /* 30px */
-    left: 0.9375rem; /* 15px */
-    transform: none;
+  .Calendar__monthSelectorItemText,
+  .Calendar__yearSelectorText {
+    font-size: 8px !important;
   }
 }
-@media (max-width: 1000px) {
-  .bar {
-    width: 95%;
+
+@media (max-width: 1200px) {
+
+  .Calendar__monthSelectorItemText,
+  .Calendar__yearSelectorText {
+    font-size: 7px !important;
   }
 }
-@media (max-width: 750px) {
-  .bar {
-    width: 90%;
+
+@media (max-width: 730px) {
+
+  .Calendar__monthSelectorItemText,
+  .Calendar__yearSelectorText {
+    font-size: 11px !important;
   }
 }
-@media (max-width: 650px) {
-  .bar {
-    width: 100%;
+
+@media (min-width: 2500px) {
+
+  .Calendar__monthSelectorItemText,
+  .Calendar__yearSelectorText {
+    font-size: 12px !important;
   }
 }
-.faTimesIcon {
-  color: 'blue';
-  font-size: 0.75rem; 
-  margin-bottom: 3.125rem; 
-}
+
+/* dit is de styling voor de calendar gedeelte */
 .DatePicker__input {
-  position:relative ;
+  position: relative;
   background: transparent;
   font-size: 12px;
-  border: 2px solid  transparent;
+  border: 2px solid transparent;
+  outline: none;
   width: 100%;
   text-align: center;
-  transform: translateY(-1rem);
-  padding-bottom: 0.6rem;
+  transform: translateY(-1.9rem);
+  padding-bottom: 1rem;
   color: transparent;
+  cursor: pointer;
+}
+
+.DatePicker__input::selection {
+  background: transparent;
 }
 
 .DatePicker__input::placeholder {
-  color:  transparent;
+  color: transparent;
 }
+
 .input-calendar::placeholder {
   font-size: 0.64rem;
+}
+
+.Calendar__monthYear {
+  font-size: 1.8em;
+
+}
+
+.Calendar__yearSelectorText {
+  border: none;
+  font-size: 1em;
+  min-width: 85%;
+  padding: 0.2em 0.5em;
+  border-radius: 8.5px;
+}
+
+.Calendar__monthSelectorItemText {
+  border: none;
+  padding: 0.4em 0.4em;
+  border-radius: 8.5px;
+  font-size: 0.8em;
+  min-width: 70%;
+  transition: 0.3s;
+}
+
+@media (max-width: 730px) {
+
+  .input-calendar,
+  .DatePicker__input {
+    font-size: 0.5rem;
+  }
+}
+
+@media (max-width: 730px) {
+
+  /* Verander de .bar-indeling naar een kolomlay-out */
+  .bar {
+    border: 2px solid #0a770f;
+    width: 140%;
+    transform: translateX(-15%);
+    margin: auto;
+    box-shadow: 0 0 5px hsl(0 0% 68%);
+    border-radius: 0.875rem;
+    display: flex;
+    font-size: 0.6rem;
+    flex-direction: column;
+    align-items: flex-start;
+    height: auto;
+    padding: 10px;
+  }  
+}
+
+@media (max-width: 730px) {
+
+  .accommodation,
+  .button-section,
+  .searchInputContainer,
+  .check-in{
+    background-color: #f0f0f0;
+    border-radius: 0.8rem;
+    width: 100%;
+    margin-bottom: 0.4rem;
+  }
+  .check-in{
+    height: 3.4rem;
+  }
+  .location{
+    background-color: #f0f0f0;
+    border-radius: 0.8rem;
+    width: 100%;
+    margin-bottom: 0.4rem;
+  }
+  .searchBar {
+    background: none;
+    border: none;
+    padding-bottom: 0.4rem;
+    text-align: left;
+    margin-bottom: 0rem;
+    width: 90%;
+    height: 1.5rem;
+  }
+  .button-section {
+    background-color: #f0f0f0;
+    border-radius: 0.8rem;
+    width: 100%;
+    padding: 0rem;
+    border: none;
+    height: 3rem;
+  }
+  .searchTitleGuest {
+    text-align: left;
+    transform: translateX(-200%);
+  }
+  .guestP {
+    position: absolute; 
+  left: 10%;
+  }
+  .searchTitle {
+    text-align: left;
+    margin-left: 2rem;
+  }
+  .searchTitleCenterAcco {
+    transform: translateX(-92%);
+    overflow: hidden;
+  }
+
+  .searchTitleCenter {
+    transform: translateX(-32%);
+  }
+  .input-calendar {
+    border: none;
+    text-align: center;
+    width: auto;
+    transform: translate(-40%, 0px);
+    margin-top: 2rem;
+    height: 2rem;
+  }
+
+  .DatePicker__input {
+    border: solid;
+    transform: translateX(-115%);
+    width: 100%;
+    height: 3rem;
+
+  }
+  .searchbar-button {
+    height: 2.7rem;
+    width: 100%;
+    border-radius: 10px;
+    transform: translateX(0%);
+    margin-top: 0.5rem;
+  }
+
+  .bar>div::before {
+    background: transparent;
+  }
+
+  .ClearButton {
+    margin-top: 0.5rem;
+  }
+  .error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 2px solid #f5c6cb;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    position: absolute;
+    z-index: 1; 
+    height: 3rem;
+    top: 40.6%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 82%; 
+    text-align: center; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+  }
+}
+.search-icon {
+  margin-right: 8px;
+}
+
+.search-text {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .search-text {
+    display: inline;
+  }
 }

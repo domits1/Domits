@@ -61,17 +61,20 @@
   grid-template-columns: 200px auto;
 }
 
-
-.wijzer {
+.wijzer{
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   cursor: pointer;
   margin-bottom: 10px;
   align-items: center;
-  width: 100%;
-  max-width: 200px;
-
+  width: 10vw;
+  font-size: 0.75em;
+  text-align: center;
+  img {
+    width: 15%;
+    height: auto;
+  }
 }
 
 .wijzer:hover {
@@ -95,14 +98,14 @@
 
 .wijzer-grn {
   display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    cursor: pointer;
-    margin-bottom: 10px;
-    align-items: center;
-    width: 100%;
-    max-width: 200px;
+  flex-direction: row;
+  justify-content: space-between;
+  cursor: pointer;
+  margin-bottom: 10px;
+  align-items: center;
   text-align: end;
+  width: 10vw;
+  font-size: 0.75em;
 }
 
 .wijzer-grn,.boxText {
@@ -117,23 +120,107 @@
 }
 
 .stripe-icon {
-  height: 2.5rem;
-  width: 2.5rem;
-  border-radius: 15px;
-  border: 1.75px solid black;
+  height: auto;
+  width: 1.5vw;
+  border-radius: 0.5em;
+  border: 0.1em solid black;
+  margin-left: -0.25em;
 }
 
 .stripe-icon-div {
   padding-left: 0.25rem;
 }
-
+.dashboard-header {
+  display: flex;
+  flex-direction: row;
+}
+.welcome-msg {
+  padding: 0;
+  margin-left: 15%;
+  font-size: 2em;
+}
 .contentContainer {
   width: 100%;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: center;
+  gap: 15em;
+  .dashboard-1 {
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+    animation: fade-up 2s;
+    .dashboard-head {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      gap: 1.5em;
+      .refresh-btn {
+        padding: 0.5em;
+        margin: 0;
+        margin-top: 5%;
+        height: 5vh;
+      }
+    }
+    .dashboard-card {
+      height: 35vh;
+      width: 17vw;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: 0.5em;
+      position: relative;
+      .accommodation-text {
+        padding: 0.25em;
+        width: 80%;
+        background-color: black;
+        backdrop-filter: blur(10px);
+        border-radius: 0.5em;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        justify-self: center;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        .accommodation-title {
+          color: white;
+          margin: 0;
+          font-size: 0.75em;
+          background-color: black;
+        }
+        .accommodation-location {
+          color: white;
+          font-size: 0.6em;
+          margin-top: 1%;
+        }
+      }
+      .accommodation-img {
+        max-height: 70%;
+        max-width: none;
+        border-radius: 0.5em 0.5em 0 0;
+        padding: 0;
+        align-self: center;
+        width: 100%;
+        height: 70%;
+      }
+    }
+  }
+  .dashboard-2 {
+    animation: fade-up 4s;
+  }
+}
 
+@keyframes fade-up {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.5);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0px) scale(1);
+  }
 }
 
 .boxColumns {
@@ -355,10 +442,6 @@
     display: grid;
     grid-template-columns: auto auto;
     justify-items: center;
-  }
-
-  .wijzer {
-    width: 90%;
   }
 
   .accommodation-tab {
