@@ -41,7 +41,7 @@ const Chat = ({ user }) => {
     const [showDate, setShowDate] = useState(false);
     const [unreadMessages, setUnreadMessages] = useState({}); 
     const [lastMessageDate, setLastMessageDate] = useState(null);
-    const [selectedImage, setSelectedImage] = useState(null); // State to store the selected image file
+    const [selectedImage, setSelectedImage] = useState(null); 
     const [imageUrl, setImageUrl] = useState("");
     const [recipientEmail, setRecipientEmail] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
@@ -74,7 +74,6 @@ const Chat = ({ user }) => {
         graphqlOperation(subscriptions.onCreateChat)
     ).subscribe({
         next: ({ provider, value }) => {
-            // Handle new chat message
             const newChat = value.data.onCreateChat;
             setChats(prevChats => [...prevChats, newChat]);
         },
@@ -85,11 +84,10 @@ const Chat = ({ user }) => {
 }, []);
 
     
-    const navigate = useNavigate(); // Get the navigate function
+    const navigate = useNavigate(); 
     const location = useLocation();
     const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
 
-    // Function to update the URL with the recipient's email
     
 
     const updateRecipientEmailInUrl = (email) => {
@@ -119,7 +117,6 @@ const Chat = ({ user }) => {
     }, [location.search, user.attributes.email]);
 
     useEffect(() => {
-        // Set recipientEmail when it's available in the URL
         const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
         if (recipientEmailFromUrl) {
             setRecipientEmail(recipientEmailFromUrl);
@@ -127,11 +124,9 @@ const Chat = ({ user }) => {
     }, [location.search]);
 
   useEffect(() => {
-    // Scroll chat container to bottom when component mounts or chats state updates
     chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
 }, [chats]);
 
-// Reference to the chat container
 const chatContainerRef = useRef(null);
 
     const handleImageUpload = (e) => {
@@ -140,9 +135,9 @@ const chatContainerRef = useRef(null);
 
         const reader = new FileReader();
         reader.onload = () => {
-            setImageUrl(reader.result); // Set the URL of the selected image
+            setImageUrl(reader.result);
         };
-        reader.readAsDataURL(file); // Read the selected file as a data URL
+        reader.readAsDataURL(file); 
     };
 
 
@@ -165,9 +160,7 @@ const chatContainerRef = useRef(null);
                     email: 'email@example.com'
                 }
             });
-            console.log("New user signed up:", user);
         } catch (error) {
-            console.error("Error signing up:", error);
         }
     };
 
@@ -214,12 +207,9 @@ const chatContainerRef = useRef(null);
     
             const allChats = [...allSentChats, ...allReceivedChats];
     
-            console.log("Sent messages:", allSentChats);
-            console.log("Received messages:", allReceivedChats);
-    
+           
             setChats(allChats);
         } catch (error) {
-            console.error("Error fetching messages:", error);
         }
     };
     
@@ -230,7 +220,6 @@ const chatContainerRef = useRef(null);
             const allChats = response.data.listChats.items;
             const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
     
-            // Filter out null or undefined values
             const filteredUsers = uniqueUsers.filter(email => email && email !== user.attributes.email);
     
             const usersData = filteredUsers.map(email => {
@@ -242,7 +231,6 @@ const chatContainerRef = useRef(null);
                 };
             });
     
-            // Filter out users who haven't exchanged messages with you
             const filteredUsersData = usersData.filter(userData => {
                 const userChats = allChats.filter(chat => chat.email === userData.email || chat.recipientEmail === userData.email);
                 return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
@@ -284,12 +272,10 @@ const chatContainerRef = useRef(null);
     };
     
     const handleUserClick = async (email) => {
-        setSelectedUser(email); // Update selected user
-        const channelName = generateChannelName(user.attributes.email, email); // Use the clicked user's email
-        setChannelUUID(channelName); // Set the channel UUID to the generated channel name
-        // Fetch chats for the selected user (email) with the generated channel name
+        setSelectedUser(email); 
+        const channelName = generateChannelName(user.attributes.email, email); 
+        setChannelUUID(channelName);
         fetchChats(email, channelName);
-        console.log("Channel Name:", channelName);
         updateRecipientEmailInUrl(channelName);
 
         try {
@@ -366,7 +352,6 @@ const chatContainerRef = useRef(null);
 
 
     useEffect(() => {
-        console.log("Unread messages:", unreadMessages);
     }, [unreadMessages]);
     
     const isToday = (date) => {
@@ -378,9 +363,8 @@ const chatContainerRef = useRef(null);
 
     useEffect(() => {
         const interval = setInterval(() => {
-            // Force re-render by updating state
             setShowDate(prevState => !prevState);
-        }, 24 * 60 * 60 * 1000); // 24 hours
+        }, 24 * 60 * 60 * 1000); 
     
         return () => clearInterval(interval);
     }, []);
@@ -401,7 +385,6 @@ const chatContainerRef = useRef(null);
                     <article className="chat__figure">
                         <aside className="chat__aside">
                             <div className="chat__pfpSecond">
-                                {/* <img src={img1} className="chat__pfpImg"/> */}
                             </div>
                             <ul className="chat__list">
                                 <li className="chat__listItem">
@@ -453,7 +436,7 @@ const chatContainerRef = useRef(null);
         </div>
     </React.Fragment>
 ))}
-{imageUrl && <img src={imageUrl} alt="Selected" style={{ maxWidth: "100%", maxHeight: "200px" }} />} {/* Display the selected image */}
+{imageUrl && <img src={imageUrl} alt="Selected" style={{ maxWidth: "100%", maxHeight: "200px" }} />} 
 
                             </article>
 
@@ -469,13 +452,7 @@ const chatContainerRef = useRef(null);
                             }
                         }}
                     />
-                    {/* <input
-                        className="chat__recipientInput"
-                        type="email"
-                        value={recipientEmail}
-                        onChange={(e) => setRecipientEmail(e.target.value)}
-                        placeholder="Recipient's email..."
-                    /> */}
+                
                                         <button onClick={() => sendMessage(getUUIDForUser(selectedUser.email))}>Send</button>
                             
                         
@@ -511,7 +488,6 @@ const chatContainerRef = useRef(null);
         </div>
         <div className="chat__wrapper">
             <h2 className="chat__name">{chatUser.email}</h2>
-            {/* Display last message preview here */}
         </div>
     </li>
 ))}

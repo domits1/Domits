@@ -37,9 +37,8 @@ const ListingDetails = () => {
     }, [id]);
 
     const handleStartChat = () => {
-        // Assuming you have the user's email available
         const userEmail = "nabilsalimi0229@gmail.com";
-        const recipientEmail = "33580@ma-web.nl"; // Change this to the actual owner email field
+        const recipientEmail = "33580@ma-web.nl"; 
         navigate(`/chat?recipient=${recipientEmail}`);
     };
 
