@@ -148,6 +148,9 @@
     max-height: 1.5em;
   }
 }
+.enlist-info {
+  padding: 2em;
+}
 .contentContainer {
   width: 100%;
   display: flex;
