@@ -83,7 +83,7 @@ function PagesDropdown() {
 
     return (
         <div className="host-dropdown">
-            <h1>Dashboard Navigation</h1>
+            <br/>
             {loading ? (
                 <div>
                     <img src={spinner} alt="Loading"/>
