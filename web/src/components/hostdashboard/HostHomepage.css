@@ -139,6 +139,15 @@
   margin-left: 15%;
   font-size: 2em;
 }
+.listing-info {
+  display: flex;
+  flex-direction: row;
+  gap: 1em;
+  .info-icon {
+    max-width: 1.5em;
+    max-height: 1.5em;
+  }
+}
 .contentContainer {
   width: 100%;
   display: flex;
@@ -210,7 +219,9 @@
     animation: fade-up 4s;
   }
 }
-
+.dashboard-card:hover {
+  cursor: pointer;
+}
 @keyframes fade-up {
   0% {
     opacity: 0;

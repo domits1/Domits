@@ -6,6 +6,7 @@ import StripeModal from './StripeModal.js';
 import { Auth } from 'aws-amplify';
 import {useNavigate} from "react-router-dom";
 import spinner from "../../images/spinnner.gif";
+import info from "../../images/icons/info.png";
 import ImageSlider from "../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
 import PagesDropdown from "./PagesDropdown";
@@ -110,13 +111,18 @@ function HostDashboard() {
                                 listing
                             </button>
                         </div>
+                        <div className="listing-info">
+                            <img className="info-icon" src={info}/>
+                            <p className="info-msg">Click on your listed accommodations to see their listing details</p>
+                        </div>
                         {isLoading ? (
                             <div>
                                 <img src={spinner}/>
                             </div>
                         ) : accommodations.length > 0 ? (
                             accommodations.map((accommodation, index) => (
-                                <div key={index} className="dashboard-card">
+                                <div key={index} className="dashboard-card"
+                                     onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>
                                     <div className="accommodation-text">
                                         <p className="accommodation-title">{accommodation.Title}</p>
                                         <p className="accommodation-location"> {accommodation.City},
