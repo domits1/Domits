@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import Pages from "./Pages.js";
 import './HostHomepage.css';
+import './PagesDropdown.css'
 import StripeModal from './StripeModal.js';
 import { Auth } from 'aws-amplify';
 import {useNavigate} from "react-router-dom";
 import spinner from "../../images/spinnner.gif";
 import ImageSlider from "../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
+import PagesDropdown from "./PagesDropdown";
 
 function HostDashboard() {
     const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
@@ -105,7 +107,7 @@ function HostDashboard() {
             </div>
             <div className="dashboard">
                 <Pages/>
-
+                <PagesDropdown/>
                 <div className="contentContainer">
                     <div className="dashboard-1">
                         <div className="dashboard-head">
