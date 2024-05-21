@@ -87,7 +87,7 @@ const Chat = ({ user }) => {
     const navigate = useNavigate(); 
     const location = useLocation();
     const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
-
+    const channelIDFromUrl = new URLSearchParams(location.search).get('channelID');
     
 
     const updateRecipientEmailInUrl = (email) => {
@@ -107,12 +107,14 @@ const Chat = ({ user }) => {
     };
 
     useEffect(() => {
-        const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
-        if (recipientEmailFromUrl) {
-            setSelectedUser(recipientEmailFromUrl);
-            const channelName = generateChannelName(user.attributes.email, recipientEmailFromUrl);
-            setChannelUUID(channelName);
-            fetchChats(recipientEmailFromUrl, channelName);
+        if (channelIDFromUrl) {
+            setChannelUUID(channelIDFromUrl);
+            fetchChats(channelIDFromUrl);
+            const recipientEmail = localStorage.getItem(channelIDFromUrl);
+            if (recipientEmail) {
+                setRecipientEmail(recipientEmail);
+                setSelectedUser({ email: recipientEmail }); 
+            }
         }
     }, [location.search, user.attributes.email]);
 
@@ -120,6 +122,7 @@ const Chat = ({ user }) => {
         const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
         if (recipientEmailFromUrl) {
             setRecipientEmail(recipientEmailFromUrl);
+            setSelectedUser({ email: recipientEmailFromUrl }); 
         }
     }, [location.search]);
 
@@ -218,31 +221,31 @@ const chatContainerRef = useRef(null);
         try {
             const response = await API.graphql({ query: queries.listChats });
             const allChats = response.data.listChats.items;
+    
             const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
     
-            const filteredUsers = uniqueUsers.filter(email => email && email !== user.attributes.email);
+            const filteredUsersData = uniqueUsers
+                .filter(email => email && email !== user.attributes.email)
+                .map(email => {
+                    const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
+                    const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
+                    return {
+                        email,
+                        lastMessageTimestamp,
+                    };
+                })
+                .filter(userData => {
+                    const userChats = allChats.filter(chat => chat.email === userData.email || chat.recipientEmail === userData.email);
+                    return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
+                })
+                .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
     
-            const usersData = filteredUsers.map(email => {
-                const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
-                const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
-                return {
-                    email,
-                    lastMessageTimestamp,
-                };
-            });
-    
-            const filteredUsersData = usersData.filter(userData => {
-                const userChats = allChats.filter(chat => chat.email === userData.email || chat.recipientEmail === userData.email);
-                return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
-            });
-    
-            const sortedUsersData = filteredUsersData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-    
-            setChatUsers(sortedUsersData);
+            setChatUsers(filteredUsersData);
         } catch (error) {
             console.error("Error fetching chat users:", error);
         }
     };
+    
     
     
     
@@ -272,11 +275,13 @@ const chatContainerRef = useRef(null);
     };
     
     const handleUserClick = async (email) => {
-        setSelectedUser(email); 
+        setSelectedUser({email}); 
         const channelName = generateChannelName(user.attributes.email, email); 
         setChannelUUID(channelName);
         fetchChats(email, channelName);
         updateRecipientEmailInUrl(channelName);
+
+        
 
         try {
             const unreadMessagesIds = chats
@@ -388,7 +393,7 @@ const chatContainerRef = useRef(null);
                             </div>
                             <ul className="chat__list">
                                 <li className="chat__listItem">
-                                    <h2 className="chat__name">{selectedUser ? selectedUser.email : ''}</h2>
+                                {/* <h2 className="chat__name">{chatUser.email}</h2> */}
                                 </li>
                                 <li className="chat__listItem">
 

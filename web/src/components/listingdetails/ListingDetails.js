@@ -36,11 +36,23 @@ const ListingDetails = () => {
         fetchAccommodation();
     }, [id]);
 
+    
     const handleStartChat = () => {
         const userEmail = "nabilsalimi0229@gmail.com";
-        const recipientEmail = "33580@ma-web.nl"; 
-        navigate(`/chat?recipient=${recipientEmail}`);
+        const recipientEmail = "jejego4569@javnoi.com";
+        const channelUUID = generateUUID();
+        localStorage.setItem(channelUUID, recipientEmail); 
+        navigate(`/chat?channelID=${channelUUID}`);
     };
+    
+    const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+    
 
 
     return (
