@@ -67,8 +67,7 @@ const Register = () => {
             setErrorMessage('Passwords do not match!');
             return;
         }
-    
-        // Attempt to sign up the user
+
         try {
             const groupName = flowState.isHost ? "Host" : "Traveler";
             await Auth.signUp({
@@ -120,7 +119,6 @@ const Register = () => {
     }, [errorMessage]);
 
 
-    // Reset sign up click state after form submission
     useEffect(() => {
         if (signUpClicked) {
             setSignUpClicked(false);
