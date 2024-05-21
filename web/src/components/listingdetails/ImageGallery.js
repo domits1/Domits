@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './imagegallery.css'; // You need to create this CSS file for styling
+import './imagegallery.css'; // Zorg ervoor dat je deze CSS-bestand hebt
 
 const ImageGallery = ({ images }) => {
   const [selectedImg, setSelectedImg] = useState(images[0]);
@@ -7,7 +7,7 @@ const ImageGallery = ({ images }) => {
   return (
     <div className="image-gallery-container">
       <div className="selected-image">
-        <img src={selectedImg} alt="Selected" />
+        <img className="selected-thumbnail" src={selectedImg} alt="Selected" />
       </div>
       <div className="image-thumbnails">
         {images.map((img, index) => (
