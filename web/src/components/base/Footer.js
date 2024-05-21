@@ -35,7 +35,7 @@ const Footer = () => {
                     <h4 className='footer-headers'>Guest</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>Search and book</Link></li>
-                        <li><Link to="/helpdesk" className='footer-links'>Helpdesk</Link></li>
+                        <li><Link to="/help" className='footer-links'>Helpdesk</Link></li>
                     </ul>
                 </div>
 
