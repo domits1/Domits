@@ -1,15 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from "react-router-dom";
+import React, {useEffect, useState} from 'react';
+import {Link, useLocation} from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
+import FormatStringToDate from "../utils/FormatStringToDate";
 
 const ListingDetails = () => {
     const { search } = useLocation();
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
-    const [checkIn, setCheckIn] = useState('2023-12-15');
-    const [checkOut, setCheckOut] = useState('2023-12-23');
+    const [checkIn, setCheckIn] = useState(null);
+    const [checkOut, setCheckOut] = useState(null);
+    const [minStart, setMinStart] = useState(null);
+    const [maxStart, setMaxStart] = useState(null);
+    const [minEnd, setMinEnd] = useState(null);
+    const [maxEnd, setMaxEnd] = useState(null);
     const [adults, setAdults] = useState(2);
     const [kids, setKids] = useState(2);
     const [pets, setPets] = useState('');
@@ -29,7 +34,9 @@ const ListingDetails = () => {
                 }
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
+                console.log(FormatStringToDate(data.StartDate) + " - " + FormatStringToDate(data.EndDate));
                 setAccommodation(data);
+                setDates(data.StartDate, data.EndDate);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -37,6 +44,15 @@ const ListingDetails = () => {
         fetchAccommodation();
     }, [id]);
 
+    const setDates = (StartDate, EndDate) => {
+        const today = new Date();
+        const parsedStartDate = today > new Date(StartDate) ? today : StartDate
+        const parsedEndDate = new Date(EndDate);
+        setMinStart(FormatStringToDate(parsedStartDate));
+        setMaxStart(FormatStringToDate(new Date().setDate(parsedEndDate.getDate() - 1)));
+        setMinEnd(FormatStringToDate(new Date().setDate(parsedStartDate.getDate() + 1)));
+        setMaxEnd(FormatStringToDate(parsedEndDate));
+    };
     const calculateTotal = () => {
         if (!accommodation) return 0;
         const nights = (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24);
@@ -98,14 +114,19 @@ const ListingDetails = () => {
                             <div className="dates">
                                 <div className="check-in-out">
                                     <label>Check in</label>
-                                    <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
+                                    <input type="date" min={minStart}
+                                           max={maxStart}
+                                           placeholder="Select your check-in"
+                                           onChange={(e) => setCheckIn(e.target.value)} />
                                 </div>
                                 <div className="nights">
                                     <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights</p>
                                 </div>
                                 <div className="check-in-out">
                                     <label>Check out</label>
-                                    <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+                                    <input type="date" min={minEnd}
+                                           max={maxEnd}
+                                           onChange={(e) => setCheckOut(e.target.value)} />
                                 </div>
                             </div>
                             <div className="travelers">
