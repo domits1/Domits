@@ -37,15 +37,23 @@ const ListingDetails = () => {
         fetchAccommodation();
     }, [id]);
 
-    const calculateTotal = () => {
-        if (!accommodation) return 0;
-        const nights = (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24);
-        const basePrice = nights * accommodation.Rent;
-        const discount = 75; // example value
-        const cleaningFee = 100;
-        const serviceFee = 98;
-        return basePrice - discount + cleaningFee + serviceFee;
+    
+    const handleStartChat = () => {
+        const userEmail = "nabilsalimi0229@gmail.com";
+        const recipientEmail = "jejego4569@javnoi.com";
+        const channelUUID = generateUUID();
+        localStorage.setItem(channelUUID, recipientEmail); 
+        navigate(`/chat?channelID=${channelUUID}`);
     };
+    
+    const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+    
 
     return (
         <main className="container">
