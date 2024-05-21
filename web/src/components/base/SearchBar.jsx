@@ -268,7 +268,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                       width: isMobile ? '100%' : '135%',
                       backgroundColor: '#fff', 
                       borderRadius: '15px', 
-                      padding: '1rem' 
+                      padding: isMobile ? '0.5rem' : '1rem',
                     }}
                   >
                     {loading && <div>Loading <FaSpinner></FaSpinner></div>}
