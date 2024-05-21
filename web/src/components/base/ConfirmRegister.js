@@ -14,33 +14,49 @@ function ConfirmEmail() {
     const { flowState } = useContext(FlowContext);
     const { isHost } = flowState;
 
-    const userEmail = location.state === null ? "" : location.state.email;
-     
-    function onSubmit(e) {
+    const userEmail = location.state?.email || "";
+    const userPassword = location.state?.password || "";
+
+    const onSubmit = (e) => {
         e.preventDefault();
         let code = "";
         inputRef.current.forEach((input) => { code += input.value });
-
+    
         Auth.confirmSignUp(userEmail, code)
-            .then(result => {
-                if (result === 'SUCCESS') {
-                    setIsConfirmed(true);
-                    if (isHost) {
-                        navigate("/hostdashboard");
-                    }
-                    setTimeout(() => navigate('/'), 3000);
+            .then(() => {
+                return Auth.signIn(userEmail, userPassword);
+            })
+            .then(() => {
+                setIsConfirmed(true);
+                if (isHost) {
+                    navigate("/hostdashboard");
+                    window.location.reload();
+                } else {
+                    setTimeout(() => {
+                        navigate('/');
+                        window.location.reload();
+                    }, 3000);
                 }
             })
             .catch(error => {
-                setErrorMessage('Invalid verification code, please check your email!');
+                console.error('Error during confirmation or sign-in:', error);
+                if (error.code === "NotAuthorizedException") {
+                    setErrorMessage('Invalid verification code or your account may already be confirmed. Please try to log in.');
+                } else {
+                    setErrorMessage('Invalid verification code, please check your email!');
+                }
             });
-    }
+    };
+    
 
     const handleResendCode = () => {
         if (userEmail === '') {
             navigate('/register');
         } else {
-            Auth.resendSignUp(userEmail);
+            Auth.resendSignUp(userEmail).catch(err => {
+                console.error("Error resending code:", err);
+                setErrorMessage("Failed to resend code, please try again later.");
+            });
         }
     };
 
@@ -59,7 +75,7 @@ function ConfirmEmail() {
                 <div className="notReceivedCodeText">
                     Not received a code? Check your spam folder or let us resend a code.
                 </div>
-                <button className="resendCodeButton" onClick={handleResendCode}>Resend code</button>
+                <button className="resendCodeButton" type="button" onClick={handleResendCode}>Resend code</button>
             </form>
         </div>
     );

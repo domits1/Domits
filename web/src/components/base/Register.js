@@ -42,7 +42,7 @@ const Register = () => {
     const onSubmit = async (e) => {
         e.preventDefault();
         const { username, email, password, repeatPassword } = formData;
-
+    
         if (username.length < 4) {
             setErrorMessage('Username must be at least 4 characters long.');
             setShouldShake(true);
@@ -57,42 +57,43 @@ const Register = () => {
             setErrorMessage('Email can\'t be empty!');
             return;
         }
-
+    
         if (!password || !repeatPassword) {
             setErrorMessage('Password can\'t be empty!');
             return;
         }
-
+    
         if (password !== repeatPassword) {
             setErrorMessage('Passwords do not match!');
             return;
         }
-
+    
         // Attempt to sign up the user
         try {
             const groupName = flowState.isHost ? "Host" : "Traveler";
-            const data = await Auth.signUp({
+            await Auth.signUp({
                 username: email,
-                email,
                 password,
                 attributes: {
                     'custom:group': groupName,
                     'custom:username': username
                 },
             });
+    
 
-            setAuthCredentials(email, password);
             navigate('/confirm-email', {
-                state: { email: email, username: data.user.getUsername() },
+                state: { email, password }
             });
         } catch (error) {
             if (error.code === 'UsernameExistsException') {
                 setErrorMessage('User already exists!');
             } else {
                 console.error("Error:", error);
+                setErrorMessage('An unexpected error occurred');
             }
         }
     };
+    
 
     useEffect(() => {
         const checkAuth = async () => {
