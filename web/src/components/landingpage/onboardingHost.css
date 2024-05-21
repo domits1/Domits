@@ -96,6 +96,11 @@
   flex-wrap: wrap;
   margin: auto;
 }
+.listing-calendar {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+}
 .loading {
   display: flex;
   flex-direction: column;

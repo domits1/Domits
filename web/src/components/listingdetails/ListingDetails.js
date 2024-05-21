@@ -8,10 +8,11 @@ const ListingDetails = () => {
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
-    const navigate = useNavigate();
-
-
-  
+    const [checkIn, setCheckIn] = useState('2023-12-15');
+    const [checkOut, setCheckOut] = useState('2023-12-23');
+    const [adults, setAdults] = useState(2);
+    const [kids, setKids] = useState(2);
+    const [pets, setPets] = useState('');
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -27,7 +28,7 @@ const ListingDetails = () => {
                     throw new Error('Failed to fetch accommodation data');
                 }
                 const responseData = await response.json();
-                const data = JSON.parse(responseData.body)
+                const data = JSON.parse(responseData.body);
                 setAccommodation(data);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
@@ -54,55 +55,112 @@ const ListingDetails = () => {
     };
     
 
-
     return (
-        <div className="listing-details-container">
-            {accommodation && (
-                <div className="booking-information-section">
-                    <div className="listing-details-top">
-                        <div className="listing-details-back-arrow">
-                            <Link to="/">
-                                <button>Back</button>
-                            </Link>
-                        </div>
-                        <h1 className="listing-details-title">
-                            {accommodation.Title}
-                        </h1>
-                    </div>
-                    <div className="listing-details-image-window">
-                        <ImageGallery images={Object.values(accommodation.Images)} />
-                    </div>
-                    <div className="price-and-rooms-row">
-                        <p className="price-per-night-text">{`€${accommodation.Rent} per night`}</p>
-                        <p className="guest-and-rooms-text">{`${accommodation.GuestAmount} guests`}</p>
-                        <p className="guest-and-rooms-text">{`${accommodation.Beds} beds`}</p>
-                        <p className="guest-and-rooms-text">{`${accommodation.Bedrooms} bedrooms`}</p>
-                        <p className="guest-and-rooms-text">{`${accommodation.Bathrooms} bathrooms`}</p>
-                        <div className="listing-details-book-button">
-                            <button>Book Now</button>
-                        </div>
-                    </div>
-                    <div className="listing-details-services-container">
-                        <div className="listing-description">
-                            <p>{accommodation.Description}</p>
-                        </div>
-                        <h3 className="listing-details-services-header">This place offers the following:</h3>
-                        <ul className="listing-details-place-offers">
-                            {Object.entries(accommodation.Features).map(([feature, value]) => (
-                                <li key={feature} className="listing-details-offer-item">
-                                    <span>{value ? '✓' : '✗'}</span> {feature}
-                                </li>
-                            ))}
-                        </ul>
-                        <div className="show-more-button">
-                            <button>Show more</button>
-                            <button onClick={handleStartChat}>Start Chat</button>
-                        </div>
-                    </div>
-                </div>
-            )}
+        <main className="container">
+            <section className="detailContainer">
+                <section className='detailInfo'>
+                    {accommodation && (
+                        <div>
+                            <div>
+                                <Link to="/">
+                                    <button>Back</button>
+                                </Link>
+                                <h1>{accommodation.Title}</h1>
+                            </div>
+                            <div>
+                                <ImageGallery images={Object.values(accommodation.Images)} />
+                            </div>
+                            <div>
+                                <div class='extraDetails'>
+                                    <p class='details'>{`€${accommodation.Rent} per night`}</p>
+                                    <p class='details'>{`${accommodation.GuestAmount} guests`}</p>
+                                    <p class='details'>{`${accommodation.Beds} beds`}</p>
+                                    <p class='details'>{`${accommodation.Bedrooms} bedrooms`}</p>
+                                    <p class='details'>{`${accommodation.Bathrooms} bathrooms`}</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p class='description'>{accommodation.Description}</p>
+                                <h3>This place offers the following:</h3>
+                                <ul class='features'>
+                                    {Object.entries(accommodation.Features).map(([feature, value]) => (
+                                        <li key={feature}>
+                                            <span>{value ? '✓' : '✗'}</span> {feature}
+                                        </li>
+                                    ))}
+                                </ul>
+                                <div>
+                                    <button class='button'>Show more</button>
+                                </div>
+                            </div>
 
-        </div>
+
+
+                        </div>
+                    )}
+                </section>
+                {accommodation && (
+                    <aside className='detailSummary'>
+                        <div className="summary-section">
+                            <h2>Booking details</h2>
+                            <div className="dates">
+                                <div className="check-in-out">
+                                    <label>Check in</label>
+                                    <input type="date" value={checkIn} onChange={(e) => setCheckIn(e.target.value)} />
+                                </div>
+                                <div className="nights">
+                                    <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights</p>
+                                </div>
+                                <div className="check-in-out">
+                                    <label>Check out</label>
+                                    <input type="date" value={checkOut} onChange={(e) => setCheckOut(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="travelers">
+                                <label>Travellers</label>
+                                <div className="traveller-inputs">
+                                    <label>Adults</label>
+                                    <input type="number" min="1" value={adults} onChange={(e) => setAdults(e.target.value)} />
+                                    <label>Kids</label>
+                                    <input type="number" min="0" value={kids} onChange={(e) => setKids(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="pets">
+                                <label>Pets</label>
+                                <select value={pets} onChange={(e) => setPets(e.target.value)}>
+                                    <option value="">Select...</option>
+                                    <option value="none">None</option>
+                                    <option value="cat">Cat</option>
+                                    <option value="dog">Dog</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <button className="reserve-button">Reserve</button>
+                            <p className="disclaimer">*You won't be charged yet</p>
+                            <div className="price-details">
+                                <div className="price-item">
+                                    <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights x €{accommodation.Rent} a night</p>
+                                    <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
+                                </div>
+                                <div className="price-item">
+                                    <p>Cleaning fee</p>
+                                    <p>€100</p>
+                                </div>
+                                <div className="price-item">
+                                    <p>Domits service fee</p>
+                                    <p>€98</p>
+                                </div>
+                                <div className="total">
+                                    <p>Total</p>
+                                    <p>€{calculateTotal()}</p>
+                                </div>
+                            </div>
+
+                        </div>
+                    </aside>
+                )}
+            </section>
+        </main>
     );
 }
 
