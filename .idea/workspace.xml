@@ -4,7 +4,24 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard" />
+    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard">
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.vscode/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/settings.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/amplify-meta.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/api/domits/build/cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/api/domits/build/schema.graphql" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/auth/domits7b73f586/build/auth-trigger-cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/awscloudformation/build/api/domits/build/cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/amplify-meta.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/build/cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/build/parameters.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/auth/domits7b73f586/build/auth-trigger-cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/awscloudformation/build/api/domits/build/cloudformation-template.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/amplify/backend/api/domits/schema.graphql" beforeDir="false" afterPath="$PROJECT_DIR$/web/amplify/backend/api/domits/schema.graphql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/chat/Chatprototype.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/chat/Chatprototype.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/ListingDetails.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/listingdetails/ListingDetails.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -23,7 +40,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="bookingProcessDynamic" />
+        <entry key="$PROJECT_DIR$" value="chat" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -48,12 +65,13 @@
     "RunOnceActivity.OpenProjectViewOnStart": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
     "WebServerToolWindowFactoryState": "false",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "appHamza",
+    "git-widget-placeholder": "app-login",
     "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "/Users/hamzatjo/IdeaProjects/Domits",
+    "last_opened_file_path": "C:/Users/Nabil/Documents/FS/Domits1/Domits",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
