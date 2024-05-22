@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 const ListingDetails = () => {
     const {search} = useLocation();
@@ -15,8 +16,9 @@ const ListingDetails = () => {
     const [maxStart, setMaxStart] = useState(null);
     const [minEnd, setMinEnd] = useState(null);
     const [maxEnd, setMaxEnd] = useState(null);
-    const [adults, setAdults] = useState(2);
-    const [kids, setKids] = useState(2);
+    const [inputError, setInputError] = useState(false);
+    const [adults, setAdults] = useState(0);
+    const [kids, setKids] = useState(0);
     const [pets, setPets] = useState('');
 
     useEffect(() => {
@@ -36,6 +38,7 @@ const ListingDetails = () => {
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate);
+                console.log(data);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -43,10 +46,21 @@ const ListingDetails = () => {
         fetchAccommodation();
     }, [id]);
 
+    const handleChange = (value, setType) => {
+        const newValue = parseInt(value, 10) || 0;
+        setType(newValue);
+
+        const total = (setType === setAdults ? newValue + kids : adults + newValue);
+
+        if (total > accommodation.GuestAmount) {
+            setInputError(true);
+        } else {
+            setInputError(false);
+        }
+    };
     const setDates = (StartDate, EndDate) => {
         const today = new Date();
         const parsedStartDate = today > new Date(StartDate) ? today : StartDate
-        console.log(parsedStartDate)
         const parsedEndDate = new Date(EndDate);
 
         const maxStart = new Date();
@@ -133,6 +147,7 @@ const ListingDetails = () => {
                         <aside className='detailSummary'>
                             <div className="summary-section">
                                 <h2>Booking details</h2>
+                                <p>Available from {DateFormatterDD_MM_YYYY(accommodation.StartDate)} to {DateFormatterDD_MM_YYYY(accommodation.EndDate)}</p>
                                 <div className="dates">
                                     <div className="check-in-out">
                                         <label>Check in</label>
@@ -158,18 +173,23 @@ const ListingDetails = () => {
                                     </div>
                                 </div>
                                 <div className="travelers">
-                                    <label>Travellers</label>
+                                    <label>Travelers</label>
+                                    <p>Maximum amount of travelers: {accommodation.GuestAmount}</p>
+                                    <br/>
                                     <div className="traveller-inputs">
                                         <label>Adults</label>
-                                        <input type="number" min="1" value={adults}
-                                               onChange={(e) => setAdults(e.target.value)}/>
+                                        <input type="number" min="1" placeholder={"Enter the amount of adults"}
+                                               className={inputError ? 'error' : ''}
+                                               onChange={(e) => handleChange(e.target.value, setAdults)}/>
                                         <label>Kids</label>
-                                        <input type="number" min="0" value={kids}
-                                               onChange={(e) => setKids(e.target.value)}/>
+                                        <input type="number" min="0" placeholder={"Enter the amount of kids"}
+                                               className={inputError ? 'error' : ''}
+                                               onChange={(e) => handleChange(e.target.value, setKids)}/>
                                     </div>
+                                    {inputError ? <p className="error-text">Maximum allowed travelers exceeded!</p> : ''}
                                 </div>
                                 <div className="pets">
-                                    <label>Pets</label>
+                                <label>Pets</label>
                                     <select value={pets} onChange={(e) => setPets(e.target.value)}>
                                         <option value="">Select...</option>
                                         <option value="none">None</option>

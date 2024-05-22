@@ -167,7 +167,13 @@
   padding-top: 10px;
   margin-top: 10px;
 }
+.error {
+  border: 1px solid red !important;
+}
 
+.error-text {
+  color: red;
+}
 /* Aanpassing voor mobiele weergave */
 @media (max-width: 600px) {
   .price-item, .total {
