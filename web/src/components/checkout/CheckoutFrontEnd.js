@@ -33,7 +33,8 @@ function CheckoutFrontend() {
             productName: 'EERSTE BETALING JONGENS',
             successUrl: 'https://domits.com/success',
             cancelUrl: 'https://domits.com/cancel',
-            connectedAccountId: 'acct_1P15xO2enydXJo9e'
+            connectedAccountId: 'acct_1P15xO2enydXJo9e',
+            client_reference_id: cognitoUserId  // Add this line
         };
     
         try {
@@ -52,7 +53,7 @@ function CheckoutFrontend() {
             const result = await response.json();
             const stripe = await stripePromise;
             const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
-            
+    
             if (error) {
                 console.error('Stripe Checkout error:', error.message);
             }
@@ -60,6 +61,7 @@ function CheckoutFrontend() {
             console.error('Error initiating Stripe Checkout:', error);
         }
     };
+    
     
 
     return (
