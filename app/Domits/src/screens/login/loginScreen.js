@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -7,28 +7,28 @@ import {
   StyleSheet,
   SafeAreaView,
 } from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {Auth} from 'aws-amplify';
-import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
+import { useNavigation } from '@react-navigation/native';
+import { signIn } from '@aws-amplify/auth'; // Correct import for Amplify Auth
+import { useAuth } from '../../context/AuthContext'; // Ensure the path is correct
 import 'react-native-get-random-values';
 
 const LoginScreen = () => {
   const navigation = useNavigation();
-  const {checkAuth} = useAuth(); // Get the checkAuth method from context
-  const [formData, setFormData] = useState({email: '', password: ''});
+  const { checkAuth } = useAuth(); // Get the checkAuth method from context
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleChange = (name, value) => {
-    setFormData(prevFormData => ({
+    setFormData((prevFormData) => ({
       ...prevFormData,
       [name]: value,
     }));
   };
 
   const handleLogin = async () => {
-    const {email, password} = formData;
+    const { email, password } = formData;
     try {
-      await Auth.signIn(email, password);
+      await signIn({ username: email, password }); // Ensure the correct parameters
       checkAuth(); // Update the global auth state
       navigation.navigate('Home');
     } catch (error) {
@@ -42,51 +42,56 @@ const LoginScreen = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerText}>Log in or sign up</Text>
-      </View>
-      <TextInput
-        placeholder="Email"
-        value={formData.email}
-        onChangeText={value => handleChange('email', value)}
-        style={styles.input}
-        keyboardType="email-address"
-      />
-      <TextInput
-        placeholder="Password"
-        value={formData.password}
-        onChangeText={value => handleChange('password', value)}
-        style={styles.input}
-        secureTextEntry
-      />
-      <TouchableOpacity
-        onPress={() => {
-          alert('To be done');
-        }}>
-        <Text style={styles.linkText}>Forgot your password?</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        onPress={() => {
-          navigation.navigate('SignupScreen');
-        }}>
-        <Text style={styles.linkText}>Don't have an account? Sign up!</Text>
-      </TouchableOpacity>
-      <View style={styles.dividerRow}>
-        <View style={styles.divider} />
-        <Text style={styles.orText}>or</Text>
-        <View style={styles.divider} />
-      </View>
-      {/* <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleSignInButton}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <Text style={styles.headerText}>Log in or sign up</Text>
+        </View>
+        <TextInput
+            placeholder="Email"
+            value={formData.email}
+            onChangeText={(value) => handleChange('email', value)}
+            style={styles.input}
+            keyboardType="email-address"
+        />
+        <TextInput
+            placeholder="Password"
+            value={formData.password}
+            onChangeText={(value) => handleChange('password', value)}
+            style={styles.input}
+            secureTextEntry
+        />
+        {errorMessage ? (
+            <Text style={styles.errorMessage}>{errorMessage}</Text>
+        ) : null}
+        <TouchableOpacity
+            onPress={() => {
+              alert('To be done');
+            }}
+        >
+          <Text style={styles.linkText}>Forgot your password?</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+            onPress={() => {
+              navigation.navigate('SignupScreen');
+            }}
+        >
+          <Text style={styles.linkText}>Don't have an account? Sign up!</Text>
+        </TouchableOpacity>
+        <View style={styles.dividerRow}>
+          <View style={styles.divider} />
+          <Text style={styles.orText}>or</Text>
+          <View style={styles.divider} />
+        </View>
+        {/* <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleSignInButton}>
         <Image source={require('./path-to-your-google-icon.png')} style={styles.googleIcon} />
         <Text style={styles.googleSignInText}>Sign in with Google</Text>
       </TouchableOpacity> */}
-      <View style={styles.buttonAlignment}>
-        <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
-          <Text style={styles.loginButtonText}>Log in</Text>
-        </TouchableOpacity>
-      </View>
-    </SafeAreaView>
+        <View style={styles.buttonAlignment}>
+          <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
+            <Text style={styles.loginButtonText}>Log in</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
   );
 };
 
@@ -169,6 +174,11 @@ const styles = StyleSheet.create({
   buttonAlignment: {
     flex: 1,
     alignItems: 'center',
+  },
+  errorMessage: {
+    color: 'red',
+    marginBottom: 10,
+    textAlign: 'center',
   },
 });
 

@@ -1,4 +1,4 @@
-function DateFormatter(dateString) {
+function DateFormatterDD_MM_YYYY(dateString) {
     const date = new Date(dateString);
     const day = date.getDate().toString().padStart(2, '0');
     const month = (date.getMonth() + 1).toString().padStart(2, '0');
@@ -7,4 +7,4 @@ function DateFormatter(dateString) {
     return `${day}/${month}/${year}`;
 }
 
-export default DateFormatter;
+export default DateFormatterDD_MM_YYYY;

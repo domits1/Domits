@@ -10,7 +10,7 @@ import info from "../../images/icons/info.png";
 import ImageSlider from "../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
 import PagesDropdown from "./PagesDropdown";
-import DateFormatter from "../utils/DateFormatter";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 function HostDashboard() {
     const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
@@ -132,12 +132,12 @@ function HostDashboard() {
                                     </div>
                                     <ImageSlider images={accommodation.Images} seconds={5}/>
                                     <div className="accommodation-details">
-                                        <p>Listed on: {DateFormatter(accommodation.createdAt)}</p>
+                                        <p>Listed on: {DateFormatterDD_MM_YYYY(accommodation.createdAt)}</p>
                                         {accommodation.StartDate && accommodation.EndDate ?
                                             (<p>
                                                 Available from
-                                                {" " + DateFormatter(accommodation.StartDate) + " "}
-                                                to {" " + DateFormatter(accommodation.EndDate) + " "}
+                                                {" " + DateFormatterDD_MM_YYYY(accommodation.StartDate) + " "}
+                                                to {" " + DateFormatterDD_MM_YYYY(accommodation.EndDate) + " "}
                                             </p>) :
                                             (<p>Date range not set</p>)
                                         }
