@@ -507,7 +507,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               : ''}
             readOnly={true}
           />
-
           <DatePicker
             label="Basic date picker"
             value={selectedDayRange}
