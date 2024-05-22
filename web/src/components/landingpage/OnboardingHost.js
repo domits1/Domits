@@ -8,7 +8,7 @@ import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
 import { Auth } from "aws-amplify"
 import Calendar from "../hostdashboard/Calendar";
-import DateFormatter from "../utils/DateFormatter";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 function OnboardingHost() {
     const navigate = useNavigate();
@@ -803,7 +803,7 @@ function OnboardingHost() {
                                 <td>Date Range:</td>
                                 <td>
                                     {formData.StartDate && formData.EndDate ? (
-                                        `Available from ${DateFormatter(formData.StartDate)} to ${DateFormatter(formData.EndDate)}`
+                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
                                     ) : "Date range not set"}
                                 </td>
                             </tr>

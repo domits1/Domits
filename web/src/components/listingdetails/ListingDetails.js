@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
-import FormatStringToDate from "../utils/FormatStringToDate";
+import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 
 const ListingDetails = () => {
     const {search} = useLocation();
@@ -34,7 +34,6 @@ const ListingDetails = () => {
                 }
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
-                console.log(FormatStringToDate(data.StartDate) + " - " + FormatStringToDate(data.EndDate));
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate);
             } catch (error) {
@@ -47,11 +46,18 @@ const ListingDetails = () => {
     const setDates = (StartDate, EndDate) => {
         const today = new Date();
         const parsedStartDate = today > new Date(StartDate) ? today : StartDate
+        console.log(parsedStartDate)
         const parsedEndDate = new Date(EndDate);
-        setMinStart(FormatStringToDate(parsedStartDate));
-        setMaxStart(FormatStringToDate(new Date().setDate(parsedEndDate.getDate() - 1)));
-        setMinEnd(FormatStringToDate(new Date().setDate(parsedStartDate.getDate() + 1)));
-        setMaxEnd(FormatStringToDate(parsedEndDate));
+
+        const maxStart = new Date();
+        maxStart.setDate(parsedEndDate.getDate() - 1);
+
+        const minEnd = new Date();
+        minEnd.setDate(parsedStartDate.getDate() + 1);
+        setMinStart(DateFormatterYYYY_MM_DD(parsedStartDate));
+        setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
+        setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
+        setMaxEnd(DateFormatterYYYY_MM_DD(parsedEndDate));
     };
     const calculateTotal = () => {
         if (!accommodation) return 0;
@@ -61,6 +67,7 @@ const ListingDetails = () => {
         const cleaningFee = 100;
         const serviceFee = 98;
         return basePrice - discount + cleaningFee + serviceFee;
+    };
 
         const handleStartChat = () => {
             const userEmail = "nabilsalimi0229@gmail.com";
@@ -134,9 +141,15 @@ const ListingDetails = () => {
                                                placeholder="Select your check-in"
                                                onChange={(e) => setCheckIn(e.target.value)}/>
                                     </div>
-                                    <div className="nights">
-                                        <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights</p>
-                                    </div>
+                                    { (checkIn && checkOut) ? (
+                                        <div className="nights">
+                                            <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights</p>
+                                        </div>
+                                    ) : (
+                                        <div className="nights">
+                                            <p>0 nights</p>
+                                        </div>
+                                    )}
                                     <div className="check-in-out">
                                         <label>Check out</label>
                                         <input type="date" min={minEnd}
@@ -167,25 +180,30 @@ const ListingDetails = () => {
                                 </div>
                                 <button className="reserve-button">Reserve</button>
                                 <p className="disclaimer">*You won't be charged yet</p>
-                                <div className="price-details">
-                                    <div className="price-item">
-                                        <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights x
-                                            €{accommodation.Rent} a night</p>
-                                        <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
+                                { (checkIn && checkOut) ? (
+                                    <div className="price-details">
+                                        <div className="price-item">
+                                            <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights
+                                                x
+                                                €{accommodation.Rent} a night</p>
+                                            <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
+                                        </div>
+                                        <div className="price-item">
+                                            <p>Cleaning fee</p>
+                                            <p>€100</p>
+                                        </div>
+                                        <div className="price-item">
+                                            <p>Domits service fee</p>
+                                            <p>€98</p>
+                                        </div>
+                                        <div className="total">
+                                            <p>Total</p>
+                                            <p>€{calculateTotal()}</p>
+                                        </div>
                                     </div>
-                                    <div className="price-item">
-                                        <p>Cleaning fee</p>
-                                        <p>€100</p>
-                                    </div>
-                                    <div className="price-item">
-                                        <p>Domits service fee</p>
-                                        <p>€98</p>
-                                    </div>
-                                    <div className="total">
-                                        <p>Total</p>
-                                        <p>€{calculateTotal()}</p>
-                                    </div>
-                                </div>
+                                ) : (
+                                    <div>Please choose your Check-in date and Check-out date</div>
+                                )}
 
                             </div>
                         </aside>
@@ -193,7 +211,6 @@ const ListingDetails = () => {
                 </section>
             </main>
         );
-    }
 }
 
 export default ListingDetails;
