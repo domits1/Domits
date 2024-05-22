@@ -18,7 +18,7 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   padding: 0.75;
-  
+
 }
 
 .bar .searchInputContainer {
@@ -53,7 +53,7 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   /* transform: translateY(45%); */
-  
+
 }
 
 .check-in {
@@ -80,7 +80,7 @@
   transform: translateY(25%);
 }
 
-.input-calendar::placeholder{
+.input-calendar::placeholder {
   color: #0D9813;
   font-weight: 700;
   transform: translateY(-5%);
@@ -105,10 +105,12 @@
 .bar>div:nth-of-type(1)::before {
   background: transparent;
 }
+
 .bar>div:nth-of-type(3)::before {
   background: solid;
   transform: translateY(-40%);
 }
+
 .bar>div:nth-of-type(4)::before {
   background: solid;
   height: 56%;
@@ -162,13 +164,14 @@
   border: none;
   text-align: left;
   transform: translateY(15%);
-  width: 85%;
+  width: 90%;
   height: 2rem;
 }
 
 .suggestion-item:hover {
   border-radius: 10px;
 }
+
 .searchBar:focus {
   outline: none;
 }
@@ -195,6 +198,7 @@
   border-radius: 1.25rem;
   width: 23%;
 }
+
 .error-message {
   background-color: #f8d7da;
   color: #721c24;
@@ -203,13 +207,13 @@
   border-radius: 8px;
   font-size: 16px;
   position: absolute;
-  z-index: 1; 
+  z-index: 1;
   height: 3rem;
-  cursor: pointer ;
+  cursor: pointer;
   transform: translate(100%, 140%);
-  max-width: 400px; 
-  text-align: center; 
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .guest-dropdown {
@@ -294,8 +298,9 @@
   cursor: not-allowed;
   opacity: 0.5;
 }
+
 .searchTitleGuest.hidden {
-  display: none; 
+  display: none;
 }
 
 .searchTitleGuest {
@@ -307,7 +312,7 @@
   top: 1.2rem;
 }
 
-.button-section  {
+.button-section {
   margin-bottom: 1.8125rem;
 }
 
@@ -479,7 +484,7 @@
     align-items: flex-start;
     height: auto;
     padding: 10px;
-  }  
+  }
 }
 
 @media (max-width: 730px) {
@@ -487,21 +492,24 @@
   .accommodation,
   .button-section,
   .searchInputContainer,
-  .check-in{
+  .check-in {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
     margin-bottom: 0.4rem;
   }
-  .check-in{
+
+  .check-in {
     height: 3.4rem;
   }
-  .location{
+
+  .location {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
     margin-bottom: 0.4rem;
   }
+
   .searchBar {
     background: none;
     border: none;
@@ -511,6 +519,7 @@
     width: 90%;
     height: 1.5rem;
   }
+
   .button-section {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
@@ -519,18 +528,22 @@
     border: none;
     height: 3rem;
   }
+
   .searchTitleGuest {
     text-align: left;
     transform: translateX(-200%);
   }
+
   .guestP {
-    position: absolute; 
-  left: 10%;
+    position: absolute;
+    left: 10%;
   }
+
   .searchTitle {
     text-align: left;
     margin-left: 2rem;
   }
+
   .searchTitleCenterAcco {
     transform: translateX(-120%);
     overflow: hidden;
@@ -539,6 +552,7 @@
   .searchTitleCenter {
     transform: translateX(-32%);
   }
+
   .input-calendar {
     border: none;
     text-align: center;
@@ -555,6 +569,7 @@
     height: 3rem;
 
   }
+
   .searchbar-button {
     height: 2.7rem;
     width: 100%;
@@ -566,12 +581,14 @@
   .bar>div::before {
     background: transparent;
   }
+
   .DatePicker__calendarContainer {
     position: absolute;
     top: calc(-350% + 0px);
     left: 8%;
     transform: translateX(-50%);
   }
+
   .DatePicker__calendarArrow {
     border-color: transparent;
   }
@@ -579,6 +596,7 @@
   .ClearButton {
     margin-top: 0.5rem;
   }
+
   .error-message {
     background-color: #f8d7da;
     color: #721c24;
@@ -587,16 +605,17 @@
     border-radius: 8px;
     font-size: 16px;
     position: absolute;
-    z-index: 1; 
+    z-index: 1;
     height: 3rem;
     top: 40.6%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 82%; 
-    text-align: center; 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); 
+    width: 82%;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
   }
 }
+
 .search-icon {
   margin-right: 8px;
 }

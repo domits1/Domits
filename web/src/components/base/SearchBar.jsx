@@ -450,9 +450,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               onClick={resetGuests}
               style={{
                 position: 'absolute',
-                right: '10px',
+                right: '0px',
                 top: '50%',
-                transform: 'translateY(-50%)',
+                transform: 'translateY(-35%)',
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
@@ -526,8 +526,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     border: '#d3d9d9',
                     color: '#fff',
                     borderRadius: '0.5rem',
-                    padding: '0.5rem 2rem',
+                    padding: '0.8rem 2.4rem',
                     cursor: 'pointer',
+                    transform: 'translateY(-30px)'
                   }}
                 >
                   Reset Dates
