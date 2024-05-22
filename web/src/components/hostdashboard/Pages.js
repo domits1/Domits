@@ -74,7 +74,7 @@ function Pages() {
   }
 
   return (
-      <div className="dashboardSection section-1">
+      <div className="dashboardSection section-1 host-navigation">
         <div className="wijzer" onClick={() => navigate("/hostdashboard")}>
           <img src={dashboard} alt="Dashboard"></img>
           <p>Dashboard</p>

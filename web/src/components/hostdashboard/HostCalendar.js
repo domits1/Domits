@@ -108,7 +108,7 @@ function HostCalendar() {
                             </p>
                             <div className="locationBox">
                                 <div className="boxColumns locationContent">
-                                    <Calendar passedProp={selectedAccommodation}/>
+                                    <Calendar passedProp={selectedAccommodation} isNew={false}/>
                                 </div>
                             </div>
                         </div>
