@@ -38,7 +38,6 @@ const ListingDetails = () => {
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate);
-                console.log(data);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -108,7 +107,7 @@ const ListingDetails = () => {
                             <div>
                                 <div>
                                     <Link to="/">
-                                        <button>Back</button>
+                                        <button className="button">Go Back</button>
                                     </Link>
                                     <h1>{accommodation.Title}</h1>
                                 </div>
