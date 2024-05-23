@@ -199,6 +199,10 @@ function OnboardingHost() {
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
     };
 
+    const constructURL = (userId, accommodationId, index) => {
+        return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+    };
+
     const uploadImageToS3 = async (userId, accommodationId, image, index) => {
         const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
 
@@ -206,9 +210,11 @@ function OnboardingHost() {
             await Storage.put(key, image, {
                 bucket: S3_BUCKET_NAME,
                 region: region,
-                contentType: image.type
+                contentType: image.type,
+                level: null,
+                customPrefix: { public: '' }
             });
-            return await Storage.get(key, { bucket: S3_BUCKET_NAME, region: region });
+            return constructURL(userId, accommodationId, index);
         } catch (err) {
             console.error("Failed to upload file:", err);
             throw err;
@@ -222,6 +228,7 @@ function OnboardingHost() {
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
                 const location =  await uploadImageToS3(userId, AccoID, file, i);
+                console.log(location);
                 updatedFormData.Images[`image${i + 1}`] = location;
             }
             await setFormData(updatedFormData);
