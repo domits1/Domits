@@ -6,10 +6,12 @@ import './onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
-import { Auth } from "aws-amplify"
+import { Storage, Auth } from "aws-amplify"
 import Calendar from "../hostdashboard/Calendar";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
+const S3_BUCKET_NAME = 'accommodation';
+const region = 'eu-north-1';
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
@@ -200,16 +202,13 @@ function OnboardingHost() {
     const uploadImageToS3 = async (userId, accommodationId, image, index) => {
         const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
 
-        const params = {
-            Bucket: 'accommodation',
-            Key: key,
-            Body: image,
-            ContentType: 'image/jpeg'
-        };
-
         try {
-            const data = await s3.upload(params).promise();
-            return data.Location;
+            await Storage.put(key, image, {
+                bucket: S3_BUCKET_NAME,
+                region: region,
+                contentType: image.type
+            });
+            return await Storage.get(key, { bucket: S3_BUCKET_NAME, region: region });
         } catch (err) {
             console.error("Failed to upload file:", err);
             throw err;
