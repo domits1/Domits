@@ -1,156 +1,86 @@
-import React from "react";
+import React, { useState } from "react";
+import Jobs from "./jobs.json";
+import { useNavigate } from 'react-router-dom';
 import "./careers.css";
 
 function Career() {
+    const navigate = useNavigate();
+    const navigateToContact = () => {
+        navigate('/contact');
+    };
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedCategory, setSelectedCategory] = useState("All");
+    const itemsPerPage = 9;
+
+
+    const handleCategoryChange = (category) => {
+        setSelectedCategory(category);
+        setCurrentPage(1);
+    };
+
+    const filteredJobs = selectedCategory === "All" ? Jobs : Jobs.filter(job => job.category === selectedCategory);
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    const displayedJobs = filteredJobs.slice(startIndex, endIndex);
+
+    const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
     return (
         <main>
             <h2 className="crew">Let's find a fitting job</h2>
+            <div className="filter-container">
+                <button onClick={() => handleCategoryChange("All")} className={selectedCategory === "All" ? "active" : ""}>All</button>
+                <button onClick={() => handleCategoryChange("People")} className={selectedCategory === "People" ? "active" : ""}>People</button>
+                <button onClick={() => handleCategoryChange("Engineering")} className={selectedCategory === "Engineering" ? "active" : ""}>Engineering</button>
+                <button onClick={() => handleCategoryChange("Growth")} className={selectedCategory === "Growth" ? "active" : ""}>Growth</button>
+                <button onClick={() => handleCategoryChange("Legal")} className={selectedCategory === "Legal" ? "active" : ""}>Legal</button>
+                <button onClick={() => handleCategoryChange("Finance")} className={selectedCategory === "Finance" ? "active" : ""}>Finance</button>
+            </div>
             <div className="container job-list">
-                <div className="filterbar">
-                    <h2 style={{margin: 0}}>Filters</h2>
-                    <div className="filter-section">
-                        <h3>Experience Level</h3>
-                        <label>
-                            <input type="checkbox" value="Intern" />
-                            Intern
-                        </label>
-                        <label>
-                            <input type="checkbox" value="Junior Developer" />
-                            Junior Developer
-                        </label>
-                        <label>
-                            <input type="checkbox" value="Team Leader" />
-                            Team Leader
-                        </label>
-                        {/* Add more checkboxes for different experience levels */}
-                    </div>
-                    <div className="filter-section">
-                        <h3>Country</h3>
-                        <label>
-                            <input type="checkbox" value="NL" />
-                            Netherlands
-                        </label>
-                        <label>
-                            <input type="checkbox" value="US" />
-                            United States
-                        </label>
-                        {/* Add more checkboxes for different countries */}
-                    </div>
-                </div>
-                <div>
-                    <div className="job-box">
+                {displayedJobs.map((job, index) => (
+                    <div className="job-box" key={index}>
                         <div className="job-info">
-                            <div className="job-title">Software Engineer</div>
-                            <div className="experience-level">Junior Developer</div>
-                            <div className="job-location">Amsterdam, NL</div>
+                            <div className="job-title">{job.title}</div>
+                            <div className="experience-level">{job.experience}</div>
+                            <div className="job-location">{job.location}</div>
                         </div>
                         <div className="hover-content">
                             <div className="job-description">
-                                We are looking for a talented Software Engineer to join our
-                                dynamic team. You will be responsible for developing
-                                high-quality software solutions and collaborating with
-                                cross-functional teams to define, design, and ship new features.
+                                <p>{job.details.apply}</p>
+                                <br></br>
+                                <p>{job.details.jobDescription}</p>
                             </div>
-                            <button className="apply-button">Apply</button>
+                            <button className="apply-button" onClick={navigateToContact}>Apply</button>
                         </div>
                     </div>
-                    <div className="job-box">
-                        <div className="job-info">
-                            <div className="job-title">Software Engineer</div>
-                            <div className="experience-level">Junior Developer</div>
-                            <div className="job-location">Amsterdam, NL</div>
-                        </div>
-                        <div className="hover-content">
-                            <div className="job-description">
-                                We are looking for a talented Software Engineer to join our
-                                dynamic team. You will be responsible for developing
-                                high-quality software solutions and collaborating with
-                                cross-functional teams to define, design, and ship new features.
-                            </div>
-                            <button className="apply-button">Apply</button>
-                        </div>
-                    </div>
-                    <div className="job-box">
-                        <div className="job-info">
-                            <div className="job-title">Software Engineer</div>
-                            <div className="experience-level">Junior Developer</div>
-                            <div className="job-location">Amsterdam, NL</div>
-                        </div>
-                        <div className="hover-content">
-                            <div className="job-description">
-                                We are looking for a talented Software Engineer to join our
-                                dynamic team. You will be responsible for developing
-                                high-quality software solutions and collaborating with
-                                cross-functional teams to define, design, and ship new features.
-                            </div>
-                            <button className="apply-button">Apply</button>
-                        </div>
-                    </div>
-                    <div className="job-box">
-                        <div className="job-info">
-                            <div className="job-title">Software Engineer</div>
-                            <div className="experience-level">Junior Developer</div>
-                            <div className="job-location">Amsterdam, NL</div>
-                        </div>
-                        <div className="hover-content">
-                            <div className="job-description">
-                                We are looking for a talented Software Engineer to join our
-                                dynamic team. You will be responsible for developing
-                                high-quality software solutions and collaborating with
-                                cross-functional teams to define, design, and ship new features.
-                            </div>
-                            <button className="apply-button">Apply</button>
-                        </div>
-                    </div>
-                    <div className="job-box">
-                        <div className="job-info">
-                            <div className="job-title">Software Engineer</div>
-                            <div className="experience-level">Junior Developer</div>
-                            <div className="job-location">Amsterdam, NL</div>
-                        </div>
-                        <div className="hover-content">
-                            <div className="job-description">
-                                We are looking for a talented Software Engineer to join our
-                                dynamic team. You will be responsible for developing
-                                high-quality software solutions and collaborating with
-                                cross-functional teams to define, design, and ship new features.
-                            </div>
-                            <button className="apply-button">Apply</button>
-                        </div>
-                    </div>
-                    <div className="job-box">
-                        <div className="job-info">
-                            <div className="job-title">Software Engineer</div>
-                            <div className="experience-level">Junior Developer</div>
-                            <div className="job-location">Amsterdam, NL</div>
-                        </div>
-                        <div className="hover-content">
-                            <div className="job-description">
-                                We are looking for a talented Software Engineer to join our
-                                dynamic team. You will be responsible for developing
-                                high-quality software solutions and collaborating with
-                                cross-functional teams to define, design, and ship new features.
-                            </div>
-                            <button className="apply-button">Apply</button>
-                        </div>
-                    </div>
-                    <div className="job-box">
-                        <div className="job-info">
-                            <div className="job-title">Software Engineer</div>
-                            <div className="experience-level">Junior Developer</div>
-                            <div className="job-location">Amsterdam, NL</div>
-                        </div>
-                        <div className="hover-content">
-                            <div className="job-description">
-                                We are looking for a talented Software Engineer to join our
-                                dynamic team. You will be responsible for developing
-                                high-quality software solutions and collaborating with
-                                cross-functional teams to define, design, and ship new features.
-                            </div>
-                            <button className="apply-button">Apply</button>
-                        </div>
-                    </div>
-                </div>
+                ))}
+            </div>
+            {/* Pagination */}
+            <div className="pagination">
+                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+                    &lt; Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                        key={i}
+                        onClick={() => handlePageChange(i + 1)}
+                        className={currentPage === i + 1 ? "active" : ""}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+                    Next &gt;
+                </button>
             </div>
         </main>
     );
