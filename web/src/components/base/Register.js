@@ -1,6 +1,6 @@
 import React, { useState, FormEvent, useEffect, useContext } from 'react';
-import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
+import { Auth } from 'aws-amplify';
 import { useAuth } from './AuthContext';
 import FlowContext from '../../FlowContext';
 import './Register.css';
@@ -9,7 +9,7 @@ import { flow } from 'lodash';
 const Register = () => {
     const navigate = useNavigate();
     const { setAuthCredentials } = useAuth();
-    const { flowState, setFlowState } = useContext(FlowContext)
+    const { flowState, setFlowState } = useContext(FlowContext);
 
     const [formData, setFormData] = useState({
         email: '',
@@ -19,67 +19,80 @@ const Register = () => {
     });
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [signUpClicked, setSignUpClicked] = useState(false);
+    const [shouldShake, setShouldShake] = useState(false);
+    const [passwordShake, setPasswordShake] = useState(false);
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value,
-        });
-    };
 
     const handleHostChange = (e) => {
-        setFlowState({ ...flowState, isHost: e.target.checked });
+        setFlowState(prevState => ({
+            ...prevState,
+            isHost: e.target.checked
+        }));
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name]: value,
+        }));
     };
 
     const onSubmit = async (e) => {
         e.preventDefault();
-
-        const userData = {
-            username: formData.username,
-            email: formData.email,
-            password: formData.password,
-            repeatPassword: formData.repeatPassword,
-        };
-
-        if (!userData.email) {
+        const { username, email, password, repeatPassword } = formData;
+    
+        if (username.length < 4) {
+            setErrorMessage('Username must be at least 4 characters long.');
+            setShouldShake(true);
+            return;
+        }
+        if (password.length < 7) {
+            setErrorMessage('Password must be at least 7 characters long.');
+            setPasswordShake(true);
+            return;
+        }
+        if (!email) {
             setErrorMessage('Email can\'t be empty!');
             return;
         }
-
-        if (!userData.password || !userData.repeatPassword) {
+    
+        if (!password || !repeatPassword) {
             setErrorMessage('Password can\'t be empty!');
             return;
         }
-
-        if (userData.password !== userData.repeatPassword) {
+    
+        if (password !== repeatPassword) {
             setErrorMessage('Passwords do not match!');
             return;
         }
 
         try {
             const groupName = flowState.isHost ? "Host" : "Traveler";
-            const data = await Auth.signUp({
-                username: userData.email,
-                email: userData.email,
-                password: userData.password,
+            await Auth.signUp({
+                username: email,
+                password,
                 attributes: {
                     'custom:group': groupName,
-                    'custom:username': userData.username
+                    'custom:username': username
                 },
             });
+    
 
-            setAuthCredentials(userData.email, userData.password);
             navigate('/confirm-email', {
-                state: { email: userData.email, username: data.user.getUsername() },
+                state: { email, password }
             });
         } catch (error) {
             if (error.code === 'UsernameExistsException') {
                 setErrorMessage('User already exists!');
             } else {
                 console.error("Error:", error);
+                setErrorMessage('An unexpected error occurred');
             }
         }
     };
+    
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -93,6 +106,24 @@ const Register = () => {
 
         checkAuth();
     }, []);
+    useEffect(() => {
+        const timeout = setTimeout(() => {
+            if (!errorMessage.includes('Username')) {
+                setShouldShake(false);
+            }
+            if (!errorMessage.includes('Password')) {
+                setPasswordShake(false);
+            }
+        }, 300);
+        return () => clearTimeout(timeout);
+    }, [errorMessage]);
+
+
+    useEffect(() => {
+        if (signUpClicked) {
+            setSignUpClicked(false);
+        }
+    }, [signUpClicked]);
 
     return (
         <>
@@ -104,11 +135,12 @@ const Register = () => {
                     <form onSubmit={onSubmit} className="registerForm">
                         <label>Username:</label>
                         <input
-                            className="registerInput"
+                            className={`registerInput ${errorMessage.includes('Username') ? 'inputError' : ''} ${shouldShake ? 'inputShake' : ''}`}
                             type="text"
                             name="username"
                             value={formData.username}
                             onChange={handleChange}
+                            style={{ borderColor: errorMessage.includes('Username') ? 'red' : 'var(--secondary-color)' }}
                         />
                         <label>Email:</label>
                         <input
@@ -120,11 +152,12 @@ const Register = () => {
                         />
                         <label>Password:</label>
                         <input
-                            className="registerInput"
+                            className={`registerInput ${errorMessage.includes('Password') ? 'inputError' : ''} ${passwordShake ? 'inputShake' : ''}`}
                             type="password"
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
+                            style={{ borderColor: errorMessage.includes('Password') ? 'red' : 'var(--secondary-color)' }}
                         />
                         <label>Repeat Password:</label>
                         <input
@@ -142,10 +175,10 @@ const Register = () => {
                             /> Become a Host
                         </label>
                         <div className="alreadyAccountText">
-                            Already have an account? <a href="/login">Log in here</a>.
+                            Already have an account? <a href="/login">Log in here</a>
                         </div>
                         {errorMessage && <div className="errorText">{errorMessage}</div>}
-                        <button type="submit" className="registerButton">Sign Up</button>
+                        <button type="submit" className="registerButton" onClick={() => setShouldShake(true)}>Sign Up</button>
                     </form>
                 </div>
             )}

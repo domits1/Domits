@@ -11,8 +11,7 @@ export const onCreateChat = /* GraphQL */ `
       isRead
       sortKey
       createdAt
-      updatedAt
-      __typename
+      channelID
     }
   }
 `;
@@ -26,6 +25,7 @@ export const onUpdateChat = /* GraphQL */ `
       isRead
       sortKey
       createdAt
+      channelID
       updatedAt
       __typename
     }
@@ -41,6 +41,7 @@ export const onDeleteChat = /* GraphQL */ `
       isRead
       sortKey
       createdAt
+      channelID
       updatedAt
       __typename
     }
@@ -160,3 +161,4 @@ export const onDeleteTodo = /* GraphQL */ `
     }
   }
 `;
+

@@ -1,90 +1,88 @@
-import React from "react";
-import careerimg from '../../images/careerimg.png';
-import './careers.css'
+import React, { useState } from "react";
+import Jobs from "./jobs.json";
+import { useNavigate } from 'react-router-dom';
+import "./careers.css";
 
 function Career() {
+    const navigate = useNavigate();
+    const navigateToContact = () => {
+        navigate('/contact');
+    };
+
+    const [currentPage, setCurrentPage] = useState(1);
+    const [selectedCategory, setSelectedCategory] = useState("All");
+    const itemsPerPage = 9;
+
+
+    const handleCategoryChange = (category) => {
+        setSelectedCategory(category);
+        setCurrentPage(1);
+    };
+
+    const filteredJobs = selectedCategory === "All" ? Jobs : Jobs.filter(job => job.category === selectedCategory);
+
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+
+    const displayedJobs = filteredJobs.slice(startIndex, endIndex);
+
+    const totalPages = Math.ceil(filteredJobs.length / itemsPerPage);
+
+    const handlePageChange = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
     return (
-        <div className="careers">
-            <div className="careertext">
-                <h1>Ah, looking for a job?</h1>
-                <div className="careerTextFlex">
-                    <div className="careerTextContainerColumn">
-                        <p className="careerTopText">
-                            Check our open positions below.
-                            If there are none available, please contact us through the contact form with your subject as “open application”</p>
-                        <p className="careerBottomText">Our HR team will reply to your application personally!</p>
-                    </div>
-                <img id="careerimg" src={careerimg} alt="careerimg" />
+        <main>
+            <h2 className="crew">Let's find a fitting job</h2>
+            <div className="filter-container">
+                <button onClick={() => handleCategoryChange("All")} className={selectedCategory === "All" ? "active" : ""}>All</button>
+                <button onClick={() => handleCategoryChange("People")} className={selectedCategory === "People" ? "active" : ""}>People</button>
+                <button onClick={() => handleCategoryChange("Engineering")} className={selectedCategory === "Engineering" ? "active" : ""}>Engineering</button>
+                <button onClick={() => handleCategoryChange("Growth")} className={selectedCategory === "Growth" ? "active" : ""}>Growth</button>
+                <button onClick={() => handleCategoryChange("Legal")} className={selectedCategory === "Legal" ? "active" : ""}>Legal</button>
+                <button onClick={() => handleCategoryChange("Finance")} className={selectedCategory === "Finance" ? "active" : ""}>Finance</button>
             </div>
-        </div>
-
-        <div className="jobBubbleFirstRow">
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Design</p>
+            <div className="container job-list">
+                {displayedJobs.map((job, index) => (
+                    <div className="job-box" key={index}>
+                        <div className="job-info">
+                            <div className="job-title">{job.title}</div>
+                            <div className="experience-level">{job.experience}</div>
+                            <div className="job-location">{job.location}</div>
+                        </div>
+                        <div className="hover-content">
+                            <div className="job-description">
+                                <p>{job.details.apply}</p>
+                                <br></br>
+                                <p>{job.details.jobDescription}</p>
+                            </div>
+                            <button className="apply-button" onClick={navigateToContact}>Apply</button>
+                        </div>
                     </div>
-                    <div className="bubbletext">
-                        <h4>UI Designer</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>HR</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>Recruiter</h4>
-                        <p>Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Design</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>Motion Designer</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
+                ))}
             </div>
-
-            <div className="JobBubbleSecondRow">
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Design</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>UX Designer</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
-
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Allround</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>Internship</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
-                <div className="jobbubble">
-                    <div className="jobcat">
-                        <p>Allround</p>
-                    </div>
-                    <div className="bubbletext">
-                        <h4>Internship</h4>
-                        <p>Haarlem / Remote</p>
-                        <p id="moreinfo">More info</p>
-                    </div>
-                </div>
+            {/* Pagination */}
+            <div className="pagination">
+                <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+                    &lt; Previous
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                    <button
+                        key={i}
+                        onClick={() => handlePageChange(i + 1)}
+                        className={currentPage === i + 1 ? "active" : ""}
+                    >
+                        {i + 1}
+                    </button>
+                ))}
+                <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+                    Next &gt;
+                </button>
             </div>
-        </div>
+        </main>
     );
 }
 

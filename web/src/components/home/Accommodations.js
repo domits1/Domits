@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import './Accommodations.css';
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
+import CheckoutFrontend from "../checkout/CheckoutFrontEnd";
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
@@ -33,7 +34,6 @@ const Accommodations = ({ searchResults }) => {
         }
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
-        console.log(data);
         setAccolist(formatData(data));
       } catch (error) {
         console.error('Error fetching or processing data:', error);
@@ -52,12 +52,12 @@ const Accommodations = ({ searchResults }) => {
     return (
       <div className="full-visibility">
         {Array(8).fill().map((_, index) => (
-              <SkeletonLoader />
+          <SkeletonLoader key={index} />
         ))}
       </div>
     );
   }
-  
+
 
   const handleClick = (ID) => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
@@ -65,14 +65,14 @@ const Accommodations = ({ searchResults }) => {
 
   return (
     <div id="card-visibility">
-      {accolist.map((accommodation, index) => (
-        <div className="accocard" key={index} onClick={() => handleClick(accommodation.id)}>
+    {/* <CheckoutFrontend/> */}
+      {accolist.map((accommodation) => (
+        <div className="accocard" key={accommodation.id} onClick={() => handleClick(accommodation.id)}>
           <img src={accommodation.image} alt={accommodation.title} />
           <div className="accocard-content">
             <div className="accocard-title">{accommodation.city}, {accommodation.country}</div>
             <div className="accocard-price">{accommodation.price}</div>
             <div className="accocard-detail">{accommodation.details}</div>
-
             <div className="accocard-specs">
               <div className="accocard-size">{accommodation.size}</div>
               <div className="accocard-size">{accommodation.bathrooms}</div>

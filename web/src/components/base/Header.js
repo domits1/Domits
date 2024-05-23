@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import './base.css'
+import './base.css';
 import logo from "../../logo.svg";
 import nineDots from '../../images/dots-grid.svg';
 import profile from '../../images/profile-icon.svg';
@@ -13,8 +13,48 @@ import { Auth } from "aws-amplify";
 
 function Header({ setSearchResults, setLoading }) {
     const navigate = useNavigate();
+    const location = useLocation();
     const { setFlowState } = useContext(FlowContext);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [group, setGroup] = useState('');
+    const [username, setUsername] = useState('');
+    const [dropdownVisible, setDropdownVisible] = useState(false);
 
+    useEffect(() => {
+        checkAuthentication();
+    }, []);
+
+    useEffect(() => {
+        setDropdownVisible(false);
+    }, [location]);
+
+    const checkAuthentication = async () => {
+        try {
+            const session = await Auth.currentSession();
+            const user = await Auth.currentAuthenticatedUser();
+            setIsLoggedIn(true);
+            const userAttributes = user.attributes;
+            setGroup(userAttributes['custom:group']);
+            setUsername(userAttributes['custom:username']);
+        } catch (error) {
+            setIsLoggedIn(false);
+            console.error('Error logging in:', error);
+        }
+    };
+
+    const handleLogout = async () => {
+        try {
+            await Auth.signOut();
+            setIsLoggedIn(false);
+            console.log('User logged out successfully');
+        } catch (error) {
+            console.error('Error logging out:', error);
+        }
+    };
+
+    const toggleDropdown = () => {
+        setDropdownVisible(!dropdownVisible);
+    };
 
     const navigateToLogin = () => {
         navigate('/login');
@@ -22,9 +62,8 @@ function Header({ setSearchResults, setLoading }) {
     const navigateToRegister = () => {
         navigate('/register');
     };
-    //op verzoek van Tim S veranderd van landing naar enlist
     const navigateToLanding = () => {
-        navigate('/enlist');
+        navigate('/landing');
     };
     const navigateToNinedots = () => {
         navigate('/travelinnovation');
@@ -60,49 +99,40 @@ function Header({ setSearchResults, setLoading }) {
         }
     };
 
-
-    const location = useLocation();
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [group, setGroup] = useState('');
-    const [username, setUsername] = useState('');
-    const [dropdownVisible, setDropdownVisible] = useState(false);
-
-    useEffect(() => {
-        checkAuthentication();
-    }, []);
-
-    useEffect(() => {
-        setDropdownVisible(false);
-    }, [location]);
-
-    const checkAuthentication = async () => {
+    const updateUserGroup = async (newGroup) => {
         try {
-            const session = await Auth.currentSession();
             const user = await Auth.currentAuthenticatedUser();
-            setIsLoggedIn(true);
-            const userAttributes = user.attributes;
-            const userGroup = userAttributes['custom:group'];
-            setGroup(userGroup); // Set the group state based on user's custom:group attribute
-            const userName = userAttributes['custom:username'];
-            setUsername(userName); // Set the username state based on user's custom:username attribute
+            let result = await Auth.updateUserAttributes(user, {
+                'custom:group': newGroup
+            });
+            if (result === 'SUCCESS') {
+                console.log("User group updated successfully");
+                setGroup(newGroup);
+                navigate('/hostdashboard');
+            } else {
+                console.error("Failed to update user group");
+            }
         } catch (error) {
-            setIsLoggedIn(false);
-            console.error('Error logging in:', error);
+            console.error('Error updating user group:', error);
         }
     };
 
-    const handleLogout = async () => {
-        try {
-            await Auth.signOut();
-            setIsLoggedIn(false);
-            console.log('User logged out successfully');
-        } catch (error) {
-            console.error('Error logging out:', error);
+    const becomeHost = () => {
+        if (!isLoggedIn) {
+            setFlowState({ isHost: true });
+            navigateToLanding();
+        } else if (group === 'Traveler') {
+            const confirmed = window.confirm("Would you like to become a host?");
+            if (confirmed) {
+                updateUserGroup('Host');
+            }
+        } else {
+            navigateToDashboard();
         }
     };
 
-    const toggleDropdown = () => {
-        setDropdownVisible(!dropdownVisible);
+    const navigateToGuestDashboard = () => {
+        navigate('/guestdashboard');
     };
 
     return (
@@ -118,18 +148,23 @@ function Header({ setSearchResults, setLoading }) {
                         <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
                     </div>
                     <div className='headerRight'>
-                        <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
+                        <button className="headerButtons headerHostButton" onClick={becomeHost}>
                             {!isLoggedIn ? 'Become a Host' :
                                 (!location.pathname.includes('dashboard') && group === 'Host') ? 'Go to Dashboard' :
                                     (group === 'Host' ? 'Switch Dashboard' : 'Become a Host')}
-                        </button> 
+                        </button>
+                        {isLoggedIn && group === 'Traveler' && (
+                            <button className="headerButtons" onClick={navigateToGuestDashboard}>
+                                Go to Dashboard
+                            </button>
+                        )}
                         <button className="headerButtons" onClick={navigateToNinedots}>
-                            <img src={nineDots} alt={nineDots} />
+                            <img src={nineDots} alt="Nine Dots" />
                         </button>
                         <div className="personalMenuDropdown">
                             <button className="personalMenu" onClick={toggleDropdown}>
-                                <img src={profile} alt={profile} />
-                                <img src={arrowDown} alt={arrowDown} />
+                                <img src={profile} alt="Profile Icon" />
+                                <img src={arrowDown} alt="Dropdown Arrow" />
                             </button>
                             <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                 {isLoggedIn ? (

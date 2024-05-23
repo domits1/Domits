@@ -3,7 +3,8 @@
     margin: auto;
     margin-top: 30px;
     margin-bottom: 30px;
-
+    display: flex;
+    flex-direction: column;
     text-align: center;
     font-weight: 400;
 }
@@ -147,4 +148,23 @@
     color: green;
     font-size: 1.5rem;
     margin-bottom: 10px;
+}
+
+.MainText {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.Why-How {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.Cards {
+    display: flex;
+    justify-content:space-between;
 }

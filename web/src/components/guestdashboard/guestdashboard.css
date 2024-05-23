@@ -31,6 +31,9 @@
     border: 0.5px solid black;
     border-radius: 15px;
     padding: 5px;
+    width: 80%;
+    margin: auto;
+    text-align: center;
 }
 
 .wijzers:hover {
@@ -73,11 +76,6 @@
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
     border-radius: 10px;
 
-}
-
-.reviewText {
-    width: 80%;
-    margin: auto;
 }
 
 .review-tab{
@@ -257,4 +255,13 @@
     /* Optional, for rounded corners */
     background-color: #f9f9f9;
     /* Example background color */
+}
+
+@media (max-width: 480px) {
+    .reviewColumn {
+        width: 100%;
+        h2.review-header {
+            font-size: 1.5em;
+        }
+    }
 }

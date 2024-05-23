@@ -3,9 +3,25 @@ import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import logo from "../../logo.svg";
+import FlowContext from '../../FlowContext';
 
 const Login = () => {
     const navigate = useNavigate();
+    const [group, setGroup] = useState('');
+
+    useEffect(() => {
+        const setUserGroup = async () => {
+            try {
+                const user = await Auth.currentAuthenticatedUser();
+                const userAttributes = user.attributes;
+                setGroup(userAttributes['custom:group']);
+            } catch (error) {
+                console.error('Error setting group:', error);
+            }
+        };
+
+        setUserGroup();
+    }, []);
 
     const [formData, setFormData] = useState({
         email: '',
@@ -24,10 +40,12 @@ const Login = () => {
 
     const handleSignIn = async () => {
         const { email, password } = formData;
-
         try {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
+            if (group = "Host") {
+                window.location("/Hostdashboard")
+            }
             setErrorMessage('');
         } catch (error) {
             console.error('Error logging in:', error);

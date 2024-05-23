@@ -13,6 +13,7 @@ import './HostHomepage.css';
 
 function Pages() {
   const [userEmail, setUserEmail] = useState(null);
+  const [cognitoUserId, setCognitoUserId] = useState(null);
   const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -22,13 +23,13 @@ function Pages() {
       try {
         const userInfo = await Auth.currentUserInfo();
         setUserEmail(userInfo.attributes.email);
-        const userSub = userInfo.attributes.sub;
+        setCognitoUserId(userInfo.attributes.sub);
         const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
           method: 'POST',
           headers: {
             'Content-type': 'application/json; charset=UTF-8',
           },
-          body: JSON.stringify({ sub: userSub }),
+          body: JSON.stringify({ sub: userInfo.attributes.sub }),
         });
         const data = await response.json();
         if (data.hasStripeAccount) {
@@ -46,9 +47,10 @@ function Pages() {
   async function handleStripeAction() {
     if (stripeLoginUrl) {
       window.open(stripeLoginUrl, '_blank');
-    } else if (userEmail) {
+    } else if (userEmail && cognitoUserId) {
       const options = {
-        userEmail: userEmail
+        userEmail: userEmail,
+        cognitoUserId: cognitoUserId
       };
       try {
         const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
@@ -67,39 +69,84 @@ function Pages() {
         console.log(error);
       }
     } else {
-      console.error('User email is not defined.');
+      console.error('User email or cognitoUserId is not defined.');
     }
   }
 
   return (
-      <div className="dashboardSection section-1">
+      <div className="dashboardSection section-1 host-navigation">
         <div className="wijzer" onClick={() => navigate("/hostdashboard")}>
           <img src={dashboard} alt="Dashboard"></img>
           <p>Dashboard</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/Chatprototype")}>
-          <img src={message} alt="Messages"></img>
-          <p>Messages</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/payments")}>
-          <img src={payment} alt="Payments"></img>
-          <p>Payments</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/listings")}>
-          <img src={listings} alt="Listing"></img>
-          <p>Listing</p>
         </div>
         <div className="wijzer" onClick={() => navigate("/hostdashboard/calendar")}>
           <img src={calendar} alt="Calendar"></img>
           <p>Calendar</p>
         </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/settings")}>
-          <img src={settings} alt="Settings"></img>
-          <p>Settings</p>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Reservations</p>
+        </div>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/chat")}>
+          <img src={message} alt="Messages"></img>
+          <p>Messages</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Revenues</p>
+        </div>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/payments")}>
+          <img src={payment} alt="Payments"></img>
+          <p>Reporting</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Occupancy/ADR</p>
         </div>
         <div className="wijzer" onClick={() => navigate("/hostdashboard/reviews")}>
           <img src={listings} alt="Reviews"></img>
           <p>Reviews</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Property care</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>IoT Hub</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Pricing</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Distribution</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Monitoring</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Screening</p>
+        </div>
+        <br/>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/listings")}>
+          <img src={listings} alt="Listing"></img>
+          <p>Listing</p>
+        </div>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/settings")}>
+          <img src={settings} alt="Settings"></img>
+          <p>Settings</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Setup</p>
+        </div>
+        <div className="wijzer">
+          <img src={dashboard} alt="Dashboard"/>
+          <p>Promo codes</p>
         </div>
         {loading ? (
             <div className="spinnerdiv">

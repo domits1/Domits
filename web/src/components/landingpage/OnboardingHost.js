@@ -1,11 +1,14 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
-
+import spinner from "../../images/spinnner.gif";
+import info from "../../images/icons/info.png";
 import './onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
-import { Auth } from "aws-amplify";
+import { Auth } from "aws-amplify"
+import Calendar from "../hostdashboard/Calendar";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 function OnboardingHost() {
     const navigate = useNavigate();
@@ -23,6 +26,7 @@ function OnboardingHost() {
         });
     }
 
+    const AWS = require('aws-sdk');
     const s3 = new AWS.S3({
         accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
@@ -30,7 +34,6 @@ function OnboardingHost() {
     });
 
     let [userId, setUserId] = useState(null);
-    const [selectedFiles, setSelectedFiles] = useState([]);
 
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
@@ -81,6 +84,8 @@ function OnboardingHost() {
             image4: "",
             image5: "",
         },
+        StartDate: "",
+        EndDate: "",
         AccommodationType: "",
         Measurement: "",
         OwnerId: ""
@@ -91,8 +96,8 @@ function OnboardingHost() {
     };
 
     const isFormFilled = () => {
-        const excludedFields = ['OwnerId'];
-        
+        const excludedFields = ['OwnerId', 'StartDate', 'EndDate'];
+
         // Check if all fields except excluded ones are filled
         for (const key in formData) {
             if (excludedFields.includes(key)) {
@@ -110,7 +115,7 @@ function OnboardingHost() {
             }
         }
         return true;
-    };    
+    };
 
     const appendUserId = () => {
         setFormData((prevData) => ({
@@ -148,7 +153,6 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-        console.log(formData)
 
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -193,277 +197,263 @@ function OnboardingHost() {
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
     };
 
+    const uploadImageToS3 = async (userId, accommodationId, image, index) => {
+        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+
+        const params = {
+            Bucket: 'accommodation',
+            Key: key,
+            Body: image,
+            ContentType: 'image/jpeg'
+        };
+
+        try {
+            const data = await s3.upload(params).promise();
+            return data.Location;
+        } catch (err) {
+            console.error("Failed to upload file:", err);
+            throw err;
+        }
+    }
     const handleSubmit = async () => {
         try {
-            const UserID = userId; // Assuming userId is available in scope
+            setIsLoading(true);
             const AccoID = formData.ID;
             const updatedFormData = { ...formData }; // Copy the original formData object
-            for (let i = 0; i < selectedFiles.length; i++) {
-                const file = selectedFiles[i];
-                const params = {
-                    Bucket: 'accommodation',
-                    Key: `images/${UserID}/${AccoID}/Image-${i + 1}.jpg`, // Include file extension ".jpg"
-                    Body: file
-                };
-                const data = await s3.upload(params).promise();
-                // Update the corresponding property in the formData object
-                updatedFormData.Images[`image${i + 1}`] = data.Location;
+            for (let i = 0; i < imageFiles.length; i++) {
+                const file = imageFiles[i];
+                const location =  await uploadImageToS3(userId, AccoID, file, i);
+                updatedFormData.Images[`image${i + 1}`] = location;
             }
-            // Set the updated formData object with image paths
-            setFormData(updatedFormData);
-            // Reset selectedFiles after successful upload
-            setSelectedFiles([]);
+            await setFormData(updatedFormData);
+            setImageFiles([]);
 
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
                 method: 'POST',
+                body: JSON.stringify(formData),
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(formData),
+                }
             });
-
             if (response.ok) {
                 console.log('Form data saved successfully');
-
             } else {
                 console.error('Error saving form data');
             }
         } catch (error) {
             console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleFileChange = (event) => {
-        const files = Array.from(event.target.files).filter(
-            (file) => file.type.startsWith('image/')
-        );
-        if (files.length + selectedFiles.length > 5) {
-            alert('You can only upload up to 5 images.');
-            return;
+    const [imageFiles, setImageFiles] = useState(Array.from({ length: 5 }, () => null));
+
+    const handleFileChange = (file, index) => {
+        const newImageFiles = [...imageFiles];
+        newImageFiles[index] = file;
+        setImageFiles(newImageFiles);
+
+        // Construct formData based on current imageFiles
+        const updatedFormData = { ...formData };
+        if (file) {
+            const key = `image${index + 1}`;
+            updatedFormData.Images[key] = URL.createObjectURL(file);
         }
-    
-        // Update formData.Images with the selected files
-        const updatedImages = { ...formData.Images };
-        files.forEach((file, index) => {
-            updatedImages[`image${selectedFiles.length + index + 1}`] = file.name;
-        });
-    
-        setFormData((prevData) => ({
-            ...prevData,
-            Images: updatedImages
-        }));
-    
-        setSelectedFiles([...selectedFiles, ...files]);
+        setFormData(updatedFormData);
     };
-    
+
     const handleDelete = (index) => {
-        const updatedFiles = [...selectedFiles];
-        const imageKeys = Object.keys(formData.Images);
-        updatedFiles.splice(index, 1);
-    
-        const updatedImages = { ...formData.Images };
-        updatedImages[imageKeys[index]] = '';
-    
-        setSelectedFiles(updatedFiles);
-        setFormData((prevData) => ({
-            ...prevData,
-            Images: updatedImages,
-        }));
+        const newImageFiles = [...imageFiles];
+        newImageFiles[index] = null;
+        setImageFiles(newImageFiles);
+
+        // Construct formData based on current imageFiles
+        const updatedFormData = { ...formData };
+        const key = `image${index + 1}`;
+        updatedFormData.Images[key] = ""; // Clear the value associated with the key
+        setFormData(updatedFormData);
     };
+
+    const updateDates = (start, end) => {
+        setFormData(prev => ({ ...prev, StartDate: start, EndDate: end }));
+    };
+    const [isLoading, setIsLoading] = useState(true);
 
     const renderPageContent = (page) => {
         switch (page) {
             case 1:
                 return (
-                    <div>
-                        <div class="formContainer">
-                            <div class="form-section">
-                                <div className="formRow">
-                                    <div class="quantity">
-                                        <h2 className="onboardingSectionTitle">Define quantity</h2>
-                                        <div className="input-group">
-                                            <label for="guests">Maximum amount of guests?</label>
-                                            <input className="textInput" type="number" id="guests" name="Guestamount" onChange={handleInputChange} value={formData.Guestamount} min={0}></input>
-                                        </div>
-                                        <div className="input-group">
-                                            <label for="bedrooms">How many bedrooms?</label>
-                                            <input className="textInput" type="number" id="bedrooms" name="Bedrooms" onChange={handleInputChange} value={formData.Bedrooms} min={0}></input>
-                                        </div>
-                                        <div className="input-group">
-                                            <label for="bathrooms">How many bathrooms?</label>
-                                            <input className="textInput" type="number" id="bathrooms" name="Bathrooms" onChange={handleInputChange} value={formData.Bathrooms} min={0}></input>
-                                        </div>
-                                        <div className="input-group">
-                                            <label for="beds">How many fixed beds?</label>
-                                            <input className="textInput" type="number" id="beds" name="Beds" onChange={handleInputChange} value={formData.Beds} min={0}></input>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="locationInput">
-                                    <h2 className="onboardingSectionTitle">Fill in Location</h2>
-                                    <div className="input-group">
-                                        <label for="country">Country</label>
-                                        <Select
-                                            options={options.map(country => ({ value: country, label: country }))}
-                                            name="Country"
-                                            className="locationText"
-                                            value={{ value: formData.Country, label: formData.Country }}
-                                            onChange={handleCountryChange}
-                                            id="country"
-                                        />
-                                    </div>
-                                    <div className="input-group">
-                                        <label for="city">City</label>
-                                        <input
-                                            className="textInput locationText"
-                                            name="City"
-                                            onChange={handleInputChange}
-                                            value={formData.City}
-                                            id="city"
-                                        />
-                                    </div>
-                                    <div className="input-group">
-                                        <label for="street">
-                                            Street + house nr.
-                                        </label>
-                                        <input
-                                            className="textInput locationText"
-                                            name="Street"
-                                            onChange={handleInputChange}
-                                            value={formData.Street}
-                                            id="street"
-                                        />
-                                    </div>
-                                    <div className="input-group">
-                                        <label for="postal">
-                                            Postal Code
-                                        </label>
-                                        <input
-                                            className="textInput locationText"
-                                            name="PostalCode"
-                                            onChange={handleInputChange}
-                                            value={formData.PostalCode}
-                                            id="postal"
-                                        />
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="map-section">
-                                <h2 className="onboardingSectionTitle">What we show on Domits</h2>
-                                <MapComponent location={location} />
-                            </div>
-                        </div>
-                        <div class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)} disabled={true}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
-                        </div>
-                    </div>
-                );
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">Accommodation Information</h2>
+                        <section className="flex-row form-row">
+                            <section className="form-section">
 
-
-            case 2:
-                return (
-                    <div>
-                        <div class="formContainer mBottom">
-                            <div class="form-section">
-                                <h2 className="onboardingSectionTitle">Add accomodation features</h2>
-                                <div class="room-features formRow">
-                                    <div>
-                                        <label><input type="checkbox" className="radioInput" name="Wifi" onChange={handleInputChange} checked={formData.Features.Wifi}></input>Wifi</label>
-                                        <label><input type="checkbox" className="radioInput" name="Television" onChange={handleInputChange} checked={formData.Features.Television}></input>Television</label>
-                                        <label><input type="checkbox" className="radioInput" name="Kitchen" onChange={handleInputChange} checked={formData.Features.Kitchen}></input>Kitchen</label>
-                                        <label><input type="checkbox" className="radioInput" name="WashingMachine" onChange={handleInputChange} checked={formData.Features.WashingMachine}></input>Washing machine</label>
-                                    </div>
-                                    <div>
-                                        <label><input type="checkbox" className="radioInput" name="Airconditioning" onChange={handleInputChange} checked={formData.Features.Airconditioning}></input>Airconditioning</label>
-                                        <label><input type="checkbox" className="radioInput" name="Onsiteparking" onChange={handleInputChange} checked={formData.Features.Onsiteparking}></input>Onsite parking</label>
-                                        <label><input type="checkbox" className="radioInput" name="Homeoffice" onChange={handleInputChange} checked={formData.Features.Homeoffice}></input>Home office</label>
-                                    </div>
-                                </div>
-                                <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
-                                <div class="room-features formRow">
-                                    <div>
-                                        <label><input type="checkbox" className="radioInput" name="Smokedetector" onChange={handleInputChange} checked={formData.Features.Smokedetector}></input>Smoke detector</label>
-                                        <label><input type="checkbox" className="radioInput" name="FirstAidkit" onChange={handleInputChange} checked={formData.Features.FirstAidkit}></input>First Aid kit</label>
-                                    </div>
-                                    <div>
-                                        <label><input type="checkbox" className="radioInput" name="Fireextinguisher" onChange={handleInputChange} checked={formData.Features.Fireextinguisher}></input>Fire extinguisher</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="front-section">
-                                <div className="room-info">
-                                    <h2 className="onboardingSectionTitle">Add accomodation information</h2>
-                                    <label for="title">Title</label>
-                                    <input className="textInput locationText" id="title" name="Title" onChange={handleInputChange} value={formData.Title}></input>
-                                    <label for="Subtitle">Subtitle</label>
-                                    <input className="textInput locationText" id="Subtitle" name="Subtitle" onChange={handleInputChange} value={formData.Subtitle}></input>
-                                    <label for="description" className="mTop" style={{ alignItems: 'start' }}>Description</label>
-                                    <textarea className="textInput locationText" id="description" name="Description" onChange={handleInputChange} rows="10" cols="30" value={formData.Description}></textarea>
-                                </div>
-                            </div>
-                        </div>
-                        <div>
-                            <label className="nextButtons"><input type="file" name="images" className="file-input" accept="image/*" onChange={handleFileChange}></input>Add your images</label>
-                            <div className="flex-row">
+                                <label htmlFor="title">Title*</label>
+                                <input
+                                    className="textInput locationText"
+                                    id="title"
+                                    name="Title"
+                                    onChange={handleInputChange}
+                                    value={formData.Title}
+                                    placeholder="Enter your title here..."
+                                />
+                                <label htmlFor="Subtitle">Subtitle*</label>
+                                <input
+                                    className="textInput locationText"
+                                    id="Subtitle"
+                                    name="Subtitle"
+                                    onChange={handleInputChange}
+                                    value={formData.Subtitle}
+                                    placeholder="Enter your subtitle here..."
+                                />
+                                <label htmlFor="description">Description*</label>
+                                <textarea
+                                    className="textInput locationText"
+                                    id="description"
+                                    name="Description"
+                                    onChange={handleInputChange}
+                                    rows="5"
+                                    value={formData.Description}
+                                    placeholder="Tell us something about your accommodation..."
+                                ></textarea>
+                            </section>
+                            <section className="images-container thumbnail-container">
+                                {imageFiles[0] && (
+                                    <img
+                                        src={URL.createObjectURL(imageFiles[0])}
+                                        alt="First Image"
+                                        className="file-image placeholder"
+                                    />
+                                )}
+                                {!imageFiles[0] && <div className="placeholder">Your Thumbnail</div>}
+                            </section>
+                        </section>
+                        <section className="form-section">
+                            <h2 className="onboardingSectionTitle">Images*</h2>
+                            <section className="flex-row">
                                 {[...Array(5)].map((_, index) => (
-                                    <div key={index} className="image-container">
-                                        {selectedFiles[index] && (
+                                    <section key={index} className="images-container">
+                                        <input
+                                            type="file"
+                                            onChange={(e) => handleFileChange(e.target.files[0], index)}
+                                            accept="image/*"
+                                            className="file-input"
+                                        />
+                                        {imageFiles[index] && (
                                             <>
                                                 <img
-                                                    src={URL.createObjectURL(selectedFiles[index])}
+                                                    src={URL.createObjectURL(imageFiles[index])}
                                                     alt={`Image ${index + 1}`}
-                                                    className="image"
+                                                    className="file-image"
                                                 />
                                                 <button className="delete-button" onClick={() => handleDelete(index)}>
                                                     Delete
                                                 </button>
                                             </>
                                         )}
-                                        {!selectedFiles[index] && <div className="placeholder">Placeholder</div>}
-                                    </div>
+                                        {!imageFiles[index] && <div className="placeholder">Image {index + 1}</div>}
+                                    </section>
                                 ))}
-                            </div>
-                        </div>
-                        <div class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed</button>
-                        </div>
-                    </div>
+                            </section>
+                        </section>
+
+                        <section className="listing-info enlist-info">
+                            <img src={info} className="info-icon"/>
+                            <p className="info-msg">Fields with * are mandatory</p>
+                        </section>
+                        <nav className="formContainer">
+                            <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>
+                                Go to dashboard
+                            </button>
+                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
                 );
-
-
-            case 3:
+            case 2:
                 return (
-                    <div>
-                        <div class="formContainer">
-                            <div className="formHolder">
-                                <h2 className="onboardingSectionTitle">Systems and configurations</h2>
-                                <div className="formRow">
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>Guest type</label>
-                                            <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Any guest"} value="Any guest"></input>Any Guest</label>
-                                            <label><input type="radio" className="radioInput" name="Guesttype" onChange={handleInputChange} checked={formData.Guesttype === "Verified Domits guest"} value="Verified Domits guest"></input>Verified Domits guest</label>
-                                        </div>
-                                    </div>
-                                </div>
+                    <main className="container">
+                        <section className="quantity">
+                            <h2 className="onboardingSectionTitle">Specifications</h2>
+                            <div className="input-group">
                             </div>
-                            <p>Price: {formData.Rent}</p>
-                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange} defaultValue={formData.Rent} min="40" max="1000" step="10" />
+
+                            <div className="form-row">
+                                <label htmlFor="bedrooms">Amount of bedrooms*</label>
+                                <input
+                                    type="number"
+                                    id="bedrooms"
+                                    name="Bedrooms"
+                                    onChange={handleInputChange}
+                                    value={formData.Bedrooms}
+                                    min={0}
+                                    className="textInput"
+                                    placeholder="How many badrooms does it have?"
+                                />
+
+                                <label htmlFor="bathrooms">Amount of bathrooms*</label>
+                                <input
+                                    type="number"
+                                    id="bathrooms"
+                                    name="Bathrooms"
+                                    onChange={handleInputChange}
+                                    value={formData.Bathrooms}
+                                    min={0}
+                                    className="textInput"
+                                    placeholder="How many bathrooms does it have?"
+                                />
+
+                                <label htmlFor="beds">Amount of beds*</label>
+                                <input
+                                    type="number"
+                                    id="beds"
+                                    name="Beds"
+                                    onChange={handleInputChange}
+                                    value={formData.Beds}
+                                    min={0}
+                                    className="textInput"
+                                    placeholder="How many fixed beds does it have?"
+                                />
+
+                                <label htmlFor="guests">Maximum amount of guests*</label>
+                                <input
+                                    type="number"
+                                    id="guests"
+                                    name="Guestamount"
+                                    onChange={handleInputChange}
+                                    value={formData.Guestamount}
+                                    min={0}
+                                    className="textInput"
+                                    placeholder="How many guests can you accept?"
+                                />
+                            </div>
+                        </section>
+
+                        <section className="details-policies formContainer">
                             <div className="formHolder">
                                 <h2 className="onboardingSectionTitle">Details and Policies</h2>
                                 <div className="formRow">
-                                    <div class="room-features formRow">
+                                    <div className="room-features formRow">
                                         <div className="configurations">
-                                            <label>What are the measurements?</label>
-                                            <input className="textInput" type="number" name="Measurement" placeholder="M²" onChange={handleInputChange} defaultValue={formData.Measurement} min={0}></input>
-                                            <label>Accommodation Type</label>
+                                            <label htmlFor="measurement">Measurements*</label>
+                                            <input
+                                                type="number"
+                                                name="Measurement"
+                                                placeholder="What are your measurements in M²?"
+                                                onChange={handleInputChange}
+                                                value={formData.Measurement}
+                                                min={0}
+                                                className="textInput"
+                                            />
+
+                                            <label htmlFor="accommodationType">Accommodation Type*</label>
                                             <select
                                                 value={formData.AccommodationType}
                                                 onChange={handleInputChange}
-                                                className="textInput"
                                                 name="AccommodationType"
+                                                className="textInput"
                                             >
                                                 <option value="Room">Room</option>
                                                 <option value="Shared Room">Shared Room</option>
@@ -475,18 +465,283 @@ function OnboardingHost() {
                                             </select>
                                         </div>
                                     </div>
-                                    <div class="room-features formRow">
-                                        <div className="configurations">
-                                            <label>Cancel policy</label>
-                                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "Users can cancel anytime"} value="Users can cancel anytime"></input>Users can cancel anytime</label>
-                                            <label><input type="radio" className="radioInput" name="CancelPolicy" onChange={handleInputChange} checked={formData.CancelPolicy === "No cancel 24h before arrival"} value="No cancel 24h before arrival"></input>No cancel 24h before arrival </label>
-                                        </div>
-                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
+                        </section>
+
+                        <section className="listing-info enlist-info">
+                            <img src={info} className="info-icon"/>
+                            <p className="info-msg">Fields with * are mandatory</p>
+                        </section>
+                        <nav className="formContainer">
+                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>
+                                Go back to change
+                            </button>
+                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+
+            case 3:
+                return (
+                    <main className="container">
+                        <section>
+                            <section className="locationInput">
+                                <h2 className="onboardingSectionTitle">Location</h2>
+                                <label htmlFor="country">Country*</label>
+                                <Select
+                                    options={options.map(country => ({value: country, label: country}))}
+                                    name="Country"
+                                    className="locationText"
+                                    value={{value: formData.Country, label: formData.Country}}
+                                    onChange={handleCountryChange}
+                                    id="country"
+                                />
+                                <label htmlFor="city">City*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="City"
+                                    onChange={handleInputChange}
+                                    value={formData.City}
+                                    id="city"
+                                    placeholder="Select your city"
+                                />
+                                <label htmlFor="street">Street + house nr.*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="Street"
+                                    onChange={handleInputChange}
+                                    value={formData.Street}
+                                    id="street"
+                                    placeholder="Enter your address"
+                                />
+                                <label htmlFor="postal">Postal Code*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="PostalCode"
+                                    onChange={handleInputChange}
+                                    value={formData.PostalCode}
+                                    id="postal"
+                                    placeholder="Enter your postal code"
+                                />
+                            </section>
+                            <section className="map-section">
+                                <h2 className="onboardingSectionTitle">What we show on Domits</h2>
+                                <MapComponent location={location}/>
+                            </section>
+                        </section>
+                        <section className="listing-info enlist-info">
+                            <img src={info} className="info-icon"/>
+                            <p className="info-msg">Fields with * are mandatory</p>
+                        </section>
+                        <nav className="formContainer">
+                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>Go back to change
+                            </button>
+                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+
+            case 4:
+                return (
+                    <main className="container">
+                        <section className="room-features formRow">
+                            <h2 className="onboardingSectionTitle">Systems and configurations</h2>
+                            <div className="form-group">
+                                <p>Cancel policy*</p>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        className="radioInput"
+                                        name="CancelPolicy"
+                                        onChange={handleInputChange}
+                                        checked={formData.CancelPolicy === "Users can cancel anytime"}
+                                        value="Users can cancel anytime"
+                                    />
+                                    Users can cancel anytime
+                                </label>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        className="radioInput"
+                                        name="CancelPolicy"
+                                        onChange={handleInputChange}
+                                        checked={formData.CancelPolicy === "No cancel 24h before arrival"}
+                                        value="No cancel 24h before arrival"
+                                    />
+                                    No cancel 24h before arrival
+                                </label>
+                            </div>
+                            <div className="form-group">
+                                <p>Guest type*</p>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        className="radioInput"
+                                        name="Guesttype"
+                                        onChange={handleInputChange}
+                                        checked={formData.Guesttype === "Any guest"}
+                                        value="Any guest"
+                                    />
+                                    Any Guest
+                                </label>
+                                <label>
+                                    <input
+                                        type="radio"
+                                        className="radioInput"
+                                        name="Guesttype"
+                                        onChange={handleInputChange}
+                                        checked={formData.Guesttype === "Verified Domits guest"}
+                                        value="Verified Domits guest"
+                                    />
+                                    Verified Domits guest
+                                </label>
+                            </div>
+                            <div className="form-group">
+                                <h2 className="onboardingSectionTitle">Add accommodation features</h2>
+                                <p>You can select one or more items below</p>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Wifi"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Wifi}
+                                    />
+                                    Wifi
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Television"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Television}
+                                    />
+                                    Television
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Kitchen"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Kitchen}
+                                    />
+                                    Kitchen
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="WashingMachine"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.WashingMachine}
+                                    />
+                                    Washing machine
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Airconditioning"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Airconditioning}
+                                    />
+                                    Airconditioning
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Onsiteparking"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Onsiteparking}
+                                    />
+                                    Onsite parking
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Homeoffice"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Homeoffice}
+                                    />
+                                    Home office
+                                </label>
+                            </div>
+                            <div className="form-group">
+                                <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Smokedetector"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Smokedetector}
+                                    />
+                                    Smoke detector
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="FirstAidkit"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.FirstAidkit}
+                                    />
+                                    First Aid kit
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Fireextinguisher"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Fireextinguisher}
+                                    />
+                                    Fire extinguisher
+                                </label>
+                            </div>
+                        </section>
+                        <section className="listing-info enlist-info">
+                            <img src={info} className="info-icon"/>
+                            <p className="info-msg">Fields with * are mandatory</p>
+                        </section>
+                        <nav className="formContainer">
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+                            </button>
+                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+
+
+            case 5:
+                return (
+                    <main className="container">
+                        <section class="room-features formRow">
+                            <h2 className="onboardingSectionTitle">Pricing</h2>
+                            <p>Price per night*: {formData.Rent}</p>
+                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
+                                   defaultValue={formData.Rent} min="40" max="1000" step="10"/>
+                        </section>
+                        <h2 className="onboardingSectionTitle">Availabilities</h2>
+                        <section className="listing-calendar">
+                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
+                        </section>
+                        <section className="listing-info enlist-info">
+                            <img src={info} className="info-icon"/>
+                            <p className="info-msg">Fields with * are mandatory</p>
+                        </section>
+                        <nav class="formContainer">
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+                            </button>
                             <button
                                 className='nextButtons'
                                 onClick={() => {
@@ -501,76 +756,149 @@ function OnboardingHost() {
                                     opacity: isFormFilled() ? 1 : 0.5
                                 }}
                                 disabled={!isFormFilled()}
-                            >Enlist</button>
+                            >Enlist
+                            </button>
+                        </nav>
+                    </main>
+                );
 
+
+            case 6:
+                return (
+                    <div className="container" style={{width: '80%'}}>
+                        <h2>Review your information</h2>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                            <tbody>
+                            <tr>
+                                <th style={{
+                                    textAlign: 'left',
+                                    borderBottom: '1px solid #ccc',
+                                    paddingBottom: '8px'
+                                }}>Property Details
+                                </th>
+                                <th style={{
+                                    textAlign: 'left',
+                                    borderBottom: '1px solid #ccc',
+                                    paddingBottom: '8px'
+                                }}>Value
+                                </th>
+                            </tr>
+                            <tr>
+                                <td>Title:</td>
+                                <td>{formData.Title}</td>
+                            </tr>
+                            <tr>
+                                <td>Description:</td>
+                                <td>{formData.Description}</td>
+                            </tr>
+                            <tr>
+                                <td>Rent:</td>
+                                <td>{formData.Rent}</td>
+                            </tr>
+                            <tr>
+                                <td>Room Type:</td>
+                                <td>{formData.AccommodationType}</td>
+                            </tr>
+                            <tr>
+                                <td>Date Range:</td>
+                                <td>
+                                    {formData.StartDate && formData.EndDate ? (
+                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
+                                    ) : "Date range not set"}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Number of Guests:</td>
+                                <td>{formData.Guestamount}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Bedrooms:</td>
+                                <td>{formData.Bedrooms}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Bathrooms:</td>
+                                <td>{formData.Bathrooms}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Fixed Beds:</td>
+                                <td>{formData.Beds}</td>
+                            </tr>
+                            <tr>
+                                <td>Country:</td>
+                                <td>{formData.Country}</td>
+                            </tr>
+                            <tr>
+                                <td>Postal Code:</td>
+                                <td>{formData.PostalCode}</td>
+                            </tr>
+                            <tr>
+                                <td>Street + House Nr.:</td>
+                                <td>{formData.Street}</td>
+                            </tr>
+                            <tr>
+                                <td>Neighbourhood:</td>
+                                <td>{formData.Neighbourhood}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <h3>Features:</h3>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                            <tbody>
+                            {Object.entries(formData.Features).map(([feature, value]) => (
+                                <tr key={feature}>
+                                    <td style={{borderBottom: '1px solid #ccc'}}>{feature}:</td>
+                                    <td style={{borderBottom: '1px solid #ccc'}}>{value ? 'Yes' : 'No'}</td>
+                                </tr>
+                            ))}
+                            </tbody>
+                        </table>
+                        <div className='buttonHolder'>
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+                            </button>
+                            <button className='nextButtons' onClick={() => {
+                                handleSubmit();
+                                pageUpdater(page + 1)
+                            }}>Confirm and proceed
+                            </button>
                         </div>
-
+                        <p>Your accommodation ID: {formData.ID}</p>
                     </div>
                 );
 
 
-            case 4:
-                return (
-                    <div className="container" style={{ width: '80%' }}>
-                        {console.log(formData)}
-                        <h2>Review your information</h2>
-                        <div className="formRow">
-                            <div className="reviewInfo">
-                                <p>Title: {formData.Title}</p>
-                                <p>Description: {formData.Description}</p>
-                                <p>Rent: {formData.Rent}</p>
-                                <p>Room Type: {formData.Roomtype}</p>
-                                <p>Number of Guests: {formData.Guestamount}</p>
-                                <p>Number of Bedrooms: {formData.Bedrooms}</p>
-                                <p>Number of Bathrooms: {formData.Bathrooms}</p>
-                                <p>Number of Fixed Beds: {formData.Beds}</p>
-                                <p>Country: {formData.Country}</p>
-                                <p>Postal Code: {formData.PostalCode}</p>
-                                <p>Street + House Nr.: {formData.Street}</p>
-                                <p>Neighbourhood: {formData.Neighbourhood}</p>
-                            </div>
-                            <div className="reviewInfo">
-                                <p>Features:</p>
-                                <ul>
-                                    {Object.entries(formData.Features).map(([feature, value]) => (
-                                        <p key={feature}>{feature}: {value ? 'Yes' : 'No'}</p>
-                                    ))}
-                                </ul>
+            case 7:
+                if (isLoading) {
+                    return (
+                        <div className="loading">
+                            <p className="spinner-text">Please wait a moment...</p>
+                            <img className="spinner" src={spinner}/>
+                        </div>
+                    );
+                } else {
+                    return (
+                        <div className="container">
+                            <h2>
+                                Congratulations! Your accommodation is being listed
+                            </h2>
+                            <p>It may take a while before your accommodation is verified</p>
+                            <div className='buttonHolder'>
+                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to
+                                    change
+                                </button>
+                                <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to
+                                    dashboard
+                                </button>
                             </div>
                         </div>
-                        <div className='buttonHolder'>
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => { handleSubmit(); pageUpdater(page + 1) }}>Confirm and proceed</button>
-                        </div>
-                        <p>Your accommodation ID: {formData.ID}</p>
-                    </div >
-                );
-
-
-            case 5:
-                return (
-                    <div className="container">
-                        <h2>
-                            Congratulations! Your accommodation is being listed
-                        </h2>
-                        <p>It may take a while before your accommodation is verified</p>
-                        <div className='buttonHolder'>
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change</button>
-                            <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to dashboard</button>
-                        </div>
-                    </div >
-                );
+                    );
+                }
             default:
                 return null;
         }
     };
 
     return (
-
-        <div className="container">
-            {renderPageContent(page)}
-
-        </div>
+        renderPageContent(page)
     );
 }
 

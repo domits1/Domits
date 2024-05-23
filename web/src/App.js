@@ -26,6 +26,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
+import BookingGuestDashboard from './components/guestdashboard/BookingGuestDashboard';
 import Disclaimers from "./components/disclaimers/Disclaimers";
 import Policy from "./components/disclaimers/Policy";
 import Terms from "./components/disclaimers/Terms";
@@ -35,10 +36,11 @@ import ConfirmRegister from "./components/base/ConfirmRegister";
 import { AuthProvider } from './components/base/AuthContext';
 import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
 import Chat from "./components/chat/Chat";
-import Chatprototype from "./components/chat/Chatprototype.js";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
+import UserProfile from './components/guestdashboard/profilePictureTest.js';
+import Hostchat from './components/hostdashboard/Hostchat';
 
 Modal.setAppElement('#root');
 
@@ -91,8 +93,10 @@ function App() {
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
                             <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
+                            <Route path="/guestdashboard/booking" element={<BookingGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
-                            <Route path="/guestdashboard/chatprototype" element={<Chatprototype />} />
+                            <Route path="/guestdashboard/chat" element={<Chat />} />
+                            {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}
 
                             {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
@@ -107,6 +111,7 @@ function App() {
                             <Route path="/hostdashboard/payments" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
                             <Route path="/hostdashboard/reviews" element={<HostReviews />} />
+                            <Route path="/hostdashboard/chat" element={<Hostchat />} />
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />

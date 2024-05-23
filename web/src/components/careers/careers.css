@@ -1,130 +1,121 @@
-.careers {
-    padding: 50px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 100px;
-    max-width: 1200px; /* Set a maximum width for the container */
+.crew {
+    text-align: center;
+    font-size: 28px;
+    margin-bottom: 20px;
+    color: #333;
 }
 
-.careertext {
-    color: #000;
-    font-size: 20px;
-    font-weight: 500;
+.filter-container {
+    text-align: center;
+    margin-bottom: 20px;
 }
 
-.careerTextFlex {
-    display: flex;
-    flex-direction: row;
+.filter-container button {
+    margin: 0 5px;
+    padding: 10px 20px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-.careerTopText {
-    margin-top: 50px;
+.filter-container button.active, .filter-container button:hover {
+    background-color: #007bff;
+    color: white;
 }
 
-.careerBottomText {
-    margin-top: 20px;
-}
-
-#careerimg {
-    width: 100%;
-    max-width: 420px;
-    height: 230px;
-    margin-bottom: 50px;
-}
-
-.jobBubbleFirstRow, .JobBubbleSecondRow {
+.job-list {
     display: flex;
     flex-wrap: wrap;
+    gap: 20px;
 }
 
-.jobcat p {
-    color: #365E3D;
-    background-color: #D6F5DB;
-    font-weight: 500;
+.job-box {
+    position: relative;
+    flex: 1 1 calc(33.33% - 20px);
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 20px;
+    box-sizing: border-box;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.job-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.job-info {
+    margin-bottom: 15px;
+}
+
+.job-title {
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.experience-level, .job-location {
+    font-size: 16px;
+    color: #667;
+    margin-bottom: 5px;
+}
+
+.job-description {
+    font-size: 14px;
+    color: #444;
+    margin-bottom: 10px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease-in-out;
+}
+
+.pagination button {
     border-radius: 15px;
+}
+
+.pagination button.active {
+    background-color: #007bff;
+    color: white;
+}
+
+.apply-button {
+    background-color: #0D9813;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
     display: inline-block;
-    padding: 3px 10px;
+    font-size: 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
-.jobbubble {
-    border-radius: 15px;
-    box-shadow: 0 0 5px #c7c7c7;
-    padding: 10px;
-    margin: 25px;
-    margin-left: 0;
-    flex: 1 1 320px; /* Flex item properties */
-    width: 100%;
-    max-width: calc(33.333% - 20px); /* 33.333% of the container minus margins */
+.apply-button:hover {
+    background-color: #45a049;
 }
 
-
-#moreinfo {
-    color: #000;
-    font-size: 18px;
-    font-weight: 500;
-    line-height: 20px;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-end;
+.job-box:hover .job-description {
+    max-height: 200px;
 }
 
-#openapp {
-    margin-top: 100px;
-    margin-left: 200px;
-}
-
-@media (max-width: 860px) {
-    .careerTextFlex {
-        flex-direction: column;
+@media (max-width: 900px) {
+    .job-box {
+        flex: 1 1 calc(50% - 20px);
     }
-    #careerimg {
-        margin-top: 25px;
+
+    .job-list {
+        width: 100%;
     }
 }
 
-/* Media query for phone screens */
-@media only screen and (max-width: 600px) {
-    .careers {
-        padding: 20px;
-    }
-
-    .careertext {
-        font-size: 16px;
-    }
-
-    #careerimg {
-        max-width: 100%;
-        height: auto;
-        float: none;
-    }
-
-    .jobbubbles {
-        margin-left: 0;
-        margin-right: 0;
-    }
-
-    .jobbubble {
-        padding-left: 10px;
-        margin-left: 0;
-        margin-bottom: 20px;
-        max-width: 100%;
-    }
-
-    #moreinfo {
-        justify-content: center;
-        margin: 20px 0;
-    }
-
-    #openapp {
-        margin-top: 20px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-}
-
-/* Media query for larger screens */
-@media only screen and (min-width: 601px) {
-    #moreinfo {
-        margin-right: 20px; /* Add margin to the right */
+@media (max-width: 600px) {
+    .job-box {
+        flex: 1 1 100%;
     }
 }
