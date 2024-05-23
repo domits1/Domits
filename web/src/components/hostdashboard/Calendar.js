@@ -11,7 +11,7 @@ import returner from "../../images/icons/return-icon.png";
  * @returns {Element}
  * @constructor
  */
-function Calendar({passedProp}) {
+function Calendar({passedProp, isNew, updateDates}) {
     const [isLoading, setIsLoading] = useState(true);
     const [dateRange, setDateRange] = useState([{
         startDate: new Date(),
@@ -23,7 +23,6 @@ function Calendar({passedProp}) {
     const resetDates = () => {
         setDateRange([...oldDateRange]);
     };
-
     useEffect(() => {
         if (passedProp && passedProp.StartDate && passedProp.EndDate) {
             const newDateRange = [{
@@ -43,7 +42,13 @@ function Calendar({passedProp}) {
       </div>
     );
   };
-
+    const handleSelect = (ranges) => {
+        const { selection } = ranges;
+        setDateRange([selection]);
+        if (updateDates) {
+            updateDates(selection.startDate, selection.endDate);
+        }
+    };
   const asyncSetDate = async () => {
     const body = {
         StartDate: dateRange[0].startDate.toISOString(),
@@ -98,7 +103,7 @@ function Calendar({passedProp}) {
   return (
       <div>
           <DateRangePicker
-              onChange={item => setDateRange([item.selection])}
+              onChange={(ranges) => handleSelect(ranges)}
               showSelectionPreview={true}
               moveRangeOnFirstSelection={false}
               months={2}
@@ -135,15 +140,19 @@ function Calendar({passedProp}) {
                   }
               ]}
           />
-          <div className="button-box">
-              <button className="undo-btn" onClick={resetDates}>
-                  <img src={returner} className="returner" alt="Return"></img>
-                  <p className="btn-text">Undo</p>
-              </button>
-              <button className="save-btn" onClick={asyncSetDate}>
-                  <p className="btn-text">Save</p>
-              </button>
-          </div>
+          {!isNew ? (
+              <div className="button-box">
+                  <button className="undo-btn" onClick={resetDates}>
+                      <img src={returner} className="returner" alt="Return"></img>
+                      <p className="btn-text">Undo</p>
+                  </button>
+                  <button className="save-btn" onClick={asyncSetDate}>
+                      <p className="btn-text">Save</p>
+                  </button>
+              </div>
+          ) : (
+              <p>Dates can also be set later from Host dashboard -> Calendar</p>
+          )}
       </div>
   );
 }

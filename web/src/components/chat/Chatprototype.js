@@ -66,6 +66,7 @@ const Chat = ({ user }) => {
     const navigate = useNavigate(); // Get the navigate function
     const location = useLocation();
     const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
+    const channelUUID = new URLSearchParams(location.search).get('channel');
 
     // Function to update the URL with the recipient's email
     
