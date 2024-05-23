@@ -96,7 +96,7 @@ function App() {
                             <Route path="/guestdashboard/booking" element={<BookingGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
                             <Route path="/guestdashboard/chat" element={<Chat />} />
-                            <Route path="/profilepictures" element={<UserProfile/>}/>
+                            {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}
 
                             {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
