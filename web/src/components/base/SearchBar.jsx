@@ -139,6 +139,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
+
   // Verbinding met API Gateway naar de lambda
   const handleSearch = async () => {
     setLoading(true);
@@ -231,7 +232,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   return (
     <>
       {error && (
-        <div className="error-message" onClick={handleClick}>{error} <FaTimesCircle/></div>)}
+        <div className="error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
       <div className="bar">
 
         <div className="location">
@@ -242,7 +243,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             onSelect={handleSelect}
             searchOptions={{ types: ['locality', 'country',] }}>
             {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-              <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px', position: 'relative' }}>
+              <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
                 <input
                   {...getInputProps({
                     className: 'searchBar',
@@ -450,9 +451,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               onClick={resetGuests}
               style={{
                 position: 'absolute',
-                right: '10px',
+                right: '0px',
                 top: '50%',
-                transform: 'translateY(-50%)',
+                transform: 'translateY(-35%)',
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
@@ -462,40 +463,39 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             </button>
           )}
           <p className='guestP'>{totalGuestsDescription}</p>
-          {showGuestDropdown && (
-            <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+          <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
 
-              <GuestCounter
-                label="Adults"
-                description="Ages 16 or above"
-                value={adults}
-                onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
-                onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
-              />
-              <GuestCounter
-                label="Children"
-                description="Ages 2–16"
-                value={children}
-                onIncrement={() => setChildren(children < 13 ? children + 1 : children)}
-                onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
-              />
-              <GuestCounter
-                label="Infants"
-                description="Ages 0–2"
-                value={infants}
-                onIncrement={() => setInfants(infants < 13 ? infants + 1 : infants)}
-                onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
-              />
-              <GuestCounter
-                label="Pets"
-                description="Normal sized pets"
-                value={pets}
-                onIncrement={() => setPets(pets < 13 ? pets + 1 : pets)}
-                onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
-              />
-            </div>
-          )}
+            <GuestCounter
+              label="Adults"
+              description="Ages 16 or above"
+              value={adults}
+              onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
+              onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
+            />
+            <GuestCounter
+              label="Children"
+              description="Ages 2–16"
+              value={children}
+              onIncrement={() => setChildren(children < 13 ? children + 1 : children)}
+              onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
+            />
+            <GuestCounter
+              label="Infants"
+              description="Ages 0–2"
+              value={infants}
+              onIncrement={() => setInfants(infants < 13 ? infants + 1 : infants)}
+              onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
+            />
+            <GuestCounter
+              label="Pets"
+              description="Normal sized pets"
+              value={pets}
+              onIncrement={() => setPets(pets < 13 ? pets + 1 : pets)}
+              onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
+            />
+          </div>
         </div>
+
 
         <div className="check-in" >
           <input
@@ -526,8 +526,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     border: '#d3d9d9',
                     color: '#fff',
                     borderRadius: '0.5rem',
-                    padding: '0.5rem 2rem',
+                    padding: '0.8rem 2.4rem',
                     cursor: 'pointer',
+                    transform: 'translateY(-30px)'
                   }}
                 >
                   Reset Dates
