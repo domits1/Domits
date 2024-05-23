@@ -63,7 +63,7 @@ function Header({ setSearchResults, setLoading }) {
         navigate('/register');
     };
     const navigateToLanding = () => {
-        navigate('/enlist');
+        navigate('/landing');
     };
     const navigateToNinedots = () => {
         navigate('/travelinnovation');
@@ -120,7 +120,7 @@ function Header({ setSearchResults, setLoading }) {
     const becomeHost = () => {
         if (!isLoggedIn) {
             setFlowState({ isHost: true });
-            navigateToRegister();
+            navigateToLanding();
         } else if (group === 'Traveler') {
             const confirmed = window.confirm("Would you like to become a host?");
             if (confirmed) {
