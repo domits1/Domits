@@ -188,7 +188,6 @@ function OnboardingHost() {
         }
     };
 
-
     const handleCountryChange = (selectedOption) => {
         setFormData(currentFormData => ({
             ...currentFormData,
@@ -197,82 +196,86 @@ function OnboardingHost() {
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
     };
 
-    const uploadImageToS3 = async (userId, accommodationId, image, index) => {
-        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
-
-        const params = {
-            Bucket: 'accommodation',
-            Key: key,
-            Body: image,
-            ContentType: 'image/jpeg'
-        };
-
-        try {
-            const data = await s3.upload(params).promise();
-            return data.Location;
-        } catch (err) {
-            console.error("Failed to upload file:", err);
-            throw err;
-        }
-    }
     const handleSubmit = async () => {
         try {
-            setIsLoading(true);
+            const UserID = userId; // Assuming userId is available in scope
             const AccoID = formData.ID;
             const updatedFormData = { ...formData }; // Copy the original formData object
+
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
-                const location =  await uploadImageToS3(userId, AccoID, file, i);
-                updatedFormData.Images[`image${i + 1}`] = location;
+                if (file) {
+                    const params = {
+                        Bucket: 'accommodation',
+                        Key: `images/${UserID}/${AccoID}/Image-${i + 1}.jpg`, // Include file extension ".jpg"
+                        Body: file
+                    };
+                    const data = await s3.upload(params).promise();
+                    // Update the corresponding property in the formData object
+                    updatedFormData.Images[`image${i + 1}`] = data.Location;
+                }
             }
-            await setFormData(updatedFormData);
-            setImageFiles([]);
+
+            // Set the updated formData object with image paths
+            setFormData(updatedFormData);
 
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
                 method: 'POST',
-                body: JSON.stringify(formData),
                 headers: {
                     'Content-Type': 'application/json',
-                }
+                },
+                body: JSON.stringify(updatedFormData),
             });
+
             if (response.ok) {
                 console.log('Form data saved successfully');
+                // Reset selectedFiles and formData after successful upload
+                setImageFiles(Array(5).fill(null));
+                setFormData({
+                    Images: {
+                        image1: "",
+                        image2: "",
+                        image3: "",
+                        image4: "",
+                        image5: "",
+                    },
+                });
             } else {
                 console.error('Error saving form data');
             }
         } catch (error) {
             console.error('Error:', error);
-        } finally {
-            setIsLoading(false);
         }
     };
 
     const [imageFiles, setImageFiles] = useState(Array.from({ length: 5 }, () => null));
 
     const handleFileChange = (file, index) => {
-        const newImageFiles = [...imageFiles];
-        newImageFiles[index] = file;
-        setImageFiles(newImageFiles);
+        if (file && file.type.startsWith('image/')) {
+            const updatedImages = { ...formData.Images, [`image${index + 1}`]: file.name };
+            setFormData((prevData) => ({
+                ...prevData,
+                Images: updatedImages
+            }));
 
-        // Construct formData based on current imageFiles
-        const updatedFormData = { ...formData };
-        if (file) {
-            const key = `image${index + 1}`;
-            updatedFormData.Images[key] = URL.createObjectURL(file);
+            const updatedFiles = [...imageFiles];
+            updatedFiles[index] = file;
+            setImageFiles(updatedFiles);
+        } else {
+            alert('Please select a valid image file.');
         }
-        setFormData(updatedFormData);
     };
 
     const handleDelete = (index) => {
-        const newImageFiles = [...imageFiles];
-        newImageFiles[index] = null;
-        setImageFiles(newImageFiles);
+        const updatedImages = { ...formData.Images, [`image${index + 1}`]: "" };
+        setFormData((prevData) => ({
+            ...prevData,
+            Images: updatedImages
+        }));
 
-        // Construct formData based on current imageFiles
-        const updatedFormData = { ...formData };
-        const key = `image${index + 1}`;
-        updatedFormData.Images[key] = ""; // Clear the value associated with the key
-        setFormData(updatedFormData);
+        const updatedFiles = [...imageFiles];
+        updatedFiles[index] = null;
+        setImageFiles(updatedFiles);
     };
 
     const updateDates = (start, end) => {
@@ -359,7 +362,7 @@ function OnboardingHost() {
                         </section>
 
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
@@ -470,7 +473,7 @@ function OnboardingHost() {
                         </section>
 
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
@@ -492,10 +495,10 @@ function OnboardingHost() {
                                 <h2 className="onboardingSectionTitle">Location</h2>
                                 <label htmlFor="country">Country*</label>
                                 <Select
-                                    options={options.map(country => ({value: country, label: country}))}
+                                    options={options.map(country => ({ value: country, label: country }))}
                                     name="Country"
                                     className="locationText"
-                                    value={{value: formData.Country, label: formData.Country}}
+                                    value={{ value: formData.Country, label: formData.Country }}
                                     onChange={handleCountryChange}
                                     id="country"
                                 />
@@ -529,11 +532,11 @@ function OnboardingHost() {
                             </section>
                             <section className="map-section">
                                 <h2 className="onboardingSectionTitle">What we show on Domits</h2>
-                                <MapComponent location={location}/>
+                                <MapComponent location={location} />
                             </section>
                         </section>
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
@@ -709,7 +712,7 @@ function OnboardingHost() {
                             </div>
                         </section>
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
@@ -729,14 +732,14 @@ function OnboardingHost() {
                             <h2 className="onboardingSectionTitle">Pricing</h2>
                             <p>Price per night*: {formData.Rent}</p>
                             <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
-                                   defaultValue={formData.Rent} min="40" max="1000" step="10"/>
+                                defaultValue={formData.Rent} min="40" max="1000" step="10" />
                         </section>
                         <h2 className="onboardingSectionTitle">Availabilities</h2>
                         <section className="listing-calendar">
-                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
+                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates} />
                         </section>
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav class="formContainer">
@@ -765,91 +768,91 @@ function OnboardingHost() {
 
             case 6:
                 return (
-                    <div className="container" style={{width: '80%'}}>
+                    <div className="container" style={{ width: '80%' }}>
                         <h2>Review your information</h2>
-                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <tbody>
-                            <tr>
-                                <th style={{
-                                    textAlign: 'left',
-                                    borderBottom: '1px solid #ccc',
-                                    paddingBottom: '8px'
-                                }}>Property Details
-                                </th>
-                                <th style={{
-                                    textAlign: 'left',
-                                    borderBottom: '1px solid #ccc',
-                                    paddingBottom: '8px'
-                                }}>Value
-                                </th>
-                            </tr>
-                            <tr>
-                                <td>Title:</td>
-                                <td>{formData.Title}</td>
-                            </tr>
-                            <tr>
-                                <td>Description:</td>
-                                <td>{formData.Description}</td>
-                            </tr>
-                            <tr>
-                                <td>Rent:</td>
-                                <td>{formData.Rent}</td>
-                            </tr>
-                            <tr>
-                                <td>Room Type:</td>
-                                <td>{formData.AccommodationType}</td>
-                            </tr>
-                            <tr>
-                                <td>Date Range:</td>
-                                <td>
-                                    {formData.StartDate && formData.EndDate ? (
-                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
-                                    ) : "Date range not set"}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Number of Guests:</td>
-                                <td>{formData.Guestamount}</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Bedrooms:</td>
-                                <td>{formData.Bedrooms}</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Bathrooms:</td>
-                                <td>{formData.Bathrooms}</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Fixed Beds:</td>
-                                <td>{formData.Beds}</td>
-                            </tr>
-                            <tr>
-                                <td>Country:</td>
-                                <td>{formData.Country}</td>
-                            </tr>
-                            <tr>
-                                <td>Postal Code:</td>
-                                <td>{formData.PostalCode}</td>
-                            </tr>
-                            <tr>
-                                <td>Street + House Nr.:</td>
-                                <td>{formData.Street}</td>
-                            </tr>
-                            <tr>
-                                <td>Neighbourhood:</td>
-                                <td>{formData.Neighbourhood}</td>
-                            </tr>
+                                <tr>
+                                    <th style={{
+                                        textAlign: 'left',
+                                        borderBottom: '1px solid #ccc',
+                                        paddingBottom: '8px'
+                                    }}>Property Details
+                                    </th>
+                                    <th style={{
+                                        textAlign: 'left',
+                                        borderBottom: '1px solid #ccc',
+                                        paddingBottom: '8px'
+                                    }}>Value
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <td>Title:</td>
+                                    <td>{formData.Title}</td>
+                                </tr>
+                                <tr>
+                                    <td>Description:</td>
+                                    <td>{formData.Description}</td>
+                                </tr>
+                                <tr>
+                                    <td>Rent:</td>
+                                    <td>{formData.Rent}</td>
+                                </tr>
+                                <tr>
+                                    <td>Room Type:</td>
+                                    <td>{formData.AccommodationType}</td>
+                                </tr>
+                                <tr>
+                                    <td>Date Range:</td>
+                                    <td>
+                                        {formData.StartDate && formData.EndDate ? (
+                                            `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
+                                        ) : "Date range not set"}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Guests:</td>
+                                    <td>{formData.Guestamount}</td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Bedrooms:</td>
+                                    <td>{formData.Bedrooms}</td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Bathrooms:</td>
+                                    <td>{formData.Bathrooms}</td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Fixed Beds:</td>
+                                    <td>{formData.Beds}</td>
+                                </tr>
+                                <tr>
+                                    <td>Country:</td>
+                                    <td>{formData.Country}</td>
+                                </tr>
+                                <tr>
+                                    <td>Postal Code:</td>
+                                    <td>{formData.PostalCode}</td>
+                                </tr>
+                                <tr>
+                                    <td>Street + House Nr.:</td>
+                                    <td>{formData.Street}</td>
+                                </tr>
+                                <tr>
+                                    <td>Neighbourhood:</td>
+                                    <td>{formData.Neighbourhood}</td>
+                                </tr>
                             </tbody>
                         </table>
                         <h3>Features:</h3>
-                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <tbody>
-                            {Object.entries(formData.Features).map(([feature, value]) => (
-                                <tr key={feature}>
-                                    <td style={{borderBottom: '1px solid #ccc'}}>{feature}:</td>
-                                    <td style={{borderBottom: '1px solid #ccc'}}>{value ? 'Yes' : 'No'}</td>
-                                </tr>
-                            ))}
+                                {Object.entries(formData.Features).map(([feature, value]) => (
+                                    <tr key={feature}>
+                                        <td style={{ borderBottom: '1px solid #ccc' }}>{feature}:</td>
+                                        <td style={{ borderBottom: '1px solid #ccc' }}>{value ? 'Yes' : 'No'}</td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                         <div className='buttonHolder'>
@@ -871,7 +874,7 @@ function OnboardingHost() {
                     return (
                         <div className="loading">
                             <p className="spinner-text">Please wait a moment...</p>
-                            <img className="spinner" src={spinner}/>
+                            <img className="spinner" src={spinner} />
                         </div>
                     );
                 } else {
