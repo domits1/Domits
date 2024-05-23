@@ -37,7 +37,6 @@ const Login = () => {
                 setIsAuthenticated(true);
                 setGroup(userAttributes['custom:group']);
 
-                // Redirect based on the group
                 if (userAttributes['custom:group'] === 'Host') {
                     navigate('/hostdashboard');
                 } else if (userAttributes['custom:group'] === 'Traveler') {
@@ -64,7 +63,6 @@ const Login = () => {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
             setErrorMessage('');
-            // Refresh the page to ensure the user session is updated
             window.location.reload();
         } catch (error) {
             console.error('Error logging in:', error);
