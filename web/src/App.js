@@ -39,6 +39,7 @@ import Chat from "./components/chat/Chat";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
+import UserProfile from './components/guestdashboard/profilePictureTest.js';
 import Hostchat from './components/hostdashboard/Hostchat';
 
 Modal.setAppElement('#root');
@@ -95,6 +96,7 @@ function App() {
                             <Route path="/guestdashboard/booking" element={<BookingGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
                             <Route path="/guestdashboard/chat" element={<Chat />} />
+                            {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}
 
                             {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
