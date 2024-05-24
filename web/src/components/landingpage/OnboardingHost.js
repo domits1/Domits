@@ -28,13 +28,6 @@ function OnboardingHost() {
         });
     }
 
-    const AWS = require('aws-sdk');
-    const s3 = new AWS.S3({
-        accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
-        region: process.env.REACT_APP_AWS_REGION
-    });
-
     let [userId, setUserId] = useState(null);
 
     useEffect(() => {
@@ -57,7 +50,6 @@ function OnboardingHost() {
         Subtitle: "",
         Description: "",
         Rent: "",
-        Guesttype: "",
         Guestamount: "",
         Bedrooms: "",
         Bathrooms: "",
@@ -66,7 +58,6 @@ function OnboardingHost() {
         PostalCode: "",
         Street: "",
         City: "",
-        CancelPolicy: "",
         Features: {
             Wifi: false,
             Television: false,
@@ -89,7 +80,6 @@ function OnboardingHost() {
         StartDate: "",
         EndDate: "",
         AccommodationType: "Room",
-        Measurement: "",
         OwnerId: ""
     });
 
@@ -155,7 +145,7 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-
+        console.log(formData);
         if (type === 'checkbox') {
             setFormData((prevData) => ({
                 ...prevData,
@@ -846,10 +836,6 @@ function OnboardingHost() {
                             <tr>
                                 <td>Street + House Nr.:</td>
                                 <td>{formData.Street}</td>
-                            </tr>
-                            <tr>
-                                <td>Neighbourhood:</td>
-                                <td>{formData.Neighbourhood}</td>
                             </tr>
                             </tbody>
                         </table>
