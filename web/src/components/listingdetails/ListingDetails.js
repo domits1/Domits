@@ -37,7 +37,7 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setDates(data.StartDate, data.EndDate);
+                await setDates(data.StartDate, data.EndDate);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -59,14 +59,13 @@ const ListingDetails = () => {
     };
     const setDates = (StartDate, EndDate) => {
         const today = new Date();
-        const parsedStartDate = today > new Date(StartDate) ? today : StartDate
+        const parsedStartDate = today > new Date(StartDate) ? today : new Date(StartDate)
         const parsedEndDate = new Date(EndDate);
+        const maxStart = new Date(parsedEndDate);
+        maxStart.setUTCDate(maxStart.getUTCDate() - 1);
 
-        const maxStart = new Date();
-        maxStart.setDate(parsedEndDate.getDate() - 1);
-
-        const minEnd = new Date();
-        minEnd.setDate(parsedStartDate.getDate() + 1);
+        const minEnd = new Date(parsedStartDate);
+        minEnd.setUTCDate(minEnd.getUTCDate() + 1);
         setMinStart(DateFormatterYYYY_MM_DD(parsedStartDate));
         setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
         setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
