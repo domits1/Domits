@@ -7,6 +7,7 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 const ListingDetails = () => {
     const {search} = useLocation();
+    const navigate = useNavigate();
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
@@ -120,8 +121,8 @@ const ListingDetails = () => {
             pets: pets
         }
         console.log(bookingData);
-        //const encodedData = encodeURIComponent(JSON.stringify(bookingData));
-        //navigate(`/bookingdetails?data=${encodedData}`);
+        const encodedData = encodeURIComponent(JSON.stringify(bookingData));
+        navigate(`/bookingdetails?data=${encodedData}`);
     };
 
 
