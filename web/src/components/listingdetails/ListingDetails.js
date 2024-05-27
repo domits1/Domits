@@ -71,6 +71,20 @@ const ListingDetails = () => {
         setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
         setMaxEnd(DateFormatterYYYY_MM_DD(parsedEndDate));
     };
+    useEffect(() => {
+        const restrictDates = () => {
+            if (checkIn && !checkOut) {
+                const minEnd = new Date(checkIn);
+                minEnd.setUTCDate(minEnd.getUTCDate() + 1);
+                setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
+            } else if (!checkIn && checkOut) {
+                const maxStart = new Date(checkOut);
+                maxStart.setUTCDate(maxStart.getUTCDate() - 1);
+                setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
+            }
+        }
+        restrictDates();
+    }, [checkIn, checkOut]);
     const calculateTotal = () => {
         if (!accommodation) return 0;
         const nights = (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24);
@@ -97,8 +111,21 @@ const ListingDetails = () => {
             });
         };
 
+    const handleConfirmation = () => {
+        const bookingData = {
+            checkIn: checkIn,
+            checkOut: checkOut,
+            adults: adults,
+            kids: kids,
+            pets: pets
+        }
+        console.log(bookingData);
+        //const encodedData = encodeURIComponent(JSON.stringify(bookingData));
+        //navigate(`/bookingdetails?data=${encodedData}`);
+    };
 
-        return (
+
+    return (
             <main className="container">
                 <section className="detailContainer">
                     <section className='detailInfo'>
@@ -196,7 +223,7 @@ const ListingDetails = () => {
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
-                                <button className="reserve-button">Reserve</button>
+                                <button className="reserve-button" onClick={handleConfirmation}>Reserve</button>
                                 <p className="disclaimer">*You won't be charged yet</p>
                                 { (checkIn && checkOut) ? (
                                     <div className="price-details">
