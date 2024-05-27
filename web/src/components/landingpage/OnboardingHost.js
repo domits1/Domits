@@ -6,10 +6,12 @@ import './onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
-import { Auth } from "aws-amplify"
+import { Storage, Auth } from "aws-amplify"
 import Calendar from "../hostdashboard/Calendar";
-import DateFormatter from "../utils/DateFormatter";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
+const S3_BUCKET_NAME = 'accommodation';
+const region = 'eu-north-1';
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
@@ -197,19 +199,22 @@ function OnboardingHost() {
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
     };
 
+    const constructURL = (userId, accommodationId, index) => {
+        return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+    };
+
     const uploadImageToS3 = async (userId, accommodationId, image, index) => {
         const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
 
-        const params = {
-            Bucket: 'accommodation',
-            Key: key,
-            Body: image,
-            ContentType: 'image/jpeg'
-        };
-
         try {
-            const data = await s3.upload(params).promise();
-            return data.Location;
+            await Storage.put(key, image, {
+                bucket: S3_BUCKET_NAME,
+                region: region,
+                contentType: image.type,
+                level: null,
+                customPrefix: { public: '' }
+            });
+            return constructURL(userId, accommodationId, index);
         } catch (err) {
             console.error("Failed to upload file:", err);
             throw err;
@@ -223,6 +228,7 @@ function OnboardingHost() {
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
                 const location =  await uploadImageToS3(userId, AccoID, file, i);
+                console.log(location);
                 updatedFormData.Images[`image${i + 1}`] = location;
             }
             await setFormData(updatedFormData);
@@ -803,7 +809,7 @@ function OnboardingHost() {
                                 <td>Date Range:</td>
                                 <td>
                                     {formData.StartDate && formData.EndDate ? (
-                                        `Available from ${DateFormatter(formData.StartDate)} to ${DateFormatter(formData.EndDate)}`
+                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
                                     ) : "Date range not set"}
                                 </td>
                             </tr>

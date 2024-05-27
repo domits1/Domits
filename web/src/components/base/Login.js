@@ -1,19 +1,54 @@
-import React, { useState, FormEvent, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import logo from "../../logo.svg";
+import FlowContext from '../../FlowContext';
 
 const Login = () => {
     const navigate = useNavigate();
-
+    const [group, setGroup] = useState('');
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
-
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+
+    useEffect(() => {
+        const setUserGroup = async () => {
+            try {
+                const user = await Auth.currentAuthenticatedUser();
+                const userAttributes = user.attributes;
+                setGroup(userAttributes['custom:group']);
+            } catch (error) {
+                console.error('Error setting group:', error);
+            }
+        };
+
+        setUserGroup();
+    }, []);
+
+    useEffect(() => {
+        const checkAuth = async () => {
+            try {
+                const user = await Auth.currentAuthenticatedUser();
+                const userAttributes = user.attributes;
+                setIsAuthenticated(true);
+                setGroup(userAttributes['custom:group']);
+
+                if (userAttributes['custom:group'] === 'Host') {
+                    navigate('/hostdashboard');
+                } else if (userAttributes['custom:group'] === 'Traveler') {
+                    navigate('/guestdashboard');
+                }
+            } catch (error) {
+                setIsAuthenticated(false);
+            }
+        };
+
+        checkAuth();
+    }, [navigate]);
 
     const handleChange = (e) => {
         setFormData({
@@ -24,11 +59,11 @@ const Login = () => {
 
     const handleSignIn = async () => {
         const { email, password } = formData;
-
         try {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
             setErrorMessage('');
+            window.location.reload();
         } catch (error) {
             console.error('Error logging in:', error);
             setErrorMessage('Invalid username or password. Please try again.');
@@ -48,19 +83,6 @@ const Login = () => {
         e.preventDefault();
         await handleSignIn();
     };
-
-    useEffect(() => {
-        const checkAuth = async () => {
-            try {
-                await Auth.currentAuthenticatedUser();
-                setIsAuthenticated(true);
-            } catch (error) {
-                setIsAuthenticated(false);
-            }
-        };
-
-        checkAuth();
-    }, []);
 
     const handleRegisterClick = () => {
         navigate('/register');
