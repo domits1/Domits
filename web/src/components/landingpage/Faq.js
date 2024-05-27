@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import './landing.css'; 
 import './Faq.css';
 
 

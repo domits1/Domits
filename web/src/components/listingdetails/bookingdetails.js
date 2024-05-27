@@ -1,11 +1,10 @@
 import React from "react";
-import back from '../../images/arrowleft.png';
-import { Link } from "react-router-dom";
-import bookarrow from "../../images/whitearrow.png"
-import arrow from "../../images/arrow.svg"
-import "./listingdetails.css";
-
+import { useLocation } from 'react-router-dom';
 const BookingDetails = () => {
+    const {search} = useLocation();
+    const searchData = new URLSearchParams(search);
+    const data = searchData.get('data');
+    console.log(data);
     return (
         <div className="booking-details-section">
             <div className="booking-details-text">Booking details</div>
@@ -18,7 +17,6 @@ const BookingDetails = () => {
                     <div className="listing-details-checkin-date">15 december 2023</div>
                     <div className="listing-details-amount-of-nights-text">
                         7<br />
-                        <img src={arrow} alt="Arrow" />
                         Nights
                     </div>
                     <div className="listing-details-checkout-date">23 december 2023</div>
@@ -31,11 +29,6 @@ const BookingDetails = () => {
                     <div className="listing-details-amount-of-adults">2 adults</div>
                     <div className="listing-details-amount-of-kids">2 kids</div>
                     <div className="listing-details-select">Select...</div>
-                </div>
-                <div className="listing-details-book-button">
-                    <Link to={`/bookingoverview`}>
-                        <button>Book* <img src={bookarrow} alt="Book Arrow" /></button>
-                    </Link>
                 </div>
                 <div className="listing-details-book-button-star-text">*You wont be charged yet</div>
                 {/*  Horizontal line  */}
