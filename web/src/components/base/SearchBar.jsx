@@ -8,6 +8,9 @@ import Select from 'react-select';
 import { countries } from 'country-data';
 import './SearchBar.css';
 import { useNavigate , useLocation } from 'react-router-dom';
+
+
+
 const handleButtonClick = (e) => {
   e.stopPropagation();
 };
@@ -143,19 +146,17 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
-
-  // Verbinding met API Gateway naar de lambda
   const handleSearchWithDelay = () => {
     setLoading(true);
     setError("");
-    navigate('/');
-    const params = new URLSearchParams();
-    if (accommodation) params.append('type', accommodation);
-    if (address) params.append('searchTerm', address);
-    if (totalGuests > 0) params.append('guests', totalGuests);
   
-    const searchParams = params.toString();
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${searchParams}`;
+    const queryParams = [
+      accommodation ? `type=${accommodation}` : null,
+      address ? `searchTerm=${address}` : null,
+      totalGuests > 0 ? `guests=${totalGuests}` : null,
+    ].filter(Boolean).join('&');
+  
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
   
     setTimeout(async () => {
       try {
@@ -164,6 +165,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         if (data.length === 0) {
           setError("No results have been found");
         } else {
+          localStorage.setItem(apiUrl, JSON.stringify(data));
           setSearchResults(data);
         }
       } catch (error) {
@@ -172,11 +174,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
       } finally {
         setLoading(false);
       }
-    }, 500); 
+    }, 500);
   };
   
   const handleSearch = () => {
-    handleSearchWithDelay(); 
+    setSearchResults([]);
+    navigate('/'); 
+    handleSearchWithDelay();
   };
   
   
