@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import "./listing.css";
+import "./listing.module.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
