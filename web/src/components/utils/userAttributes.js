@@ -15,11 +15,11 @@ export const initializeUserAttributes = async () => {
 //     const userAttributes = getUserAttributes();
 //     const userGroup = userAttributes.group               // here you choose what part of the info you want.
 
-//     possible userAttributes as of 28/05/2024:        //  sub: cognitoUserId
-                                                        //  sub: cd1a02ff-4c93-43aa-bd87-f6387fb90866
+// possible userAttributes as of 28/05/2024:        
+// sub(cognitoUserId):
 // email_verified:
-// custom:username: Muhammedc38
-// custom:group: Host
+// custom:username:
+// custom:group:
 // email:
     
 export const getUserAttributes = () => userAttributes;
