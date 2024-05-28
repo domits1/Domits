@@ -12,7 +12,6 @@ const BookingOverview = () => {
     const [bookingDetails, setBookingDetails] = useState(null);
 
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [username, setUsername] = useState('');
     const [userData, setUserData] = useState({
         username: "",
         email: "",
@@ -98,8 +97,6 @@ const BookingOverview = () => {
                 <div className="accommodation-info">
                     <h2>Accommodation</h2>
                     <form>
-
-
                         {isLoggedIn ? (
                             <>
                                 <div className="helloUsername">Hello {userData.username}!</div>
