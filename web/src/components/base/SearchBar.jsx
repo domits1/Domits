@@ -7,7 +7,7 @@ import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-au
 import Select from 'react-select';
 import { countries } from 'country-data';
 import './SearchBar.css';
-
+import { useNavigate , useLocation } from 'react-router-dom';
 const handleButtonClick = (e) => {
   e.stopPropagation();
 };
@@ -46,6 +46,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -139,32 +143,43 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
+
   // Verbinding met API Gateway naar de lambda
-  const handleSearch = async () => {
+  const handleSearchWithDelay = () => {
     setLoading(true);
     setError("");
-
+    navigate('/');
     const params = new URLSearchParams();
     if (accommodation) params.append('type', accommodation);
     if (address) params.append('searchTerm', address);
     if (totalGuests > 0) params.append('guests', totalGuests);
-    const url = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${params}`;
-
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.length === 0) {
-        setError("No results have been found");
-      } else {
-        setSearchResults(data);
+  
+    const searchParams = params.toString();
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${searchParams}`;
+  
+    setTimeout(async () => {
+      try {
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        if (data.length === 0) {
+          setError("No results have been found");
+        } else {
+          setSearchResults(data);
+        }
+      } catch (error) {
+        console.error('Error during fetch:', error);
+        setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Error during fetch:', error);
-      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
-    } finally {
-      setLoading(false);
-    }
+    }, 500); 
   };
+  
+  const handleSearch = () => {
+    handleSearchWithDelay(); 
+  };
+  
+  
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -228,10 +243,17 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setError(null);
   };
 
+  const incrementGuests = (guestType, setGuestType) => {
+    setGuestType(prev => prev < 13 ? prev + 1 : prev);
+    if (adults === 0) {
+      setAdults(1);
+    }
+  };
+
   return (
     <>
       {error && (
-        <div className="error-message" onClick={handleClick}>{error} <FaTimesCircle/></div>)}
+        <div className="error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
       <div className="bar">
 
         <div className="location">
@@ -240,9 +262,12 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             value={address}
             onChange={handleChange}
             onSelect={handleSelect}
-            searchOptions={{ types: ['locality', 'country',] }}>
+            searchOptions={{
+              types: ['locality', 'country'],
+              language: 'en', 
+            }}>
             {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-              <div className="autocomplete-container searchInputContainer" style={{ marginTop: '10px', position: 'relative' }}>
+              <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
                 <input
                   {...getInputProps({
                     className: 'searchBar',
@@ -368,13 +393,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   transform: isMobile ? 'translateX(-120px)' : 'translateY(5px)',
                   boxShadow: 'none',
                   background: 'none',
-                  Height: '0',
                   padding: '0',
                   margin: '0',
                   cursor: 'pointer',
                   width: isMobile ? '140%' : '150px',
-                  left: isMobile ? '70' : '',
-                  position: 'absolutle',
                 };
               },
               menu: (provided) => {
@@ -393,9 +415,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 };
               },
               indicatorSeparator: () => ({ display: 'none' }),
-              dropdownIndicator: (provided) => ({
+              dropdownIndicator: (provided, state) => ({
                 ...provided,
-                display: 'none', // Verberg de dropdown-indicator
+                display: state.selectProps.value ? 'none' : 'block',
               }),
               option: (provided, state) => ({
                 ...provided,
@@ -443,59 +465,59 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         </div>
 
         <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
-          <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests</p>
-          {totalGuests > 0 && (
-            <button
-              className="clear-guests"
-              onClick={resetGuests}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-              }}
-            >
-              <FaTimes />
-            </button>
-          )}
-          <p className='guestP'>{totalGuestsDescription}</p>
-          {showGuestDropdown && (
-            <div className="guest-dropdown" ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+      <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests</p>
+      {totalGuests > 0 && (
+        <button
+          className="clear-guests"
+          onClick={resetGuests}
+          style={{
+            position: 'absolute',
+            right: '0px',
+            top: '50%',
+            transform: 'translateY(-35%)',
+            border: 'none',
+            background: 'transparent',
+            cursor: 'pointer',
+          }}
+        >
+          <FaTimes />
+        </button>
+      )}
+      
+      <p className='guestP'>{totalGuestsDescription}</p>
+      <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
 
-              <GuestCounter
-                label="Adults"
-                description="Ages 16 or above"
-                value={adults}
-                onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
-                onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
-              />
-              <GuestCounter
-                label="Children"
-                description="Ages 2–16"
-                value={children}
-                onIncrement={() => setChildren(children < 13 ? children + 1 : children)}
-                onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
-              />
-              <GuestCounter
-                label="Infants"
-                description="Ages 0–2"
-                value={infants}
-                onIncrement={() => setInfants(infants < 13 ? infants + 1 : infants)}
-                onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
-              />
-              <GuestCounter
-                label="Pets"
-                description="Normal sized pets"
-                value={pets}
-                onIncrement={() => setPets(pets < 13 ? pets + 1 : pets)}
-                onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
-              />
-            </div>
-          )}
-        </div>
+        <GuestCounter
+          label="Adults"
+          description="Ages 16 or above"
+          value={adults}
+          onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
+          onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
+        />
+        <GuestCounter
+          label="Children"
+          description="Ages 2–16"
+          value={children}
+          onIncrement={() => incrementGuests(children, setChildren)}
+          onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
+        />
+        <GuestCounter
+          label="Infants"
+          description="Ages 0–2"
+          value={infants}
+          onIncrement={() => incrementGuests(infants, setInfants)}
+          onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
+        />
+        <GuestCounter
+          label="Pets"
+          description="Normal sized pets"
+          value={pets}
+          onIncrement={() => incrementGuests(pets, setPets)}
+          onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
+        />
+      </div>
+    </div>
+
 
         <div className="check-in" >
           <input
@@ -526,8 +548,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     border: '#d3d9d9',
                     color: '#fff',
                     borderRadius: '0.5rem',
-                    padding: '0.5rem 2rem',
+                    padding: '0.8rem 2.4rem',
                     cursor: 'pointer',
+                    transform: 'translateY(-30px)'
                   }}
                 >
                   Reset Dates
