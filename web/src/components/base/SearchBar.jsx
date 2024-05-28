@@ -146,18 +146,20 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
+
+
   const handleSearchWithDelay = () => {
     setLoading(true);
     setError("");
-  
+    
     const queryParams = [
       accommodation ? `type=${accommodation}` : null,
       address ? `searchTerm=${address}` : null,
       totalGuests > 0 ? `guests=${totalGuests}` : null,
     ].filter(Boolean).join('&');
-  
+    
     const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
-  
+    
     setTimeout(async () => {
       try {
         const response = await fetch(apiUrl);
@@ -176,14 +178,16 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
       }
     }, 500);
   };
-  
+
   const handleSearch = () => {
-    setSearchResults([]);
-    navigate('/'); 
+    if (location.pathname !== '/') {
+      setSearchResults([]); // Reset searchResults
+      navigate('/');
+    }
+    
     handleSearchWithDelay();
   };
-  
-  
+
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {

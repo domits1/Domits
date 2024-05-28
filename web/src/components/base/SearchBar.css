@@ -53,7 +53,6 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 700;
   /* transform: translateY(45%); */
-
 }
 
 .check-in {
@@ -327,8 +326,8 @@
   color: #0D9813;
   font-size: 0.8rem;
   font-weight: 700;
-  transform: translateX(-10%);
-  top: 1.2rem;
+  margin-top: 0.4rem;
+
 }
 
 .button-section {
