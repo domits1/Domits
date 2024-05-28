@@ -1,8 +1,5 @@
 .Bookingcontainer {
-    display: flex;
-    flex-wrap: wrap;
     padding: 20px;
-    background-color: #ffffff;
     margin: 20px auto;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
