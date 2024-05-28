@@ -273,7 +273,7 @@ const ListingDetails = () => {
                                     </div>
                                     ))
                                     ) : (
-                                    <p className="review-alert">It appears that you have not written any reviews yet...</p>
+                                    <p className="review-alert">This accommodation does not have any reviews yet...</p>
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
