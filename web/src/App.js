@@ -42,6 +42,7 @@ import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
 import UserProfile from './components/guestdashboard/profilePictureTest.js';
 import Hostchat from './components/hostdashboard/Hostchat';
+import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 
 Modal.setAppElement('#root');
 
@@ -67,6 +68,7 @@ function App() {
     return (
         <FlowContext.Provider value={{ flowState, setFlowState }}>
             <Router>
+                <ScrollToTop />
                 <AuthProvider>
                 <UserProvider>
                     <div className="App">
@@ -130,4 +132,3 @@ function App() {
     );
 }
 export default App;
-
