@@ -32,6 +32,7 @@ const ListingDetails = () => {
     const [adults, setAdults] = useState(0);
     const [kids, setKids] = useState(0);
     const [pets, setPets] = useState('');
+    const [isFormValid, setIsFormValid] = useState(false);
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -57,6 +58,10 @@ const ListingDetails = () => {
         fetchAccommodation();
     }, [id]);
 
+    useEffect(() => {
+        checkFormValidity();
+    }, [checkIn, checkOut, adults, kids]);
+
     const handleChange = (value, setType) => {
         const newValue = parseInt(value, 10) || 0;
         setType(newValue);
@@ -68,7 +73,9 @@ const ListingDetails = () => {
         } else {
             setInputError(false);
         }
+        checkFormValidity();
     };
+
     const setDates = (StartDate, EndDate) => {
         const today = new Date();
         const parsedStartDate = today > new Date(StartDate) ? today : StartDate
@@ -84,6 +91,15 @@ const ListingDetails = () => {
         setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
         setMaxEnd(DateFormatterYYYY_MM_DD(parsedEndDate));
     };
+
+    const checkFormValidity = () => {
+        if (checkIn && checkOut && adults > 0 && !inputError) {
+            setIsFormValid(true);
+        } else {
+            setIsFormValid(false);
+        }
+    };
+
     const calculateTotal = () => {
         if (!accommodation) return 0;
         const nights = (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24);
@@ -121,7 +137,6 @@ const ListingDetails = () => {
         };
         navigate('/bookingoverview', { state: { details } });
     };
-    
 
     const generateUUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -130,7 +145,6 @@ const ListingDetails = () => {
             return v.toString(16);
         });
     };
-
 
     return (
         <main className="container">
@@ -182,8 +196,6 @@ const ListingDetails = () => {
                                     <button class='button'>Show more</button>
                                 </div>
                             </div>
-
-
                         </div>
                     )}
                 </section>
@@ -242,7 +254,15 @@ const ListingDetails = () => {
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <button className="reserve-button" onClick={handleBooking}>Reserve</button>
+                            <button className="reserve-button" onClick={handleBooking} 
+                                disabled={!isFormValid}
+                                style={{
+                                    backgroundColor: isFormValid ? 'green' : 'gray',
+                                    cursor: isFormValid ? 'pointer' : 'not-allowed',
+                                    opacity: isFormValid ? 1 : 0.5
+                                }}>
+                                Reserve
+                            </button>
                             <p className="disclaimer">*You won't be charged yet</p>
                             {(checkIn && checkOut) ? (
                                 <div className="price-details">
