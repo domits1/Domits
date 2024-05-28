@@ -140,15 +140,7 @@ const ListingDetails = () => {
             checkOut,
             adults,
             kids,
-            pets,
-            userInfo: {
-                name: "Lotte Summer",
-                email: "Lotte_summer@gmail.com",
-                phoneNumber: "+31612345678",
-                address: "Domitslaan 3, 1234AB, Netherlands",
-                dateOfBirth: "01-02-1990",
-                password: "**********"
-            }
+            pets
         };
         navigate('/bookingoverview', { state: { details } });
     };
