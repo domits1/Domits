@@ -41,6 +41,7 @@ import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
 import UserProfile from './components/guestdashboard/profilePictureTest.js';
 import Hostchat from './components/hostdashboard/Hostchat';
+import Bookingdetails from "./components/listingdetails/bookingdetails";
 
 Modal.setAppElement('#root');
 
@@ -84,6 +85,7 @@ function App() {
                             <Route path="/register" element={<Register />} />
                             <Route path="/confirm-email" element={<ConfirmRegister />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
+                            <Route path="/bookingdetails" element={<Bookingdetails />} />
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
