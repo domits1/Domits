@@ -114,6 +114,21 @@ const ListingDetails = () => {
         checkFormValidity();
     }, [checkIn, checkOut, adults, kids]);
 
+    useEffect(() => {
+        const restrictDates = () => {
+            if (checkIn && !checkOut) {
+                const minEnd = new Date(checkIn);
+                minEnd.setUTCDate(minEnd.getUTCDate() + 1);
+                setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
+            } else if (!checkIn && checkOut) {
+                const maxStart = new Date(checkOut);
+                maxStart.setUTCDate(maxStart.getUTCDate() - 1);
+                setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
+            }
+        }
+        restrictDates();
+    }, [checkIn, checkOut]);
+    
     const handleChange = (value, setType) => {
         const newValue = parseInt(value, 10) || 0;
         setType(newValue);
