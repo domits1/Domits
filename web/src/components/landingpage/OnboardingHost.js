@@ -6,10 +6,12 @@ import './onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
-import { Auth } from "aws-amplify"
+import { Storage, Auth } from "aws-amplify"
 import Calendar from "../hostdashboard/Calendar";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
+const S3_BUCKET_NAME = 'accommodation';
+const region = 'eu-north-1';
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
@@ -25,13 +27,6 @@ function OnboardingHost() {
             return v.toString(16);
         });
     }
-
-    const AWS = require('aws-sdk');
-    const s3 = new AWS.S3({
-        accessKeyId: process.env.REACT_APP_AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.REACT_APP_AWS_SECRET_ACCESS_KEY,
-        region: process.env.REACT_APP_AWS_REGION
-    });
 
     let [userId, setUserId] = useState(null);
 
@@ -55,7 +50,6 @@ function OnboardingHost() {
         Subtitle: "",
         Description: "",
         Rent: "",
-        Guesttype: "",
         Guestamount: "",
         Bedrooms: "",
         Bathrooms: "",
@@ -64,7 +58,6 @@ function OnboardingHost() {
         PostalCode: "",
         Street: "",
         City: "",
-        CancelPolicy: "",
         Features: {
             Wifi: false,
             Television: false,
@@ -86,8 +79,7 @@ function OnboardingHost() {
         },
         StartDate: "",
         EndDate: "",
-        AccommodationType: "",
-        Measurement: "",
+        AccommodationType: "Room",
         OwnerId: ""
     });
 
@@ -153,7 +145,7 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-
+        console.log(formData);
         if (type === 'checkbox') {
             setFormData((prevData) => ({
                 ...prevData,
@@ -188,6 +180,7 @@ function OnboardingHost() {
         }
     };
 
+
     const handleCountryChange = (selectedOption) => {
         setFormData(currentFormData => ({
             ...currentFormData,
@@ -196,86 +189,86 @@ function OnboardingHost() {
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
     };
 
+    const constructURL = (userId, accommodationId, index) => {
+        return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+    };
+
+    const uploadImageToS3 = async (userId, accommodationId, image, index) => {
+        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+
+        try {
+            await Storage.put(key, image, {
+                bucket: S3_BUCKET_NAME,
+                region: region,
+                contentType: image.type,
+                level: null,
+                customPrefix: { public: '' }
+            });
+            return constructURL(userId, accommodationId, index);
+        } catch (err) {
+            console.error("Failed to upload file:", err);
+            throw err;
+        }
+    }
     const handleSubmit = async () => {
         try {
-            const UserID = userId; // Assuming userId is available in scope
+            setIsLoading(true);
             const AccoID = formData.ID;
             const updatedFormData = { ...formData }; // Copy the original formData object
-
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
-                if (file) {
-                    const params = {
-                        Bucket: 'accommodation',
-                        Key: `images/${UserID}/${AccoID}/Image-${i + 1}.jpg`, // Include file extension ".jpg"
-                        Body: file
-                    };
-                    const data = await s3.upload(params).promise();
-                    // Update the corresponding property in the formData object
-                    updatedFormData.Images[`image${i + 1}`] = data.Location;
-                }
+                const location =  await uploadImageToS3(userId, AccoID, file, i);
+                console.log(location);
+                updatedFormData.Images[`image${i + 1}`] = location;
             }
-
-            // Set the updated formData object with image paths
-            setFormData(updatedFormData);
+            await setFormData(updatedFormData);
+            setImageFiles([]);
 
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
                 method: 'POST',
+                body: JSON.stringify(formData),
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(updatedFormData),
+                }
             });
-
             if (response.ok) {
                 console.log('Form data saved successfully');
-                // Reset selectedFiles and formData after successful upload
-                setImageFiles(Array(5).fill(null));
-                setFormData({
-                    Images: {
-                        image1: "",
-                        image2: "",
-                        image3: "",
-                        image4: "",
-                        image5: "",
-                    },
-                });
             } else {
                 console.error('Error saving form data');
             }
         } catch (error) {
             console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
         }
     };
 
     const [imageFiles, setImageFiles] = useState(Array.from({ length: 5 }, () => null));
 
     const handleFileChange = (file, index) => {
-        if (file && file.type.startsWith('image/')) {
-            const updatedImages = { ...formData.Images, [`image${index + 1}`]: file.name };
-            setFormData((prevData) => ({
-                ...prevData,
-                Images: updatedImages
-            }));
+        const newImageFiles = [...imageFiles];
+        newImageFiles[index] = file;
+        setImageFiles(newImageFiles);
 
-            const updatedFiles = [...imageFiles];
-            updatedFiles[index] = file;
-            setImageFiles(updatedFiles);
-        } else {
-            alert('Please select a valid image file.');
+        // Construct formData based on current imageFiles
+        const updatedFormData = { ...formData };
+        if (file) {
+            const key = `image${index + 1}`;
+            updatedFormData.Images[key] = URL.createObjectURL(file);
         }
+        setFormData(updatedFormData);
     };
 
     const handleDelete = (index) => {
-        const updatedImages = { ...formData.Images, [`image${index + 1}`]: "" };
-        setFormData((prevData) => ({
-            ...prevData,
-            Images: updatedImages
-        }));
+        const newImageFiles = [...imageFiles];
+        newImageFiles[index] = null;
+        setImageFiles(newImageFiles);
 
-        const updatedFiles = [...imageFiles];
-        updatedFiles[index] = null;
-        setImageFiles(updatedFiles);
+        // Construct formData based on current imageFiles
+        const updatedFormData = { ...formData };
+        const key = `image${index + 1}`;
+        updatedFormData.Images[key] = ""; // Clear the value associated with the key
+        setFormData(updatedFormData);
     };
 
     const updateDates = (start, end) => {
@@ -320,6 +313,21 @@ function OnboardingHost() {
                                     value={formData.Description}
                                     placeholder="Tell us something about your accommodation..."
                                 ></textarea>
+                                <label htmlFor="accommodationType">Accommodation Type*</label>
+                                <select
+                                    value={formData.AccommodationType}
+                                    onChange={handleInputChange}
+                                    name="AccommodationType"
+                                    className="textInput"
+                                >
+                                    <option value="Room">Room</option>
+                                    <option value="Shared Room">Shared Room</option>
+                                    <option value="House">House</option>
+                                    <option value="Apartment">Apartment</option>
+                                    <option value="Villa">Villa</option>
+                                    <option value="Cottage">Cottage</option>
+                                    <option value="Hotel">Hotel</option>
+                                </select>
                             </section>
                             <section className="images-container thumbnail-container">
                                 {imageFiles[0] && (
@@ -362,7 +370,7 @@ function OnboardingHost() {
                         </section>
 
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
+                            <img src={info} className="info-icon"/>
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
@@ -382,8 +390,18 @@ function OnboardingHost() {
                             <h2 className="onboardingSectionTitle">Specifications</h2>
                             <div className="input-group">
                             </div>
-
                             <div className="form-row">
+                                <label htmlFor="guests">Maximum amount of guests*</label>
+                                <input
+                                    type="number"
+                                    id="guests"
+                                    name="Guestamount"
+                                    onChange={handleInputChange}
+                                    value={formData.Guestamount}
+                                    min={0}
+                                    className="textInput"
+                                    placeholder="How many guests can you accept?"
+                                />
                                 <label htmlFor="bedrooms">Amount of bedrooms*</label>
                                 <input
                                     type="number"
@@ -419,193 +437,47 @@ function OnboardingHost() {
                                     className="textInput"
                                     placeholder="How many fixed beds does it have?"
                                 />
-
-                                <label htmlFor="guests">Maximum amount of guests*</label>
-                                <input
-                                    type="number"
-                                    id="guests"
-                                    name="Guestamount"
-                                    onChange={handleInputChange}
-                                    value={formData.Guestamount}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many guests can you accept?"
-                                />
                             </div>
                         </section>
-
-                        <section className="details-policies formContainer">
-                            <div className="formHolder">
-                                <h2 className="onboardingSectionTitle">Details and Policies</h2>
-                                <div className="formRow">
-                                    <div className="room-features formRow">
-                                        <div className="configurations">
-                                            <label htmlFor="measurement">Measurements*</label>
-                                            <input
-                                                type="number"
-                                                name="Measurement"
-                                                placeholder="What are your measurements in M²?"
-                                                onChange={handleInputChange}
-                                                value={formData.Measurement}
-                                                min={0}
-                                                className="textInput"
-                                            />
-
-                                            <label htmlFor="accommodationType">Accommodation Type*</label>
-                                            <select
-                                                value={formData.AccommodationType}
-                                                onChange={handleInputChange}
-                                                name="AccommodationType"
-                                                className="textInput"
-                                            >
-                                                <option value="Room">Room</option>
-                                                <option value="Shared Room">Shared Room</option>
-                                                <option value="House">House</option>
-                                                <option value="Apartment">Apartment</option>
-                                                <option value="Villa">Villa</option>
-                                                <option value="Cottage">Cottage</option>
-                                                <option value="Hotel">Hotel</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav className="formContainer">
-                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>
-                                Go back to change
-                            </button>
-                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>
-                                Confirm and proceed
-                            </button>
-                        </nav>
-                    </main>
-                );
-
-            case 3:
-                return (
-                    <main className="container">
-                        <section>
-                            <section className="locationInput">
-                                <h2 className="onboardingSectionTitle">Location</h2>
-                                <label htmlFor="country">Country*</label>
-                                <Select
-                                    options={options.map(country => ({ value: country, label: country }))}
-                                    name="Country"
-                                    className="locationText"
-                                    value={{ value: formData.Country, label: formData.Country }}
-                                    onChange={handleCountryChange}
-                                    id="country"
-                                />
-                                <label htmlFor="city">City*</label>
-                                <input
-                                    className="textInput locationText"
-                                    name="City"
-                                    onChange={handleInputChange}
-                                    value={formData.City}
-                                    id="city"
-                                    placeholder="Select your city"
-                                />
-                                <label htmlFor="street">Street + house nr.*</label>
-                                <input
-                                    className="textInput locationText"
-                                    name="Street"
-                                    onChange={handleInputChange}
-                                    value={formData.Street}
-                                    id="street"
-                                    placeholder="Enter your address"
-                                />
-                                <label htmlFor="postal">Postal Code*</label>
-                                <input
-                                    className="textInput locationText"
-                                    name="PostalCode"
-                                    onChange={handleInputChange}
-                                    value={formData.PostalCode}
-                                    id="postal"
-                                    placeholder="Enter your postal code"
-                                />
+                        <div className="form-group">
+                            <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
+                            <section className="check-box">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Smokedetector"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Smokedetector}
+                                    />
+                                    Smoke detector
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="FirstAidkit"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.FirstAidkit}
+                                    />
+                                    First Aid kit
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Fireextinguisher"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.Fireextinguisher}
+                                    />
+                                    Fire extinguisher
+                                </label>
                             </section>
-                            <section className="map-section">
-                                <h2 className="onboardingSectionTitle">What we show on Domits</h2>
-                                <MapComponent location={location} />
-                            </section>
-                        </section>
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav className="formContainer">
-                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>Go back to change
-                            </button>
-                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>Confirm and proceed
-                            </button>
-                        </nav>
-                    </main>
-                );
-
-            case 4:
-                return (
-                    <main className="container">
-                        <section className="room-features formRow">
-                            <h2 className="onboardingSectionTitle">Systems and configurations</h2>
-                            <div className="form-group">
-                                <p>Cancel policy*</p>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        className="radioInput"
-                                        name="CancelPolicy"
-                                        onChange={handleInputChange}
-                                        checked={formData.CancelPolicy === "Users can cancel anytime"}
-                                        value="Users can cancel anytime"
-                                    />
-                                    Users can cancel anytime
-                                </label>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        className="radioInput"
-                                        name="CancelPolicy"
-                                        onChange={handleInputChange}
-                                        checked={formData.CancelPolicy === "No cancel 24h before arrival"}
-                                        value="No cancel 24h before arrival"
-                                    />
-                                    No cancel 24h before arrival
-                                </label>
-                            </div>
-                            <div className="form-group">
-                                <p>Guest type*</p>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        className="radioInput"
-                                        name="Guesttype"
-                                        onChange={handleInputChange}
-                                        checked={formData.Guesttype === "Any guest"}
-                                        value="Any guest"
-                                    />
-                                    Any Guest
-                                </label>
-                                <label>
-                                    <input
-                                        type="radio"
-                                        className="radioInput"
-                                        name="Guesttype"
-                                        onChange={handleInputChange}
-                                        checked={formData.Guesttype === "Verified Domits guest"}
-                                        value="Verified Domits guest"
-                                    />
-                                    Verified Domits guest
-                                </label>
-                            </div>
-                            <div className="form-group">
-                                <h2 className="onboardingSectionTitle">Add accommodation features</h2>
-                                <p>You can select one or more items below</p>
+                        </div>
+                        <div className="form-group">
+                            <h2 className="onboardingSectionTitle">Add accommodation features</h2>
+                            <p>You can select one or more items below</p>
+                            <section className="check-box">
                                 <label>
                                     <input
                                         type="checkbox"
@@ -676,70 +548,196 @@ function OnboardingHost() {
                                     />
                                     Home office
                                 </label>
-                            </div>
-                            <div className="form-group">
-                                <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Smokedetector"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Smokedetector}
-                                    />
-                                    Smoke detector
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="FirstAidkit"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.FirstAidkit}
-                                    />
-                                    First Aid kit
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Fireextinguisher"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Fireextinguisher}
-                                    />
-                                    Fire extinguisher
-                                </label>
-                            </div>
-                        </section>
+                            </section>
+                        </div>
+
+                        {/*<section className="details-policies formContainer">*/}
+                        {/*    <div className="formHolder">*/}
+                        {/*        <h2 className="onboardingSectionTitle">Details and Policies</h2>*/}
+                        {/*        <div className="formRow">*/}
+                        {/*            <div className="room-features formRow">*/}
+                        {/*                <div className="configurations">*/}
+                        {/*                    <label htmlFor="measurement">Measurements*</label>*/}
+                        {/*                    <input*/}
+                        {/*                        type="number"*/}
+                        {/*                        name="Measurement"*/}
+                        {/*                        placeholder="What are your measurements in M²?"*/}
+                        {/*                        onChange={handleInputChange}*/}
+                        {/*                        value={formData.Measurement}*/}
+                        {/*                        min={0}*/}
+                        {/*                        className="textInput"*/}
+                        {/*                    />*/}
+                        {/*                </div>*/}
+                        {/*            </div>*/}
+                        {/*        </div>*/}
+                        {/*    </div>*/}
+                        {/*</section>*/}
+
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
+                            <img src={info} className="info-icon"/>
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>
+                                Go back to change
                             </button>
-                            <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed
+                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
                             </button>
                         </nav>
                     </main>
                 );
 
+            case 3:
+                return (
+                    <main className="container">
+                        <section>
+                            <section className="locationInput">
+                                <h2 className="onboardingSectionTitle">Location</h2>
+                                <label htmlFor="country">Country*</label>
+                                <Select
+                                    options={options.map(country => ({value: country, label: country}))}
+                                    name="Country"
+                                    className="locationText"
+                                    value={{value: formData.Country, label: formData.Country}}
+                                    onChange={handleCountryChange}
+                                    id="country"
+                                />
+                                <label htmlFor="city">City*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="City"
+                                    onChange={handleInputChange}
+                                    value={formData.City}
+                                    id="city"
+                                    placeholder="Select your city"
+                                />
+                                <label htmlFor="street">Street + house nr.*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="Street"
+                                    onChange={handleInputChange}
+                                    value={formData.Street}
+                                    id="street"
+                                    placeholder="Enter your address"
+                                />
+                                <label htmlFor="postal">Postal Code*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="PostalCode"
+                                    onChange={handleInputChange}
+                                    value={formData.PostalCode}
+                                    id="postal"
+                                    placeholder="Enter your postal code"
+                                />
+                            </section>
+                            <section className="map-section">
+                                <h2 className="onboardingSectionTitle">What we show on Domits</h2>
+                                <MapComponent location={location}/>
+                            </section>
+                        </section>
+                        <section className="listing-info enlist-info">
+                            <img src={info} className="info-icon"/>
+                            <p className="info-msg">Fields with * are mandatory</p>
+                        </section>
+                        <nav className="formContainer">
+                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>Go back to change
+                            </button>
+                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
 
-            case 5:
+            // case 4:
+            //     return (
+            //         <main className="container">
+            //             <section className="room-features formRow">
+            //                 <h2 className="onboardingSectionTitle">Systems and configurations</h2>
+            //                 <div className="form-group">
+            //                     <p>Cancel policy*</p>
+            //                     <label>
+            //                         <input
+            //                             type="radio"
+            //                             className="radioInput"
+            //                             name="CancelPolicy"
+            //                             onChange={handleInputChange}
+            //                             checked={formData.CancelPolicy === "Users can cancel anytime"}
+            //                             value="Users can cancel anytime"
+            //                         />
+            //                         Users can cancel anytime
+            //                     </label>
+            //                     <label>
+            //                         <input
+            //                             type="radio"
+            //                             className="radioInput"
+            //                             name="CancelPolicy"
+            //                             onChange={handleInputChange}
+            //                             checked={formData.CancelPolicy === "No cancel 24h before arrival"}
+            //                             value="No cancel 24h before arrival"
+            //                         />
+            //                         No cancel 24h before arrival
+            //                     </label>
+            //                 </div>
+            //                 <div className="form-group">
+            //                     <p>Guest type*</p>
+            //                     <label>
+            //                         <input
+            //                             type="radio"
+            //                             className="radioInput"
+            //                             name="Guesttype"
+            //                             onChange={handleInputChange}
+            //                             checked={formData.Guesttype === "Any guest"}
+            //                             value="Any guest"
+            //                         />
+            //                         Any Guest
+            //                     </label>
+            //                     <label>
+            //                         <input
+            //                             type="radio"
+            //                             className="radioInput"
+            //                             name="Guesttype"
+            //                             onChange={handleInputChange}
+            //                             checked={formData.Guesttype === "Verified Domits guest"}
+            //                             value="Verified Domits guest"
+            //                         />
+            //                         Verified Domits guest
+            //                     </label>
+            //                 </div>
+            //             </section>
+            //             <section className="listing-info enlist-info">
+            //                 <img src={info} className="info-icon"/>
+            //                 <p className="info-msg">Fields with * are mandatory</p>
+            //             </section>
+            //             <nav className="formContainer">
+            //                 <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+            //                 </button>
+            //                 <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed
+            //                 </button>
+            //             </nav>
+            //         </main>
+            //     );
+
+
+            case 4:
                 return (
                     <main className="container">
                         <section class="room-features formRow">
                             <h2 className="onboardingSectionTitle">Pricing</h2>
                             <p>Price per night*: {formData.Rent}</p>
-                            <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
-                                defaultValue={formData.Rent} min="40" max="1000" step="10" />
+                            <div className="slider-bar">
+                                <p>40</p>
+                                <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
+                                       defaultValue={formData.Rent} min="40" max="1000" step="10"/>
+                                <p>1000</p>
+                            </div>
                         </section>
                         <h2 className="onboardingSectionTitle">Availabilities</h2>
                         <section className="listing-calendar">
-                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates} />
+                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
                         </section>
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
+                            <img src={info} className="info-icon"/>
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav class="formContainer">
@@ -755,6 +753,7 @@ function OnboardingHost() {
                                 }}
                                 style={{
                                     backgroundColor: 'green',
+                                    width: '7vw',
                                     cursor: isFormFilled() ? 'pointer' : 'not-allowed',
                                     opacity: isFormFilled() ? 1 : 0.5
                                 }}
@@ -766,93 +765,89 @@ function OnboardingHost() {
                 );
 
 
-            case 6:
+            case 5:
                 return (
-                    <div className="container" style={{ width: '80%' }}>
+                    <div className="container" style={{width: '80%'}}>
                         <h2>Review your information</h2>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
                             <tbody>
-                                <tr>
-                                    <th style={{
-                                        textAlign: 'left',
-                                        borderBottom: '1px solid #ccc',
-                                        paddingBottom: '8px'
-                                    }}>Property Details
-                                    </th>
-                                    <th style={{
-                                        textAlign: 'left',
-                                        borderBottom: '1px solid #ccc',
-                                        paddingBottom: '8px'
-                                    }}>Value
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <td>Title:</td>
-                                    <td>{formData.Title}</td>
-                                </tr>
-                                <tr>
-                                    <td>Description:</td>
-                                    <td>{formData.Description}</td>
-                                </tr>
-                                <tr>
-                                    <td>Rent:</td>
-                                    <td>{formData.Rent}</td>
-                                </tr>
-                                <tr>
-                                    <td>Room Type:</td>
-                                    <td>{formData.AccommodationType}</td>
-                                </tr>
-                                <tr>
-                                    <td>Date Range:</td>
-                                    <td>
-                                        {formData.StartDate && formData.EndDate ? (
-                                            `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
-                                        ) : "Date range not set"}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Guests:</td>
-                                    <td>{formData.Guestamount}</td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Bedrooms:</td>
-                                    <td>{formData.Bedrooms}</td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Bathrooms:</td>
-                                    <td>{formData.Bathrooms}</td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Fixed Beds:</td>
-                                    <td>{formData.Beds}</td>
-                                </tr>
-                                <tr>
-                                    <td>Country:</td>
-                                    <td>{formData.Country}</td>
-                                </tr>
-                                <tr>
-                                    <td>Postal Code:</td>
-                                    <td>{formData.PostalCode}</td>
-                                </tr>
-                                <tr>
-                                    <td>Street + House Nr.:</td>
-                                    <td>{formData.Street}</td>
-                                </tr>
-                                <tr>
-                                    <td>Neighbourhood:</td>
-                                    <td>{formData.Neighbourhood}</td>
-                                </tr>
+                            <tr>
+                                <th style={{
+                                    textAlign: 'left',
+                                    borderBottom: '1px solid #ccc',
+                                    paddingBottom: '8px'
+                                }}>Property Details
+                                </th>
+                                <th style={{
+                                    textAlign: 'left',
+                                    borderBottom: '1px solid #ccc',
+                                    paddingBottom: '8px'
+                                }}>Value
+                                </th>
+                            </tr>
+                            <tr>
+                                <td>Title:</td>
+                                <td>{formData.Title}</td>
+                            </tr>
+                            <tr>
+                                <td>Description:</td>
+                                <td>{formData.Description}</td>
+                            </tr>
+                            <tr>
+                                <td>Rent:</td>
+                                <td>{formData.Rent}</td>
+                            </tr>
+                            <tr>
+                                <td>Room Type:</td>
+                                <td>{formData.AccommodationType}</td>
+                            </tr>
+                            <tr>
+                                <td>Date Range:</td>
+                                <td>
+                                    {formData.StartDate && formData.EndDate ? (
+                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
+                                    ) : "Date range not set"}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Number of Guests:</td>
+                                <td>{formData.Guestamount}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Bedrooms:</td>
+                                <td>{formData.Bedrooms}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Bathrooms:</td>
+                                <td>{formData.Bathrooms}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Fixed Beds:</td>
+                                <td>{formData.Beds}</td>
+                            </tr>
+                            <tr>
+                                <td>Country:</td>
+                                <td>{formData.Country}</td>
+                            </tr>
+                            <tr>
+                                <td>Postal Code:</td>
+                                <td>{formData.PostalCode}</td>
+                            </tr>
+                            <tr>
+                                <td>Street + House Nr.:</td>
+                                <td>{formData.Street}</td>
+                            </tr>
                             </tbody>
                         </table>
                         <h3>Features:</h3>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
                             <tbody>
-                                {Object.entries(formData.Features).map(([feature, value]) => (
-                                    <tr key={feature}>
-                                        <td style={{ borderBottom: '1px solid #ccc' }}>{feature}:</td>
-                                        <td style={{ borderBottom: '1px solid #ccc' }}>{value ? 'Yes' : 'No'}</td>
-                                    </tr>
-                                ))}
+                            {Object.entries(formData.Features).map(([feature, value]) => (
+                                <tr key={feature}>
+                                    <td style={{borderBottom: '1px solid #ccc'}}>{feature}:</td>
+                                    <td style={{borderBottom: '1px solid #ccc'}}>{value ? 'Yes' : 'No'}</td>
+                                </tr>
+                            ))}
                             </tbody>
                         </table>
                         <div className='buttonHolder'>
@@ -869,12 +864,12 @@ function OnboardingHost() {
                 );
 
 
-            case 7:
+            case 6:
                 if (isLoading) {
                     return (
                         <div className="loading">
                             <p className="spinner-text">Please wait a moment...</p>
-                            <img className="spinner" src={spinner} />
+                            <img className="spinner" src={spinner}/>
                         </div>
                     );
                 } else {

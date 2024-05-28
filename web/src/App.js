@@ -21,7 +21,8 @@ import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
 import HostReviews from "./components/hostdashboard/HostReviews";
-import ListingDetails from './components/listingdetails/ListingDetails';
+import ListingDetails from './components/booking/ListingDetails';
+import BookingOverview from './components/booking/BookingOverview';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
@@ -41,6 +42,7 @@ import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
 import UserProfile from './components/guestdashboard/profilePictureTest.js';
 import Hostchat from './components/hostdashboard/Hostchat';
+import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 
 Modal.setAppElement('#root');
 
@@ -66,6 +68,7 @@ function App() {
     return (
         <FlowContext.Provider value={{ flowState, setFlowState }}>
             <Router>
+                <ScrollToTop />
                 <AuthProvider>
                 <UserProvider>
                     <div className="App">
@@ -84,6 +87,7 @@ function App() {
                             <Route path="/register" element={<Register />} />
                             <Route path="/confirm-email" element={<ConfirmRegister />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
+                            <Route path="/bookingoverview" element={<BookingOverview />} />
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
@@ -128,4 +132,3 @@ function App() {
     );
 }
 export default App;
-
