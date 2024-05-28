@@ -91,29 +91,59 @@
   transform: scale(1.05);
 }
 
+/* Stijl voor de beschrijving */
 .description {
   margin-top: 20px;
+  font-size: 18px;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* Stijl voor de sectie met functies */
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 20px;
+  list-style-type: none;
+  padding: 0;
+  margin-top: 20px;
+}
+
+/* Stijl voor individuele functies */
+.feature-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-align: center;
+}
+
+.feature-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.feature-item.feature-absent {
+  opacity: 0.5;
+}
+
+/* Stijl voor de feature iconen */
+.feature-icon {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 10px;
+}
+
+.feature-item span {
   font-size: 16px;
   color: #555;
 }
 
-.features {
-  list-style-type: none;
-  padding: 0;
-  margin-top: 10px;
-}
-
-.features li {
-  margin-bottom: 10px;
-  font-size: 16px;
-}
-
-.features li span {
-  margin-right: 5px;
-  color: #4CAF50;
-  font-weight: bold;
-}
-
+/* Stijl voor de knop */
 .button {
   background-color: #4CAF50;
   border: none;
@@ -129,6 +159,7 @@
   transition: background-color 0.3s ease;
 }
 
+/* Stijl voor hover effect op de knop */
 .button:hover {
   background-color: #45a049;
 }
