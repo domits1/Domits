@@ -1,0 +1,262 @@
+.container {
+    width: 60%;
+    margin: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    font-weight: 400;
+}
+
+.calculatorBlock {
+    border-radius: 15px;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 5px #003366;
+    padding: 20px 15px;
+    width: auto;
+    margin: auto;
+}
+
+.pages {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.pageButtons {
+    box-shadow: 0 0 5px #003366;
+    border-radius: 5px;
+    padding: 10px;
+    width: 40px;
+    height: 40px;
+    background-color: white;
+    border: none;
+    margin-right: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pageButtons:hover {
+    background-color: #4c7cac;
+    color: #fff;
+    cursor: pointer;
+}
+
+.selected {
+    background-color: #003366;
+    color: #fff;
+    box-shadow: none;
+}
+
+.cardHolder {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1vw;
+    margin-top: 2vw;
+    margin-bottom: 1vw;
+}
+
+.card {
+    height: 135px;
+    width: 135px;
+    max-height: 135px;
+    max-width: 135px;
+    margin-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    border: 2px solid transparent;
+}
+
+.card img {
+    max-width: 80px;
+    max-height: 80px;
+    width: auto;
+    height: auto;
+}
+
+.card:hover, .selectedCard {
+    border-radius: 10px;
+    box-shadow: 0 0 5px #003366;
+    cursor: pointer;
+}
+
+.selectedCard {
+    border: 2px solid #003366;
+    box-shadow: none !important;
+}
+
+.priceDisplay {
+    max-width: 35%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid #003366;
+    box-shadow: 1px 1px 5px 1px #003366;
+    margin: auto;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.buttonHolder {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin-top: 10px;
+}
+
+.nextButtons {
+    background-color: #003366;
+    color: #fff;
+    height: 45px;
+    width: 150px;
+    border-radius: 5px;
+    box-shadow: none;
+    padding: 10px;
+    margin: 0 10px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+}
+
+.nextButtons:hover {
+    background-color: #4c7cac;
+    cursor: pointer;
+    transition: background-color .3s ease-out;
+}
+
+.infoHolder {
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+.info {
+    font-size: 1.2rem;
+    margin: 8px 0;
+    color: #333;
+}
+
+.infoHeader {
+    color: green;
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+.MainText {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 4%;
+}
+
+.WhyHow {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 5%;
+}
+
+.Cards {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.7rem;
+}
+
+.RegisterBlock {
+    display: flex;
+    text-align: left;
+}
+
+.First_Icons {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+    gap: 2%;
+    padding-bottom: 3%;
+}
+
+.First_Icons img {
+    max-width: 7vw;
+}
+
+.WhyHow_text {
+    padding-bottom: 5%;
+}
+
+.infoCard p {
+    max-width: 10vw;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 90%;
+        margin-top: 0.625rem;
+        margin-bottom: 0.625rem;
+    }
+
+    .MainText h1, .WhyHow_text h1 {
+        font-size: 1.6rem;
+    }
+
+    .infoCard img {
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .infoCard {
+        padding: none;
+    }
+
+    .infoCard, .card {
+        width: 100%;
+        padding: 0.938rem;
+        margin-bottom: 0.938rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .First_Icons {
+        display: flex;
+        justify-content: space-evenly;
+    }
+
+    .infoCard p {
+        font-size: 1rem !important;
+        max-width: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 100%;
+    }
+
+    .MainText h1, .WhyHow_text h1 {
+        font-size: 1.4rem;
+    }
+
+    .infoCard img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .infoCard p, .Cards p {
+        font-size: 0.75rem;
+    }
+}
