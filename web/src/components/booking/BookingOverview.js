@@ -16,7 +16,7 @@ const BookingOverview = () => {
     const [cognitoUserId, setCognitoUserId] = useState(null);
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null); // To handle and display errors
+    const [error, setError] = useState(null);
 
     const checkAuthentication = async () => {
         try {
