@@ -1,15 +1,13 @@
-import React, { useState, FormEvent, useEffect, useContext } from 'react';
+// Register.js
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import { useAuth } from './AuthContext';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../FlowContext'; // Import FlowContext
 import './Register.css';
-import { flow } from 'lodash';
 
 const Register = () => {
     const navigate = useNavigate();
-    const { setAuthCredentials } = useAuth();
-    const { flowState, setFlowState } = useContext(FlowContext);
+    const { flowState, setFlowState } = useContext(FlowContext)
 
     const [formData, setFormData] = useState({
         email: '',

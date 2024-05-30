@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { FlowProvider } from '../../FlowContext';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 
@@ -43,12 +44,13 @@ const BookingOverview = () => {
 
     useEffect(() => {
         const details = location.state?.details;
-        if (details) {
+        if (details && !bookingDetails) { // Check if details exist and bookingDetails is not already set
             setBookingDetails(details);
-        } else {
-            navigate('/');
+        } else if (!details && bookingDetails) { // Check if details are empty and bookingDetails is set
+            setBookingDetails(null);
         }
-    }, [location, navigate]);
+    }, [location.state?.details, bookingDetails]); // Add bookingDetails to the dependency array
+    
 
     if (!bookingDetails) {
         return <div>Loading...</div>;
@@ -108,24 +110,14 @@ const BookingOverview = () => {
                                     <label htmlFor="email">Email address</label>
                                     <input type="text" id="email" name="email" defaultValue={userData.email} />
                                 </div>
-                                {/* <div className="form-group">
-                                    <label htmlFor="address">Address</label>
-                                    <input type="text" id="address" name="address" defaultValue={userData.address} />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="phone">Phone Number</label>
-                                    <input type="text" id="phone" name="phone" defaultValue={userData.phoneNumber} />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="dob">Date of Birth</label>
-                                    <input type="text" id="dob" name="dob" defaultValue={userData.dob} />
-                                </div> */}
-            
+
                                 <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay}>Confirm & Pay</button>
                             </>
                         ) : (
                             <>
-                                <Register />
+                                <FlowProvider>
+                                    <Register />
+                                </FlowProvider>
                             </>
                         )}
                     </form>
