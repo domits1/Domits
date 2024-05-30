@@ -200,6 +200,14 @@
     max-width: 10vw;
 }
 
+.updateGroupButtonDiv {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding-bottom: 4%;
+    padding-top: 4%;
+}
+
 @media (max-width: 768px) {
     .container {
         width: 90%;

@@ -23,7 +23,6 @@ const Register = () => {
     const [shouldShake, setShouldShake] = useState(false);
     const [passwordShake, setPasswordShake] = useState(false);
 
-
     const handleHostChange = (e) => {
         setFlowState(prevState => ({
             ...prevState,
@@ -93,6 +92,15 @@ const Register = () => {
         }
     };
     
+    const handleSignOut = async () => {
+        try {
+            await Auth.signOut();
+            setIsAuthenticated(false);
+            window.location.reload();
+        } catch (error) {
+            console.error('Error logging out:', error);
+        }
+    };
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -106,6 +114,7 @@ const Register = () => {
 
         checkAuth();
     }, []);
+
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (!errorMessage.includes('Username')) {
@@ -118,7 +127,6 @@ const Register = () => {
         return () => clearTimeout(timeout);
     }, [errorMessage]);
 
-
     useEffect(() => {
         if (signUpClicked) {
             setSignUpClicked(false);
@@ -128,7 +136,9 @@ const Register = () => {
     return (
         <>
             {isAuthenticated ? (
-                <button onClick={() => Auth.signOut()}>Sign out</button>
+                <div className='signOutDiv'>
+                    <button className='signOutButton' onClick={handleSignOut}>Sign out</button>
+                </div>
             ) : (
                 <div className="registerContainer">
                     <div className="registerTitle">Create an account on Domits</div>

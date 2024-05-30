@@ -83,7 +83,7 @@ function Pages() {
           <img src={calendar} alt="Calendar"></img>
           <p>Calendar</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/reservations")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Reservations</p>
         </div>
@@ -91,15 +91,15 @@ function Pages() {
           <img src={message} alt="Messages"></img>
           <p>Messages</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/revenues")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Revenues</p>
         </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/payments")}>
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/reporting")}>
           <img src={payment} alt="Payments"></img>
           <p>Reporting</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/occupancy")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Occupancy/ADR</p>
         </div>
@@ -107,27 +107,27 @@ function Pages() {
           <img src={listings} alt="Reviews"></img>
           <p>Reviews</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/property-care")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Property care</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/iot-hub")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>IoT Hub</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/pricing")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Pricing</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/distribution")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Distribution</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/monitoring")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Monitoring</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/screening")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Screening</p>
         </div>
@@ -140,11 +140,11 @@ function Pages() {
           <img src={settings} alt="Settings"></img>
           <p>Settings</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/setup")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Setup</p>
         </div>
-        <div className="wijzer">
+        <div className="wijzer" onClick={() => navigate("/hostdashboard/promo-codes")}>
           <img src={dashboard} alt="Dashboard"/>
           <p>Promo codes</p>
         </div>
