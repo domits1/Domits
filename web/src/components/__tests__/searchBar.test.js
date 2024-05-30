@@ -18,7 +18,6 @@ jest.mock('react-places-autocomplete', () => {
     };
 });
 
-// Dit is een mock van google autocomplete om het sneller in te laden
 global.google = {
     maps: {
         places: {
@@ -34,18 +33,27 @@ global.google = {
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
+import { BrowserRouter } from 'react-router-dom'; 
 import { SearchBar } from '../base/SearchBar';
 
 describe('SearchBar Component', () => {
     test('laadt de autocomplete input', () => {
-        render(<SearchBar />);
+        render(
+            <BrowserRouter> 
+                <SearchBar />
+            </BrowserRouter>
+        );
         const inputElement = screen.getByPlaceholderText('Search Places ....');
         expect(inputElement).toBeInTheDocument();
     });
 
     test('controleert de lege toestand van het adresveld', () => {
-        render(<SearchBar />);
-        const inputElement = screen.getByPlaceholderText('Search Places ....');
+        render(
+            <BrowserRouter> 
+                <SearchBar />
+            </BrowserRouter>
+        );
+        const inputElement = screen.getByPlaceholderText('Search Places ....'); 
         expect(inputElement.value).toBe('');
     });
 });
