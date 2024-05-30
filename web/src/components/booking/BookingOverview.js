@@ -1,11 +1,45 @@
 import React, { useState, useEffect } from 'react';
+import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import "./bookingoverview.css";
+import Register from "../base/Register";
+
+
 
 const BookingOverview = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
+
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [userData, setUserData] = useState({
+        username: "",
+        email: "",
+        phoneNumber: "",
+        address: "",
+        dob: "",
+    });
+
+    const checkAuthentication = async () => {
+        try {
+            const session = await Auth.currentSession();
+            const user = await Auth.currentAuthenticatedUser();
+            setIsLoggedIn(true);
+            const userAttributes = user.attributes;
+            setUserData((prevData) => ({
+                ...prevData,
+                username: userAttributes['custom:username'],
+                email: userAttributes['email'],
+            }));
+        } catch (error) {
+            setIsLoggedIn(false);
+            console.error('Error logging in:', error);
+        }
+    };
+    useEffect(() => {
+        checkAuthentication();
+    }, []);
+
 
     useEffect(() => {
         const details = location.state?.details;
@@ -26,8 +60,7 @@ const BookingOverview = () => {
         checkOut,
         adults,
         kids,
-        pets,
-        userInfo
+        pets
     } = bookingDetails;
 
     const handleConfirmAndPay = () => {
@@ -35,23 +68,9 @@ const BookingOverview = () => {
         console.log("Payment confirmed");
     };
 
-    const images = Object.values(accommodation.Images);
-
     return (
         <main className="container Bookingcontainer">
-            <div className="imagebar">
-                <div className="thumbnail-images">
-                    {images.map((image, index) => (
-                        <img key={index} src={image} alt={`Accommodation image ${index + 1}`} />
-                    ))}
-                </div>
-            </div>
             <div className="main-content">
-                <div className="steps">
-                    <div className="step completed"></div>
-                    <div className="step"></div>
-                    <div className="step"></div>
-                </div>
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>
                 <div className="booking-details">
@@ -74,51 +93,41 @@ const BookingOverview = () => {
                     <h2>Booking overview</h2>
                     <p>Check-in: {checkIn}</p>
                     <p>Check-out: {checkOut}</p>
-                    <p>Main booker: {userInfo.name}</p>
-                    <p>Amount of travellers: {adults} adults - {kids} kids</p>
-                    <p>Email address: {userInfo.email}</p>
-                    <p>Phone number: {userInfo.phoneNumber}</p>
                 </div>
                 <div className="accommodation-info">
                     <h2>Accommodation</h2>
                     <form>
-                        <div className="form-group">
-                            <label htmlFor="name">Name</label>
-                            <input type="text" id="name" name="name" defaultValue={userInfo.name} />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="address">Address</label>
-                            <input type="text" id="address" name="address" defaultValue={userInfo.address} />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="postcode">Postcode</label>
-                            <input type="text" id="postcode" name="postcode" defaultValue={userInfo.postcode} />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="country">Country</label>
-                            <input type="text" id="country" name="country" defaultValue={userInfo.country} />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="phone">Phone Number</label>
-                            <input type="text" id="phone" name="phone" defaultValue={userInfo.phoneNumber} />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="dob">Date of Birth</label>
-                            <input type="text" id="dob" name="dob" defaultValue={userInfo.dateOfBirth} />
-                        </div>
-                        <div className="form-group">
-                            <label htmlFor="password">Password</label>
-                            <input type="password" id="password" name="password" placeholder="********************" />
-                        </div>
-                        <div className="form-group">
-                            <input type="checkbox" id="accommodation-rules" name="accommodation-rules" />
-                            <label htmlFor="accommodation-rules">I have read and accept the accommodation rules</label>
-                        </div>
-                        <div className="form-group">
-                            <input type="checkbox" id="privacy-agreement" name="privacy-agreement" />
-                            <label htmlFor="privacy-agreement">I have read and accept the privacy agreement and terms and conditions</label>
-                        </div>
-                        <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay}>Confirm & Pay</button>
+                        {isLoggedIn ? (
+                            <>
+                                <div className="helloUsername">Hello {userData.username}!</div>
+                                <div className="form-group">
+                                    <label htmlFor="name">Name</label>
+                                    <input type="text" id="name" name="name" defaultValue={userData.username} />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="email">Email address</label>
+                                    <input type="text" id="email" name="email" defaultValue={userData.email} />
+                                </div>
+                                {/* <div className="form-group">
+                                    <label htmlFor="address">Address</label>
+                                    <input type="text" id="address" name="address" defaultValue={userData.address} />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="phone">Phone Number</label>
+                                    <input type="text" id="phone" name="phone" defaultValue={userData.phoneNumber} />
+                                </div>
+                                <div className="form-group">
+                                    <label htmlFor="dob">Date of Birth</label>
+                                    <input type="text" id="dob" name="dob" defaultValue={userData.dob} />
+                                </div> */}
+            
+                                <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay}>Confirm & Pay</button>
+                            </>
+                        ) : (
+                            <>
+                                <Register />
+                            </>
+                        )}
                     </form>
                 </div>
             </div>
