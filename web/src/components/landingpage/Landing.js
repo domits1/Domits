@@ -1,7 +1,8 @@
-import React from "react";
-import Page from "./Calculator";
-import FAQ from "./Faq";
+import React, { useState, useEffect, useContext } from 'react';
+import { Auth } from 'aws-amplify';
+import { useNavigate } from 'react-router-dom';
 import styles from './landing.module.css';
+
 import Register from "../base/Register";
 import rocket from "../../images/icons/rocket-02.png";
 import banknote from "../../images/icons/bank-note-01.png";
@@ -14,6 +15,43 @@ import camper from "../../images/icons/camper-van.png";
 import villa from "../../images/icons/mansion.png";
 
 function Landing() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [group, setGroup] = useState('');
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        checkAuthentication();
+    }, []);
+
+    const checkAuthentication = async () => {
+        try {
+            const user = await Auth.currentAuthenticatedUser();
+            setIsAuthenticated(true);
+            setGroup(user.attributes['custom:group']);
+        } catch (error) {
+            console.error('Error checking authentication:', error);
+            setIsAuthenticated(false);
+        }
+    };
+
+    const updateUserGroup = async () => {
+        try {
+            const user = await Auth.currentAuthenticatedUser();
+            let result = await Auth.updateUserAttributes(user, {
+                'custom:group': 'Host'
+            });
+            if (result === 'SUCCESS') {
+                console.log("User group updated successfully");
+                setGroup('Host');
+                navigate('/hostdashboard');
+            } else {
+                console.error("Failed to update user group");
+            }
+        } catch (error) {
+            console.error('Error updating user group:', error);
+        }
+    };
+
     return (
         <div className={styles.container}>
             <div className={styles.MainText}>
@@ -26,24 +64,32 @@ function Landing() {
                     <p>House</p>
                 </div>
                 <div className={styles.infoCard}>
-                <img src={appartement} alt="Flat" />
-                <p>Appartment</p>
+                    <img src={appartement} alt="Flat" />
+                    <p>Apartment</p>
                 </div>
                 <div className={styles.infoCard}>
-                <img src={camper} alt="Camper" />
-                <p>Camper</p>
+                    <img src={camper} alt="Camper" />
+                    <p>Camper</p>
                 </div>
                 <div className={styles.infoCard}>
-                <img src={boothuis} alt="Boat" />
-                <p>Boat</p>
+                    <img src={boothuis} alt="Boat" />
+                    <p>Boat</p>
                 </div>
                 <div className={styles.infoCard}>
-                <img src={villa} alt="Villa" />
-                <p>Villa</p>
+                    <img src={villa} alt="Villa" />
+                    <p>Villa</p>
                 </div>
             </div>
             <div className={styles.RegisterBlock}>
-                <Register />
+                {isAuthenticated && group !== 'Host' ? (
+                    <div className={styles.updateGroupButtonDiv}>
+                        <button onClick={updateUserGroup} className={styles.nextButtons}>
+                            Become a Host
+                        </button>
+                    </div>
+                ) : (
+                    <Register />
+                )}
             </div>
             <section className={styles.WhyHow}>
                 <div className={styles.WhyHow_text}>
@@ -98,9 +144,6 @@ function Landing() {
                     </div>
                 </div>
             </section>
-            <div className={styles.calculatorBlock}>
-                <Page />
-            </div>
         </div>
     );
 }
