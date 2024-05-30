@@ -49,6 +49,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
 
 
   const navigate = useNavigate();
@@ -470,8 +471,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               singleValue: (provided) => ({
                 ...provided,
                 textAlign: 'center',
-                color: '#333',
-                fontSize: '14px',
+                fontWeight: 500,
+                color: '#000',
+                fontSize: '1rem',
               }),
             }}
           />
@@ -500,7 +502,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             </button>
           )}
 
-          <p className='guestP'>{totalGuestsDescription}</p>
+          <p className={`guestP ${hasTwoGuests ? 'nowrap' : ''}`}>
+            {totalGuestsDescription}
+          </p>
           <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
 
             <GuestCounter
@@ -542,7 +546,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
               : ''}
             readOnly={true}
-            style={{ fontSize: '0.8rem' }}
+            style={{ fontSize: '0.9rem' }}
           />
           {!startDate && !endDate && (
             <span
@@ -553,10 +557,12 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 position: 'absolute',
                 top: '50%',
                 left: '50%',
-                transform: 'translate(-50%, -50%)',
+                transform: 'translate(-50%, -40%)',
                 color: '#0D9813',
-                fontWeight: 700,
-                fontSize: '0.9rem',
+                fontWeight: 600,
+                fontSize: '1rem',
+                whiteSpace: 'nowrap',
+
               }}
             >
               Check in • out

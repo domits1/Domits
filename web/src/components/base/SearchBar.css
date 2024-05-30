@@ -49,9 +49,9 @@
 .bar .searchTitle,
 .searchTitleCenter {
   color: #0D9813;
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-family: 'Kanit', sans-serif;
-  font-weight: 700;
+  font-weight: 600;
   /* transform: translateY(45%); */
 }
 
@@ -73,7 +73,7 @@
 .input-calendar {
   background: none;
   border: none;
-  text-align: left;
+  text-align: center;
   width: 92%;
   height: 3.5rem;
 }
@@ -170,21 +170,18 @@
 .searchBar::placeholder {
   color: #0D9813;
   font-family: 'Kanit', sans-serif;
-  font-weight: 900;
-  font-size: 0.9rem;
+  font-weight: 600;
+  font-size: 1rem;
   transform: translateX(20%);
 }
 
 .button-section {
   border: none;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  position: relative;
   cursor: pointer;
   padding: 1.625rem;
-  user-select: none;
   background-color: #fff;
   border-radius: 1.25rem;
   width: 23%;
@@ -317,8 +314,8 @@
 .searchTitleGuest {
   position: absolute;
   color: #0D9813;
-  font-size: 0.9rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   margin-top: 1rem;
 
 }
@@ -328,10 +325,15 @@
 }
 
 .guestP {
+  text-align: left;
   font-weight: 500;
   color: #000;
-  font-size: 0.75rem;
-  margin-top: 0.60rem;
+  font-size: 0.8rem;
+  margin-top: 1rem;
+}
+
+.guestP.nowrap {
+  white-space: nowrap; /* Prevent wrapping when there are only two guest types */
 }
 
 
@@ -534,10 +536,10 @@
   }
   .searchBar::placeholder {
     position: absolute;
-    top: 40%;
+    top: 50%;
     left: 50%;
     transform: translate(-50%, -50%); 
-    text-align: center; 
+     
   }
 
   .button-section {
