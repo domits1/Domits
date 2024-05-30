@@ -52,7 +52,7 @@ function OnboardingHost() {
         Title: "",
         Subtitle: "",
         Description: "",
-        Rent: "",
+        Rent: "100",
         Guestamount: "",
         Bedrooms: "",
         Bathrooms: "",
