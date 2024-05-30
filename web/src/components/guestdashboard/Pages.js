@@ -27,6 +27,10 @@ function Pages() {
         <img src={payment} alt="Booking"></img>
         <p>Booking</p>
       </div>
+      <div className="wijzers" onClick={() => navigate("/guestdashboard/payments")}>
+        <img src={payment} alt="Booking"></img>
+        <p>Payments</p>
+      </div>
       <div className="wijzers" onClick={() => navigate("/guestdashboard/reviews")}>
         <img src={listings} alt="Listing"></img>
         <p>Reviews</p>

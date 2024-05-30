@@ -43,6 +43,7 @@ import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashb
 import UserProfile from './components/guestdashboard/profilePictureTest.js';
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
+import { initializeUserAttributes } from './components/utils/userAttributes';
 
 Modal.setAppElement('#root');
 
@@ -53,6 +54,10 @@ function App() {
         // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
     }, [searchResults]);
+
+    useEffect(() => {
+        initializeUserAttributes();
+    }, []);
 
     const currentPath = window.location.pathname;
 
