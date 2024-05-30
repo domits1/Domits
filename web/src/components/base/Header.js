@@ -86,7 +86,7 @@ function Header({ setSearchResults, setLoading }) {
     const navigateToDashboard = () => {
         if (!isLoggedIn) {
             setFlowState({ isHost: true });
-            navigate('/register');
+            navigate('/landing');
         } else {
             const onAnyDashboard = location.pathname.includes('dashboard');
             if (!onAnyDashboard && group === 'Host') {
@@ -121,7 +121,7 @@ function Header({ setSearchResults, setLoading }) {
                         <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
                     </div>
                     <div className='headerRight'>
-                        <button className="headerButtons headerHostButton" onClick={becomeHost}>
+                        <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
                             {!isLoggedIn ? 'Become a Host' :
                                 (!location.pathname.includes('dashboard') && group === 'Host') ? 'Go to Dashboard' :
                                     (group === 'Host' ? 'Switch Dashboard' : 'Become a Host')}
