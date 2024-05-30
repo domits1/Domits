@@ -99,36 +99,9 @@ function Header({ setSearchResults, setLoading }) {
         }
     };
 
-    const updateUserGroup = async (newGroup) => {
-        try {
-            const user = await Auth.currentAuthenticatedUser();
-            let result = await Auth.updateUserAttributes(user, {
-                'custom:group': newGroup
-            });
-            if (result === 'SUCCESS') {
-                console.log("User group updated successfully");
-                setGroup(newGroup);
-                navigate('/hostdashboard');
-            } else {
-                console.error("Failed to update user group");
-            }
-        } catch (error) {
-            console.error('Error updating user group:', error);
-        }
-    };
-
     const becomeHost = () => {
-        if (!isLoggedIn) {
-            setFlowState({ isHost: true });
-            navigateToLanding();
-        } else if (group === 'Traveler') {
-            const confirmed = window.confirm("Would you like to become a host?");
-            if (confirmed) {
-                updateUserGroup('Host');
-            }
-        } else {
-            navigateToDashboard();
-        }
+        setFlowState({ isHost: true });
+        navigateToLanding();
     };
 
     const navigateToGuestDashboard = () => {

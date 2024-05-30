@@ -54,6 +54,7 @@ import HostMonitoring from "./components/hostdashboard/HostMonitoring";
 import HostScreening from "./components/hostdashboard/HostScreening";
 import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
+import { initializeUserAttributes } from './components/utils/userAttributes';
 
 Modal.setAppElement('#root');
 
@@ -64,6 +65,10 @@ function App() {
         // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
     }, [searchResults]);
+
+    useEffect(() => {
+        initializeUserAttributes();
+    }, []);
 
     const currentPath = window.location.pathname;
 
