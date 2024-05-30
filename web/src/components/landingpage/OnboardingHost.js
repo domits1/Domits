@@ -19,6 +19,9 @@ function OnboardingHost() {
         latitude: 0,
         longitude: 0,
     });
+    let [stepOne, setStepOne] = useState(null);
+    let [stepTwo, setStepTwo] = useState(null);
+    let [stepThree, setStepThree] = useState(null);
 
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -87,10 +90,36 @@ function OnboardingHost() {
         setPage(pageNumber);
     };
 
+    const hasImages = () => {
+        for (const imageKey in formData.Images) {
+            if (formData.Images[imageKey] === '') {
+                return false;
+            }
+        }
+        return true;
+    }
+    useEffect(() => {
+        if (formData.Title && formData.Subtitle && formData.Description && hasImages()) {
+            setStepOne(false);
+        } else {
+            setStepOne(true);
+        }
+
+        if (formData.Guestamount && formData.Bedrooms && formData.Bathrooms && formData.Beds) {
+            setStepTwo(false);
+        } else {
+            setStepTwo(true);
+        }
+
+        if (formData.Country && formData.City && formData.Street && formData.PostalCode) {
+            setStepThree(false);
+        } else {
+            setStepThree(true);
+        }
+    }, [formData]);
+
     const isFormFilled = () => {
         const excludedFields = ['OwnerId', 'StartDate', 'EndDate'];
-
-        // Check if all fields except excluded ones are filled
         for (const key in formData) {
             if (excludedFields.includes(key)) {
                 continue;
@@ -107,7 +136,8 @@ function OnboardingHost() {
             }
         }
         return true;
-    };
+    }
+
 
     const appendUserId = () => {
         setFormData((prevData) => ({
@@ -281,7 +311,7 @@ function OnboardingHost() {
             case 1:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Accommodation Information</h2>
+                        <h2 className="onboardingSectionTitle">Step 1: Accommodation Information</h2>
                         <section className="flex-row form-row">
                             <section className="form-section">
 
@@ -382,7 +412,7 @@ function OnboardingHost() {
                             <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>
                                 Go to dashboard
                             </button>
-                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>
+                            <button className="nextButtons" disabled={stepOne} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
@@ -392,7 +422,7 @@ function OnboardingHost() {
                 return (
                     <main className="container">
                         <section className="quantity">
-                            <h2 className="onboardingSectionTitle">Specifications</h2>
+                            <h2 className="onboardingSectionTitle">Step 2: Specifications</h2>
                             <div className="input-group">
                             </div>
                             <div className="form-row">
@@ -590,7 +620,7 @@ function OnboardingHost() {
                             <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>
                                 Go back to change
                             </button>
-                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>
+                            <button className="nextButtons" disabled={stepTwo} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
@@ -602,7 +632,7 @@ function OnboardingHost() {
                     <main className="container">
                         <section>
                             <section className="locationInput">
-                                <h2 className="onboardingSectionTitle">Location</h2>
+                                <h2 className="onboardingSectionTitle">Step 3: Location</h2>
                                 <label htmlFor="country">Country*</label>
                                 <Select
                                     options={options.map(country => ({value: country, label: country}))}
@@ -654,9 +684,9 @@ function OnboardingHost() {
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
-                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>Go back to change
+                            <button className="nextButtons"  onClick={() => pageUpdater(page - 1)}>Go back to change
                             </button>
-                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>Confirm and proceed
+                            <button className="nextButtons" disabled={stepThree} onClick={() => pageUpdater(page + 1)}>Confirm and proceed
                             </button>
                         </nav>
                     </main>
@@ -736,7 +766,7 @@ function OnboardingHost() {
                 return (
                     <main className="container">
                         <section class="room-features formRow">
-                            <h2 className="onboardingSectionTitle">Pricing</h2>
+                            <h2 className="onboardingSectionTitle">Step 4: Pricing</h2>
                             <p>Price per night*: {formData.Rent}</p>
                             <div className="slider-bar">
                                 <p>40</p>
@@ -760,9 +790,9 @@ function OnboardingHost() {
                             <button
                                 className='nextButtons'
                                 onClick={() => {
-                                    if (isFormFilled()) {
-                                        appendUserId(); // First action
-                                        pageUpdater(page + 1); // Second action
+                                    if (isFormFilled) {
+                                        appendUserId();
+                                        pageUpdater(page + 1);
                                     }
                                 }}
                                 style={{
@@ -772,8 +802,7 @@ function OnboardingHost() {
                                     opacity: isFormFilled() ? 1 : 0.5
                                 }}
                                 disabled={!isFormFilled()}
-                            >Enlist
-                            </button>
+                            >Enlist</button>
                         </nav>
                     </main>
                 );
@@ -782,7 +811,7 @@ function OnboardingHost() {
             case 5:
                 return (
                     <div className="container" style={{width: '80%'}}>
-                        <h2>Review your information</h2>
+                        <h2>Step 5: Review your information</h2>
                         <table style={{width: '100%', borderCollapse: 'collapse'}}>
                             <tbody>
                             <tr>
