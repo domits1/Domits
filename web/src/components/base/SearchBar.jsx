@@ -7,7 +7,10 @@ import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-au
 import Select from 'react-select';
 import { countries } from 'country-data';
 import './SearchBar.css';
-import { useNavigate , useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+
+
+
 const handleButtonClick = (e) => {
   e.stopPropagation();
 };
@@ -46,6 +49,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -144,19 +148,30 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   };
 
 
-  // Verbinding met API Gateway naar de lambda
+
   const handleSearchWithDelay = () => {
     setLoading(true);
     setError("");
-    navigate('/');
-    const params = new URLSearchParams();
-    if (accommodation) params.append('type', accommodation);
-    if (address) params.append('searchTerm', address);
-    if (totalGuests > 0) params.append('guests', totalGuests);
-  
-    const searchParams = params.toString();
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${searchParams}`;
-  
+
+    const queryParams = [
+      accommodation ? `type=${accommodation}` : null,
+      address ? `searchTerm=${address}` : null,
+      totalGuests > 0 ? `guests=${totalGuests}` : null,
+    ].filter(Boolean).join('&');
+
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+
+    //THIS CODE IS VERY IMPORTANT!!!
+    //THE CODE CHECKS IF THE RESULTS THAT YOU HAVE SEARCH ARE STORED IN CACHE SO WHAT IT DOES IS IMPROVE THE SEARCH DRAMATICALLY!
+    //IT SHOWS RESULTS MUCH FASTER THAN WITHOUT THIS CODE, UNFORTUNATELY IT DOESN'T WORK RIGHT WITH NAVIGATE FUNCTION
+
+    // const cachedResults = localStorage.getItem(apiUrl);
+    // if (cachedResults) {
+    //   setSearchResults(JSON.parse(cachedResults));
+    //   setLoading(false);
+    //   return;
+    // }
+
     setTimeout(async () => {
       try {
         const response = await fetch(apiUrl);
@@ -164,6 +179,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         if (data.length === 0) {
           setError("No results have been found");
         } else {
+          localStorage.setItem(apiUrl, JSON.stringify(data));
           setSearchResults(data);
         }
       } catch (error) {
@@ -172,14 +188,18 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
       } finally {
         setLoading(false);
       }
-    }, 500); 
+    }, 500);
   };
-  
+
   const handleSearch = () => {
-    handleSearchWithDelay(); 
+    if (location.pathname !== '/') {
+      setSearchResults([]);
+      navigate('/');
+    }
+
+    handleSearchWithDelay();
   };
-  
-  
+
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -264,7 +284,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             onSelect={handleSelect}
             searchOptions={{
               types: ['locality', 'country'],
-              language: 'en', 
+              language: 'en',
             }}>
             {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
               <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
@@ -273,7 +293,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     className: 'searchBar',
                     onFocus: handleFocus,
                     onBlur: handleBlur,
-                    placeholder: 'Location'
+                    placeholder: 'Search Destination'
                   })}
                 />
                 {address && isFocused && (
@@ -366,7 +386,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
         </div>
 
-        <div className=" searchInputContainer">
+        <div className="searchInputContainer">
           {/* <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p> */}
           <Select
             value={accommodation ? { label: accommodation, value: accommodation } : null}
@@ -390,7 +410,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   width: '100%',
                   border: 'none',
                   height: '2rem',
-                  transform: isMobile ? 'translateX(-120px)' : 'translateY(5px)',
+                  transform: isMobile ? 'translateX(-25px)' : 'translateY(5px)',
                   boxShadow: 'none',
                   background: 'none',
                   padding: '0',
@@ -415,10 +435,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 };
               },
               indicatorSeparator: () => ({ display: 'none' }),
-              dropdownIndicator: (provided, state) => ({
-                ...provided,
-                display: state.selectProps.value ? 'none' : 'block',
-              }),
+              dropdownIndicator: () => ({ display: 'none' }),
               option: (provided, state) => ({
                 ...provided,
                 backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : 'white',
@@ -459,98 +476,116 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             }}
           />
           {isOpen && (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setIsOpen(false
-            )}></div>
+            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setIsOpen(false)}></div>
           )}
         </div>
 
         <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
-      <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests</p>
-      {totalGuests > 0 && (
-        <button
-          className="clear-guests"
-          onClick={resetGuests}
-          style={{
-            position: 'absolute',
-            right: '0px',
-            top: '50%',
-            transform: 'translateY(-35%)',
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          <FaTimes />
-        </button>
-      )}
-      
-      <p className='guestP'>{totalGuestsDescription}</p>
-      <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+          <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests • Rooms</p>
+          {totalGuests > 0 && (
+            <button
+              className="clear-guests"
+              onClick={resetGuests}
+              style={{
+                position: 'absolute',
+                right: '0px',
+                top: '50%',
+                transform: 'translateY(-35%)',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+              }}
+            >
+              <FaTimes />
+            </button>
+          )}
 
-        <GuestCounter
-          label="Adults"
-          description="Ages 16 or above"
-          value={adults}
-          onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
-          onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
-        />
-        <GuestCounter
-          label="Children"
-          description="Ages 2–16"
-          value={children}
-          onIncrement={() => incrementGuests(children, setChildren)}
-          onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
-        />
-        <GuestCounter
-          label="Infants"
-          description="Ages 0–2"
-          value={infants}
-          onIncrement={() => incrementGuests(infants, setInfants)}
-          onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
-        />
-        <GuestCounter
-          label="Pets"
-          description="Normal sized pets"
-          value={pets}
-          onIncrement={() => incrementGuests(pets, setPets)}
-          onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
-        />
-      </div>
-    </div>
+          <p className='guestP'>{totalGuestsDescription}</p>
+          <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
 
+            <GuestCounter
+              label="Adults"
+              description="Ages 16 or above"
+              value={adults}
+              onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
+              onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
+            />
+            <GuestCounter
+              label="Children"
+              description="Ages 2–16"
+              value={children}
+              onIncrement={() => incrementGuests(children, setChildren)}
+              onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
+            />
+            <GuestCounter
+              label="Infants"
+              description="Ages 0–2"
+              value={infants}
+              onIncrement={() => incrementGuests(infants, setInfants)}
+              onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
+            />
+            <GuestCounter
+              label="Pets"
+              description="Normal sized pets"
+              value={pets}
+              onIncrement={() => incrementGuests(pets, setPets)}
+              onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
+            />
+          </div>
+        </div>
 
-        <div className="check-in" >
+        <div className="check-in" style={{ position: 'relative' }}>
           <input
             className="input-calendar"
             type="text"
-            placeholder="Check in/out"
             value={startDate && endDate
               ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
               : ''}
             readOnly={true}
+            style={{ fontSize: '0.8rem' }}
           />
+          {!startDate && !endDate && (
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                color: '#0D9813',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+              }}
+            >
+              Check in • out
+            </span>
+          )}
           <DatePicker
             label="Basic date picker"
             value={selectedDayRange}
             calendarClassName="responsive-calendar"
             format="MMM DD, YYYY"
-            onChange={setSelectedDayRange}
+            onChange={(range) => {
+              setSelectedDayRange(range);
+            }}
             shouldHighlightWeekends
             style={{ transform: 'translateX(-20px)' }}
             renderFooter={() => (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem 0' }}>
                 <button
                   type="button"
-                  onClick={() => setSelectedDayRange({ from: null, to: null })}
+                  onClick={() => {
+                    setSelectedDayRange({ from: null, to: null });
+                  }}
                   style={{
-                    border: 'solid',
                     background: 'rgb(15, 188, 249)',
-                    border: '#d3d9d9',
+                    border: 'none',
                     color: '#fff',
                     borderRadius: '0.5rem',
                     padding: '0.8rem 2.4rem',
                     cursor: 'pointer',
-                    transform: 'translateY(-30px)'
                   }}
                 >
                   Reset Dates
