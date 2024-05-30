@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker from '@hassanmojab/react-modern-calendar-datepicker';
-import { FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree, FaSpinner, FaTimesCircle } from 'react-icons/fa';
+import { FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree, FaSpinner, FaTimesCircle, FaUmbrellaBeach } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
@@ -388,17 +388,17 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         </div>
 
         <div className="searchInputContainer">
-          {/* <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p> */}
           <Select
             value={accommodation ? { label: accommodation, value: accommodation } : null}
             onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
             options={[
               { value: 'Apartment', label: <><FaBuilding /> Apartment</> },
               { value: 'House', label: <><FaHome /> House</> },
-              { value: 'Villa', label: <><FaHotel /> Villa</> },
+              { value: 'Villa', label: <><FaUmbrellaBeach /> Villa</> },
               { value: 'Boat', label: <><FaShip /> Boat</> },
               { value: 'Camper', label: <><FaCaravan /> Camper</> },
               { value: 'Cottage', label: <><FaTree /> Cottage</> },
+              { value: 'Hotel', label: <><FaHotel /> Hotel</> },
             ]}
             isSearchable={false}
             isClearable={true}
@@ -425,14 +425,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 return {
                   ...provided,
                   backgroundColor: 'white',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
-                  marginTop: '15px',
-                  left: '-2rem',
-                  width: '220px',
+                  marginTop: '1rem',
+                  width: '15rem',
                   overflowX: 'hidden',
                   overflowY: 'auto',
-                  transform: isMobile ? 'translateX(-95px)' : 'none',
+                  transform: isMobile ? 'translateX(-40px)' : 'translateX(-40px)',
                 };
               },
               indicatorSeparator: () => ({ display: 'none' }),
@@ -441,7 +440,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 ...provided,
                 backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : 'white',
                 color: state.isFocused ? 'black' : '#666',
-                fontWeight: state.isFocused ? '600' : 'normal',
+                fontWeight: state.isFocused ? '800' : 'normal',
                 fontSize: '14px',
                 padding: '13.8px 16px',
                 display: 'flex',

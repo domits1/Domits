@@ -122,16 +122,17 @@
   outline: 0;
   cursor: pointer;
   padding: 3px;
-  font-size: 0.625rem;
+  font-size: 0.6rem;
   line-height: 1.875rem;
   border: 1px solid #0fa616;
   border-radius: 50%;
   color: #ffffff;
   background-color: #0fa616;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  height: 2.5625rem;
-  width: 2.5625rem;
+  height: 2.5rem;
+  width: 2.5rem;
   margin-top: 0.5rem;
+  margin-left: 0.1rem;
 }
 
 .searchbar-button:hover {
@@ -143,6 +144,7 @@
 .searchbar-button svg {
   color: rgb(255, 255, 255);
   margin-top: 0.625rem;
+  margin-left: 0.2rem;
 }
 
 .search-text {
@@ -376,7 +378,7 @@
 
 @media (max-width: 1200px) {
   .responsive-calendar {
-    font-size: 7px !important;
+    font-size: 12px !important;
   }
 }
 
@@ -389,7 +391,7 @@
 /* Large screens */
 @media (min-width: 2500px) {
   .responsive-calendar {
-    font-size: 12px !important;
+    font-size: 16px !important;
   }
 }
 
