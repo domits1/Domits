@@ -293,6 +293,7 @@ function OnboardingHost() {
                                     onChange={handleInputChange}
                                     value={formData.Title}
                                     placeholder="Enter your title here..."
+                                    required={true}
                                 />
                                 <label htmlFor="Subtitle">Subtitle*</label>
                                 <input
@@ -302,6 +303,7 @@ function OnboardingHost() {
                                     onChange={handleInputChange}
                                     value={formData.Subtitle}
                                     placeholder="Enter your subtitle here..."
+                                    required={true}
                                 />
                                 <label htmlFor="description">Description*</label>
                                 <textarea
@@ -312,6 +314,7 @@ function OnboardingHost() {
                                     rows="5"
                                     value={formData.Description}
                                     placeholder="Tell us something about your accommodation..."
+                                    required={true}
                                 ></textarea>
                                 <label htmlFor="accommodationType">Accommodation Type*</label>
                                 <select
@@ -319,6 +322,7 @@ function OnboardingHost() {
                                     onChange={handleInputChange}
                                     name="AccommodationType"
                                     className="textInput"
+                                    required={true}
                                 >
                                     <option value="Room">Room</option>
                                     <option value="Shared Room">Shared Room</option>
@@ -350,6 +354,7 @@ function OnboardingHost() {
                                             onChange={(e) => handleFileChange(e.target.files[0], index)}
                                             accept="image/*"
                                             className="file-input"
+                                            required={true}
                                         />
                                         {imageFiles[index] && (
                                             <>
@@ -401,6 +406,7 @@ function OnboardingHost() {
                                     min={0}
                                     className="textInput"
                                     placeholder="How many guests can you accept?"
+                                    required={true}
                                 />
                                 <label htmlFor="bedrooms">Amount of bedrooms*</label>
                                 <input
@@ -412,6 +418,7 @@ function OnboardingHost() {
                                     min={0}
                                     className="textInput"
                                     placeholder="How many badrooms does it have?"
+                                    required={true}
                                 />
 
                                 <label htmlFor="bathrooms">Amount of bathrooms*</label>
@@ -424,6 +431,7 @@ function OnboardingHost() {
                                     min={0}
                                     className="textInput"
                                     placeholder="How many bathrooms does it have?"
+                                    required={true}
                                 />
 
                                 <label htmlFor="beds">Amount of beds*</label>
@@ -436,6 +444,7 @@ function OnboardingHost() {
                                     min={0}
                                     className="textInput"
                                     placeholder="How many fixed beds does it have?"
+                                    required={true}
                                 />
                             </div>
                         </section>
@@ -602,6 +611,7 @@ function OnboardingHost() {
                                     value={{value: formData.Country, label: formData.Country}}
                                     onChange={handleCountryChange}
                                     id="country"
+                                    required={true}
                                 />
                                 <label htmlFor="city">City*</label>
                                 <input
@@ -611,6 +621,7 @@ function OnboardingHost() {
                                     value={formData.City}
                                     id="city"
                                     placeholder="Select your city"
+                                    required={true}
                                 />
                                 <label htmlFor="street">Street + house nr.*</label>
                                 <input
@@ -620,6 +631,7 @@ function OnboardingHost() {
                                     value={formData.Street}
                                     id="street"
                                     placeholder="Enter your address"
+                                    required={true}
                                 />
                                 <label htmlFor="postal">Postal Code*</label>
                                 <input
@@ -629,6 +641,7 @@ function OnboardingHost() {
                                     value={formData.PostalCode}
                                     id="postal"
                                     placeholder="Enter your postal code"
+                                    required={true}
                                 />
                             </section>
                             <section className="map-section">
@@ -728,7 +741,8 @@ function OnboardingHost() {
                             <div className="slider-bar">
                                 <p>40</p>
                                 <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
-                                       defaultValue={formData.Rent} min="40" max="1000" step="10"/>
+                                       defaultValue={formData.Rent} min="40" max="1000" step="10"
+                                       required={true}/>
                                 <p>1000</p>
                             </div>
                         </section>
