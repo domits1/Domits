@@ -190,8 +190,6 @@ const BookingOverview = () => {
                                     <label htmlFor="email">Email address</label>
                                     <input type="text" id="email" name="email" defaultValue={userData.email} />
                                 </div>
-
-                                <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay}>Confirm & Pay</button>
                                 <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
                                     {loading ? 'Loading...' : 'Confirm & Pay'}
                                 </button>
