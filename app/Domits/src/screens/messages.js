@@ -1,10 +1,9 @@
 import React, { useEffect, useState, useRef } from "react";
 import { generateClient } from 'aws-amplify/api';
+const client = generateClient();
 import * as mutations from "./mutations";
 import * as queries from "./queries";
 import { View, Text, ScrollView, Image, TextInput, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
-
-const client = generateClient();
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
@@ -19,7 +18,6 @@ const vh = (percentage) => {
 export function Messages() {
   const [chats, setChats] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [showDate, setShowDate] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
@@ -28,27 +26,118 @@ export function Messages() {
   const [chatUsers, setChatUsers] = useState([]);
   const [channelUUID, setChannelUUID] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
-  const [user, setUser] = useState({ attributes: { email: 'jedar54396@acuxi.com' } }); // Replace with actual user fetching logic
+  const [user, setUser] = useState({ attributes: { email: 'jedar54396@acuxi.com' } }); 
 
   const chatContainerRef = useRef(null);
 
-  const handleUserClick = (email) => {
-    const user = chatUsers.find((user) => user.email === email);
-    setSelectedUser(user);
+  const dummyUsers = [
+    { email: 'user1@example.com', profilePic: 'https://via.placeholder.com/50' },
+    { email: 'user2@example.com', profilePic: 'https://via.placeholder.com/50' },
+    { email: 'user3@example.com', profilePic: 'https://via.placeholder.com/50' },
+    // Add more users as needed
+  ];
+
+  useEffect(() => {
+    setChatUsers(dummyUsers);
+  }, []);
+
+  useEffect(() => {
+    fetchChatUsers();
+  }, []);
+
+  const getUUIDForUser = (email) => {
+    let uuid = localStorage.getItem(`${email}_uuid`);
+    if (!uuid) {
+      uuid = generateUUID();
+      localStorage.setItem(`${email}_uuid`, uuid);
+    }
+    return uuid;
+  };
+
+  const generateUUID = () => {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      var r = Math.random() * 16 | 0,
+          v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  };
+
+  const generateChannelName = (userEmail, recipientEmail) => {
+    const sortedEmails = [userEmail, recipientEmail].sort();
+    return sortedEmails.join('_');
+  };
+
+  const handleUserClick = async (email) => {
+    const selectedUser = chatUsers.find((user) => user.email === email);
+    setSelectedUser(selectedUser);
     setIsChatVisible(true);
-    // Optionally, scroll to the chat container
+
+    if (!user || !user.attributes || !user.attributes.email) {
+      return;
+    }
+
+    const userEmail = user.attributes.email;
+    const recipientEmail = selectedUser.email;
+
+    const channelName = generateChannelName(userEmail, recipientEmail);
+    setChannelUUID(channelName);
+
+
+    fetchChats(recipientEmail, channelName);
+
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
-  const handleBackToUsers = () => {
-    setSelectedUser(null);
-    setIsChatVisible(false);
+  const fetchChats = async (recipientEmail, channelName) => {
+    try {
+      const sentMessages = await client.graphql({
+        query: queries.listChats,
+        variables: {
+          filter: {
+            email: { eq: user.attributes.email },
+            recipientEmail: { eq: recipientEmail }
+          }
+        }
+      });
+
+      const receivedMessages = await client.graphql({
+        query: queries.listChats,
+        variables: {
+          filter: {
+            email: { eq: recipientEmail },
+            recipientEmail: { eq: user.attributes.email }
+          }
+        }
+      });
+
+      const allSentChats = sentMessages.data.listChats.items.map(chat => ({
+        ...chat,
+        isSent: true
+      }));
+
+      const allReceivedChats = receivedMessages.data.listChats.items.map(chat => ({
+        ...chat,
+        isSent: false
+      }));
+
+      const allChats = [...allSentChats, ...allReceivedChats];
+      setChats(allChats);
+    } catch (error) {
+    }
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedUser) return;
+    if (!newMessage.trim()) {
+      return;
+    }
+    if (!selectedUser) {
+      return;
+    }
+    if (!channelUUID) {
+      return;
+    }
 
     try {
       const messagePayload = {
@@ -57,9 +146,9 @@ export function Messages() {
         recipientEmail: selectedUser.email,
         isRead: false,
         createdAt: new Date().toISOString(),
+        channelID: channelUUID
       };
 
-      console.log("Attempting to send message with:", messagePayload);
 
       const response = await client.graphql({
         query: mutations.createChat,
@@ -69,52 +158,40 @@ export function Messages() {
       });
 
       setNewMessage('');
-      console.log("Message sent successfully:", response);
     } catch (error) {
-      console.error("Error sending message:", error);
     }
   };
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      const users = await fetchChatUsers(user);
-      setChatUsers(users);
-    };
+  const handleBackToUsers = () => {
+    setSelectedUser(null);
+    setIsChatVisible(false);
+  };
 
-    fetchUsers();
-  }, [user]);
-
-  const fetchChatUsers = async (user) => {
+  const fetchChatUsers = async () => {
     try {
       const response = await client.graphql({ query: queries.listChats });
-      console.log("GraphQL response:", response); // Debug log
       const allChats = response.data.listChats.items;
 
-      // Create a set to track unique users
-      const uniqueUsers = new Set();
+      const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
 
-      allChats.forEach(chat => {
-        if (chat.email === user.attributes.email) {
-          uniqueUsers.add(chat.recipientEmail);
-        } else if (chat.recipientEmail === user.attributes.email) {
-          uniqueUsers.add(chat.email);
-        }
-      });
+      const filteredUsersData = uniqueUsers
+        .filter(email => email && email !== user.attributes.email)
+        .map(email => {
+          const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
+          const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
+          return {
+            email,
+            lastMessageTimestamp,
+          };
+        })
+        .filter(userData => {
+          const userChats = allChats.filter(chat => chat.email === userData.email || chat.recipientEmail === userData.email);
+          return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
+        })
+        .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
 
-      // Convert set to an array
-      const filteredUsersData = Array.from(uniqueUsers).map(email => {
-        const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
-        const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
-        return {
-          email,
-          lastMessageTimestamp,
-        };
-      }).sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-
-      return filteredUsersData;
+      setChatUsers(filteredUsersData);
     } catch (error) {
-      console.error("Error fetching chat users:", error);
-      return [];
     }
   };
 
@@ -173,10 +250,16 @@ export function Messages() {
             data={chatUsers}
             keyExtractor={(item) => item.email}
             renderItem={({ item }) => (
-              <TouchableOpacity style={styles.chat__user} onPress={() => handleUserClick(item.email)}>
-                <View style={styles.chat__wrapper}>
+              <TouchableOpacity style={styles.chat__peopleContainer} onPress={() => handleUserClick(item.email)}>
+                <View style={styles.chat__pfp}>
+                  <Image source={{ uri: item.profilePic }} style={styles.chatPfpImg} />
+                </View>
+                <View style={styles.chat__body}>
                   <Text style={styles.chat__name}>{item.email}</Text>
-                  {/* Optionally display last message preview */}
+                  <Text style={styles.chat__text}>{item.lastMessage}</Text>
+                </View>
+                <View style={styles.chat__time}>
+                  <Text>{item.lastMessageTimestamp}</Text>
                 </View>
               </TouchableOpacity>
             )}
