@@ -19,6 +19,9 @@ function OnboardingHost() {
         latitude: 0,
         longitude: 0,
     });
+    let [stepOne, setStepOne] = useState(null);
+    let [stepTwo, setStepTwo] = useState(null);
+    let [stepThree, setStepThree] = useState(null);
 
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -87,10 +90,36 @@ function OnboardingHost() {
         setPage(pageNumber);
     };
 
+    const hasImages = () => {
+        for (const imageKey in formData.Images) {
+            if (formData.Images[imageKey] === '') {
+                return false;
+            }
+        }
+        return true;
+    }
+    useEffect(() => {
+        if (formData.Title && formData.Subtitle && formData.Description && hasImages()) {
+            setStepOne(false);
+        } else {
+            setStepOne(true);
+        }
+
+        if (formData.Guestamount && formData.Bedrooms && formData.Bathrooms && formData.Beds) {
+            setStepTwo(false);
+        } else {
+            setStepTwo(true);
+        }
+
+        if (formData.Country && formData.City && formData.Street && formData.PostalCode) {
+            setStepThree(false);
+        } else {
+            setStepThree(true);
+        }
+    }, [formData]);
+
     const isFormFilled = () => {
         const excludedFields = ['OwnerId', 'StartDate', 'EndDate'];
-
-        // Check if all fields except excluded ones are filled
         for (const key in formData) {
             if (excludedFields.includes(key)) {
                 continue;
@@ -107,7 +136,8 @@ function OnboardingHost() {
             }
         }
         return true;
-    };
+    }
+
 
     const appendUserId = () => {
         setFormData((prevData) => ({
@@ -281,7 +311,7 @@ function OnboardingHost() {
             case 1:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Accommodation Information</h2>
+                        <h2 className="onboardingSectionTitle">Step 1: Accommodation Information</h2>
                         <section className="flex-row form-row">
                             <section className="form-section">
 
@@ -293,6 +323,7 @@ function OnboardingHost() {
                                     onChange={handleInputChange}
                                     value={formData.Title}
                                     placeholder="Enter your title here..."
+                                    required={true}
                                 />
                                 <label htmlFor="Subtitle">Subtitle*</label>
                                 <input
@@ -302,6 +333,7 @@ function OnboardingHost() {
                                     onChange={handleInputChange}
                                     value={formData.Subtitle}
                                     placeholder="Enter your subtitle here..."
+                                    required={true}
                                 />
                                 <label htmlFor="description">Description*</label>
                                 <textarea
@@ -312,6 +344,7 @@ function OnboardingHost() {
                                     rows="5"
                                     value={formData.Description}
                                     placeholder="Tell us something about your accommodation..."
+                                    required={true}
                                 ></textarea>
                                 <label htmlFor="accommodationType">Accommodation Type*</label>
                                 <select
@@ -319,6 +352,7 @@ function OnboardingHost() {
                                     onChange={handleInputChange}
                                     name="AccommodationType"
                                     className="textInput"
+                                    required={true}
                                 >
                                     <option value="Room">Room</option>
                                     <option value="Shared Room">Shared Room</option>
@@ -350,6 +384,7 @@ function OnboardingHost() {
                                             onChange={(e) => handleFileChange(e.target.files[0], index)}
                                             accept="image/*"
                                             className="file-input"
+                                            required={true}
                                         />
                                         {imageFiles[index] && (
                                             <>
@@ -377,7 +412,7 @@ function OnboardingHost() {
                             <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>
                                 Go to dashboard
                             </button>
-                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>
+                            <button className="nextButtons" disabled={stepOne} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
@@ -387,7 +422,7 @@ function OnboardingHost() {
                 return (
                     <main className="container">
                         <section className="quantity">
-                            <h2 className="onboardingSectionTitle">Specifications</h2>
+                            <h2 className="onboardingSectionTitle">Step 2: Specifications</h2>
                             <div className="input-group">
                             </div>
                             <div className="form-row">
@@ -401,6 +436,7 @@ function OnboardingHost() {
                                     min={0}
                                     className="textInput"
                                     placeholder="How many guests can you accept?"
+                                    required={true}
                                 />
                                 <label htmlFor="bedrooms">Amount of bedrooms*</label>
                                 <input
@@ -412,6 +448,7 @@ function OnboardingHost() {
                                     min={0}
                                     className="textInput"
                                     placeholder="How many badrooms does it have?"
+                                    required={true}
                                 />
 
                                 <label htmlFor="bathrooms">Amount of bathrooms*</label>
@@ -424,6 +461,7 @@ function OnboardingHost() {
                                     min={0}
                                     className="textInput"
                                     placeholder="How many bathrooms does it have?"
+                                    required={true}
                                 />
 
                                 <label htmlFor="beds">Amount of beds*</label>
@@ -436,6 +474,7 @@ function OnboardingHost() {
                                     min={0}
                                     className="textInput"
                                     placeholder="How many fixed beds does it have?"
+                                    required={true}
                                 />
                             </div>
                         </section>
@@ -581,7 +620,7 @@ function OnboardingHost() {
                             <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>
                                 Go back to change
                             </button>
-                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>
+                            <button className="nextButtons" disabled={stepTwo} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
@@ -593,7 +632,7 @@ function OnboardingHost() {
                     <main className="container">
                         <section>
                             <section className="locationInput">
-                                <h2 className="onboardingSectionTitle">Location</h2>
+                                <h2 className="onboardingSectionTitle">Step 3: Location</h2>
                                 <label htmlFor="country">Country*</label>
                                 <Select
                                     options={options.map(country => ({value: country, label: country}))}
@@ -602,6 +641,7 @@ function OnboardingHost() {
                                     value={{value: formData.Country, label: formData.Country}}
                                     onChange={handleCountryChange}
                                     id="country"
+                                    required={true}
                                 />
                                 <label htmlFor="city">City*</label>
                                 <input
@@ -611,6 +651,7 @@ function OnboardingHost() {
                                     value={formData.City}
                                     id="city"
                                     placeholder="Select your city"
+                                    required={true}
                                 />
                                 <label htmlFor="street">Street + house nr.*</label>
                                 <input
@@ -620,6 +661,7 @@ function OnboardingHost() {
                                     value={formData.Street}
                                     id="street"
                                     placeholder="Enter your address"
+                                    required={true}
                                 />
                                 <label htmlFor="postal">Postal Code*</label>
                                 <input
@@ -629,6 +671,7 @@ function OnboardingHost() {
                                     value={formData.PostalCode}
                                     id="postal"
                                     placeholder="Enter your postal code"
+                                    required={true}
                                 />
                             </section>
                             <section className="map-section">
@@ -641,9 +684,9 @@ function OnboardingHost() {
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
-                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>Go back to change
+                            <button className="nextButtons"  onClick={() => pageUpdater(page - 1)}>Go back to change
                             </button>
-                            <button className="nextButtons" onClick={() => pageUpdater(page + 1)}>Confirm and proceed
+                            <button className="nextButtons" disabled={stepThree} onClick={() => pageUpdater(page + 1)}>Confirm and proceed
                             </button>
                         </nav>
                     </main>
@@ -723,12 +766,13 @@ function OnboardingHost() {
                 return (
                     <main className="container">
                         <section class="room-features formRow">
-                            <h2 className="onboardingSectionTitle">Pricing</h2>
+                            <h2 className="onboardingSectionTitle">Step 4: Pricing</h2>
                             <p>Price per night*: {formData.Rent}</p>
                             <div className="slider-bar">
                                 <p>40</p>
                                 <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
-                                       defaultValue={formData.Rent} min="40" max="1000" step="10"/>
+                                       defaultValue={formData.Rent} min="40" max="1000" step="10"
+                                       required={true}/>
                                 <p>1000</p>
                             </div>
                         </section>
@@ -746,9 +790,9 @@ function OnboardingHost() {
                             <button
                                 className='nextButtons'
                                 onClick={() => {
-                                    if (isFormFilled()) {
-                                        appendUserId(); // First action
-                                        pageUpdater(page + 1); // Second action
+                                    if (isFormFilled) {
+                                        appendUserId();
+                                        pageUpdater(page + 1);
                                     }
                                 }}
                                 style={{
@@ -758,8 +802,7 @@ function OnboardingHost() {
                                     opacity: isFormFilled() ? 1 : 0.5
                                 }}
                                 disabled={!isFormFilled()}
-                            >Enlist
-                            </button>
+                            >Enlist</button>
                         </nav>
                     </main>
                 );
@@ -768,7 +811,7 @@ function OnboardingHost() {
             case 5:
                 return (
                     <div className="container" style={{width: '80%'}}>
-                        <h2>Review your information</h2>
+                        <h2>Step 5: Review your information</h2>
                         <table style={{width: '100%', borderCollapse: 'collapse'}}>
                             <tbody>
                             <tr>
