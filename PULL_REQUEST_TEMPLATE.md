@@ -24,9 +24,13 @@
 
 ## Checklist
 - [ ] Console.logs are deleted
-- [ ] Comments are deleted (or not used).
-- [ ] Frontend and back-end are in seperate files
-- [ ] Jest tests are included, and your tests haven't failed.
+- [ ] Comments are deleted
+- [ ] Jest tests are included
+- [ ] Jest tests have succeeded
+- [ ] Pull request is assigned to a reviewer
+- [ ] Pull request title is descriptive and includes the issue number
+- [ ] Code has been tested in a local environment
+- [ ] No sensitive data (e.g., passwords, keys) are hardcoded
 
 All boxes must be checked in order to move forward with your pull request.
 
