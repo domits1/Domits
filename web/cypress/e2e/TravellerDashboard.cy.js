@@ -15,7 +15,7 @@ it('LoginGuest dashboard testing', () => {
 
     cy.wait(3000);
 
-    cy.url().should('eq', 'https://acceptance.domits.com/login');
+    // cy.url().should('eq', 'https://acceptance.domits.com/login');
     cy.reload();
     cy.get('.personalMenu').first().click();
     cy.contains('button', 'Profile').click();

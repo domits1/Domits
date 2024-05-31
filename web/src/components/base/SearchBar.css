@@ -49,11 +49,10 @@
 .bar .searchTitle,
 .searchTitleCenter {
   color: #0D9813;
-  font-size: 0.8rem;
+  font-size: 1rem;
   font-family: 'Kanit', sans-serif;
-  font-weight: 700;
+  font-weight: 600;
   /* transform: translateY(45%); */
-
 }
 
 .check-in {
@@ -75,17 +74,9 @@
   background: none;
   border: none;
   text-align: center;
-  width: 90%;
-  height: 2.5rem;
-  transform: translateY(25%);
+  width: 92%;
+  height: 3.5rem;
 }
-
-.input-calendar::placeholder {
-  color: #0D9813;
-  font-weight: 700;
-  transform: translateY(-5%);
-}
-
 .bar>div {
   position: relative;
   transition: background 150ms ease, width 150ms ease;
@@ -120,7 +111,7 @@
 
 .DatePicker__calendarContainer {
   position: absolute;
-  top: calc(50% + 10px);
+  top: calc(10% + 10px);
   left: 60%;
   transform: translateX(-50%);
 }
@@ -131,16 +122,17 @@
   outline: 0;
   cursor: pointer;
   padding: 3px;
-  font-size: 0.625rem;
+  font-size: 0.6rem;
   line-height: 1.875rem;
   border: 1px solid #0fa616;
   border-radius: 50%;
   color: #ffffff;
   background-color: #0fa616;
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  height: 2.5625rem;
-  width: 2.5625rem;
+  height: 2.5rem;
+  width: 2.5rem;
   margin-top: 0.5rem;
+  margin-left: 0.1rem;
 }
 
 .searchbar-button:hover {
@@ -152,6 +144,7 @@
 .searchbar-button svg {
   color: rgb(255, 255, 255);
   margin-top: 0.625rem;
+  margin-left: 0.2rem;
 }
 
 .search-text {
@@ -179,21 +172,18 @@
 .searchBar::placeholder {
   color: #0D9813;
   font-family: 'Kanit', sans-serif;
-  font-weight: 900;
-  font-size: 0.8rem;
-  transform: translateX(34%);
+  font-weight: 600;
+  font-size: 1rem;
+  transform: translateX(20%);
 }
 
 .button-section {
   border: none;
   display: flex;
-  flex-direction: column;
   justify-content: center;
   align-items: center;
-  position: relative;
   cursor: pointer;
   padding: 1.625rem;
-  user-select: none;
   background-color: #fff;
   border-radius: 1.25rem;
   width: 23%;
@@ -220,17 +210,18 @@
   display: none; 
   position: absolute;
   top: calc(100% + 0.625rem);
-  left: 57%;
+  margin-right: -250%;
   transform: translateX(-50%) scale(0.95); 
   background: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
   border-radius: 1.5625rem;
   padding: 1.5625rem;
   z-index: 999;
-  width: 23.125rem;
+  width: 25.125rem;
   min-width: 15.625rem;
   box-sizing: border-box;
   cursor: auto;
+  
 }
 
 .guest-dropdown.active {
@@ -325,10 +316,10 @@
 .searchTitleGuest {
   position: absolute;
   color: #0D9813;
-  font-size: 0.8rem;
-  font-weight: 700;
-  transform: translateX(-10%);
-  top: 1.2rem;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-top: 1rem;
+
 }
 
 .button-section {
@@ -336,10 +327,15 @@
 }
 
 .guestP {
+  text-align: left;
   font-weight: 500;
   color: #000;
-  font-size: 0.75rem;
-  margin-top: 0.60rem;
+  font-size: 0.8rem;
+  margin-top: 1rem;
+}
+
+.guestP.nowrap {
+  white-space: nowrap; /* Prevent wrapping when there are only two guest types */
 }
 
 
@@ -347,10 +343,11 @@
   font-size: 11px !important;
 }
 
-@media (max-width: 1000px) {
+@media (max-width: 768px) {
   .guest-dropdown {
-    width: calc(100% - 1.875rem);
-    left: 0.9375rem;
+    width: calc(120% - 1.875rem);
+    left: 50%;
+    right: 50%;
     transform: none;
   }
 }
@@ -381,7 +378,7 @@
 
 @media (max-width: 1200px) {
   .responsive-calendar {
-    font-size: 7px !important;
+    font-size: 12px !important;
   }
 }
 
@@ -394,7 +391,7 @@
 /* Large screens */
 @media (min-width: 2500px) {
   .responsive-calendar {
-    font-size: 12px !important;
+    font-size: 16px !important;
   }
 }
 
@@ -435,14 +432,16 @@
   position: relative;
   background: transparent;
   font-size: 12px;
-  border: 2px solid transparent;
+  border: 1px solid transparent;
   outline: none;
   width: 100%;
   text-align: center;
-  transform: translateY(-1.9rem);
+  transform: translateY(-3.5rem);
   padding-bottom: 1rem;
   color: transparent;
   cursor: pointer;
+  height: 3.5rem;
+
 }
 
 .DatePicker__input::selection {
@@ -459,9 +458,7 @@
 
 .Calendar__monthYear {
   font-size: 1.8em;
-
 }
-
 .Calendar__yearSelectorText {
   border: none;
   font-size: 1em;
@@ -492,8 +489,8 @@
   /* Verander de .bar-indeling naar een kolomlay-out */
   .bar {
     border: 2px solid #0a770f;
-    width: 140%;
-    transform: translateX(-15%);
+    width: 110%;
+    transform: translateX(-10%);
     margin: auto;
     box-shadow: 0 0 5px hsl(0 0% 68%);
     border-radius: 0.875rem;
@@ -527,20 +524,24 @@
     border-radius: 0.8rem;
     width: 100%;
     margin-bottom: 0.4rem;
-    height: 2.5rem;
+    height: 2.9rem;
   }
 
   .searchBar {
+    position: relative;
     background: none;
     border: none;
-    padding-bottom: 0.4rem;
     text-align: center;
-    margin-bottom: 0rem;
     width: 100%;
-    height: 1.7rem;
+    height: 2.5rem;
+    transform: translateY(-15%);
   }
   .searchBar::placeholder {
-    transform: translateX(38%);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%); 
+     
   }
 
   .button-section {
@@ -556,7 +557,7 @@
   }
 
   .searchTitleGuest {
-    transform: translateX(-30%);
+    transform: translateX(-5%);
   }
 
   .guestP {
@@ -564,37 +565,18 @@
     left: 10%;
   }
 
-  .searchTitle {
-    transform: translateX(32%);
-  }
-
-  .searchTitleCenterAcco {
-    transform: translateX(-120%);
-    overflow: hidden;
-  }
-
-  .searchTitleCenter {
-    transform: translateX(-32%);
-  }
-
   .input-calendar {
     border: none;
     text-align: left;
     width: 70%;
-    transform: translate(-20%, 0px);
-    margin-top: 2rem;
-    height: 3rem;
-  }
-  .input-calendar::placeholder{
-    transform: translateX(50%);
+    transform: translate(0%);
+    height: 3.5rem;
   }
 /* tijdelijke oplossing het is nog niet responsive */
   .DatePicker__input {
     border: none;
     transform: translateX(-40%) translateY(-90%);
     width: 200%;
-    
-
   }
 
   .searchbar-button {
@@ -611,8 +593,8 @@
 
   .DatePicker__calendarContainer {
     position: absolute;
-    top: calc(-700% + 0px);
-    left: 8%;
+    top: calc(-400% + 0px);
+    left: 48%;
     transform: translateX(-50%);
   }
 
