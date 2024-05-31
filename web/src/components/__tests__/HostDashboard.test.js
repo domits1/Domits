@@ -15,12 +15,12 @@ describe('HostDashboard', () => {
 
     it('renders welcome message with user name', () => {
         render(
-            <Router> {/* Wrap your component inside Router */}
+            <Router>
                 <HostDashboard />
             </Router>
         );
-        const welcomeMsg = screen.getByPlaceholderText('.welcome-msg');
-        expect(welcomeMsg).toContain('Welcome');
+        const welcomeMsg = screen.getByText('Welcome');
+        expect(welcomeMsg).toBeInTheDocument();
     });
 
 });
