@@ -1,16 +1,17 @@
 ## Your name
-Please enter your name here.
-
 `Name: @[GitHub username]`
 
 ## Related Issue
-Please link to the issue that this pull request is related to. If there is no related issue, please explain why this change is necessary.
-
 `Related Issue: #[issue number]`
 
-## Change type
+## Change size
 - [ ] Big change (300+)
 - [ ] Small change (less than 300)
+
+## Change type
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Optimalization
 
 ## Npm packages 
 - [ ] NPM Packages installed
@@ -19,41 +20,22 @@ Please link to the issue that this pull request is related to. If there is no re
 - [ ] Did you check for vulnerabilities using "npm audit"?
 
 ## Proposed Changes
-Please provide a detailed description of the changes you're proposing with this pull request. Include any specific changes to the code, new files, or changes to existing files.
-
 `Description: [Please add detailed description of the changes here]`
 
-## Console.logs
+## Checklist
 - [ ] Console.logs are deleted
-
-(Important) If console.logs are not deleted, you must delete them first before your pull requests can be further reviewed.
-
-## Comments
 - [ ] Comments are deleted (or not used).
-
-(Important) Commennts must be deleted before your pull request can be reviewed further.
-
-## Split frontend and back-end
 - [ ] Frontend and back-end are in seperate files
+- [ ] Jest tests are included, and your tests haven't failed.
 
-(Important) Frontend and back-end must be split before your pull request can be reviewed further.
+All boxes must be checked in order to move forward with your pull request.
 
-## Testing
-- [ ] Jest test is included, and your function is working when tested.
-
-(Important) Without a Jest test, your pull request cannot be accepted.
-
-## @Mentions
-Mention the person or team responsible for reviewing the proposed changes. This notifies them that their review is needed.
-
+## Reviewers
 `Reviewer(s): @[GitHub username]`
 
 ## Additional Information
-Include any additional information or context that might be necessary for understanding the pull request.
-
 `Additional Info: [Add any additional information here]`
 
 ## Keep or delete my branch
-
 - [ ] Delete my branch
 - [ ] Keep my branch
