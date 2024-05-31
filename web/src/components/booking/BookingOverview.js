@@ -2,24 +2,22 @@ import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { FlowProvider } from '../../FlowContext';
+import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 
-
+const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4L8dXvk00sxduWZd3');
 
 const BookingOverview = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
-
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userData, setUserData] = useState({
-        username: "",
-        email: "",
-        phoneNumber: "",
-        address: "",
-        dob: "",
-    });
+    const [userData, setUserData] = useState({ username: "", email: "" });
+    const [cognitoUserId, setCognitoUserId] = useState(null);
+    const [ownerStripeId, setOwnerStripeId] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null); // To handle and display errors
 
     const checkAuthentication = async () => {
         try {
@@ -27,20 +25,45 @@ const BookingOverview = () => {
             const user = await Auth.currentAuthenticatedUser();
             setIsLoggedIn(true);
             const userAttributes = user.attributes;
-            setUserData((prevData) => ({
-                ...prevData,
+            setUserData({
                 username: userAttributes['custom:username'],
                 email: userAttributes['email'],
-            }));
+            });
+            setCognitoUserId(userAttributes.sub);
         } catch (error) {
             setIsLoggedIn(false);
             console.error('Error logging in:', error);
         }
     };
+
     useEffect(() => {
         checkAuthentication();
     }, []);
 
+    useEffect(() => {
+        const fetchOwnerStripeId = async (ownerId) => {
+            try {
+                const response = await fetch('https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json; charset=UTF-8',
+                    },
+                    body: JSON.stringify({ sub: ownerId }),
+                });
+                const data = await response.json();
+                setOwnerStripeId(data.accountId);
+            } catch (error) {
+                console.error("Error fetching owner Stripe ID:", error);
+                setError("Error fetching owner Stripe ID. Please try again later.");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        if (bookingDetails && bookingDetails.accommodation && bookingDetails.accommodation.OwnerId) {
+            fetchOwnerStripeId(bookingDetails.accommodation.OwnerId);
+        }
+    }, [bookingDetails]);
 
     useEffect(() => {
         const details = location.state?.details;
@@ -62,12 +85,68 @@ const BookingOverview = () => {
         checkOut,
         adults,
         kids,
-        pets
+        pets,
     } = bookingDetails;
 
-    const handleConfirmAndPay = () => {
-        // Handle payment logic here
-        console.log("Payment confirmed");
+    // Helper function to calculate the number of days between two dates in YYYY_MM_DD format
+    const calculateDaysBetweenDates = (startDate, endDate) => {
+        const start = new Date(startDate.replace(/_/g, '-'));
+        const end = new Date(endDate.replace(/_/g, '-'));
+        const differenceInTime = end - start;
+        const differenceInDays = differenceInTime / (1000 * 3600 * 24);
+        return differenceInDays;
+    };
+
+    const numberOfDays = calculateDaysBetweenDates(checkIn, checkOut);
+    const accommodationPrice = accommodation.Rent * numberOfDays;
+
+    const initiateStripeCheckout = async () => {
+        if (!cognitoUserId || !ownerStripeId) {
+            console.error('Cognito user ID or Owner Stripe ID is not available.');
+            setError('Cognito user ID or Owner Stripe ID is not available.');
+            return;
+        }
+
+        const checkoutData = {
+            userId: cognitoUserId,
+            amount: accommodationPrice,
+            currency: 'eur',
+            productName: accommodation.Title,
+            successUrl: 'https://domits.com/success',
+            cancelUrl: 'https://domits.com/cancel',
+            connectedAccountId: ownerStripeId,
+        };
+
+        try {
+            const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
+                method: 'POST',
+                body: JSON.stringify(checkoutData),
+                headers: {
+                    'Content-Type': 'application/json; charset=UTF-8',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const result = await response.json();
+            const stripe = await stripePromise;
+            const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
+
+            if (error) {
+                console.error('Stripe Checkout error:', error.message);
+                setError('Stripe Checkout error: ' + error.message);
+            }
+        } catch (error) {
+            console.error('Error initiating Stripe Checkout:', error);
+            setError('Error initiating Stripe Checkout. Please try again later.');
+        }
+    };
+
+    const handleConfirmAndPay = (e) => {
+        e.preventDefault();
+        initiateStripeCheckout();
     };
 
     return (
@@ -75,6 +154,7 @@ const BookingOverview = () => {
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>
+                {error && <div className="error">{error}</div>} {/* Display errors */}
                 <div className="booking-details">
                     <div className="detail-item">
                         <span>Dates</span>
@@ -112,6 +192,9 @@ const BookingOverview = () => {
                                 </div>
 
                                 <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay}>Confirm & Pay</button>
+                                <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
+                                    {loading ? 'Loading...' : 'Confirm & Pay'}
+                                </button>
                             </>
                         ) : (
                             <>
@@ -125,6 +208,6 @@ const BookingOverview = () => {
             </div>
         </main>
     );
-}
+};
 
 export default BookingOverview;
