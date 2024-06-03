@@ -5,6 +5,7 @@ import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { CommonActions } from '@react-navigation/native';
 
 const Detailpage = ({ navigation }) => {
   const images = [
@@ -20,15 +21,27 @@ const Detailpage = ({ navigation }) => {
   const handleHomeScreenPress = () => {
     navigation.navigate('HomeScreen');
   };
+ 
   const handleMessagesPress = () => {
-    navigation.navigate('Messages');
+    const email = '33580@ma-web.nl'; 
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'Messages', params: { email } }],
+      })
+    );
   };
+    
+
+
   const handleSettingsPress = () => {
     navigation.navigate('Settings');
   };
   const handleonBoarding1Press = () => {
     navigation.navigate('onBoarding1');
   };
+
+  
 
   const handleScroll = (event) => {
     const page = Math.round(event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width);

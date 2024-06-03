@@ -3,7 +3,7 @@ import { generateClient } from 'aws-amplify/api';
 const client = generateClient();
 import * as mutations from "./mutations";
 import * as queries from "./queries";
-import { View, Text, ScrollView, Image, TextInput, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
 
@@ -15,13 +15,12 @@ const vh = (percentage) => {
   return (windowHeight * percentage) / 100;
 };
 
-export function Messages() {
+export function Messages({ route, navigation }) {
   const [chats, setChats] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [unreadMessages, setUnreadMessages] = useState({});
   const [selectedImage, setSelectedImage] = useState(null);
   const [imageUrl, setImageUrl] = useState("");
-  const [recipientEmail, setRecipientEmail] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [chatUsers, setChatUsers] = useState([]);
   const [channelUUID, setChannelUUID] = useState(null);
@@ -30,16 +29,15 @@ export function Messages() {
 
   const chatContainerRef = useRef(null);
 
-  const dummyUsers = [
-    { email: 'user1@example.com', profilePic: 'https://via.placeholder.com/50' },
-    { email: 'user2@example.com', profilePic: 'https://via.placeholder.com/50' },
-    { email: 'user3@example.com', profilePic: 'https://via.placeholder.com/50' },
-    // Add more users as needed
-  ];
+  const recipientEmail = route.params?.email;
 
   useEffect(() => {
-    setChatUsers(dummyUsers);
-  }, []);
+    if (recipientEmail) {
+      handleUserClick(recipientEmail);
+    }
+  }, [recipientEmail]);
+
+  
 
   useEffect(() => {
     fetchChatUsers();
@@ -68,7 +66,7 @@ export function Messages() {
   };
 
   const handleUserClick = async (email) => {
-    const selectedUser = chatUsers.find((user) => user.email === email);
+    const selectedUser = { email: email }; // Simpler initialization
     setSelectedUser(selectedUser);
     setIsChatVisible(true);
 
@@ -77,13 +75,11 @@ export function Messages() {
     }
 
     const userEmail = user.attributes.email;
-    const recipientEmail = selectedUser.email;
 
-    const channelName = generateChannelName(userEmail, recipientEmail);
+    const channelName = generateChannelName(userEmail, email);
     setChannelUUID(channelName);
 
-
-    fetchChats(recipientEmail, channelName);
+    fetchChats(email, channelName);
 
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -138,7 +134,7 @@ export function Messages() {
     if (!channelUUID) {
       return;
     }
-
+  
     try {
       const messagePayload = {
         text: newMessage.trim(),
@@ -148,19 +144,33 @@ export function Messages() {
         createdAt: new Date().toISOString(),
         channelID: channelUUID
       };
-
-
+  
       const response = await client.graphql({
         query: mutations.createChat,
         variables: {
           input: messagePayload,
         },
       });
-
+  
       setNewMessage('');
+  
+      setChats(prevChats => [...prevChats, { ...messagePayload, isSent: true }]);
+      
+      const updatedChatUsers = chatUsers.map(chatUser => {
+        if (chatUser.email === selectedUser.email) {
+          return {
+            ...chatUser,
+            lastMessageTimestamp: new Date().getTime(), 
+          };
+        }
+        return chatUser;
+      });
+      setChatUsers(updatedChatUsers);
     } catch (error) {
     }
   };
+  
+  
 
   const handleBackToUsers = () => {
     setSelectedUser(null);
@@ -171,9 +181,9 @@ export function Messages() {
     try {
       const response = await client.graphql({ query: queries.listChats });
       const allChats = response.data.listChats.items;
-
+  
       const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
-
+  
       const filteredUsersData = uniqueUsers
         .filter(email => email && email !== user.attributes.email)
         .map(email => {
@@ -189,11 +199,12 @@ export function Messages() {
           return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
         })
         .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-
+  
       setChatUsers(filteredUsersData);
     } catch (error) {
     }
   };
+  
 
   return (
     <View style={styles.chat}>
@@ -206,7 +217,6 @@ export function Messages() {
             <View style={styles.chat__figure}>
               <View style={styles.chat__aside}>
                 <View style={styles.chat__pfpSecond}>
-                  {/* <Image source={require('./path/to/img1')} style={styles.chatPfpImg}/> */}
                 </View>
                 <View style={styles.chat__list}>
                   <Text style={styles.chat__name}>{selectedUser ? selectedUser.email : ''}</Text>
@@ -218,6 +228,15 @@ export function Messages() {
                 </View>
               </View>
             </View>
+            <FlatList
+              data={chats}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View style={{ marginVertical: 5 }}>
+                  <Text style={{ color: item.isSent ? 'blue' : 'black' }}>{item.text}</Text>
+                </View>
+              )}
+            />
             <TextInput
               style={styles.chat__input}
               value={newMessage}
@@ -252,7 +271,6 @@ export function Messages() {
             renderItem={({ item }) => (
               <TouchableOpacity style={styles.chat__peopleContainer} onPress={() => handleUserClick(item.email)}>
                 <View style={styles.chat__pfp}>
-                  <Image source={{ uri: item.profilePic }} style={styles.chatPfpImg} />
                 </View>
                 <View style={styles.chat__body}>
                   <Text style={styles.chat__name}>{item.email}</Text>
@@ -271,7 +289,6 @@ export function Messages() {
 }
 
 export default Messages;
-
 
 const styles = StyleSheet.create({
   chat: {
