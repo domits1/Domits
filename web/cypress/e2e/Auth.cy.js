@@ -16,11 +16,7 @@ it('LoginGuest', () => {
 
   cy.wait(5000); //5 second interval
 
-  cy.get('button').contains('Sign out').should('exist').then(($button) => {
-    if ($button.length > 0) {
-      cy.wrap($button).click();
-      cy.log('login and out successful')
-    }
-  });
+  cy.get('.personalMenu').click();
+  cy.get('.dropdownLogoutButton').click();
 });
 

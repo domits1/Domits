@@ -10,7 +10,7 @@ import calendar from './calendar.png';
 import card from './card.png';
 import eye from './eye.png';
 import alert from './alert.png';
-import Pages from "../guestdashboard/Pages";
+import Pages from "./Pages";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
