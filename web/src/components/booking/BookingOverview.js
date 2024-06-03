@@ -6,7 +6,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 
-const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4L8dXvk00sxduWZd3');
+const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3');
 
 const BookingOverview = () => {
     const location = useLocation();
@@ -17,26 +17,58 @@ const BookingOverview = () => {
     const [cognitoUserId, setCognitoUserId] = useState(null);
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null); // To handle and display errors
+    const [error, setError] = useState(null);
 
-    const checkAuthentication = async () => {
-        try {
-            const session = await Auth.currentSession();
-            const user = await Auth.currentAuthenticatedUser();
-            setIsLoggedIn(true);
-            const userAttributes = user.attributes;
-            setUserData({
-                username: userAttributes['custom:username'],
-                email: userAttributes['email'],
-            });
-            setCognitoUserId(userAttributes.sub);
-        } catch (error) {
-            setIsLoggedIn(false);
-            console.error('Error logging in:', error);
-        }
-    };
+    const [accommodation, setAccommodation] = useState(null);
+    const searchParams = new URLSearchParams(location.search);
+    const id = searchParams.get('id');
+    const checkIn = searchParams.get('checkIn');
+    const checkOut = searchParams.get('checkOut');
+    const adults = parseInt(searchParams.get('adults'), 10);
+    const kids = parseInt(searchParams.get('kids'), 10);
+    const pets = searchParams.get('pets');
 
     useEffect(() => {
+        const fetchAccommodation = async () => {
+            try {
+                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ID: id })
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch accommodation data');
+                }
+                const responseData = await response.json();
+                const data = JSON.parse(responseData.body);
+                setAccommodation(data);
+                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets });
+            } catch (error) {
+                console.error('Error fetching accommodation data:', error);
+            }
+        };
+        fetchAccommodation();
+    }, [id, checkIn, checkOut, adults, kids, pets]);
+
+    useEffect(() => {
+        const checkAuthentication = async () => {
+            try {
+                const userInfo = await Auth.currentUserInfo();
+                setIsLoggedIn(true);
+                const userAttributes = userInfo.attributes;
+                setUserData({
+                    username: userAttributes['custom:username'],
+                    email: userAttributes['email'],
+                });
+                setCognitoUserId(userAttributes.sub);
+            } catch (error) {
+                setIsLoggedIn(false);
+                console.error('Error logging in:', error);
+            }
+        };
+
         checkAuthentication();
     }, []);
 
@@ -60,38 +92,19 @@ const BookingOverview = () => {
             }
         };
 
-        if (bookingDetails && bookingDetails.accommodation && bookingDetails.accommodation.OwnerId) {
-            fetchOwnerStripeId(bookingDetails.accommodation.OwnerId);
+        if (accommodation && accommodation.OwnerId) {
+            fetchOwnerStripeId(accommodation.OwnerId);
         }
-    }, [bookingDetails]);
+    }, [accommodation]);
 
-    useEffect(() => {
-        const details = location.state?.details;
-        if (details && !bookingDetails) { // Check if details exist and bookingDetails is not already set
-            setBookingDetails(details);
-        } else if (!details && bookingDetails) { // Check if details are empty and bookingDetails is set
-            setBookingDetails(null);
-        }
-    }, [location.state?.details, bookingDetails]); // Add bookingDetails to the dependency array
-    
-
-    if (!bookingDetails) {
+    if (!bookingDetails || !accommodation) {
         return <div>Loading...</div>;
     }
 
-    const {
-        accommodation,
-        checkIn,
-        checkOut,
-        adults,
-        kids,
-        pets,
-    } = bookingDetails;
-
-    // Helper function to calculate the number of days between two dates in YYYY_MM_DD format
+    // Helper function to calculate the number of days between two dates in YYYY-MM-DD format
     const calculateDaysBetweenDates = (startDate, endDate) => {
-        const start = new Date(startDate.replace(/_/g, '-'));
-        const end = new Date(endDate.replace(/_/g, '-'));
+        const start = new Date(startDate);
+        const end = new Date(endDate);
         const differenceInTime = end - start;
         const differenceInDays = differenceInTime / (1000 * 3600 * 24);
         return differenceInDays;
@@ -154,7 +167,7 @@ const BookingOverview = () => {
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>
-                {error && <div className="error">{error}</div>} {/* Display errors */}
+                {error && <div className="error">{error}</div>}
                 <div className="booking-details">
                     <div className="detail-item">
                         <span>Dates</span>
@@ -195,11 +208,9 @@ const BookingOverview = () => {
                                 </button>
                             </>
                         ) : (
-                            <>
-                                <FlowProvider>
-                                    <Register />
-                                </FlowProvider>
-                            </>
+                            <FlowProvider>
+                                <Register />
+                            </FlowProvider>
                         )}
                     </form>
                 </div>
