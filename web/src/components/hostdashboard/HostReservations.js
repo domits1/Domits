@@ -109,6 +109,7 @@ const HostReservations = () => {
                                     {selectedOption === "Booking requests" && (
                                         <input
                                             type="checkbox"
+                                            className="check-box"
                                             checked={selectedReservations.some(item => item.ID === reservation.ID)}
                                             onChange={(event) => handleCheckboxChange(event, reservation)}
                                         />
