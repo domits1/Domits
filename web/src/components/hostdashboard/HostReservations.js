@@ -5,6 +5,7 @@ import info from "../../images/icons/info.png";
 import {Auth} from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import spinner from "../../images/spinnner.gif";
+import {useNavigate} from "react-router-dom";
 
 const HostReservations = () => {
     const [userId, setUserId] = useState({});
@@ -23,6 +24,7 @@ const HostReservations = () => {
     const indexOfLastItem = currentPage * 5;
     const indexOfFirstItem = indexOfLastItem - 5;
     const currentItems = reservationDisplay.slice(indexOfFirstItem, indexOfLastItem);
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (currentItems.length === 0 && currentPage > 1) {
@@ -195,7 +197,8 @@ const HostReservations = () => {
                                                 />
                                             )}
                                             <p>{reservation.ID}</p>
-                                            <p>{reservation.Accommodation.Title}</p>
+                                            <p onClick={() => navigate(`/listingdetails?ID=${reservation.Accommodation.ID}`)}
+                                            className="reservation-link">{reservation.Accommodation.Title}</p>
                                             <p>{DateFormatterDD_MM_YYYY(reservation.StartDate)} - {DateFormatterDD_MM_YYYY(reservation.EndDate)}</p>
                                             {selectedOption === "All" && (
                                                 <div className="status-display">
