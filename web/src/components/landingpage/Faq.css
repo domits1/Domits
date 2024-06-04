@@ -9,6 +9,11 @@
   font-size: clamp(20px, 4vw, 32px);
 }
 
+.faqHeader4 {
+  font-size: clamp(10px, 4vw, 25px);
+  font-weight: bolder;
+}
+
 .faq-box {
   width: 50%;
   border: 2px solid var(--primary-color);
