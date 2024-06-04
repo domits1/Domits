@@ -125,7 +125,6 @@ const HostReservations = () => {
                         Status: status,
                         ID: selectedReservations[i].ID
                     }
-                    console.log(options);
                     const response = await fetch('https://5ycj23b6db.execute-api.eu-north-1.amazonaws.com/default/UpdateReservation', {
                         method: 'PUT',
                         body: JSON.stringify(options),
