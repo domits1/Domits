@@ -20,7 +20,7 @@
         display: flex;
         flex-direction: row;
         justify-content: space-around;
-        margin-left: 2em;
+        margin: 2em;
         gap: 2em;
         width: 40vw;
         align-self: center;
@@ -29,6 +29,8 @@
             padding: 0.25em;
             box-shadow: inset 0 0 20px 10px #dedede;
             font-size: 1.25em;
+            min-width: 6vw;
+            text-align: center;
         }
         .selected, .option:hover {
             cursor: pointer;
@@ -44,9 +46,9 @@
         padding: 5%;
         min-height: 50%;
         max-height: 70%;
-        margin-top: 10%;
         width: 50vw;
         gap: 1em;
+        margin: 2em;
         .reservation-item {
             display: flex;
             flex-direction: row;

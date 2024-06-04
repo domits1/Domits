@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import Pages from "./Pages.js";
-import {getUserAttributes} from "../utils/userAttributes";
 import '././HostReservations.css';
 import info from "../../images/icons/info.png";
 import {Auth} from "aws-amplify";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import spinner from "../../images/spinnner.gif";
 
 const HostReservations = () => {
     const [userId, setUserId] = useState({});
@@ -12,6 +12,8 @@ const HostReservations = () => {
     const [selectedOption, setSelectedOption] = useState(null);
     const [reservations, setReservations] = useState([]);
     const [selectedReservations, setSelectedReservations] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
 
     const handleCheckboxChange = (event, reservation) => {
         const checked = event.target.checked;
@@ -47,6 +49,7 @@ const HostReservations = () => {
             console.log("No user!")
             return;
         } else {
+            setIsLoading(true);
             try {
                 const response = await fetch('https://5ycj23b6db.execute-api.eu-north-1.amazonaws.com/default/FetchReservations', {
                     method: 'POST',
@@ -69,9 +72,41 @@ const HostReservations = () => {
                 }
             } catch (error) {
                 console.error("Unexpected error:", error);
+            } finally {
+                setIsLoading(false);
             }
         }
     };
+    const asyncUpdateReservation = async (status) => {
+        if (window.confirm(`Do you wish to set these booking request(s) as ${status.toLowerCase()}?`)) {
+            for (let i = 0; i < selectedReservations.length; i++) {
+                try {
+                    const options = {
+                        Status: status,
+                        ID: selectedReservations[i].ID
+                    }
+                    console.log(options);
+                    const response = await fetch('https://5ycj23b6db.execute-api.eu-north-1.amazonaws.com/default/UpdateReservation', {
+                        method: 'PUT',
+                        body: JSON.stringify(options),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        }
+                    });
+                    if (!response.ok) {
+                        window.alert("Update failed");
+                        throw new Error('Failed to fetch');
+                    }
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    window.alert("Update successful");
+                    setSelectedReservations([]);
+                    await fetchReservations();
+                }
+            }
+        }
+    }
     useEffect(() => {
         if (userId) {
             fetchReservations();
@@ -102,34 +137,45 @@ const HostReservations = () => {
                             </div>
                         ))}
                     </section>
+                    <button className="refresh-btn" onClick={() => fetchReservations()}>Refresh</button>
                     <section className="reservation-display">
-                        {reservations.length > 0 ? (
-                            reservations.map(reservation => (
-                                <div className="reservation-item" key={reservation.ID}>
-                                    {selectedOption === "Booking requests" && (
-                                        <input
-                                            type="checkbox"
-                                            className="check-box"
-                                            checked={selectedReservations.some(item => item.ID === reservation.ID)}
-                                            onChange={(event) => handleCheckboxChange(event, reservation)}
-                                        />
-                                    )}
-                                    <p>{reservation.ID}</p>
-                                    <p>{reservation.Accommodation.Title}</p>
-                                    <p>{DateFormatterDD_MM_YYYY(reservation.StartDate)} - {DateFormatterDD_MM_YYYY(reservation.EndDate)}</p>
-                                </div>
-                            ))
-                        ) : (
-                            <p>You do not have any booking requests at the moment...</p>
-                        )}
+                        {isLoading ?
+                            <div className="spinner">
+                                <img src={spinner} alt='spinner'/>
+                            </div>
+                            :
+                            reservations.length > 0 ? (
+                                reservations
+                                    .filter(reservation => selectedOption === "Booking requests" ? reservation.Status === "PENDING" :
+                                        selectedOption === "Accepted" ? reservation.Status === "ACCEPTED" :
+                                            selectedOption === "Reserved" ? reservation.Status === "RESERVED" :
+                                                selectedOption === "Cancelled" ? reservation.Status === "CANCELLED" : true)
+                                    .map(reservation => (
+                                        <div className="reservation-item" key={reservation.ID}>
+                                            {selectedOption === "Booking requests" && (
+                                                <input
+                                                    type="checkbox"
+                                                    className="check-box"
+                                                    checked={selectedReservations.some(item => item.ID === reservation.ID)}
+                                                    onChange={(event) => handleCheckboxChange(event, reservation)}
+                                                />
+                                            )}
+                                            <p>{reservation.ID}</p>
+                                            <p>{reservation.Accommodation.Title}</p>
+                                            <p>{DateFormatterDD_MM_YYYY(reservation.StartDate)} - {DateFormatterDD_MM_YYYY(reservation.EndDate)}</p>
+                                        </div>
+                                    ))
+                            ) : (
+                                <p>You do not have any booking requests at the moment...</p>
+                            )}
                     </section>
                     {selectedOption === "Booking requests" && selectedReservations.length > 0 && (
                         <div className="btn-box">
                             <button className="btn-undo" onClick={() => handleUndoSelect()}>Undo select</button>
                             <p className="selected-text">{selectedReservations.length} items selected</p>
                             <div className="btn-group">
-                                <button className="btn-deny">Deny</button>
-                                <button className="btn-approve">Approve</button>
+                                <button className="btn-deny" onClick={() => asyncUpdateReservation("CANCELLED")}>Deny</button>
+                                <button className="btn-approve" onClick={() => asyncUpdateReservation("ACCEPTED")}>Approve</button>
                             </div>
                         </div>
                     )}
