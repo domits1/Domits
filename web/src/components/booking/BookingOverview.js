@@ -1,17 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 
-
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE);
 
 
 const BookingOverview = () => {
-    const location = useLocation();
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -30,6 +28,10 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
 
+
+    const domain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
+  
+  
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -128,7 +130,7 @@ const BookingOverview = () => {
             amount: accommodationPrice + '00',
             currency: 'eur',
             productName: accommodation.Title,
-            successUrl: 'https://domits.com/guestdashboard/booking',
+            successUrl: domain + '/guestdashboard/booking',
             cancelUrl: 'https://domits.com/cancel',
             connectedAccountId: ownerStripeId,
         };
