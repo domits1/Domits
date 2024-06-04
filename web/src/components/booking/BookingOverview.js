@@ -9,6 +9,7 @@ import Register from "../base/Register";
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE);
 
+
 const BookingOverview = () => {
     const location = useLocation();
     const navigate = useNavigate();
