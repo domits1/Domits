@@ -6,7 +6,6 @@ import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 
-
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE);
 
 const BookingOverview = () => {
@@ -18,59 +17,26 @@ const BookingOverview = () => {
     const [cognitoUserId, setCognitoUserId] = useState(null);
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error, setError] = useState(null); // To handle and display errors
 
-    const [accommodation, setAccommodation] = useState(null);
-    const searchParams = new URLSearchParams(location.search);
-    const id = searchParams.get('id');
-    const checkIn = searchParams.get('checkIn');
-    const checkOut = searchParams.get('checkOut');
-    const adults = parseInt(searchParams.get('adults'), 10);
-    const kids = parseInt(searchParams.get('kids'), 10);
-    const pets = searchParams.get('pets');
-
-
-    useEffect(() => {
-        const fetchAccommodation = async () => {
-            try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ ID: id })
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch accommodation data');
-                }
-                const responseData = await response.json();
-                const data = JSON.parse(responseData.body);
-                setAccommodation(data);
-                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets });
-            } catch (error) {
-                console.error('Error fetching accommodation data:', error);
-            }
-        };
-        fetchAccommodation();
-    }, [id, checkIn, checkOut, adults, kids, pets]);
+    const checkAuthentication = async () => {
+        try {
+            const session = await Auth.currentSession();
+            const user = await Auth.currentAuthenticatedUser();
+            setIsLoggedIn(true);
+            const userAttributes = user.attributes;
+            setUserData({
+                username: userAttributes['custom:username'],
+                email: userAttributes['email'],
+            });
+            setCognitoUserId(userAttributes.sub);
+        } catch (error) {
+            setIsLoggedIn(false);
+            console.error('Error logging in:', error);
+        }
+    };
 
     useEffect(() => {
-        const checkAuthentication = async () => {
-            try {
-                const userInfo = await Auth.currentUserInfo();
-                setIsLoggedIn(true);
-                const userAttributes = userInfo.attributes;
-                setUserData({
-                    username: userAttributes['custom:username'],
-                    email: userAttributes['email'],
-                });
-                setCognitoUserId(userAttributes.sub);
-            } catch (error) {
-                setIsLoggedIn(false);
-                console.error('Error logging in:', error);
-            }
-        };
-
         checkAuthentication();
     }, []);
 
@@ -94,19 +60,38 @@ const BookingOverview = () => {
             }
         };
 
-        if (accommodation && accommodation.OwnerId) {
-            fetchOwnerStripeId(accommodation.OwnerId);
+        if (bookingDetails && bookingDetails.accommodation && bookingDetails.accommodation.OwnerId) {
+            fetchOwnerStripeId(bookingDetails.accommodation.OwnerId);
         }
-    }, [accommodation]);
+    }, [bookingDetails]);
 
-    if (!bookingDetails || !accommodation) {
+    useEffect(() => {
+        const details = location.state?.details;
+        if (details && !bookingDetails) { // Check if details exist and bookingDetails is not already set
+            setBookingDetails(details);
+        } else if (!details && bookingDetails) { // Check if details are empty and bookingDetails is set
+            setBookingDetails(null);
+        }
+    }, [location.state?.details, bookingDetails]); // Add bookingDetails to the dependency array
+    
+
+    if (!bookingDetails) {
         return <div>Loading...</div>;
     }
 
-    // Helper function to calculate the number of days between two dates in YYYY-MM-DD format
+    const {
+        accommodation,
+        checkIn,
+        checkOut,
+        adults,
+        kids,
+        pets,
+    } = bookingDetails;
+
+    // Helper function to calculate the number of days between two dates in YYYY_MM_DD format
     const calculateDaysBetweenDates = (startDate, endDate) => {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
+        const start = new Date(startDate.replace(/_/g, '-'));
+        const end = new Date(endDate.replace(/_/g, '-'));
         const differenceInTime = end - start;
         const differenceInDays = differenceInTime / (1000 * 3600 * 24);
         return differenceInDays;
@@ -124,10 +109,10 @@ const BookingOverview = () => {
 
         const checkoutData = {
             userId: cognitoUserId,
-            amount: accommodationPrice,
+            amount: accommodationPrice + "00",
             currency: 'eur',
             productName: accommodation.Title,
-            successUrl: 'https://domits.com/guestdashboard/booking',
+            successUrl: 'https://domits.com/success',
             cancelUrl: 'https://domits.com/cancel',
             connectedAccountId: ownerStripeId,
         };
@@ -169,7 +154,7 @@ const BookingOverview = () => {
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>
-                {error && <div className="error">{error}</div>}
+                {error && <div className="error">{error}</div>} {/* Display errors */}
                 <div className="booking-details">
                     <div className="detail-item">
                         <span>Dates</span>
@@ -210,9 +195,11 @@ const BookingOverview = () => {
                                 </button>
                             </>
                         ) : (
-                            <FlowProvider>
-                                <Register />
-                            </FlowProvider>
+                            <>
+                                <FlowProvider>
+                                    <Register />
+                                </FlowProvider>
+                            </>
                         )}
                     </form>
                 </div>
