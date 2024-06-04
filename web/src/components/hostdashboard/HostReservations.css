@@ -61,6 +61,10 @@
             .check-box {
                 width: 1.5vw;
             }
+            .status-display {
+                display: flex;
+                flex-direction: row;
+            }
         }
     }
     .btn-box {
