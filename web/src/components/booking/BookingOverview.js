@@ -6,7 +6,8 @@ import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 
-const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3');
+
+const stripePromise = loadStripe(process.env.REACT_APP_STRIPE);
 
 const BookingOverview = () => {
     const location = useLocation();
@@ -27,6 +28,8 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('adults'), 10);
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
+
+    console.log(process.env.REACT_APP_STRIPE)
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -125,7 +128,7 @@ const BookingOverview = () => {
             amount: accommodationPrice,
             currency: 'eur',
             productName: accommodation.Title,
-            successUrl: 'https://domits.com/success',
+            successUrl: 'https://domits.com/guestdashboard/booking',
             cancelUrl: 'https://domits.com/cancel',
             connectedAccountId: ownerStripeId,
         };
