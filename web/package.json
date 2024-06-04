@@ -16,7 +16,6 @@
     "aws-sdk": "^2.1571.0",
     "date-fns": "^3.6.0",
     "dayjs": "^1.11.10",
-    "dotenv": "^16.4.1",
     "jest": "^27.5.1",
     "react": "^18.2.0",
     "react-date-range": "^2.0.0-alpha.4",
@@ -39,18 +38,19 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "test": "react-scripts test",
+    "test": "react-scripts test --transformIgnorePatterns 'node_modules/(?!axios)/'",
     "eject": "react-scripts eject",
     "cypress:open": "cypress open"
   },
   "devDependencies": {
     "@babel/core": "^7.24.5",
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@babel/preset-env": "^7.24.5",
-    "@babel/preset-react": "^7.24.1",
+    "@babel/preset-env": "^7.24.6",
+    "@babel/preset-react": "^7.24.6",
     "@babel/preset-typescript": "^7.24.1",
     "@testing-library/jest-dom": "^6.4.5",
     "@testing-library/react": "^15.0.7",
+    "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.5.12",
     "babel-eslint": "^10.1.0",
     "babel-jest": "^29.7.0",
@@ -79,6 +79,7 @@
   },
   "dependencies": {
     "@hassanmojab/react-modern-calendar-datepicker": "^3.1.7",
+    "axios": "^1.7.2",
     "country-data": "^0.0.31",
     "date-fns": "^3.6.0",
     "immer": "^10.0.4",
