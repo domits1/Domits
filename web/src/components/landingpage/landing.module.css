@@ -1,5 +1,3 @@
-/* landing.module.css */
-
 .container {
     width: 60%;
     margin: auto;
@@ -13,12 +11,12 @@
 
 .calculatorBlock {
     border-radius: 15px;
-    margin-top: 20px; /* Reduced margin-top */
-    margin-bottom: 20px; /* Reduced margin-bottom */
+    margin-top: 20px;
+    margin-bottom: 20px;
     box-shadow: 0 0 5px #003366;
-    padding: 20px 15px; /* Reduced padding */
-    width: 80%; /* Adjusted width to be smaller */
-    margin: auto; /* Centered horizontally */
+    padding: 20px 15px;
+    width: auto;
+    margin: auto;
 }
 
 .pages {
@@ -58,9 +56,10 @@
     display: flex;
     flex-direction: row;
     justify-content: center;
-    gap: 1vw; /* Reduced gap */
-    margin-top: 2vw; /* Reduced margin */
-    margin-bottom: 1vw; /* Reduced margin */
+    flex-wrap: wrap;
+    gap: 1vw;
+    margin-top: 2vw;
+    margin-bottom: 1vw;
 }
 
 .card {
@@ -68,7 +67,7 @@
     width: 135px;
     max-height: 135px;
     max-width: 135px;
-    margin-bottom: 10px; /* Reduced margin */
+    margin-bottom: 10px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -110,23 +109,23 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    margin-top: 10px; /* Reduced margin */
+    margin-top: 10px;
 }
 
 .nextButtons {
     background-color: #003366;
     color: #fff;
     height: 45px;
-    width: 150px; /* Updated width */
-    border-radius: 5px; /* Updated border radius */
+    width: 150px;
+    border-radius: 5px;
     box-shadow: none;
     padding: 10px;
-    margin: 0 10px; /* Updated margin */
+    margin: 0 10px;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1rem; /* Updated font size */
+    font-size: 1rem;
 }
 
 .nextButtons:hover {
@@ -171,6 +170,8 @@
 .Cards {
     display: flex;
     justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.7rem;
 }
 
 .RegisterBlock {
@@ -197,4 +198,73 @@
 
 .infoCard p {
     max-width: 10vw;
+}
+
+.updateGroupButtonDiv {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+    padding-bottom: 4%;
+    padding-top: 4%;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 90%;
+        margin-top: 0.625rem;
+        margin-bottom: 0.625rem;
+    }
+
+    .MainText h1, .WhyHow_text h1 {
+        font-size: 1.6rem;
+    }
+
+    .infoCard img {
+        width: auto;
+        height: auto;
+        object-fit: contain;
+    }
+
+    .infoCard {
+        padding: none;
+    }
+
+    .infoCard, .card {
+        width: 100%;
+        padding: 0.938rem;
+        margin-bottom: 0.938rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .First_Icons {
+        display: flex;
+        justify-content: space-evenly;
+    }
+
+    .infoCard p {
+        font-size: 1rem !important;
+        max-width: none !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        width: 100%;
+    }
+
+    .MainText h1, .WhyHow_text h1 {
+        font-size: 1.4rem;
+    }
+
+    .infoCard img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .infoCard p, .Cards p {
+        font-size: 0.75rem;
+    }
 }

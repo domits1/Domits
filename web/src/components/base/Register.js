@@ -1,15 +1,13 @@
-import React, { useState, FormEvent, useEffect, useContext } from 'react';
+// Register.js
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import { useAuth } from './AuthContext';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../FlowContext'; // Import FlowContext
 import './Register.css';
-import { flow } from 'lodash';
 
 const Register = () => {
     const navigate = useNavigate();
-    const { setAuthCredentials } = useAuth();
-    const { flowState, setFlowState } = useContext(FlowContext);
+    const { flowState, setFlowState } = useContext(FlowContext)
 
     const [formData, setFormData] = useState({
         email: '',
@@ -22,7 +20,6 @@ const Register = () => {
     const [signUpClicked, setSignUpClicked] = useState(false);
     const [shouldShake, setShouldShake] = useState(false);
     const [passwordShake, setPasswordShake] = useState(false);
-
 
     const handleHostChange = (e) => {
         setFlowState(prevState => ({
@@ -93,6 +90,15 @@ const Register = () => {
         }
     };
     
+    const handleSignOut = async () => {
+        try {
+            await Auth.signOut();
+            setIsAuthenticated(false);
+            window.location.reload();
+        } catch (error) {
+            console.error('Error logging out:', error);
+        }
+    };
 
     useEffect(() => {
         const checkAuth = async () => {
@@ -106,6 +112,7 @@ const Register = () => {
 
         checkAuth();
     }, []);
+
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (!errorMessage.includes('Username')) {
@@ -118,7 +125,6 @@ const Register = () => {
         return () => clearTimeout(timeout);
     }, [errorMessage]);
 
-
     useEffect(() => {
         if (signUpClicked) {
             setSignUpClicked(false);
@@ -128,7 +134,9 @@ const Register = () => {
     return (
         <>
             {isAuthenticated ? (
-                <button onClick={() => Auth.signOut()}>Sign out</button>
+                <div className='signOutDiv'>
+                    <button className='signOutButton' onClick={handleSignOut}>Sign out</button>
+                </div>
             ) : (
                 <div className="registerContainer">
                     <div className="registerTitle">Create an account on Domits</div>
