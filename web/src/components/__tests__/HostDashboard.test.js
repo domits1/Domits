@@ -83,7 +83,7 @@ describe('HostDashboard', () => {
         render(<HostDashboard />);
 
         await waitFor(() => expect(screen.getByText('Refresh')).toBeInTheDocument());
-        
+
         fireEvent.click(screen.getByText('Refresh'));
 
         await waitFor(() => expect(global.fetch).toHaveBeenCalledTimes(2));
@@ -93,7 +93,7 @@ describe('HostDashboard', () => {
         render(<HostDashboard />);
 
         await waitFor(() => expect(screen.getByText('Go to listing')).toBeInTheDocument());
-        
+
         fireEvent.click(screen.getByText('Go to listing'));
 
         expect(navigate).toHaveBeenCalledWith('/hostdashboard/listings');
