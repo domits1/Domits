@@ -1,0 +1,9 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.sad-face {
+    max-width: 25vw;
+    height: auto;
+}
