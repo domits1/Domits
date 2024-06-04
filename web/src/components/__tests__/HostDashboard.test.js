@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
-import HostDashboard from './hostdashboard/HostDashboard'; // Adjust this path if necessary
-import StripeModal from '../hostdashboard/StripeModal';
+import '@testing-library/jest-dom';
+import HostDashboard from '../hostdashboard/HostDashboard';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 
@@ -10,13 +9,13 @@ jest.mock('aws-amplify');
 jest.mock('react-router-dom', () => ({
     useNavigate: jest.fn(),
 }));
-jest.mock('./hostdashboard/StripeModal', () => ({ isOpen, onClose }) => (
+jest.mock('../hostdashboard/StripeModal', () => ({ isOpen, onClose }) => (
     isOpen ? <div data-testid="stripe-modal" onClick={onClose}>Stripe Modal</div> : null
 ));
-jest.mock('./hostdashboard/Pages', () => () => <div>Pages Component</div>);
-jest.mock('./hostdashboard/PagesDropdown', () => () => <div>PagesDropdown Component</div>);
-jest.mock('../../utils/ImageSlider', () => ({ images, seconds }) => <div>Image Slider</div>);
-jest.mock('../../utils/DateFormatterDD_MM_YYYY', () => date => `Formatted Date: ${date}`);
+jest.mock('../hostdashboard/Pages', () => () => <div>Pages Component</div>);
+jest.mock('../hostdashboard/PagesDropdown', () => () => <div>PagesDropdown Component</div>);
+jest.mock('../utils/ImageSlider', () => ({ images, seconds }) => <div>Image Slider</div>);
+jest.mock('../utils/DateFormatterDD_MM_YYYY', () => date => `Formatted Date: ${date}`);
 
 describe('HostDashboard', () => {
     const navigate = jest.fn();
