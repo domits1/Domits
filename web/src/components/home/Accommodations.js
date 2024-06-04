@@ -9,23 +9,6 @@ const Accommodations = ({ searchResults }) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
-  const totalPages = Math.ceil(accolist.length / itemsPerPage);
-  
-  
-
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-
-  const displayedAccolist = accolist.slice(startIndex, endIndex);
-
-  const handlePageChange = (page) => {
-    if (page >= 1 && page <= totalPages) {
-        setCurrentPage(page);
-    }
-};
-
   const formatData = (items) => {
     return items.map((item) => ({
       image: item.Images.image1,
@@ -75,7 +58,6 @@ const Accommodations = ({ searchResults }) => {
     );
   }
 
-  
 
   const handleClick = (ID) => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
@@ -83,8 +65,8 @@ const Accommodations = ({ searchResults }) => {
 
   return (
     <div id="card-visibility">
-      {/* <CheckoutFrontend/> */}
-      {displayedAccolist.map((accommodation) => (
+    {/* <CheckoutFrontend/> */}
+      {accolist.map((accommodation) => (
         <div className="accocard" key={accommodation.id} onClick={() => handleClick(accommodation.id)}>
           <img src={accommodation.image} alt={accommodation.title} />
           <div className="accocard-content">
@@ -100,24 +82,6 @@ const Accommodations = ({ searchResults }) => {
           </div>
         </div>
       ))}
-      {/* Pagination */}
-      <div className="pagination">
-        <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-          &lt; Previous
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i}
-            onClick={() => handlePageChange(i + 1)}
-            className={currentPage === i + 1 ? "active" : ""}
-          >
-            {i + 1}
-          </button>
-        ))}
-        <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-          Next &gt;
-        </button>
-      </div>
     </div>
   );
 };
