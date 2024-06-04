@@ -12,15 +12,12 @@ import './PageSwitcher.css';
 function PageSwitcher({accommodations, amount, onDelete}) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = amount;
-    // Calculate the number of pages
     const pageCount = Math.ceil(accommodations.length / itemsPerPage);
 
-    // Get current items
     const indexOfLastItem = currentPage * itemsPerPage;
     const indexOfFirstItem = indexOfLastItem - itemsPerPage;
     const currentItems = accommodations.slice(indexOfFirstItem, indexOfLastItem);
 
-    // Change page
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
     const getFeatures = (features) => {
