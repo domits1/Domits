@@ -23,7 +23,7 @@ const Detailpage = ({ navigation }) => {
   };
  
   const handleMessagesPress = () => {
-    const email = '33580@ma-web.nl'; 
+    const email = 'user1@example.com';
     navigation.dispatch(
       CommonActions.reset({
         index: 0,

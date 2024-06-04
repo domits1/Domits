@@ -18,14 +18,11 @@ const vh = (percentage) => {
 export function Messages({ route, navigation }) {
   const [chats, setChats] = useState([]);
   const [newMessage, setNewMessage] = useState('');
-  const [unreadMessages, setUnreadMessages] = useState({});
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imageUrl, setImageUrl] = useState("");
   const [selectedUser, setSelectedUser] = useState(null);
   const [chatUsers, setChatUsers] = useState([]);
   const [channelUUID, setChannelUUID] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
-  const [user, setUser] = useState({ attributes: { email: 'jedar54396@acuxi.com' } }); 
+  const [user, setUser] = useState({ attributes: { email: '33580@ma-web.nl' } });
 
   const chatContainerRef = useRef(null);
 
@@ -37,20 +34,11 @@ export function Messages({ route, navigation }) {
     }
   }, [recipientEmail]);
 
-  
-
   useEffect(() => {
-    fetchChatUsers();
-  }, []);
-
-  const getUUIDForUser = (email) => {
-    let uuid = localStorage.getItem(`${email}_uuid`);
-    if (!uuid) {
-      uuid = generateUUID();
-      localStorage.setItem(`${email}_uuid`, uuid);
+    if (user) {
+      fetchChatUsers();
     }
-    return uuid;
-  };
+  }, [user]);
 
   const generateUUID = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -66,7 +54,7 @@ export function Messages({ route, navigation }) {
   };
 
   const handleUserClick = async (email) => {
-    const selectedUser = { email: email }; // Simpler initialization
+    const selectedUser = { email: email };
     setSelectedUser(selectedUser);
     setIsChatVisible(true);
 
@@ -75,7 +63,6 @@ export function Messages({ route, navigation }) {
     }
 
     const userEmail = user.attributes.email;
-
     const channelName = generateChannelName(userEmail, email);
     setChannelUUID(channelName);
 
@@ -134,7 +121,7 @@ export function Messages({ route, navigation }) {
     if (!channelUUID) {
       return;
     }
-  
+
     try {
       const messagePayload = {
         text: newMessage.trim(),
@@ -144,23 +131,23 @@ export function Messages({ route, navigation }) {
         createdAt: new Date().toISOString(),
         channelID: channelUUID
       };
-  
+
       const response = await client.graphql({
         query: mutations.createChat,
         variables: {
           input: messagePayload,
         },
       });
-  
+
       setNewMessage('');
-  
+
       setChats(prevChats => [...prevChats, { ...messagePayload, isSent: true }]);
-      
+
       const updatedChatUsers = chatUsers.map(chatUser => {
         if (chatUser.email === selectedUser.email) {
           return {
             ...chatUser,
-            lastMessageTimestamp: new Date().getTime(), 
+            lastMessageTimestamp: new Date().getTime(),
           };
         }
         return chatUser;
@@ -169,8 +156,6 @@ export function Messages({ route, navigation }) {
     } catch (error) {
     }
   };
-  
-  
 
   const handleBackToUsers = () => {
     setSelectedUser(null);
@@ -181,17 +166,18 @@ export function Messages({ route, navigation }) {
     try {
       const response = await client.graphql({ query: queries.listChats });
       const allChats = response.data.listChats.items;
-  
+
       const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
-  
+
       const filteredUsersData = uniqueUsers
         .filter(email => email && email !== user.attributes.email)
         .map(email => {
           const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
-          const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
+          const lastMessage = userChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
           return {
             email,
-            lastMessageTimestamp,
+            lastMessageTimestamp: lastMessage ? new Date(lastMessage.createdAt).getTime() : 0,
+            lastMessage: lastMessage ? lastMessage.text : '',
           };
         })
         .filter(userData => {
@@ -199,12 +185,13 @@ export function Messages({ route, navigation }) {
           return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
         })
         .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-  
+
       setChatUsers(filteredUsersData);
     } catch (error) {
+      console.error('Error fetching chat users:', error);
     }
   };
-  
+
 
   return (
     <View style={styles.chat}>
@@ -216,8 +203,7 @@ export function Messages({ route, navigation }) {
           <View style={styles.chat__message} ref={chatContainerRef}>
             <View style={styles.chat__figure}>
               <View style={styles.chat__aside}>
-                <View style={styles.chat__pfpSecond}>
-                </View>
+                <View style={styles.chat__pfpSecond}></View>
                 <View style={styles.chat__list}>
                   <Text style={styles.chat__name}>{selectedUser ? selectedUser.email : ''}</Text>
                   <Text style={styles.chat__listP}>3rd all-time booker</Text>
@@ -232,56 +218,44 @@ export function Messages({ route, navigation }) {
               data={chats}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
-                <View style={{ marginVertical: 5 }}>
-                  <Text style={{ color: item.isSent ? 'blue' : 'black' }}>{item.text}</Text>
+                <View style={[styles.chat__bubble, item.isSent ? styles.chat__bubbleSent : styles.chat__bubbleReceived]}>
+                  <Text style={styles.chat__bubbleText}>{item.text}</Text>
                 </View>
               )}
             />
-            <TextInput
-              style={styles.chat__input}
-              value={newMessage}
-              onChangeText={(text) => setNewMessage(text)}
-              placeholder="Type your message..."
-              onSubmitEditing={() => sendMessage()}
-            />
-            <TouchableOpacity onPress={() => sendMessage()}>
-              <Text>Send</Text>
-            </TouchableOpacity>
-          </View>
-          <View style={styles.chat__nav}>
-            <View style={styles.chat__controls}>
-              <TouchableOpacity></TouchableOpacity>
-              <TouchableOpacity></TouchableOpacity>
-            </View>
-            <View style={styles.chat__buttonWrapper}>
-              <TouchableOpacity style={styles.chat__buttonFile}>
-                <Text>add files</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.chat__buttonReview}>
-                <Text>Send review link</Text>
+            <View style={styles.chat__inputContainer}>
+              <TextInput
+                style={styles.chat__input}
+                value={newMessage}
+                onChangeText={(text) => setNewMessage(text)}
+                placeholder="Type your message..."
+                onSubmitEditing={() => sendMessage()}
+              />
+              <TouchableOpacity onPress={() => sendMessage()} style={styles.chat__sendButton}>
+                <Text style={styles.chat__sendButtonText}>Send</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       ) : (
         <View style={styles.chat__people}>
-          <FlatList
-            data={chatUsers}
-            keyExtractor={(item) => item.email}
-            renderItem={({ item }) => (
-              <TouchableOpacity style={styles.chat__peopleContainer} onPress={() => handleUserClick(item.email)}>
-                <View style={styles.chat__pfp}>
-                </View>
-                <View style={styles.chat__body}>
-                  <Text style={styles.chat__name}>{item.email}</Text>
-                  <Text style={styles.chat__text}>{item.lastMessage}</Text>
-                </View>
-                <View style={styles.chat__time}>
-                  <Text>{item.lastMessageTimestamp}</Text>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
+        <FlatList
+          data={chatUsers}
+          keyExtractor={(item) => item.email}
+          renderItem={({ item }) => (
+            <TouchableOpacity style={styles.chat__peopleContainer} onPress={() => handleUserClick(item.email)}>
+              <View style={styles.chat__pfp}></View>
+              <View style={styles.chat__body}>
+                <Text style={styles.chat__name}>{item.email}</Text>
+                <Text style={styles.chat__text}>{item.lastMessage}</Text>
+              </View>
+              <View style={styles.chat__time}>
+                <Text>{new Date(item.lastMessageTimestamp).toLocaleDateString()}</Text>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+
         </View>
       )}
     </View>
@@ -292,147 +266,139 @@ export default Messages;
 
 const styles = StyleSheet.create({
   chat: {
-      flex: 1,
-      backgroundColor: '#f5f5f5',
-  },
-  chat__headerWrapper: {
-      padding: 20,
-      backgroundColor: '#6200ea',
-      alignItems: 'center',
-  },
-  h2: {
-      fontSize: 24,
-      color: '#ffffff',
+    flex: 1,
+    backgroundColor: '#f5f5f5',
   },
   chat__container: {
-      flex: 1,
+    flex: 1,
+    padding: 20,
   },
   chat__message: {
-      backgroundColor: '#ffffff',
-      borderRadius: 8,
-      padding: 15,
-      shadowColor: '#000',
-      shadowOpacity: 0.1,
-      shadowRadius: 10,
-      elevation: 5,
-      height: 550,
+    backgroundColor: '#ffffff',
+    borderRadius: 8,
+    padding: 15,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 5,
+    flex: 1,
   },
   chat__figure: {
-      flexDirection: 'row',
-      marginBottom: 300,
+    flexDirection: 'row',
+    marginBottom: 10,
   },
   chat__aside: {
-      flexDirection: 'row',
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   chat__pfpSecond: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
-      backgroundColor: '#ddd',
-      marginRight: 10,
-      justifyContent: 'center',
-      alignItems: 'center',
-  },
-  chatPfpImg: {
-      width: '100%',
-      height: '100%',
-      borderRadius: 25,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ddd',
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   chat__list: {
-      justifyContent: 'flex-start',
-      flexDirection: 'row',
-      width: '100%',
-      flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    flexDirection: 'column',
   },
   chat__name: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: '#333',
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
   },
   chat__listP: {
-      fontSize: 14,
-      color: '#666',
+    fontSize: 14,
+    color: '#666',
+  },
+  chat__inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
   },
   chat__input: {
-      borderWidth: 1,
-      borderColor: '#ccc',
-      borderRadius: 8,
-      padding: 10,
-      marginTop: 10,
-      fontSize: 16,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 16,
+    flex: 1,
   },
   chat__sendButton: {
-      backgroundColor: '#6200ea',
-      borderRadius: 8,
-      padding: 10,
-      alignItems: 'center',
-      marginTop: 10,
+    backgroundColor: '#6200ea',
+    borderRadius: 8,
+    padding: 10,
+    marginLeft: 10,
+    alignItems: 'center',
   },
   chat__sendButtonText: {
-      color: '#ffffff',
-      fontSize: 16,
-  },
-  chat__nav: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-  },
-  chat__controls: {
-      flexDirection: 'row',
-  },
-  chat__buttonWrapper: {
-      flexDirection: 'row',
-  },
-  chat__buttonFile: {
-      backgroundColor: '#0D9813',
-      borderRadius: 8,
-      padding: 10,
-      marginRight: 10,
-  },
-  chat__buttonReview: {
-      backgroundColor: '#49146A',
-      borderRadius: 8,
-      padding: 10,
-  },
-  chat__buttonText: {
-      color: '#ffffff',
-      fontSize: 14,
+    color: '#ffffff',
+    fontSize: 16,
   },
   chat__people: {
-      flex: 1,
+    flex: 1,
+    padding: 20,
   },
-  chat__user: {
-      flexDirection: 'row',
-      padding: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: '#eee',
-      alignItems: 'center',
+  chat__peopleContainer: {
+    flexDirection: 'row',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    alignItems: 'center',
   },
   chat__pfp: {
-      width: 50,
-      height: 50,
-      borderRadius: 25,
-      backgroundColor: '#ddd',
-      marginRight: 10,
-      justifyContent: 'center',
-      alignItems: 'center',
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#ddd',
+    marginRight: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  chat__img: {
-      width: '100%',
-      height: '100%',
-      borderRadius: 25,
+  chat__body: {
+    flex: 1,
   },
-  chat__wrapper: {
-      flex: 1,
+  chat__name: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  chat__text: {
+    fontSize: 14,
+    color: '#666',
+  },
+  chat__time: {
+    fontSize: 12,
+    color: '#999',
   },
   chat__backButton: {
-      backgroundColor: '#6200ea',
-      borderRadius: 8,
-      padding: 10,
-      margin: 10,
+    backgroundColor: '#6200ea',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 10,
   },
   chat__backButtonText: {
-      color: '#ffffff',
-      fontSize: 16,
-      textAlign: 'center',
+    color: '#ffffff',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  chat__bubble: {
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 5,
+    maxWidth: '80%',
+  },
+  chat__bubbleSent: {
+    backgroundColor: '#e1ffc7',
+    alignSelf: 'flex-end',
+  },
+  chat__bubbleReceived: {
+    backgroundColor: '#fff',
+    alignSelf: 'flex-start',
+  },
+  chat__bubbleText: {
+    fontSize: 16,
   },
 });
