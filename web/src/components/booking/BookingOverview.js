@@ -29,7 +29,6 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
 
-    console.log(process.env.REACT_APP_STRIPE)
 
     useEffect(() => {
         const fetchAccommodation = async () => {
