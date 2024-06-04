@@ -135,14 +135,15 @@ const ListingDetails = () => {
 
     const handleBooking = () => {
         const details = {
-            accommodation,
+            id,
             checkIn,
             checkOut,
             adults,
             kids,
             pets
         };
-        navigate('/bookingoverview', { state: { details } });
+        const queryString = new URLSearchParams(details).toString();
+        navigate(`/bookingoverview?${queryString}`);
     };
 
     const generateUUID = () => {
@@ -170,7 +171,7 @@ const ListingDetails = () => {
                             </div>
                             <div>
                                 <div class='extraDetails'>
-                                    <p class='details'>{`€${accommodation.Rent} per night`}</p>
+                                    <p class='details'>{`€ ${accommodation.Rent} per night`}</p>
                                     <p class='details'>{`${accommodation.GuestAmount} guests`}</p>
                                     <p class='details'>{`${accommodation.Beds} beds`}</p>
                                     <p class='details'>{`${accommodation.Bedrooms} bedrooms`}</p>
@@ -276,20 +277,20 @@ const ListingDetails = () => {
                                     <div className="price-item">
                                         <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights
                                             x
-                                            €{accommodation.Rent} a night</p>
-                                        <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
+                                            € {accommodation.Rent} a night</p>
+                                        <p>€ {(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
                                     </div>
                                     <div className="price-item">
                                         <p>Cleaning fee</p>
-                                        <p>€100</p>
+                                        <p>€ 100</p>
                                     </div>
                                     <div className="price-item">
                                         <p>Domits service fee</p>
-                                        <p>€98</p>
+                                        <p>€ 98</p>
                                     </div>
                                     <div className="total">
                                         <p>Total</p>
-                                        <p>€{calculateTotal()}</p>
+                                        <p>€ {calculateTotal()}</p>
                                     </div>
                                 </div>
                             ) : (
