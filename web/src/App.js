@@ -55,6 +55,7 @@ import HostScreening from "./components/hostdashboard/HostScreening";
 import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
 import { initializeUserAttributes } from './components/utils/userAttributes';
+import PageNotFound from "./components/error/404NotFound";
 
 Modal.setAppElement('#root');
 
@@ -149,6 +150,9 @@ function App() {
                             <Route path="/policy" element={<Policy />} />
                             <Route path="/terms" element={<Terms />} />
                             <Route path="/disclaimers" element={<Disclaimers />} />
+
+                            {/* Error*/}
+                            <Route path="/*" element={<PageNotFound />} />
                         </Routes>
                         {renderFooter()}
                     </div>
