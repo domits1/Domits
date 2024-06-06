@@ -15,6 +15,8 @@ import Airconditioning from "../../images/icons/Airconditioning.png";
 import FirstAidKit from "../../images/icons/FirstAidKit.png";
 import Kitchen from "../../images/icons/Kitchen.png";
 import Onsiteparking from "../../images/icons/Onsiteparking.png";
+import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import deleteIcon from "../../images/icons/cross.png";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -22,6 +24,8 @@ const ListingDetails = () => {
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
+    const [host, setHost] = useState(null);
+    const [reviews, setReviews] = useState([]);
     const [checkIn, setCheckIn] = useState(null);
     const [checkOut, setCheckOut] = useState(null);
     const [minStart, setMinStart] = useState(null);
@@ -42,7 +46,7 @@ const ListingDetails = () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ ID: id })
+                    body: JSON.stringify({ID: id})
                 });
                 if (!response.ok) {
                     throw new Error('Failed to fetch accommodation data');
@@ -51,12 +55,60 @@ const ListingDetails = () => {
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate);
+
+                fetchHostInfo(data.OwnerId);
+                fetchReviewsByAccommodation(data.ID);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
         };
+
         fetchAccommodation();
     }, [id]);
+
+    const fetchReviewsByAccommodation = async (accoId) => {
+        try {
+            const requestData = {
+                accoId: accoId
+            };
+            const response = await fetch(`https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviewByAccoId`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch host information');
+            }
+            const responseData = await response.json();
+            setReviews(responseData);
+        } catch (error) {
+            console.error('Error fetching host info:', error);
+        }
+    }
+    const fetchHostInfo = async (ownerId) => {
+        try {
+            const requestData = {
+                OwnerId: ownerId
+            };
+            const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch host information');
+            }
+            const responseData = await response.json();
+            const hostData = JSON.parse(responseData.body)[0];
+            setHost(hostData);
+        } catch (error) {
+            console.error('Error fetching host info:', error);
+        }
+    };
 
     useEffect(() => {
         checkFormValidity();
@@ -93,14 +145,13 @@ const ListingDetails = () => {
 
     const setDates = (StartDate, EndDate) => {
         const today = new Date();
-        const parsedStartDate = today > new Date(StartDate) ? today : StartDate
+        const parsedStartDate = today > new Date(StartDate) ? today : new Date(StartDate)
         const parsedEndDate = new Date(EndDate);
+        const maxStart = new Date(parsedEndDate);
+        maxStart.setUTCDate(maxStart.getUTCDate() - 1);
 
-        const maxStart = new Date();
-        maxStart.setDate(parsedEndDate.getDate() - 1);
-
-        const minEnd = new Date();
-        minEnd.setDate(parsedStartDate.getDate() + 1);
+        const minEnd = new Date(parsedStartDate);
+        minEnd.setUTCDate(minEnd.getUTCDate() + 1);
         setMinStart(DateFormatterYYYY_MM_DD(parsedStartDate));
         setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
         setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
@@ -203,6 +254,42 @@ const ListingDetails = () => {
                                 <div>
                                     <button class='button'>Show more</button>
                                 </div>
+                                <br/>
+                                <section className="listing-reviews">
+                                    <h2>Reviews</h2>
+                                    {reviews.length > 0 ? (
+                                    reviews.map((review, index) => (
+                                    <div key={index} className="review-card">
+                                        <h2 className="review-header">{review.title}</h2>
+                                        <p className="review-content">{review.content}</p>
+                                        <p className="review-date">Written on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
+                                    </div>
+                                    ))
+                                    ) : (
+                                    <p className="review-alert">This accommodation does not have any reviews yet...</p>
+                                    )}
+                                    <div>
+                                        <button className='button'>Show more</button>
+                                    </div>
+                                </section>
+                                <br/>
+                                <section className="listing-host-info">
+                                    <h2>Host profile</h2>
+                                    {host && (
+                                        <div className="host-card">
+                                            <section className="card-top">
+                                                <h3>{host.Attributes[2].Value}</h3>
+                                                <p>Joined on: {dateFormatterDD_MM_YYYY(host.UserCreateDate)}</p>
+                                            </section>
+                                            <section className="card-bottom">
+                                                <p>E-Mail: {host.Attributes[4].Value}</p>
+                                                <div>
+                                                    <button className='button'>Contact host</button>
+                                                </div>
+                                            </section>
+                                        </div>
+                                    )}
+                                </section>
                             </div>
                         </div>
                     )}
