@@ -5,6 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/amplify/.config/project-config.json" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/amplify/backend/api/domits/cli-inputs.json" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/amplify/backend/api/domits/parameters.json" afterDir="false" />
