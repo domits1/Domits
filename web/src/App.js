@@ -21,7 +21,8 @@ import HostListings from "./components/hostdashboard/HostListings";
 import HostCalendar from "./components/hostdashboard/HostCalendar";
 import HostSettings from "./components/hostdashboard/HostSettings";
 import HostReviews from "./components/hostdashboard/HostReviews";
-import ListingDetails from './components/listingdetails/ListingDetails';
+import ListingDetails from './components/booking/ListingDetails';
+import BookingOverview from './components/booking/BookingOverview';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
@@ -39,7 +40,22 @@ import Chat from "./components/chat/Chat";
 import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
 import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
+import UserProfile from './components/guestdashboard/profilePictureTest.js';
 import Hostchat from './components/hostdashboard/Hostchat';
+import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
+import HostReservations from "./components/hostdashboard/HostReservations";
+import HostRevenues from "./components/hostdashboard/HostRevenues";
+import HostOccupancy from "./components/hostdashboard/HostOccupancy";
+import HostPropertyCare from "./components/hostdashboard/HostPropertyCare";
+import HostIoTHub from "./components/hostdashboard/HostIoTHub";
+import HostPricing from "./components/hostdashboard/HostPricing";
+import HostDistribution from "./components/hostdashboard/HostDistribution";
+import HostMonitoring from "./components/hostdashboard/HostMonitoring";
+import HostScreening from "./components/hostdashboard/HostScreening";
+import HostSetup from "./components/hostdashboard/HostSetup";
+import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
+import { initializeUserAttributes } from './components/utils/userAttributes';
+import PageNotFound from "./components/error/404NotFound";
 
 Modal.setAppElement('#root');
 
@@ -50,6 +66,10 @@ function App() {
         // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
     }, [searchResults]);
+
+    useEffect(() => {
+        initializeUserAttributes();
+    }, []);
 
     const currentPath = window.location.pathname;
 
@@ -65,6 +85,7 @@ function App() {
     return (
         <FlowContext.Provider value={{ flowState, setFlowState }}>
             <Router>
+                <ScrollToTop />
                 <AuthProvider>
                 <UserProvider>
                     <div className="App">
@@ -83,6 +104,7 @@ function App() {
                             <Route path="/register" element={<Register />} />
                             <Route path="/confirm-email" element={<ConfirmRegister />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
+                            <Route path="/bookingoverview" element={<BookingOverview />} />
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
@@ -95,6 +117,7 @@ function App() {
                             <Route path="/guestdashboard/booking" element={<BookingGuestDashboard />} />
                             <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
                             <Route path="/guestdashboard/chat" element={<Chat />} />
+                            {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}
 
                             {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
@@ -106,16 +129,30 @@ function App() {
                             <Route path="/hostdashboard/listings" element={<HostListings />} />
                             <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
                             <Route path="/hostdashboard/messages" element={<HostMessages />} />
-                            <Route path="/hostdashboard/payments" element={<HostPayments />} />
+                            <Route path="/hostdashboard/reporting" element={<HostPayments />} />
                             <Route path="/hostdashboard/settings" element={<HostSettings />} />
                             <Route path="/hostdashboard/reviews" element={<HostReviews />} />
                             <Route path="/hostdashboard/chat" element={<Hostchat />} />
+                            <Route path="/hostdashboard/reservations" element={<HostReservations />}/>
+                            <Route path="/hostdashboard/revenues" element={<HostRevenues />} />
+                            <Route path="/hostdashboard/occupancy" element={<HostOccupancy />} />
+                            <Route path="/hostdashboard/property-care" element={<HostPropertyCare />} />
+                            <Route path="/hostdashboard/iot-hub" element={<HostIoTHub />} />
+                            <Route path="/hostdashboard/pricing" element={<HostPricing />} />
+                            <Route path="/hostdashboard/distribution" element={<HostDistribution />} />
+                            <Route path="/hostdashboard/monitoring" element={<HostMonitoring />} />
+                            <Route path="/hostdashboard/screening" element={<HostScreening />} />
+                            <Route path="/hostdashboard/setup" element={<HostSetup />} />
+                            <Route path="/hostdashboard/promo-codes" element={<HostPromoCodes />} />
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />
                             <Route path="/policy" element={<Policy />} />
                             <Route path="/terms" element={<Terms />} />
                             <Route path="/disclaimers" element={<Disclaimers />} />
+
+                            {/* Error*/}
+                            <Route path="/*" element={<PageNotFound />} />
                         </Routes>
                         {renderFooter()}
                     </div>
@@ -126,4 +163,3 @@ function App() {
     );
 }
 export default App;
-

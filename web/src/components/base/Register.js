@@ -1,15 +1,13 @@
-import React, { useState, FormEvent, useEffect, useContext } from 'react';
+// Register.js
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import { useAuth } from './AuthContext';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../FlowContext'; // Import FlowContext
 import './Register.css';
-import { flow } from 'lodash';
 
 const Register = () => {
     const navigate = useNavigate();
-    const { setAuthCredentials } = useAuth();
-    const { flowState, setFlowState } = useContext(FlowContext);
+    const { flowState, setFlowState } = useContext(FlowContext)
 
     const [formData, setFormData] = useState({
         email: '',
@@ -22,7 +20,6 @@ const Register = () => {
     const [signUpClicked, setSignUpClicked] = useState(false);
     const [shouldShake, setShouldShake] = useState(false);
     const [passwordShake, setPasswordShake] = useState(false);
-
 
     const handleHostChange = (e) => {
         setFlowState(prevState => ({
@@ -42,7 +39,7 @@ const Register = () => {
     const onSubmit = async (e) => {
         e.preventDefault();
         const { username, email, password, repeatPassword } = formData;
-
+    
         if (username.length < 4) {
             setErrorMessage('Username must be at least 4 characters long.');
             setShouldShake(true);
@@ -57,40 +54,49 @@ const Register = () => {
             setErrorMessage('Email can\'t be empty!');
             return;
         }
-
+    
         if (!password || !repeatPassword) {
             setErrorMessage('Password can\'t be empty!');
             return;
         }
-
+    
         if (password !== repeatPassword) {
             setErrorMessage('Passwords do not match!');
             return;
         }
 
-        // Attempt to sign up the user
         try {
             const groupName = flowState.isHost ? "Host" : "Traveler";
-            const data = await Auth.signUp({
+            await Auth.signUp({
                 username: email,
-                email,
                 password,
                 attributes: {
                     'custom:group': groupName,
                     'custom:username': username
                 },
             });
+    
 
-            setAuthCredentials(email, password);
             navigate('/confirm-email', {
-                state: { email: email, username: data.user.getUsername() },
+                state: { email, password }
             });
         } catch (error) {
             if (error.code === 'UsernameExistsException') {
                 setErrorMessage('User already exists!');
             } else {
                 console.error("Error:", error);
+                setErrorMessage('An unexpected error occurred');
             }
+        }
+    };
+    
+    const handleSignOut = async () => {
+        try {
+            await Auth.signOut();
+            setIsAuthenticated(false);
+            window.location.reload();
+        } catch (error) {
+            console.error('Error logging out:', error);
         }
     };
 
@@ -106,6 +112,7 @@ const Register = () => {
 
         checkAuth();
     }, []);
+
     useEffect(() => {
         const timeout = setTimeout(() => {
             if (!errorMessage.includes('Username')) {
@@ -118,8 +125,6 @@ const Register = () => {
         return () => clearTimeout(timeout);
     }, [errorMessage]);
 
-
-    // Reset sign up click state after form submission
     useEffect(() => {
         if (signUpClicked) {
             setSignUpClicked(false);
@@ -129,7 +134,9 @@ const Register = () => {
     return (
         <>
             {isAuthenticated ? (
-                <button onClick={() => Auth.signOut()}>Sign out</button>
+                <div className='signOutDiv'>
+                    <button className='signOutButton' onClick={handleSignOut}>Sign out</button>
+                </div>
             ) : (
                 <div className="registerContainer">
                     <div className="registerTitle">Create an account on Domits</div>

@@ -1,12 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import Pages from "./Pages.js";
 import './HostHomepage.css';
+import './PagesDropdown.css'
 import StripeModal from './StripeModal.js';
 import { Auth } from 'aws-amplify';
 import {useNavigate} from "react-router-dom";
 import spinner from "../../images/spinnner.gif";
+import info from "../../images/icons/info.png";
 import ImageSlider from "../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
+import PagesDropdown from "./PagesDropdown";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 function HostDashboard() {
     const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
@@ -38,14 +42,6 @@ function HostDashboard() {
 
         checkStripeAccount();
     }, []);
-    const formatDate = (dateString) => {
-        const date = new Date(dateString);
-        const day = date.getDate().toString().padStart(2, '0');
-        const month = (date.getMonth() + 1).toString().padStart(2, '0');
-        const year = date.getFullYear();
-
-        return `${day}/${month}/${year}`;
-    }
     useEffect(() => {
         const asyncConfigureUser = async () => {
             try {
@@ -105,7 +101,7 @@ function HostDashboard() {
             </div>
             <div className="dashboard">
                 <Pages/>
-
+                <PagesDropdown/>
                 <div className="contentContainer">
                     <div className="dashboard-1">
                         <div className="dashboard-head">
@@ -115,13 +111,18 @@ function HostDashboard() {
                                 listing
                             </button>
                         </div>
+                        <div className="listing-info">
+                            <img className="info-icon" src={info}/>
+                            <p className="info-msg">Click on your listed accommodations to see their listing details</p>
+                        </div>
                         {isLoading ? (
                             <div>
-                                <img src={spinner}/>
+                                <img src={spinner} alt='spinner'/>
                             </div>
                         ) : accommodations.length > 0 ? (
                             accommodations.map((accommodation, index) => (
-                                <div key={index} className="dashboard-card">
+                                <div key={index} className="dashboard-card"
+                                     onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>
                                     <div className="accommodation-text">
                                         <p className="accommodation-title">{accommodation.Title}</p>
                                         <p className="accommodation-location"> {accommodation.City},
@@ -131,12 +132,12 @@ function HostDashboard() {
                                     </div>
                                     <ImageSlider images={accommodation.Images} seconds={5}/>
                                     <div className="accommodation-details">
-                                        <p>Listed on: {formatDate(accommodation.createdAt)}</p>
+                                        <p>Listed on: {DateFormatterDD_MM_YYYY(accommodation.createdAt)}</p>
                                         {accommodation.StartDate && accommodation.EndDate ?
                                             (<p>
                                                 Available from
-                                                {" " + formatDate(accommodation.StartDate) + " "}
-                                                to {" " + formatDate(accommodation.EndDate) + " "}
+                                                {" " + DateFormatterDD_MM_YYYY(accommodation.StartDate) + " "}
+                                                to {" " + DateFormatterDD_MM_YYYY(accommodation.EndDate) + " "}
                                             </p>) :
                                             (<p>Date range not set</p>)
                                         }

@@ -28,12 +28,12 @@ function CheckoutFrontend() {
     
         const checkoutData = {
             userId: cognitoUserId,
-            amount: 50,  // example value in cents
+            amount: 50,
             currency: 'eur',
             productName: 'EERSTE BETALING JONGENS',
             successUrl: 'https://domits.com/success',
             cancelUrl: 'https://domits.com/cancel',
-            connectedAccountId: 'acct_1P15xO2enydXJo9e'
+            connectedAccountId: 'acct_1P15xO2enydXJo9e',
         };
     
         try {
@@ -52,7 +52,7 @@ function CheckoutFrontend() {
             const result = await response.json();
             const stripe = await stripePromise;
             const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
-            
+    
             if (error) {
                 console.error('Stripe Checkout error:', error.message);
             }
@@ -61,7 +61,6 @@ function CheckoutFrontend() {
         }
     };
     
-
     return (
         <button onClick={initiateStripeCheckout} disabled={!cognitoUserId}>Test Payment</button>
     );
