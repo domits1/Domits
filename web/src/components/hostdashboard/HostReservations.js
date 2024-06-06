@@ -198,8 +198,8 @@ const HostReservations = () => {
                                                 />
                                             )}
                                             <p>{reservation.ID}</p>
-                                            <p onClick={() => navigate(`/listingdetails?ID=${reservation.Accommodation.ID}`)}
-                                            className="reservation-link">{reservation.Accommodation.Title}</p>
+                                            <p onClick={() => navigate(`/listingdetails?ID=${reservation.AccoID}`)}
+                                            className="reservation-link">{reservation.Title}</p>
                                             <p>{DateFormatterDD_MM_YYYY(reservation.StartDate)} - {DateFormatterDD_MM_YYYY(reservation.EndDate)}</p>
                                             {selectedOption === "All" && (
                                                 <div className="status-display">

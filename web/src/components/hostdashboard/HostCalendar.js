@@ -90,7 +90,7 @@ function HostCalendar() {
                             <select className="locationBox"
                                     onChange={handleSelectAccommodation}>
                                 <option value="" className="select-option">
-                                    <p className="select-text">Select your Accommodation</p>
+                                    Select your Accommodation
                                 </option>
                                 {accommodations.map(accommodation => (
                                     <option key={accommodation.ID}
