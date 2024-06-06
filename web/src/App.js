@@ -23,6 +23,7 @@ import HostSettings from "./components/hostdashboard/HostSettings";
 import HostReviews from "./components/hostdashboard/HostReviews";
 import ListingDetails from './components/booking/ListingDetails';
 import BookingOverview from './components/booking/BookingOverview';
+import BookingConfirmation from "./components/booking/PaymentConfirm";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
@@ -104,6 +105,7 @@ function App() {
                             <Route path="/confirm-email" element={<ConfirmRegister />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
                             <Route path="/bookingoverview" element={<BookingOverview />} />
+                            <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
