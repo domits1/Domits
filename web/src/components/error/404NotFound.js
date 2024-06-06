@@ -6,7 +6,7 @@ const PageNotFound = () => {
     const navigate = useNavigate();
 
     return (
-        <main className="container">
+        <main className="container-message">
             <h1>Something went wrong...</h1>
             <img src={sadface} alt="sad" className="sad-face"/>
             <h3>The page you were looking for does not exist or has been removed</h3>
