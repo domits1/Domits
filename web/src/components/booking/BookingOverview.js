@@ -124,7 +124,7 @@ const BookingOverview = () => {
 
         const checkoutData = {
             userId: cognitoUserId,
-            amount: accommodationPrice,
+            amount: accommodationPrice + '00',
             currency: 'eur',
             productName: accommodation.Title,
             successUrl: 'https://domits.com/guestdashboard/booking',
