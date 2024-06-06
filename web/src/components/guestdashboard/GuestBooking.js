@@ -9,7 +9,8 @@ const BookingGuestDashboard = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="guestdashboard">
+        <div className="container">
+            <h2>Booking</h2>
             <div className='dashboards'>
                 <Pages />
                 <div className="content">
