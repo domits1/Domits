@@ -20,10 +20,10 @@ const HostReservations = () => {
     const [selectedReservations, setSelectedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const pageCount = Math.ceil(reservationDisplay.length / 5);
+    const pageCount = reservationDisplay ? Math.ceil(reservationDisplay.length / 5) : 0;
     const indexOfLastItem = currentPage * 5;
     const indexOfFirstItem = indexOfLastItem - 5;
-    const currentItems = reservationDisplay.slice(indexOfFirstItem, indexOfLastItem);
+    const currentItems = reservationDisplay ? reservationDisplay.slice(indexOfFirstItem, indexOfLastItem) : [];
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -31,31 +31,7 @@ const HostReservations = () => {
             setCurrentPage(currentPage - 1);
         }
     }, [currentItems.length, currentPage]);
-    useEffect(() => {
-        if (reservations) {
-            setPendingReservations(reservations.filter(reservation => reservation.Status === "PENDING"));
-            setAcceptedReservations(reservations.filter(reservation => reservation.Status === "ACCEPTED"));
-            setReservedReservations(reservations.filter(reservation => reservation.Status === "RESERVED"));
-            setCancelledReservations(reservations.filter(reservation => reservation.Status === "CANCELLED"));
-        }
-    }, [reservations]);
-    useEffect(() => {
-        if (selectedOption === "Booking requests") {
-            setReservationDisplay(pendingReservations);
-        }
-        if (selectedOption === "Accepted") {
-            setReservationDisplay(acceptedReservations);
-        }
-        if (selectedOption === "Reserved") {
-            setReservationDisplay(reservedReservations);
-        }
-        if (selectedOption === "Cancelled") {
-            setReservationDisplay(cancelledReservations);
-        }
-        if (selectedOption === "All") {
-            setReservationDisplay(reservations);
-        }
-    }, [selectedOption]);
+
     const paginate = (pageNumber) => setCurrentPage(pageNumber);
     const handleCheckboxChange = (event, reservation) => {
         const checked = event.target.checked;
@@ -65,6 +41,38 @@ const HostReservations = () => {
             setSelectedReservations(selectedReservations.filter(item => item.ID !== reservation.ID));
         }
     };
+
+    const handleData = (data) => {
+        if (data) {
+            setReservations(data.allReservations);
+            setAcceptedReservations(data.acceptedReservations);
+            setReservedReservations(data.reservedReservations);
+            setCancelledReservations(data.cancelledReservations);
+            setPendingReservations(data.pendingReservations);
+        }
+    };
+    useEffect(() => {
+        switch (selectedOption) {
+            case "Booking requests":
+                setReservationDisplay(pendingReservations);
+                break;
+            case "Accepted":
+                setReservationDisplay(acceptedReservations);
+                break;
+            case "Reserved":
+                setReservationDisplay(reservedReservations);
+                break;
+            case "Cancelled":
+                setReservationDisplay(cancelledReservations);
+                break;
+            case "All":
+                setReservationDisplay(reservations);
+                break;
+            default:
+                setReservationDisplay([]);
+                break;
+        }
+    }, [selectedOption, reservations, pendingReservations, acceptedReservations, reservedReservations, cancelledReservations]);
 
     const handleOptionClick = (option) => {
         setSelectedOption(option);
@@ -103,15 +111,8 @@ const HostReservations = () => {
                     throw new Error('Failed to fetch');
                 }
                 const data = await response.json();
-                if (data.body && typeof data.body === 'string') {
-                    const reservationsArray = JSON.parse(data.body);
-                    if (Array.isArray(reservationsArray)) {
-                        setReservations(reservationsArray);
-                    } else {
-                        console.error("Parsed data is not an array:", reservationsArray);
-                        setReservations([]);
-                    }
-                }
+                const parsedData = JSON.parse(data.body);
+                await handleData(parsedData);
             } catch (error) {
                 console.error("Unexpected error:", error);
             } finally {
@@ -138,12 +139,12 @@ const HostReservations = () => {
                         window.alert("Update failed");
                         throw new Error('Failed to fetch');
                     }
+                    setSelectedReservations([]);
+                    await fetchReservations();
                 } catch (error) {
                     console.error(error);
                 } finally {
                     window.alert("Update successful");
-                    setSelectedReservations([]);
-                    await fetchReservations();
                 }
             }
         }
@@ -179,12 +180,12 @@ const HostReservations = () => {
                     </section>
                     <button className="refresh-btn" onClick={() => fetchReservations()}>Refresh</button>
                     <section className="reservation-display">
-                        {isLoading ?
+                        {isLoading ? (
                             <div className="spinner">
                                 <img src={spinner} alt='spinner'/>
                             </div>
-                            :
-                            reservationDisplay.length > 0 ? (
+                            ) :
+                            reservationDisplay && reservationDisplay.length > 0 ? (
                                 currentItems
                                     .map(reservation => (
                                         <div className="reservation-item" key={reservation.ID}>
