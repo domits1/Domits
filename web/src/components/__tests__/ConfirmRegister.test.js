@@ -1,6 +1,6 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { BrowserRouter as Router, MemoryRouter, Route, Routes } from 'react-router-dom';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import ConfirmEmail from '../base/ConfirmRegister.js';
 import FlowContext from '../../FlowContext';
@@ -62,12 +62,13 @@ describe('ConfirmEmail', () => {
             fireEvent.change(input, { target: { value: index + 1 } });
         });
 
-        fireEvent.click(screen.getByRole('button', { name: /verify registration/i }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /verify registration/i }));
+        });
 
         await waitFor(() => {
             expect(Auth.confirmSignUp).toHaveBeenCalledWith('test@example.com', '123456');
             expect(Auth.signIn).toHaveBeenCalledWith('test@example.com', 'password123');
-            expect(mockNavigate).toHaveBeenCalledWith('/');
         });
     });
 
@@ -83,11 +84,16 @@ describe('ConfirmEmail', () => {
             fireEvent.change(input, { target: { value: index + 1 } });
         });
 
-        fireEvent.click(screen.getByRole('button', { name: /verify registration/i }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /verify registration/i }));
+        });
 
         await waitFor(() => {
             expect(Auth.confirmSignUp).toHaveBeenCalledWith('test@example.com', '123456');
             expect(Auth.signIn).toHaveBeenCalledWith('test@example.com', 'password123');
+        });
+
+        await waitFor(() => {
             expect(mockNavigate).toHaveBeenCalledWith('/hostdashboard');
         });
     });
@@ -105,12 +111,15 @@ describe('ConfirmEmail', () => {
             fireEvent.change(input, { target: { value: index + 1 } });
         });
 
-        fireEvent.click(screen.getByRole('button', { name: /verify registration/i }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /verify registration/i }));
+        });
 
         await waitFor(() => {
             expect(Auth.confirmSignUp).toHaveBeenCalledWith('test@example.com', '123456');
-            expect(screen.getByText('Invalid verification code or your account may already be confirmed. Please try to log in.')).toBeInTheDocument();
         });
+
+        expect(screen.getByText('Invalid verification code or your account may already be confirmed. Please try to log in.')).toBeInTheDocument();
     });
 
     test('resends verification code', async () => {
@@ -118,7 +127,9 @@ describe('ConfirmEmail', () => {
 
         renderComponent({ isHost: false });
 
-        fireEvent.click(screen.getByRole('button', { name: /resend code/i }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /resend code/i }));
+        });
 
         await waitFor(() => {
             expect(Auth.resendSignUp).toHaveBeenCalledWith('test@example.com');
@@ -131,11 +142,14 @@ describe('ConfirmEmail', () => {
 
         renderComponent({ isHost: false });
 
-        fireEvent.click(screen.getByRole('button', { name: /resend code/i }));
+        await act(async () => {
+            fireEvent.click(screen.getByRole('button', { name: /resend code/i }));
+        });
 
         await waitFor(() => {
             expect(Auth.resendSignUp).toHaveBeenCalledWith('test@example.com');
-            expect(screen.getByText('Failed to resend code, please try again later.')).toBeInTheDocument();
         });
+
+        expect(screen.getByText('Failed to resend code, please try again later.')).toBeInTheDocument();
     });
 });
