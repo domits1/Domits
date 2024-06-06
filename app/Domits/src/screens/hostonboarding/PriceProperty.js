@@ -4,113 +4,113 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  Switch,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
-import {Picker} from '@react-native-picker/picker';
-import {SafeAreaView} from "react-native-safe-area-context";
+import {SafeAreaView} from 'react-native-safe-area-context';
 
-function PriceSettingScreen() {
-  const [price, setPrice] = useState('100');
-  const [monthlyDiscount, setMonthlyDiscount] = useState(false);
-  const [weeklyDiscount, setWeeklyDiscount] = useState(false);
-  const [firstBookerDiscount, setFirstBookerDiscount] = useState(false);
-  const [discountValue, setDiscountValue] = useState({
-    monthly: '',
-    weekly: '',
-    firstBooker: '',
-  });
+function PriceSettingScreen({route, navigation}) {
+  const [price, setPrice] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [cancelPolicy, setCancelPolicy] = useState('');
+  const [guestType, setGuestType] = useState('');
 
-  const renderPickerItems = () => {
-    let items = [];
-    for (let i = 50; i <= 1000; i += 50) {
-      items.push(<Picker.Item key={i} label={`$${i}`} value={i.toString()} />);
-    }
-    return items;
+  const goToPreviousStep = () => navigation.goBack();
+
+  const goToNextStep = () => {
+    const updatedListingData = {
+      ...route.params.listingData,
+      Rent: price,
+      StartDate: startDate,
+      EndDate: endDate,
+      CancelPolicy: cancelPolicy,
+      GuestType: guestType,
+    };
+    navigation.navigate('ReviewAndSubmitScreen', {
+      listingData: updatedListingData,
+    });
   };
 
   return (
-      <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.container}>
-      <Text style={styles.title}>How much do travelers pay a night</Text>
-      <TextInput
-        style={styles.input}
-        onChangeText={setPrice}
-        value={price}
-        keyboardType="numeric"
-      />
-      <Picker
-        selectedValue={price}
-        onValueChange={itemValue => setPrice(itemValue)}
-        style={styles.picker}>
-        {renderPickerItems()}
-      </Picker>
+    <SafeAreaView style={styles.container}>
+      <ScrollView style={styles.scrollContainer}>
+        <Text style={styles.title}>Set Price and Availability</Text>
 
-      <Text style={styles.subtitle}>Do you offer discounts?</Text>
-      <View style={styles.switchContainer}>
-        <Text>Monthly discount</Text>
-        <Switch
-          onValueChange={() =>
-            setMonthlyDiscount(previousState => !previousState)
-          }
-          value={monthlyDiscount}
-        />
-        {monthlyDiscount && (
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Price per Night</Text>
           <TextInput
-            style={styles.discountInput}
-            onChangeText={value =>
-              setDiscountValue({...discountValue, monthly: value})
-            }
-            value={discountValue.monthly}
+            style={styles.input}
+            onChangeText={setPrice}
+            value={price}
             keyboardType="numeric"
-            placeholder="%"
+            placeholder="$"
           />
-        )}
-      </View>
+        </View>
 
-      <View style={styles.switchContainer}>
-        <Text>Weekly discount</Text>
-        <Switch
-          onValueChange={() =>
-            setWeeklyDiscount(previousState => !previousState)
-          }
-          value={weeklyDiscount}
-        />
-        {weeklyDiscount && (
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Start Date</Text>
+          <Text style={styles.description}>
+            Enter the start date for availability (YYYY-MM-DD)
+          </Text>
           <TextInput
-            style={styles.discountInput}
-            onChangeText={value =>
-              setDiscountValue({...discountValue, weekly: value})
-            }
-            value={discountValue.weekly}
-            keyboardType="numeric"
-            placeholder="%"
+            style={styles.input}
+            onChangeText={setStartDate}
+            value={startDate}
+            placeholder="YYYY-MM-DD"
           />
-        )}
-      </View>
+        </View>
 
-      <View style={styles.switchContainer}>
-        <Text>First booker discount</Text>
-        <Switch
-          onValueChange={() =>
-            setFirstBookerDiscount(previousState => !previousState)
-          }
-          value={firstBookerDiscount}
-        />
-        {firstBookerDiscount && (
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>End Date</Text>
+          <Text style={styles.description}>
+            Enter the end date for availability (YYYY-MM-DD)
+          </Text>
           <TextInput
-            style={styles.discountInput}
-            onChangeText={value =>
-              setDiscountValue({...discountValue, firstBooker: value})
-            }
-            value={discountValue.firstBooker}
-            keyboardType="numeric"
-            placeholder="%"
+            style={styles.input}
+            onChangeText={setEndDate}
+            value={endDate}
+            placeholder="YYYY-MM-DD"
           />
-        )}
-      </View>
-    </ScrollView>
-      </SafeAreaView>
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Cancellation Policy</Text>
+          <Text style={styles.description}>
+            Specify the cancellation policy for the listing
+          </Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setCancelPolicy}
+            value={cancelPolicy}
+            placeholder="e.g., Free cancellation within 24 hours"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Guest Type</Text>
+          <Text style={styles.description}>
+            Specify the type of guests allowed (e.g., families, business
+            travelers)
+          </Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setGuestType}
+            value={guestType}
+            placeholder="e.g., Families, Business Travelers"
+          />
+        </View>
+
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={goToPreviousStep}>
+            <Text style={styles.buttonText}>Previous step</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={goToNextStep}>
+            <Text style={styles.buttonText}>Next step</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -119,39 +119,50 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFF',
   },
+  scrollContainer: {
+    padding: 16,
+  },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
-    padding: 16,
+    marginBottom: 24,
+  },
+  inputContainer: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 14,
+    color: '#777',
+    marginBottom: 8,
   },
   input: {
     height: 50,
-    margin: 12,
     borderWidth: 1,
+    borderColor: '#000',
+    borderRadius: 4,
     padding: 10,
-    fontSize: 18,
-    borderRadius: 5,
+    fontSize: 16,
   },
-  picker: {
-    height: 150,
-    width: '100%',
-  },
-  subtitle: {
-    fontSize: 18,
-    fontWeight: '500',
-    padding: 16,
-  },
-  switchContainer: {
+  buttonContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingVertical: 16,
   },
-  discountInput: {
-    width: 60,
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 5,
+  button: {
+    backgroundColor: '#000',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 4,
+  },
+  buttonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

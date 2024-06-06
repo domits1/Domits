@@ -3,6 +3,7 @@ import { generateClient } from 'aws-amplify/api';
 const client = generateClient();
 import * as mutations from "./mutations";
 import * as queries from "./queries";
+import * as subscriptions from './subscriptions';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
@@ -23,9 +24,9 @@ export function Messages({ route, navigation }) {
   const [channelUUID, setChannelUUID] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
   const [user, setUser] = useState({ attributes: { email: '33580@ma-web.nl' } });
+  const [unreadMessages, setUnreadMessages] = useState({});
 
   const chatContainerRef = useRef(null);
-
   const recipientEmail = route.params?.email;
 
   useEffect(() => {
@@ -37,8 +38,15 @@ export function Messages({ route, navigation }) {
   useEffect(() => {
     if (user) {
       fetchChatUsers();
+      fetchUnreadMessages();
     }
   }, [user]);
+
+  useEffect(() => {
+    if (selectedUser && channelUUID) {
+      fetchChats(selectedUser.email, channelUUID);
+    }
+  }, [selectedUser, channelUUID]);
 
   const generateUUID = () => {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -70,6 +78,37 @@ export function Messages({ route, navigation }) {
 
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    try {
+      const unreadMessagesIds = chats
+        .filter(chat => chat.recipientEmail === user.attributes.email && !chat.isRead)
+        .map(chat => chat.id);
+
+      await Promise.all(unreadMessagesIds.map(async id => {
+        try {
+          await client.graphql({
+            query: mutations.updateChat,
+            variables: {
+              input: {
+                id: id,
+                isRead: true
+              }
+            }
+          });
+        } catch (error) {
+          console.error("Error updating read status:", error);
+        }
+      }));
+
+      setUnreadMessages(prevState => ({
+        ...prevState,
+        [email]: 0
+      }));
+    } catch (error) {
+      console.error("Error updating read status:", error);
+    } finally {
+      fetchChats(email, channelName);
     }
   };
 
@@ -108,6 +147,7 @@ export function Messages({ route, navigation }) {
       const allChats = [...allSentChats, ...allReceivedChats];
       setChats(allChats);
     } catch (error) {
+      console.error("Error fetching chats:", error);
     }
   };
 
@@ -154,6 +194,7 @@ export function Messages({ route, navigation }) {
       });
       setChatUsers(updatedChatUsers);
     } catch (error) {
+      console.error("Error sending message:", error);
     }
   };
 
@@ -192,6 +233,53 @@ export function Messages({ route, navigation }) {
     }
   };
 
+  const fetchUnreadMessages = async () => {
+    try {
+      const unreadMessagesResponse = await client.graphql({
+        query: queries.listChats,
+        variables: {
+          filter: {
+            recipientEmail: { eq: user.attributes.email },
+            isRead: { eq: false }
+          }
+        }
+      });
+
+      const unreadMessagesByEmail = unreadMessagesResponse.data.listChats.items.reduce((acc, chat) => {
+        const { email } = chat;
+        acc[email] = (acc[email] || 0) + 1;
+        return acc;
+      }, {});
+
+      setUnreadMessages(unreadMessagesByEmail);
+    } catch (error) {
+      console.error("Error fetching unread messages:", error);
+    }
+  };
+
+  // useEffect(() => {
+  //   if (channelUUID) {
+  //     const subscription = client.graphql({
+  //       query: subscriptions.onCreateChat,
+  //       variables: {
+  //         channelID: channelUUID
+  //       }
+  //     }).subscribe({
+  //       next: (response) => {
+  //         const newChat = response.value.data.onCreateChat;
+  //         if (newChat.email !== user.attributes.email) {
+  //           setChats(prevChats => [...prevChats, { ...newChat, isSent: false }]);
+  //         }
+  //       },
+  //       error: (error) => {
+  //         console.error("Error with subscription:", error);
+  //       }
+  //     });
+
+  //     // Cleanup subscription on component unmount
+  //     return () => subscription.unsubscribe();
+  //   }
+  // }, [channelUUID]);
 
   return (
     <View style={styles.chat}>
@@ -239,23 +327,27 @@ export function Messages({ route, navigation }) {
         </View>
       ) : (
         <View style={styles.chat__people}>
-        <FlatList
-          data={chatUsers}
-          keyExtractor={(item) => item.email}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.chat__peopleContainer} onPress={() => handleUserClick(item.email)}>
-              <View style={styles.chat__pfp}></View>
-              <View style={styles.chat__body}>
-                <Text style={styles.chat__name}>{item.email}</Text>
-                <Text style={styles.chat__text}>{item.lastMessage}</Text>
-              </View>
-              <View style={styles.chat__time}>
-                <Text>{new Date(item.lastMessageTimestamp).toLocaleDateString()}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-
+          <FlatList
+            data={chatUsers}
+            keyExtractor={(item) => item.email}
+            renderItem={({ item }) => (
+              <TouchableOpacity style={styles.chat__peopleContainer} onPress={() => handleUserClick(item.email)}>
+                <View style={styles.chat__pfp}></View>
+                <View style={styles.chat__body}>
+                  <Text style={styles.chat__name}>{item.email}</Text>
+                  <Text style={styles.chat__text}>{item.lastMessage}</Text>
+                </View>
+                {unreadMessages[item.email] > 0 && (
+                  <View style={styles.chat__notification}>
+                    <Text>{unreadMessages[item.email] > 9 ? '9+' : unreadMessages[item.email]}</Text>
+                  </View>
+                )}
+                <View style={styles.chat__time}>
+                  <Text>{new Date(item.lastMessageTimestamp).toLocaleDateString()}</Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
         </View>
       )}
     </View>
@@ -400,5 +492,21 @@ const styles = StyleSheet.create({
   },
   chat__bubbleText: {
     fontSize: 16,
+  },
+
+  chat__notification: {
+    backgroundColor: 'red',
+    borderRadius: 15,
+    width: 30,
+    height: 30,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'absolute',
+    top: 5,
+    right: 5,
+  },
+  chat__notificationText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
