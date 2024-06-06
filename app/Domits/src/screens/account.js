@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, Button, SafeAreaView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext'; // Ensure the path is correct
@@ -6,20 +6,31 @@ import {signOut} from '@aws-amplify/auth';
 
 const Account = () => {
   const navigation = useNavigation();
-  const {isAuthenticated, user, checkAuth} = useAuth();
+  const {isAuthenticated, user, userAttributes, checkAuth} = useAuth();
+  const [customUsername, setCustomUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [hostGuest, setHostGuest] = useState('');
 
-  // Extracting custom username and email from user attributes
-  const customUsername = user?.attributes?.['custom:username'] || 'N/A';
-  const email = user?.attributes?.email || 'N/A';
+  useEffect(() => {
+    if (user) {
+      setCustomUsername(userAttributes?.['custom:username'] || 'N/A');
+      setEmail(userAttributes?.email || 'N/A');
+      setHostGuest(userAttributes?.['custom:group'] || 'N/A');
+    } else {
+      // Reset the state when the user is logged out
+      setCustomUsername('');
+      setEmail('');
+      setHostGuest('');
+    }
+  }, [user, userAttributes]);
 
-  // Function to handle user logout
   const handleLogout = async () => {
     try {
       await signOut(); // Logs out the user
       checkAuth(); // Update authentication state in context
       navigation.navigate('LoginScreen'); // Navigate to login screen after logout
     } catch (error) {
-      console.error('Error signing out: ', error);
+      console.error('Error signing out:', error);
     }
   };
 
@@ -30,24 +41,33 @@ const Account = () => {
       <Text>Authenticated: {isAuthenticated ? 'Yes' : 'No'}</Text>
       <Text>Username: {customUsername}</Text>
       <Text>Email: {email}</Text>
+      <Text>Type: {hostGuest}</Text>
       <View>
-        <Button
-          title="Go to Host Dashboard"
-          onPress={() => navigation.navigate('HostHomepage')}
-        />
-        <Button
-          title="Go to Guest Dashboard"
-          onPress={() => navigation.navigate('GuestDashboard')}
-        />
-        <Button
-          title="Login"
-          onPress={() => navigation.navigate('LoginScreen')}
-        />
-        <Button title="Recheck Authentication" onPress={checkAuth} />
-        <Button
-          title="Logout"
-          onPress={handleLogout} // Adds the logout functionality
-        />
+        {isAuthenticated && hostGuest === 'Host' && (
+          <Button
+            title="Go to Host Dashboard"
+            onPress={() => navigation.navigate('HostHomepage')}
+          />
+        )}
+        {isAuthenticated && (
+          <Button
+            title="Go to Guest Dashboard"
+            onPress={() => navigation.navigate('GuestDashboard')}
+          />
+        )}
+        {!isAuthenticated && (
+          <Button
+            title="Login"
+            onPress={() => navigation.navigate('LoginScreen')}
+          />
+        )}
+        {!isAuthenticated && (
+          <Button
+            title="Register"
+            onPress={() => navigation.navigate('Register')}
+          />
+        )}
+        {isAuthenticated && <Button title="Logout" onPress={handleLogout} />}
       </View>
     </SafeAreaView>
   );
