@@ -515,7 +515,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 '&:hover': {
                   color: 'black',
                   backgroundColor: '#e6e6e6',
-                  transform: 'scale(0.96)',
+                  transform: 'scale(1)',
                 },
               }),
               clearIndicator: (provided) => ({
