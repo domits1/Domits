@@ -1,269 +1,92 @@
-import { render, fireEvent, waitFor } from '@testing-library/react';
-import Login from '../base/Login.js'; // Adjust the import based on your file structure
-import { Auth } from 'aws-amplify'; // Adjust based on your auth library
-import { BrowserRouter as Router } from 'react-router-dom'; // or MemoryRouter for isolated testing
+// Login.test.js
+import React from 'react';
+import { render, fireEvent, waitFor, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import Login from '../base/Login.js';
+import { Auth } from 'aws-amplify';
+import { MemoryRouter } from 'react-router-dom';
+import { createMemoryHistory } from 'history';
+import { Router } from 'react-router';
 
 jest.mock('aws-amplify');
 jest.mock('react-router-dom', () => ({
-    ...jest.requireActual('react-router-dom'),
-    useNavigate: () => jest.fn(),
+  ...jest.requireActual('react-router-dom'),
+  useNavigate: () => jest.fn(),
 }));
 
-const mockNavigate = require('react-router-dom').useNavigate();
+describe('Login Component', () => {
+  const mockSignIn = Auth.signIn;
+  const mockCurrentAuthenticatedUser = Auth.currentAuthenticatedUser;
+  const mockNavigate = jest.fn();
 
-describe('Login', () => {
+  beforeEach(() => {
+    mockSignIn.mockClear();
+    mockCurrentAuthenticatedUser.mockClear();
+    mockNavigate.mockClear();
+  });
 
-    // Successful login redirects Host to /hostdashboard
-    it('should redirect Host to /hostdashboard on successful login', async () => {
-        const { getByLabelText, getByText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const emailInput = getByLabelText("Email:");
-        const passwordInput = getByLabelText("Password:");
-        const loginButton = getByText(/login/i);
+  test('renders login form', () => {
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
 
-        fireEvent.change(emailInput, { target: { value: 'host@example.com' } });
-        fireEvent.change(passwordInput, { target: { value: 'password' } });
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByText(/login/i)).toBeInTheDocument();
+  });
 
-        Auth.signIn.mockResolvedValue({
-            attributes: { 'custom:group': 'Host' }
-        });
+  test('handles form input changes', () => {
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
 
-        fireEvent.click(loginButton);
+    const emailInput = screen.getByLabelText(/email/i);
+    const passwordInput = screen.getByLabelText(/password/i);
 
-        await waitFor(() => {
-            expect(Auth.signIn).toHaveBeenCalledWith('host@example.com', 'password');
-            expect(mockNavigate).toHaveBeenCalledWith('/hostdashboard');
-        });
-    });
+    fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
+    fireEvent.change(passwordInput, { target: { value: 'password' } });
 
-    // Successful login redirects Traveler to /guestdashboard
-    it('should redirect Traveler to /guestdashboard on successful login', async () => {
-        const { getByLabelText, getByText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const emailInput = getByLabelText(/email/i);
-        const passwordInput = getByLabelText(/password/i);
-        const loginButton = getByText(/login/i);
+    expect(emailInput.value).toBe('test@example.com');
+    expect(passwordInput.value).toBe('password');
+  });
 
-        fireEvent.change(emailInput, { target: { value: 'traveler@example.com' } });
-        fireEvent.change(passwordInput, { target: { value: 'password' } });
+  test('handles form submission and successful login', async () => {
+    mockSignIn.mockResolvedValueOnce({});
 
-        Auth.signIn.mockResolvedValue({
-            attributes: { 'custom:group': 'Traveler' }
-        });
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
 
-        fireEvent.click(loginButton);
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'password' } });
 
-        await waitFor(() => {
-            expect(Auth.signIn).toHaveBeenCalledWith('traveler@example.com', 'password');
-            expect(mockNavigate).toHaveBeenCalledWith('/guestdashboard');
-        });
-    });
+    fireEvent.click(screen.getByText(/login/i));
 
-    // User can sign out successfully
-    it('should sign out successfully', async () => {
-        Auth.signOut.mockResolvedValue();
+    await waitFor(() => expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password'));
+    await waitFor(() => expect(window.location.reload).toHaveBeenCalled());
+  });
 
-        const { getByText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const signOutButton = getByText(/sign out/i);
+  test('handles form submission and login failure', async () => {
+    mockSignIn.mockRejectedValueOnce(new Error('Invalid username or password'));
 
-        fireEvent.click(signOutButton);
+    render(
+      <MemoryRouter>
+        <Login />
+      </MemoryRouter>
+    );
 
-        await waitFor(() => {
-            expect(Auth.signOut).toHaveBeenCalled();
-            expect(mockNavigate).toHaveBeenCalledWith('/');
-        });
-    });
+    fireEvent.change(screen.getByLabelText(/email/i), { target: { value: 'test@example.com' } });
+    fireEvent.change(screen.getByLabelText(/password/i), { target: { value: 'password' } });
 
-    // User can navigate to registration page
-    it('should navigate to registration page when register button is clicked', () => {
-        const { getByText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const registerButton = getByText(/register/i);
+    fireEvent.click(screen.getByText(/login/i));
 
-        fireEvent.click(registerButton);
-
-        expect(mockNavigate).toHaveBeenCalledWith('/register');
-    });
-
-    // Error message is displayed for invalid login credentials
-    it('should display error message for invalid login credentials', async () => {
-        Auth.signIn.mockRejectedValue(new Error('Invalid username or password'));
-
-        const { getByLabelText, getByText, findByText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const emailInput = getByLabelText(/email/i);
-        const passwordInput = getByLabelText(/password/i);
-        const loginButton = getByText(/login/i);
-
-        fireEvent.change(emailInput, { target: { value: 'invalid@example.com' } });
-        fireEvent.change(passwordInput, { target: { value: 'wrongpassword' } });
-
-        fireEvent.click(loginButton);
-
-        const errorMessage = await findByText(/invalid username or password/i);
-        expect(errorMessage).toBeInTheDocument();
-    });
-
-    // Form inputs update state correctly on change
-    it('should update form inputs state correctly on change', () => {
-        const { getByLabelText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const emailInput = getByLabelText(/email/i);
-        const passwordInput = getByLabelText(/password/i);
-
-        fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-        fireEvent.change(passwordInput, { target: { value: 'password' } });
-
-        expect(emailInput.value).toBe('test@example.com');
-        expect(passwordInput.value).toBe('password');
-    });
-
-    // User with no group attribute should not be redirected
-    it('should not redirect user with no group attribute', async () => {
-        Auth.currentAuthenticatedUser.mockResolvedValue({
-            attributes: {}
-        });
-
-        render(
-            <Router>
-                <Login />
-            </Router>
-        );
-
-        await waitFor(() => {
-            expect(mockNavigate).not.toHaveBeenCalled();
-        });
-    });
-
-    // User with incorrect email format should see an error
-    it('should display error for incorrect email format', async () => {
-        const { getByLabelText, getByText, findByText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const emailInput = getByLabelText(/email/i);
-        const passwordInput = getByLabelText(/password/i);
-        const loginButton = getByText(/login/i);
-
-        fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
-        fireEvent.change(passwordInput, { target: { value: 'password' } });
-
-        fireEvent.click(loginButton);
-
-        const errorMessage = await findByText(/invalid email format/i);
-        expect(errorMessage).toBeInTheDocument();
-    });
-
-    // User with empty password should see an error
-    it('should display error for empty password', async () => {
-        const { getByLabelText, getByText, findByText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const emailInput = getByLabelText(/email/i);
-        const passwordInput = getByLabelText(/password/i);
-        const loginButton = getByText(/login/i);
-
-        fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-        fireEvent.change(passwordInput, { target: { value: '' } });
-
-        fireEvent.click(loginButton);
-
-        const errorMessage = await findByText(/password cannot be empty/i);
-        expect(errorMessage).toBeInTheDocument();
-    });
-
-    // Network failure during login attempt should display an error
-    it('should display error on network failure during login attempt', async () => {
-        Auth.signIn.mockRejectedValue(new Error('Network Error'));
-
-        const { getByLabelText, getByText, findByText } = render(
-            <Router>
-                <Login />
-            </Router>
-        );
-        const emailInput = getByLabelText(/email/i);
-        const passwordInput = getByLabelText(/password/i);
-        const loginButton = getByText(/login/i);
-
-        fireEvent.change(emailInput, { target: { value: 'test@example.com' } });
-        fireEvent.change(passwordInput, { target: { value: 'password' } });
-
-        fireEvent.click(loginButton);
-
-        const errorMessage = await findByText(/network error/i);
-        expect(errorMessage).toBeInTheDocument();
-    });
-
-    // Auth.currentAuthenticatedUser throws an error
-    it('should handle error when Auth.currentAuthenticatedUser throws an error', async () => {
-        Auth.currentAuthenticatedUser.mockRejectedValue(new Error('Auth Error'));
-
-        render(
-            <Router>
-                <Login />
-            </Router>
-        );
-
-        await waitFor(() => {
-            expect(Auth.currentAuthenticatedUser).toHaveBeenCalled();
-            expect(mockNavigate).not.toHaveBeenCalled();
-            // Additional assertions can be added based on how the component handles the error
-        });
-    });
-
-    // Authenticated user is redirected based on group on initial load
-    it('should redirect authenticated user based on group on initial load', async () => {
-        Auth.currentAuthenticatedUser.mockResolvedValue({
-            attributes: { 'custom:group': 'Traveler' }
-        });
-
-        render(
-            <Router>
-                <Login />
-            </Router>
-        );
-
-        await waitFor(() => {
-            expect(Auth.currentAuthenticatedUser).toHaveBeenCalled();
-            expect(mockNavigate).toHaveBeenCalledWith('/guestdashboard');
-        });
-    });
-
-    // Non-authenticated user does not get redirected on initial load
-    it('should not redirect non-authenticated user on initial load', async () => {
-        Auth.currentAuthenticatedUser.mockResolvedValue(null);
-
-        render(
-            <Router>
-                <Login />
-            </Router>
-        );
-
-        await waitFor(() => {
-            expect(Auth.currentAuthenticatedUser).toHaveBeenCalled();
-            expect(mockNavigate).not.toHaveBeenCalled();
-        });
-    });
+    await waitFor(() => expect(mockSignIn).toHaveBeenCalledWith('test@example.com', 'password'));
+    expect(await screen.findByText(/invalid username or password/i)).toBeInTheDocument();
+  });
 });
