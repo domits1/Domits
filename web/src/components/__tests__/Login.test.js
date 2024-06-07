@@ -20,8 +20,8 @@ describe('Login', () => {
                 <Login />
             </Router>
         );
-        const emailInput = getByLabelText(/email/i);
-        const passwordInput = getByLabelText(/password/i);
+        const emailInput = getByLabelText("Email:");
+        const passwordInput = getByLabelText("Password:");
         const loginButton = getByText(/login/i);
 
         fireEvent.change(emailInput, { target: { value: 'host@example.com' } });
