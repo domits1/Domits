@@ -40,6 +40,10 @@ const HostReservations = () => {
         }
     };
 
+    const selectAll = () => {
+        setSelectedReservations(pendingReservations);
+    }
+
     const handleData = (data) => {
         if (data) {
             setReservations(data.allReservations);
@@ -177,12 +181,16 @@ const HostReservations = () => {
                             </div>
                         ))}
                     </section>
-                    <button className="refresh-btn" onClick={() => fetchReservations()}>Refresh</button>
+                    <div className="util-box">
+                        {selectedOption === "Booking requests" &&
+                            <button className="refresh-btn" onClick={() => selectAll()}>Select all</button>}
+                        <button className="refresh-btn" onClick={() => fetchReservations()}>Refresh</button>
+                    </div>
                     <section className="reservation-display">
                         {isLoading ? (
-                            <div className="spinner">
+                                <div className="spinner">
                                 <img src={spinner} alt='spinner'/>
-                            </div>
+                                </div>
                             ) :
                             reservationDisplay && reservationDisplay.length > 0 ? (
                                 <table>

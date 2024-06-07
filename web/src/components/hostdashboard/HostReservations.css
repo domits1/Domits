@@ -50,6 +50,16 @@
         gap: 1.5em;
         margin: 1.5em;
     }
+
+    .util-box {
+        display: flex;
+        flex-direction: row;
+        gap: 5%;
+        align-self: end;
+        .refresh-btn {
+            margin: 0;
+        }
+    }
     .btn-box {
         display: grid;
         grid-template-columns: auto auto auto;
