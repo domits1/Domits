@@ -50,6 +50,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [error, setError] = useState("");
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isMobile, setIsMobile] = useState(false);
+  const [buttonClicked, setButtonClicked] = useState(false);
+
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
 
 
@@ -68,6 +70,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
       window.removeEventListener('resize', handleResize);
     };
   }, []);
+
 
 
   const totalGuestsDescription = useMemo(() => {
@@ -125,24 +128,25 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
+
   const handleSelect = async (selectedAddress) => {
     if (!selectedAddress || !selectedAddress.description) {
       return;
     }
-  
+
     const parts = selectedAddress.description.split(', ');
     let city, country;
-  
+
     if (parts.length > 1) {
       city = parts[0];
       country = parts[parts.length - 1].trim();
     } else {
       country = parts[0];
     }
-  
+
     setAddress(`${city ? city + ', ' : ''}${country}`);
     setShowResults(true);
-  
+
     try {
       const results = await geocodeByAddress(selectedAddress.description);
       const latLng = await getLatLng(results[0]);
@@ -155,56 +159,88 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
-  const handleSearchWithDelay = () => {
-    setLoading(true);
-    setError("");
 
-    const queryParams = [
-      accommodation ? `type=${accommodation}` : null,
-      address ? `searchTerm=${address}` : null,
-      totalGuests > 0 ? `guests=${totalGuests}` : null,
-    ].filter(Boolean).join('&');
 
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+ useEffect(() => {
+  handleSearchWithDelay(false);
+}, [accommodation, address, totalGuests]); 
 
-    //THIS CODE IS VERY IMPORTANT!!!
-    //THE CODE CHECKS IF THE RESULTS THAT YOU HAVE SEARCH ARE STORED IN CACHE SO WHAT IT DOES IS IMPROVE THE SEARCH DRAMATICALLY!
-    //IT SHOWS RESULTS MUCH FASTER THAN WITHOUT THIS CODE, UNFORTUNATELY IT DOESN'T WORK RIGHT WITH NAVIGATE FUNCTION
+useEffect(() => {
+  if (location.state && location.state.searchResults) {
+    setSearchResults(location.state.searchResults);
+  }
+}, [location]);
 
-    // const cachedResults = localStorage.getItem(apiUrl);
-    // if (cachedResults) {
-    //   setSearchResults(JSON.parse(cachedResults));
-    //   setLoading(false);
-    //   return;
-    // }
+const handleSearchWithDelay = async (shouldNavigate) => {
+  setLoading(true);
+  setError(""); 
 
-    setTimeout(async () => {
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        if (data.length === 0) {
-          setError("No results have been found");
-        } else {
-          localStorage.setItem(apiUrl, JSON.stringify(data));
-          setSearchResults(data);
-        }
-      } catch (error) {
-        console.error('Error during fetch:', error);
-        setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
-      } finally {
-        setLoading(false);
-      }
-    }, 500);
-  };
+  const queryParams = [
+    accommodation ? `type=${accommodation}` : null,
+    address ? `searchTerm=${address}` : null,
+    totalGuests > 0 ? `guests=${totalGuests}` : null,
+  ].filter(Boolean).join('&');
 
-  const handleSearch = () => {
-    if (location.pathname !== '/') {
-      setSearchResults([]);
-      navigate('/');
+  const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+
+  const cachedResults = localStorage.getItem(apiUrl);
+  if (cachedResults) {
+    const parsedResults = JSON.parse(cachedResults);
+    if (shouldNavigate) {
+      navigate('/', { state: { searchResults: parsedResults } });
+    } else {
+      setSearchResults(parsedResults);
     }
+    setLoading(false);
+    return;
+  }
 
-    handleSearchWithDelay();
-  };
+  try {
+    const response = await fetch(apiUrl);
+    const data = await response.json();
+    if (data.length === 0) {
+      setTimeout(() => {
+        setError("No results have been found");
+      }, 1000); 
+    } else {
+      localStorage.setItem(apiUrl, JSON.stringify(data));
+      if (shouldNavigate) {
+        navigate('/', { state: { searchResults: data } });
+      } else {
+        setSearchResults(data);
+      }
+    }
+  }
+   catch (error) {
+    console.error('Error during fetch:', error);
+    setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleSearch = () => {
+  setButtonClicked(true);
+
+  const shouldNavigate = location.pathname !== '/';
+
+  if (shouldNavigate) {
+    setSearchResults([]);
+  }
+
+  handleSearchWithDelay(shouldNavigate);
+
+  setTimeout(() => {
+    handleSearchWithDelay(shouldNavigate);
+  }, 1000);
+
+  setTimeout(() => {
+    setButtonClicked(false);
+  }, 1400);
+};
+
+
+
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -440,6 +476,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   overflowY: 'auto',
                   transform: isMobile ? 'translateX(-40px)' : 'translateX(-40px)',
                   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+                  zIndex: 9999,
                 };
               },
               indicatorSeparator: () => ({ display: 'none' }),
@@ -550,6 +587,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
           </div>
         </div>
 
+
         <div className="check-in" style={{ position: 'relative' }}>
           <input
             className="input-calendar"
@@ -574,6 +612,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 fontWeight: 500,
                 fontSize: '1rem',
                 whiteSpace: 'nowrap',
+
 
               }}
             >
@@ -613,8 +652,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
           />
         </div>
 
-        <button className="searchbar-button" type="button" onClick={handleSearch}>
-
+        <button className={`searchbar-button ${buttonClicked ? 'button-clicked' : ''}`} type="button" onClick={handleSearch}>
           <FaSearchLocation size={15} style={{ position: 'relative', right: '2px' }} className="search-icon" />
           <span className="search-text">Search</span>
         </button>
