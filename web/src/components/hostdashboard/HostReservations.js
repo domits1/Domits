@@ -3,9 +3,8 @@ import Pages from "./Pages.js";
 import '././HostReservations.css';
 import info from "../../images/icons/info.png";
 import {Auth} from "aws-amplify";
-import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import spinner from "../../images/spinnner.gif";
-import {useNavigate} from "react-router-dom";
+import ReservationItem from "../utils/ReservationItem";
 
 const HostReservations = () => {
     const [userId, setUserId] = useState({});
@@ -24,7 +23,6 @@ const HostReservations = () => {
     const indexOfLastItem = currentPage * 5;
     const indexOfFirstItem = indexOfLastItem - 5;
     const currentItems = reservationDisplay ? reservationDisplay.slice(indexOfFirstItem, indexOfLastItem) : [];
-    const navigate = useNavigate();
 
     useEffect(() => {
         if (currentItems.length === 0 && currentPage > 1) {
@@ -112,6 +110,7 @@ const HostReservations = () => {
                 }
                 const data = await response.json();
                 const parsedData = JSON.parse(data.body);
+                console.log(parsedData);
                 await handleData(parsedData);
             } catch (error) {
                 console.error("Unexpected error:", error);
@@ -186,33 +185,29 @@ const HostReservations = () => {
                             </div>
                             ) :
                             reservationDisplay && reservationDisplay.length > 0 ? (
-                                currentItems
-                                    .map(reservation => (
-                                        <div className="reservation-item" key={reservation.ID}>
-                                            {selectedOption === "Booking requests" && (
-                                                <input
-                                                    type="checkbox"
-                                                    className="check-box"
-                                                    checked={selectedReservations.some(item => item.ID === reservation.ID)}
-                                                    onChange={(event) => handleCheckboxChange(event, reservation)}
-                                                />
-                                            )}
-                                            <p>{reservation.ID}</p>
-                                            <p onClick={() => navigate(`/listingdetails?ID=${reservation.AccoID}`)}
-                                            className="reservation-link">{reservation.Title}</p>
-                                            <p>{DateFormatterDD_MM_YYYY(reservation.StartDate)} - {DateFormatterDD_MM_YYYY(reservation.EndDate)}</p>
-                                            {selectedOption === "All" && (
-                                                <div className="status-display">
-                                                    <p>Status: </p>
-                                                    <p style={{
-                                                        color: reservation.Status === 'ACCEPTED' ? 'green' :
-                                                            reservation.Status === 'CANCELLED' ? 'red' :
-                                                                reservation.Status === 'RESERVED' ? '#003366': 'inherit'
-                                                    }}>{reservation.Status}</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
+                                <table>
+                                    <thead>
+                                    <tr>
+                                        {selectedOption === 'Booking requests' && <th>Select</th>}
+                                        <th>Requested on</th>
+                                        <th>Guest name</th>
+                                        <th>Reservation date</th>
+                                        {selectedOption === 'All' && <th>Status</th>}
+                                        <th>Price</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {currentItems.map(reservation => (
+                                        <ReservationItem
+                                            key={reservation.ID}
+                                            reservation={reservation}
+                                            selectedOption={selectedOption}
+                                            selectedReservations={selectedReservations}
+                                            handleCheckboxChange={handleCheckboxChange}
+                                        />
+                                    ))}
+                                    </tbody>
+                                </table>
                             ) : (
                                 <p>You do not have any booking requests at the moment...</p>
                             )}
@@ -237,10 +232,10 @@ const HostReservations = () => {
                             <button className="btn-undo" onClick={() => handleUndoSelect()}>Undo select</button>
                             <p className="selected-text">{selectedReservations.length} items selected</p>
                             <div className="btn-group">
-                                <button className="btn-deny" onClick={() => asyncUpdateReservation("CANCELLED")}>Deny
+                                <button className="btn-deny" onClick={() => asyncUpdateReservation("Cancelled")}>Deny
                                 </button>
                                 <button className="btn-approve"
-                                        onClick={() => asyncUpdateReservation("ACCEPTED")}>Approve
+                                        onClick={() => asyncUpdateReservation("Accepted")}>Approve
                                 </button>
                             </div>
                         </div>
