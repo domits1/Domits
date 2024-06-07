@@ -24,11 +24,10 @@ import HostSettings from "./components/hostdashboard/HostSettings";
 import HostReviews from "./components/hostdashboard/HostReviews";
 import ListingDetails from './components/booking/ListingDetails';
 import BookingOverview from './components/booking/BookingOverview';
+import BookingConfirmation from "./components/booking/PaymentConfirm";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import GuestDashboard from './components/guestdashboard/GuestDashboard';
-import BookingGuestDashboard from './components/guestdashboard/BookingGuestDashboard';
 import Disclaimers from "./components/disclaimers/Disclaimers";
 import Policy from "./components/disclaimers/Policy";
 import Terms from "./components/disclaimers/Terms";
@@ -36,12 +35,13 @@ import Login from "./components/base/Login";
 import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/ConfirmRegister";
 import { AuthProvider } from './components/base/AuthContext';
-import PaymentsGuestDashboard from "./components/guestdashboard/PaymentsGuestDashboard";
+import GuestDashboard from './components/guestdashboard/GuestDashboard';
+import GuestBooking from './components/guestdashboard/GuestBooking';
+import GuestPayments from "./components/guestdashboard/GuestPayments";
+import GuestReviews from "./components/guestdashboard/GuestReviews";
+import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat";
-import SettingsGuestDashboard from "./components/guestdashboard/SettingsGuestDashboard";
 import FlowContext from './FlowContext'
-import ReviewsGuestDashboard from "./components/guestdashboard/ReviewsGuestDashboard";
-import UserProfile from './components/guestdashboard/profilePictureTest.js';
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./components/hostdashboard/HostReservations";
@@ -56,6 +56,7 @@ import HostScreening from "./components/hostdashboard/HostScreening";
 import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
 import { initializeUserAttributes } from './components/utils/userAttributes';
+import PageNotFound from "./components/error/404NotFound";
 
 Modal.setAppElement('#root');
 
@@ -106,6 +107,7 @@ function App() {
                             <Route path="/confirm-email" element={<ConfirmRegister />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
                             <Route path="/bookingoverview" element={<BookingOverview />} />
+                            <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
@@ -113,10 +115,10 @@ function App() {
                             {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
-                            <Route path="/guestdashboard/payments" element={<PaymentsGuestDashboard />} />
-                            <Route path="/guestdashboard/reviews" element={<ReviewsGuestDashboard />} />
-                            <Route path="/guestdashboard/booking" element={<BookingGuestDashboard />} />
-                            <Route path="/guestdashboard/settings" element={<SettingsGuestDashboard />} />
+                            <Route path="/guestdashboard/payments" element={<GuestPayments />} />
+                            <Route path="/guestdashboard/reviews" element={<GuestReviews />} />
+                            <Route path="/guestdashboard/booking" element={<GuestBooking />} />
+                            <Route path="/guestdashboard/settings" element={<GuestSettings />} />
                             <Route path="/guestdashboard/chat" element={<Chat />} />
                             {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}
 
@@ -151,6 +153,9 @@ function App() {
                             <Route path="/policy" element={<Policy />} />
                             <Route path="/terms" element={<Terms />} />
                             <Route path="/disclaimers" element={<Disclaimers />} />
+
+                            {/* Error*/}
+                            <Route path="/*" element={<PageNotFound />} />
                         </Routes>
                         {renderFooter()}
                     </div>

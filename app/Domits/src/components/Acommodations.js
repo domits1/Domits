@@ -1,22 +1,14 @@
-import React, {useState, useEffect} from 'react';
-import {
-  View,
-  ScrollView,
-  Text,
-  Image,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+import React, { useState, useEffect } from 'react';
+import { View, ScrollView, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 
-const Accommodations = ({searchResults}) => {
+const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
-  const formatData = items => {
-    return items.map(item => ({
+  const formatData = (items) => {
+    return items.map((item) => ({
       image: item.Images.image1,
       title: item.Title,
       city: item.City,
@@ -34,9 +26,7 @@ const Accommodations = ({searchResults}) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch(
-          'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation',
-        );
+        const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation');
         if (!response.ok) {
           throw new Error('Failed to fetch data');
         }
@@ -58,40 +48,39 @@ const Accommodations = ({searchResults}) => {
 
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#0000ff" />
+        </View>
     );
   }
 
-  const handlePress = ID => {
-    navigation.navigate('Detailpage', {ID: ID});
+  const handlePress = (accommodation) => {
+    navigation.navigate('Detailpage', { accommodation });
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {accolist.map(accommodation => (
-        <TouchableOpacity
-          style={styles.card}
-          key={accommodation.id}
-          onPress={() => handlePress(accommodation.id)}>
-          <Image source={{uri: accommodation.image}} style={styles.image} />
-          <View style={styles.cardContent}>
-            <Text style={styles.title}>
-              {accommodation.city}, {accommodation.country}
-            </Text>
-            <Text style={styles.price}>{accommodation.price}</Text>
-            <Text style={styles.details}>{accommodation.details}</Text>
-            <View style={styles.specs}>
-              <Text style={styles.spec}>{accommodation.size}</Text>
-              <Text style={styles.spec}>{accommodation.bathrooms}</Text>
-              <Text style={styles.spec}>{accommodation.bedrooms}</Text>
-              <Text style={styles.spec}>{accommodation.persons}</Text>
-            </View>
-          </View>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
+      <ScrollView contentContainerStyle={styles.container}>
+        {accolist.map((accommodation) => (
+            <TouchableOpacity
+                style={styles.card}
+                key={accommodation.id}
+                onPress={() => handlePress(accommodation)}
+            >
+              <Image source={{ uri: accommodation.image }} style={styles.image} />
+              <View style={styles.cardContent}>
+                <Text style={styles.title}>{accommodation.city}, {accommodation.country}</Text>
+                <Text style={styles.price}>{accommodation.price}</Text>
+                <Text style={styles.details}>{accommodation.details}</Text>
+                <View style={styles.specs}>
+                  <Text style={styles.spec}>{accommodation.size}</Text>
+                  <Text style={styles.spec}>{accommodation.bathrooms}</Text>
+                  <Text style={styles.spec}>{accommodation.bedrooms}</Text>
+                  <Text style={styles.spec}>{accommodation.persons}</Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+        ))}
+      </ScrollView>
   );
 };
 
