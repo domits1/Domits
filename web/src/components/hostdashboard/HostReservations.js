@@ -114,7 +114,6 @@ const HostReservations = () => {
                 }
                 const data = await response.json();
                 const parsedData = JSON.parse(data.body);
-                console.log(parsedData);
                 await handleData(parsedData);
             } catch (error) {
                 console.error("Unexpected error:", error);
