@@ -32,8 +32,8 @@ const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, descr
   );
 });
 
-const MIN_ADDRESS_LENGTH = 4; // minimum aantal tekens voordat een zoekopdracht wordt uitgevoerd
-const DEBOUNCE_DELAY = 500; // vertraging in milliseconden
+const MIN_ADDRESS_LENGTH = 4; 
+const DEBOUNCE_DELAY = 500; 
 
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
