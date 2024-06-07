@@ -32,6 +32,9 @@ const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, descr
   );
 });
 
+const MIN_ADDRESS_LENGTH = 4; // minimum aantal tekens voordat een zoekopdracht wordt uitgevoerd
+const DEBOUNCE_DELAY = 500; // vertraging in milliseconden
+
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
@@ -161,83 +164,95 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
 
 
- useEffect(() => {
-  handleSearchWithDelay(false);
-}, [accommodation, address, totalGuests]); 
 
-useEffect(() => {
-  if (location.state && location.state.searchResults) {
-    setSearchResults(location.state.searchResults);
-  }
-}, [location]);
-
-const handleSearchWithDelay = async (shouldNavigate) => {
-  setLoading(true);
-  setError(""); 
-
-  const queryParams = [
-    accommodation ? `type=${accommodation}` : null,
-    address ? `searchTerm=${address}` : null,
-    totalGuests > 0 ? `guests=${totalGuests}` : null,
-  ].filter(Boolean).join('&');
-
-  const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
-
-  const cachedResults = localStorage.getItem(apiUrl);
-  if (cachedResults) {
-    const parsedResults = JSON.parse(cachedResults);
-    if (shouldNavigate) {
-      navigate('/', { state: { searchResults: parsedResults } });
-    } else {
-      setSearchResults(parsedResults);
+  useEffect(() => {
+    if (location.state && location.state.searchResults) {
+      setSearchResults(location.state.searchResults);
     }
-    setLoading(false);
-    return;
-  }
+  }, [location]);
 
-  try {
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-    if (data.length === 0) {
-      setTimeout(() => {
-        setError("No results have been found");
-      }, 1000); 
-    } else {
-      localStorage.setItem(apiUrl, JSON.stringify(data));
+  const handleSearchWithDelay = useCallback(async (shouldNavigate) => {
+    if (address.length < MIN_ADDRESS_LENGTH) {
+      return; // geen zoekopdracht uitvoeren als het adres te kort is
+    }
+    
+    setLoading(true);
+    setError("");
+    
+    const queryParams = [
+      accommodation ? `type=${accommodation}` : null,
+      address ? `searchTerm=${address}` : null,
+      totalGuests > 0 ? `guests=${totalGuests}` : null,
+    ].filter(Boolean).join('&');
+    
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+    
+    const cachedResults = localStorage.getItem(apiUrl);
+    if (cachedResults) {
+      const parsedResults = JSON.parse(cachedResults);
       if (shouldNavigate) {
-        navigate('/', { state: { searchResults: data } });
+        navigate('/', { state: { searchResults: parsedResults } });
       } else {
-        setSearchResults(data);
+        setSearchResults(parsedResults);
       }
+      setLoading(false);
+      return;
     }
-  }
-   catch (error) {
-    console.error('Error during fetch:', error);
-    setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      if (data.length === 0) {
+        setTimeout(() => {
+          setError("No results have been found");
+        }, 1000); 
+      } else {
+        localStorage.setItem(apiUrl, JSON.stringify(data));
+        if (shouldNavigate) {
+          navigate('/', { state: { searchResults: data } });
+        } else {
+          setSearchResults(data);
+        }
+      }
+    } catch (error) {
+      console.error('Error during fetch:', error);
+      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+    } finally {
+      setLoading(false);
+    }
+  }, [address, accommodation, totalGuests, navigate]);
 
-const handleSearch = () => {
-  setButtonClicked(true);
+  const debounceSearch = useCallback((callback, delay) => {
+    let timer;
+    return (...args) => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        callback(...args);
+      }, delay);
+    };
+  }, []);
 
-  const shouldNavigate = location.pathname !== '/';
+  const debouncedSearch = useCallback(debounceSearch(handleSearchWithDelay, DEBOUNCE_DELAY), [handleSearchWithDelay]);
 
-  if (shouldNavigate) {
-    setSearchResults([]);
-  }
+  useEffect(() => {
+    debouncedSearch(false);
+  }, [address, debouncedSearch]);
 
-  handleSearchWithDelay(shouldNavigate);
-
-  setTimeout(() => {
+  const handleSearch = () => {
+    setButtonClicked(true);
+    const shouldNavigate = location.pathname !== '/';
+    if (shouldNavigate) {
+      setSearchResults([]);
+    }
     handleSearchWithDelay(shouldNavigate);
-  }, 1000);
+    
+    setTimeout(() => {
+      handleSearchWithDelay(shouldNavigate);
+    }, 700);
 
-  setTimeout(() => {
-    setButtonClicked(false);
-  }, 1400);
-};
+    setTimeout(() => {
+      setButtonClicked(false);
+    }, 1400);
+  };
 
 
 
