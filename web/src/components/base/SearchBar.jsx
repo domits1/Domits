@@ -502,9 +502,8 @@ const handleSearch = () => {
                 ...provided,
                 color: 'black',
                 position: 'absolute',
-                right: isMobile ? -'2rem' : '0px',
-
-                transform: isMobile ? 'translateY(15%) translateX(220%)' : 'translateY(0%) translateX(10%)',
+                // right: isMobile ? -'2rem' : '0px',
+                // transform: isMobile ? 'translateY(15%) translateX(220%)' : 'translateY(0%) translateX(10%)',
                 width: '35px',
                 height: '35px',
               }),
