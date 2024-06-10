@@ -8,6 +8,8 @@ import {
   ScrollView,
   Modal,
   Button,
+  TextInput,
+  Alert,
 } from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import {useNavigation} from '@react-navigation/native';
@@ -21,6 +23,10 @@ function ListProperty({navigation}) {
   const [isPickerVisible, setPickerVisible] = useState(false);
   const [currentPicker, setCurrentPicker] = useState(null);
   const [tempValue, setTempValue] = useState(null); // Temporary state for picker value
+
+  const [title, setTitle] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [description, setDescription] = useState('');
 
   // Define the list of options
   const options = {
@@ -71,14 +77,68 @@ function ListProperty({navigation}) {
   };
 
   const navigateToLocationFillIn = () => {
-    // Implement navigation logic using React Navigation
-    // You may need to set up your navigation stack and screens accordingly
-    navigation.navigate('LocationFillIn');
+    if (
+      !roomType ||
+      !travelers ||
+      !bedrooms ||
+      !bathrooms ||
+      !beds ||
+      !title ||
+      !subtitle ||
+      !description
+    ) {
+      Alert.alert('Please fill in all fields before proceeding.');
+      return;
+    }
+    const listingData = {
+      AccommodationType: roomType,
+      GuestAmount: travelers,
+      Bedrooms: bedrooms,
+      Bathrooms: bathrooms,
+      Beds: beds,
+      Title: title,
+      Subtitle: subtitle,
+      Description: description,
+    };
+    navigation.navigate('LocationFillIn', {listingData});
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollContainer}>
+        <Text style={styles.title}>Property Information</Text>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Title</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setTitle}
+            value={title}
+            placeholder="Property title"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Subtitle</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setSubtitle}
+            value={subtitle}
+            placeholder="Property subtitle"
+          />
+        </View>
+
+        <View style={styles.inputContainer}>
+          <Text style={styles.label}>Description</Text>
+          <TextInput
+            style={styles.input}
+            onChangeText={setDescription}
+            value={description}
+            placeholder="Property description"
+            multiline
+          />
+        </View>
+
         <Text style={styles.title}>Select room type</Text>
         <View style={styles.optionsContainer}>
           {['Entire house', 'Room', 'Shared room'].map(type => (
@@ -115,7 +175,7 @@ function ListProperty({navigation}) {
         </View>
 
         <View style={styles.quantityContainer}>
-          <Text style={styles.quantityLabel}>How many travelers?</Text>
+          <Text style={styles.quantityLabel}>How many bedrooms?</Text>
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => {
@@ -126,20 +186,44 @@ function ListProperty({navigation}) {
           </TouchableOpacity>
         </View>
 
+        <View style={styles.quantityContainer}>
+          <Text style={styles.quantityLabel}>How many bathrooms?</Text>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => {
+              setCurrentPicker('bathrooms');
+              setPickerVisible(true);
+            }}>
+            <Text style={styles.dropdownText}>{bathrooms || 'Select'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.quantityContainer}>
+          <Text style={styles.quantityLabel}>How many beds?</Text>
+          <TouchableOpacity
+            style={styles.dropdownButton}
+            onPress={() => {
+              setCurrentPicker('beds');
+              setPickerVisible(true);
+            }}>
+            <Text style={styles.dropdownText}>{beds || 'Select'}</Text>
+          </TouchableOpacity>
+        </View>
+
         <Modal
-            transparent={true}
-            animationType="slide"
-            visible={isPickerVisible}
-            onRequestClose={() => setPickerVisible(false)}>
+          transparent={true}
+          animationType="slide"
+          visible={isPickerVisible}
+          onRequestClose={() => setPickerVisible(false)}>
           <View style={styles.centeredView}>
             <View style={styles.modalView}>
               {currentPicker && (
-                  <Picker
-                      selectedValue={tempValue}
-                      onValueChange={handlePickerSelect}
-                      mode="dropdown">
-                    {renderPickerItems(currentPicker)}
-                  </Picker>
+                <Picker
+                  selectedValue={tempValue}
+                  onValueChange={handlePickerSelect}
+                  mode="dropdown">
+                  {renderPickerItems(currentPicker)}
+                </Picker>
               )}
               <Button title="Done" onPress={handleDonePress} />
             </View>
@@ -160,6 +244,7 @@ function ListProperty({navigation}) {
     </SafeAreaView>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -200,6 +285,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
   },
+  inputContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 16,
+    marginBottom: 8,
+  },
+  input: {
+    height: 50,
+    borderColor: '#000',
+    borderWidth: 1,
+    borderRadius: 4,
+    padding: 10,
+    fontSize: 16,
+  },
   dropDownPicker: {
     borderColor: '#000',
     borderWidth: 1,
@@ -234,7 +335,6 @@ const styles = StyleSheet.create({
     minWidth: 300,
     padding: 20,
   },
-
   dropdownButton: {
     borderWidth: 1,
     borderColor: '#000',

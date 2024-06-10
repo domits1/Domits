@@ -74,7 +74,8 @@ const GuestDashboard = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="guestdashboard">
+        <div className="container">
+            <h2>Dashboard</h2>
             <div className="dashboard">
                 <Pages />
                 <div className="content">
