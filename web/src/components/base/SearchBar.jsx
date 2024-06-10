@@ -228,7 +228,7 @@ const handleSearch = () => {
   handleSearchWithDelay(shouldNavigate);
   setTimeout(() => {
     handleSearchWithDelay(shouldNavigate);
-  }, 700);
+  }, 1000);
 
   setTimeout(() => {
     setButtonClicked(false);
@@ -314,7 +314,6 @@ const handleSearch = () => {
       <div className="bar">
 
         <div className="location">
-          {/* <p className="searchTitle">Location</p> */}
           <PlacesAutocomplete
             value={address}
             onChange={handleChange}
@@ -450,7 +449,7 @@ const handleSearch = () => {
                   width: '100%',
                   border: 'none',
                   height: '2rem',
-                  transform: isMobile ? 'translateX(-25px)' : 'translateY(5px)',
+                  transform: isMobile ? 'translateX(-28px)' : 'translateY(5px)',
                   boxShadow: 'none',
                   background: 'none',
                   padding: '0',
@@ -503,11 +502,13 @@ const handleSearch = () => {
                 ...provided,
                 color: 'black',
                 position: 'absolute',
-                right: '0px',
-                transform: 'translateY(-15%)',
-                width: '32px',
-                height: '32px',
+                right: isMobile ? -'2rem' : '0px',
+
+                transform: isMobile ? 'translateY(15%) translateX(220%)' : 'translateY(0%) translateX(10%)',
+                width: '35px',
+                height: '35px',
               }),
+              
               singleValue: (provided) => ({
                 ...provided,
                 textAlign: 'center',
@@ -528,7 +529,7 @@ const handleSearch = () => {
               onClick={resetGuests}
               style={{
                 position: 'absolute',
-                right: '0px',
+                right: '0.2rem',
                 top: '50%',
                 transform: 'translateY(-35%)',
                 border: 'none',
