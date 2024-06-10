@@ -68,7 +68,7 @@ const SettingsTab = () => {
             <h2>Settings</h2>
             <div className='dashboards'>
                 <Pages />
-                <div className="content">
+                <div className="content flexwrap">
                     <div className="settingsContent">
                         <h1>{username}'s Settings</h1>
                         <div className="settingsOptions">

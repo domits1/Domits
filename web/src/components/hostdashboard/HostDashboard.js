@@ -99,9 +99,10 @@ function HostDashboard() {
                 <h2>Dashboard</h2>
                 <h3 className="welcome-msg">Welcome {user.name}</h3>
             </div>
-            <div className="dashboard">
+            <div className="dashboardHost">
                 <Pages/>
                 <PagesDropdown/>
+                <div>
                 <div className="contentContainer">
                     <div className="dashboard-1">
                         <div className="dashboard-head">
@@ -168,6 +169,8 @@ function HostDashboard() {
                     </div>
                 </div>
             </div>
+            </div>
+            
         </div>
     );
 }
