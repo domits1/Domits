@@ -4,14 +4,25 @@ import spinner from "../../images/spinnner.gif";
 import Pages from "./Pages.js";
 
 const HostRevenues = () => {
-    const [userId, setUserId] = useState(null); // Changed initial state to null
+    const [userId, setUserId] = useState(null);
     const [data, setData] = useState(null);
+    const formatData = (items) => {
+        if (!Array.isArray(items)) {
+            console.error("Items is not an array:", items);
+            return [];
+        }
+        return items
+            .filter(item => Array.isArray(item) && item.Status === 'Accepted')
+            .map((item) => ({
+                price: `€${item.Price} per night`,
+            }));
+    };
 
     useEffect(() => {
         const setUserIdAsync = async () => {
             try {
                 const userInfo = await Auth.currentUserInfo();
-                console.log("User Info:", userInfo); // Log user info for debugging
+                console.log("User Info:", userInfo);
                 setUserId(userInfo.attributes.sub);
             } catch (error) {
                 console.error("Error finding your user id:", error);
@@ -27,23 +38,18 @@ const HostRevenues = () => {
                 return;
             } else {
                 try {
-                    const response = await fetch('https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingData', {
-                        method: 'GET',
-                        body: JSON.stringify({ HostID: userId }),
-                        headers: {
-                            'Content-Type': 'application/json; charset=UTF-8',
-                        }
-                    });
-
-                    console.log("Response:", response); // Log the response
+                    const response = await fetch('https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingData');
+                    console.log("Response:", response);
 
                     if (!response.ok) {
                         throw new Error('Failed to fetch');
                     }
 
                     const responseData = await response.json();
-                    console.log("Response Data:", responseData); // Log the response data
-                    setData(responseData);
+                    console.log("Response Data:", responseData);
+                    const formattedData = formatData(responseData);
+                    console.log("Formatted Data:", formattedData);
+                    setData(formattedData);
 
                 } catch (error) {
                     console.error("Unexpected error:", error);
@@ -52,7 +58,7 @@ const HostRevenues = () => {
         };
 
         if (userId) {
-            fetchPayments(); // Fetch payments when userId is set
+            fetchPayments();
         }
     }, [userId]);
 
@@ -63,7 +69,11 @@ const HostRevenues = () => {
                 <div className="content">
                     <h1>Revenue</h1>
                     {data ? (
-                        <pre>{JSON.stringify(data, null, 2)}</pre> // Display data if available
+                        <ul>
+                            {data.map((item, index) => (
+                                <li key={index}>{item.price}</li>
+                            ))}
+                        </ul>
                     ) : (
                         <p>Loading...</p>
                     )}
