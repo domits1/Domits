@@ -1,7 +1,3 @@
-* {
-  box-sizing: border-box;
-}
-
 .bar {
   width: 45rem;
   margin: auto;
@@ -9,6 +5,7 @@
   border-radius: 1.875rem;
   display: flex;
   height: 3.4375rem;
+  box-sizing: border-box;
   font-size: 0.6rem;
 }
 
@@ -32,10 +29,10 @@
   text-align: left;
 }
 
-.bar input {
+/* .bar input {
   margin-top: 0;
   padding-top: 0;
-}
+} */
 
 .searchTitle {
   color: #0D9813;
@@ -50,7 +47,7 @@
 }
 
 .location {
-  width: 32%;
+  width: 34%;
 }
 
 .accommodation {
@@ -122,7 +119,7 @@
   height: 2.5rem;
   width: 2.5rem;
   margin-top: 0.5rem;
-  margin-left: 0.1rem;
+  margin-left: 0.5rem;
 }
 
 .searchbar-button:hover {
@@ -151,9 +148,9 @@
   height: 2rem;
 }
 
-.suggestion-item:hover {
+/* .suggestion-item:hover {
   border-radius: 10px;
-}
+} */
 
 .searchBar:focus {
   outline: none;
@@ -176,7 +173,7 @@
   padding: 1.625rem;
   background-color: #fff;
   border-radius: 1.25rem;
-  width: 23%;
+  width: 13%;
 }
 
 .error-message {
@@ -191,13 +188,10 @@
   height: auto;
   cursor: pointer;
   transform: translate(60%, 80%);
-
   max-width: 400px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
-
-
 .guest-dropdown {
   display: none;
   position: absolute;
@@ -246,7 +240,6 @@
   align-items: center;
   justify-content: space-between;
   margin-top: 0.40rem;
-  /* padding: 0.625rem 0; */
   border-bottom: 1px solid #0a770f;
 }
 
@@ -363,18 +356,6 @@
   }
 }
 
-/* @media (max-width: 750px) {
-  .bar {
-    width: 90%;
-  }
-}
-@media (max-width: 650px) {
-  .bar {
-    width: 100%;
-  }
-} */
-
-/* responsive calendar (fonts) */
 @media (min-width: 2500px) {
   .responsive-calendar {
     font-size: 1rem !important;
@@ -398,7 +379,6 @@
     font-size: 0.7rem !important;
   }
 }
-
 
 @media (max-width: 1500px) {
 
@@ -446,13 +426,13 @@
   font-size: 12px;
   border: 1px solid transparent;
   outline: none;
-  width: 100%;
+  width: 80%;
   text-align: center;
-  transform: translateY(-3.5rem);
+  transform: translateY(-3.67rem);
   padding-bottom: 1rem;
   color: transparent;
   cursor: pointer;
-  height: 3.5rem;
+  height: 2.3rem;
 }
 
 .DatePicker__input::selection {
@@ -575,19 +555,15 @@
   .searchInputContainer {
     height: 2.8rem;
   }
-
   .searchTitleGuest {
     transform: translateX(-0%);
     transform: translateY(-15%);
     text-align: center;
     text-overflow: ellipsis;
   }
-
   .guestP {
     position: absolute;
-    /* left: 10%; */
   }
-
   .input-calendar {
     border: none;
     text-align: center;
@@ -595,7 +571,6 @@
     transform: translate(0%);
     height: 3.5rem;
   }
-
   /* tijdelijke oplossing het is nog niet responsive */
   .DatePicker__input {
     border: solid transparent;
@@ -605,7 +580,6 @@
     min-width: 20vw;
     box-sizing: border-box;
   }
-
   .searchbar-button {
     height: 2.7rem;
     width: 100%;
@@ -613,26 +587,21 @@
     transform: translateX(0%);
     margin-top: 0.5rem;
   }
-
   .bar>div::before {
     background: transparent;
   }
-
   .DatePicker__calendarContainer {
     position: absolute;
     top: calc(-20% + -15.7rem);
     left: 48%;
     transform: translateX(-50%);
   }
-
   .DatePicker__calendarArrow {
     border-color: transparent;
   }
-
   .ClearButton {
     margin-top: 0.5rem;
   }
-
   .error-message {
     background-color: #f8d7da;
     color: #721c24;

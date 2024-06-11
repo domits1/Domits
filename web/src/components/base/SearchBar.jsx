@@ -160,9 +160,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
-
-
-
  useEffect(() => {
   handleSearchWithDelay(false);
 }, [accommodation, address, totalGuests]); 
@@ -234,8 +231,6 @@ const handleSearch = () => {
     setButtonClicked(false);
   }, 1400);
 };
-
-
 
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
@@ -501,9 +496,9 @@ const handleSearch = () => {
               clearIndicator: (provided) => ({
                 ...provided,
                 color: 'black',
-                position: 'absolute',
-                // right: isMobile ? -'2rem' : '0px',
-                // transform: isMobile ? 'translateY(15%) translateX(220%)' : 'translateY(0%) translateX(10%)',
+                
+                position: 'relative',
+                transform: 'translateY(0%)',
                 width: '35px',
                 height: '35px',
               }),
@@ -608,8 +603,6 @@ const handleSearch = () => {
                 fontWeight: 500,
                 fontSize: '1rem',
                 whiteSpace: 'nowrap',
-
-
               }}
             >
               Check in • out
