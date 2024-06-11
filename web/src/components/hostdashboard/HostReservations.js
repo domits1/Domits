@@ -19,9 +19,10 @@ const HostReservations = () => {
     const [selectedReservations, setSelectedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const pageCount = reservationDisplay ? Math.ceil(reservationDisplay.length / 5) : 0;
-    const indexOfLastItem = currentPage * 5;
-    const indexOfFirstItem = indexOfLastItem - 5;
+    const amountOfItems = 10;
+    const pageCount = reservationDisplay ? Math.ceil(reservationDisplay.length / amountOfItems) : 0;
+    const indexOfLastItem = currentPage * amountOfItems;
+    const indexOfFirstItem = indexOfLastItem - amountOfItems;
     const currentItems = reservationDisplay ? reservationDisplay.slice(indexOfFirstItem, indexOfLastItem) : [];
 
     useEffect(() => {
@@ -124,22 +125,23 @@ const HostReservations = () => {
     };
     const asyncUpdateReservation = async (status) => {
         if (window.confirm(`Do you wish to set these booking request(s) as ${status.toLowerCase()}?`)) {
-            for (let i = 0; i < selectedReservations.length; i++) {
                 try {
-                    const options = {
-                        Status: status,
-                        ID: selectedReservations[i].ID
-                    }
-                    const response = await fetch('https://5ycj23b6db.execute-api.eu-north-1.amazonaws.com/default/UpdateReservation', {
-                        method: 'PUT',
-                        body: JSON.stringify(options),
-                        headers: {
-                            'Content-type': 'application/json; charset=UTF-8',
+                    for (let i = 0; i < selectedReservations.length; i++) {
+                        const options = {
+                            Status: status,
+                            ID: selectedReservations[i].ID
                         }
-                    });
-                    if (!response.ok) {
-                        window.alert("Update failed");
-                        throw new Error('Failed to fetch');
+                        const response = await fetch('https://5ycj23b6db.execute-api.eu-north-1.amazonaws.com/default/UpdateReservation', {
+                            method: 'PUT',
+                            body: JSON.stringify(options),
+                            headers: {
+                                'Content-type': 'application/json; charset=UTF-8',
+                            }
+                        });
+                        if (!response.ok) {
+                            window.alert("Update failed");
+                            throw new Error('Failed to fetch');
+                        }
                     }
                     setSelectedReservations([]);
                     await fetchReservations();
@@ -148,7 +150,6 @@ const HostReservations = () => {
                 } finally {
                     window.alert("Update successful");
                 }
-            }
         }
     }
     useEffect(() => {
