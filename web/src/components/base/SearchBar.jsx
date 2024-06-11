@@ -32,6 +32,7 @@ const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, descr
   );
 });
 
+
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
@@ -159,8 +160,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
-
-
  useEffect(() => {
   handleSearchWithDelay(false);
 }, [accommodation, address, totalGuests]); 
@@ -194,7 +193,6 @@ const handleSearchWithDelay = async (shouldNavigate) => {
     setLoading(false);
     return;
   }
-
   try {
     const response = await fetch(apiUrl);
     const data = await response.json();
@@ -218,18 +216,13 @@ const handleSearchWithDelay = async (shouldNavigate) => {
     setLoading(false);
   }
 };
-
 const handleSearch = () => {
   setButtonClicked(true);
-
   const shouldNavigate = location.pathname !== '/';
-
   if (shouldNavigate) {
     setSearchResults([]);
   }
-
   handleSearchWithDelay(shouldNavigate);
-
   setTimeout(() => {
     handleSearchWithDelay(shouldNavigate);
   }, 1000);
@@ -238,8 +231,6 @@ const handleSearch = () => {
     setButtonClicked(false);
   }, 1400);
 };
-
-
 
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
@@ -318,7 +309,6 @@ const handleSearch = () => {
       <div className="bar">
 
         <div className="location">
-          {/* <p className="searchTitle">Location</p> */}
           <PlacesAutocomplete
             value={address}
             onChange={handleChange}
@@ -360,8 +350,8 @@ const handleSearch = () => {
                     className="suggestions-container"
                     style={{
                       position: 'absolute',
-                      top: isMobile ? '100%' : '150%',
-                      left: isMobile ? 0 : -30,
+                      top: isMobile ? '95%' : '150%',
+                      left: isMobile ? -8 : -30,
                       width: isMobile ? '100%' : '135%',
                       backgroundColor: 'white',
                       borderRadius: '15px',
@@ -454,7 +444,7 @@ const handleSearch = () => {
                   width: '100%',
                   border: 'none',
                   height: '2rem',
-                  transform: isMobile ? 'translateX(-25px)' : 'translateY(5px)',
+                  transform: isMobile ? 'translateX(-28px)' : 'translateY(5px)',
                   boxShadow: 'none',
                   background: 'none',
                   padding: '0',
@@ -500,18 +490,19 @@ const handleSearch = () => {
                 '&:hover': {
                   color: 'black',
                   backgroundColor: '#e6e6e6',
-                  transform: 'scale(0.96)',
+                  transform: 'scale(1)',
                 },
               }),
               clearIndicator: (provided) => ({
                 ...provided,
                 color: 'black',
-                position: 'absolute',
-                right: '0px',
-                transform: 'translateY(-15%)',
-                width: '32px',
-                height: '32px',
+                
+                position: 'relative',
+                transform: 'translateY(0%)',
+                width: '35px',
+                height: '35px',
               }),
+              
               singleValue: (provided) => ({
                 ...provided,
                 textAlign: 'center',
@@ -532,7 +523,7 @@ const handleSearch = () => {
               onClick={resetGuests}
               style={{
                 position: 'absolute',
-                right: '0px',
+                right: '0.2rem',
                 top: '50%',
                 transform: 'translateY(-35%)',
                 border: 'none',
@@ -612,8 +603,6 @@ const handleSearch = () => {
                 fontWeight: 500,
                 fontSize: '1rem',
                 whiteSpace: 'nowrap',
-
-
               }}
             >
               Check in • out

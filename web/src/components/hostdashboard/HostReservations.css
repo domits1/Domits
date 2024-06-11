@@ -51,6 +51,14 @@
         margin: 1.5em;
     }
 
+    .sort {
+        max-height: 2vh;
+        max-width: 2vw;
+        margin-left: 3%;
+    }
+    .sort:hover {
+        cursor: pointer;
+    }
     .util-box {
         display: flex;
         flex-direction: row;
