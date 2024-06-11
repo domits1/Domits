@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 
-
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE);
 
+
 const BookingOverview = () => {
-    const location = useLocation();
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -29,6 +36,9 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
 
+
+
+    const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -122,16 +132,51 @@ const BookingOverview = () => {
             return;
         }
 
+        // Assuming you have these variables already defined
+        const paymentID = generateUUID();
+        const userId = cognitoUserId;
+        const accommodationTitle = accommodation.Title;
+        const accommodationId = id;
+        const ownerId = accommodation.OwnerId;
+        const price = accommodationPrice;
+        const startDate = checkIn;
+        const endDate = checkOut;
+
+        const successQueryParams = new URLSearchParams({
+            paymentID,
+            accommodationTitle,
+            userId,
+            accommodationId,
+            ownerId,
+            State: "Pending",
+            price,
+            startDate,
+            endDate
+        }).toString();
+        const cancelQueryParams = new URLSearchParams({
+            paymentID,
+            accommodationTitle,
+            userId,
+            accommodationId,
+            ownerId,
+            State: "Failed",
+            price,
+            startDate,
+            endDate
+        }).toString();
+
+        const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
+        const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
+
         const checkoutData = {
             userId: cognitoUserId,
             amount: accommodationPrice + '00',
             currency: 'eur',
             productName: accommodation.Title,
-            successUrl: 'https://domits.com/guestdashboard/booking',
-            cancelUrl: 'https://domits.com/cancel',
+            successUrl: successUrl,
+            cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
-
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
                 method: 'POST',
