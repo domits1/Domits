@@ -7,15 +7,9 @@ const HostRevenues = () => {
     const [userId, setUserId] = useState(null);
     const [data, setData] = useState(null);
     const formatData = (items) => {
-        if (!Array.isArray(items)) {
-            console.error("Items is not an array:", items);
-            return [];
-        }
-        return items
-            .filter(item => Array.isArray(item) && item.Status === 'Accepted')
-            .map((item) => ({
-                price: `€${item.Price} per night`,
-            }));
+        return items.map((item) => ({
+            price: `€${item.Price} per night`,
+        }));
     };
 
     useEffect(() => {
@@ -47,9 +41,10 @@ const HostRevenues = () => {
 
                     const responseData = await response.json();
                     console.log("Response Data:", responseData);
-                    const formattedData = formatData(responseData);
-                    console.log("Formatted Data:", formattedData);
-                    setData(formattedData);
+
+                    // Ensure responseData is an array
+                    const dataArray = Array.isArray(responseData) ? responseData : [];
+                    setData(dataArray);
 
                 } catch (error) {
                     console.error("Unexpected error:", error);
@@ -62,15 +57,17 @@ const HostRevenues = () => {
         }
     }, [userId]);
 
+    const formattedData = data ? formatData(data) : null;
+
     return (
         <main className="container">
             <section className='host-revenues' style={{ display: "flex", flexDirection: "row" }}>
                 <Pages />
                 <div className="content">
                     <h1>Revenue</h1>
-                    {data ? (
+                    {formattedData ? (
                         <ul>
-                            {data.map((item, index) => (
+                            {formattedData.map((item, index) => (
                                 <li key={index}>{item.price}</li>
                             ))}
                         </ul>
