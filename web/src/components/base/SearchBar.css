@@ -26,7 +26,7 @@
 }
 
 .autocomplete-container input::placeholder {
-  text-align: left;
+  text-align: center;
 }
 
 /* .bar input {
@@ -161,7 +161,7 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
   font-size: 1rem;
-  transform: translateX(18%);
+  margin: auto;
 }
 
 .button-section {
@@ -320,13 +320,11 @@
   text-align: left;
   font-weight: 500;
   color: #000;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   margin-top: 1rem;
 }
 
-.guestP.nowrap {
-  white-space: nowrap;
-}
+
 
 .responsive-calendar {
   font-size: 11px !important;
@@ -489,7 +487,7 @@
     border: 2px solid #0a770f;
     width: 110%;
     max-width: 400px;
-    transform: translateX(-0.5rem);
+    transform: translateX(-1rem);
     margin: auto;
     box-shadow: 0 0 5px hsl(0 0% 68%);
     border-radius: 0.875rem;
@@ -534,13 +532,14 @@
     border: none;
     text-align: center;
     width: 100%;
-    height: 2.5rem;
+    height: 3rem;
     transform: translateY(-15%);
     text-overflow: ellipsis;
+    margin: auto;
   }
 
-  .searchBar::placeholder {
-    transform: translate(26%, -0%);
+  .searchBar * {
+    margin: auto;
   }
 
   .button-section {
@@ -584,7 +583,7 @@
     height: 2.7rem;
     width: 100%;
     border-radius: 10px;
-    transform: translateX(0%);
+    transform: translateX(-2.25%);
     margin-top: 0.5rem;
   }
   .bar>div::before {
