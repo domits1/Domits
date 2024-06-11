@@ -11,17 +11,18 @@ const PaymentConfirm = () => {
         const ID = queryParams.get('paymentID');
         const userId = queryParams.get('userId');
         const accommodationId = queryParams.get('accommodationId');
+        const accommodationTitle = queryParams.get('accommodationTitle,');
         const ownerId = queryParams.get('ownerId');
         const State = queryParams.get('State');
         const price = queryParams.get('price');
         const startDate = queryParams.get('startDate');
         const endDate = queryParams.get('endDate');
-
         // Construct the payload to send to the API
         const payload = {
             ID,
             userId,
             accommodationId,
+            accommodationTitle,
             ownerId,
             State,
             price,

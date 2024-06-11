@@ -135,6 +135,7 @@ const BookingOverview = () => {
         // Assuming you have these variables already defined
         const paymentID = generateUUID();
         const userId = cognitoUserId;
+        const accommodationTitle = accommodation.Title;
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const price = accommodationPrice;
@@ -143,6 +144,7 @@ const BookingOverview = () => {
 
         const successQueryParams = new URLSearchParams({
             paymentID,
+            accommodationTitle,
             userId,
             accommodationId,
             ownerId,
@@ -153,6 +155,7 @@ const BookingOverview = () => {
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
+            accommodationTitle,
             userId,
             accommodationId,
             ownerId,
