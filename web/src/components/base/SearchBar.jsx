@@ -350,8 +350,8 @@ const handleSearch = () => {
                     className="suggestions-container"
                     style={{
                       position: 'absolute',
-                      top: isMobile ? '100%' : '150%',
-                      left: isMobile ? 0 : -30,
+                      top: isMobile ? '95%' : '150%',
+                      left: isMobile ? -8 : -30,
                       width: isMobile ? '100%' : '135%',
                       backgroundColor: 'white',
                       borderRadius: '15px',
