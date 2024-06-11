@@ -55,7 +55,7 @@ const ReservationItem = ({ reservation, selectedOption, selectedReservations, ha
                     {reservation.Status}
                 </td>
             )}
-            <td>{reservation.Price}</td>
+            <td>€ {reservation.Price}</td>
         </tr>
     );
 };
