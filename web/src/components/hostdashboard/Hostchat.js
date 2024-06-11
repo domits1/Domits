@@ -375,7 +375,7 @@ const chatContainerRef = useRef(null);
 
 
     return (
-        <main className="chat">
+        <main className="container">
             <div className="chat__headerWrapper">
          
                 <h2 className="chat__heading">Message dashboard</h2>
