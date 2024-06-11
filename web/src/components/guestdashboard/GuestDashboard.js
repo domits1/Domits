@@ -4,33 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
 
-const listAccommodationsQuery = `
-query ListAccommodations {
-  listAccommodations {
-    items {
-      id
-      accommodation
-      description
-      createdAt
-      updatedAt
-    }
-    nextToken
-  }
-}
-`;
-
-const listChatsQuery = `
-query ListChats($filter: ModelChatFilterInput) {
-  listChats(filter: $filter) {
-    items {
-      id
-      recipientEmail
-      isRead
-    }
-  }
-}
-`;
-
 const GuestDashboard = () => {
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
 
@@ -66,21 +39,12 @@ const GuestDashboard = () => {
     useEffect(() => {
     }, [user.email]);
 
-    
-    
-
-    
-
-    const navigate = useNavigate();
-
     return (
         <div className="container">
             <h2>Dashboard</h2>
             <div className="dashboard">
                 <Pages />
                 <div className="content">
-                    <div className="leftContent">
-                    </div>
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
                         <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</div>
