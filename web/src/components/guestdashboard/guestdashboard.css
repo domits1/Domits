@@ -6,7 +6,6 @@
     margin-bottom: 30px;
 }
 
-
 .dashboards {
     display: grid;
     grid-template-columns: 200px auto;
@@ -141,7 +140,7 @@
     .dashboards {
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        align-items: center;
     }
 
     .dashboard {

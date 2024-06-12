@@ -1,4 +1,6 @@
-.PaymentsGuestDashboard {
+.bookingContent {
+    margin-left: 20px;
+    margin-right: 20px;
     display: flex;
     flex-direction: column;
     margin: auto;
@@ -100,11 +102,50 @@
     align-items: center;
 }
 
-.add-payment-button {
-    position: absolute; /* Change to absolute positioning */
-    right: 20px; /* Adjust as needed to hug the right side */
-    top: 50%; /* Center vertically */
-    transform: translateY(-50%); /* Adjusts for exact vertical centering */
+.filterContainer {
+    text-align: center;
+}
+.filterContainer label {
+    margin-right: 10px;
+}
+
+.filterContainer select {
+    padding: 5px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+}
+
+.bookings-table {
+    width: 90%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    height: 100%;
+}
+
+.bookings-table th, .bookings-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.bookings-table th {
+    background-color: #f2f2f2;
+    color: black;
+}
+
+.bookings-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.bookings-table tr:hover {
+    background-color: #ddd;
+    cursor: pointer;
+}
+
+.bookings-table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
     background-color: #4CAF50;
     color: white;
     border: none;

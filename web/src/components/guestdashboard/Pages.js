@@ -3,7 +3,8 @@ import './guestdashboard.css';
 
 import dashboard from "../../images/icons/dashboard-icon.png";
 import message from "../../images/icons/message-icon.png";
-import payment from "../../images/icons/booking-icon.png";
+import booking from "../../images/icons/booking-icon.png";
+import payment from "../../images/icons/payment-icon.png";
 import listings from "../../images/icons/listings-icon.png";
 import settings from "../../images/icons/settings-icon.png";
 import { useNavigate } from 'react-router-dom';
@@ -19,13 +20,13 @@ function Pages() {
         <img src={dashboard} alt="Profile"></img>
         <p>Dashboard</p>
       </div>
+      <div className="wijzers" onClick={() => navigate("/guestdashboard/bookings")}>
+        <img src={booking} alt="Booking"></img>
+        <p>Bookings</p>
+      </div>
       <div className="wijzers" onClick={() => navigate("/guestdashboard/chat")}>
         <img src={message} alt="Messages"></img>
         <p>Messages</p>
-      </div>
-      <div className="wijzers" onClick={() => navigate("/guestdashboard/booking")}>
-        <img src={payment} alt="Booking"></img>
-        <p>Booking</p>
       </div>
       <div className="wijzers" onClick={() => navigate("/guestdashboard/payments")}>
         <img src={payment} alt="Booking"></img>
