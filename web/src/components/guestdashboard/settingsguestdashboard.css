@@ -1,0 +1,92 @@
+.settingsContent {
+    flex-grow: 1;
+    padding: 20px;
+}
+
+.horizontalOptions {
+    display: flex;
+    justify-content: flex-start; /* Aligns items to the start */
+    margin-bottom: 10px; /* Adds some space below the container */
+}
+
+.flexwrap{
+    flex-wrap: wrap;
+}
+
+.settingsOptions .settingsOption, .dataRemovalOption, .horizontalOptions .settingsOption {
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    flex: 1; /* Allows flexible box sizes */
+    min-width: 120px; /* Minimum width for smaller screens, adjust as needed */
+    margin-right: 10px; /* Adds spacing between horizontal options */
+}
+
+/* Reset the margin-right for the last item in a flex container to prevent extra spacing */
+.horizontalOptions .settingsOption:last-child {
+    margin-right: 0;
+}
+
+
+.dataRemovalSection {
+    display: flex;
+    flex-wrap: wrap; /* Allows items to wrap as needed */
+    justify-content: flex-start; /* Align items to the start of the container */
+    margin-top: 20px;
+}
+
+.dataRemovalSection h2 {
+    width: 100%; /* Ensures the heading takes full width to force items below */
+    margin-bottom: 10px;
+}
+
+.dataRemovalOption {
+    background-color: #fff;
+    border-radius: 15px;
+    padding: 10px 20px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    margin-right: 10px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    flex: 1;
+    min-width: 120px;
+    min-height: 60px;
+}
+
+
+.dataRemovalSection h2 {
+    flex-basis: 100%;
+    margin-bottom: 10px;
+}
+
+.publicProfileContent {
+    margin-top: 20px;
+}
+
+.publicProfileContent .profileField {
+    margin-bottom: 20px;
+}
+
+.publicProfileContent .profileField input {
+    margin-left: 10px;
+}
+
+.publicProfileContent .profilePicture {
+    display: flex;
+    justify-content: center;
+}
+
+.publicProfileContent .profilePicture .icon {
+    width: 100px;
+    height: 100px;
+}
+
+
+
