@@ -32,21 +32,43 @@ function OnboardingHost() {
     }
 
     let [userId, setUserId] = useState(null);
+    const [hasStripe, setHostStripe] = useState(false);
 
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
                 setUserId(user.attributes.sub);
             } else {
-                navigate('/login'); // Redirect to login if not logged in
+                navigate('/login');
             }
         }).catch(error => {
             console.error("Error setting user id:", error);
-            navigate('/login'); // Redirect on error
+            navigate('/login');
         });
     }, [navigate]);
 
-    const [page, setPage] = useState(1); // Track the current page
+    useEffect(() => {
+        const checkHostStripeAcc = async (hostID) => {
+            try {
+                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    },
+                    body: JSON.stringify({ sub: hostID }),
+                });
+                const data = await response.json();
+                if (data.hasStripeAccount) {
+                    setHostStripe(true);
+                }
+            } catch (error) {
+                console.error("Error fetching user data or Stripe status:", error);
+            }
+        }
+        checkHostStripeAcc(userId);
+    }, [userId]);
+
+    const [page, setPage] = useState(1);
     const [formData, setFormData] = useState({
         ID: generateUUID(),
         Title: "",
@@ -82,6 +104,7 @@ function OnboardingHost() {
         },
         StartDate: "",
         EndDate: "",
+        Drafted: true,
         AccommodationType: "Room",
         OwnerId: ""
     });
@@ -186,7 +209,8 @@ function OnboardingHost() {
                 SystemConfiguration: {
                     ...prevData.Features,
                     [name]: checked,
-                }
+                },
+                Drafted: checked
             }));
         } else if (type === 'number' || type === 'range') {
             const newValue = value || '';
@@ -780,6 +804,17 @@ function OnboardingHost() {
                         <section className="listing-calendar">
                             <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
                         </section>
+                        <label>
+                            <input
+                                type="checkbox"
+                                className="radioInput"
+                                name="Drafted"
+                                onChange={handleInputChange}
+                                disabled={!(formData.StartDate && formData.EndDate && hasStripe)}
+                                checked={formData.Drafted}
+                            />
+                            Mark as draft (Stripe account and date range is required)
+                        </label>
                         <section className="listing-info enlist-info">
                             <img src={info} className="info-icon"/>
                             <p className="info-msg">Fields with * are mandatory</p>
@@ -802,7 +837,8 @@ function OnboardingHost() {
                                     opacity: isFormFilled() ? 1 : 0.5
                                 }}
                                 disabled={!isFormFilled()}
-                            >Enlist</button>
+                            >Enlist
+                            </button>
                         </nav>
                     </main>
                 );

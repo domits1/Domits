@@ -31,7 +31,6 @@ const Accommodations = ({ searchResults }) => {
       city: item.City,
       country: item.Country,
       details: item.Description,
-      size: `${item.Measurements}m²`,
       price: `€${item.Rent} per night`,
       id: item.ID,
       bathrooms: `${item.Bathrooms} Bathrooms`,
