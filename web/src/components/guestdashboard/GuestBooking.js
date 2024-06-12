@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
+import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 import Pages from './Pages.js';
 import './paymentsguestdashboard.css';
@@ -106,7 +107,7 @@ const BookingGuestDashboard = () => {
                                             <td>{booking.Price}</td>
                                             <td>{booking.StartDate}</td>
                                             <td>{booking.EndDate}</td>
-                                            <td>{booking.createdAt}</td>
+                                            <td>{dateFormatterDD_MM_YYYY(booking.createdAt)}</td>
                                         </tr>
                                     ))
                                 )}
