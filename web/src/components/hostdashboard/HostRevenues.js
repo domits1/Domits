@@ -41,8 +41,6 @@ const HostRevenues = () => {
 
                     const responseData = await response.json();
                     console.log("Response Data:", responseData);
-
-                    // Ensure responseData is an array
                     const dataArray = Array.isArray(responseData) ? responseData : [];
                     setData(dataArray);
 
