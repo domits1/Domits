@@ -75,91 +75,95 @@ function Pages() {
 
   return (
       <div className="dashboardSection section-1 host-navigation">
-        <div className="wijzer" onClick={() => navigate("/hostdashboard")}>
-          <img src={dashboard} alt="Dashboard"></img>
-          <p>Dashboard</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/calendar")}>
-          <img src={calendar} alt="Calendar"></img>
-          <p>Calendar</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/reservations")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Reservations</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/chat")}>
-          <img src={message} alt="Messages"></img>
-          <p>Messages</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/revenues")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Revenues</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/reporting")}>
-          <img src={payment} alt="Payments"></img>
-          <p>Reporting</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/occupancy")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Occupancy/ADR</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/reviews")}>
-          <img src={listings} alt="Reviews"></img>
-          <p>Reviews</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/property-care")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Property care</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/iot-hub")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>IoT Hub</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/pricing")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Pricing</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/distribution")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Distribution</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/monitoring")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Monitoring</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/screening")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Screening</p>
-        </div>
-        <br/>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/listings")}>
-          <img src={listings} alt="Listing"></img>
-          <p>Listing</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/settings")}>
-          <img src={settings} alt="Settings"></img>
-          <p>Settings</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/setup")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Setup</p>
-        </div>
-        <div className="wijzer" onClick={() => navigate("/hostdashboard/promo-codes")}>
-          <img src={dashboard} alt="Dashboard"/>
-          <p>Promo codes</p>
-        </div>
-        {loading ? (
-            <div className="spinnerdiv">
-              <img className="spinner" src={spinner} alt="Loading"/>
-            </div>
-        ) : (
-            <div className="wijzer-grn" onClick={handleStripeAction}>
-              <div className="stripe-icon-div">
-                <img src={stripe} className="stripe-icon" alt="Stripe"/>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard")}>
+              <img src={dashboard} alt="Dashboard"></img>
+              <p>Dashboard</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/calendar")}>
+              <img src={calendar} alt="Calendar"></img>
+              <p>Calendar</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/reservations")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Reservations</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/drafts")}>
+              <img src={dashboard} alt="Drafts"/>
+              <p>Drafts</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/chat")}>
+              <img src={message} alt="Messages"></img>
+              <p>Messages</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/revenues")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Revenues</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/reporting")}>
+              <img src={payment} alt="Payments"></img>
+              <p>Reporting</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/occupancy")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Occupancy/ADR</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/reviews")}>
+              <img src={listings} alt="Reviews"></img>
+              <p>Reviews</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/property-care")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Property care</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/iot-hub")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>IoT Hub</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/pricing")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Pricing</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/distribution")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Distribution</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/monitoring")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Monitoring</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/screening")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Screening</p>
+          </div>
+          <br/>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/listings")}>
+              <img src={listings} alt="Listing"></img>
+              <p>Listing</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/settings")}>
+              <img src={settings} alt="Settings"></img>
+              <p>Settings</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/setup")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Setup</p>
+          </div>
+          <div className="wijzer" onClick={() => navigate("/hostdashboard/promo-codes")}>
+              <img src={dashboard} alt="Dashboard"/>
+              <p>Promo codes</p>
+          </div>
+          {loading ? (
+              <div className="spinnerdiv">
+                  <img className="spinner" src={spinner} alt="Loading"/>
               </div>
-              <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>
-            </div>
-        )}
+          ) : (
+              <div className="wijzer-grn" onClick={handleStripeAction}>
+                  <div className="stripe-icon-div">
+                      <img src={stripe} className="stripe-icon" alt="Stripe"/>
+                  </div>
+                  <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>
+              </div>
+          )}
       </div>
   );
 }
