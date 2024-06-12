@@ -7,6 +7,11 @@
 }
 
 
+.dashboards {
+    display: grid;
+    grid-template-columns: 200px auto;
+}
+
 .dashboard {
     display: grid;
     grid-template-columns: 200px auto;
@@ -134,6 +139,12 @@
 
 @media screen and (max-width: 830px) {
     .dashboards {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .dashboard {
         display: flex;
         flex-direction: column;
         justify-content: center;
