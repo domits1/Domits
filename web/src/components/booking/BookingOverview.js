@@ -112,7 +112,7 @@ const BookingOverview = () => {
         return <div>Loading...</div>;
     }
 
-    // Helper function to calculate the number of days between two dates in YYYY-MM-DD format
+    
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -131,7 +131,7 @@ const BookingOverview = () => {
             return;
         }
 
-        // Assuming you have these variables already defined
+       
         const paymentID = generateUUID();
         const userId = cognitoUserId;
         const accommodationTitle = accommodation.Title;
@@ -202,13 +202,13 @@ const BookingOverview = () => {
             console.error('Error initiating Stripe Checkout:', error);
             setError('Error initiating Stripe Checkout. Please try again later.');
         } finally {
-            setIsProcessing(false); // Reset the cursor once processing is done
+            setIsProcessing(false);
         }
     };
 
     const handleConfirmAndPay = (e) => {
         e.preventDefault();
-        setIsProcessing(true); // Set the cursor to wait
+        setIsProcessing(true);
         initiateStripeCheckout();
     };
 
