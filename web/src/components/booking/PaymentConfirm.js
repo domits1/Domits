@@ -7,33 +7,33 @@ const PaymentConfirm = () => {
     const [accommodationTitle, setAccommodationTitle] = useState('');
 
     useEffect(() => {
-        // Extract query parameters from URL
         const queryParams = new URLSearchParams(location.search);
         const ID = queryParams.get('paymentID');
         const userId = queryParams.get('userId');
         const accommodationId = queryParams.get('accommodationId');
-        const accommodationTitle = queryParams.get('accommodationTitle,');
+        const rawAccommodationTitle = queryParams.get('accommodationTitle'); 
         const ownerId = queryParams.get('ownerId');
         const State = queryParams.get('State');
         const price = queryParams.get('price');
         const startDate = queryParams.get('startDate');
         const endDate = queryParams.get('endDate');
-        const decodedAccommodationTitle = decodeURIComponent('accommodationTitle');
+        
+        // Decode the accommodationTitle
+        const decodedAccommodationTitle = decodeURIComponent(rawAccommodationTitle);
         setAccommodationTitle(decodedAccommodationTitle);
-        console.log(accommodationTitle)
-
 
         const payload = {
             ID,
             userId,
             accommodationId,
-            accommodationTitle,
+            accommodationTitle: decodedAccommodationTitle, // Ensure to use the decoded title
             ownerId,
             State,
             price,
             startDate,
             endDate
         };
+
         const storeData = async () => {
             try {
                 const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/store-checkout', {
@@ -45,6 +45,7 @@ const PaymentConfirm = () => {
                 });
 
                 if (response.ok) {
+                    navigate('/guestdashboard/bookings');
                 } else {
                     console.error('Failed to store data:', response.statusText);
                 }
@@ -54,7 +55,7 @@ const PaymentConfirm = () => {
         };
 
         storeData();
-    }, [location, history]);
+    }, [location]);
 
     return (
         <div>
