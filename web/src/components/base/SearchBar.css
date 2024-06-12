@@ -28,28 +28,19 @@
 .autocomplete-container input::placeholder {
   text-align: center;
 }
-
-/* .bar input {
-  margin-top: 0;
-  padding-top: 0;
-} */
-
 .searchTitle {
   color: #0D9813;
   font-size: 1rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
 }
-
 .check-in {
   width: 17%;
   cursor: auto;
 }
-
 .location {
   width: 34%;
 }
-
 .accommodation {
   width: 25%;
   border: none;
@@ -97,7 +88,7 @@
 
 .DatePicker__calendarContainer {
   position: absolute;
-  top: calc(-20% + 0.7rem);
+  top: calc(-20% + 0.4rem);
   left: 60%;
   transform: translateX(-50%);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
@@ -472,6 +463,9 @@
   padding: 0 2.6em;
   position: relative;
 }
+.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(.-selectedEnd):not(.-selectedBetween) {
+  color: inherit; /* of color: #fff; */
+}
 
 
 @media (max-width: 730px) {
@@ -487,7 +481,7 @@
     border: 2px solid #0a770f;
     width: 110%;
     max-width: 400px;
-    transform: translateX(-1rem);
+    transform: translateX(-0.9rem);
     margin: auto;
     box-shadow: 0 0 5px hsl(0 0% 68%);
     border-radius: 0.875rem;
