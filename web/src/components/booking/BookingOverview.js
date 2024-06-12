@@ -28,6 +28,7 @@ const BookingOverview = () => {
     const [error, setError] = useState(null);
 
     const [accommodation, setAccommodation] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false); // New state for cursor wait
     const searchParams = new URLSearchParams(location.search);
     const id = searchParams.get('id');
     const checkIn = searchParams.get('checkIn');
@@ -35,8 +36,6 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('adults'), 10);
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
-
-
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
@@ -177,6 +176,7 @@ const BookingOverview = () => {
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
+
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
                 method: 'POST',
@@ -201,16 +201,19 @@ const BookingOverview = () => {
         } catch (error) {
             console.error('Error initiating Stripe Checkout:', error);
             setError('Error initiating Stripe Checkout. Please try again later.');
+        } finally {
+            setIsProcessing(false); // Reset the cursor once processing is done
         }
     };
 
     const handleConfirmAndPay = (e) => {
         e.preventDefault();
+        setIsProcessing(true); // Set the cursor to wait
         initiateStripeCheckout();
     };
 
     return (
-        <main className="container Bookingcontainer">
+        <main className="container Bookingcontainer" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>
