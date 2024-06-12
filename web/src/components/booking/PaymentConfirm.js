@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 const PaymentConfirm = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const [accommodationTitle, setAccommodationTitle] = useState('');
 
     useEffect(() => {
         // Extract query parameters from URL
@@ -17,7 +18,11 @@ const PaymentConfirm = () => {
         const price = queryParams.get('price');
         const startDate = queryParams.get('startDate');
         const endDate = queryParams.get('endDate');
-        // Construct the payload to send to the API
+        const decodedAccommodationTitle = decodeURIComponent('accommodationTitle');
+        setAccommodationTitle(decodedAccommodationTitle);
+        console.log(accommodationTitle)
+
+
         const payload = {
             ID,
             userId,
@@ -40,7 +45,6 @@ const PaymentConfirm = () => {
                 });
 
                 if (response.ok) {
-                    navigate('/guestdashboard/booking');
                 } else {
                     console.error('Failed to store data:', response.statusText);
                 }

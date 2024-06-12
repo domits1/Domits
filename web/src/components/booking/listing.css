@@ -129,6 +129,7 @@
 
 .feature-item.feature-absent {
   opacity: 0.5;
+  box-shadow: 0px 0px 0px;
 }
 
 /* Stijl voor de feature iconen */

@@ -115,7 +115,7 @@ function App() {
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<GuestPayments />} />
                             <Route path="/guestdashboard/reviews" element={<GuestReviews />} />
-                            <Route path="/guestdashboard/booking" element={<GuestBooking />} />
+                            <Route path="/guestdashboard/bookings" element={<GuestBooking />} />
                             <Route path="/guestdashboard/settings" element={<GuestSettings />} />
                             <Route path="/guestdashboard/chat" element={<Chat />} />
                             {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}
