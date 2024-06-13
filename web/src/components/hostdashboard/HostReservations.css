@@ -41,20 +41,22 @@
             box-shadow: none;
         }
     }
+    .reservation-th {
+        min-width: 7vw;
+    }
     .reservation-display {
         display: flex;
         flex-direction: column;
         box-shadow: 0 0 20px 10px #dedede;
         padding: 5%;
-        min-height: 50%;
         min-width: 50vw;
         gap: 1.5em;
         margin: 1.5em;
     }
 
     .sort {
-        max-height: 2vh;
-        max-width: 2vw;
+        max-height: 1.5vh;
+        max-width: 1.5vw;
         margin-left: 3%;
     }
     .sort:hover {
