@@ -87,10 +87,6 @@ function Pages() {
               <img src={dashboard} alt="Dashboard"/>
               <p>Reservations</p>
           </div>
-          <div className="wijzer" onClick={() => navigate("/hostdashboard/drafts")}>
-              <img src={dashboard} alt="Drafts"/>
-              <p>Drafts</p>
-          </div>
           <div className="wijzer" onClick={() => navigate("/hostdashboard/chat")}>
               <img src={message} alt="Messages"></img>
               <p>Messages</p>

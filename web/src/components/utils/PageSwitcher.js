@@ -1,15 +1,7 @@
 import React, {useEffect, useState} from "react";
 import ImageSlider from "./ImageSlider";
 import './PageSwitcher.css';
-
-/**
- *
- * @param accommodations = An array of accommodations for listing
- * @param amount = The amount of accommodations you want to display per page
- * @returns {Element}
- * @constructor
- */
-function PageSwitcher({accommodations, amount, onDelete}) {
+function PageSwitcher({accommodations, amount, hasStripe, onDelete , onUpdate}) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = amount;
     const pageCount = Math.ceil(accommodations.length / itemsPerPage);
@@ -72,9 +64,19 @@ function PageSwitcher({accommodations, amount, onDelete}) {
                             }
                         </section>
                         <div className="listing-button-box">
-                            <button className="listing-button listing-delete" onClick={() => onDelete(accommodation)}>Remove</button>
-                            {accommodation.Drafted === true ? <button className="listing-button listing-live">Set Live</button> :
-                                <button className="listing-button listing-draft">Set Draft</button>}
+                            <button className="listing-button listing-delete"
+                                    onClick={() => onDelete(accommodation)}>Remove
+                            </button>
+                            {accommodation.Drafted === true ?
+                                <button className={"listing-button listing-live"}
+                                        onClick={() => onUpdate(accommodation.ID, false)}
+                                        disabled={!(hasStripe && (accommodation.StartDate && accommodation.EndDate))}
+                                        style={{backgroundColor: !(hasStripe && (accommodation.StartDate && accommodation.EndDate)) ? 'gray' : '#003366'}}
+                                >Set Live</button>
+                                :
+                                <button className="listing-button listing-draft"
+                                        onClick={() => onUpdate(accommodation.ID, true)}
+                                >Set Draft</button>}
                         </div>
                     </section>
                 ))}

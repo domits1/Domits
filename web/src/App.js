@@ -44,7 +44,6 @@ import FlowContext from './FlowContext'
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./components/hostdashboard/HostReservations";
-import HostDraft from"./components/hostdashboard/HostDraft";
 import HostRevenues from "./components/hostdashboard/HostRevenues";
 import HostOccupancy from "./components/hostdashboard/HostOccupancy";
 import HostPropertyCare from "./components/hostdashboard/HostPropertyCare";
@@ -136,7 +135,6 @@ function App() {
                             <Route path="/hostdashboard/reviews" element={<HostReviews />} />
                             <Route path="/hostdashboard/chat" element={<Hostchat />} />
                             <Route path="/hostdashboard/reservations" element={<HostReservations />}/>
-                            <Route path="/hostdashboard/drafts" element={<HostDraft />}/>
                             <Route path="/hostdashboard/revenues" element={<HostRevenues />} />
                             <Route path="/hostdashboard/occupancy" element={<HostOccupancy />} />
                             <Route path="/hostdashboard/property-care" element={<HostPropertyCare />} />
