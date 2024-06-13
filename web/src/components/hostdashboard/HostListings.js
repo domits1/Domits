@@ -47,27 +47,20 @@ function HostListings() {
                 if (!response.ok) {
                     throw new Error('Failed to fetch');
                 }
-                // Extracting the response body
                 const data = await response.json();
-                // Now 'responseData' should contain your {statusCode, headers, body}
-                // Check if 'responseData.body' exists and is a string
                 if (data.body && typeof data.body === 'string') {
-                    // Parse the JSON string inside 'responseData.body'
                     const accommodationsArray = JSON.parse(data.body);
-                    // Ensure the parsed data is an array before setting the state
                     if (Array.isArray(accommodationsArray)) {
                         setAccommodations(accommodationsArray);
                     } else {
-                        // Handle the case where the parsed data is not an array
                         console.error("Parsed data is not an array:", accommodationsArray);
-                        setAccommodations([]); // Setting a default or handling as needed
+                        setAccommodations([]);
                     }
                 }
             } catch (error) {
-                // Error Handling
                 console.error("Unexpected error:", error);
             } finally {
-                setIsLoading(false); // End loading regardless of promise outcome
+                setIsLoading(false);
             }
         }
     };
@@ -122,7 +115,9 @@ function HostListings() {
                                     <img src={spinner}/>
                                 </div>
                             ) : accommodations.length > 0 ? (
-                                <PageSwitcher accommodations={accommodations} amount={5} onDelete={asyncDeleteAccommodation}/>
+                                <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === false)}
+                                              amount={3}
+                                              onDelete={asyncDeleteAccommodation}/>
                             ) : (
                                 <div className="accommodation-box">
                                     <p className="accommodation-alert">It appears that you have not listed any accommodations yet...</p>
@@ -130,7 +125,18 @@ function HostListings() {
                             )}
                         </div>
                         <div className="box fullBox">
-                            <p className="header">Pending</p>
+                            <p className="header">Drafted listings</p>
+                            {isLoading ? (
+                                <div>
+                                    <img src={spinner}/>
+                                </div>
+                            ) : accommodations.length > 0 ? (
+                                <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === true)} amount={3} onDelete={asyncDeleteAccommodation}/>
+                            ) : (
+                                <div className="accommodation-box">
+                                    <p className="accommodation-alert">It appears that you have not drafted any accommodations yet...</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

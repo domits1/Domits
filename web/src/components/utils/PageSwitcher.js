@@ -42,10 +42,10 @@ function PageSwitcher({accommodations, amount, onDelete}) {
 
 
     return (
-        <div className="page-body">
+        <main className="page-body">
                 {currentItems.map((accommodation) => (
-                    <div key={accommodation.ID} className="accommodation-tab">
-                        <div className="accommodation-left">
+                    <section key={accommodation.ID} className="accommodation-tab">
+                        <section className="accommodation-left">
                             <p className="accommodation-title">{accommodation.Title}</p>
                             <p className="accommodation-location">{accommodation.Country},
                                 {accommodation.City},
@@ -53,12 +53,11 @@ function PageSwitcher({accommodations, amount, onDelete}) {
                                 {accommodation.PostalCode}
                             </p>
                             <ImageSlider images={accommodation.Images} seconds={5}/>
-                        </div>
+                        </section>
 
-                        <div className="accommodation-right">
-                            <p>Description: {accommodation.Description}</p>
+                        <section className="accommodation-right">
+                            <p>Subtitle: {accommodation.Subtitle}</p>
                             <p>Listed on: {formatDate(accommodation.createdAt)}</p>
-                            <p>Measurements: {accommodation.Measurements}m²</p>
                             <p>Features: {accommodation.Features.length > 0 ? (
                                 getFeatures(accommodation.Features)) : ('none')}
                             </p>
@@ -71,9 +70,13 @@ function PageSwitcher({accommodations, amount, onDelete}) {
                                 </p>) :
                                 (<p>Date range not set</p>)
                             }
+                        </section>
+                        <div className="listing-button-box">
+                            <button className="listing-button listing-delete" onClick={() => onDelete(accommodation)}>Remove</button>
+                            {accommodation.Drafted === true ? <button className="listing-button listing-live">Set Live</button> :
+                                <button className="listing-button listing-draft">Set Draft</button>}
                         </div>
-                        <button className="listing-delete" onClick={() => onDelete(accommodation)}>Remove</button>
-                    </div>
+                    </section>
                 ))}
             <div className="pagination">
                 <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
@@ -88,7 +91,7 @@ function PageSwitcher({accommodations, amount, onDelete}) {
                     {'>'}
                 </button>
             </div>
-        </div>
+        </main>
     );
 }
 
