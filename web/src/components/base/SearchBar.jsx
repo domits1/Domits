@@ -160,77 +160,58 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
+  
   useEffect(() => {
     handleSearchWithDelay(false);
-  }, [accommodation, address, totalGuests]);
+}, [accommodation, address, totalGuests]);
 
-  useEffect(() => {
+useEffect(() => {
     if (location.state && location.state.searchResults) {
-      setSearchResults(location.state.searchResults);
+        setSearchResults(location.state.searchResults);
     }
-  }, [location]);
+}, [location]);
 
-  const handleSearchWithDelay = async (shouldNavigate) => {
+const handleSearchWithDelay = async (shouldNavigate) => {
     setLoading(true);
     setError("");
 
     const queryParams = [
-      accommodation ? `type=${accommodation}` : null,
-      address ? `searchTerm=${address}` : null,
-      totalGuests > 0 ? `guests=${totalGuests}` : null,
+        accommodation ? `type=${accommodation}` : null,
+        address ? `searchTerm=${address}` : null,
+        totalGuests > 0 ? `guests=${totalGuests}` : null,
     ].filter(Boolean).join('&');
 
     const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
 
-    const cachedResults = localStorage.getItem(apiUrl);
-    if (cachedResults) {
-      const parsedResults = JSON.parse(cachedResults);
-      if (shouldNavigate) {
-        navigate('/', { state: { searchResults: parsedResults } });
-      } else {
-        setSearchResults(parsedResults);
-      }
-      setLoading(false);
-      return;
-    }
     try {
-      const response = await fetch(apiUrl);
-      const data = await response.json();
-      if (data.length === 0) {
-        setTimeout(() => {
-          setError("No results have been found");
-        }, 0);
-      } else {
-        localStorage.setItem(apiUrl, JSON.stringify(data));
-        if (shouldNavigate) {
-          navigate('/', { state: { searchResults: data } });
+        const response = await fetch(apiUrl);
+        const data = await response.json();
+        if (data.length === 0) {
+            setError("No results have been found");
         } else {
-          setSearchResults(data);
+            if (shouldNavigate) {
+                navigate('/', { state: { searchResults: data } });
+            } else {
+                setSearchResults(data);
+            }
         }
-      }
-    }
-    catch (error) {
-      console.error('Error during fetch:', error);
-      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+    } catch (error) {
+        console.error('Error during fetch:', error);
+        setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
-  };
-  const handleSearch = () => {
+};
+
+const handleSearch = () => {
     setButtonClicked(true);
     const shouldNavigate = location.pathname !== '/';
     if (shouldNavigate) {
-      setSearchResults([]);
+        setSearchResults([]);
     }
     handleSearchWithDelay(shouldNavigate);
-    setTimeout(() => {
-      handleSearchWithDelay(shouldNavigate);
-    }, 1000);
+};
 
-    setTimeout(() => {
-      setButtonClicked(false);
-    }, 1400);
-  };
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
