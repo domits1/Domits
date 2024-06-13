@@ -103,7 +103,7 @@ function HostDashboard() {
                 <Pages/>
                 <PagesDropdown/>
                 <div>
-                <div className="contentContainer">
+                <div className="contentContainer-dashboard">
                     <div className="dashboard-1">
                         <div className="dashboard-head">
                             <h3>My recent listings:</h3>
@@ -123,7 +123,9 @@ function HostDashboard() {
                         ) : accommodations.length > 0 ? (
                             accommodations.map((accommodation, index) => (
                                 <div key={index} className="dashboard-card"
-                                     onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>
+                                     onClick={() => !accommodation.Drafted ? navigate(`/listingdetails?ID=${accommodation.ID}`) :
+                                         alert('This accommodation is drafted and cannot be viewed in listing details!')
+                                }>
                                     <div className="accommodation-text">
                                         <p className="accommodation-title">{accommodation.Title}</p>
                                         <p className="accommodation-location"> {accommodation.City},
