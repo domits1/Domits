@@ -1,73 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import './settingsguestdashboard.css';
-import './guestdashboard.css';
+import React, { useEffect, useState } from "react";
+import editIcon from "../../images/icons/edit-05.png";
+import { useNavigate } from 'react-router-dom';
+import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
-import { Link, useNavigate } from 'react-router-dom';
-import faceHappyIcon from "../../images/icons/face-happy.png";
-import settingsIcon from "../../images/icons/settings-04.png";
-import { Auth } from 'aws-amplify';
 
-const SettingsTab = () => {
-    const navigate = useNavigate();
-    const [showMailSettings, setShowMailSettings] = useState(false);
-    const [showPhotoSettings, setShowPhotoSettings] = useState(false);
-    const [newEmail, setNewEmail] = useState('');
-    const [confirmEmail, setConfirmEmail] = useState('');
-    const [verificationCode, setVerificationCode] = useState('');
-    const [showVerificationCodeInput, setShowVerificationCodeInput] = useState(false);
-    const [username, setUsername] = useState('');
-    const [userId, setUserId] = useState('');
+const GuestSettings = () => {
+    const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
 
     useEffect(() => {
-        const fetchUserInfo = async () => {
-            try {
-                const user = await Auth.currentAuthenticatedUser();
-                setUsername(user.attributes['custom:username']);
-                setUserId(user.attributes.sub);
-            } catch (error) {
-                console.error('Error fetching user info:', error);
-            }
-        };
-
-        fetchUserInfo();
+        fetchAccommodations();
+        fetchUserData();
     }, []);
 
-    const handleChangeEmail = async () => {
-        if (newEmail !== confirmEmail) {
-            console.log("Emails do not match");
-            return;
-        }
-
+    const fetchUserData = async () => {
         try {
-            const response = await fetch('https://z0j63xfxrb.execute-api.eu-north-1.amazonaws.com/dev/changeEmail', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ newEmail, userId, username }),
+            const userInfo = await Auth.currentUserInfo();
+            setUser({
+                email: userInfo.attributes.email,
+                name: userInfo.attributes['custom:username'],
+                address: userInfo.attributes.address,
+                phone: userInfo.attributes.phone_number,
+                family: "2 adults - 2 kids"
             });
-
-            console.log(response);
-
-            if (response.ok) {
-                setShowVerificationCodeInput(true);
-            } else {
-                const data = await response.json();
-                console.error('Failed to change email:', data.error);
-            }
         } catch (error) {
-            console.error('Error changing email:', error);
+            console.error("Error fetching user data:", error);
         }
     };
 
-    const handleConfirmEmailChange = async () => {
+    const fetchAccommodations = async () => {
+        try {
+            const response = await API.graphql(graphqlOperation(listAccommodationsQuery));
+            console.log("Accommodations:", response.data.listAccommodations.items);
+        } catch (error) {
+            console.error("Error listing accommodations:", error);
+        }
     };
+
+    useEffect(() => {
+    }, [user.email]);
 
     return (
-        <div className="guestdashboard">
-            <div className='dashboards'>
+        <div className="container">
+            <h2>Dashboard</h2>
+            <div className="dashboard">
                 <Pages />
-                <div className="content">
+                <div className="content flexwrap">
                     <div className="settingsContent">
                         <h1>{username}'s Settings</h1>
                         <div className="settingsOptions">
@@ -161,6 +138,6 @@ const SettingsTab = () => {
             </div>
         </div>
     );
-};
+}
 
-export default SettingsTab;
+export default GuestSettings;

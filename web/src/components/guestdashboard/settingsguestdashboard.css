@@ -9,6 +9,10 @@
     margin-bottom: 10px; /* Adds some space below the container */
 }
 
+.flexwrap{
+    flex-wrap: wrap;
+}
+
 .settingsOptions .settingsOption, .dataRemovalOption, .horizontalOptions .settingsOption {
     background-color: #fff;
     border-radius: 15px;
@@ -53,7 +57,7 @@
     cursor: pointer;
     flex: 1;
     min-width: 120px;
-    height: 60px;
+    min-height: 60px;
 }
 
 
@@ -80,7 +84,9 @@
 }
 
 .publicProfileContent .profilePicture .icon {
-    /* Adjust size as needed */
     width: 100px;
     height: 100px;
 }
+
+
+
