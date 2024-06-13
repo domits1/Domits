@@ -3,20 +3,18 @@ import { Auth } from 'aws-amplify';
 import { Line } from 'react-chartjs-2';
 import 'chart.js/auto';
 import Pages from "./Pages.js";
-import './HostRevenueStyle.css'
+import './HostRevenueStyle.css';
 
 const HostRevenues = () => {
     const [userId, setUserId] = useState(null);
     const [data, setData] = useState(null);
 
-    const formatData = (items) => {
-        // Filter accepted bookings and format prices
-        return items
-            .filter(item => item.Status === 'accepted')
-            .map((item) => ({
-                price: item.Price,
-                date: new Date(item.BookingDate).toLocaleDateString() // Ensure BookingDate is a proper date
-            }));
+    const formatBalanceData = (balance) => {
+        // Extract data from balance object
+        return balance.available.map(item => ({
+            amount: item.amount / 100,  // Stripe returns amount in cents, convert to dollars
+            date: new Date(item.created * 1000).toLocaleDateString()  // Convert timestamp to date
+        }));
     };
 
     useEffect(() => {
@@ -33,13 +31,13 @@ const HostRevenues = () => {
     }, []);
 
     useEffect(() => {
-        const fetchPayments = async () => {
+        const fetchBalanceData = async () => {
             if (!userId) {
                 console.log("No user found!");
                 return;
             } else {
                 try {
-                    const response = await fetch('https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingData');
+                    const response = await fetch('https://9zagimrvq0.execute-api.eu-north-1.amazonaws.com/test/test');
                     console.log("Response:", response);
 
                     if (!response.ok) {
@@ -48,10 +46,7 @@ const HostRevenues = () => {
 
                     const responseData = await response.json();
                     console.log("Response Data:", responseData);
-
-                    // Ensure responseData is an array
-                    const dataArray = Array.isArray(responseData) ? responseData : [];
-                    setData(dataArray);
+                    setData(responseData);
 
                 } catch (error) {
                     console.error("Unexpected error:", error);
@@ -60,18 +55,18 @@ const HostRevenues = () => {
         };
 
         if (userId) {
-            fetchPayments();
+            fetchBalanceData();
         }
     }, [userId]);
 
-    const formattedData = data ? formatData(data) : [];
+    const formattedData = data ? formatBalanceData(data) : [];
 
     const chartData = {
         labels: formattedData.map(item => item.date),
         datasets: [
             {
-                label: 'Price per Night',
-                data: formattedData.map(item => item.price),
+                label: 'Available Balance',
+                data: formattedData.map(item => item.amount),
                 fill: false,
                 backgroundColor: 'rgba(75,192,192,1)',
                 borderColor: 'rgba(75,192,192,1)',
@@ -86,24 +81,6 @@ const HostRevenues = () => {
                     <Pages />
                 </div>
                 <div className="content">
-                    <div className="revenue-header">
-                        <h2>Revenue Recognition</h2>
-                        <div className="filters">
-                            <select>
-                                <option>Last 12 months</option>
-                                <option>Last 6 months</option>
-                                <option>Last 3 months</option>
-                            </select>
-                            <select>
-                                <option>Aug 2023 - Aug 2024</option>
-                                <option>Sep 2023 - Sep 2024</option>
-                            </select>
-                            <div>
-                                <button>Daily</button>
-                                <button>Monthly</button>
-                            </div>
-                        </div>
-                    </div>
                     <div className="chart-container">
                         <h3>Revenue Overview</h3>
                         {data ? (
@@ -111,32 +88,6 @@ const HostRevenues = () => {
                         ) : (
                             <p>Loading...</p>
                         )}
-                    </div>
-                    <div className="summary">
-                        <h4>Monthly summary</h4>
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Recognised revenue previously deferred</th>
-                                    <th>Revenue from unbilled services</th>
-                                    <th>Less refunds</th>
-                                    <th>Less disputes</th>
-                                    <th>Less bad debt</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td>$1,216,752.67</td>
-                                    <td>$4,244,870.34</td>
-                                    <td>$22.38</td>
-                                    <td>$8,813.74</td>
-                                    <td>$190.56</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div className="download-button">
-                            <button>Download</button>
-                        </div>
                     </div>
                 </div>
             </section>
