@@ -206,12 +206,13 @@ const HostReservations = () => {
                                 <table>
                                     <thead>
                                     <tr>
-                                        {selectedOption === 'Booking requests' && <th>Select</th>}
-                                        <th>Requested on<img src={chevron} className="sort" alt="sort" onClick={()=> sortReservations('createdAt')}/></th>
-                                        <th>Guest name</th>
-                                        <th>Reservation date</th>
-                                        {selectedOption === 'All' && <th>Status<img className="sort" src={chevron} onClick={()=> sortReservations('Status')} alt="sort" /></th>}
-                                        <th>Price<img src={chevron} className="sort" onClick={()=> sortReservations('Price')} alt="sort"/></th>
+                                        {selectedOption === 'Booking requests' && <th className="reservation-th">Select</th>}
+                                        <th className="reservation-th">Requested on<img src={chevron} className="sort" alt="sort" onClick={()=> sortReservations('createdAt')}/></th>
+                                        <th className="reservation-th">Guest name</th>
+                                        <th className="reservation-th">Title</th>
+                                        <th className="reservation-th">Reservation date</th>
+                                        {selectedOption === 'All' && <th className="reservation-th">Status<img className="sort" src={chevron} onClick={()=> sortReservations('Status')} alt="sort" /></th>}
+                                        <th className="reservation-th">Price<img src={chevron} className="sort" onClick={()=> sortReservations('Price')} alt="sort"/></th>
                                     </tr>
                                     </thead>
                                     <tbody>

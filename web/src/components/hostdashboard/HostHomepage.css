@@ -157,7 +157,7 @@
 .enlist-info {
   padding: 2em;
 }
-.contentContainer {
+.contentContainer-dashboard {
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -509,7 +509,7 @@
 }
 
 @media (max-width: 480px) {
-  .contentContainer {
+  .contentContainer-dashboard {
       gap: 1em;
   }
 
@@ -527,9 +527,9 @@
   }
 
   .dashboard-card {
-      height: auto;
-      width: 100%;
-      margin: 10px 0;
+      height: auto !important;
+      width: 100% !important;
+      margin: 10px 0 !important;
   }
 
   .accommodation-img {
@@ -614,80 +614,6 @@
 .enlist-info {
   padding: 2em;
 }
-
-/* Content container styles */
-.contentContainer {
-  width: 100%;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 4em;
-  .dashboard-1 {
-      display: flex;
-      flex-direction: column;
-      gap: 2em;
-      animation: fade-up 2s;
-      .dashboard-head {
-          display: flex;
-          flex-direction: row;
-          justify-content: space-between;
-          gap: 1.5em;
-          .refresh-btn {
-              padding: 0.5em;
-              margin: 0;
-              margin-top: 5%;
-              height: 5vh;
-          }
-      }
-      .dashboard-card {
-          height: 35vh;
-          width: 17vw;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          border-radius: 0.5em;
-          position: relative;
-          .accommodation-text {
-              padding: 0.25em;
-              width: 80%;
-              background-color: black;
-              backdrop-filter: blur(10px);
-              border-radius: 0.5em;
-              text-align: center;
-              display: flex;
-              flex-direction: column;
-              position: absolute;
-              justify-self: center;
-              top: 10%;
-              left: 50%;
-              transform: translate(-50%, -50%);
-              .accommodation-title {
-                  color: white;
-                  margin: 0;
-                  font-size: 0.75em;
-                  background-color: black;
-              }
-              .accommodation-location {
-                  color: white;
-                  font-size: 0.6em;
-                  margin-top: 1%;
-              }
-          }
-          .accommodation-img {
-              max-height: 70%;
-              max-width: none;
-              border-radius: 0.5em 0.5em 0 0;
-              padding: 0;
-              align-self: center;
-              width: 100%;
-              height: 70%;
-          }
-      }
-  }
-  .dashboard-2 {
-      animation: fade-up 4s;
-  }
-}
-
 /* Keyframes for fade-up animation */
 @keyframes fade-up {
   0% {
@@ -858,65 +784,3 @@
 #logoutButton:hover {
   background-color: #3da942;
 }
-
-
-/* @media screen and (max-width: 830px) {
-
-  .dashboard {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .dashboardSection {
-    display: grid;
-    grid-template-columns: auto auto;
-    justify-items: center;
-  }
-
-  .accommodation-tab {
-    max-width: 80%;
-  }
-
-  .accommodation-img {
-    max-height: 20vh;
-    max-width: 30vw;
-  }
-
-}
-@media (max-width: 480px) {
-  .contentContainer {
-    gap: 5em !important;
-  }
-  .dashboard-header {
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    .welcome-msg {
-      padding: 0;
-      margin: 0;
-      font-size: 1.5em;
-    }
-  }
-  .dashboard-1 {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    .dashboard-card {
-      height: auto !important;
-      width: 100% !important;
-      .accommodation-title {
-        font-size: 1em !important;
-      }
-      .accommodation-location {
-        font-size: 0.75em !important;
-      }
-      .accommodation-img {
-        height: 30vh !important;
-      }
-    }
-  }
-}
-  */
