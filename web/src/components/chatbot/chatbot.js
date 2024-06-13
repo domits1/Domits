@@ -42,7 +42,7 @@ const Chat = () => {
 
     // Send user input to backend
     try {
-      const response = await axios.post('http://localhost:3001/query', { query: tempUserInput });
+      const response = await axios.post('http://13.53.187.20:3000/query ', { query: tempUserInput });
       // Remove the "Sophia is typing..." message
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
       // Add the actual response from Sophia
