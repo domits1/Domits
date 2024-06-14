@@ -385,6 +385,8 @@ function OnboardingHost() {
                                     <option value="Villa">Villa</option>
                                     <option value="Cottage">Cottage</option>
                                     <option value="Hotel">Hotel</option>
+                                    <option value="Boat">Boat</option>
+                                    <option value="Camper">Camper</option>
                                 </select>
                             </section>
                             <section className="images-container thumbnail-container">
