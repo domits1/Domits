@@ -1,22 +1,14 @@
 import React, { useEffect, useState, useRef } from "react";
 import { generateClient } from 'aws-amplify/api';
-const client = generateClient();
+import { fetchUserAttributes, getCurrentUser } from '@aws-amplify/auth';
 import * as mutations from "./mutations";
 import * as queries from "./queries";
 import * as subscriptions from './subscriptions';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, FlatList } from 'react-native';
+
+const client = generateClient();
 
 const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
-
-const vw = (percentage) => {
-  return (windowWidth * percentage) / 100;
-};
-
-const vh = (percentage) => {
-  return (windowHeight * percentage) / 100;
-};
-
-
 
 export function Messages({ route, navigation }) {
   const [chats, setChats] = useState([]);
@@ -25,11 +17,27 @@ export function Messages({ route, navigation }) {
   const [chatUsers, setChatUsers] = useState([]);
   const [channelUUID, setChannelUUID] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
-  const [user, setUser] = useState({ attributes: { email: '33580@ma-web.nl' } });
+  const [user, setUser] = useState(null); 
 
   const chatContainerRef = useRef(null);
 
   const recipientEmail = route.params?.email;
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        const attributes = await fetchUserAttributes(currentUser);
+        if (attributes && attributes.email) {
+          setUser({ email: attributes.email }); 
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   useEffect(() => {
     if (recipientEmail) {
@@ -38,21 +46,12 @@ export function Messages({ route, navigation }) {
   }, [recipientEmail]);
 
   useEffect(() => {
-    if (user) {
+    if (user && user.email) { 
       fetchChatUsers();
     }
   }, [user]);
 
-  const generateUUID = () => {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      var r = Math.random() * 16 | 0,
-          v = c == 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-  };
-
-
-useEffect(() => {
+  useEffect(() => {
     if (channelUUID) {
       const subscription = client.graphql({
         query: subscriptions.onCreateChat,
@@ -60,7 +59,7 @@ useEffect(() => {
       }).subscribe({
         next: ({ value }) => {
           const newChat = value.data.onCreateChat;
-          setChats(prevChats => [...prevChats, { ...newChat, isSent: newChat.email === user.attributes.email }]);
+          setChats(prevChats => [...prevChats, { ...newChat, isSent: newChat.email === user.email }]);
         },
         error: error => {
           console.warn('Subscription error:', error);
@@ -70,10 +69,7 @@ useEffect(() => {
       // Cleanup subscription on component unmount
       return () => subscription.unsubscribe();
     }
-  }, [channelUUID]);
-
-
-
+  }, [channelUUID, user]);
 
   const generateChannelName = (userEmail, recipientEmail) => {
     const sortedEmails = [userEmail, recipientEmail].sort();
@@ -85,12 +81,11 @@ useEffect(() => {
     setSelectedUser(selectedUser);
     setIsChatVisible(true);
 
-    if (!user || !user.attributes || !user.attributes.email) {
+    if (!user || !user.email) {
       return;
     }
 
-
-    const userEmail = user.attributes.email;
+    const userEmail = user.email;
     const channelName = generateChannelName(userEmail, email);
     setChannelUUID(channelName);
 
@@ -103,57 +98,57 @@ useEffect(() => {
 
   const fetchChats = async (recipientEmail, channelName) => {
     try {
-      const sentMessages = await client.graphql({
+      const sentMessagesResponse = await client.graphql({
         query: queries.listChats,
         variables: {
           filter: {
-            email: { eq: user.attributes.email },
+            email: { eq: user.email },
             recipientEmail: { eq: recipientEmail }
           }
         }
       });
-
-      const receivedMessages = await client.graphql({
+  
+      const receivedMessagesResponse = await client.graphql({
         query: queries.listChats,
         variables: {
           filter: {
             email: { eq: recipientEmail },
-            recipientEmail: { eq: user.attributes.email }
+            recipientEmail: { eq: user.email }
           }
         }
       });
-
-      const allSentChats = sentMessages.data.listChats.items.map(chat => ({
+  
+      const sentMessages = sentMessagesResponse.data.listChats.items.map(chat => ({
         ...chat,
         isSent: true
-      }));
-
-      const allReceivedChats = receivedMessages.data.listChats.items.map(chat => ({
+      })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); 
+  
+      const receivedMessages = receivedMessagesResponse.data.listChats.items.map(chat => ({
         ...chat,
         isSent: false
-      }));
-
-      const allChats = [...allSentChats, ...allReceivedChats];
+      })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); 
+  
+      const allChats = [...sentMessages, ...receivedMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); 
+  
       setChats(allChats);
     } catch (error) {
+      console.error('Error fetching chats:', error);
     }
   };
+  
 
   const sendMessage = async () => {
     if (!newMessage.trim()) {
       return;
     }
-    if (!selectedUser) {
-      return;
-    }
-    if (!channelUUID) {
+    if (!selectedUser || !channelUUID || !user || !user.email) {
       return;
     }
 
     try {
       const messagePayload = {
         text: newMessage.trim(),
-        email: user.attributes.email,
+        email: user.email,
         recipientEmail: selectedUser.email,
         isRead: false,
         createdAt: new Date().toISOString(),
@@ -182,6 +177,7 @@ useEffect(() => {
       });
       setChatUsers(updatedChatUsers);
     } catch (error) {
+      console.error('Error sending message:', error);
     }
   };
 
@@ -198,7 +194,7 @@ useEffect(() => {
       const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
 
       const filteredUsersData = uniqueUsers
-        .filter(email => email && email !== user.attributes.email)
+        .filter(email => email !== user.email) 
         .map(email => {
           const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
           const lastMessage = userChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
@@ -209,8 +205,10 @@ useEffect(() => {
           };
         })
         .filter(userData => {
-          const userChats = allChats.filter(chat => chat.email === userData.email || chat.recipientEmail === userData.email);
-          return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
+          return allChats.some(chat =>
+            (chat.email === user.email && chat.recipientEmail === userData.email) ||
+            (chat.recipientEmail === user.email && chat.email === userData.email)
+          );
         })
         .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
 
@@ -219,7 +217,6 @@ useEffect(() => {
       console.error('Error fetching chat users:', error);
     }
   };
-
 
   return (
     <View style={styles.chat}>
