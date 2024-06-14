@@ -129,6 +129,7 @@
 
 .feature-item.feature-absent {
   opacity: 0.5;
+  box-shadow: 0px 0px 0px;
 }
 
 /* Stijl voor de feature iconen */
@@ -198,7 +199,14 @@
   padding-top: 10px;
   margin-top: 10px;
 }
-
+.listing-reviews {
+  display: flex;
+  flex-direction: column;
+}
+.review-card {
+  padding: 1.5em;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
 .error {
   border: 1px solid red !important;
 }

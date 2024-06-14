@@ -10,6 +10,7 @@ import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomits";
 import Release from "./components/about/release.js";
 import Helpdesk from "./components/about/Helpdesk.js";
+import Faq from "./components/landingpage/Faq";
 import Howitworks from "./components/about/Howitworks.js";
 import Careers from "./components/careers/Careers";
 import Contact from "./components/contact/Contact";
@@ -23,6 +24,7 @@ import HostSettings from "./components/hostdashboard/HostSettings";
 import HostReviews from "./components/hostdashboard/HostReviews";
 import ListingDetails from './components/booking/ListingDetails';
 import BookingOverview from './components/booking/BookingOverview';
+import BookingConfirmation from "./components/booking/PaymentConfirm";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
@@ -93,7 +95,8 @@ function App() {
                             <Route path="/" element={<Home searchResults={searchResults} />} />
                             <Route path="/about" element={<About />} />
                             <Route path="/release" element={<Release />} />
-                            <Route path="/helpdesk" element={<Helpdesk />} />
+                            <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} /> 
+                            <Route path="/helpdesk-host" element={<Helpdesk category="host" />} /> 
                             <Route path="/howitworks" element={<Howitworks />} />
                             <Route path="/why-domits" element={<Whydomits />} />
                             <Route path="/contact" element={<Contact />} />
@@ -104,6 +107,7 @@ function App() {
                             <Route path="/confirm-email" element={<ConfirmRegister />} />
                             <Route path="/listingdetails" element={<ListingDetails />} />
                             <Route path="/bookingoverview" element={<BookingOverview />} />
+                            <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
@@ -113,7 +117,7 @@ function App() {
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
                             <Route path="/guestdashboard/payments" element={<GuestPayments />} />
                             <Route path="/guestdashboard/reviews" element={<GuestReviews />} />
-                            <Route path="/guestdashboard/booking" element={<GuestBooking />} />
+                            <Route path="/guestdashboard/bookings" element={<GuestBooking />} />
                             <Route path="/guestdashboard/settings" element={<GuestSettings />} />
                             <Route path="/guestdashboard/chat" element={<Chat />} />
                             {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}

@@ -1,16 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 
+const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE);
 
 const BookingOverview = () => {
-    const location = useLocation();
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -21,6 +28,7 @@ const BookingOverview = () => {
     const [error, setError] = useState(null);
 
     const [accommodation, setAccommodation] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false); // New state for cursor wait
     const searchParams = new URLSearchParams(location.search);
     const id = searchParams.get('id');
     const checkIn = searchParams.get('checkIn');
@@ -29,6 +37,7 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
 
+    const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -103,7 +112,7 @@ const BookingOverview = () => {
         return <div>Loading...</div>;
     }
 
-    // Helper function to calculate the number of days between two dates in YYYY-MM-DD format
+    
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -122,13 +131,49 @@ const BookingOverview = () => {
             return;
         }
 
+       
+        const paymentID = generateUUID();
+        const userId = cognitoUserId;
+        const accommodationTitle = accommodation.Title;
+        const accommodationId = id;
+        const ownerId = accommodation.OwnerId;
+        const price = accommodationPrice;
+        const startDate = checkIn;
+        const endDate = checkOut;
+
+        const successQueryParams = new URLSearchParams({
+            paymentID,
+            accommodationTitle,
+            userId,
+            accommodationId,
+            ownerId,
+            State: "Pending",
+            price,
+            startDate,
+            endDate
+        }).toString();
+        const cancelQueryParams = new URLSearchParams({
+            paymentID,
+            accommodationTitle,
+            userId,
+            accommodationId,
+            ownerId,
+            State: "Failed",
+            price,
+            startDate,
+            endDate
+        }).toString();
+
+        const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
+        const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
+
         const checkoutData = {
             userId: cognitoUserId,
             amount: accommodationPrice + '00',
             currency: 'eur',
             productName: accommodation.Title,
-            successUrl: 'https://domits.com/guestdashboard/booking',
-            cancelUrl: 'https://domits.com/cancel',
+            successUrl: successUrl,
+            cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
 
@@ -156,16 +201,19 @@ const BookingOverview = () => {
         } catch (error) {
             console.error('Error initiating Stripe Checkout:', error);
             setError('Error initiating Stripe Checkout. Please try again later.');
+        } finally {
+            setIsProcessing(false);
         }
     };
 
     const handleConfirmAndPay = (e) => {
         e.preventDefault();
+        setIsProcessing(true);
         initiateStripeCheckout();
     };
 
     return (
-        <main className="container Bookingcontainer">
+        <main className="container Bookingcontainer" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>

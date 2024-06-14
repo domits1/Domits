@@ -27,7 +27,7 @@ const safetyData = [
   // Add more safety measures as needed
 ];
 
-function SelectAmenitiesScreen({navigation}) {
+function SelectAmenitiesScreen({route, navigation}) {
   const [selectedAmenities, setSelectedAmenities] = useState(new Set());
   const [selectedSafetyMeasures, setSelectedSafetyMeasures] = useState(
     new Set(),
@@ -53,15 +53,24 @@ function SelectAmenitiesScreen({navigation}) {
     setSelectedSafetyMeasures(newSelectedSafetyMeasures);
   };
 
-  // Placeholder functions for navigation
   const goToPreviousStep = () => navigation.goBack();
 
   const goToNextStep = () => {
-    navigation.navigate('PriceProperty');
+    const features = {};
+    selectedAmenities.forEach(amenity => (features[amenity] = {BOOL: true}));
+    selectedSafetyMeasures.forEach(
+      measure => (features[measure] = {BOOL: true}),
+    );
+    const updatedListingData = {
+      ...route.params.listingData,
+      Features: features,
+    };
+    navigation.navigate('PriceProperty', {listingData: updatedListingData});
   };
 
   const renderAmenity = item => (
     <TouchableOpacity
+      key={item.key}
       style={styles.item}
       onPress={() => toggleAmenity(item.key)}>
       <Icon
@@ -75,6 +84,7 @@ function SelectAmenitiesScreen({navigation}) {
 
   const renderSafetyMeasure = item => (
     <TouchableOpacity
+      key={item.key}
       style={styles.item}
       onPress={() => toggleSafetyMeasure(item.key)}>
       <Icon
