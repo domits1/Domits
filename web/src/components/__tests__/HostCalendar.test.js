@@ -3,7 +3,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import HostCalendar from '../hostdashboard/HostCalendar';
 import { Auth } from 'aws-amplify';
-import Calendar from '../hostdashboard/Calendar';
 jest.mock('aws-amplify');
 jest.mock('../hostdashboard/Pages', () => () => <div>Pages Component</div>);
 jest.mock('../hostdashboard/Calendar', () => () => <div>Calendar Component</div>);

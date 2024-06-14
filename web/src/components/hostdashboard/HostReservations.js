@@ -5,6 +5,7 @@ import info from "../../images/icons/info.png";
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import ReservationItem from "../utils/ReservationItem";
+import chevron from "../../images/icons/sort-solid.svg";
 
 const HostReservations = () => {
     const [userId, setUserId] = useState({});
@@ -19,10 +20,12 @@ const HostReservations = () => {
     const [selectedReservations, setSelectedReservations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const pageCount = reservationDisplay ? Math.ceil(reservationDisplay.length / 5) : 0;
-    const indexOfLastItem = currentPage * 5;
-    const indexOfFirstItem = indexOfLastItem - 5;
+    const amountOfItems = 10;
+    const pageCount = reservationDisplay ? Math.ceil(reservationDisplay.length / amountOfItems) : 0;
+    const indexOfLastItem = currentPage * amountOfItems;
+    const indexOfFirstItem = indexOfLastItem - amountOfItems;
     const currentItems = reservationDisplay ? reservationDisplay.slice(indexOfFirstItem, indexOfLastItem) : [];
+    const [reversed, setReversed] = useState(false);
 
     useEffect(() => {
         if (currentItems.length === 0 && currentPage > 1) {
@@ -56,19 +59,19 @@ const HostReservations = () => {
     useEffect(() => {
         switch (selectedOption) {
             case "Booking requests":
-                setReservationDisplay(pendingReservations);
+                setReservationDisplay(!reversed ? pendingReservations : pendingReservations.reverse());
                 break;
             case "Accepted":
-                setReservationDisplay(acceptedReservations);
+                setReservationDisplay(!reversed ? acceptedReservations : acceptedReservations.reverse());
                 break;
             case "Reserved":
-                setReservationDisplay(reservedReservations);
+                setReservationDisplay(!reversed ? reservedReservations :reservedReservations.reverse());
                 break;
             case "Cancelled":
-                setReservationDisplay(cancelledReservations);
+                setReservationDisplay(!reversed ? cancelledReservations : cancelledReservations.reverse());
                 break;
             case "All":
-                setReservationDisplay(reservations);
+                setReservationDisplay(!reversed ? reservations : reservations.reverse());
                 break;
             default:
                 setReservationDisplay([]);
@@ -96,7 +99,7 @@ const HostReservations = () => {
 
         setUserIdAsync();
     }, []);
-    const fetchReservations = async () => {
+    const fetchReservations = async (index) => {
         if (!userId) {
             console.log("No user!")
             return;
@@ -105,7 +108,10 @@ const HostReservations = () => {
             try {
                 const response = await fetch('https://5ycj23b6db.execute-api.eu-north-1.amazonaws.com/default/FetchReservations', {
                     method: 'POST',
-                    body: JSON.stringify({ HostID: userId }),
+                    body: JSON.stringify({
+                        HostID: userId,
+                        index: index ? index : null
+                    }),
                     headers: {'Content-type': 'application/json; charset=UTF-8',
                     }
                 });
@@ -122,24 +128,30 @@ const HostReservations = () => {
             }
         }
     };
+
+    const sortReservations = async (index) => {
+        await fetchReservations(index);
+        setReversed(!reversed);
+    }
     const asyncUpdateReservation = async (status) => {
         if (window.confirm(`Do you wish to set these booking request(s) as ${status.toLowerCase()}?`)) {
-            for (let i = 0; i < selectedReservations.length; i++) {
                 try {
-                    const options = {
-                        Status: status,
-                        ID: selectedReservations[i].ID
-                    }
-                    const response = await fetch('https://5ycj23b6db.execute-api.eu-north-1.amazonaws.com/default/UpdateReservation', {
-                        method: 'PUT',
-                        body: JSON.stringify(options),
-                        headers: {
-                            'Content-type': 'application/json; charset=UTF-8',
+                    for (let i = 0; i < selectedReservations.length; i++) {
+                        const options = {
+                            Status: status,
+                            ID: selectedReservations[i].ID
                         }
-                    });
-                    if (!response.ok) {
-                        window.alert("Update failed");
-                        throw new Error('Failed to fetch');
+                        const response = await fetch('https://5ycj23b6db.execute-api.eu-north-1.amazonaws.com/default/UpdateReservation', {
+                            method: 'PUT',
+                            body: JSON.stringify(options),
+                            headers: {
+                                'Content-type': 'application/json; charset=UTF-8',
+                            }
+                        });
+                        if (!response.ok) {
+                            window.alert("Update failed");
+                            throw new Error('Failed to fetch');
+                        }
                     }
                     setSelectedReservations([]);
                     await fetchReservations();
@@ -148,7 +160,6 @@ const HostReservations = () => {
                 } finally {
                     window.alert("Update successful");
                 }
-            }
         }
     }
     useEffect(() => {
@@ -195,12 +206,13 @@ const HostReservations = () => {
                                 <table>
                                     <thead>
                                     <tr>
-                                        {selectedOption === 'Booking requests' && <th>Select</th>}
-                                        <th>Requested on</th>
-                                        <th>Guest name</th>
-                                        <th>Reservation date</th>
-                                        {selectedOption === 'All' && <th>Status</th>}
-                                        <th>Price</th>
+                                        {selectedOption === 'Booking requests' && <th className="reservation-th">Select</th>}
+                                        <th className="reservation-th">Requested on<img src={chevron} className="sort" alt="sort" onClick={()=> sortReservations('createdAt')}/></th>
+                                        <th className="reservation-th">Guest name</th>
+                                        <th className="reservation-th">Title</th>
+                                        <th className="reservation-th">Reservation date</th>
+                                        {selectedOption === 'All' && <th className="reservation-th">Status<img className="sort" src={chevron} onClick={()=> sortReservations('Status')} alt="sort" /></th>}
+                                        <th className="reservation-th">Price<img src={chevron} className="sort" onClick={()=> sortReservations('Price')} alt="sort"/></th>
                                     </tr>
                                     </thead>
                                     <tbody>

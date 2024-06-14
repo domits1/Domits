@@ -35,7 +35,7 @@ const Footer = () => {
                     <h4 className='footer-headers'>Guest</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>Search and book</Link></li>
-                        <li><Link to="/helpdesk" className='footer-links'>Helpdesk</Link></li>
+                        <li><Link to="/helpdesk-guest" className='footer-links'>Helpdesk for Guest</Link></li>
                     </ul>
                 </div>
 
@@ -44,7 +44,7 @@ const Footer = () => {
                     <h4 className='footer-headers'>Hosts</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/landing" className='footer-links'>Become a host</Link></li>
-                        <li><Link to="/" className='footer-links'>Helpdesk for hosts</Link></li>
+                        <li><Link to="/helpdesk-host" className='footer-links'>Helpdesk for hosts</Link></li>
                     </ul>
                 </div>
 

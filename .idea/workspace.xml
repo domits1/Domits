@@ -6,163 +6,9 @@
   <component name="ChangeListManager">
     <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/.config/project-config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/api/domits/cli-inputs.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/api/domits/parameters.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/api/domits/resolvers/README.md" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/api/domits/schema.graphql" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/api/domits/stacks/CustomResources.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/api/domits/transform.conf.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/auth/domits7b73f586/cli-inputs.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/auth/userPoolGroups/user-pool-group-precedence.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/backend-config.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/amplify.state" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/custom-policies.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/domits7b73f586PreSignup-cloudformation-template.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/function-parameters.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/parameters.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/custom.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/event.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/index.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/package-lock.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/function/domits7b73f586PreSignup/src/package.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/tags.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/backend/types/amplify-dependent-resources-ref.d.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/cli.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/amplify/team-provider-info.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/__tests__/Messages.test.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/mutations.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/queries.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/ScrollToTop/ScrollToTop.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/__tests__/HostDashboard.test.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/booking/BookingOverview.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/booking/ListingDetails.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/booking/__bookingtests__/BookingOverview.test.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/booking/bookingoverview.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/careers/jobs.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/error/404NotFound.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/error/error.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/profilePictureTest.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostDistribution.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostIoTHub.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostMonitoring.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostOccupancy.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostPricing.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostPromoCodes.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostPropertyCare.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostReservations.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostReservations.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostRevenues.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostScreening.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostSetup.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/PagesDropdown.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/PagesDropdown.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/landingpage/landing.module.css" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/utils/DateFormatterDD_MM_YYYY.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/utils/DateFormatterYYYY_MM_DD.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/utils/GetUserInfo.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/components/utils/userAttributes.js" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Airconditioning.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Fireextinguisher.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/FirstAidKit.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Homeoffice.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Kitchen.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Onsiteparking.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Smokedetector.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Television.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Washingmachine.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/Wifi.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/info.png" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/web/src/images/icons/sad.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/amplify-meta.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/api/domits/build/cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/api/domits/build/schema.graphql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/auth/domits7b73f586/build/auth-trigger-cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/awscloudformation/build/api/domits/build/cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/amplify-meta.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/build/cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/build/parameters.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/auth/domits7b73f586/build/auth-trigger-cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/awscloudformation/build/api/domits/build/cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/.config/project-config.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/.config/project-config.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/schema.graphql" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/amplify/backend/api/domits/schema.graphql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/index.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/detailpage.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/detailpage.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/amplify/backend/api/domits/schema.graphql" beforeDir="false" afterPath="$PROJECT_DIR$/web/amplify/backend/api/domits/schema.graphql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/amplify/team-provider-info.json" beforeDir="false" afterPath="$PROJECT_DIR$/web/amplify/team-provider-info.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/cypress/e2e/Auth.cy.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/cypress/e2e/Auth.cy.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/cypress/e2e/TravellerDashboard.cy.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/cypress/e2e/TravellerDashboard.cy.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/cypress/support/commands.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/cypress/support/commands.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/jest.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/jest.config.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/web/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/web/package.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/App.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/FlowContext.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/FlowContext.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/__tests__/searchBar.test.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/__tests__/searchBar.test.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/base/ConfirmRegister.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/ConfirmRegister.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/base/Footer.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/Footer.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/base/Header.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/Header.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/base/Login.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/Login.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/base/Register.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/Register.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/base/Register.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/Register.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/base/SearchBar.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/SearchBar.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/base/SearchBar.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/base/SearchBar.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/careers/Careers.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/careers/Careers.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/careers/careers.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/careers/careers.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/chat/Chat.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/chat/Chat.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/chat/Chatprototype.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/chat/Chatprototype.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/checkout/CheckoutFrontEnd.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/checkout/CheckoutFrontEnd.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/guestdashboard/Pages.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/Pages.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/guestdashboard/PaymentsGuestDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/PaymentsGuestDashboard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/guestdashboard/SettingsGuestDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/SettingsGuestDashboard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/guestdashboard/guestdashboard.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/guestdashboard.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/guestdashboard/paymentsguestdashboard.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/paymentsguestdashboard.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/home/Accommodations.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/home/Accommodations.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/Calendar.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/Calendar.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/HostCalendar.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostCalendar.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/HostDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostDashboard.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/HostHomepage.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/HostHomepage.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/Hostchat.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/Hostchat.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/Pages.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/Pages.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/Calculator.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/Calculator.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/Faq.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/Faq.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/Landing.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/Landing.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/OnboardingHost.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/OnboardingHost.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/landing.css" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/onboardingHost.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/onboardingHost.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/DetailCard.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/ImageGallery.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/ImageGallery.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/ListingDetails.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/listingdetails/ListingDetails.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/ListingDetailsOud.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/bookingdetails.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/listingdetails/bookingdetails.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/fixedcard.js" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/imagegallery.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/imagegallery.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/listing.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/listing.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/utils/PageSwitcher.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/utils/PageSwitcher.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/bank-note-01.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/bank-note-01.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/camper-van.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/camper-van.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/flat.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/flat.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/house-boat.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/house-boat.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/house.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/house.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/mansion.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/mansion.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/message-chat-circle.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/message-chat-circle.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/monitor-01.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/monitor-01.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/images/icons/rocket-02.png" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/images/icons/rocket-02.png" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/AccommodationCreateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/AccommodationCreateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/AccommodationUpdateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/AccommodationUpdateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/ChatCreateForm.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/ChatCreateForm.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/ChatCreateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/ChatCreateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/ChatUpdateForm.d.ts" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/ChatUpdateForm.d.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/ChatUpdateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/ChatUpdateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/TodoCreateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/TodoCreateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/TodoUpdateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/TodoUpdateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/UserCreateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/UserCreateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/UserUpdateForm.jsx" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/UserUpdateForm.jsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/ui-components/utils.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/ui-components/utils.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -213,7 +59,7 @@
     "cidr.known.project.marker": "true",
     "com.android.tools.idea.streaming.emulator.frame.visible": "false",
     "com.android.tools.idea.streaming.zoom.toolbar.visible": "false",
-    "git-widget-placeholder": "Merging host-onboarding",
+    "git-widget-placeholder": "chat",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/Nabil/Documents/FS/Domits1/Domits",
     "node.js.detected.package.eslint": "true",

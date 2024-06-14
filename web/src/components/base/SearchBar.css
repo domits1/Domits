@@ -1,8 +1,9 @@
 .bar {
   width: 45rem;
   margin: auto;
-  box-shadow: 0 0 5px hsl(0 0% 68%);
+  box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 1.875rem;
+  border: solid 1px #7171716a;
   display: flex;
   height: 3.4375rem;
   box-sizing: border-box;
@@ -26,30 +27,21 @@
 }
 
 .autocomplete-container input::placeholder {
-  text-align: left;
+  text-align: center;
 }
-
-/* .bar input {
-  margin-top: 0;
-  padding-top: 0;
-} */
-
 .searchTitle {
   color: #0D9813;
   font-size: 1rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
 }
-
 .check-in {
   width: 17%;
   cursor: auto;
 }
-
 .location {
   width: 34%;
 }
-
 .accommodation {
   width: 25%;
   border: none;
@@ -87,6 +79,7 @@
 .bar>div:nth-of-type(3)::before {
   background: solid;
   transform: translateY(-40%);
+  left: -0.01%;
 }
 
 .bar>div:nth-of-type(4)::before {
@@ -97,7 +90,7 @@
 
 .DatePicker__calendarContainer {
   position: absolute;
-  top: calc(-20% + 0.7rem);
+  top: calc(-20% + 0.4rem);
   left: 60%;
   transform: translateX(-50%);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
@@ -118,7 +111,7 @@
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
   height: 2.5rem;
   width: 2.5rem;
-  margin-top: 0.5rem;
+  margin-top: 0.45rem;
   margin-left: 0.5rem;
 }
 
@@ -143,7 +136,7 @@
   background: none;
   border: none;
   text-align: left;
-  transform: translateY(15%);
+  transform: translateY(10%);
   width: 90%;
   height: 2rem;
 }
@@ -161,7 +154,7 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
   font-size: 1rem;
-  transform: translateX(18%);
+  margin: auto;
 }
 
 .button-section {
@@ -320,13 +313,11 @@
   text-align: left;
   font-weight: 500;
   color: #000;
-  font-size: 0.7rem;
+  font-size: 0.75rem;
   margin-top: 1rem;
 }
 
-.guestP.nowrap {
-  white-space: nowrap;
-}
+
 
 .responsive-calendar {
   font-size: 11px !important;
@@ -474,6 +465,9 @@
   padding: 0 2.6em;
   position: relative;
 }
+.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(.-selectedEnd):not(.-selectedBetween) {
+  color: inherit; /* of color: #fff; */
+}
 
 
 @media (max-width: 730px) {
@@ -489,7 +483,7 @@
     border: 2px solid #0a770f;
     width: 110%;
     max-width: 400px;
-    transform: translateX(-0.5rem);
+    transform: translateX(-0.9rem);
     margin: auto;
     box-shadow: 0 0 5px hsl(0 0% 68%);
     border-radius: 0.875rem;
@@ -534,13 +528,14 @@
     border: none;
     text-align: center;
     width: 100%;
-    height: 2.5rem;
+    height: 3rem;
     transform: translateY(-15%);
     text-overflow: ellipsis;
+    margin: auto;
   }
 
-  .searchBar::placeholder {
-    transform: translate(26%, -0%);
+  .searchBar * {
+    margin: auto;
   }
 
   .button-section {
@@ -584,7 +579,7 @@
     height: 2.7rem;
     width: 100%;
     border-radius: 10px;
-    transform: translateX(0%);
+    transform: translateX(-2.25%);
     margin-top: 0.5rem;
   }
   .bar>div::before {
