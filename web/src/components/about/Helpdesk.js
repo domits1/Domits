@@ -2,8 +2,7 @@ import React from 'react';
 import './helpdesk.css';
 import FAQ from "../landingpage/Faq";
 
-const Helpdesk = ({ onSearch }) => {
-
+const Helpdesk = ({ category }) => {
 
   return (
     <div className="helpContainer">
@@ -19,7 +18,7 @@ const Helpdesk = ({ onSearch }) => {
       </div>
 
         <div>
-            <FAQ />
+            <FAQ category={category}/>
         </div>
     </div>
   );
