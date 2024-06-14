@@ -6,6 +6,10 @@
   <component name="ChangeListManager">
     <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/__tests__/Messages.test.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/__tests__/Messages.test.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/jest.config.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/jest.config.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
