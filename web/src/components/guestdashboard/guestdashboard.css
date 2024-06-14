@@ -11,6 +11,11 @@
     grid-template-columns: 200px auto;
 }
 
+.dashboard {
+    display: grid;
+    grid-template-columns: 200px auto;
+}
+
 .wijzers {
     display: flex;
     flex-direction: row;
@@ -75,6 +80,7 @@
     height: 100%;
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
     border-radius: 10px;
+    flex-wrap: wrap;
 
 }
 
@@ -132,6 +138,12 @@
 
 @media screen and (max-width: 830px) {
     .dashboards {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .dashboard {
         display: flex;
         flex-direction: column;
         justify-content: center;
