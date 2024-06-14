@@ -160,78 +160,88 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
- useEffect(() => {
-  handleSearchWithDelay(false);
-}, [accommodation, address, totalGuests]); 
 
-useEffect(() => {
-  if (location.state && location.state.searchResults) {
-    setSearchResults(location.state.searchResults);
-  }
-}, [location]);
 
-const handleSearchWithDelay = async (shouldNavigate) => {
-  setLoading(true);
-  setError(""); 
 
-  const queryParams = [
-    accommodation ? `type=${accommodation}` : null,
-    address ? `searchTerm=${address}` : null,
-    totalGuests > 0 ? `guests=${totalGuests}` : null,
-  ].filter(Boolean).join('&');
 
-  const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
-
-  const cachedResults = localStorage.getItem(apiUrl);
-  if (cachedResults) {
-    const parsedResults = JSON.parse(cachedResults);
-    if (shouldNavigate) {
-      navigate('/', { state: { searchResults: parsedResults } });
-    } else {
-      setSearchResults(parsedResults);
+  useEffect(() => {
+    handleSearchWithDelay(false);
+  }, [accommodation, address, totalGuests]); 
+  
+  useEffect(() => {
+    if (location.state && location.state.searchResults) {
+      setSearchResults(location.state.searchResults);
     }
-    setLoading(false);
-    return;
-  }
-  try {
-    const response = await fetch(apiUrl);
-    const data = await response.json();
-    if (data.length === 0) {
-      setTimeout(() => {
-        setError("No results have been found");
-      }, 1000); 
-    } else {
-      localStorage.setItem(apiUrl, JSON.stringify(data));
-      if (shouldNavigate) {
-        navigate('/', { state: { searchResults: data } });
+  }, [location]);
+  
+  const handleSearchWithDelay = async (shouldNavigate) => {
+    setLoading(true);
+    setError(""); 
+  
+    const queryParams = [
+      accommodation ? `type=${accommodation}` : null,
+      address ? `searchTerm=${address}` : null,
+      totalGuests > 0 ? `guests=${totalGuests}` : null,
+    ].filter(Boolean).join('&');
+  
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+  
+    //Cache function doesnt work right when there are accommodations that were deleted, because it saves those thats what cache does it saves the previous
+    //data that was and if accommdoation was removed you still be able to see those. That cant happend so for now it wont be used.
+
+    // const cachedResults = localStorage.getItem(apiUrl);
+    // if (cachedResults) {
+    //   const parsedResults = JSON.parse(cachedResults);
+    //   if (shouldNavigate) {
+    //     navigate('/', { state: { searchResults: parsedResults } });
+    //   } else {
+    //     setSearchResults(parsedResults);
+    //   }
+    //   setLoading(false);
+    //   return;
+    // }
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      if (data.length === 0) {
+        setTimeout(() => {
+          setError("No results have been found");
+        }, 1000); 
       } else {
-        setSearchResults(data);
+        localStorage.setItem(apiUrl, JSON.stringify(data));
+        if (shouldNavigate) {
+          navigate('/', { state: { searchResults: data } });
+        } else {
+          setSearchResults(data);
+        }
       }
     }
-  }
-   catch (error) {
-    console.error('Error during fetch:', error);
-    setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
-  } finally {
-    setLoading(false);
-  }
-};
-const handleSearch = () => {
-  setButtonClicked(true);
-  const shouldNavigate = location.pathname !== '/';
-  if (shouldNavigate) {
-    setSearchResults([]);
-  }
-  handleSearchWithDelay(shouldNavigate);
-  setTimeout(() => {
+     catch (error) {
+      console.error('Error during fetch:', error);
+      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const handleSearch = () => {
+    setButtonClicked(true);
+    const shouldNavigate = location.pathname !== '/';
+    if (shouldNavigate) {
+      setSearchResults([]);
+    }
     handleSearchWithDelay(shouldNavigate);
-  }, 1000);
+    setTimeout(() => {
+      handleSearchWithDelay(shouldNavigate);
+    }, 1000);
+  
+    setTimeout(() => {
+      setButtonClicked(false);
+    }, 1400);
+  };
+  
 
-  setTimeout(() => {
-    setButtonClicked(false);
-  }, 1400);
-};
 
+  
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -443,12 +453,12 @@ const handleSearch = () => {
                   ...provided,
                   width: '100%',
                   border: 'none',
-                  height: '2rem',
-                  transform: isMobile ? 'translateX(-28px)' : 'translateY(5px)',
+                  height: '2.7rem',
+                  transform: isMobile ? 'translateX(-28px)' : 'translateY(2px)',
                   boxShadow: 'none',
                   background: 'none',
                   padding: '0',
-                  margin: '0',
+                  margin: 'auto',
                   cursor: 'pointer',
                   width: isMobile ? '140%' : '150px',
                 };
@@ -496,13 +506,13 @@ const handleSearch = () => {
               clearIndicator: (provided) => ({
                 ...provided,
                 color: 'black',
-                
+
                 position: 'relative',
                 transform: 'translateY(0%)',
                 width: '35px',
                 height: '35px',
               }),
-              
+
               singleValue: (provided) => ({
                 ...provided,
                 textAlign: 'center',
@@ -626,7 +636,7 @@ const handleSearch = () => {
                     setSelectedDayRange({ from: null, to: null });
                   }}
                   style={{
-                    background: 'rgb(15, 188, 249)',
+                    background: 'rgb(250, 50, 50)',
                     border: 'none',
                     color: '#fff',
                     borderRadius: '0.5rem',

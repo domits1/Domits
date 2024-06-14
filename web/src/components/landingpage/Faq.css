@@ -9,6 +9,21 @@
   font-size: clamp(20px, 4vw, 32px);
 }
 
+.faqHeader4 {
+  font-size: clamp(10px, 4vw, 25px);
+  font-weight: bolder;
+}
+
+.category{
+  color: white;
+  border-radius: 8px;
+  background-color: #0D9813;
+  border: 2px solid var(--primary-color);
+  padding: 10px 20px;
+  margin: 30px 20px;
+  cursor: pointer;
+}
+
 .faq-box {
   width: 50%;
   border: 2px solid var(--primary-color);
