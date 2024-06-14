@@ -64,58 +64,60 @@ const Chat = () => {
   };
 
   return (
-    <div className="chat-container">
-      <div className="chat-messages" ref={chatMessagesRef}>
-        {messages.map((message, index) => (
-          <div key={index} className={`chat-message ${message.sender}`}>
-            <div className="chat-sender">
-              {message.sender === 'user' ? 'You' : 'Sophia (AI)'}
-            </div>
-            {message.sender !== 'typing' ? (
-              <div className="chat-message-content">
-                {message.text}
+    <div className='chat-center'>
+      <div className="chat-container">
+        <div className="chat-messages" ref={chatMessagesRef}>
+          {messages.map((message, index) => (
+            <div key={index} className={`chat-message ${message.sender}`}>
+              <div className="chat-sender">
+                {message.sender === 'user' ? 'You' : 'Sophia (AI)'}
               </div>
-            ) : (
-              <div className="chat-typing-indicator">
-                {message.text}
-                <span className="chat-dot">.</span>
-                <span className="chat-dot">.</span>
-                <span className="chat-dot">.</span>
-              </div>
-            )}
-            {message.sender === 'ai' && message.accommodations && (
-              <div className="chat-accommodation-tiles">
-                {message.accommodations.map(accommodation => (
-                  <div key={accommodation.ID} className="chat-accommodation-tile">
-                    <img
-                      src={accommodation.Images.image1}
-                      alt="Accommodation Image"
-                      className="chat-accommodation-image"
-                    />
-                    <div className="chat-accommodation-details">
-                      <h3>{accommodation.Title}</h3>
-                      <p>{accommodation.Description}</p>
-                      <p><strong>City:</strong> {accommodation.City}</p>
-                      <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
-                      <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
+              {message.sender !== 'typing' ? (
+                <div className="chat-message-content">
+                  {message.text}
+                </div>
+              ) : (
+                <div className="chat-typing-indicator">
+                  {message.text}
+                  <span className="chat-dot">.</span>
+                  <span className="chat-dot">.</span>
+                  <span className="chat-dot">.</span>
+                </div>
+              )}
+              {message.sender === 'ai' && message.accommodations && (
+                <div className="chat-accommodation-tiles">
+                  {message.accommodations.map(accommodation => (
+                    <div key={accommodation.ID} className="chat-accommodation-tile">
+                      <img
+                        src={accommodation.Images.image1}
+                        alt="Accommodation Image"
+                        className="chat-accommodation-image"
+                      />
+                      <div className="chat-accommodation-details">
+                        <h3>{accommodation.Title}</h3>
+                        <p>{accommodation.Description}</p>
+                        <p><strong>City:</strong> {accommodation.City}</p>
+                        <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
+                        <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-      <div className="chat-input">
-        <input
-          type="text"
-          value={userInput}
-          onChange={(e) => setUserInput(e.target.value)}
-          onKeyUp={(e) => { if (e.key === 'Enter') sendMessage(); }}
-          placeholder="Type a message..."
-          disabled={loading}
-        />
-        <button onClick={sendMessage} disabled={loading}>Send</button>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <div className="chat-input">
+          <input
+            type="text"
+            value={userInput}
+            onChange={(e) => setUserInput(e.target.value)}
+            onKeyUp={(e) => { if (e.key === 'Enter') sendMessage(); }}
+            placeholder="Type a message..."
+            disabled={loading}
+          />
+          <button onClick={sendMessage} disabled={loading}>Send</button>
+        </div>
       </div>
     </div>
   );
