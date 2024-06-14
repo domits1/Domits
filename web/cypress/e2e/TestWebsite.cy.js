@@ -5,7 +5,7 @@ describe('Accommodation Type Dropdown Tests', () => {
     });
   
     it('Allows the user to open and select an accommodation type', () => {
-      cy.get('.css-1sr6mq2-control').contains('Accommodation').click();
+      cy.get('.css-184wzqc-control').contains('Accommodation').click();
       cy.contains('Apartment').click(); 
   
       cy.get('.css-hlgwow').contains('Apartment').should('exist');

@@ -186,17 +186,20 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   
     const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
   
-    const cachedResults = localStorage.getItem(apiUrl);
-    if (cachedResults) {
-      const parsedResults = JSON.parse(cachedResults);
-      if (shouldNavigate) {
-        navigate('/', { state: { searchResults: parsedResults } });
-      } else {
-        setSearchResults(parsedResults);
-      }
-      setLoading(false);
-      return;
-    }
+    //Cache function doesnt work right when there are accommodations that were deleted, because it saves those thats what cache does it saves the previous
+    //data that was and if accommdoation was removed you still be able to see those. That cant happend so for now it wont be used.
+
+    // const cachedResults = localStorage.getItem(apiUrl);
+    // if (cachedResults) {
+    //   const parsedResults = JSON.parse(cachedResults);
+    //   if (shouldNavigate) {
+    //     navigate('/', { state: { searchResults: parsedResults } });
+    //   } else {
+    //     setSearchResults(parsedResults);
+    //   }
+    //   setLoading(false);
+    //   return;
+    // }
     try {
       const response = await fetch(apiUrl);
       const data = await response.json();
