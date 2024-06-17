@@ -55,5 +55,12 @@
         }
       }
     }
+  },
+  "dev": {
+    "categories": {
+      "auth": {
+        "domits7b73f586": {}
+      }
+    }
   }
 }

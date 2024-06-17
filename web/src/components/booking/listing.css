@@ -11,11 +11,16 @@
 .detailSummary {
   width: 29%;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+  margin: 40px;
   margin-top: 90px;
   padding: 20px;
   border-radius: 10px;
 }
 
+.summaryBlock {
+  display: flex;
+  flex-direction: column;
+}
 .summary-section {
   display: flex;
   flex-direction: column;
@@ -37,8 +42,7 @@
   margin-top: 10px;
 }
 
-.detailSummary [type="date"], input[type="number"], select {
-  width: 100%;
+.detailSummary .datePickerLD, input[type="number"], select {
   padding: 8px;
   margin-top: 5px;
   margin-bottom: 15px;
@@ -129,6 +133,7 @@
 
 .feature-item.feature-absent {
   opacity: 0.5;
+  box-shadow: 0px 0px 0px;
 }
 
 /* Stijl voor de feature iconen */
@@ -232,7 +237,12 @@
     flex-direction: column;
   }
 
-  .detailSummary, .detailInfo {
+  .detailInfo {
     width: 100%;
+  }
+  .detailSummary { 
+    width: 90%;
+    margin: auto;
+    
   }
 }

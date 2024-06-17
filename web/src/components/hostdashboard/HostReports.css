@@ -1,0 +1,105 @@
+.container {
+    padding: 20px;
+}
+
+h2 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+    text-align: center;
+}
+
+.dashboard {
+    display: flex;
+    justify-content: center;
+}
+
+.contentContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.reportsSection {
+    width: 100%;
+    max-width: 800px;
+}
+
+.overview {
+    margin-bottom: 20px;
+}
+
+.overview h3 {
+    font-size: 20px;
+    color: #555;
+}
+
+.chart {
+    margin-bottom: 20px;
+}
+
+.summary {
+    margin-bottom: 20px;
+}
+
+.waterfall {
+    margin-bottom: 20px;
+}
+
+.waterfall h3 {
+    font-size: 20px;
+    color: #555;
+}
+
+.waterfall table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.waterfall th, .waterfall td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.waterfall th {
+    background-color: #f2f2f2;
+}
+
+.reportBox {
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    padding: 20px;
+    margin-bottom: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.reportBox h4 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.reportBox p {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.exportButton {
+    padding: 10px 15px;
+    font-size: 14px;
+    color: #fff;
+    background-color: #007bff;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.exportButton:hover {
+    background-color: #0056b3;
+}

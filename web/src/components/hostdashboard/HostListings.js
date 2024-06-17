@@ -11,6 +11,7 @@ function HostListings() {
     const [accommodations, setAccommodations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState(null);
+    const [hasStripe, setHostStripe] = useState(false);
     const navigate = useNavigate();
     useEffect(() => {
         const setUserIdAsync = async () => {
@@ -24,6 +25,26 @@ function HostListings() {
 
         setUserIdAsync();
     }, []);
+    useEffect(() => {
+        const checkHostStripeAcc = async (hostID) => {
+            try {
+                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    },
+                    body: JSON.stringify({ sub: hostID }),
+                });
+                const data = await response.json();
+                if (data.hasStripeAccount) {
+                    setHostStripe(true);
+                }
+            } catch (error) {
+                console.error("Error fetching user data or Stripe status:", error);
+            }
+        }
+        checkHostStripeAcc(userId);
+    }, [userId]);
 
     useEffect(() => {
         fetchAccommodations();
@@ -47,30 +68,50 @@ function HostListings() {
                 if (!response.ok) {
                     throw new Error('Failed to fetch');
                 }
-                // Extracting the response body
                 const data = await response.json();
-                // Now 'responseData' should contain your {statusCode, headers, body}
-                // Check if 'responseData.body' exists and is a string
                 if (data.body && typeof data.body === 'string') {
-                    // Parse the JSON string inside 'responseData.body'
                     const accommodationsArray = JSON.parse(data.body);
-                    // Ensure the parsed data is an array before setting the state
                     if (Array.isArray(accommodationsArray)) {
                         setAccommodations(accommodationsArray);
                     } else {
-                        // Handle the case where the parsed data is not an array
                         console.error("Parsed data is not an array:", accommodationsArray);
-                        setAccommodations([]); // Setting a default or handling as needed
+                        setAccommodations([]);
                     }
                 }
             } catch (error) {
-                // Error Handling
                 console.error("Unexpected error:", error);
             } finally {
-                setIsLoading(false); // End loading regardless of promise outcome
+                setIsLoading(false);
             }
         }
     };
+    const asyncChangeAccommodationStatus = async (id, drafted) => {
+        let status = drafted ? 'Draft' : 'Live';
+        if(confirm(`Do you wish to set this accommodation as ${status}?`) === true) {
+            const options = {
+                ID: id,
+                Status: drafted
+            };
+
+            try {
+                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ChangeAccommodationStatues', {
+                    method: 'PUT',
+                    body: JSON.stringify(options),
+                    headers: {'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
+                if (!response.ok) {
+                    alert("Something went wrong, please try again later...")
+                    throw new Error('Failed to fetch');
+                }
+                await fetchAccommodations();
+            } catch (error) {
+                console.error("Unexpected error:", error);
+            } finally {
+                alert("Update successful")
+            }
+        }
+    }
     const asyncDeleteAccommodation = async (accommodation) => {
         if(confirm("Are you sure you want to remove this item from your listing?") === true) {
             let accId = accommodation.ID;
@@ -122,7 +163,11 @@ function HostListings() {
                                     <img src={spinner}/>
                                 </div>
                             ) : accommodations.length > 0 ? (
-                                <PageSwitcher accommodations={accommodations} amount={5} onDelete={asyncDeleteAccommodation}/>
+                                <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === false)}
+                                              amount={3}
+                                              hasStripe={hasStripe}
+                                              onDelete={asyncDeleteAccommodation}
+                                              onUpdate={asyncChangeAccommodationStatus}/>
                             ) : (
                                 <div className="accommodation-box">
                                     <p className="accommodation-alert">It appears that you have not listed any accommodations yet...</p>
@@ -130,7 +175,22 @@ function HostListings() {
                             )}
                         </div>
                         <div className="box fullBox">
-                            <p className="header">Pending</p>
+                            <p className="header">Drafted listings</p>
+                            {isLoading ? (
+                                <div>
+                                    <img src={spinner}/>
+                                </div>
+                            ) : accommodations.length > 0 ? (
+                                <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === true)}
+                                              amount={3}
+                                              hasStripe={hasStripe}
+                                              onDelete={asyncDeleteAccommodation}
+                                              onUpdate={asyncChangeAccommodationStatus}/>
+                            ) : (
+                                <div className="accommodation-box">
+                                    <p className="accommodation-alert">It appears that you have not drafted any accommodations yet...</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
