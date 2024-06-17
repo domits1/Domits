@@ -379,7 +379,7 @@ function OnboardingHost() {
                             <button className='onboarding-button' onClick={() => navigate("/hostdashboard")} style={{opacity: "75%"}}>
                                 Go to dashboard
                             </button>
-                            <button className="onboarding-button" disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
+                            <button className={!hasAccoType ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>

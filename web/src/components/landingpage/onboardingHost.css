@@ -185,6 +185,21 @@
   transition: background-color 0.3s ease;
 }
 
+.onboarding-button-disabled {
+  background-color: darkgray;
+  border: none;
+  color: gray;
+  padding: 12px 24px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: bold;
+  margin-top: 20px;
+  cursor: not-allowed;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
 @media (max-width: 480px) {
   .accommodation-types {
     grid-template-columns: repeat(2, 1fr);
