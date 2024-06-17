@@ -105,8 +105,8 @@ const BookingGuestDashboard = () => {
                                             <td>{booking.Title}</td>
                                             <td>{booking.Status}</td>
                                             <td>{booking.Price}</td>
-                                            <td>{booking.StartDate}</td>
-                                            <td>{booking.EndDate}</td>
+                                            <td>{dateFormatterDD_MM_YYYY(booking.StartDate)}</td>
+                                            <td>{dateFormatterDD_MM_YYYY(booking.EndDate)}</td>
                                             <td>{dateFormatterDD_MM_YYYY(booking.createdAt)}</td>
                                         </tr>
                                     ))

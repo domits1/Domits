@@ -183,7 +183,7 @@ const ListingDetails = () => {
         if (!accommodation) return 0;
         const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
         const basePrice = nights * accommodation.Rent;
-        const discount = 75; // example value
+        const discount = 75;
         const cleaningFee = 100;
         const serviceFee = 98;
         return basePrice - discount + cleaningFee + serviceFee;
@@ -354,7 +354,7 @@ const ListingDetails = () => {
                                 </div>
                                 {(checkIn && checkOut) ? (
                                     <div className="nights">
-                                        <p>{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} nights</p>
+                                        <p>{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
                                     </div>
                                 ) : (
                                     <div className="nights">
