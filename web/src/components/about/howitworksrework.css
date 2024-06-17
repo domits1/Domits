@@ -18,7 +18,6 @@
 
 .howitworkstitlescontainer{
   width: 100%;
-  /* background: pink; */
   gap: 1.375rem;
   height: 10rem;
   display: flex;
@@ -30,7 +29,6 @@
 
 .guestSmallTitleContainer{
   width: 84.12rem;
-  /* background: yellow; */
   margin-top: 1.4rem;
   display: flex;
   margin-bottom: 0.6rem;
@@ -57,7 +55,6 @@
   width: 23.8rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
-  /* background: orange; */
   height: 14rem;
   display: flex;
   flex-direction: column;
@@ -66,7 +63,7 @@
 
 .borderleft{
   border-left: 0.2rem solid white;
-  padding-left: 2rem; /* Add padding to the left side */
+  padding-left: 2rem;
 
 }
 
@@ -77,7 +74,6 @@
 .titleIconHowItWorks{
   height: 3rem;
   width: 100%;
-  /* background: pink; */
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -122,7 +118,7 @@
   .borderleft{
     border-left: 0.0rem solid white;
     border-top: 0.2rem solid white;
-    padding-left: 2rem; /* Add padding to the left side */
+    padding-left: 2rem;
   
   }
   
@@ -136,10 +132,10 @@
     border-right: 0.0rem solid white;
     border-bottom: 0.2rem solid white;
     padding-left: 0rem;
-    padding-bottom: 2rem; /* Add padding to the left side */
+    padding-bottom: 2rem;
   }
 
   .borderleft{
-    padding-top: 2rem; /* Add padding to the left side */
+    padding-top: 2rem; 
   }
 }
