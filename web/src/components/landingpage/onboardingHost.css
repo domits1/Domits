@@ -136,7 +136,6 @@
   grid-gap: 5%;
   justify-items: center;
   align-items: center;
-  font-weight: bold;
 }
 
 .accommodation-types .option {
@@ -178,7 +177,6 @@
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-weight: bold;
   margin-top: 20px;
   cursor: pointer;
   border-radius: 5px;
@@ -193,7 +191,6 @@
   text-align: center;
   text-decoration: none;
   display: inline-block;
-  font-weight: bold;
   margin-top: 20px;
   cursor: not-allowed;
   border-radius: 5px;
@@ -249,7 +246,7 @@
   background-color: white;
   color: #003366;
   text-align: center;
-  line-height: 1.5em;
+  line-height: 1.25em;
   font-size: 16px;
   cursor: pointer;
   outline: none;
@@ -264,6 +261,7 @@
 
 .guest-amount {
   margin: 0 20%;
+  padding: 2em;
 }
 .guest-amount-item {
   display: flex;
@@ -287,6 +285,15 @@
   }
   .location-left, .location-right {
     width: 70vw !important;
+  }
+
+  .guest-amount {
+    margin: 0 10%;
+    padding: 0;
+  }
+
+  .amount-btn-box {
+    gap: 2vw !important;
   }
 
 }

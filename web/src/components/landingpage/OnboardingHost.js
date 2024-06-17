@@ -520,7 +520,7 @@ function OnboardingHost() {
             case 3:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">How many people can stay here</h2>
+                        <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
                         <section className="guest-amount">
                             <div className="guest-amount-item">
                                 <p>Guests</p>
