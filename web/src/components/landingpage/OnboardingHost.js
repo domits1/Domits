@@ -26,6 +26,8 @@ function OnboardingHost() {
         longitude: 0,
     });
     let [hasAccoType, setHasAccoType] = useState(false);
+    let [hasGuestAccess, setHasGuestAccess] =useState(false);
+    let [hasAddress, setHasAddress] = useState(false);
     let [stepOne, setStepOne] = useState(null);
     let [stepTwo, setStepTwo] = useState(null);
     let [stepThree, setStepThree] = useState(null);
@@ -91,10 +93,10 @@ function OnboardingHost() {
         Subtitle: "",
         Description: "",
         Rent: "100",
-        Guestamount: "",
-        Bedrooms: "",
-        Bathrooms: "",
-        Beds: "",
+        Guestamount: 0,
+        Bedrooms: 0,
+        Bathrooms: 0,
+        Beds: 0,
         Country: "",
         PostalCode: "",
         Street: "",
@@ -122,6 +124,7 @@ function OnboardingHost() {
         EndDate: "",
         Drafted: true,
         AccommodationType: "",
+        GuestAccess: "",
         OwnerId: ""
     });
 
@@ -141,6 +144,9 @@ function OnboardingHost() {
         if (formData.AccommodationType) {
             setHasAccoType(true);
         }
+        if (formData.GuestAccess) {
+            setHasGuestAccess(true);
+        }
         if (formData.Title && formData.Subtitle && formData.Description && hasImages()) {
             setStepOne(false);
         } else {
@@ -154,9 +160,9 @@ function OnboardingHost() {
         }
 
         if (formData.Country && formData.City && formData.Street && formData.PostalCode) {
-            setStepThree(false);
+            setHasAddress(true);
         } else {
-            setStepThree(true);
+            setHasAddress(false);
         }
     }, [formData]);
 
@@ -222,6 +228,30 @@ function OnboardingHost() {
         }));
         console.log(formData);
     };
+    const changeGuestAccess = (access) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            GuestAccess: access
+        }));
+        console.log(formData);
+    };
+
+    const incrementAmount = (field) => {
+        setFormData(prevData => ({
+            ...prevData,
+            [field]: prevData[field] + 1
+        }));
+    };
+
+    const decrementAmount = (field) => {
+        if (formData[field] > 0) {
+            setFormData(prevData => ({
+                ...prevData,
+                [field]: prevData[field] - 1
+            }));
+        }
+    };
+
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
@@ -388,6 +418,163 @@ function OnboardingHost() {
             case 1:
                 return (
                     <main className="container">
+                        <h2 className="onboardingSectionTitle">What kind of space do your guests have access to?</h2>
+
+                        <section className="guest-access">
+                            <div className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                 onClick={() => changeGuestAccess("Entire house")}>
+                                <h3 className="guest-access-header">Entire house</h3>
+                                <p>Guests have the entire space to themselves</p>
+                            </div>
+                            <div className={formData.GuestAccess === 'Room' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                 onClick={() => changeGuestAccess("Room")}>
+                                <h3 className="guest-access-header">Room</h3>
+                                <p>Guests have their own room in a house and share other spaces</p>
+                            </div>
+                            <div className={formData.GuestAccess === 'Shared room' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                 onClick={() => changeGuestAccess("Shared room")}>
+                                <h3 className="guest-access-header">A shared room</h3>
+                                <p>Guests sleep in a room or common area that they may share with you or others</p>
+                            </div>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                                Go back
+                            </button>
+                            <button className={!hasGuestAccess ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasGuestAccess} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 2:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">Where can we find your accommodation?</h2>
+                        <p className="onboardingSectionSubtitle">We only share your address with guests after they have
+                            booked</p>
+
+                        <section className="acco-location">
+                            <section className="location-left">
+                                <label htmlFor="country">Country*</label>
+                                <Select
+                                    options={options.map(country => ({value: country, label: country}))}
+                                    name="Country"
+                                    className="locationText"
+                                    value={{value: formData.Country, label: formData.Country}}
+                                    onChange={handleCountryChange}
+                                    id="country"
+                                    required={true}
+                                />
+                                <label htmlFor="city">City*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="City"
+                                    onChange={handleInputChange}
+                                    value={formData.City}
+                                    id="city"
+                                    placeholder="Select your city"
+                                    required={true}
+                                />
+                                <label htmlFor="street">Street + house nr.*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="Street"
+                                    onChange={handleInputChange}
+                                    value={formData.Street}
+                                    id="street"
+                                    placeholder="Enter your address"
+                                    required={true}
+                                />
+                                <label htmlFor="postal">Postal Code*</label>
+                                <input
+                                    className="textInput locationText"
+                                    name="PostalCode"
+                                    onChange={handleInputChange}
+                                    value={formData.PostalCode}
+                                    id="postal"
+                                    placeholder="Enter your postal code"
+                                    required={true}
+                                />
+                            </section>
+                            <section className="location-right">
+                                <h2 className="onboardingSectionTitle">What we show on Domits</h2>
+                                <MapComponent location={location}/>
+                            </section>
+                        </section>
+                        <section className="listing-info enlist-info">
+                            <img src={info} className="info-icon"/>
+                            <p className="info-msg">Fields with * are mandatory</p>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                                Go back
+                            </button>
+                            <button className={!hasAddress ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!hasAddress} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 3:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">How many people can stay here</h2>
+                        <section className="guest-amount">
+                            <div className="guest-amount-item">
+                                <p>Guests</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('Guestamount')}>-
+                                    </button>
+                                    {formData.Guestamount}
+                                    <button className="round-button" onClick={() => incrementAmount('Guestamount')}>+
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="guest-amount-item">
+                                <p>Bedrooms</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
+                                    </button>
+                                    {formData.Bedrooms}
+                                    <button className="round-button" onClick={() => incrementAmount('Bedrooms')}>+
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="guest-amount-item">
+                                <p>Bathrooms</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('Bathrooms')}>-
+                                    </button>
+                                    {formData.Bathrooms}
+                                    <button className="round-button" onClick={() => incrementAmount('Bathrooms')}>+
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="guest-amount-item">
+                                <p>Beds</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('Beds')}>-</button>
+                                    {formData.Beds}
+                                    <button className="round-button" onClick={() => incrementAmount('Beds')}>+</button>
+                                </div>
+                            </div>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                                Go back
+                            </button>
+                            <button className="onboarding-button"
+                                    onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 100:
+                return (
+                    <main className="container">
                         <h2 className="onboardingSectionTitle">Step 1: Accommodation Information</h2>
                         <section className="flex-row form-row">
                             <section className="form-section">
@@ -497,7 +684,7 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
-            case 2:
+            case 101:
                 return (
                     <main className="container">
                         <section className="quantity">
@@ -668,29 +855,6 @@ function OnboardingHost() {
                                 </label>
                             </section>
                         </div>
-
-                        {/*<section className="details-policies formContainer">*/}
-                        {/*    <div className="formHolder">*/}
-                        {/*        <h2 className="onboardingSectionTitle">Details and Policies</h2>*/}
-                        {/*        <div className="formRow">*/}
-                        {/*            <div className="room-features formRow">*/}
-                        {/*                <div className="configurations">*/}
-                        {/*                    <label htmlFor="measurement">Measurements*</label>*/}
-                        {/*                    <input*/}
-                        {/*                        type="number"*/}
-                        {/*                        name="Measurement"*/}
-                        {/*                        placeholder="What are your measurements in M²?"*/}
-                        {/*                        onChange={handleInputChange}*/}
-                        {/*                        value={formData.Measurement}*/}
-                        {/*                        min={0}*/}
-                        {/*                        className="textInput"*/}
-                        {/*                    />*/}
-                        {/*                </div>*/}
-                        {/*            </div>*/}
-                        {/*        </div>*/}
-                        {/*    </div>*/}
-                        {/*</section>*/}
-
                         <section className="listing-info enlist-info">
                             <img src={info} className="info-icon"/>
                             <p className="info-msg">Fields with * are mandatory</p>
@@ -705,142 +869,6 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
-
-            case 3:
-                return (
-                    <main className="container">
-                        <section>
-                            <section className="locationInput">
-                                <h2 className="onboardingSectionTitle">Step 3: Location</h2>
-                                <label htmlFor="country">Country*</label>
-                                <Select
-                                    options={options.map(country => ({value: country, label: country}))}
-                                    name="Country"
-                                    className="locationText"
-                                    value={{value: formData.Country, label: formData.Country}}
-                                    onChange={handleCountryChange}
-                                    id="country"
-                                    required={true}
-                                />
-                                <label htmlFor="city">City*</label>
-                                <input
-                                    className="textInput locationText"
-                                    name="City"
-                                    onChange={handleInputChange}
-                                    value={formData.City}
-                                    id="city"
-                                    placeholder="Select your city"
-                                    required={true}
-                                />
-                                <label htmlFor="street">Street + house nr.*</label>
-                                <input
-                                    className="textInput locationText"
-                                    name="Street"
-                                    onChange={handleInputChange}
-                                    value={formData.Street}
-                                    id="street"
-                                    placeholder="Enter your address"
-                                    required={true}
-                                />
-                                <label htmlFor="postal">Postal Code*</label>
-                                <input
-                                    className="textInput locationText"
-                                    name="PostalCode"
-                                    onChange={handleInputChange}
-                                    value={formData.PostalCode}
-                                    id="postal"
-                                    placeholder="Enter your postal code"
-                                    required={true}
-                                />
-                            </section>
-                            <section className="map-section">
-                                <h2 className="onboardingSectionTitle">What we show on Domits</h2>
-                                <MapComponent location={location}/>
-                            </section>
-                        </section>
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav className="formContainer">
-                            <button className="nextButtons"  onClick={() => pageUpdater(page - 1)}>Go back to change
-                            </button>
-                            <button className="nextButtons" disabled={stepThree} onClick={() => pageUpdater(page + 1)}>Confirm and proceed
-                            </button>
-                        </nav>
-                    </main>
-                );
-
-            // case 4:
-            //     return (
-            //         <main className="container">
-            //             <section className="room-features formRow">
-            //                 <h2 className="onboardingSectionTitle">Systems and configurations</h2>
-            //                 <div className="form-group">
-            //                     <p>Cancel policy*</p>
-            //                     <label>
-            //                         <input
-            //                             type="radio"
-            //                             className="radioInput"
-            //                             name="CancelPolicy"
-            //                             onChange={handleInputChange}
-            //                             checked={formData.CancelPolicy === "Users can cancel anytime"}
-            //                             value="Users can cancel anytime"
-            //                         />
-            //                         Users can cancel anytime
-            //                     </label>
-            //                     <label>
-            //                         <input
-            //                             type="radio"
-            //                             className="radioInput"
-            //                             name="CancelPolicy"
-            //                             onChange={handleInputChange}
-            //                             checked={formData.CancelPolicy === "No cancel 24h before arrival"}
-            //                             value="No cancel 24h before arrival"
-            //                         />
-            //                         No cancel 24h before arrival
-            //                     </label>
-            //                 </div>
-            //                 <div className="form-group">
-            //                     <p>Guest type*</p>
-            //                     <label>
-            //                         <input
-            //                             type="radio"
-            //                             className="radioInput"
-            //                             name="Guesttype"
-            //                             onChange={handleInputChange}
-            //                             checked={formData.Guesttype === "Any guest"}
-            //                             value="Any guest"
-            //                         />
-            //                         Any Guest
-            //                     </label>
-            //                     <label>
-            //                         <input
-            //                             type="radio"
-            //                             className="radioInput"
-            //                             name="Guesttype"
-            //                             onChange={handleInputChange}
-            //                             checked={formData.Guesttype === "Verified Domits guest"}
-            //                             value="Verified Domits guest"
-            //                         />
-            //                         Verified Domits guest
-            //                     </label>
-            //                 </div>
-            //             </section>
-            //             <section className="listing-info enlist-info">
-            //                 <img src={info} className="info-icon"/>
-            //                 <p className="info-msg">Fields with * are mandatory</p>
-            //             </section>
-            //             <nav className="formContainer">
-            //                 <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
-            //                 </button>
-            //                 <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed
-            //                 </button>
-            //             </nav>
-            //         </main>
-            //     );
-
-
             case 4:
                 return (
                     <main className="container">
@@ -899,7 +927,7 @@ function OnboardingHost() {
                 );
 
 
-            case 5:
+            case 6:
                 return (
                     <div className="container" style={{width: '80%'}}>
                         <h2>Step 5: Review your information</h2>
@@ -998,7 +1026,7 @@ function OnboardingHost() {
                 );
 
 
-            case 6:
+            case 7:
                 if (isLoading) {
                     return (
                         <div className="loading">
