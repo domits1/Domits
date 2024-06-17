@@ -15,6 +15,16 @@ import Villa from "../../images/icons/mansion.png";
 import Boat from "../../images/icons/house-boat.png";
 import Camper from "../../images/icons/camper-van.png";
 import Cottage from "../../images/icons/cottage.png";
+import WiFi from "../../images/icons/Wifi.png";
+import Airconditioning from "../../images/icons/Airconditioning.png";
+import OnsiteParking from "../../images/icons/Onsiteparking.png";
+import Television from "../../images/icons/Television.png";
+import Kitchen from "../../images/icons/Kitchen.png";
+import Washingmachine from "../../images/icons/Washingmachine.png";
+import Smokedetector from  "../../images/icons/Smokedetector.png";
+import FirstAidKit from  "../../images/icons/FirstAidKit.png";
+import HomeOffice from  "../../images/icons/Homeoffice.png";
+import FireExtinguisher from "../../images/icons/Fireextinguisher.png";
 
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
@@ -51,7 +61,6 @@ function OnboardingHost() {
         "Camper": Camper,
         "Cottage": Cottage
     };
-
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
@@ -250,6 +259,16 @@ function OnboardingHost() {
                 [field]: prevData[field] - 1
             }));
         }
+    };
+
+    const toggleFeature = (feature) => {
+        setFormData(prevData => ({
+            ...prevData,
+            Features: {
+                ...prevData.Features,
+                [feature]: !prevData.Features[feature]
+            }
+        }));
     };
 
 
@@ -559,6 +578,74 @@ function OnboardingHost() {
                                     {formData.Beds}
                                     <button className="round-button" onClick={() => incrementAmount('Beds')}>+</button>
                                 </div>
+                            </div>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                                Go back
+                            </button>
+                            <button className="onboarding-button"
+                                    onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 4:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">Let guests know what your space has to offer.</h2>
+                        <p className="onboardingSectionSubtitle">You can add more facilities after publishing your listing</p>
+                        <section className="accommodation-types">
+                            <div className={`option ${formData.Features.Wifi ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('Wifi')}>
+                                <img className="accommodation-icon" src={WiFi} alt="Wifi"/>
+                                WiFi
+                            </div>
+                            <div className={`option ${formData.Features.Airconditioning ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('Airconditioning')}>
+                                <img className="accommodation-icon" src={Airconditioning} alt="Airco"/>
+                                Air conditioning
+                            </div>
+                            <div className={`option ${formData.Features.Onsiteparking ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('Onsiteparking')}>
+                                <img className="accommodation-icon" src={OnsiteParking} alt="OnsiteParking"/>
+                                Onsite parking
+                            </div>
+                            <div className={`option ${formData.Features.Television ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('Television')}>
+                                <img className="accommodation-icon" src={Television} alt="Television"/>
+                                Television
+                            </div>
+                            <div className={`option ${formData.Features.Kitchen ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('Kitchen')}>
+                                <img className="accommodation-icon" src={Kitchen} alt="Kitchen"/>
+                                Kitchen
+                            </div>
+                            <div className={`option ${formData.Features.WashingMachine ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('WashingMachine')}>
+                                <img className="accommodation-icon" src={Washingmachine} alt="Washingmachine"/>
+                                Washing machine
+                            </div>
+                            <div className={`option ${formData.Features.Homeoffice ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('Homeoffice')}>
+                                <img className="accommodation-icon" src={HomeOffice} alt="Homeoffice"/>
+                                Home office
+                            </div>
+                            <div className={`option ${formData.Features.Smokedetector ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('Smokedetector')}>
+                                <img className="accommodation-icon" src={Smokedetector} alt="Smokedetector"/>
+                                Smoke detector
+                            </div>
+                            <div className={`option ${formData.Features.FirstAidkit ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('FirstAidkit')}>
+                                <img className="accommodation-icon" src={FirstAidKit} alt="Firstaidkit"/>
+                                First aid kit
+                            </div>
+                            <div className={`option ${formData.Features.Fireextinguisher ? 'selected' : ''}`}
+                                 onClick={() => toggleFeature('Fireextinguisher')}>
+                                <img className="accommodation-icon" src={FireExtinguisher} alt="Fireextinguisher"/>
+                                Fire extinguisher
                             </div>
                         </section>
                         <nav className="onboarding-button-box">
