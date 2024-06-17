@@ -5,6 +5,8 @@ import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
+import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
+import ImageGallery from './ImageGallery';
 
 const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
@@ -112,7 +114,7 @@ const BookingOverview = () => {
         return <div>Loading...</div>;
     }
 
-    
+
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -131,7 +133,7 @@ const BookingOverview = () => {
             return;
         }
 
-       
+
         const paymentID = generateUUID();
         const userId = cognitoUserId;
         const accommodationTitle = accommodation.Title;
@@ -217,11 +219,14 @@ const BookingOverview = () => {
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>
+                <div>
+                    <ImageGallery images={Object.values(accommodation.Images)} />
+                </div>
                 {error && <div className="error">{error}</div>}
                 <div className="booking-details">
                     <div className="detail-item">
                         <span>Dates</span>
-                        <span>{checkIn} - {checkOut}</span>
+                        <span>{DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}</span>
                         <a href="#">Change</a>
                     </div>
                     <div className="detail-item">
@@ -236,8 +241,8 @@ const BookingOverview = () => {
                 </div>
                 <div className="booking-overview">
                     <h2>Booking overview</h2>
-                    <p>Check-in: {checkIn}</p>
-                    <p>Check-out: {checkOut}</p>
+                    <p>Check-in: {DateFormatterDD_MM_YYYY(checkIn)}</p>
+                    <p>Check-out: {DateFormatterDD_MM_YYYY(checkOut)}</p>
                 </div>
                 <div className="accommodation-info">
                     <h2>Accommodation</h2>
