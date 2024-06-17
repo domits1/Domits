@@ -41,7 +41,6 @@ import GuestPayments from "./components/guestdashboard/GuestPayments";
 import GuestReviews from "./components/guestdashboard/GuestReviews";
 import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat";
-import Chatbot from "./components/chatbot/chatbot";
 import FlowContext from './FlowContext'
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
@@ -112,10 +111,6 @@ function App() {
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
-
-                            {/* Chatbot */}
-                            <Route path="/chatbot" element={<Chatbot />} />
-
 
                             {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
