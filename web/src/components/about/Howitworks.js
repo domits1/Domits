@@ -1,5 +1,5 @@
 import React from "react";
-import './howitworksdani.css';
+import './howitworksrework.css';
 import profile from '../../images/profile-icon.svg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faCalendarAlt, faUser } from '@fortawesome/free-solid-svg-icons';
