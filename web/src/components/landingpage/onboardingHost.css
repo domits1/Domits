@@ -128,3 +128,66 @@
     height: auto;
   }
 }
+
+.accommodation-types {
+  padding: 5%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 5%;
+  justify-items: center;
+  align-items: center;
+  font-weight: bold;
+}
+
+.accommodation-types .option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  padding: 1em;
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+}
+
+.accommodation-types .option.selected {
+  border-color: #003366;
+}
+
+.accommodation-icon {
+  width: 7.5vw;
+  height: auto;
+  margin-bottom: 5%;
+}
+
+.accommodation-types .option p {
+  margin: 0;
+  font-size: 14px;
+  text-align: center;
+}
+.onboarding-button-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.onboarding-button {
+  background-color: #003366;
+  border: none;
+  color: white;
+  padding: 12px 24px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-weight: bold;
+  margin-top: 20px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s ease;
+}
+
+@media (max-width: 480px) {
+  .accommodation-types {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+}

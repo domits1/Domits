@@ -9,6 +9,12 @@ import MapComponent from "./data/MapComponent";
 import { Storage, Auth } from "aws-amplify"
 import Calendar from "../hostdashboard/Calendar";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import Apartment from "../../images/icons/flat.png";
+import House from "../../images/icons/house.png";
+import Villa from "../../images/icons/mansion.png";
+import Boat from "../../images/icons/house-boat.png";
+import Camper from "../../images/icons/camper-van.png";
+import Cottage from "../../images/icons/cottage.png";
 
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
@@ -19,6 +25,7 @@ function OnboardingHost() {
         latitude: 0,
         longitude: 0,
     });
+    let [hasAccoType, setHasAccoType] = useState(false);
     let [stepOne, setStepOne] = useState(null);
     let [stepTwo, setStepTwo] = useState(null);
     let [stepThree, setStepThree] = useState(null);
@@ -33,6 +40,15 @@ function OnboardingHost() {
 
     let [userId, setUserId] = useState(null);
     const [hasStripe, setHostStripe] = useState(false);
+    const [accoTypes] = useState(["Apartment", "House", "Villa", "Boat", "Camper", "Cottage"]);
+    const accommodationIcons = {
+        "Apartment": Apartment,
+        "House": House,
+        "Villa": Villa,
+        "Boat": Boat,
+        "Camper": Camper,
+        "Cottage": Cottage
+    };
 
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
@@ -68,7 +84,7 @@ function OnboardingHost() {
         checkHostStripeAcc(userId);
     }, [userId]);
 
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0);
     const [formData, setFormData] = useState({
         ID: generateUUID(),
         Title: "",
@@ -105,7 +121,7 @@ function OnboardingHost() {
         StartDate: "",
         EndDate: "",
         Drafted: true,
-        AccommodationType: "Room",
+        AccommodationType: "",
         OwnerId: ""
     });
 
@@ -122,6 +138,9 @@ function OnboardingHost() {
         return true;
     }
     useEffect(() => {
+        if (formData.AccommodationType) {
+            setHasAccoType(true);
+        }
         if (formData.Title && formData.Subtitle && formData.Description && hasImages()) {
             setStepOne(false);
         } else {
@@ -196,6 +215,14 @@ function OnboardingHost() {
         }
     };
 
+    const changeAccoType = (accommodationType) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            AccommodationType: accommodationType
+        }));
+        console.log(formData);
+    };
+
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
         console.log(formData);
@@ -210,7 +237,7 @@ function OnboardingHost() {
                     ...prevData.Features,
                     [name]: checked,
                 },
-                Drafted: checked
+                Drafted: checked,
             }));
         } else if (type === 'number' || type === 'range') {
             const newValue = value || '';
@@ -233,7 +260,6 @@ function OnboardingHost() {
             }
         }
     };
-
 
     const handleCountryChange = (selectedOption) => {
         setFormData(currentFormData => ({
@@ -332,6 +358,33 @@ function OnboardingHost() {
 
     const renderPageContent = (page) => {
         switch (page) {
+            case 0:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">What best describes your accommodation?</h2>
+
+                        <section className="accommodation-types">
+                            {accoTypes.map((option, index) => (
+                                <div
+                                    key={index}
+                                    className={`option ${formData.AccommodationType === option ? 'selected' : ''}`}
+                                    onClick={() => changeAccoType(option)}
+                                >
+                                    <img className="accommodation-icon" src={accommodationIcons[option]} alt={option}/>
+                                    {option}
+                                </div>
+                            ))}
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => navigate("/hostdashboard")} style={{opacity: "75%"}}>
+                                Go to dashboard
+                            </button>
+                            <button className="onboarding-button" disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
             case 1:
                 return (
                     <main className="container">
@@ -435,8 +488,8 @@ function OnboardingHost() {
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
-                            <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>
-                                Go to dashboard
+                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>
+                                Go back
                             </button>
                             <button className="nextButtons" disabled={stepOne} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
