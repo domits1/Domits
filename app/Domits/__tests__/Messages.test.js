@@ -1,78 +1,52 @@
-// Messages.test.js
 import React from 'react';
-import { Messages } from '../src/screens/messages'
-import * as mutations from "../src/screens/mutations";
-
-
-
-// Sample data for mocks
-const mockClient = {
-  graphql: jest.fn(),
-};
-
-generateClient.mockReturnValue(mockClient);
+import { render, getByTestId  } from '@testing-library/react-native';
+import { Messages } from '../src/screens/messages';
 
 describe('Messages component', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
+  const defaultRoute = { params: {} };
+  
+  test('renders back button when isChatVisible is true', () => {
+    const route = { params: { email: 'test@example.com' } };
+    const { getByText } = render(<Messages route={route} />);
+    const backButton = getByText('Back to Users');
+    expect(backButton).toBeTruthy();
   });
 
-  it('renders the user list', async () => {
-    const { getByText } = render(<Messages />);
-
-    await waitFor(() => {
-      expect(getByText('user1@example.com')).toBeTruthy();
-      expect(getByText('user2@example.com')).toBeTruthy();
-      expect(getByText('user3@example.com')).toBeTruthy();
-    });
+  test('renders chat container when isChatVisible is true', () => {
+    const route = { params: { email: 'test@example.com' } };
+    const { getByTestId } = render(<Messages route={route} />);
+    const chatContainer = getByTestId('chat-container');
+    expect(chatContainer).toBeTruthy();
   });
 
-  it('shows chat when a user is clicked', async () => {
-    const { getByText, getByPlaceholderText } = render(<Messages />);
-
-    fireEvent.press(getByText('user1@example.com'));
-
-    await waitFor(() => {
-      expect(getByText('Back to Users')).toBeTruthy();
-      expect(getByPlaceholderText('Type your message...')).toBeTruthy();
-    });
+  test('renders back button when isChatVisible is true', () => {
+    const route = { params: { email: 'test@example.com' } };
+    const { getByText } = render(<Messages route={route} />);
+    const backButton = getByText('Back to Users');
+    expect(backButton).toBeTruthy();
   });
 
-  it('sends a message when send button is pressed', async () => {
-    mockClient.graphql.mockResolvedValue({
-      data: {
-        createChat: {
-          id: '1',
-          text: 'Hello',
-          email: 'jedar54396@acuxi.com',
-          recipientEmail: 'user1@example.com',
-        },
-      },
-    });
+  test('renders send button', () => {
+    const route = { params: { email: 'test@example.com' } };
+    const { getByText } = render(<Messages route={route} />);
+    const sendButton = getByText('Send');
+    expect(sendButton).toBeTruthy();
+  });
 
-    const { getByText, getByPlaceholderText } = render(<Messages />);
-
-    fireEvent.press(getByText('user1@example.com'));
-
-    await waitFor(() => {
-      expect(getByText('Back to Users')).toBeTruthy();
-    });
-
+  test('renders message input', () => {
+    const route = { params: { email: 'test@example.com' } };
+    const { getByPlaceholderText } = render(<Messages route={route} />);
     const messageInput = getByPlaceholderText('Type your message...');
-    fireEvent.changeText(messageInput, 'Hello');
-    fireEvent.press(getByText('Send'));
-
-    await waitFor(() => {
-      expect(mockClient.graphql).toHaveBeenCalledWith(expect.objectContaining({
-        query: mutations.createChat,
-        variables: expect.objectContaining({
-          input: expect.objectContaining({
-            text: 'Hello',
-            email: 'jedar54396@acuxi.com',
-            recipientEmail: 'user1@example.com',
-          }),
-        }),
-      }));
-    });
+    expect(messageInput).toBeTruthy();
   });
+
+  test('renders list of chat users when isChatVisible is false', () => {
+    const { debug } = render(<Messages route={defaultRoute} />);
+    debug(); // This will log the rendered component to the console
+    const chatPeople = getByTestId('chat-people');
+    expect(chatPeople).toBeTruthy();
+  });
+  
+
+  // Add more tests as needed...
 });

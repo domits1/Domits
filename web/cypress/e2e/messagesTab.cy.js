@@ -4,8 +4,8 @@ describe('Chat Functionaliteit Tests', () => {
     beforeEach(() => {
         cy.loginAsGuest();  
         cy.get('.personalMenu').first().click();
-        cy.contains('button', 'Profile').click();
-        cy.get('.dashboardSections > :nth-child(2)').click();  
+        cy.contains('button', 'Profile').click({ force: true });
+        cy.get('.dashboardSections > :nth-child(3)').click();  
     });
 
     it('stuurt een eenvoudig bericht', () => {
