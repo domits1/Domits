@@ -1,0 +1,134 @@
+.WhyDomitsTwoMain {
+    width: 100%;
+}
+
+.WhyDomitsTwoTitleTextContainer {
+    padding: 6.75rem;
+    padding-bottom: 1rem;
+}
+
+.WhyDomitsTwoH3 {
+    font-size: 2.25rem;
+    margin: 0rem;
+    font-weight: 400;
+}
+
+.WhyDomitsTwoH4 {
+    font-size: 2rem;
+    font-weight: 400;
+    margin-top: 1.6rem;
+    margin-bottom: 3rem;
+}
+
+.WhyDomitsTwoP {
+    font-size: 1.25rem;
+    font-weight: 400;
+    margin-top: 1.6rem;
+    margin-bottom: 3rem;
+    color: black;
+}
+
+.WhyDomitsTwoCardsContainer {
+    min-height: 20rem;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5.6rem;
+    flex-wrap: wrap;
+}
+
+.WhyDomitsTwoCard {
+    width: 39.2%;
+    background: #0D9813;
+    min-height: 9.3rem;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 1.8rem;
+    padding-right: 1.8rem;
+    gap: 2rem;
+}
+
+.WhyDomitsTwoCardP {
+    font-size: 1.25rem;
+    font-weight: 400;
+    color: white;
+}
+
+@media (max-width: 1024px) {
+    .WhyDomitsTwoTitleTextContainer {
+        padding: 5rem;
+    }
+
+    .WhyDomitsTwoH3 {
+        font-size: 2rem;
+    }
+
+    .WhyDomitsTwoH4 {
+        font-size: 1.75rem;
+    }
+
+    .WhyDomitsTwoP {
+        font-size: 1.125rem;
+    }
+
+    .WhyDomitsTwoCardP {
+        font-size: 1.125rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .WhyDomitsTwoTitleTextContainer {
+        padding: 4rem;
+    }
+
+    .WhyDomitsTwoH3 {
+        font-size: 1.75rem;
+    }
+
+    .WhyDomitsTwoH4 {
+        font-size: 1.5rem;
+    }
+
+    .WhyDomitsTwoP {
+        font-size: 1rem;
+    }
+
+    .WhyDomitsTwoCard {
+        width: 100%;
+        min-height: 7rem;
+    }
+
+    .WhyDomitsTwoCardP {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .WhyDomitsTwoTitleTextContainer {
+        padding: 2rem;
+    }
+
+    .WhyDomitsTwoH3 {
+        font-size: 1.5rem;
+    }
+
+    .WhyDomitsTwoH4 {
+        font-size: 1.25rem;
+    }
+
+    .WhyDomitsTwoP {
+        font-size: 0.875rem;
+    }
+
+    .WhyDomitsTwoCard {
+        width: 100%;
+        min-height: 5rem;
+    }
+
+    .WhyDomitsTwoCardP {
+        font-size: 0.875rem;
+    }
+}

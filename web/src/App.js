@@ -7,7 +7,7 @@ import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
 import Home from './components/home/Accommodations';
 import About from "./components/about/About";
-import Whydomits from "./components/about/Whydomits";
+import Whydomits from "./components/about/Whydomitstwo.js";
 import Release from "./components/about/release.js";
 import Helpdesk from "./components/about/Helpdesk.js";
 import Faq from "./components/landingpage/Faq";
