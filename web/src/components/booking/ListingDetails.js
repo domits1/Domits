@@ -41,6 +41,8 @@ const ListingDetails = () => {
     const [pets, setPets] = useState('');
     const [isFormValid, setIsFormValid] = useState(false);
     const [bookedDates, setBookedDates] = useState([]);
+    const [totalPrice, setTotalPrice] = useState(0);
+    const [serviceFee, setServiceFee] = useState(0);
 
 
     useEffect(() => {
@@ -131,8 +133,8 @@ const ListingDetails = () => {
         };
         restrictDates();
     }, [checkIn]);
-    
-    
+
+
 
     const handleChange = (value, setType) => {
         const newValue = parseInt(value, 10) || 0;
@@ -176,19 +178,37 @@ const ListingDetails = () => {
         } else {
             setIsFormValid(false);
         }
-    };    
-    
-
-    const calculateTotal = () => {
-        if (!accommodation) return 0;
-        const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-        const basePrice = nights * accommodation.Rent;
-        const discount = 75;
-        const cleaningFee = 100;
-        const serviceFee = 98;
-        return basePrice - discount + cleaningFee + serviceFee;
     };
+
+    useEffect(() => {
+        const calculateTotal = () => {
+            if (!accommodation) return;
     
+            const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+            const basePrice = nights * accommodation.Rent;
+            // const discount = 75;
+            // const cleaningFee = 100;
+            const calculatedServiceFee = basePrice * 0.15;
+            const calculatedTotalPrice = basePrice + calculatedServiceFee;
+    
+            setServiceFee(calculatedServiceFee);
+            setTotalPrice(calculatedTotalPrice);
+        };
+    
+        calculateTotal();
+    }, [accommodation, checkIn, checkOut]);
+
+
+    // const calculateTotal = () => {
+    //     if (!accommodation) return 0;
+    //     const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+    //     const basePrice = nights * accommodation.Rent;
+    //     // const discount = 75;
+    //     // const cleaningFee = 100;
+    //     const serviceFee = basePrice * 0.15;
+    //     return basePrice + serviceFee;
+    // };
+
 
     const handleStartChat = () => {
         const userEmail = "nabilsalimi0229@gmail.com";
@@ -417,20 +437,20 @@ const ListingDetails = () => {
                                     <div className="price-item">
                                         <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights
                                             x
-                                            € {accommodation.Rent} a night</p>
-                                        <p>€ {(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
+                                            €{accommodation.Rent} a night</p>
+                                        <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
                                     </div>
-                                    <div className="price-item">
+                                    {/* <div className="price-item">
                                         <p>Cleaning fee</p>
                                         <p>€ 100</p>
-                                    </div>
+                                    </div> */}
                                     <div className="price-item">
                                         <p>Domits service fee</p>
-                                        <p>€ 98</p>
+                                        <p>€{serviceFee.toFixed(2)}</p>
                                     </div>
                                     <div className="total">
                                         <p>Total</p>
-                                        <p>€ {calculateTotal()}</p>
+                                        <p>€{totalPrice.toFixed(2)}</p>
                                     </div>
                                 </div>
                             ) : (
