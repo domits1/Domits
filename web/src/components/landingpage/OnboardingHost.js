@@ -659,6 +659,66 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
+            case 5:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">Add photos of your home</h2>
+
+                        <section className="accommodation-photos">
+                            {!formData.Images.image1 ?
+                                <section className="image-upload">
+                                    <h2>Drag your photos here</h2>
+                                    <p>Choose at least five photos</p>
+                                    <input
+                                        type="file"
+                                        onChange={(e) => handleFileChange(e.target.files[0], 0)}
+                                        accept="image/*"
+                                        className="file-input-thumbnail"
+                                        required={true}
+                                    />
+                                </section>
+                                :
+                                <section className="accommodation-images">
+                                    {[...Array(5)].map((_, index) => (
+                                        <section key={index} className="images-container">
+                                            <input
+                                                type="file"
+                                                onChange={(e) => handleFileChange(e.target.files[0], index)}
+                                                accept="image/*"
+                                                className="file-input"
+                                                required={true}
+                                            />
+                                            {imageFiles[index] && (
+                                                <>
+                                                    <img
+                                                        src={URL.createObjectURL(imageFiles[index])}
+                                                        alt={`Image ${index + 1}`}
+                                                        className={index === 0 ? "accommodation-thumbnail" : "file-image"}
+                                                    />
+                                                    <button className="delete-button"
+                                                            onClick={() => handleDelete(index)}>
+                                                        Delete
+                                                    </button>
+                                                </>
+                                            )}
+                                            {!imageFiles[index] && <div className="placeholder">Image {index + 1}</div>}
+                                        </section>
+                                    ))}
+                                </section>
+                            }
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button className={!hasImages() ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!hasImages()} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
             case 100:
                 return (
                     <main className="container">
@@ -956,7 +1016,7 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
-            case 4:
+            case 6:
                 return (
                     <main className="container">
                         <section class="room-features formRow">
