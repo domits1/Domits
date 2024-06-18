@@ -133,13 +133,13 @@ const BookingOverview = () => {
             return;
         }
 
-
         const paymentID = generateUUID();
         const userId = cognitoUserId;
         const accommodationTitle = accommodation.Title;
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
-        const price = accommodationPrice;
+        const basePrice = accommodation.Rent * numberOfDays; // Base accommodation price
+        const totalAmount = basePrice * 1.15; // Total amount including 15% fee
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -150,7 +150,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Pending",
-            price,
+            price: totalAmount,
             startDate,
             endDate
         }).toString();
@@ -161,7 +161,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Failed",
-            price,
+            price: totalAmount,
             startDate,
             endDate
         }).toString();
@@ -171,7 +171,8 @@ const BookingOverview = () => {
 
         const checkoutData = {
             userId: cognitoUserId,
-            amount: accommodationPrice + '00',
+            basePrice: basePrice * 100,
+            totalAmount: totalAmount * 100,
             currency: 'eur',
             productName: accommodation.Title,
             successUrl: successUrl,

@@ -1,0 +1,141 @@
+.howitworksmain{
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.howitworksTitleDomits{
+  font-size: 2.25rem;
+  margin: 0rem;
+}
+
+.howitworkssmallerTitleDomits{
+  font-size: 1.25rem;
+  margin: 0rem;
+}
+
+.howitworkstitlescontainer{
+  width: 100%;
+  gap: 1.375rem;
+  height: 10rem;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.guestSmallTitleContainer{
+  width: 84.12rem;
+  margin-top: 1.4rem;
+  display: flex;
+  margin-bottom: 0.6rem;
+}
+
+.infoTitleGuest{
+  font-size: 2.25rem;
+  font-weight: 500;
+  margin: 0rem;
+}
+
+.guestinfoblockhowitworks{
+  width: 84.12rem;
+  background: #0D9813;
+  border-radius: 0.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.informationContainerHowItWorks{
+  width: 23.8rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  height: 14rem;
+  display: flex;
+  flex-direction: column;
+}
+
+
+.borderleft{
+  border-left: 0.2rem solid white;
+  padding-left: 2rem;
+
+}
+
+.borderright{
+  border-right: 0.2rem solid white;
+}
+
+.titleIconHowItWorks{
+  height: 3rem;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
+}
+
+.titleinformationH3{
+  font-size: 1.5rem;
+  color: white;
+  font-weight: 500;
+}
+
+.informationHowItWorksP{
+  font-size: 1rem;
+  color: white;
+  max-width: 19rem;
+}
+
+.bluebackground{
+  background: #052C5A;
+  margin-bottom: 7rem;
+}
+
+@media (max-width: 1364px) {
+  .guestinfoblockhowitworks{
+    width:100%;
+  }
+
+  .guestSmallTitleContainer{
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.1rem;
+  }
+
+
+} 
+
+@media (max-width: 1238px) {
+  .borderleft{
+    border-left: 0.0rem solid white;
+    border-top: 0.2rem solid white;
+    padding-left: 2rem;
+  
+  }
+  
+  .borderright{
+    border-right: 0.2rem solid white;
+  }
+}
+
+@media (max-width:796px){  
+  .borderright{
+    border-right: 0.0rem solid white;
+    border-bottom: 0.2rem solid white;
+    padding-left: 0rem;
+    padding-bottom: 2rem;
+  }
+
+  .borderleft{
+    padding-top: 2rem; 
+  }
+}
