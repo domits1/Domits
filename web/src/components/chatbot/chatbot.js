@@ -1,12 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './chatbot.css';
+import { useUser } from '../../UserContext';
 
 const Chat = () => {
+  const { user, role, isLoading } = useUser();
   const [userInput, setUserInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const chatMessagesRef = useRef(null);
+
+  useEffect(() => {
+    // Check if user is not authenticated, you can handle redirection or show a message here
+    if (!isLoading && !user) {
+      console.log('User not authenticated');
+    }
+  }, [isLoading, user]);
 
   const scrollToBottom = () => {
     const chatMessages = chatMessagesRef.current;
@@ -16,23 +25,16 @@ const Chat = () => {
   const sendMessage = async () => {
     if (userInput.trim() === '') return;
 
-    // Add user message to messages
     setMessages((prevMessages) => [
       ...prevMessages,
       { text: userInput, sender: 'user' }
     ]);
     scrollToBottom();
 
-    // Save the input value temporarily
     const tempUserInput = userInput;
-
-    // Clear the user input field immediately
     setUserInput('');
-
-    // Set loading state to true
     setLoading(true);
 
-    // Add a temporary "Sophia is typing..." message
     const typingMessage = { text: 'Sophia (AI) is typing', sender: 'typing' };
     setMessages((prevMessages) => [
       ...prevMessages,
@@ -40,12 +42,9 @@ const Chat = () => {
     ]);
     scrollToBottom();
 
-    // Send user input to backend
     try {
       const response = await axios.post('http://13.53.187.20:3000/query ', { query: tempUserInput });
-      // Remove the "Sophia is typing..." message
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
-      // Add the actual response from Sophia
       const { message, accommodations } = response.data;
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -54,14 +53,16 @@ const Chat = () => {
       scrollToBottom();
     } catch (error) {
       console.error('Error sending message:', error);
-      // Remove the "Sophia is typing..." message in case of an error
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
       scrollToBottom();
     } finally {
-      // Set loading state to false
       setLoading(false);
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div className='chat-center'>
