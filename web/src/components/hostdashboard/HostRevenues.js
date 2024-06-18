@@ -33,13 +33,8 @@ const HostRevenues = () => {
                 return;
             } else {
                 try {
-                    const response = await fetch('https://kq82anbek1.execute-api.eu-north-1.amazonaws.com/default/StripeRevenuePage', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ userId })
-                    });
+                    const response = await fetch('https://kq82anbek1.execute-api.eu-north-1.amazonaws.com/default/StripeRevenuePage');
+                    console.log(response);
 
                     if (!response.ok) {
                         throw new Error('Failed to fetch');
