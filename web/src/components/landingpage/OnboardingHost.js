@@ -599,52 +599,52 @@ function OnboardingHost() {
                         <section className="accommodation-types">
                             <div className={`option ${formData.Features.Wifi ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('Wifi')}>
-                                <img className="accommodation-icon" src={WiFi} alt="Wifi"/>
+                                <img className="amenity-icon" src={WiFi} alt="Wifi"/>
                                 WiFi
                             </div>
                             <div className={`option ${formData.Features.Airconditioning ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('Airconditioning')}>
-                                <img className="accommodation-icon" src={Airconditioning} alt="Airco"/>
+                                <img className="amenity-icon" src={Airconditioning} alt="Airco"/>
                                 Air conditioning
                             </div>
                             <div className={`option ${formData.Features.Onsiteparking ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('Onsiteparking')}>
-                                <img className="accommodation-icon" src={OnsiteParking} alt="OnsiteParking"/>
+                                <img className="amenity-icon" src={OnsiteParking} alt="OnsiteParking"/>
                                 Onsite parking
                             </div>
                             <div className={`option ${formData.Features.Television ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('Television')}>
-                                <img className="accommodation-icon" src={Television} alt="Television"/>
+                                <img className="amenity-icon" src={Television} alt="Television"/>
                                 Television
                             </div>
                             <div className={`option ${formData.Features.Kitchen ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('Kitchen')}>
-                                <img className="accommodation-icon" src={Kitchen} alt="Kitchen"/>
+                                <img className="amenity-icon" src={Kitchen} alt="Kitchen"/>
                                 Kitchen
                             </div>
                             <div className={`option ${formData.Features.WashingMachine ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('WashingMachine')}>
-                                <img className="accommodation-icon" src={Washingmachine} alt="Washingmachine"/>
+                                <img className="amenity-icon" src={Washingmachine} alt="Washingmachine"/>
                                 Washing machine
                             </div>
                             <div className={`option ${formData.Features.Homeoffice ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('Homeoffice')}>
-                                <img className="accommodation-icon" src={HomeOffice} alt="Homeoffice"/>
+                                <img className="amenity-icon" src={HomeOffice} alt="Homeoffice"/>
                                 Home office
                             </div>
                             <div className={`option ${formData.Features.Smokedetector ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('Smokedetector')}>
-                                <img className="accommodation-icon" src={Smokedetector} alt="Smokedetector"/>
+                                <img className="amenity-icon" src={Smokedetector} alt="Smokedetector"/>
                                 Smoke detector
                             </div>
                             <div className={`option ${formData.Features.FirstAidkit ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('FirstAidkit')}>
-                                <img className="accommodation-icon" src={FirstAidKit} alt="Firstaidkit"/>
+                                <img className="amenity-icon" src={FirstAidKit} alt="Firstaidkit"/>
                                 First aid kit
                             </div>
                             <div className={`option ${formData.Features.Fireextinguisher ? 'selected' : ''}`}
                                  onClick={() => toggleFeature('Fireextinguisher')}>
-                                <img className="accommodation-icon" src={FireExtinguisher} alt="Fireextinguisher"/>
+                                <img className="amenity-icon" src={FireExtinguisher} alt="Fireextinguisher"/>
                                 Fire extinguisher
                             </div>
                         </section>

@@ -275,6 +275,12 @@
     gap: 1vw;
   }
 }
+
+.amenity-icon {
+  width: 4.5vw;
+  height: auto;
+  margin-bottom: 5%;
+}
 @media (max-width: 480px) {
   .accommodation-types {
     grid-template-columns: repeat(2, 1fr);
