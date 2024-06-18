@@ -104,7 +104,7 @@ const BookingGuestDashboard = () => {
                                         <tr onClick={() => handleClick(booking.AccoID)} key={booking.ID}>
                                             <td>{booking.Title}</td>
                                             <td>{booking.Status}</td>
-                                            <td>{booking.Price}</td>
+                                            <td>&euro;{parseFloat(booking.Price).toFixed(2)}</td>
                                             <td>{dateFormatterDD_MM_YYYY(booking.StartDate)}</td>
                                             <td>{dateFormatterDD_MM_YYYY(booking.EndDate)}</td>
                                             <td>{dateFormatterDD_MM_YYYY(booking.createdAt)}</td>
