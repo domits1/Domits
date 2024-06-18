@@ -98,7 +98,7 @@ function App() {
                             <Route path="/release" element={<Release />} />
                             <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} /> 
                             <Route path="/helpdesk-host" element={<Helpdesk category="host" />} /> 
-                            <Route path="/howitworks" element={<Howitworks />} />
+                            <Route path="/how-it-works" element={<Howitworks />} />
                             <Route path="/why-domits" element={<Whydomits />} />
                             <Route path="/contact" element={<Contact />} />
                             <Route path="/travelinnovation" element={<Travelinnovation />} />
