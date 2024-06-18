@@ -795,9 +795,9 @@ function OnboardingHost() {
                             <h2 className="onboardingSectionTitle">Step 4: Pricing</h2>
                             <p>Price per night*: {formData.Rent}</p>
                             <div className="slider-bar">
-                                <p>40</p>
+                                <p>1</p>
                                 <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
-                                       defaultValue={formData.Rent} min="40" max="1000" step="10"
+                                       defaultValue={formData.Rent} min="1" max="1000" step="1"
                                        required={true}/>
                                 <p>1000</p>
                             </div>
