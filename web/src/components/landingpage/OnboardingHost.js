@@ -457,7 +457,7 @@ function OnboardingHost() {
                             </div>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className={!hasGuestAccess ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasGuestAccess} onClick={() => pageUpdater(page + 1)}>
@@ -487,7 +487,7 @@ function OnboardingHost() {
                                 />
                                 <label htmlFor="city">City*</label>
                                 <input
-                                    className="textInput locationText"
+                                    className="textInput-field locationText"
                                     name="City"
                                     onChange={handleInputChange}
                                     value={formData.City}
@@ -497,7 +497,7 @@ function OnboardingHost() {
                                 />
                                 <label htmlFor="street">Street + house nr.*</label>
                                 <input
-                                    className="textInput locationText"
+                                    className="textInput-field locationText"
                                     name="Street"
                                     onChange={handleInputChange}
                                     value={formData.Street}
@@ -507,7 +507,7 @@ function OnboardingHost() {
                                 />
                                 <label htmlFor="postal">Postal Code*</label>
                                 <input
-                                    className="textInput locationText"
+                                    className="textInput-field locationText"
                                     name="PostalCode"
                                     onChange={handleInputChange}
                                     value={formData.PostalCode}
@@ -526,7 +526,7 @@ function OnboardingHost() {
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className={!hasAddress ? 'onboarding-button-disabled' : 'onboarding-button'}
@@ -581,7 +581,7 @@ function OnboardingHost() {
                             </div>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className="onboarding-button"
@@ -649,7 +649,7 @@ function OnboardingHost() {
                             </div>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className="onboarding-button"
@@ -714,6 +714,82 @@ function OnboardingHost() {
                             </button>
                             <button className={!hasImages() ? 'onboarding-button-disabled' : 'onboarding-button'}
                                     disabled={!hasImages()} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 6:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">Name your home</h2>
+                        <p className="onboardingSectionSubtitle">A short title works best. Don't worry, you can always
+                            change it later.</p>
+
+                        <section className="accommodation-title">
+                            <textarea
+                                className="textInput locationText"
+                                id="title"
+                                name="Title"
+                                onChange={handleInputChange}
+                                value={formData.Title}
+                                placeholder="Enter your title here..."
+                                required={true}
+                                maxLength={32}
+                            />
+                            <p>{formData.Title.length}/32</p>
+                        </section>
+                        <p className="onboardingSectionSubtitle">Give it a suitable subtitle</p>
+                        <section className="accommodation-title">
+                            <textarea
+                            className="textInput locationText"
+                            id="Subtitle"
+                            name="Subtitle"
+                            onChange={handleInputChange}
+                            value={formData.Subtitle}
+                            placeholder="Enter your subtitle here..."
+                            required={true}
+                            maxLength={32}
+                            />
+                            <p>{formData.Subtitle.length}/32</p>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                                Go back
+                            </button>
+                            <button
+                                className={!(formData.Title && formData.Subtitle) ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                disabled={!(formData.Title && formData.Subtitle)} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 7:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">Provide a description</h2>
+                        <p className="onboardingSectionSubtitle">Share what makes your space special.</p>
+
+                        <section className="accommodation-title">
+                            <textarea
+                                className="textInput locationText title-input"
+                                id="description"
+                                name="Description"
+                                onChange={handleInputChange}
+                                value={formData.Description}
+                                placeholder="Enter your title here..."
+                                required={true}
+                                maxLength={500}
+                            />
+                            <p>{formData.Description.length}/500</p>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                                Go back
+                            </button>
+                            <button className={!formData.Description ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!formData.Description} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>

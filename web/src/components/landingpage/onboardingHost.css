@@ -7,12 +7,13 @@
 }
 
 .textInput {
-  width: 100%;
-  padding: 10px;
+  width: 30vw;
+  height: 30vh;
   font-size: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 5px;
   margin-bottom: 20px;
+  text-align: left;
+  padding: 11px 15px;
+  border-radius: 5px;
 }
 .images-container {
   width: 300px;
@@ -310,6 +311,18 @@
   justify-items: center;
   align-items: center;
 }
+
+.accommodation-title {
+  align-self: center;
+}
+.textInput-field {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
 @media (max-width: 480px) {
   .accommodation-types {
     grid-template-columns: repeat(2, 1fr);
@@ -331,4 +344,8 @@
     gap: 2vw !important;
   }
 
+  .textInput {
+    width: 100% !important;
+    height: 100% !important;
+  }
 }
