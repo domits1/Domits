@@ -84,6 +84,7 @@
     "country-data": "^0.0.31",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
+    "fontawesome": "^5.6.3",
     "immer": "^10.0.4",
     "jest-environment-jsdom": "^29.7.0",
     "minimist": "1.2.8",
