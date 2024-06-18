@@ -94,6 +94,8 @@ function OnboardingHost() {
             Smokedetector: false,
             FirstAidkit: false,
             Fireextinguisher: false,
+            CleaningFeeEnabled: false,
+            CleaningFee: 0,
         },
         Images: {
             image1: "",
@@ -198,43 +200,43 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-        console.log(formData);
-        if (type === 'checkbox') {
-            setFormData((prevData) => ({
-                ...prevData,
-                Features: {
-                    ...prevData.Features,
-                    [name]: checked,
-                },
-                SystemConfiguration: {
-                    ...prevData.Features,
-                    [name]: checked,
-                },
-                Drafted: checked
-            }));
-        } else if (type === 'number' || type === 'range') {
-            const newValue = value || '';
-            setFormData((prevData) => ({
-                ...prevData,
-                [name]: newValue
-            }));
-        } else {
-            setFormData((prevData) => ({
-                ...prevData,
-                [name]: value
-            }));
-
-            if (name === 'City') {
-                handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
-            } else if (name === 'PostalCode') {
-                handleLocationChange(formData.Country, formData.City, value, formData.Street);
-            } else if (name === 'Street') {
-                handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
+    
+        setFormData((prevData) => {
+            if (name in prevData.Features) {
+                if (type === 'checkbox') {
+                    return {
+                        ...prevData,
+                        Features: {
+                            ...prevData.Features,
+                            [name]: checked,
+                        },
+                    };
+                } else {
+                    return {
+                        ...prevData,
+                        Features: {
+                            ...prevData.Features,
+                            [name]: type === 'number' ? Number(value) : value,
+                        },
+                    };
+                }
+            } else {
+                return {
+                    ...prevData,
+                    [name]: type === 'number' ? Number(value) : value,
+                };
             }
+        });
+    
+        if (name === 'City') {
+            handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
+        } else if (name === 'PostalCode') {
+            handleLocationChange(formData.Country, formData.City, value, formData.Street);
+        } else if (name === 'Street') {
+            handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
         }
     };
-
-
+    
     const handleCountryChange = (selectedOption) => {
         setFormData(currentFormData => ({
             ...currentFormData,
@@ -271,7 +273,7 @@ function OnboardingHost() {
             const updatedFormData = { ...formData }; // Copy the original formData object
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
-                const location =  await uploadImageToS3(userId, AccoID, file, i);
+                const location = await uploadImageToS3(userId, AccoID, file, i);
                 console.log(location);
                 updatedFormData.Images[`image${i + 1}`] = location;
             }
@@ -431,7 +433,7 @@ function OnboardingHost() {
                         </section>
 
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
@@ -613,8 +615,33 @@ function OnboardingHost() {
                                     />
                                     Home office
                                 </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="CleaningFeeEnabled"
+                                        onChange={handleInputChange}
+                                        checked={formData.Features.CleaningFeeEnabled}
+                                    />
+                                    Cleaning Fee
+                                </label>
+                                {formData.Features.CleaningFeeEnabled && (
+                                    <label>
+                                        Cleaning Fee Amount
+                                        <input
+                                            type="number"
+                                            className="textInput"
+                                            name="CleaningFee"
+                                            value={formData.Features.CleaningFee}
+                                            onChange={handleInputChange}
+                                            min={0}
+                                            placeholder="Enter the cleaning fee amount"
+                                        />
+                                    </label>
+                                )}
                             </section>
                         </div>
+
 
                         {/*<section className="details-policies formContainer">*/}
                         {/*    <div className="formHolder">*/}
@@ -639,7 +666,7 @@ function OnboardingHost() {
                         {/*</section>*/}
 
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
@@ -661,10 +688,10 @@ function OnboardingHost() {
                                 <h2 className="onboardingSectionTitle">Step 3: Location</h2>
                                 <label htmlFor="country">Country*</label>
                                 <Select
-                                    options={options.map(country => ({value: country, label: country}))}
+                                    options={options.map(country => ({ value: country, label: country }))}
                                     name="Country"
                                     className="locationText"
-                                    value={{value: formData.Country, label: formData.Country}}
+                                    value={{ value: formData.Country, label: formData.Country }}
                                     onChange={handleCountryChange}
                                     id="country"
                                     required={true}
@@ -702,15 +729,15 @@ function OnboardingHost() {
                             </section>
                             <section className="map-section">
                                 <h2 className="onboardingSectionTitle">What we show on Domits</h2>
-                                <MapComponent location={location}/>
+                                <MapComponent location={location} />
                             </section>
                         </section>
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="formContainer">
-                            <button className="nextButtons"  onClick={() => pageUpdater(page - 1)}>Go back to change
+                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>Go back to change
                             </button>
                             <button className="nextButtons" disabled={stepThree} onClick={() => pageUpdater(page + 1)}>Confirm and proceed
                             </button>
@@ -797,14 +824,14 @@ function OnboardingHost() {
                             <div className="slider-bar">
                                 <p>1</p>
                                 <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
-                                       defaultValue={formData.Rent} min="1" max="1000" step="1"
-                                       required={true}/>
+                                    defaultValue={formData.Rent} min="1" max="1000" step="1"
+                                    required={true} />
                                 <p>1000</p>
                             </div>
                         </section>
                         <h2 className="onboardingSectionTitle">Availabilities</h2>
                         <section className="listing-calendar">
-                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
+                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates} />
                         </section>
                         <label>
                             <input
@@ -818,7 +845,7 @@ function OnboardingHost() {
                             Mark as draft (Stripe account and date range is required)
                         </label>
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav class="formContainer">
@@ -848,87 +875,92 @@ function OnboardingHost() {
 
             case 5:
                 return (
-                    <div className="container" style={{width: '80%'}}>
+                    <div className="container" style={{ width: '80%' }}>
                         <h2>Step 5: Review your information</h2>
-                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <tbody>
-                            <tr>
-                                <th style={{
-                                    textAlign: 'left',
-                                    borderBottom: '1px solid #ccc',
-                                    paddingBottom: '8px'
-                                }}>Property Details
-                                </th>
-                                <th style={{
-                                    textAlign: 'left',
-                                    borderBottom: '1px solid #ccc',
-                                    paddingBottom: '8px'
-                                }}>Value
-                                </th>
-                            </tr>
-                            <tr>
-                                <td>Title:</td>
-                                <td>{formData.Title}</td>
-                            </tr>
-                            <tr>
-                                <td>Description:</td>
-                                <td>{formData.Description}</td>
-                            </tr>
-                            <tr>
-                                <td>Rent:</td>
-                                <td>{formData.Rent}</td>
-                            </tr>
-                            <tr>
-                                <td>Room Type:</td>
-                                <td>{formData.AccommodationType}</td>
-                            </tr>
-                            <tr>
-                                <td>Date Range:</td>
-                                <td>
-                                    {formData.StartDate && formData.EndDate ? (
-                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
-                                    ) : "Date range not set"}
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>Number of Guests:</td>
-                                <td>{formData.Guestamount}</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Bedrooms:</td>
-                                <td>{formData.Bedrooms}</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Bathrooms:</td>
-                                <td>{formData.Bathrooms}</td>
-                            </tr>
-                            <tr>
-                                <td>Number of Fixed Beds:</td>
-                                <td>{formData.Beds}</td>
-                            </tr>
-                            <tr>
-                                <td>Country:</td>
-                                <td>{formData.Country}</td>
-                            </tr>
-                            <tr>
-                                <td>Postal Code:</td>
-                                <td>{formData.PostalCode}</td>
-                            </tr>
-                            <tr>
-                                <td>Street + House Nr.:</td>
-                                <td>{formData.Street}</td>
-                            </tr>
+                                <tr>
+                                    <th style={{
+                                        textAlign: 'left',
+                                        borderBottom: '1px solid #ccc',
+                                        paddingBottom: '8px'
+                                    }}>Property Details
+                                    </th>
+                                    <th style={{
+                                        textAlign: 'left',
+                                        borderBottom: '1px solid #ccc',
+                                        paddingBottom: '8px'
+                                    }}>Value
+                                    </th>
+                                </tr>
+                                <tr>
+                                    <td>Title:</td>
+                                    <td>{formData.Title}</td>
+                                </tr>
+                                <tr>
+                                    <td>Description:</td>
+                                    <td>{formData.Description}</td>
+                                </tr>
+                                <tr>
+                                    <td>Rent:</td>
+                                    <td>{formData.Rent}</td>
+                                </tr>
+                                <tr>
+                                    <td>Cleaning Fee:</td>
+                                    <td>{formData.Features.CleaningFeeEnabled ? `Yes, ${formData.Features.CleaningFee}` : 'No'}</td>
+                                </tr>
+
+                                <tr>
+                                    <td>Room Type:</td>
+                                    <td>{formData.AccommodationType}</td>
+                                </tr>
+                                <tr>
+                                    <td>Date Range:</td>
+                                    <td>
+                                        {formData.StartDate && formData.EndDate ? (
+                                            `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
+                                        ) : "Date range not set"}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Guests:</td>
+                                    <td>{formData.Guestamount}</td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Bedrooms:</td>
+                                    <td>{formData.Bedrooms}</td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Bathrooms:</td>
+                                    <td>{formData.Bathrooms}</td>
+                                </tr>
+                                <tr>
+                                    <td>Number of Fixed Beds:</td>
+                                    <td>{formData.Beds}</td>
+                                </tr>
+                                <tr>
+                                    <td>Country:</td>
+                                    <td>{formData.Country}</td>
+                                </tr>
+                                <tr>
+                                    <td>Postal Code:</td>
+                                    <td>{formData.PostalCode}</td>
+                                </tr>
+                                <tr>
+                                    <td>Street + House Nr.:</td>
+                                    <td>{formData.Street}</td>
+                                </tr>
                             </tbody>
                         </table>
                         <h3>Features:</h3>
-                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                             <tbody>
-                            {Object.entries(formData.Features).map(([feature, value]) => (
-                                <tr key={feature}>
-                                    <td style={{borderBottom: '1px solid #ccc'}}>{feature}:</td>
-                                    <td style={{borderBottom: '1px solid #ccc'}}>{value ? 'Yes' : 'No'}</td>
-                                </tr>
-                            ))}
+                                {Object.entries(formData.Features).map(([feature, value]) => (
+                                    <tr key={feature}>
+                                        <td style={{ borderBottom: '1px solid #ccc' }}>{feature}:</td>
+                                        <td style={{ borderBottom: '1px solid #ccc' }}>{value ? 'Yes' : 'No'}</td>
+                                    </tr>
+                                ))}
                             </tbody>
                         </table>
                         <div className='buttonHolder'>
@@ -950,7 +982,7 @@ function OnboardingHost() {
                     return (
                         <div className="loading">
                             <p className="spinner-text">Please wait a moment...</p>
-                            <img className="spinner" src={spinner}/>
+                            <img className="spinner" src={spinner} />
                         </div>
                     );
                 } else {
