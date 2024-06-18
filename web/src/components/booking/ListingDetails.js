@@ -4,6 +4,9 @@ import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import DatePicker from 'react-datepicker';
+import "react-datepicker/dist/react-datepicker.css";
+
 
 import Washingmashine from "../../images/icons/Washingmachine.png";
 import Television from "../../images/icons/Television.png";
@@ -37,6 +40,8 @@ const ListingDetails = () => {
     const [kids, setKids] = useState(0);
     const [pets, setPets] = useState('');
     const [isFormValid, setIsFormValid] = useState(false);
+    const [bookedDates, setBookedDates] = useState([]);
+
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -46,7 +51,7 @@ const ListingDetails = () => {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ID: id})
+                    body: JSON.stringify({ ID: id }),
                 });
                 if (!response.ok) {
                     throw new Error('Failed to fetch accommodation data');
@@ -54,8 +59,7 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setDates(data.StartDate, data.EndDate);
-
+                setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
                 fetchReviewsByAccommodation(data.ID);
             } catch (error) {
@@ -116,19 +120,20 @@ const ListingDetails = () => {
 
     useEffect(() => {
         const restrictDates = () => {
-            if (checkIn && !checkOut) {
+            if (checkIn) {
                 const minEnd = new Date(checkIn);
                 minEnd.setUTCDate(minEnd.getUTCDate() + 1);
                 setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
-            } else if (!checkIn && checkOut) {
-                const maxStart = new Date(checkOut);
-                maxStart.setUTCDate(maxStart.getUTCDate() - 1);
-                setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
+                if (checkOut && new Date(checkOut) <= new Date(checkIn)) {
+                    setCheckOut('');
+                }
             }
-        }
+        };
         restrictDates();
-    }, [checkIn, checkOut]);
+    }, [checkIn]);
     
+    
+
     const handleChange = (value, setType) => {
         const newValue = parseInt(value, 10) || 0;
         setType(newValue);
@@ -143,38 +148,47 @@ const ListingDetails = () => {
         checkFormValidity();
     };
 
-    const setDates = (StartDate, EndDate) => {
+    const setDates = (StartDate, EndDate, bookedDates) => {
         const today = new Date();
-        const parsedStartDate = today > new Date(StartDate) ? today : new Date(StartDate)
+        const parsedStartDate = today > new Date(StartDate) ? today : new Date(StartDate);
         const parsedEndDate = new Date(EndDate);
         const maxStart = new Date(parsedEndDate);
         maxStart.setUTCDate(maxStart.getUTCDate() - 1);
 
         const minEnd = new Date(parsedStartDate);
         minEnd.setUTCDate(minEnd.getUTCDate() + 1);
+
         setMinStart(DateFormatterYYYY_MM_DD(parsedStartDate));
         setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
         setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
         setMaxEnd(DateFormatterYYYY_MM_DD(parsedEndDate));
+        setBookedDates(bookedDates); // Save booked dates in state
     };
+
 
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
-            setIsFormValid(true);
+            if (new Date(checkOut) > new Date(checkIn)) {
+                setIsFormValid(true);
+            } else {
+                setIsFormValid(false);
+            }
         } else {
             setIsFormValid(false);
         }
-    };
+    };    
+    
 
     const calculateTotal = () => {
         if (!accommodation) return 0;
-        const nights = (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24);
+        const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
         const basePrice = nights * accommodation.Rent;
-        const discount = 75; // example value
+        const discount = 75;
         const cleaningFee = 100;
         const serviceFee = 98;
         return basePrice - discount + cleaningFee + serviceFee;
     };
+    
 
     const handleStartChat = () => {
         const userEmail = "nabilsalimi0229@gmail.com";
@@ -203,6 +217,31 @@ const ListingDetails = () => {
                 v = c == 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
+    };
+
+    // Check if a date is within any booked range
+    const isDateBooked = (date) => {
+        return bookedDates.some(bookedRange => {
+            const start = new Date(bookedRange[0]);
+            const end = new Date(bookedRange[1]);
+            return date >= start && date <= end;
+        });
+    };
+
+    const isDateAfterBookedNight = (date) => {
+        if (!checkIn) return false;
+
+        for (let bookedRange of bookedDates) {
+            const start = new Date(bookedRange[0]);
+            if (checkIn <= start && date >= start) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    const filterBookedDates = (date) => {
+        return !isDateBooked(date) && !isDateAfterBookedNight(date);
     };
 
     return (
@@ -240,12 +279,12 @@ const ListingDetails = () => {
                                                     feature === 'Television' ? Television :
                                                         feature === 'Smokedetector' ? Smokedetector :
                                                             feature === 'Wifi' ? Wifi :
-                                                            feature === 'Onsiteparking' ? Onsiteparking :
-                                                                feature === 'Homeoffice' ? Homeoffice :
-                                                                    feature === 'Fireextinguisher' ? Fireextinguisher :
-                                                                        feature === 'Airconditioning' ? Airconditioning :
-                                                                            feature === 'FirstAidkit' ? FirstAidKit :
-                                                                                feature === 'Kitchen' ? Kitchen : ''
+                                                                feature === 'Onsiteparking' ? Onsiteparking :
+                                                                    feature === 'Homeoffice' ? Homeoffice :
+                                                                        feature === 'Fireextinguisher' ? Fireextinguisher :
+                                                                            feature === 'Airconditioning' ? Airconditioning :
+                                                                                feature === 'FirstAidkit' ? FirstAidKit :
+                                                                                    feature === 'Kitchen' ? Kitchen : ''
                                             } alt={feature} className='feature-icon' />
                                             <span>{feature}</span>
                                         </li>
@@ -254,25 +293,25 @@ const ListingDetails = () => {
                                 <div>
                                     <button class='button'>Show more</button>
                                 </div>
-                                <br/>
+                                <br />
                                 <section className="listing-reviews">
                                     <h2>Reviews</h2>
                                     {reviews.length > 0 ? (
-                                    reviews.map((review, index) => (
-                                    <div key={index} className="review-card">
-                                        <h2 className="review-header">{review.title}</h2>
-                                        <p className="review-content">{review.content}</p>
-                                        <p className="review-date">Written on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
-                                    </div>
-                                    ))
+                                        reviews.map((review, index) => (
+                                            <div key={index} className="review-card">
+                                                <h2 className="review-header">{review.title}</h2>
+                                                <p className="review-content">{review.content}</p>
+                                                <p className="review-date">Written on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
+                                            </div>
+                                        ))
                                     ) : (
-                                    <p className="review-alert">This accommodation does not have any reviews yet...</p>
+                                        <p className="review-alert">This accommodation does not have any reviews yet...</p>
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
                                     </div>
                                 </section>
-                                <br/>
+                                <br />
                                 <section className="listing-host-info">
                                     <h2>Host profile</h2>
                                     {host && (
@@ -300,34 +339,48 @@ const ListingDetails = () => {
                             <h2>Booking details</h2>
                             <p>Available from {DateFormatterDD_MM_YYYY(accommodation.StartDate)} to {DateFormatterDD_MM_YYYY(accommodation.EndDate)}</p>
                             <div className="dates">
-                                <div className="check-in-out">
-                                    <label>Check in</label>
-                                    <input type="date" min={minStart}
-                                        max={maxStart}
-                                        placeholder="Select your check-in"
-                                        onChange={(e) => setCheckIn(e.target.value)} />
+                                <div className="summaryBlock">
+                                    <label htmlFor="checkIn">Check In</label>
+                                    <DatePicker
+                                        id="checkIn"
+                                        selected={checkIn}
+                                        className='datePickerLD'
+                                        onChange={(date) => setCheckIn(date)}
+                                        minDate={minStart && new Date(minStart)}
+                                        maxDate={maxStart && new Date(maxStart)}
+                                        filterDate={filterBookedDates}
+                                        dateFormat="yyyy-MM-dd"
+                                    />
                                 </div>
                                 {(checkIn && checkOut) ? (
                                     <div className="nights">
-                                        <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights</p>
+                                        <p>{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
                                     </div>
                                 ) : (
                                     <div className="nights">
                                         <p>0 nights</p>
                                     </div>
                                 )}
-                                <div className="check-in-out">
-                                    <label>Check out</label>
-                                    <input type="date" min={minEnd}
-                                        max={maxEnd}
-                                        onChange={(e) => setCheckOut(e.target.value)} />
+
+                                <div className="summaryBlock">
+                                    <label htmlFor="checkOut">Check Out</label>
+                                    <DatePicker
+                                        id="checkOut"
+                                        selected={checkOut}
+                                        className='datePickerLD'
+                                        onChange={(date) => setCheckOut(date)}
+                                        minDate={minEnd && new Date(minEnd)}
+                                        maxDate={maxEnd && new Date(maxEnd)}
+                                        filterDate={filterBookedDates}
+                                        dateFormat="yyyy-MM-dd"
+                                    />
                                 </div>
                             </div>
                             <div className="travelers">
                                 <label>Travelers</label>
                                 <p>Maximum amount of travelers: {accommodation.GuestAmount}</p>
                                 <br />
-                                <div className="traveller-inputs">
+                                <div className="summaryBlock">
                                     <label>Adults</label>
                                     <input type="number" min="1" placeholder={"Enter the amount of adults"}
                                         className={inputError ? 'error' : ''}
@@ -339,7 +392,7 @@ const ListingDetails = () => {
                                 </div>
                                 {inputError ? <p className="error-text">Maximum allowed travelers exceeded!</p> : ''}
                             </div>
-                            <div className="pets">
+                            <div className="summaryBlock">
                                 <label>Pets</label>
                                 <select value={pets} onChange={(e) => setPets(e.target.value)}>
                                     <option value="">Select...</option>
@@ -349,7 +402,7 @@ const ListingDetails = () => {
                                     <option value="other">Other</option>
                                 </select>
                             </div>
-                            <button className="reserve-button" onClick={handleBooking} 
+                            <button className="reserve-button" onClick={handleBooking}
                                 disabled={!isFormValid}
                                 style={{
                                     backgroundColor: isFormValid ? 'green' : 'gray',

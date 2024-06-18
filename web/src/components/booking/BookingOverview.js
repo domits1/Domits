@@ -5,8 +5,10 @@ import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
+import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
+import ImageGallery from './ImageGallery';
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE);
+const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
 
 const BookingOverview = () => {
@@ -28,6 +30,7 @@ const BookingOverview = () => {
     const [error, setError] = useState(null);
 
     const [accommodation, setAccommodation] = useState(null);
+    const [isProcessing, setIsProcessing] = useState(false); // New state for cursor wait
     const searchParams = new URLSearchParams(location.search);
     const id = searchParams.get('id');
     const checkIn = searchParams.get('checkIn');
@@ -35,8 +38,6 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('adults'), 10);
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
-
-
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
@@ -113,7 +114,7 @@ const BookingOverview = () => {
         return <div>Loading...</div>;
     }
 
-    // Helper function to calculate the number of days between two dates in YYYY-MM-DD format
+
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -132,9 +133,10 @@ const BookingOverview = () => {
             return;
         }
 
-        // Assuming you have these variables already defined
+
         const paymentID = generateUUID();
         const userId = cognitoUserId;
+        const accommodationTitle = accommodation.Title;
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const price = accommodationPrice;
@@ -143,6 +145,7 @@ const BookingOverview = () => {
 
         const successQueryParams = new URLSearchParams({
             paymentID,
+            accommodationTitle,
             userId,
             accommodationId,
             ownerId,
@@ -153,6 +156,7 @@ const BookingOverview = () => {
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
+            accommodationTitle,
             userId,
             accommodationId,
             ownerId,
@@ -174,6 +178,7 @@ const BookingOverview = () => {
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
+
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
                 method: 'POST',
@@ -198,24 +203,30 @@ const BookingOverview = () => {
         } catch (error) {
             console.error('Error initiating Stripe Checkout:', error);
             setError('Error initiating Stripe Checkout. Please try again later.');
+        } finally {
+            setIsProcessing(false);
         }
     };
 
     const handleConfirmAndPay = (e) => {
         e.preventDefault();
+        setIsProcessing(true);
         initiateStripeCheckout();
     };
 
     return (
-        <main className="container Bookingcontainer">
+        <main className="container Bookingcontainer" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>
+                <div>
+                    <ImageGallery images={Object.values(accommodation.Images)} />
+                </div>
                 {error && <div className="error">{error}</div>}
                 <div className="booking-details">
                     <div className="detail-item">
                         <span>Dates</span>
-                        <span>{checkIn} - {checkOut}</span>
+                        <span>{DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}</span>
                         <a href="#">Change</a>
                     </div>
                     <div className="detail-item">
@@ -230,8 +241,8 @@ const BookingOverview = () => {
                 </div>
                 <div className="booking-overview">
                     <h2>Booking overview</h2>
-                    <p>Check-in: {checkIn}</p>
-                    <p>Check-out: {checkOut}</p>
+                    <p>Check-in: {DateFormatterDD_MM_YYYY(checkIn)}</p>
+                    <p>Check-out: {DateFormatterDD_MM_YYYY(checkOut)}</p>
                 </div>
                 <div className="accommodation-info">
                     <h2>Accommodation</h2>
