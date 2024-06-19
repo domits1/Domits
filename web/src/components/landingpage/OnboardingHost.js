@@ -15,17 +15,6 @@ import Villa from "../../images/icons/mansion.png";
 import Boat from "../../images/icons/house-boat.png";
 import Camper from "../../images/icons/camper-van.png";
 import Cottage from "../../images/icons/cottage.png";
-import WiFi from "../../images/icons/Wifi.png";
-import Airconditioning from "../../images/icons/Airconditioning.png";
-import OnsiteParking from "../../images/icons/Onsiteparking.png";
-import Television from "../../images/icons/Television.png";
-import Kitchen from "../../images/icons/Kitchen.png";
-import Washingmachine from "../../images/icons/Washingmachine.png";
-import Smokedetector from  "../../images/icons/Smokedetector.png";
-import FirstAidKit from  "../../images/icons/FirstAidKit.png";
-import HomeOffice from  "../../images/icons/Homeoffice.png";
-import FireExtinguisher from "../../images/icons/Fireextinguisher.png";
-
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
 function OnboardingHost() {
@@ -38,9 +27,6 @@ function OnboardingHost() {
     let [hasAccoType, setHasAccoType] = useState(false);
     let [hasGuestAccess, setHasGuestAccess] =useState(false);
     let [hasAddress, setHasAddress] = useState(false);
-    let [stepOne, setStepOne] = useState(null);
-    let [stepTwo, setStepTwo] = useState(null);
-    let [stepThree, setStepThree] = useState(null);
 
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -110,18 +96,7 @@ function OnboardingHost() {
         PostalCode: "",
         Street: "",
         City: "",
-        Features: {
-            Wifi: false,
-            Television: false,
-            Kitchen: false,
-            WashingMachine: false,
-            Airconditioning: false,
-            Onsiteparking: false,
-            Homeoffice: false,
-            Smokedetector: false,
-            FirstAidkit: false,
-            Fireextinguisher: false,
-        },
+        Features: [],
         Images: {
             image1: "",
             image2: "",
@@ -135,7 +110,8 @@ function OnboardingHost() {
         AccommodationType: "",
         ServiceFee: 0,
         GuestAccess: "",
-        OwnerId: ""
+        OwnerId: "",
+        CleaningFee: 0
     });
 
     const pageUpdater = (pageNumber) => {
@@ -157,44 +133,12 @@ function OnboardingHost() {
         if (formData.GuestAccess) {
             setHasGuestAccess(true);
         }
-        if (formData.Title && formData.Subtitle && formData.Description && hasImages()) {
-            setStepOne(false);
-        } else {
-            setStepOne(true);
-        }
-
-        if (formData.Guestamount && formData.Bedrooms && formData.Bathrooms && formData.Beds) {
-            setStepTwo(false);
-        } else {
-            setStepTwo(true);
-        }
-
         if (formData.Country && formData.City && formData.Street && formData.PostalCode) {
             setHasAddress(true);
         } else {
             setHasAddress(false);
         }
     }, [formData]);
-
-    const isFormFilled = () => {
-        const excludedFields = ['OwnerId', 'StartDate', 'EndDate'];
-        for (const key in formData) {
-            if (excludedFields.includes(key)) {
-                continue;
-            }
-            if (key === 'Images') {
-                // Check if all keys inside the Images object are filled
-                for (const imageKey in formData.Images) {
-                    if (formData.Images[imageKey] === '') {
-                        return false;
-                    }
-                }
-            } else if (formData[key] === "" || formData[key] === 0) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     const calculateServiceFee = () => {
         const rent = parseFloat(formData.Rent);
@@ -257,7 +201,6 @@ function OnboardingHost() {
             ...prevData,
             AccommodationType: accommodationType
         }));
-        console.log(formData);
     };
     const changeGuestAccess = (access) => {
         setFormData((prevData) => ({
@@ -265,6 +208,18 @@ function OnboardingHost() {
             GuestAccess: access
         }));
     };
+
+    useEffect(() => {
+        if (!formData.Features.includes('CleaningFee')) {
+            const resetCleaningFee = () => {
+                setFormData((prevData) => ({
+                    ...prevData,
+                    CleaningFee: 0
+                }));
+            };
+            resetCleaningFee();
+        }
+    }, [formData.Features]);
 
     const incrementAmount = (field) => {
         setFormData(prevData => ({
@@ -282,21 +237,29 @@ function OnboardingHost() {
         }
     };
 
-    const toggleFeature = (feature) => {
-        setFormData(prevData => ({
-            ...prevData,
-            Features: {
-                ...prevData.Features,
-                [feature]: !prevData.Features[feature]
-            }
-        }));
-    };
-
     const setDrafted = (value) => {
         setFormData((prevData) => ({
             ...prevData,
             Drafted: value
         }));
+    }
+
+    const handleAmenities = (event) => {
+        const { name, checked } = event.target;
+        const feature = name;
+
+        if (checked) {
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                Features: [...prevFormData.Features, feature]
+            }));
+        } else {
+            setFormData(prevFormData => ({
+                ...prevFormData,
+                Features: prevFormData.Features.filter(item => item !== feature)
+            }));
+        }
+        console.log(formData);
     }
 
     const handleInputChange = (event) => {
@@ -620,58 +583,106 @@ function OnboardingHost() {
                     <main className="container">
                         <h2 className="onboardingSectionTitle">Let guests know what your space has to offer.</h2>
                         <p className="onboardingSectionSubtitle">You can add more facilities after publishing your listing</p>
-                        <section className="accommodation-types">
-                            <div className={`option ${formData.Features.Wifi ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('Wifi')}>
-                                <img className="amenity-icon" src={WiFi} alt="Wifi"/>
-                                WiFi
-                            </div>
-                            <div className={`option ${formData.Features.Airconditioning ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('Airconditioning')}>
-                                <img className="amenity-icon" src={Airconditioning} alt="Airco"/>
-                                Air conditioning
-                            </div>
-                            <div className={`option ${formData.Features.Onsiteparking ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('Onsiteparking')}>
-                                <img className="amenity-icon" src={OnsiteParking} alt="OnsiteParking"/>
-                                Onsite parking
-                            </div>
-                            <div className={`option ${formData.Features.Television ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('Television')}>
-                                <img className="amenity-icon" src={Television} alt="Television"/>
-                                Television
-                            </div>
-                            <div className={`option ${formData.Features.Kitchen ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('Kitchen')}>
-                                <img className="amenity-icon" src={Kitchen} alt="Kitchen"/>
-                                Kitchen
-                            </div>
-                            <div className={`option ${formData.Features.WashingMachine ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('WashingMachine')}>
-                                <img className="amenity-icon" src={Washingmachine} alt="Washingmachine"/>
-                                Washing machine
-                            </div>
-                            <div className={`option ${formData.Features.Homeoffice ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('Homeoffice')}>
-                                <img className="amenity-icon" src={HomeOffice} alt="Homeoffice"/>
-                                Home office
-                            </div>
-                            <div className={`option ${formData.Features.Smokedetector ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('Smokedetector')}>
-                                <img className="amenity-icon" src={Smokedetector} alt="Smokedetector"/>
-                                Smoke detector
-                            </div>
-                            <div className={`option ${formData.Features.FirstAidkit ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('FirstAidkit')}>
-                                <img className="amenity-icon" src={FirstAidKit} alt="Firstaidkit"/>
-                                First aid kit
-                            </div>
-                            <div className={`option ${formData.Features.Fireextinguisher ? 'selected' : ''}`}
-                                 onClick={() => toggleFeature('Fireextinguisher')}>
-                                <img className="amenity-icon" src={FireExtinguisher} alt="Fireextinguisher"/>
-                                Fire extinguisher
-                            </div>
-                        </section>
+                        <div className="form-group">
+                            <h2 className="onboardingSectionTitle">Add accommodation features</h2>
+                            <p>You can select one or more items below</p>
+                            <section className="check-box">
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Wifi"
+                                        onChange={handleAmenities}
+                                        checked={formData.Features.includes('Wifi')}
+                                    />
+                                    Wifi
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Television"
+                                        onChange={handleAmenities}
+                                        checked={formData.Features.includes('Television')}
+                                    />
+                                    Television
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Kitchen"
+                                        onChange={handleAmenities}
+                                        checked={formData.Features.includes('Kitchen')}
+                                    />
+                                    Kitchen
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="WashingMachine"
+                                        onChange={handleAmenities}
+                                        checked={formData.Features.includes('WashingMachine')}
+                                    />
+                                    Washing machine
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Airconditioning"
+                                        onChange={handleAmenities}
+                                        checked={formData.Features.includes('Airconditioning')}
+                                    />
+                                    Airconditioning
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Onsiteparking"
+                                        onChange={handleAmenities}
+                                        checked={formData.Features.includes('Onsiteparking')}
+                                    />
+                                    Onsite parking
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="Homeoffice"
+                                        onChange={handleAmenities}
+                                        checked={formData.Features.includes('Homeoffice')}
+                                    />
+                                    Home office
+                                </label>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        className="radioInput"
+                                        name="CleaningFee"
+                                        onChange={handleAmenities}
+                                        checked={formData.Features.includes('CleaningFee')}
+                                    />
+                                    Cleaning Fee
+                                </label>
+                                {formData.Features.includes('CleaningFee') && (
+                                    <label>
+                                        Cleaning Fee Amount
+                                        <input
+                                            type="number"
+                                            className="pricing-input"
+                                            name="CleaningFee"
+                                            value={formData.CleaningFee}
+                                            onChange={handleInputChange}
+                                            min={0}
+                                            placeholder="Enter the cleaning fee amount"
+                                        />
+                                    </label>
+                                )}
+                            </section>
+                        </div>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
                                 Go back
