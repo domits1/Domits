@@ -114,7 +114,7 @@
 .listing-calendar {
   display: flex;
   flex-direction: row;
-  justify-content: start;
+  justify-content: center;
 }
 .loading {
   display: flex;
@@ -352,6 +352,13 @@
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+}
+.button-box-last {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 1.5em;
+  padding: 2em;
 }
 @media (max-width: 640px) {
   .accommodation-types {

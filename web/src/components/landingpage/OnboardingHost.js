@@ -261,7 +261,6 @@ function OnboardingHost() {
             ...prevData,
             GuestAccess: access
         }));
-        console.log(formData);
     };
 
     const incrementAmount = (field) => {
@@ -290,6 +289,12 @@ function OnboardingHost() {
         }));
     };
 
+    const setDrafted = (value) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            Drafted: value
+        }));
+    }
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
@@ -304,8 +309,7 @@ function OnboardingHost() {
                 SystemConfiguration: {
                     ...prevData.Features,
                     [name]: checked,
-                },
-                Drafted: checked,
+                }
             }));
         } else if (type === 'number' || type === 'range') {
             const newValue = value || '';
@@ -362,11 +366,10 @@ function OnboardingHost() {
         try {
             setIsLoading(true);
             const AccoID = formData.ID;
-            const updatedFormData = { ...formData }; // Copy the original formData object
+            const updatedFormData = { ...formData };
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
                 const location =  await uploadImageToS3(userId, AccoID, file, i);
-                console.log(location);
                 updatedFormData.Images[`image${i + 1}`] = location;
             }
             await setFormData(updatedFormData);
@@ -398,7 +401,6 @@ function OnboardingHost() {
         newImageFiles[index] = file;
         setImageFiles(newImageFiles);
 
-        // Construct formData based on current imageFiles
         const updatedFormData = { ...formData };
         if (file) {
             const key = `image${index + 1}`;
@@ -412,7 +414,6 @@ function OnboardingHost() {
         newImageFiles[index] = null;
         setImageFiles(newImageFiles);
 
-        // Construct formData based on current imageFiles
         const updatedFormData = { ...formData };
         const key = `image${index + 1}`;
         updatedFormData.Images[key] = ""; // Clear the value associated with the key
@@ -861,318 +862,12 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
-            case 100:
+            case 9:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Step 1: Accommodation Information</h2>
-                        <section className="flex-row form-row">
-                            <section className="form-section">
-
-                                <label htmlFor="title">Title*</label>
-                                <input
-                                    className="textInput locationText"
-                                    id="title"
-                                    name="Title"
-                                    onChange={handleInputChange}
-                                    value={formData.Title}
-                                    placeholder="Enter your title here..."
-                                    required={true}
-                                />
-                                <label htmlFor="Subtitle">Subtitle*</label>
-                                <input
-                                    className="textInput locationText"
-                                    id="Subtitle"
-                                    name="Subtitle"
-                                    onChange={handleInputChange}
-                                    value={formData.Subtitle}
-                                    placeholder="Enter your subtitle here..."
-                                    required={true}
-                                />
-                                <label htmlFor="description">Description*</label>
-                                <textarea
-                                    className="textInput locationText"
-                                    id="description"
-                                    name="Description"
-                                    onChange={handleInputChange}
-                                    rows="5"
-                                    value={formData.Description}
-                                    placeholder="Tell us something about your accommodation..."
-                                    required={true}
-                                ></textarea>
-                                <label htmlFor="accommodationType">Accommodation Type*</label>
-                                <select
-                                    value={formData.AccommodationType}
-                                    onChange={handleInputChange}
-                                    name="AccommodationType"
-                                    className="textInput"
-                                    required={true}
-                                >
-                                    <option value="Room">Room</option>
-                                    <option value="Shared Room">Shared Room</option>
-                                    <option value="House">House</option>
-                                    <option value="Apartment">Apartment</option>
-                                    <option value="Villa">Villa</option>
-                                    <option value="Cottage">Cottage</option>
-                                    <option value="Hotel">Hotel</option>
-                                    <option value="Boat">Boat</option>
-                                    <option value="Camper">Camper</option>
-                                </select>
-                            </section>
-                            <section className="images-container thumbnail-container">
-                                {imageFiles[0] && (
-                                    <img
-                                        src={URL.createObjectURL(imageFiles[0])}
-                                        alt="First Image"
-                                        className="file-image placeholder"
-                                    />
-                                )}
-                                {!imageFiles[0] && <div className="placeholder">Your Thumbnail</div>}
-                            </section>
-                        </section>
-                        <section className="form-section">
-                            <h2 className="onboardingSectionTitle">Images*</h2>
-                            <section className="flex-row">
-                                {[...Array(5)].map((_, index) => (
-                                    <section key={index} className="images-container">
-                                        <input
-                                            type="file"
-                                            onChange={(e) => handleFileChange(e.target.files[0], index)}
-                                            accept="image/*"
-                                            className="file-input"
-                                            required={true}
-                                        />
-                                        {imageFiles[index] && (
-                                            <>
-                                                <img
-                                                    src={URL.createObjectURL(imageFiles[index])}
-                                                    alt={`Image ${index + 1}`}
-                                                    className="file-image"
-                                                />
-                                                <button className="delete-button" onClick={() => handleDelete(index)}>
-                                                    Delete
-                                                </button>
-                                            </>
-                                        )}
-                                        {!imageFiles[index] && <div className="placeholder">Image {index + 1}</div>}
-                                    </section>
-                                ))}
-                            </section>
-                        </section>
-
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav className="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>
-                                Go back
-                            </button>
-                            <button className="nextButtons" disabled={stepOne} onClick={() => pageUpdater(page + 1)}>
-                                Confirm and proceed
-                            </button>
-                        </nav>
-                    </main>
-                );
-            case 101:
-                return (
-                    <main className="container">
-                        <section className="quantity">
-                            <h2 className="onboardingSectionTitle">Step 2: Specifications</h2>
-                            <div className="input-group">
-                            </div>
-                            <div className="form-row">
-                                <label htmlFor="guests">Maximum amount of guests*</label>
-                                <input
-                                    type="number"
-                                    id="guests"
-                                    name="Guestamount"
-                                    onChange={handleInputChange}
-                                    value={formData.Guestamount}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many guests can you accept?"
-                                    required={true}
-                                />
-                                <label htmlFor="bedrooms">Amount of bedrooms*</label>
-                                <input
-                                    type="number"
-                                    id="bedrooms"
-                                    name="Bedrooms"
-                                    onChange={handleInputChange}
-                                    value={formData.Bedrooms}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many badrooms does it have?"
-                                    required={true}
-                                />
-
-                                <label htmlFor="bathrooms">Amount of bathrooms*</label>
-                                <input
-                                    type="number"
-                                    id="bathrooms"
-                                    name="Bathrooms"
-                                    onChange={handleInputChange}
-                                    value={formData.Bathrooms}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many bathrooms does it have?"
-                                    required={true}
-                                />
-
-                                <label htmlFor="beds">Amount of beds*</label>
-                                <input
-                                    type="number"
-                                    id="beds"
-                                    name="Beds"
-                                    onChange={handleInputChange}
-                                    value={formData.Beds}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many fixed beds does it have?"
-                                    required={true}
-                                />
-                            </div>
-                        </section>
-                        <div className="form-group">
-                            <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
-                            <section className="check-box">
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Smokedetector"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Smokedetector}
-                                    />
-                                    Smoke detector
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="FirstAidkit"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.FirstAidkit}
-                                    />
-                                    First Aid kit
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Fireextinguisher"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Fireextinguisher}
-                                    />
-                                    Fire extinguisher
-                                </label>
-                            </section>
-                        </div>
-                        <div className="form-group">
-                            <h2 className="onboardingSectionTitle">Add accommodation features</h2>
-                            <p>You can select one or more items below</p>
-                            <section className="check-box">
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Wifi"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Wifi}
-                                    />
-                                    Wifi
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Television"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Television}
-                                    />
-                                    Television
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Kitchen"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Kitchen}
-                                    />
-                                    Kitchen
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="WashingMachine"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.WashingMachine}
-                                    />
-                                    Washing machine
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Airconditioning"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Airconditioning}
-                                    />
-                                    Airconditioning
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Onsiteparking"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Onsiteparking}
-                                    />
-                                    Onsite parking
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Homeoffice"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Homeoffice}
-                                    />
-                                    Home office
-                                </label>
-                            </section>
-                        </div>
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav className="formContainer">
-                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>
-                                Go back to change
-                            </button>
-                            <button className="nextButtons" disabled={stepTwo} onClick={() => pageUpdater(page + 1)}>
-                                Confirm and proceed
-                            </button>
-                        </nav>
-                    </main>
-                );
-            case 6:
-                return (
-                    <main className="container">
-                        <section class="room-features formRow">
-                            <h2 className="onboardingSectionTitle">Step 4: Pricing</h2>
-                            <p>Price per night*: {formData.Rent}</p>
-                            <div className="slider-bar">
-                                <p>40</p>
-                                <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
-                                       defaultValue={formData.Rent} min="40" max="1000" step="10"
-                                       required={true}/>
-                                <p>1000</p>
-                            </div>
-                        </section>
-                        <h2 className="onboardingSectionTitle">Availabilities</h2>
+                        <h2 className="onboardingSectionTitle">Now set your rate</h2>
+                        <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within
+                            your dashboard</p>
                         <section className="listing-calendar">
                             <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
                         </section>
@@ -1181,45 +876,28 @@ function OnboardingHost() {
                                 type="checkbox"
                                 className="radioInput"
                                 name="Drafted"
-                                onChange={handleInputChange}
+                                onChange={() => setDrafted(!formData.Drafted)}
                                 disabled={!(formData.StartDate && formData.EndDate && hasStripe)}
                                 checked={formData.Drafted}
                             />
                             Mark as draft (Stripe account and date range is required)
                         </label>
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back
                             </button>
-                            <button
-                                className='nextButtons'
-                                onClick={() => {
-                                    if (isFormFilled) {
-                                        appendUserId();
-                                        pageUpdater(page + 1);
-                                    }
-                                }}
-                                style={{
-                                    backgroundColor: 'green',
-                                    width: '7vw',
-                                    cursor: isFormFilled() ? 'pointer' : 'not-allowed',
-                                    opacity: isFormFilled() ? 1 : 0.5
-                                }}
-                                disabled={!isFormFilled()}
-                            >Enlist
+                            <button className='onboarding-button'
+                                    onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
                             </button>
                         </nav>
                     </main>
                 );
-
-
-            case 6:
+            case 10:
                 return (
                     <div className="container" style={{width: '80%'}}>
-                        <h2>Step 5: Review your information</h2>
+                        <h2>Please check if everything is correct</h2>
                         <table style={{width: '100%', borderCollapse: 'collapse'}}>
                             <tbody>
                             <tr>
@@ -1301,21 +979,24 @@ function OnboardingHost() {
                             ))}
                             </tbody>
                         </table>
-                        <div className='buttonHolder'>
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+                        <p>Your accommodation ID: {formData.ID}</p>
+                        <p>{formData.Drafted ? "Guests cannot book your accommodation before you set it live via Hostdashboard -> Listing"
+                            : "Guests can book your accommodation anytime now!"}
+                        </p>
+                        <div className='onboarding-button-box'>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back to change
                             </button>
-                            <button className='nextButtons' onClick={() => {
+                            <button className='onboarding-button' onClick={() => {
                                 handleSubmit();
                                 pageUpdater(page + 1)
-                            }}>Confirm and proceed
+                            }}>Confirm
                             </button>
                         </div>
-                        <p>Your accommodation ID: {formData.ID}</p>
                     </div>
                 );
-
-
-            case 7:
+            case 11:
                 if (isLoading) {
                     return (
                         <div className="loading">
@@ -1326,15 +1007,14 @@ function OnboardingHost() {
                 } else {
                     return (
                         <div className="container">
-                            <h2>
+                        <h2>
                                 Congratulations! Your accommodation is being listed
                             </h2>
-                            <p>It may take a while before your accommodation is verified</p>
-                            <div className='buttonHolder'>
-                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to
-                                    change
+                            <p className="onboardingSectionSubtitle">It may take a while before your accommodation is verified</p>
+                            <div className='button-box-last'>
+                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
                                 </button>
-                                <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to
+                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard")}>Go to
                                     dashboard
                                 </button>
                             </div>
