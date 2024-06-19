@@ -869,7 +869,7 @@ function OnboardingHost() {
             case 9:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Now set your rate</h2>
+                        <h2 className="onboardingSectionTitle">Share your first availability</h2>
                         <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within
                             your dashboard</p>
                         <section className="listing-calendar">
