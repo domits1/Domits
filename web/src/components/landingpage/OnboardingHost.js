@@ -101,7 +101,7 @@ function OnboardingHost() {
         Title: "",
         Subtitle: "",
         Description: "",
-        Rent: "100",
+        Rent: 1,
         Guestamount: 0,
         Bedrooms: 0,
         Bathrooms: 0,
@@ -133,6 +133,7 @@ function OnboardingHost() {
         EndDate: "",
         Drafted: true,
         AccommodationType: "",
+        ServiceFee: 0,
         GuestAccess: "",
         OwnerId: ""
     });
@@ -194,6 +195,24 @@ function OnboardingHost() {
         }
         return true;
     }
+
+    const calculateServiceFee = () => {
+        const rent = parseFloat(formData.Rent);
+        if (isNaN(rent)) {
+            return 0;
+        } else {
+            return rent * 0.15;
+        }
+    };
+
+
+    useEffect(() => {
+        const fee = calculateServiceFee();
+        setFormData(prevData => ({
+            ...prevData,
+            ServiceFee: fee
+        }));
+    }, [formData.Rent]);
 
 
     const appendUserId = () => {
@@ -754,7 +773,7 @@ function OnboardingHost() {
                             <p>{formData.Subtitle.length}/32</p>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button
@@ -785,11 +804,58 @@ function OnboardingHost() {
                             <p>{formData.Description.length}/500</p>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className={!formData.Description ? 'onboarding-button-disabled' : 'onboarding-button'}
                                     disabled={!formData.Description} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 8:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">Now set your rate</h2>
+                        <h2 className="acco-price">{!isNaN(parseFloat(formData.Rent)) ? `€ ${parseFloat(formData.Rent).toFixed(0)}` : 'Enter your base rate'}</h2>
+                        <section className="accommodation-pricing">
+                            <div className="pricing-row">
+                                <label>Base rate</label>
+                                <input className="pricing-input" type="number" name="Rent" onChange={handleInputChange}
+                                       defaultValue={formData.Rent} min={1} step={0.1}
+                                       required={true}/>
+                            </div>
+                            <div className="pricing-row">
+                                <label>Service fees</label>
+                                <p className="pricing-input">
+                                    €{((!isNaN(parseFloat(formData.ServiceFee)) ? parseFloat(formData.ServiceFee) : 0)).toFixed(2)}
+                                </p>
+                            </div>
+                            <hr/>
+                            <div className="pricing-row">
+                                <label>Guest's price</label>
+                                <p className="pricing-input">
+                                    €{((!isNaN(parseFloat(formData.Rent)) ? parseFloat(formData.Rent) : 0) +
+                                    (!isNaN(parseFloat(formData.ServiceFee)) ? parseFloat(formData.ServiceFee) : 0)).toFixed(2)}
+                                </p>
+                            </div>
+                        </section>
+                        <section className="accommodation-pricing">
+                            <div className="pricing-row">
+                                <label>Guest's price</label>
+                                <p className="pricing-input">
+                                    €{((!isNaN(parseFloat(formData.Rent)) ? parseFloat(formData.Rent) : 0)).toFixed(2)}
+                                </p>
+                            </div>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button className={!formData.Rent ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!formData.Rent} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>

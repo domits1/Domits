@@ -323,9 +323,55 @@
   border-radius: 5px;
   margin-bottom: 20px;
 }
-@media (max-width: 480px) {
+.acco-price {
+  padding: 5%;
+  font-weight: bold;
+  color: black;
+}
+.accommodation-pricing {
+  display: flex;
+  flex-direction: column;
+  align-self: center;
+  padding: 2em;
+  border: 3px solid #003366;
+  border-radius: 2em;
+  width: 20vw;
+  margin-bottom: 1em;
+  hr {
+    clear:both;
+    display:block;
+    width: 96%;
+    background-color: black;
+    height: 1px;
+  }
+}
+.pricing-input {
+  width: 20%;
+}
+.pricing-row {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+@media (max-width: 640px) {
   .accommodation-types {
     grid-template-columns: repeat(2, 1fr);
+  }
+  .accommodation-images {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .file-image, .accommodation-thumbnail {
+    width: 30%;
+    height: 30%;
+  }
+  .file-input {
+    width: 35%;
+    height: 35%;
+  }
+  .images-container {
+    height: auto;
+    width: auto;
   }
 
   .acco-location {
@@ -347,5 +393,9 @@
   .textInput {
     width: 100% !important;
     height: 100% !important;
+  }
+
+  .accommodation-pricing {
+    width: 75%;
   }
 }
