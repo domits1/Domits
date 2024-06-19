@@ -1,11 +1,11 @@
 .chat{
-    height: 60vh;
+    height: 80vh;
     width: 100%;
     background: white;
     display: flex;
     justify-content: space-evenly;
     align-items: center;
- 
+ gap: 50px;
 }
 
 .chat__container{
@@ -314,14 +314,22 @@ p{
 
 }
 
+.chat__inputContainer{
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    height: auto;
+    padding: 10px;
+    gap: 10px;
+}
+
 .chat__input{
-    width: 95%;
+    width: 85%;
     height: 50px;
     border-radius: 1rem;
     border: 1.5px solid black;
-    background-image: url(send.png);
-    background-repeat: no-repeat;
-    background-position: 98% center;
+    padding-left: 20px;
 }
 
 .chat__aside{
@@ -336,6 +344,25 @@ p{
     gap: 15px;
     border-bottom: 1px solid black;
     padding: 5px;
+}
+
+
+
+.chat__send{
+    border-radius: 1rem;
+    color: #707070;
+    border: none;
+    width: 70px;
+    cursor: pointer;
+    background: #C2E5C4;
+    height: 100%;
+    /* background-image: url(send.png);
+    background-repeat: no-repeat;
+    background-position: center; */
+}
+
+.chat__send:hover{
+    background: #abe9ae;
 }
 
 .chat__pfpImg{
@@ -460,11 +487,19 @@ p{
 
 .chat__button--review{
     width: 200px;
-    height: 40px;
+    height: 45px;
     margin: 0;
     font-size: 1.1rem;
-    background: #49146A;
+    background: #036;
     color: white;
+    border: none;
+    border-radius: 1rem;
+    transition: 0.2s;
+}
+
+.chat__button--review:hover{
+    background: #4a86c3;
+    cursor: pointer;
 }
 
 .chat__iconText{
