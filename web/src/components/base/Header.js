@@ -19,6 +19,7 @@ function Header({ setSearchResults, setLoading }) {
     const [group, setGroup] = useState('');
     const [username, setUsername] = useState('');
     const [dropdownVisible, setDropdownVisible] = useState(false);
+    const [currentView, setCurrentView] = useState('guest'); // 'guest' or 'host'
 
     useEffect(() => {
         checkAuthentication();
@@ -36,6 +37,7 @@ function Header({ setSearchResults, setLoading }) {
             const userAttributes = user.attributes;
             setGroup(userAttributes['custom:group']);
             setUsername(userAttributes['custom:username']);
+            setCurrentView(userAttributes['custom:group'] === 'Host' ? 'host' : 'guest');
         } catch (error) {
             setIsLoggedIn(false);
             console.error('Error logging in:', error);
@@ -68,11 +70,20 @@ function Header({ setSearchResults, setLoading }) {
     const navigateToNinedots = () => {
         navigate('/travelinnovation');
     };
-    const navigateToProfile = () => {
+    const navigateToGuestDashboard = () => {
+        setCurrentView('guest');
         navigate('/guestdashboard');
     };
+    const navigateToHostDashboard = () => {
+        setCurrentView('host');
+        navigate('/hostdashboard');
+    };
     const navigateToMessages = () => {
-        navigate('/guestdashboard/messages');
+        if (currentView === 'host') {
+            navigate('/hostdashboard/messages');
+        } else {
+            navigate('/guestdashboard/messages');
+        }
     };
     const navigateToPayments = () => {
         navigate('/guestdashboard/payments');
@@ -83,29 +94,47 @@ function Header({ setSearchResults, setLoading }) {
     const navigateToSettings = () => {
         navigate('/guestdashboard/settings');
     };
+
     const navigateToDashboard = () => {
         if (!isLoggedIn) {
             setFlowState({ isHost: true });
             navigate('/landing');
         } else {
-            const onAnyDashboard = location.pathname.includes('dashboard');
-            if (!onAnyDashboard && group === 'Host') {
-                navigate('/hostdashboard');
-            } else if (location.pathname.includes('hostdashboard')) {
-                navigate('/guestdashboard');
+            if (currentView === 'host') {
+                navigateToGuestDashboard();
             } else {
-                navigate('/hostdashboard');
+                navigateToHostDashboard();
             }
         }
     };
 
-    const becomeHost = () => {
-        setFlowState({ isHost: true });
-        navigateToLanding();
-    };
-
-    const navigateToGuestDashboard = () => {
-        navigate('/guestdashboard');
+    const renderDropdownMenu = () => {
+        if (currentView === 'host') {
+            return (
+                <>
+                    <div className="helloUsername">Hello {username}!</div>
+                    <button onClick={navigateToHostDashboard} className="dropdownLoginButton">Dashboard</button>
+                    <button onClick={() => navigate('/hostdashboard/calendar')} className="dropdownLoginButton">Calendar</button>
+                    <button onClick={() => navigate('/hostdashboard/reservations')} className="dropdownLoginButton">Reservations</button>
+                    <button onClick={() => navigate('/hostdashboard/messages')} className="dropdownLoginButton">Messages</button>
+                    <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
+                        src={logoutArrow} alt="Logout Arrow" /></button>
+                </>
+            );
+        } else {
+            return (
+                <>
+                    <div className="helloUsername">Hello {username}!</div>
+                    <button onClick={navigateToGuestDashboard} className="dropdownLoginButton">Profile</button>
+                    <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
+                    <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
+                    <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
+                    <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
+                    <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
+                        src={logoutArrow} alt="Logout Arrow" /></button>
+                </>
+            );
+        }
     };
 
     return (
@@ -121,11 +150,19 @@ function Header({ setSearchResults, setLoading }) {
                         <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
                     </div>
                     <div className='headerRight'>
-                        <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
-                            {!isLoggedIn ? 'Become a Host' :
-                                (!location.pathname.includes('dashboard') && group === 'Host') ? 'Go to Dashboard' :
-                                    (group === 'Host' ? 'Switch Dashboard' : 'Become a Host')}
-                        </button>
+                        {!isLoggedIn ? (
+                            <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                                Become a Host
+                            </button>
+                        ) : group === 'Host' ? (
+                            <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
+                                {currentView === 'guest' ? 'Switch to Host Dashboard' : 'Switch to Guest Dashboard'}
+                            </button>
+                        ) : (
+                            <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                                Become a Host
+                            </button>
+                        )}
                         {isLoggedIn && group === 'Traveler' && (
                             <button className="headerButtons" onClick={navigateToGuestDashboard}>
                                 Go to Dashboard
@@ -140,23 +177,12 @@ function Header({ setSearchResults, setLoading }) {
                                 <img src={arrowDown} alt="Dropdown Arrow" />
                             </button>
                             <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
-                                {isLoggedIn ? (
-                                    <>
-                                        <div className="helloUsername">Hello {username}!</div>
-                                        <button onClick={navigateToProfile} className="dropdownLoginButton">Profile</button>
-                                        <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
-                                        <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
-                                        <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
-                                        <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
-                                        <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
-                                            src={logoutArrow} alt="Logout Arrow" /></button>
-                                    </>
-                                ) : (
+                                {isLoggedIn ? renderDropdownMenu() : (
                                     <>
                                         <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img
                                             src={loginArrow} alt="Login Arrow" /></button>
                                         <button onClick={navigateToRegister}
-                                            className="dropdownRegisterButton">Register
+                                                className="dropdownRegisterButton">Register
                                         </button>
                                     </>
                                 )}
