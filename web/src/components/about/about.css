@@ -15,9 +15,14 @@
 .factsbox{
     display: flex;
     flex-direction: row;
-    flex-wrap: wrap;
     justify-content: space-between;
     color: white;
+    gap: 3.75rem;
+}
+
+.AboutDomitsTitleContainer{
+    display: flex;
+    align-items: flex-start;
 }
 
 .awesomefacts{
@@ -34,7 +39,21 @@
 }
 
 .aboutText {
-    margin-top: 30px;
+    font-size: 1.25rem;
+    color: black;
+    margin: 0rem;
+}
+
+.aboutWhoWeAreText{
+    text-align: left;
+}
+
+.marginbottom{
+    margin-bottom: 4rem;
+}
+
+.margintop{
+    margin-top: 1.2rem;
 }
 
 .factsText {
@@ -102,13 +121,14 @@
 
 .about {
     text-align: left;
-    margin: 50px 0;
     display: flex;
+    flex-direction: column;
+    margin-top: 2rem;
 }
 
 .about p {
-    width: 50%;
-    margin: 0 auto;
+    color: black;
+    font-size: 1.25rem;
 }
 
 .about p:first-child {
