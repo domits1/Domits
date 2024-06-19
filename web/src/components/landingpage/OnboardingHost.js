@@ -215,12 +215,15 @@ function OnboardingHost() {
     }, [formData.Rent]);
 
 
-    const appendUserId = () => {
-        setFormData((prevData) => ({
-            ...prevData,
-            OwnerId: userId
-        }));
-    }
+    useEffect(() => {
+        const appendUserId = () => {
+            setFormData((prevData) => ({
+                ...prevData,
+                OwnerId: userId
+            }));
+        }
+        appendUserId();
+    }, [userId]);
 
     const handleLocationChange = async (Country, City, PostalCode, Street) => {
         const address = `${Country} ${City} ${Street} ${PostalCode}`;
@@ -372,6 +375,7 @@ function OnboardingHost() {
                 const location =  await uploadImageToS3(userId, AccoID, file, i);
                 updatedFormData.Images[`image${i + 1}`] = location;
             }
+            console.log(updatedFormData);
             await setFormData(updatedFormData);
             setImageFiles([]);
 
