@@ -7,7 +7,7 @@ import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
 import Home from './components/home/Accommodations';
 import About from "./components/about/About";
-import Whydomits from "./components/about/Whydomits";
+import Whydomits from "./components/about/Whydomitstwo.js";
 import Release from "./components/about/release.js";
 import Helpdesk from "./components/about/Helpdesk.js";
 import Faq from "./components/landingpage/Faq";
@@ -41,6 +41,7 @@ import GuestPayments from "./components/guestdashboard/GuestPayments";
 import GuestReviews from "./components/guestdashboard/GuestReviews";
 import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat";
+import Chatbot from "./components/chatbot/chatbot";
 import FlowContext from './FlowContext'
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
@@ -97,7 +98,7 @@ function App() {
                             <Route path="/release" element={<Release />} />
                             <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} /> 
                             <Route path="/helpdesk-host" element={<Helpdesk category="host" />} /> 
-                            <Route path="/howitworks" element={<Howitworks />} />
+                            <Route path="/how-it-works" element={<Howitworks />} />
                             <Route path="/why-domits" element={<Whydomits />} />
                             <Route path="/contact" element={<Contact />} />
                             <Route path="/travelinnovation" element={<Travelinnovation />} />
@@ -111,6 +112,9 @@ function App() {
 
                             {/* Chat */}
                             <Route path="/chat" element={<Chat />} />
+
+                            {/* Chatbot */}
+                            <Route path="/chatbot" element={<Chatbot />} />
 
                             {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />

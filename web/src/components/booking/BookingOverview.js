@@ -132,17 +132,17 @@ const BookingOverview = () => {
             setError('Cognito user ID or Owner Stripe ID is not available.');
             return;
         }
-
-
+    
         const paymentID = generateUUID();
         const userId = cognitoUserId;
         const accommodationTitle = accommodation.Title;
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
-        const price = accommodationPrice;
+        const basePrice = Math.round(accommodation.Rent * numberOfDays * 100); // Convert to cents and round to ensure integer
+        const totalAmount = Math.round(basePrice * 1.15); // Total amount including 15% fee, rounding to ensure integer
         const startDate = checkIn;
         const endDate = checkOut;
-
+    
         const successQueryParams = new URLSearchParams({
             paymentID,
             accommodationTitle,
@@ -150,7 +150,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Pending",
-            price,
+            price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate
         }).toString();
@@ -161,24 +161,25 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Failed",
-            price,
+            price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate
         }).toString();
-
+    
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
         const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
-
+    
         const checkoutData = {
             userId: cognitoUserId,
-            amount: accommodationPrice + '00',
+            basePrice: basePrice, // Already in cents
+            totalAmount: totalAmount, // Already in cents
             currency: 'eur',
             productName: accommodation.Title,
             successUrl: successUrl,
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
-
+    
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
                 method: 'POST',
@@ -187,15 +188,15 @@ const BookingOverview = () => {
                     'Content-Type': 'application/json; charset=UTF-8',
                 },
             });
-
+    
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-
+    
             const result = await response.json();
             const stripe = await stripePromise;
             const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
-
+    
             if (error) {
                 console.error('Stripe Checkout error:', error.message);
                 setError('Stripe Checkout error: ' + error.message);
