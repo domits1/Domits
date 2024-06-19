@@ -31,20 +31,33 @@ const HostRevenues = () => {
             if (!userId) {
                 console.log("No user found!");
                 return;
-            } else {
-                try {
-                    const response = await fetch('https://kq82anbek1.execute-api.eu-north-1.amazonaws.com/default/StripeRevenuePage');
-                    console.log(response);
+            }
+            try {
+                const response = await fetch('https://kq82anbek1.execute-api.eu-north-1.amazonaws.com/default/StripeRevenuePage', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        body: JSON.stringify({ user_id: userId })
+                    }),
+                });
 
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch');
-                    }
+                console.log("Raw response:", response);
 
-                    const responseData = await response.json();
-                    setStripeAccountId(responseData.stripeAccountId);
-                } catch (error) {
-                    console.error("Unexpected error:", error);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || 'Failed to fetch');
                 }
+
+                const responseData = await response.json();
+
+                // Log the parsed response data
+                console.log("Parsed response data:", responseData);
+
+                setStripeAccountId(responseData.accountId); // Update to match the key returned from Lambda
+            } catch (error) {
+                console.error("Unexpected error:", error);
             }
         };
 
