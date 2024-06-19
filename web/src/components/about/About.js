@@ -18,7 +18,7 @@ import jiaming from '../../images/jiaming.png';
 function About() {
     return (
         <div className="aboutus">
-            <div>
+            <div className="AboutDomitsTitleContainer">
                 <h2>About Domits</h2>
             </div>
             <div>
@@ -27,28 +27,28 @@ function About() {
 
             <div className="underbigtext">
                 <p className="aboutText">
-                    <p>
+                    <p className="aboutText">
                         Domits is a platform to list, search and book holiday accommodations.
                     </p>
-                    <p>
+                    <p className="aboutText">
                         We build cool stuff in our travel innovation labs for People, Growth, Cloud IT and AI Data.
                     </p>
                 </p>
-                <p className="aboutText">
+                <p className="aboutText margintop">
                     In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners.
                     There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.
                 </p>
-                <p className="aboutText">
-                    <p>
+                <p className="aboutText margintop">
+                    <p className="aboutText">
                         We strive to support tenants and landlords in every step of the process.
                         Domits acts as the intermediary in this process.
                     </p>
-                    <p>
+                    <p className="aboutText">
                         You enter into a rental agreement directly with the landlord and/or owner of the accommodation.
                         Through Domits, you have the opportunity to inquire about options without any obligation.
                     </p>
                 </p>
-                <p className="aboutText">
+                <p className="aboutText margintop">
                     By charging one-time service fees, we can keep our platform running and provide services such as support.
                 </p>
             </div>
@@ -81,8 +81,8 @@ function About() {
                 </div>
             </div>
             <div className="crew">
-                <h1>Who we are</h1>
-                <p>We are all conscious founders.</p>
+                <h1 className="aboutWhoWeAreText margintop">Who we are</h1>
+                <p className="aboutWhoWeAreText marginbottom">We are all conscious founders.</p>
 
                 <div class="team">
                     <div class="member">
