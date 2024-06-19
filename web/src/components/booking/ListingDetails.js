@@ -7,7 +7,6 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 
-
 import Washingmashine from "../../images/icons/Washingmachine.png";
 import Television from "../../images/icons/Television.png";
 import Smokedetector from "../../images/icons/Smokedetector.png";
@@ -41,7 +40,21 @@ const ListingDetails = () => {
     const [pets, setPets] = useState('');
     const [isFormValid, setIsFormValid] = useState(false);
     const [bookedDates, setBookedDates] = useState([]);
+    const [totalPrice, setTotalPrice] = useState(0);
+    const [serviceFee, setServiceFee] = useState(0);
 
+    const featureIcons = {
+        WashingMachine: Washingmashine,
+        Television: Television,
+        Smokedetector: Smokedetector,
+        Wifi: Wifi,
+        Onsiteparking: Onsiteparking,
+        Homeoffice: Homeoffice,
+        Fireextinguisher: Fireextinguisher,
+        Airconditioning: Airconditioning,
+        FirstAidKit: FirstAidKit,
+        Kitchen: Kitchen,
+    };
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -91,6 +104,7 @@ const ListingDetails = () => {
             console.error('Error fetching host info:', error);
         }
     }
+
     const fetchHostInfo = async (ownerId) => {
         try {
             const requestData = {
@@ -131,8 +145,6 @@ const ListingDetails = () => {
         };
         restrictDates();
     }, [checkIn]);
-    
-    
 
     const handleChange = (value, setType) => {
         const newValue = parseInt(value, 10) || 0;
@@ -165,7 +177,6 @@ const ListingDetails = () => {
         setBookedDates(bookedDates); // Save booked dates in state
     };
 
-
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
             if (new Date(checkOut) > new Date(checkIn)) {
@@ -176,18 +187,25 @@ const ListingDetails = () => {
         } else {
             setIsFormValid(false);
         }
-    };    
-    
-
-    const calculateTotal = () => {
-        if (!accommodation) return 0;
-        const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
-        const basePrice = nights * accommodation.Rent;
-        const discount = 75; // example value
-        const cleaningFee = 100;
-        const serviceFee = 98;
-        return basePrice - discount + cleaningFee + serviceFee;
     };
+
+    useEffect(() => {
+        const calculateTotal = () => {
+            if (!accommodation) return;
+    
+            const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
+            const basePrice = nights * accommodation.Rent * 100;
+            // const discount = 75;
+            // const cleaningFee = 100;
+            const calculatedServiceFee = basePrice * 0.15;
+            const calculatedTotalPrice = basePrice + calculatedServiceFee;
+    
+            setServiceFee(calculatedServiceFee / 100);
+            setTotalPrice(calculatedTotalPrice / 100);
+        };
+    
+        calculateTotal();
+    }, [accommodation, checkIn, checkOut]);
     
 
     const handleStartChat = () => {
@@ -260,38 +278,33 @@ const ListingDetails = () => {
                                 <ImageGallery images={Object.values(accommodation.Images)} />
                             </div>
                             <div>
-                                <div class='extraDetails'>
-                                    <p class='details'>{`€ ${accommodation.Rent} per night`}</p>
-                                    <p class='details'>{`${accommodation.GuestAmount} guests`}</p>
-                                    <p class='details'>{`${accommodation.Beds} beds`}</p>
-                                    <p class='details'>{`${accommodation.Bedrooms} bedrooms`}</p>
-                                    <p class='details'>{`${accommodation.Bathrooms} bathrooms`}</p>
+                                <div className='extraDetails'>
+                                    <p className='details'>{`€ ${accommodation.Rent} per night`}</p>
+                                    <p className='details'>{`${accommodation.GuestAmount} guests`}</p>
+                                    <p className='details'>{`${accommodation.Beds} beds`}</p>
+                                    <p className='details'>{`${accommodation.Bedrooms} bedrooms`}</p>
+                                    <p className='details'>{`${accommodation.Bathrooms} bathrooms`}</p>
                                 </div>
                             </div>
                             <div>
-                                <p class='description'>{accommodation.Description}</p>
+                                <p className='description'>{accommodation.Description}</p>
                                 <h3>This place offers the following:</h3>
-                                <ul class='features'>
+                                <ul className='features'>
                                     {Object.entries(accommodation.Features).map(([feature, value]) => (
-                                        <li key={feature} className={value ? 'feature-item' : 'feature-item feature-absent'}>
-                                            <img src={
-                                                feature === 'WashingMachine' ? Washingmashine :
-                                                    feature === 'Television' ? Television :
-                                                        feature === 'Smokedetector' ? Smokedetector :
-                                                            feature === 'Wifi' ? Wifi :
-                                                                feature === 'Onsiteparking' ? Onsiteparking :
-                                                                    feature === 'Homeoffice' ? Homeoffice :
-                                                                        feature === 'Fireextinguisher' ? Fireextinguisher :
-                                                                            feature === 'Airconditioning' ? Airconditioning :
-                                                                                feature === 'FirstAidkit' ? FirstAidKit :
-                                                                                    feature === 'Kitchen' ? Kitchen : ''
-                                            } alt={feature} className='feature-icon' />
-                                            <span>{feature}</span>
-                                        </li>
+                                        value && (
+                                            <li key={feature} className='feature-item'>
+                                                <img
+                                                    src={featureIcons[feature]}
+                                                    alt={feature}
+                                                    className='feature-icon'
+                                                />
+                                                <span>{feature}</span>
+                                            </li>
+                                        )
                                     ))}
                                 </ul>
                                 <div>
-                                    <button class='button'>Show more</button>
+                                    <button className='button'>Show more</button>
                                 </div>
                                 <br />
                                 <section className="listing-reviews">
@@ -354,7 +367,7 @@ const ListingDetails = () => {
                                 </div>
                                 {(checkIn && checkOut) ? (
                                     <div className="nights">
-                                        <p>{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} nights</p>
+                                        <p>{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
                                     </div>
                                 ) : (
                                     <div className="nights">
@@ -417,20 +430,20 @@ const ListingDetails = () => {
                                     <div className="price-item">
                                         <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights
                                             x
-                                            € {accommodation.Rent} a night</p>
-                                        <p>€ {(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
+                                            €{accommodation.Rent} a night</p>
+                                        <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
                                     </div>
-                                    <div className="price-item">
+                                    {/* <div className="price-item">
                                         <p>Cleaning fee</p>
                                         <p>€ 100</p>
-                                    </div>
+                                    </div> */}
                                     <div className="price-item">
                                         <p>Domits service fee</p>
-                                        <p>€ 98</p>
+                                        <p>€{serviceFee.toFixed(2)}</p>
                                     </div>
                                     <div className="total">
                                         <p>Total</p>
-                                        <p>€ {calculateTotal()}</p>
+                                        <p>€{totalPrice.toFixed(2)}</p>
                                     </div>
                                 </div>
                             ) : (

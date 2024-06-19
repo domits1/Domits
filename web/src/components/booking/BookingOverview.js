@@ -5,8 +5,10 @@ import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
+import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
+import ImageGallery from './ImageGallery';
 
-const stripePromise = loadStripe('pk_test_51OAG6OGiInrsWMEcRkwvuQw92Pnmjz9XIGeJf97hnA3Jk551czhUgQPoNwiCJKLnf05K6N2ZYKlXyr4p4qL8dXvk00sxduWZd3');
+const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
 
 const BookingOverview = () => {
@@ -112,7 +114,7 @@ const BookingOverview = () => {
         return <div>Loading...</div>;
     }
 
-    
+
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
         const end = new Date(endDate);
@@ -130,17 +132,17 @@ const BookingOverview = () => {
             setError('Cognito user ID or Owner Stripe ID is not available.');
             return;
         }
-
-       
+    
         const paymentID = generateUUID();
         const userId = cognitoUserId;
         const accommodationTitle = accommodation.Title;
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
-        const price = accommodationPrice;
+        const basePrice = Math.round(accommodation.Rent * numberOfDays * 100); // Convert to cents and round to ensure integer
+        const totalAmount = Math.round(basePrice * 1.15); // Total amount including 15% fee, rounding to ensure integer
         const startDate = checkIn;
         const endDate = checkOut;
-
+    
         const successQueryParams = new URLSearchParams({
             paymentID,
             accommodationTitle,
@@ -148,7 +150,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Pending",
-            price,
+            price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate
         }).toString();
@@ -159,24 +161,25 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Failed",
-            price,
+            price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate
         }).toString();
-
+    
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
         const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
-
+    
         const checkoutData = {
             userId: cognitoUserId,
-            amount: accommodationPrice + '00',
+            basePrice: basePrice, // Already in cents
+            totalAmount: totalAmount, // Already in cents
             currency: 'eur',
             productName: accommodation.Title,
             successUrl: successUrl,
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
-
+    
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
                 method: 'POST',
@@ -185,15 +188,15 @@ const BookingOverview = () => {
                     'Content-Type': 'application/json; charset=UTF-8',
                 },
             });
-
+    
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-
+    
             const result = await response.json();
             const stripe = await stripePromise;
             const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
-
+    
             if (error) {
                 console.error('Stripe Checkout error:', error.message);
                 setError('Stripe Checkout error: ' + error.message);
@@ -217,11 +220,14 @@ const BookingOverview = () => {
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>
+                <div>
+                    <ImageGallery images={Object.values(accommodation.Images)} />
+                </div>
                 {error && <div className="error">{error}</div>}
                 <div className="booking-details">
                     <div className="detail-item">
                         <span>Dates</span>
-                        <span>{checkIn} - {checkOut}</span>
+                        <span>{DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}</span>
                         <a href="#">Change</a>
                     </div>
                     <div className="detail-item">
@@ -236,8 +242,8 @@ const BookingOverview = () => {
                 </div>
                 <div className="booking-overview">
                     <h2>Booking overview</h2>
-                    <p>Check-in: {checkIn}</p>
-                    <p>Check-out: {checkOut}</p>
+                    <p>Check-in: {DateFormatterDD_MM_YYYY(checkIn)}</p>
+                    <p>Check-out: {DateFormatterDD_MM_YYYY(checkOut)}</p>
                 </div>
                 <div className="accommodation-info">
                     <h2>Accommodation</h2>
