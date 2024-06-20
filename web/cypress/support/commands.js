@@ -34,8 +34,8 @@ Cypress.Commands.add('loginAsGuest', () => {
     cy.get('input[name="password"]').type('Kacper2911');
     cy.get('button[type="submit"]').click();
     cy.wait(1000);
-    //cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard');
-    //cy.reload();
+    cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard');
+    cy.reload();
   });
 
   Cypress.Commands.add('loginAsHost', () => {
