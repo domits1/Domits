@@ -360,6 +360,9 @@
   gap: 1.5em;
   padding: 2em;
 }
+.amenity-header {
+  text-align: left;
+}
 @media (max-width: 640px) {
   .accommodation-types {
     grid-template-columns: repeat(2, 1fr);

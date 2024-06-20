@@ -96,7 +96,22 @@ function OnboardingHost() {
         PostalCode: "",
         Street: "",
         City: "",
-        Features: [],
+        Features: {
+            Essentials: [],
+            Kitchen: [],
+            Bathroom: [],
+            Bedroom: [],
+            LivingArea: [],
+            Technology: [],
+            Safety: [],
+            Outdoor: [],
+            FamilyFriendly: [],
+            Laundry: [],
+            Convenience: [],
+            Accessibility: [],
+            ExtraServices: [],
+            EcoFriendly: []
+        },
         Images: {
             image1: "",
             image2: "",
@@ -113,6 +128,123 @@ function OnboardingHost() {
         OwnerId: "",
         CleaningFee: 0
     });
+
+    const allAmenities = {
+        Essentials: [
+            'Wi-Fi',
+            'Air conditioning',
+            'Heating',
+            'TV with cable/satellite',
+            'Hot water',
+            'Towels',
+            'Bed linens',
+            'Extra pillows and blankets',
+            'Toilet paper',
+            'Soap and shampoo'
+        ],
+            Kitchen: [
+            'Refrigerator',
+            'Microwave',
+            'Oven',
+            'Stove',
+            'Dishwasher',
+            'Coffee maker',
+            'Toaster',
+            'Basic cooking essentials',
+            'Dishes and silverware',
+            'Glasses and mugs',
+            'Cutting board and knives',
+            'Blender',
+            'Kettle'
+        ],
+            Bathroom: [
+            'Hair dryer',
+            'Shower gel',
+            'Conditioner',
+            'Body lotion',
+            'First aid kit'
+        ],
+            Bedroom: [
+            'Hangers',
+            'Iron and ironing board',
+            'Closet/drawers',
+            'Alarm clock'
+        ],
+            LivingArea: [
+            'Sofa',
+            'Armchairs',
+            'Coffee table',
+            'Books and magazines',
+            'Board games'
+        ],
+            Technology: [
+            'Smart TV',
+            'Streaming services',
+            'Bluetooth speaker',
+            'Universal chargers',
+            'Work desk and chair'
+        ],
+            Safety: [
+            'Smoke detector',
+            'Carbon monoxide detector',
+            'Fire extinguisher',
+            'Lock on bedroom door'
+        ],
+            Outdoor: [
+            'Patio or balcony',
+            'Outdoor furniture',
+            'Grill',
+            'Fire pit',
+            'Pool',
+            'Hot tub',
+            'Garden or backyard',
+            'Bicycle'
+        ],
+            FamilyFriendly: [
+            'High chair',
+            'Crib',
+            'Children’s books and toys',
+            'Baby safety gates',
+            'Baby bath',
+            'Baby monitor'
+        ],
+            Laundry: [
+            'Washer and dryer',
+            'Laundry detergent',
+            'Clothes drying rack'
+        ],
+            Convenience: [
+            'Keyless entry',
+            'Self-check-in',
+            'Local maps and guides',
+            'Luggage drop-off allowed',
+            'Parking space',
+            'EV charger'
+        ],
+            Accessibility: [
+            'Step-free access',
+            'Wide doorways',
+            'Accessible-height bed',
+            'Accessible-height toilet',
+            'Shower chair'
+        ],
+            ExtraServices: [
+            'Cleaning service (add service fee manually)',
+            'Concierge service',
+            'Housekeeping',
+            'Grocery delivery',
+            'Airport shuttle',
+            'Private chef',
+            'Personal trainer',
+            'Massage therapist'
+        ],
+            EcoFriendly: [
+            'Recycling bins',
+            'Energy-efficient appliances',
+            'Solar panels',
+            'Composting bin'
+        ]
+    };
 
     const pageUpdater = (pageNumber) => {
         setPage(pageNumber);
@@ -210,7 +342,7 @@ function OnboardingHost() {
     };
 
     useEffect(() => {
-        if (!formData.Features.includes('CleaningFee')) {
+        if (!formData.Features.ExtraServices.includes('Cleaning service (add service fee manually)')) {
             const resetCleaningFee = () => {
                 setFormData((prevData) => ({
                     ...prevData,
@@ -244,23 +376,23 @@ function OnboardingHost() {
         }));
     }
 
-    const handleAmenities = (event) => {
-        const { name, checked } = event.target;
-        const feature = name;
+    const handleAmenities = (category, amenity, checked) => {
+        setFormData(prevFormData => {
+            const updatedFeatures = { ...prevFormData.Features };
 
-        if (checked) {
-            setFormData(prevFormData => ({
+            if (checked) {
+                updatedFeatures[category] = [...updatedFeatures[category], amenity];
+            } else {
+                updatedFeatures[category] = updatedFeatures[category].filter(item => item !== amenity);
+            }
+
+            return {
                 ...prevFormData,
-                Features: [...prevFormData.Features, feature]
-            }));
-        } else {
-            setFormData(prevFormData => ({
-                ...prevFormData,
-                Features: prevFormData.Features.filter(item => item !== feature)
-            }));
-        }
-        console.log(formData);
-    }
+                Features: updatedFeatures
+            };
+        });
+    };
+
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
@@ -338,7 +470,6 @@ function OnboardingHost() {
                 const location =  await uploadImageToS3(userId, AccoID, file, i);
                 updatedFormData.Images[`image${i + 1}`] = location;
             }
-            console.log(updatedFormData);
             await setFormData(updatedFormData);
             setImageFiles([]);
 
@@ -582,109 +713,33 @@ function OnboardingHost() {
                 return (
                     <main className="container">
                         <h2 className="onboardingSectionTitle">Let guests know what your space has to offer.</h2>
-                        <p className="onboardingSectionSubtitle">You can add more facilities after publishing your listing</p>
-                        <div className="form-group">
-                            <h2 className="onboardingSectionTitle">Add accommodation features</h2>
-                            <p>You can select one or more items below</p>
-                            <section className="check-box">
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Wifi"
-                                        onChange={handleAmenities}
-                                        checked={formData.Features.includes('Wifi')}
-                                    />
-                                    Wifi
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Television"
-                                        onChange={handleAmenities}
-                                        checked={formData.Features.includes('Television')}
-                                    />
-                                    Television
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Kitchen"
-                                        onChange={handleAmenities}
-                                        checked={formData.Features.includes('Kitchen')}
-                                    />
-                                    Kitchen
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="WashingMachine"
-                                        onChange={handleAmenities}
-                                        checked={formData.Features.includes('WashingMachine')}
-                                    />
-                                    Washing machine
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Airconditioning"
-                                        onChange={handleAmenities}
-                                        checked={formData.Features.includes('Airconditioning')}
-                                    />
-                                    Airconditioning
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Onsiteparking"
-                                        onChange={handleAmenities}
-                                        checked={formData.Features.includes('Onsiteparking')}
-                                    />
-                                    Onsite parking
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Homeoffice"
-                                        onChange={handleAmenities}
-                                        checked={formData.Features.includes('Homeoffice')}
-                                    />
-                                    Home office
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="CleaningFee"
-                                        onChange={handleAmenities}
-                                        checked={formData.Features.includes('CleaningFee')}
-                                    />
-                                    Cleaning Fee
-                                </label>
-                                {formData.Features.includes('CleaningFee') && (
-                                    <label>
-                                        Cleaning Fee Amount
-                                        <input
-                                            type="number"
-                                            className="pricing-input"
-                                            name="CleaningFee"
-                                            value={formData.CleaningFee}
-                                            onChange={handleInputChange}
-                                            min={0}
-                                            placeholder="Enter the cleaning fee amount"
-                                        />
-                                    </label>
-                                )}
-                            </section>
+                        <p className="onboardingSectionSubtitle">You can add more facilities after publishing your
+                            listing</p>
+                        <div>
+                            {Object.keys(allAmenities).map(category => (
+                                <div key={category} style={{marginBottom: '5%'}}>
+                                    <h2 className="amenity-header">{category}</h2>
+                                    <section className="check-box">
+                                        {allAmenities[category].map(amenity => (
+                                            <label key={amenity}>
+                                                <input
+                                                    type="checkbox"
+                                                    className="radioInput"
+                                                    name={amenity}
+                                                    onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
+                                                    checked={formData.Features[category].includes(amenity)}
+                                                />
+                                                {amenity}
+                                            </label>
+                                        ))}
+                                    </section>
+                                </div>
+                            ))}
                         </div>
+
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className="onboarding-button"
@@ -842,6 +897,14 @@ function OnboardingHost() {
                                        defaultValue={formData.Rent} min={1} step={0.1}
                                        required={true}/>
                             </div>
+                            {formData.Features.ExtraServices.includes('Cleaning service (add service fee manually)') &&
+                                <div className="pricing-row">
+                                    <label>Cleaning fee</label>
+                                    <input className="pricing-input" type="number" name="CleaningFee"
+                                           onChange={handleInputChange}
+                                           defaultValue={formData.CleaningFee} min={1} step={0.1}
+                                           required={true}/>
+                                </div>}
                             <div className="pricing-row">
                                 <label>Service fees</label>
                                 <p className="pricing-input">
@@ -853,15 +916,17 @@ function OnboardingHost() {
                                 <label>Guest's price</label>
                                 <p className="pricing-input">
                                     €{((!isNaN(parseFloat(formData.Rent)) ? parseFloat(formData.Rent) : 0) +
+                                    (!isNaN(parseFloat(formData.CleaningFee)) ? parseFloat(formData.CleaningFee) : 0) +
                                     (!isNaN(parseFloat(formData.ServiceFee)) ? parseFloat(formData.ServiceFee) : 0)).toFixed(2)}
                                 </p>
                             </div>
                         </section>
                         <section className="accommodation-pricing">
                             <div className="pricing-row">
-                                <label>Guest's price</label>
+                                <label>You earn</label>
                                 <p className="pricing-input">
-                                    €{((!isNaN(parseFloat(formData.Rent)) ? parseFloat(formData.Rent) : 0)).toFixed(2)}
+                                    €{((!isNaN(parseFloat(formData.Rent)) ? parseFloat(formData.Rent) : 0) +
+                                    (!isNaN(parseFloat(formData.CleaningFee)) ? parseFloat(formData.CleaningFee) : 0)).toFixed(2)}
                                 </p>
                             </div>
                         </section>
@@ -986,14 +1051,26 @@ function OnboardingHost() {
                         <h3>Features:</h3>
                         <table style={{width: '100%', borderCollapse: 'collapse'}}>
                             <tbody>
-                            {Object.entries(formData.Features).map(([feature, value]) => (
-                                <tr key={feature}>
-                                    <td style={{borderBottom: '1px solid #ccc'}}>{feature}:</td>
-                                    <td style={{borderBottom: '1px solid #ccc'}}>{value ? 'Yes' : 'No'}</td>
-                                </tr>
+                            {Object.keys(formData.Features).map(category => (
+                                <>
+                                    {formData.Features[category].length > 0 && (
+                                        <tr key={category}>
+                                            <td colSpan={2}
+                                                style={{fontWeight: 'bold', borderBottom: '1px solid #ccc'}}>{category}:
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {formData.Features[category].map((amenity, index) => (
+                                        <tr key={`${category}-${index}`}>
+                                            <td style={{borderBottom: '1px solid #ccc'}}>{amenity}</td>
+                                            <td style={{borderBottom: '1px solid #ccc'}}>Yes</td>
+                                        </tr>
+                                    ))}
+                                </>
                             ))}
                             </tbody>
                         </table>
+
                         <p>Your accommodation ID: {formData.ID}</p>
                         <p>{formData.Drafted ? "Guests cannot book your accommodation before you set it live via Hostdashboard -> Listing"
                             : "Guests can book your accommodation anytime now!"}
@@ -1022,12 +1099,13 @@ function OnboardingHost() {
                 } else {
                     return (
                         <div className="container">
-                        <h2>
+                            <h2>
                                 Congratulations! Your accommodation is being listed
                             </h2>
-                            <p className="onboardingSectionSubtitle">It may take a while before your accommodation is verified</p>
+                            <p className="onboardingSectionSubtitle">It may take a while before your accommodation is
+                                verified</p>
                             <div className='button-box-last'>
-                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
+                            <button className='onboarding-button' onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
                                 </button>
                                 <button className='onboarding-button' onClick={() => navigate("/hostdashboard")}>Go to
                                     dashboard
