@@ -29,7 +29,15 @@
   object-fit: cover;
   border-radius: 15px;
   display: block;
+  transition: transform 0.4s ease-in-out; /* Add transition for smooth animation */
+}
 
+.accocard:hover img {
+  transform: scale(1.06); /* Scale the image to 110% */
+}
+
+.accocard:hover .accocard-title{
+  background: rgba(13, 152, 20, 0.616);
 }
 
 .accocard-content {
@@ -55,6 +63,8 @@
   color: white;
   font-size: 18px;
   font-weight: 500;
+  transition: background 0.4s ease-in-out; /* Add transition for smooth background color change */
+
 }
 
 .accocard-price {
