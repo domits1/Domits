@@ -41,7 +41,6 @@ describe('Web Host dashboard Enlist', () => {
         cy.get('.formContainer > :nth-child(2)').click();
 
         cy.get('.container').should('be.visible');
-        // Open the dropdown
         cy.get('.css-19bb58m', { timeout: 50000 }).click();
         cy.get('#react-select-3-listbox', { timeout: 10000 }).should('be.visible');
         cy.get('#react-select-3-listbox').contains('Netherlands').click();
