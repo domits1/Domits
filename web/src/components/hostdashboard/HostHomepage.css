@@ -61,7 +61,7 @@
 .dashboardHost {
   display: flex;
   justify-content: flex-start;
-  gap: 14rem;
+  gap: 5rem;
   width: 100%;
 }
 
