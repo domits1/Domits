@@ -1,0 +1,211 @@
+.chatwidget-widget {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1000;
+    width: 300px;
+    max-height: 400px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chatwidget-toggle {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    font-size: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .chatwidget-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: #ffffff;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .chatwidget-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+  }
+  
+  .chatwidget-message {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 15px;
+  }
+  
+  .chatwidget-message.user {
+    align-items: flex-end;
+  }
+  
+  .chatwidget-message.ai {
+    align-items: flex-start;
+  }
+  
+  .chatwidget-sender {
+    font-size: 0.85em;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #888;
+  }
+  
+  .chatwidget-message-content {
+    display: inline-block;
+    padding: 10px 15px;
+    border-radius: 20px;
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+  
+  .chatwidget-message.user .chatwidget-message-content {
+    background-color: #007bff;
+    color: white;
+    border-bottom-right-radius: 0;
+  }
+  
+  .chatwidget-message.ai .chatwidget-message-content {
+    background-color: #e0e0e0;
+    color: black;
+    border-bottom-left-radius: 0;
+  }
+  
+  .chatwidget-typing-indicator {
+    font-style: italic;
+    color: #888;
+    display: flex;
+    align-items: center;
+  }
+  
+  .chatwidget-dot {
+    animation: chatwidget-blink 1s infinite;
+    display: inline-block;
+    font-size: 1.5em;
+  }
+  
+  .chatwidget-dot:nth-child(1) {
+    animation-delay: 0s;
+  }
+  
+  .chatwidget-dot:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+  
+  .chatwidget-dot:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+  
+  @keyframes chatwidget-blink {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  
+  .chatwidget-input {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-top: 1px solid #ccc;
+    background-color: #fff;
+  }
+  
+  .chatwidget-input input {
+    flex: 1;
+    padding: 10px 15px;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    margin-right: 10px;
+    outline: none;
+  }
+  
+  .chatwidget-input button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 20px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    outline: none;
+  }
+  
+  .chatwidget-input button:disabled {
+    background-color: #007bff;
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .chatwidget-input input:disabled {
+    background-color: #f1f1f1;
+  }
+  
+  .chatwidget-input button:hover {
+    background-color: #0056b3;
+  }
+  
+  .chatwidget-accommodation-tiles {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 10px;
+  }
+  
+  .chatwidget-accommodation-tile {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .chatwidget-accommodation-image {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+  }
+  
+  .chatwidget-accommodation-details {
+    padding: 10px;
+  }
+  
+  .chatwidget-accommodation-details h3 {
+    margin: 0 0 10px;
+    font-size: 1.2em;
+  }
+  
+  .chatwidget-accommodation-details p {
+    margin: 5px 0;
+  }
+  
+  @media (max-width: 768px) {
+    .chatwidget-widget {
+      width: 80%;
+      bottom: 10px;
+      right: 10px;
+    }
+  }
+  
