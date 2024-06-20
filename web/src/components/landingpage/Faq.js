@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Faq.css';
+import Helpdesk from '../about/Helpdesk';
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   const answerRef = useRef(null);
@@ -17,7 +18,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   );
 };
 
-const Faq = ({ category }) => {
+const Faq = () => {
   const faqData = {
     guest: {
       aboutDomits: [
@@ -100,6 +101,7 @@ const Faq = ({ category }) => {
     }
   };
 
+  const [category, setCategory] = useState('guest');
   const [faqs, setFaqs] = useState(faqData[category] || {});
 
   useEffect(() => {
@@ -118,7 +120,10 @@ const Faq = ({ category }) => {
   return (
     <div className="faq-container">
       <h3 className="faqHeader3">FAQ - Frequently Asked Questions</h3>
-
+      <div className="faq-button-container">
+        <button className="faqButton" onClick={() => setCategory('host')}>Host</button>
+        <button className="faqButton" onClick={() => setCategory('guest')}>Guest</button>
+      </div>
       {category === 'guest' && (
         <>
           <div className="faq-category">
