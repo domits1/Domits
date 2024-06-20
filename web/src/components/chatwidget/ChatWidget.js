@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
+import { ResizableBox } from 'react-resizable';
 import './ChatWidget.css'; // Ensure you have the CSS file
 import { useUser } from '../../UserContext'; // Make sure this path is correct
 
@@ -99,58 +100,73 @@ const ChatWidget = () => {
 
   return (
     <div className={`chatwidget-widget ${isOpen ? 'open' : ''}`}>
-      <button className="chatwidget-toggle" onClick={() => setIsOpen(!isOpen)}>
-        {isOpen ? '×' : 'Chat'}
-      </button>
+      {!isOpen && (
+        <button className="chatwidget-toggle" onClick={() => setIsOpen(true)}>
+          Chat
+        </button>
+      )}
       {isOpen && (
-        <div className="chatwidget-container">
-          <div className="chatwidget-messages" ref={chatMessagesRef}>
-            {messages.map((message, index) => (
-              <div key={index} className={`chatwidget-message ${message.sender}`}>
-                <div className="chatwidget-sender">
-                  {message.sender === 'user' ? 'You' : 'Sophia (AI)'}
-                </div>
-                {message.sender !== 'typing' ? (
-                  <div className="chatwidget-message-content">{message.text}</div>
-                ) : (
-                  <div className="chatwidget-typing-indicator">
-                    {message.text}
-                    <span className="chatwidget-dot">.</span>
-                    <span className="chatwidget-dot">.</span>
-                    <span className="chatwidget-dot">.</span>
+        <ResizableBox
+          width={300}
+          height={400}
+          minConstraints={[200, 200]}
+          maxConstraints={[600, 600]}
+          className="chatwidget-resizable"
+          resizeHandles={['se']}
+        >
+          <div className="chatwidget-header">
+            <span className="chatwidget-resize-handle" />
+            <button className="chatwidget-close" onClick={() => setIsOpen(false)}>×</button>
+          </div>
+          <div className="chatwidget-container">
+            <div className="chatwidget-messages" ref={chatMessagesRef}>
+              {messages.map((message, index) => (
+                <div key={index} className={`chatwidget-message ${message.sender}`}>
+                  <div className="chatwidget-sender">
+                    {message.sender === 'user' ? 'You' : 'Sophia (AI)'}
                   </div>
-                )}
-                {message.sender === 'ai' && message.accommodations && (
-                  <div className="chatwidget-accommodation-tiles">
-                    {message.accommodations.map(accommodation => (
-                      <div key={accommodation.ID} className="chatwidget-accommodation-tile">
-                        <img src={accommodation.Images.image1} alt="Accommodation" className="chatwidget-accommodation-image" />
-                        <div className="chatwidget-accommodation-details">
-                          <h3>{accommodation.Title}</h3>
-                          <p>{accommodation.Description}</p>
-                          <p><strong>City:</strong> {accommodation.City}</p>
-                          <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
-                          <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
+                  {message.sender !== 'typing' ? (
+                    <div className="chatwidget-message-content">{message.text}</div>
+                  ) : (
+                    <div className="chatwidget-typing-indicator">
+                      {message.text}
+                      <span className="chatwidget-dot">.</span>
+                      <span className="chatwidget-dot">.</span>
+                      <span className="chatwidget-dot">.</span>
+                    </div>
+                  )}
+                  {message.sender === 'ai' && message.accommodations && (
+                    <div className="chatwidget-accommodation-tiles">
+                      {message.accommodations.map(accommodation => (
+                        <div key={accommodation.ID} className="chatwidget-accommodation-tile">
+                          <img src={accommodation.Images.image1} alt="Accommodation" className="chatwidget-accommodation-image" />
+                          <div className="chatwidget-accommodation-details">
+                            <h3>{accommodation.Title}</h3>
+                            <p>{accommodation.Description}</p>
+                            <p><strong>City:</strong> {accommodation.City}</p>
+                            <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
+                            <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+            <div className="chatwidget-input">
+              <input
+                type="text"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onKeyUp={(e) => { if (e.key === 'Enter') sendMessage(); }}
+                placeholder="Type a message..."
+                disabled={loading}
+              />
+              <button onClick={sendMessage} disabled={loading}>Send</button>
+            </div>
           </div>
-          <div className="chatwidget-input">
-            <input
-              type="text"
-              value={userInput}
-              onChange={(e) => setUserInput(e.target.value)}
-              onKeyUp={(e) => { if (e.key === 'Enter') sendMessage(); }}
-              placeholder="Type a message..."
-              disabled={loading}
-            />
-            <button onClick={sendMessage} disabled={loading}>Send</button>
-          </div>
-        </div>
+        </ResizableBox>
       )}
     </div>
   );
