@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import spinner from "../../images/spinnner.gif";
 import info from "../../images/icons/info.png";
 import './onboardingHost.css';
@@ -20,6 +20,10 @@ const region = 'eu-north-1';
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
+    const { search } = useLocation();
+    const searchParams = new URLSearchParams(search);
+    const id = searchParams.get('ID');
+    const [isNew, setIsNew] = useState(true);
     const [location, setLocation] = useState({
         latitude: 0,
         longitude: 0,
@@ -28,6 +32,30 @@ function OnboardingHost() {
     let [hasGuestAccess, setHasGuestAccess] =useState(false);
     let [hasAddress, setHasAddress] = useState(false);
 
+    useEffect(() => {
+        setIsNew(false);
+        const fetchAccommodation = async () => {
+            try {
+                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ID: id }),
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch accommodation data');
+                }
+                const responseData = await response.json();
+                const data = JSON.parse(responseData.body);
+                setFormData(data);
+            } catch (error) {
+                console.error('Error fetching accommodation data:', error);
+            }
+        };
+
+        fetchAccommodation();
+    }, [id]);
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -88,7 +116,7 @@ function OnboardingHost() {
         Subtitle: "",
         Description: "",
         Rent: 1,
-        Guestamount: 0,
+        GuestAmount: 0,
         Bedrooms: 0,
         Bathrooms: 0,
         Beds: 0,
@@ -281,7 +309,6 @@ function OnboardingHost() {
         }
     };
 
-
     useEffect(() => {
         const fee = calculateServiceFee();
         setFormData(prevData => ({
@@ -460,6 +487,31 @@ function OnboardingHost() {
             throw err;
         }
     }
+    const handleUpdate = async () => {
+        try {
+            setIsLoading(true);
+            const updatedFormData = { ...formData };
+            await setFormData(updatedFormData);
+            setImageFiles([]);
+
+            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
+                method: 'POST',
+                body: JSON.stringify(formData),
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+            if (response.ok) {
+                console.log('Form data saved successfully');
+            } else {
+                console.error('Error saving form data');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
     const handleSubmit = async () => {
         try {
             setIsLoading(true);
@@ -528,7 +580,7 @@ function OnboardingHost() {
             case 0:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">What best describes your accommodation?</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'What best describes your accommodation?' : 'Edit your accommodation type'}</h2>
 
                         <section className="accommodation-types">
                             {accoTypes.map((option, index) => (
@@ -555,7 +607,7 @@ function OnboardingHost() {
             case 1:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">What kind of space do your guests have access to?</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}</h2>
 
                         <section className="guest-access">
                             <div className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
@@ -587,7 +639,7 @@ function OnboardingHost() {
             case 2:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Where can we find your accommodation?</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Where can we find your accommodation?' : 'Change the location of your accommodation'}</h2>
                         <p className="onboardingSectionSubtitle">We only share your address with guests after they have
                             booked</p>
 
@@ -657,15 +709,15 @@ function OnboardingHost() {
             case 3:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'How many people can stay here?' : 'Adjust the maximum amount of guests'}</h2>
                         <section className="guest-amount">
                             <div className="guest-amount-item">
                                 <p>Guests</p>
                                 <div className="amount-btn-box">
-                                    <button className="round-button" onClick={() => decrementAmount('Guestamount')}>-
+                                    <button className="round-button" onClick={() => decrementAmount('GuestAmount')}>-
                                     </button>
-                                    {formData.Guestamount}
-                                    <button className="round-button" onClick={() => incrementAmount('Guestamount')}>+
+                                    {formData.GuestAmount}
+                                    <button className="round-button" onClick={() => incrementAmount('GuestAmount')}>+
                                     </button>
                                 </div>
                             </div>
@@ -712,7 +764,7 @@ function OnboardingHost() {
             case 4:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Let guests know what your space has to offer.</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Let guests know what your space has to offer.' : 'Edit your amenities'}</h2>
                         <p className="onboardingSectionSubtitle">You can add more facilities after publishing your
                             listing</p>
                         <div>
@@ -752,7 +804,7 @@ function OnboardingHost() {
             case 5:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Add photos of your home</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Add photos of your home' : 'Edit photos of your home'}</h2>
 
                         <section className="accommodation-photos">
                             {!formData.Images.image1 ?
@@ -778,10 +830,10 @@ function OnboardingHost() {
                                                 className="file-input"
                                                 required={true}
                                             />
-                                            {imageFiles[index] && (
+                                            {formData.Images[`image${index + 1}`] && (
                                                 <>
                                                     <img
-                                                        src={URL.createObjectURL(imageFiles[index])}
+                                                        src={formData.Images[`image${index + 1}`]}
                                                         alt={`Image ${index + 1}`}
                                                         className={index === 0 ? "accommodation-thumbnail" : "file-image"}
                                                     />
@@ -791,12 +843,14 @@ function OnboardingHost() {
                                                     </button>
                                                 </>
                                             )}
-                                            {!imageFiles[index] && <div className="placeholder">Image {index + 1}</div>}
+                                            {!formData.Images[`image${index + 1}`] &&
+                                                <div className="placeholder">Image {index + 1}</div>}
                                         </section>
                                     ))}
                                 </section>
                             }
                         </section>
+
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
@@ -812,7 +866,7 @@ function OnboardingHost() {
             case 6:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Name your home</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Name your home' : 'Edit the name of your home'}</h2>
                         <p className="onboardingSectionSubtitle">A short title works best. Don't worry, you can always
                             change it later.</p>
 
@@ -829,17 +883,17 @@ function OnboardingHost() {
                             />
                             <p>{formData.Title.length}/32</p>
                         </section>
-                        <p className="onboardingSectionSubtitle">Give it a suitable subtitle</p>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Give it a suitable subtitle' : 'Edit your subtitle'}</h2>
                         <section className="accommodation-title">
                             <textarea
-                            className="textInput locationText"
-                            id="Subtitle"
-                            name="Subtitle"
-                            onChange={handleInputChange}
-                            value={formData.Subtitle}
-                            placeholder="Enter your subtitle here..."
-                            required={true}
-                            maxLength={32}
+                                className="textInput locationText"
+                                id="Subtitle"
+                                name="Subtitle"
+                                onChange={handleInputChange}
+                                value={formData.Subtitle}
+                                placeholder="Enter your subtitle here..."
+                                required={true}
+                                maxLength={32}
                             />
                             <p>{formData.Subtitle.length}/32</p>
                         </section>
@@ -858,7 +912,7 @@ function OnboardingHost() {
             case 7:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Provide a description</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Provide a description' : 'Edit your description'}</h2>
                         <p className="onboardingSectionSubtitle">Share what makes your space special.</p>
 
                         <section className="accommodation-title">
@@ -888,7 +942,7 @@ function OnboardingHost() {
             case 8:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Now set your rate</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Now set your rate' : 'Edit your rate'}</h2>
                         <h2 className="acco-price">{!isNaN(parseFloat(formData.Rent)) ? `€ ${parseFloat(formData.Rent).toFixed(0)}` : 'Enter your base rate'}</h2>
                         <section className="accommodation-pricing">
                             <div className="pricing-row">
@@ -945,23 +999,12 @@ function OnboardingHost() {
             case 9:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Share your first availability</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Share your first availability' : 'Edit your availability'}</h2>
                         <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within
                             your dashboard</p>
                         <section className="listing-calendar">
                             <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
                         </section>
-                        <label>
-                            <input
-                                type="checkbox"
-                                className="radioInput"
-                                name="Drafted"
-                                onChange={() => setDrafted(!formData.Drafted)}
-                                disabled={!(formData.StartDate && formData.EndDate && hasStripe)}
-                                checked={formData.Drafted}
-                            />
-                            Mark as draft (Stripe account and date range is required)
-                        </label>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
@@ -1075,15 +1118,31 @@ function OnboardingHost() {
                         <p>{formData.Drafted ? "Guests cannot book your accommodation before you set it live via Hostdashboard -> Listing"
                             : "Guests can book your accommodation anytime now!"}
                         </p>
+                        <label>
+                            <input
+                                type="checkbox"
+                                className="radioInput"
+                                name="Drafted"
+                                onChange={() => setDrafted(!formData.Drafted)}
+                                disabled={!(formData.StartDate && formData.EndDate && hasStripe)}
+                                checked={formData.Drafted}
+                            />
+                            Mark as draft (Stripe account and date range is required)
+                        </label>
                         <div className='onboarding-button-box'>
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
                                 Go back to change
                             </button>
-                            <button className='onboarding-button' onClick={() => {
-                                handleSubmit();
-                                pageUpdater(page + 1)
-                            }}>Confirm
+                            <button className='onboarding-button' onClick={
+                                isNew ? () => {
+                                    handleSubmit();
+                                    pageUpdater(page + 1)
+                                } : () => {
+                                    handleUpdate();
+                                    pageUpdater(page + 1)
+                                }
+                            }>{isNew ? 'Confirm' : 'Confirm and update'}
                             </button>
                         </div>
                     </div>

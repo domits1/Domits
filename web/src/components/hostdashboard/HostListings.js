@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import Pages from "./Pages";
 import './HostHomepage.css'
 import add from "../../images/icons/host-add.png";
-import { useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import PageSwitcher from "../utils/PageSwitcher";
@@ -85,6 +85,13 @@ function HostListings() {
             }
         }
     };
+    const asyncEditAccommodation = async (accoId, accoTitle) => {
+        if (confirm(`Do you wish to edit ${accoTitle}?`)) {
+            if (accoId) {
+                navigate(`/enlist?ID=${accoId}`)
+            }
+        }
+    }
     const asyncChangeAccommodationStatus = async (id, drafted) => {
         let status = drafted ? 'Draft' : 'Live';
         if(confirm(`Do you wish to set this accommodation as ${status}?`) === true) {
@@ -166,6 +173,7 @@ function HostListings() {
                                 <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === false)}
                                               amount={3}
                                               hasStripe={hasStripe}
+                                              onEdit={asyncEditAccommodation}
                                               onDelete={asyncDeleteAccommodation}
                                               onUpdate={asyncChangeAccommodationStatus}/>
                             ) : (
@@ -184,6 +192,7 @@ function HostListings() {
                                 <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === true)}
                                               amount={3}
                                               hasStripe={hasStripe}
+                                              onEdit={asyncEditAccommodation}
                                               onDelete={asyncDeleteAccommodation}
                                               onUpdate={asyncChangeAccommodationStatus}/>
                             ) : (
