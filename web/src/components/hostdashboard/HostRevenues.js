@@ -26,45 +26,49 @@ const HostRevenues = () => {
         setUserIdAsync();
     }, []);
 
+    const handleStripeOAuth = () => {
+        const clientId = 'your_stripe_client_id'; // Replace with your Stripe client ID
+        const redirectUri = 'https://your-app.com/stripe/callback'; // Replace with your redirect URI
+        const state = userId;
+        const stripeOAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${clientId}&scope=read_write&redirect_uri=${redirectUri}&state=${state}`;
+        window.location.href = stripeOAuthUrl;
+    };
+
     useEffect(() => {
         const fetchStripeAccount = async () => {
-            if (!userId) {
-                console.log("No user found!");
-                return;
-            }
-            try {
-                const response = await fetch('https://kq82anbek1.execute-api.eu-north-1.amazonaws.com/default/StripeRevenuePage', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        body: JSON.stringify({ user_id: userId })
-                    }),
-                });
+            const urlParams = new URLSearchParams(window.location.search);
+            const code = urlParams.get('code');
+            const state = urlParams.get('state');
 
-                console.log("Raw response:", response);
+            if (code && state) {
+                try {
+                    const response = await fetch('https://your-backend.com/stripe/callback', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            code: code,
+                            state: state,
+                        }),
+                    });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || 'Failed to fetch');
+                    if (!response.ok) {
+                        throw new Error('Failed to exchange authorization code for access token');
+                    }
+
+                    const data = await response.json();
+                    setStripeAccountId(data.stripe_user_id);
+                } catch (error) {
+                    console.error("OAuth Error:", error);
                 }
-
-                const responseData = await response.json();
-
-                // Log the parsed response data
-                console.log("Parsed response data:", responseData);
-
-                setStripeAccountId(responseData.accountId); // Update to match the key returned from Lambda
-            } catch (error) {
-                console.error("Unexpected error:", error);
             }
         };
 
-        if (userId) {
+        if (!stripeAccountId) {
             fetchStripeAccount();
         }
-    }, [userId]);
+    }, [stripeAccountId]);
 
     useEffect(() => {
         const fetchStripePaymentsData = async () => {
@@ -112,6 +116,7 @@ const HostRevenues = () => {
                             )
                         )}
                     </div>
+                    <button onClick={handleStripeOAuth}>Connect with Stripe</button>
                 </div>
             </section>
         </main>
