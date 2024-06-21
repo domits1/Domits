@@ -1,11 +1,139 @@
 .release {
+    padding: 20px;
+    margin-bottom: 45px;
+  }
+      
+  .release-header-container {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: center;
+    margin: 45px 80px 90px;
+  }
+      
+  .release-header {
+    text-align: left;
+    margin: 50px;
+  }
+      
+  .release-header h1 {
+    font-size: 3em;
+    margin-top: 15px;
+  }
+      
+  .release-header h4 {
+    margin: 5px;
+    font-size: 1.2em;
+  }
+      
+  .release-header button {
+    margin: 20px 5px;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+      
+  .release-header button{
+    background-color: #218838; 
+  }
+      
+  .image-header{
+    width: 30%;
+    margin-right: 55px;
+  }
+      
+  .release-notes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    margin-right: 100px;
+    gap: 20px;
+  }
+      
+  .release-item img {
+    border-radius: 5px;
     width: 100%;
-    height: 50vh;
-}
+  }
+      
+  .release-item {
+    border: 2px solid green;
+    text-align: center;
+    padding: 9px 13px 0 13px;
+    border-radius: 3px;
+    width: 85%;
+    margin-left: 90px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-sizing: border-box;
+    overflow: hidden; /* Ensure the overflow is hidden */
+  }
+      
+  .release-item h4 {
+    margin-bottom: 2px;
+    margin-top: 0px;
+  }
+  
+  .release-item.expanded {
+    height: auto;
+    padding-bottom: 25px; 
+  }
+    
+  .release-item.expanded .release-details {
+    max-height: 100px; 
+  }
+  
+  .release-details {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease; 
+  }
 
-.release h1 {
-    font-weight: 500;
-}
+@media screen and (max-width: 930px) {
+   .release {
+      padding: 0px;
+      margin: auto;
+    }
+
+   .image-header{
+     width: 35%;
+     margin-top: 15px;
+     margin-right: -17px;
+    }
+
+    .release-header {
+        margin: 20px;
+    }
+
+   .release-header h1 {
+      font-size: 2.5em;
+    }
+
+   .release-header h4 {
+      font-size: 0.9em;
+    }
+
+    .release-notes {
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      width: 108%;
+    }
+
+    .release-item img {
+      width: 480px;
+      max-width: 110%;
+      height: 150px;
+      object-fit: cover;
+      max-height: 50%;
+    }
+
+    .release-item {
+        padding-right: 50px;
+        width: 75%;
+        margin: auto;
+    }
+
+    .release-item:last-child {
+        margin-bottom: 50px;
+    }
+  }
