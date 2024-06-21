@@ -20,10 +20,18 @@ const region = 'eu-north-1';
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
-    const { search } = useLocation();
-    const searchParams = new URLSearchParams(search);
-    const id = searchParams.get('ID');
     const [isNew, setIsNew] = useState(true);
+    const [oldAccoID, setOldAccoID] = useState('');
+    try {
+        const { search } = useLocation();
+        const searchParams = new URLSearchParams(search);
+        if (searchParams.get('ID')) {
+            setOldAccoID(searchParams.get('ID'));
+            setIsNew(false);
+        }
+    } catch (error) {
+        console.log(error);
+    }
     const [location, setLocation] = useState({
         latitude: 0,
         longitude: 0,
@@ -33,7 +41,6 @@ function OnboardingHost() {
     let [hasAddress, setHasAddress] = useState(false);
 
     useEffect(() => {
-        setIsNew(false);
         const fetchAccommodation = async () => {
             try {
                 const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
@@ -41,7 +48,7 @@ function OnboardingHost() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ ID: id }),
+                    body: JSON.stringify({ ID: oldAccoID }),
                 });
                 if (!response.ok) {
                     throw new Error('Failed to fetch accommodation data');
@@ -54,8 +61,10 @@ function OnboardingHost() {
             }
         };
 
-        fetchAccommodation();
-    }, [id]);
+        if (!isNew) {
+            fetchAccommodation();
+        }
+    }, [isNew]);
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -368,17 +377,14 @@ function OnboardingHost() {
         }));
     };
 
-    useEffect(() => {
+    const resetCleaningFee = () => {
         if (!formData.Features.ExtraServices.includes('Cleaning service (add service fee manually)')) {
-            const resetCleaningFee = () => {
-                setFormData((prevData) => ({
-                    ...prevData,
-                    CleaningFee: 0
-                }));
-            };
-            resetCleaningFee();
+            setFormData((prevData) => ({
+                ...prevData,
+                CleaningFee: 0
+            }));
         }
-    }, [formData.Features]);
+    };
 
     const incrementAmount = (field) => {
         setFormData(prevData => ({
@@ -407,6 +413,9 @@ function OnboardingHost() {
         setFormData(prevFormData => {
             const updatedFeatures = { ...prevFormData.Features };
 
+            if (amenity === 'Cleaning service (add service fee manually)') {
+                resetCleaningFee();
+            }
             if (checked) {
                 updatedFeatures[category] = [...updatedFeatures[category], amenity];
             } else {
@@ -422,6 +431,7 @@ function OnboardingHost() {
 
 
     const handleInputChange = (event) => {
+        console.log('is new: ' + isNew);
         const { name, type, checked, value } = event.target;
         console.log(formData);
         if (type === 'checkbox') {
@@ -501,6 +511,7 @@ function OnboardingHost() {
                     'Content-Type': 'application/json',
                 }
             });
+            console.log(response);
             if (response.ok) {
                 console.log('Form data saved successfully');
             } else {
