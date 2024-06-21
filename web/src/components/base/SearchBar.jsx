@@ -191,7 +191,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     try {
       const response = await fetch(apiUrl);
-      if (!response.ok) {  // Check if the response status is not 200-299
+      if (!response.ok) {  
         if (response.status === 404) {
           setError("No results have been found...");
         } else {
@@ -486,7 +486,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 padding: '13.8px 16px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: isMobile ? 'center' : 'flex-start', // Responsive text alignment
+                justifyContent: isMobile ? 'center' : 'flex-start', 
                 borderRadius: '10px',
                 gap: '15px',
                 cursor: 'pointer',

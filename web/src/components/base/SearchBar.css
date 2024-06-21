@@ -623,10 +623,10 @@
     display: block;
     width: 100%;
     max-width: 300px;
-    padding: 0.8rem; /* Aangepaste padding voor betere aanraakbaarheid */
+    padding: 0.8rem; 
     background-color: #ffffff;
     border: 1px solid #e2e2e4;
-    border-radius: 1.8rem; /* Afgeronde hoeken */
+    border-radius: 1.8rem; 
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     font-size: 1rem;
     color: #484848;
