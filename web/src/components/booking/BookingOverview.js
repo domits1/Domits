@@ -133,13 +133,13 @@ const BookingOverview = () => {
             return;
         }
 
-
         const paymentID = generateUUID();
         const userId = cognitoUserId;
         const accommodationTitle = accommodation.Title;
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
-        const price = accommodationPrice;
+        const basePrice = Math.round(accommodation.Rent * numberOfDays * 100); // Convert to cents and round to ensure integer
+        const totalAmount = Math.round(basePrice * 1.15); // Total amount including 15% fee, rounding to ensure integer
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -150,7 +150,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Pending",
-            price,
+            price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate
         }).toString();
@@ -161,7 +161,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Failed",
-            price,
+            price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate
         }).toString();
@@ -171,7 +171,8 @@ const BookingOverview = () => {
 
         const checkoutData = {
             userId: cognitoUserId,
-            amount: accommodationPrice + '00',
+            basePrice: basePrice, // Already in cents
+            totalAmount: totalAmount, // Already in cents
             currency: 'eur',
             productName: accommodation.Title,
             successUrl: successUrl,
@@ -249,7 +250,9 @@ const BookingOverview = () => {
                     <form>
                         {isLoggedIn ? (
                             <>
-                                <div className="helloUsername">Hello {userData.username}!</div>
+                                <div className="form-group">
+                                    <label htmlFor="helloUsername">Hello {userData.username}!</label>
+                                </div>
                                 <div className="form-group">
                                     <label htmlFor="name">Name</label>
                                     <input type="text" id="name" name="name" defaultValue={userData.username} />

@@ -61,7 +61,7 @@
 .dashboardHost {
   display: flex;
   justify-content: flex-start;
-  gap: 14rem;
+  gap: 5rem;
   width: 100%;
 }
 
@@ -269,21 +269,6 @@
   max-height: none;
 }
 
-.locationBox {
-  height: auto;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  overflow: hidden;
-  font-size: 1.1em;
-  width: 100%;
-  max-width: 100%;
-  padding: 0.75em;
-  margin: 1em auto;
-}
-
 .boxText {
   width: 80%;
   margin: auto;
@@ -335,8 +320,8 @@
 }
 
 #date {
-  border-color: #007bff; /* Change to your preferred focus color */
-  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); /* Change to your preferred focus shadow */
+  border-color: #007bff;
+  box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
 .review-content {
@@ -554,7 +539,6 @@
   }
 }
 
-/* Specific adjustments for modal */
 .StripeModal {
   z-index: 2;
   left: 0;
@@ -600,7 +584,6 @@
   width: 3.2vw;
 }
 
-/* Specific adjustments for listing info */
 .listing-info {
   display: flex;
   flex-direction: row;
@@ -614,7 +597,7 @@
 .enlist-info {
   padding: 2em;
 }
-/* Keyframes for fade-up animation */
+
 @keyframes fade-up {
   0% {
       opacity: 0;
@@ -626,7 +609,6 @@
   }
 }
 
-/* Box styles */
 .boxColumns {
   height: auto;
   margin: 10px;
@@ -666,13 +648,30 @@
   margin: 1em auto;
 }
 
+.locationBox select {
+  width: 100%;
+  max-width: 100%;
+  font-size: 1em;
+  white-space: normal;
+  overflow-wrap: break-word;
+}
+
+@media (max-width: 600px) {
+  .locationBox {
+    font-size: 0.9em;
+  }
+
+  .locationBox select {
+    font-size: 0.9em;
+  }
+}
+
 .boxText {
   width: 80%;
   margin: auto;
   text-align: center;
 }
 
-/* Specific styles for withdrawal button */
 #withdrawButton {
   background-color: #003366;
   color: #fff;
@@ -705,7 +704,6 @@
   text-align: left;
 }
 
-/* Date input styles */
 #date {
   padding: 8px;
   border: 1px solid #ccc;
@@ -721,7 +719,6 @@
   box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
-/* Review content styles */
 .review-content {
   text-align: start;
 }

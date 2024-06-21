@@ -4,7 +4,7 @@ import { fetchUserAttributes, getCurrentUser } from '@aws-amplify/auth';
 import * as mutations from "./mutations";
 import * as queries from "./queries";
 import * as subscriptions from './subscriptions';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, FlatList } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
 
 const client = generateClient();
 
@@ -17,7 +17,7 @@ export function Messages({ route, navigation }) {
   const [chatUsers, setChatUsers] = useState([]);
   const [channelUUID, setChannelUUID] = useState(null);
   const [isChatVisible, setIsChatVisible] = useState(false);
-  const [user, setUser] = useState(null); 
+  const [user, setUser] = useState(null);
 
   const chatContainerRef = useRef(null);
 
@@ -29,7 +29,7 @@ export function Messages({ route, navigation }) {
         const currentUser = await getCurrentUser();
         const attributes = await fetchUserAttributes(currentUser);
         if (attributes && attributes.email) {
-          setUser({ email: attributes.email }); 
+          setUser({ email: attributes.email });
         }
       } catch (error) {
         console.error('Error fetching user:', error);
@@ -46,7 +46,7 @@ export function Messages({ route, navigation }) {
   }, [recipientEmail]);
 
   useEffect(() => {
-    if (user && user.email) { 
+    if (user && user.email) {
       fetchChatUsers();
     }
   }, [user]);
@@ -107,7 +107,7 @@ export function Messages({ route, navigation }) {
           }
         }
       });
-  
+
       const receivedMessagesResponse = await client.graphql({
         query: queries.listChats,
         variables: {
@@ -117,25 +117,25 @@ export function Messages({ route, navigation }) {
           }
         }
       });
-  
+
       const sentMessages = sentMessagesResponse.data.listChats.items.map(chat => ({
         ...chat,
         isSent: true
-      })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); 
-  
+      })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
       const receivedMessages = receivedMessagesResponse.data.listChats.items.map(chat => ({
         ...chat,
         isSent: false
-      })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); 
-  
-      const allChats = [...sentMessages, ...receivedMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); 
-  
+      })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
+      const allChats = [...sentMessages, ...receivedMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+
       setChats(allChats);
     } catch (error) {
       console.error('Error fetching chats:', error);
     }
   };
-  
+
 
   const sendMessage = async () => {
     if (!newMessage.trim()) {
@@ -194,7 +194,7 @@ export function Messages({ route, navigation }) {
       const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
 
       const filteredUsersData = uniqueUsers
-        .filter(email => email !== user.email) 
+        .filter(email => email !== user.email)
         .map(email => {
           const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
           const lastMessage = userChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
@@ -219,7 +219,11 @@ export function Messages({ route, navigation }) {
   };
 
   return (
-    <View style={styles.chat}>
+    <KeyboardAvoidingView
+      style={styles.chat}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
       {isChatVisible ? (
         <View style={styles.chat__container}>
           <TouchableOpacity onPress={handleBackToUsers} style={styles.chat__backButton}>
@@ -283,7 +287,7 @@ export function Messages({ route, navigation }) {
 
         </View>
       )}
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -352,7 +356,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   chat__sendButton: {
-    backgroundColor: '#6200ea',
+    backgroundColor: '#57af5b',
     borderRadius: 8,
     padding: 10,
     marginLeft: 10,
@@ -416,11 +420,11 @@ const styles = StyleSheet.create({
     maxWidth: '80%',
   },
   chat__bubbleSent: {
-    backgroundColor: '#e1ffc7',
+    backgroundColor: '#57af5b',
     alignSelf: 'flex-end',
   },
   chat__bubbleReceived: {
-    backgroundColor: '#fff',
+    backgroundColor: '#b187cb',
     alignSelf: 'flex-start',
   },
   chat__bubbleText: {

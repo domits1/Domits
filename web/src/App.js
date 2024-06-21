@@ -7,8 +7,9 @@ import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
 import Home from './components/home/Accommodations';
 import About from "./components/about/About";
-import Whydomits from "./components/about/Whydomits";
+import Whydomits from "./components/about/Whydomitstwo.js";
 import Release from "./components/about/release.js";
+import Datasafety from "./components/about/datasafety.js";
 import Helpdesk from "./components/about/Helpdesk.js";
 import Faq from "./components/landingpage/Faq";
 import Howitworks from "./components/about/Howitworks.js";
@@ -98,9 +99,10 @@ function App() {
                             <Route path="/" element={<Home searchResults={searchResults} />} />
                             <Route path="/about" element={<About />} />
                             <Route path="/release" element={<Release />} />
+                            <Route path="/data-safety" element={<Datasafety />} />
                             <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} /> 
                             <Route path="/helpdesk-host" element={<Helpdesk category="host" />} /> 
-                            <Route path="/howitworks" element={<Howitworks />} />
+                            <Route path="/how-it-works" element={<Howitworks />} />
                             <Route path="/why-domits" element={<Whydomits />} />
                             <Route path="/contact" element={<Contact />} />
                             <Route path="/travelinnovation" element={<Travelinnovation />} />
