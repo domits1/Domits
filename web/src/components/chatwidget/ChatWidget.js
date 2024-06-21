@@ -88,6 +88,10 @@ const ChatWidget = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: 'Chatbot is currently unavailable. Please try again later.', sender: 'ai' }
+      ]);
       scrollToBottom();
     } finally {
       setLoading(false);
@@ -166,7 +170,6 @@ const ChatWidget = () => {
               <button onClick={sendMessage} disabled={loading}>Send</button>
             </div>
           </div>
-          <span className="chatwidget-resize-handle" />
         </ResizableBox>
       )}
     </div>
