@@ -1,70 +1,73 @@
-.read-more {
-    padding: 50px;
-    margin: 0 auto;
-    max-width: 1200px;
+.new-features {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+.new-features h1 {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+}
+
+.new-features p {
+  font-size: 1.2em;
+  line-height: 1.6;
+  margin-bottom: 40px;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.feature-item {
+  text-align: center;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.feature-item img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.feature-item h3 {
+  font-size: 1.5em;
+  margin-top: 15px;
+}
+
+.feature-item p {
+  font-size: 1.1em;
+}
+
+@media screen and (max-width: 888px) {
+  .features-grid {
+    grid-template-columns: repeat(1, 1fr);
   }
-  
-  .header{
+
+  .feature-item {
     margin: auto;
+    width: 70%;
+    padding: 70px;
   }
 
-  .read-more h1 {
-    font-size: 2.0em;
-    margin-bottom: 20px;
-  }
-  
-  .read-more p {
-    line-height: 1.6;
-    margin-bottom: 40px;
-  }
-  
-  .feature {
-    display: flex;
-    align-items: center;
-    margin-bottom: 40px;
-  }
-  
-  .feature:nth-child(even) {
-    flex-direction: row-reverse;
-  }
-  
-  .feature-text {
-    flex: 1;
-    padding: 20px;
-  }
-  
-  .feature img {
-    flex: 1;
-    max-width: 400px;
-    max-height: 320px;
-    border-radius: 10px;
-  }
-  
-  .feature h2 {
-    text-align: left;
+  .feature-item h3 {
+    font-size: 1.2em; 
   }
 
-  .feature h3 {
-    margin-bottom: 10px;
+  .feature-item p {
+    font-size: 1em; 
   }
-  
-  .feature p {
-    font-size: 1em;
-    line-height: 1.5;
+
+  .feature-item img {
+    height: 230px;
+    width: 500px;
+    object-fit: cover;
+    border-radius: 5px; 
   }
-  
-  @media screen and (max-width: 990px) {
-    .feature {
-      flex-direction: column;
-    }
-  
-    .feature:nth-child(even) {
-      flex-direction: column;
-    }
-  
-    .feature img {
-      max-width: 100%;
-      margin-bottom: 20px;
-    }
-  }
-  
+}

@@ -1,139 +1,100 @@
 .release {
-    padding: 20px;
-    margin-bottom: 45px;
-  }
-      
-  .release-header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin: 45px 80px 90px;
-  }
-      
-  .release-header {
-    text-align: left;
-    margin: 50px;
-  }
-      
-  .release-header h1 {
-    font-size: 3em;
-    margin-top: 15px;
-  }
-      
-  .release-header h4 {
-    margin: 5px;
-    font-size: 1.2em;
-  }
-      
-  .release-header button {
-    margin: 20px 5px;
-    padding: 10px 20px;
-    background-color: #28a745;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-      
-  .release-header button{
-    background-color: #218838; 
-  }
-      
-  .image-header{
-    width: 30%;
-    margin-right: 55px;
-  }
-      
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.release-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 50px auto;
+}
+
+.release-header {
+  margin-left: 50px;
+  text-align: left;
+}
+
+.release-header h1 {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.release-header h4 {
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}
+
+.release-header button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.release-header button:hover {
+  background-color: #45a049;
+}
+
+.image-header {
+  width: 380px;
+  max-width: 400px;
+}
+
+.release-notes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.release-item {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.release-item img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.release-item h4 {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+.release-item p {
+  font-size: 1em;
+  display: none;
+}
+
+.release-item.expanded p {
+  display: block;
+}
+
+.release-item:hover {
+  transform: scale(1.05);
+}
+
+@media screen and (max-width: 768px) {
   .release-notes {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    margin-right: 100px;
-    gap: 20px;
-  }
-      
-  .release-item img {
-    border-radius: 5px;
-    width: 100%;
-  }
-      
-  .release-item {
-    border: 2px solid green;
-    text-align: center;
-    padding: 9px 13px 0 13px;
-    border-radius: 3px;
-    width: 85%;
-    margin-left: 90px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    box-sizing: border-box;
-    overflow: hidden; /* Ensure the overflow is hidden */
-  }
-      
-  .release-item h4 {
-    margin-bottom: 2px;
-    margin-top: 0px;
-  }
-  
-  .release-item.expanded {
-    height: auto;
-    padding-bottom: 25px; 
-  }
-    
-  .release-item.expanded .release-details {
-    max-height: 100px; 
-  }
-  
-  .release-details {
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease; 
+    grid-template-columns: 1fr;
   }
 
-@media screen and (max-width: 930px) {
-   .release {
-      padding: 0px;
-      margin: auto;
-    }
-
-   .image-header{
-     width: 35%;
-     margin-top: 15px;
-     margin-right: -17px;
-    }
-
-    .release-header {
-        margin: 20px;
-    }
-
-   .release-header h1 {
-      font-size: 2.5em;
-    }
-
-   .release-header h4 {
-      font-size: 0.9em;
-    }
-
-    .release-notes {
-      display: grid;
-      grid-template-columns: repeat(1, 1fr);
-      width: 108%;
-    }
-
-    .release-item img {
-      width: 480px;
-      max-width: 110%;
-      height: 150px;
-      object-fit: cover;
-      max-height: 50%;
-    }
-
-    .release-item {
-        padding-right: 50px;
-        width: 75%;
-        margin: auto;
-    }
-
-    .release-item:last-child {
-        margin-bottom: 50px;
-    }
+  .image-header {
+    margin-left: 0;
+    margin-top: 20px;
+    max-width: 200px;
   }
+}
