@@ -444,6 +444,7 @@ const Chat = ({ user }) => {
                                 {imageUrl && <img src={imageUrl} alt="Selected" style={{ maxWidth: "100%", maxHeight: "200px" }} />}
 
                             </article>
+                            <div className="chat__inputContainer">
 
                             <input
                                 className="chat__input"
@@ -458,22 +459,15 @@ const Chat = ({ user }) => {
                                 }}
                             />
 
-                            <button onClick={() => sendMessage(getUUIDForUser(selectedUser.email))}>Send</button>
-
+                            <button className="chat__send" onClick={() => sendMessage(getUUIDForUser(selectedUser.email))}>send</button>
+                            </div>
 
                         </article>
                         <nav className="chat__nav">
-                            <ul className="chat__controls">
-                                <li className="chat__control chat__control--icon">
-                                    <img className="chat__icon" src={heart} />
-                                </li>
-                                <li className="chat__control chat__control--icon">
-                                    <img className="chat__icon" src={trash} />
-                                </li>
-                            </ul>
+                           
                             <div className="chat__buttonWrapper">
-                                <button className="chat__button chat__button--file">add files
-                                    <input type="file" onChange={handleImageUpload} /></button>
+                                {/* <button className="chat__button chat__button--file">add files
+                                    <input type="file" onChange={handleImageUpload} /></button> */}
                                 <button className="chat__button chat__button--review">Send review link</button>
 
                             </div>

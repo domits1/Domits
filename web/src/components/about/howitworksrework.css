@@ -100,6 +100,10 @@
 }
 
 @media (max-width: 1364px) {
+
+  .howitworksmain{
+    padding-left: 1rem;
+  }
   .guestinfoblockhowitworks{
     width:100%;
   }
@@ -115,6 +119,12 @@
 } 
 
 @media (max-width: 1238px) {
+
+  .howitworksmain{
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
   .borderleft{
     border-left: 0.0rem solid white;
     border-top: 0.2rem solid white;

@@ -75,7 +75,7 @@ function HostCalendar() {
     return (
         <div className="container">
             <h2>Calendar</h2>
-            <div className="dashboard">
+            <div className="dashboardHost">
                 <Pages />
                 {isLoading ? (
                         <div>
