@@ -116,10 +116,10 @@ const ChatWidget = () => {
           minConstraints={[200, 200]}
           maxConstraints={[600, 600]}
           className="chatwidget-resizable"
-          resizeHandles={['se']}
+          handle={<span className="chatwidget-resize-handle" />}
         >
           <div className="chatwidget-header">
-            <span className="chatwidget-resize-handle" />
+            <span className="chatwidget-title">Chat</span>
             <button className="chatwidget-close" onClick={() => setIsOpen(false)}>×</button>
           </div>
           <div className="chatwidget-container">
