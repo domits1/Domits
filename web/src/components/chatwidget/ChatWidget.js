@@ -28,7 +28,7 @@ const ChatWidget = () => {
 
   const loadChatHistory = async () => {
     try {
-      const params = chatID ? { chatID } : { userID: user.id };
+      const params = user ? { userID: user.attributes.sub } : { chatID };
       const response = await axios.get('http://localhost:3001/chat-history', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
@@ -65,10 +65,10 @@ const ChatWidget = () => {
 
     try {
       const payload = { query: tempUserInput };
-      if (chatID) {
+      if (user) {
+        payload.userID = user.attributes.sub;
+      } else if (chatID) {
         payload.chatID = chatID;
-      } else if (user) {
-        payload.userID = user.id;
       }
 
       const response = await axios.post('http://localhost:3001/query', payload);
@@ -102,13 +102,13 @@ const ChatWidget = () => {
     <div className={`chatwidget-widget ${isOpen ? 'open' : ''}`}>
       {!isOpen && (
         <button className="chatwidget-toggle" onClick={() => setIsOpen(true)}>
-          Chat
+          &#128172; {/* Unicode character for a chat bubble */}
         </button>
       )}
       {isOpen && (
         <ResizableBox
-          width={300}
-          height={400}
+          width={500}
+          height={600}
           minConstraints={[200, 200]}
           maxConstraints={[600, 600]}
           className="chatwidget-resizable"
@@ -166,6 +166,7 @@ const ChatWidget = () => {
               <button onClick={sendMessage} disabled={loading}>Send</button>
             </div>
           </div>
+          <span className="chatwidget-resize-handle" />
         </ResizableBox>
       )}
     </div>
