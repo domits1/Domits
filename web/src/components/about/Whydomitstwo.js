@@ -2,6 +2,8 @@ import React from "react";
 import "./whydomits.css";
 import FAQ from "../landingpage/Faq";
 import barchart from "../../images/icons/bar-chart.png";
+import chartbreakout from "../../images/icons/chart-breakout-circle.png";
+
 
 function Whydomits() {
   return (
@@ -34,9 +36,9 @@ function Whydomits() {
         </article>
         <article className="WhyDomitsTwoCard">
           <p className="WhyDomitsTwoCardP">
-            Our motto is 1% better every day in product development, integrations, security and intellectual travel leadership.
+          Travel Innovation Labs to create sustainable value. For hosts to increase revenue, occupancy and rates. For Guests an AI trip planner with recommendations.
           </p>
-          <img className="factsImage" src={barchart} alt="Bar Chart" />
+          <img className="factsImage" src={chartbreakout} alt="Bar Chart" />
         </article>
       </section>
     </section>
