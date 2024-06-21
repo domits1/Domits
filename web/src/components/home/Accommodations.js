@@ -80,7 +80,6 @@ const Accommodations = ({ searchResults }) => {
 
   return (
     <div id="card-visibility">
-      {/* <CheckoutFrontend/> */}
       {displayedAccolist.map((accommodation) => (
         <div className="accocard" key={accommodation.id} onClick={() => handleClick(accommodation.id)}>
           <img src={accommodation.image} alt={accommodation.title} />
