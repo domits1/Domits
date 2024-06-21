@@ -98,13 +98,17 @@ p {
     border-radius: 4px;
     font-size: 18px;
     cursor: pointer;
+    margin-bottom: 1.25rem;
 }
 
 .confirm-pay-button:hover {
     background-color: #45a049;
 }
 
-/* Responsive styles */
+.accommodation-info form {
+    margin-bottom: 40px;
+}
+
 @media (max-width: 768px) {
     .container {
         flex-direction: column;
@@ -120,8 +124,7 @@ p {
         align-items: flex-start;
     }
 
-    .detail-item span,
-    .detail-item a {
+    .detail-item span, .detail-item a {
         margin-bottom: 5px;
     }
 }

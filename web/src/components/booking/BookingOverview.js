@@ -132,7 +132,7 @@ const BookingOverview = () => {
             setError('Cognito user ID or Owner Stripe ID is not available.');
             return;
         }
-    
+
         const paymentID = generateUUID();
         const userId = cognitoUserId;
         const accommodationTitle = accommodation.Title;
@@ -142,7 +142,7 @@ const BookingOverview = () => {
         const totalAmount = Math.round(basePrice * 1.15); // Total amount including 15% fee, rounding to ensure integer
         const startDate = checkIn;
         const endDate = checkOut;
-    
+
         const successQueryParams = new URLSearchParams({
             paymentID,
             accommodationTitle,
@@ -165,10 +165,10 @@ const BookingOverview = () => {
             startDate,
             endDate
         }).toString();
-    
+
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
         const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
-    
+
         const checkoutData = {
             userId: cognitoUserId,
             basePrice: basePrice, // Already in cents
@@ -179,7 +179,7 @@ const BookingOverview = () => {
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
-    
+
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
                 method: 'POST',
@@ -188,15 +188,15 @@ const BookingOverview = () => {
                     'Content-Type': 'application/json; charset=UTF-8',
                 },
             });
-    
+
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-    
+
             const result = await response.json();
             const stripe = await stripePromise;
             const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
-    
+
             if (error) {
                 console.error('Stripe Checkout error:', error.message);
                 setError('Stripe Checkout error: ' + error.message);
@@ -250,7 +250,9 @@ const BookingOverview = () => {
                     <form>
                         {isLoggedIn ? (
                             <>
-                                <div className="helloUsername">Hello {userData.username}!</div>
+                                <div className="form-group">
+                                    <label htmlFor="helloUsername">Hello {userData.username}!</label>
+                                </div>
                                 <div className="form-group">
                                     <label htmlFor="name">Name</label>
                                     <input type="text" id="name" name="name" defaultValue={userData.username} />
