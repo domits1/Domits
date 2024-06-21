@@ -108,6 +108,15 @@
   .accocard {
     width: 48%;
   }
+
+  .accocard-specs {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+}
+
 }
 
 @media (max-width: 480px) {
@@ -117,4 +126,13 @@
   .accocard-size {
     font-size: 12px;
   }
+
+  .accocard-specs {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    text-align: center;
+}
+
 }
