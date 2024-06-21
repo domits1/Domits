@@ -22,16 +22,9 @@ function OnboardingHost() {
     const options = useMemo(() => countryList().getLabels(), []);
     const [isNew, setIsNew] = useState(true);
     const [oldAccoID, setOldAccoID] = useState('');
-    try {
-        const { search } = useLocation();
-        const searchParams = new URLSearchParams(search);
-        if (searchParams.get('ID')) {
-            setOldAccoID(searchParams.get('ID'));
-            setIsNew(false);
-        }
-    } catch (error) {
-        console.log(error);
-    }
+    const { search } = useLocation();
+    const searchParams = new URLSearchParams(search);
+    const accommodationID = searchParams.get('ID');
     const [location, setLocation] = useState({
         latitude: 0,
         longitude: 0,
@@ -50,21 +43,29 @@ function OnboardingHost() {
                     },
                     body: JSON.stringify({ ID: oldAccoID }),
                 });
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch accommodation data');
                 }
+
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
+
+                if (!data.hasOwnProperty('CleaningFee')) {
+                    data.CleaningFee = 1;
+                }
+
                 setFormData(data);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
         };
 
-        if (!isNew) {
+
+        if (!isNew && oldAccoID) {
             fetchAccommodation();
         }
-    }, [isNew]);
+    }, [isNew, oldAccoID]);
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -88,6 +89,10 @@ function OnboardingHost() {
         Auth.currentUserInfo().then(user => {
             if (user) {
                 setUserId(user.attributes.sub);
+                if (accommodationID) {
+                    setOldAccoID(accommodationID);
+                    setIsNew(false);
+                }
             } else {
                 navigate('/login');
             }
@@ -431,7 +436,6 @@ function OnboardingHost() {
 
 
     const handleInputChange = (event) => {
-        console.log('is new: ' + isNew);
         const { name, type, checked, value } = event.target;
         console.log(formData);
         if (type === 'checkbox') {
@@ -500,29 +504,37 @@ function OnboardingHost() {
     const handleUpdate = async () => {
         try {
             setIsLoading(true);
-            const updatedFormData = { ...formData };
-            await setFormData(updatedFormData);
+
             setImageFiles([]);
 
+            if (!formData.CleaningFee) {
+                setFormData((prevData) => ({
+                    ...prevData,
+                    CleaningFee: 0
+                }));
+            }
+            console.log(formData);
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
-                method: 'POST',
+                method: 'PUT',
                 body: JSON.stringify(formData),
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
-            console.log(response);
+
             if (response.ok) {
-                console.log('Form data saved successfully');
+                console.log('Accommodation updated successfully');
             } else {
-                console.error('Error saving form data');
+                console.error('Error updating accommodation');
             }
         } catch (error) {
             console.error('Error:', error);
         } finally {
             setIsLoading(false);
         }
-    }
+    };
+
+
     const handleSubmit = async () => {
         try {
             setIsLoading(true);
@@ -967,7 +979,7 @@ function OnboardingHost() {
                                     <label>Cleaning fee</label>
                                     <input className="pricing-input" type="number" name="CleaningFee"
                                            onChange={handleInputChange}
-                                           defaultValue={formData.CleaningFee} min={1} step={0.1}
+                                           defaultValue={formData.CleaningFee ? formData.CleaningFee : 1} min={1} step={0.1}
                                            required={true}/>
                                 </div>}
                             <div className="pricing-row">
