@@ -147,7 +147,7 @@ function HostListings() {
     return (
         <div className="container">
             <h2>Listings</h2>
-            <div className="dashboard">
+            <div className="dashboardHost">
                 <Pages />
                 <div className="contentContainer">
                     <div className="boxColumns fullColumn">
