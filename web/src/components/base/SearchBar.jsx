@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker from '@hassanmojab/react-modern-calendar-datepicker';
 import {
-  FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel,
-  FaShip, FaTree, FaSpinner, FaTimesCircle, FaUmbrellaBeach, FaUser, FaChild, FaBaby, FaPaw, FaDoorClosed
+  FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel, FaDoorClosed,
+  FaShip, FaTree, FaSpinner, FaTimesCircle, FaUmbrellaBeach, FaUser, FaChild, FaBaby, FaPaw, FaSearch,
 } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
@@ -51,6 +51,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [error, setError] = useState("");
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isMobile, setIsMobile] = useState(false);
+  const [showSearchBar, setShowSearchBar] = useState(false);
 
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
 
@@ -71,7 +72,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     };
   }, []);
 
-
+  const toggleSearchBar = () => {
+    setShowSearchBar(!showSearchBar);
+  };
 
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
@@ -97,6 +100,11 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     e.stopPropagation();
     setShowGuestDropdown(prevState => !prevState);
   }, []);
+
+  const closeGuestDropdown = (e) => {
+    e.stopPropagation();
+    setShowGuestDropdown(false);
+  };
 
   const totalGuests = adults + children + infants + pets;
 
@@ -129,7 +137,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   };
 
 
-   const handleSelect = async (selectedAddress) => {
+  const handleSelect = async (selectedAddress) => {
     if (!selectedAddress || !selectedAddress.description) {
       return;
     }
@@ -161,63 +169,55 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
   useEffect(() => {
     handleSearchWithDelay(false);
-  }, [accommodation, address, totalGuests]); 
-  
+  }, [accommodation, address, totalGuests]);
+
   useEffect(() => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
     }
   }, [location]);
-  
+
   const handleSearchWithDelay = async (shouldNavigate) => {
     setLoading(true);
-    setError(""); 
-  
+    setError("");
+
     const queryParams = [
       accommodation ? `type=${accommodation}` : null,
       address ? `searchTerm=${address}` : null,
       totalGuests > 0 ? `guests=${totalGuests}` : null,
     ].filter(Boolean).join('&');
-  
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
-  
-    //Cache function doesnt work right when there are accommodations that were deleted, because it saves those thats what cache does it saves the previous
-    //data that was and if accommdoation was removed you still be able to see those. That cant happend so for now it wont be
 
-    // const cachedResults = localStorage.getItem(apiUrl);
-    // if (cachedResults) {
-    //   const parsedResults = JSON.parse(cachedResults);
-    //   if (shouldNavigate) {
-    //     navigate('/', { state: { searchResults: parsedResults } });
-    //   } else {
-    //     setSearchResults(parsedResults);
-    //   }
-    //   setLoading(false);
-    //   return;
-    // }
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+
     try {
       const response = await fetch(apiUrl);
+      if (!response.ok) {  
+        if (response.status === 404) {
+          setError("No results have been found...");
+        } else {
+          setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+        }
+        return;
+      }
       const data = await response.json();
       if (data.length === 0) {
         setTimeout(() => {
-          setError("No results have been found");
-        }, 500); 
+          setError("No results have been found...");
+        }, 500);
       } else {
-        localStorage.setItem(apiUrl, JSON.stringify(data));
         if (shouldNavigate) {
           navigate('/', { state: { searchResults: data } });
         } else {
           setSearchResults(data);
         }
       }
-    }
-     catch (error) {
-      console.error('Error during fetch:', error);
+    } catch (error) {
       setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
     } finally {
       setLoading(false);
     }
   };
+
   const handleSearch = () => {
     const shouldNavigate = location.pathname !== '/';
     if (shouldNavigate) {
@@ -227,10 +227,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setTimeout(() => {
       handleSearchWithDelay(shouldNavigate);
     }, 1000);
-  
-    
   };
-  
+
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
     const knownAbbreviations = {
@@ -304,117 +302,126 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     <>
       {error && (
         <div className="error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
-      <div className="bar">
-
-        <div className="location">
-        <PlacesAutocomplete
-      value={address}
-      onChange={handleChange}
-      onSelect={handleSelect}
-      searchOptions={{
-        types: ['locality', 'country'],
-        language: 'en',
-      }}
-    >
-      {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-        <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
-          <input
-            {...getInputProps({
-              className: 'searchBar',
-              onFocus: handleFocus,
-              onBlur: handleBlur,
-              placeholder: 'Search Destination'
-            })}
-          />
-          {address && isFocused && (
-            <button
-              className="ClearButton"
-              onMouseDown={handleClear}
-              style={{
-                position: 'absolute',
-                right: '10px',
-                top: '50%',
-                transform: isMobile ? 'translateY(-100%)' : 'translateY(-30%)',
-                border: 'none',
-                background: 'transparent',
-                cursor: 'pointer',
-              }}
-            >
-              <FaTimes />
-            </button>
-          )}
-          {suggestions.length > 0 && (
-            <div
-              className="suggestions-container"
-              style={{
-                position: 'absolute',
-                top: isMobile ? '95%' : '150%',
-                left: isMobile ? -8 : -30,
-                width: isMobile ? '100%' : '135%',
-                backgroundColor: 'white',
-                borderRadius: '15px',
-                padding: isMobile ? '0.5rem' : '1rem',
-                boxShadow: '0 6px 8px rgba(0, 0, 0, 0.15)',
-              }}
-            >
-              {loading && <div>Loading <FaSpinner /></div>}
-              {suggestions.map((suggestion, index) => {
-                const parts = suggestion.description.split(', ');
-                const city = parts[0];
-                const country = parts[parts.length - 1].trim();
-                const countryCode = getCountryCode(country);
-
-                return (
-                  <div
-                    key={index}
-                    {...getSuggestionItemProps(suggestion, {
-                      style: {
-                        backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                        padding: isMobile ? '1px 0px' : '20px 10px',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
-                        fontSize: '1rem',
-                        color: '#000',
-                        borderBottom: '1px solid #ddd',
-                        margin: '0',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'flex-start',
-                        justifyContent: 'flex-start',
-                        transform: suggestion.active ? 'scale(1.04)' : 'none',
-                        zIndex: suggestion.active ? '1' : '0',
-                      },
-                      onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
-                      onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
-                      onClick: () => handleSelect(suggestion)
-                    })}
+      <div className="bar-container">
+        {isMobile && (
+          <button className="mobile-search-button" onClick={toggleSearchBar}>
+          <FaSearch size={15} /> Search • Filter Accommodations
+          
+        </button>
+        )}
+  
+        {(showSearchBar || !isMobile) && (
+          <div className="bar">
+            <div className="location">
+          <PlacesAutocomplete
+            value={address}
+            onChange={handleChange}
+            onSelect={handleSelect}
+            searchOptions={{
+              types: ['locality', 'country'],
+              language: 'en',
+            }}
+          >
+            {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+              <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
+                <input
+                  {...getInputProps({
+                    className: 'searchBar',
+                    onFocus: handleFocus,
+                    onBlur: handleBlur,
+                    placeholder: 'Search Destination'
+                  })}
+                />
+                {address && isFocused && (
+                  <button
+                    className="ClearButton"
+                    onMouseDown={handleClear}
+                    style={{
+                      position: 'absolute',
+                      right: '5px',
+                      top: '50%',
+                      transform: isMobile ? 'translateY(-80%)' : 'translateY(-30%)',
+                      border: 'none',
+                      fontSize: isMobile ? '1.1rem' : '0.9rem',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                    }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <ReactCountryFlag
-                        countryCode={countryCode}
-                        svg
-                        style={{
-                          marginRight: '10px',
-                          width: '20px',
-                          height: '15px',
-                          boxShadow: '2px 2px 10px #777',
-                          marginBottom: '-0.8rem'
-                        }}
-                        title={country}
-                      />
-                      <span>{city}</span>
-                    </div>
-                    <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
-                      {country}
-                    </div>
+                    <FaTimes />
+                  </button>
+                )}
+                {suggestions.length > 0 && (
+                  <div
+                    className="suggestions-container"
+                    style={{
+                      position: 'absolute',
+                      top: isMobile ? '85%' : '150%',
+                      left: isMobile ? -8 : -30,
+                      width: isMobile ? '100%' : '135%',
+                      backgroundColor: 'white',
+                      borderRadius: '15px',
+                      padding: isMobile ? '0.5rem' : '1rem',
+                      boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)'
+                    }}
+                  >
+                    {loading && <div>Loading <FaSpinner /></div>}
+                    {suggestions.map((suggestion, index) => {
+                      const parts = suggestion.description.split(', ');
+                      const city = parts[0];
+                      const country = parts[parts.length - 1].trim();
+                      const countryCode = getCountryCode(country);
+
+                      return (
+                        <div
+                          key={index}
+                          {...getSuggestionItemProps(suggestion, {
+                            style: {
+                              backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
+                              padding: isMobile ? '1px 0px' : '20px 10px',
+                              cursor: 'pointer',
+                              transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
+                              fontSize: '1rem',
+                              color: '#000',
+                              borderBottom: '1px solid #ddd',
+                              margin: '0',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'flex-start',
+                              justifyContent: 'flex-start',
+                              transform: suggestion.active ? 'scale(1.04)' : 'none',
+                              zIndex: suggestion.active ? '1' : '0',
+                            },
+                            onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
+                            onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
+                            onClick: () => handleSelect(suggestion)
+                          })}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <ReactCountryFlag
+                              countryCode={countryCode}
+                              svg
+                              style={{
+                                marginRight: '10px',
+                                width: '20px',
+                                height: '15px',
+                                boxShadow: '2px 2px 10px #777',
+                                marginBottom: '-0.8rem'
+                              }}
+                              title={country}
+                            />
+                            <span>{city}</span>
+                          </div>
+                          <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
+                            {country}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
-    </PlacesAutocomplete>
+                )}
+              </div>
+            )}
+          </PlacesAutocomplete>
         </div>
 
         <div className="searchInputContainer">
@@ -450,20 +457,22 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   width: isMobile ? '140%' : '150px',
                 };
               },
-              menu: (provided) => {
-                const isMobile = window.innerWidth <= 730;
+              menu: (provided, state) => {
+                const isMobile = window.innerWidth <= 730; 
                 return {
                   ...provided,
                   backgroundColor: 'white',
                   borderRadius: '10px',
                   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
-                  marginTop: '1rem',
-                  width: '15rem',
+                  marginTop: isMobile ? '-7.1rem' : '1rem', 
+                  width: isMobile ? 'calc(95vw - 40px)' : '15rem', 
                   overflowX: 'hidden',
                   overflowY: 'auto',
-                  transform: isMobile ? 'translateX(-40px)' : 'translateX(-40px)',
                   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
                   zIndex: 9999,
+                  left: '50%',
+                  transform: 'translateX(-50%)', 
+                  position: 'absolute',
                 };
               },
               indicatorSeparator: () => ({ display: 'none' }),
@@ -477,7 +486,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 padding: '13.8px 16px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'flex-start',
+                justifyContent: isMobile ? 'center' : 'flex-start', 
                 borderRadius: '10px',
                 gap: '15px',
                 cursor: 'pointer',
@@ -493,11 +502,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               clearIndicator: (provided) => ({
                 ...provided,
                 color: 'black',
-
                 position: 'relative',
                 transform: 'translateY(0%)',
-                width: '35px',
-                height: '35px',
+                fontSize: '2rem',
               }),
 
               singleValue: (provided) => ({
@@ -526,6 +533,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 border: 'none',
                 background: 'transparent',
                 cursor: 'pointer',
+                fontSize: isMobile ? '1.1rem':  '0.9rem',
               }}
             >
               <FaTimes />
@@ -536,6 +544,24 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             {totalGuestsDescription}
           </p>
           <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+            {isMobile && (
+              <button
+                className="close-guest-dropdown"
+                onClick={closeGuestDropdown}
+                style={{
+                  position: 'absolute',
+                  padding: '0.3rem',
+                  right: '10px',
+                  top: '10px',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '1.1rem',
+                }}
+              >
+                <FaTimes />
+              </button>
+            )}
 
             <GuestCounter
               label={<><FaUser /> Adults</>}
@@ -600,6 +626,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 fontWeight: 500,
                 fontSize: '1rem',
                 whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
+
               }}
             >
               Check in • out
@@ -615,26 +643,26 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             }}
             shouldHighlightWeekends
             style={{ transform: 'translateX(-20px)' }}
-            renderFooter={() => (
-              <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem 0' }}>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedDayRange({ from: null, to: null });
-                  }}
-                  style={{
-                    background: 'rgb(250, 50, 50)',
-                    border: 'none',
-                    color: '#fff',
-                    borderRadius: '0.5rem',
-                    padding: '0.8rem 2.4rem',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Reset Dates
-                </button>
-              </div>
-            )}
+          // renderFooter={() => (
+          //   <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem 0' }}>
+          //     <button
+          //       type="button"
+          //       onClick={() => {
+          //         setSelectedDayRange({ from: null, to: null });
+          //       }}
+          //       style={{
+          //         background: 'rgb(250, 50, 50)',
+          //         border: 'none',
+          //         color: '#fff',
+          //         borderRadius: '0.5rem',
+          //         padding: '0.8rem 2.4rem',
+          //         cursor: 'pointer',
+          //       }}
+          //     >
+          //       Reset Dates
+          //     </button>
+          //   </div>
+          // )}
           />
         </div>
 
@@ -643,9 +671,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
           <span className="search-text">Search</span>
         </button>
 
-      </div>
-    </>
-  );
-
-
-};
+        </div>
+      )}
+    </div>
+  </>
+);}
