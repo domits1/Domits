@@ -36,6 +36,7 @@ function OnboardingHost() {
 
     useEffect(() => {
         const fetchAccommodation = async () => {
+            setIsLoading(true);
             try {
                 const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
                     method: 'POST',
@@ -59,6 +60,8 @@ function OnboardingHost() {
                 setFormData(data);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -627,6 +630,14 @@ function OnboardingHost() {
     const renderPageContent = (page) => {
         switch (page) {
             case 0:
+                if (isLoading) {
+                    return (
+                        <main className="loading">
+                            <h2 className="spinner-text">Please wait a moment...</h2>
+                            <img className="spinner" src={spinner}/>
+                        </main>
+                    );
+                } else
                 return (
                     <main className="container">
                         <h2 className="onboardingSectionTitle">{isNew ? 'What best describes your accommodation?' : 'Edit your accommodation type'}</h2>
@@ -1199,10 +1210,10 @@ function OnboardingHost() {
             case 11:
                 if (isLoading) {
                     return (
-                        <div className="loading">
-                            <p className="spinner-text">Please wait a moment...</p>
+                        <main className="loading">
+                            <h2 className="spinner-text">Please wait a moment...</h2>
                             <img className="spinner" src={spinner}/>
-                        </div>
+                        </main>
                     );
                 } else {
                     return (
