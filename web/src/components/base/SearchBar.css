@@ -1,3 +1,5 @@
+
+
 .bar {
   width: 45rem;
   margin: auto;
@@ -557,10 +559,9 @@
   /* tijdelijke oplossing het is nog niet responsive */
   .DatePicker__input {
     border: solid transparent;
-    transform: translateX(-0%) translateY(-100%);
+    transform: translateX(-0%) translateY(-130%);
     width: 60vw;
-    max-width: 80%;
-    min-width: 20vw;
+    max-width: 62vw;
     box-sizing: border-box;
   }
   .searchbar-button {
@@ -621,7 +622,7 @@
 @media (max-width: 730px) {
   .mobile-search-button {
     display: block;
-    width: 100%;
+    width: 75vw;
     /* max-width: 300px; */
     padding: 0.8rem; 
     background-color: #ffffff;
