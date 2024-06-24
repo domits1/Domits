@@ -32,6 +32,7 @@ function OnboardingHost() {
     let [hasAccoType, setHasAccoType] = useState(false);
     let [hasGuestAccess, setHasGuestAccess] =useState(false);
     let [hasAddress, setHasAddress] = useState(false);
+    let [updatedIndex, setUpdatedIndex] = useState([]);
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -501,19 +502,40 @@ function OnboardingHost() {
             throw err;
         }
     }
+
+    const removeImageFromS3 = async (userId, accommodationId, index) => {
+        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+
+        try {
+            await Storage.remove(key, {
+                bucket: S3_BUCKET_NAME,
+                region: region,
+                level: null,
+                customPrefix: { public: '' }
+            });
+        } catch (err) {
+            console.error("Failed to remove file:", err);
+            throw err;
+        }
+    }
     const handleUpdate = async () => {
         try {
             setIsLoading(true);
-
+            const AccoID = formData.ID;
+            const updatedFormData = { ...formData };
+            for (let i = 0; i < updatedIndex.length; i++) {
+                const index = updatedIndex[i];
+                await removeImageFromS3(userId, AccoID, index);
+            }
+            for (let i = 0; i < updatedIndex.length; i++) {
+                const index = updatedIndex[i];
+                const file = imageFiles[index];
+                const location =  await uploadImageToS3(userId, AccoID, file, index);
+                updatedFormData.Images[`image${i + 1}`] = location;
+            }
+            await setFormData(updatedFormData);
             setImageFiles([]);
 
-            if (!formData.CleaningFee) {
-                setFormData((prevData) => ({
-                    ...prevData,
-                    CleaningFee: 0
-                }));
-            }
-            console.log(formData);
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
                 method: 'PUT',
                 body: JSON.stringify(formData),
@@ -589,8 +611,12 @@ function OnboardingHost() {
 
         const updatedFormData = { ...formData };
         const key = `image${index + 1}`;
-        updatedFormData.Images[key] = ""; // Clear the value associated with the key
+        updatedFormData.Images[key] = "";
         setFormData(updatedFormData);
+
+        if (!updatedIndex.includes(index)) {
+            setUpdatedIndex(prevUpdatedIndex => [...prevUpdatedIndex, index]);
+        }
     };
 
     const updateDates = (start, end) => {
@@ -830,7 +856,7 @@ function OnboardingHost() {
                         <h2 className="onboardingSectionTitle">{isNew ? 'Add photos of your home' : 'Edit photos of your home'}</h2>
 
                         <section className="accommodation-photos">
-                            {!formData.Images.image1 ?
+                            {!formData.Images ?
                                 <section className="image-upload">
                                     <h2>Drag your photos here</h2>
                                     <p>Choose at least five photos</p>
