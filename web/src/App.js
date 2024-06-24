@@ -44,6 +44,7 @@ import GuestReviews from "./components/guestdashboard/GuestReviews";
 import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat";
 import Chatbot from "./components/chatbot/chatbot";
+import ChatWidget from './components/chatwidget/ChatWidget';
 import FlowContext from './FlowContext'
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
@@ -60,6 +61,7 @@ import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
 import { initializeUserAttributes } from './components/utils/userAttributes';
 import PageNotFound from "./components/error/404NotFound";
+
 
 Modal.setAppElement('#root');
 
@@ -166,6 +168,7 @@ function App() {
                             <Route path="/*" element={<PageNotFound />} />
                         </Routes>
                         {renderFooter()}
+                        <ChatWidget />
                     </div>
                     </UserProvider>
                 </AuthProvider>
