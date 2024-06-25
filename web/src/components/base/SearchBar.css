@@ -1,3 +1,5 @@
+
+
 .bar {
   width: 45rem;
   margin: auto;
@@ -517,9 +519,13 @@
     text-align: center;
     width: 95%;
     height: 2.5rem;
-    transform: translateY(-0%);
+    transform: translateY(10%);
     text-overflow: ellipsis;
     margin: auto;
+  }
+  /* kan problemen veroorzaken bij mobile-view */
+  .searchBar::placeholder {
+    transform: translateX(2.5%)
   }
 
   .searchBar * {
@@ -557,10 +563,9 @@
   /* tijdelijke oplossing het is nog niet responsive */
   .DatePicker__input {
     border: solid transparent;
-    transform: translateX(-0%) translateY(-100%);
+    transform: translateX(-0%) translateY(-130%);
     width: 60vw;
-    max-width: 80%;
-    min-width: 20vw;
+    max-width: 62vw;
     box-sizing: border-box;
   }
   .searchbar-button {
@@ -621,7 +626,7 @@
 @media (max-width: 730px) {
   .mobile-search-button {
     display: block;
-    width: 100%;
+    width: 75vw;
     /* max-width: 300px; */
     padding: 0.8rem; 
     background-color: #ffffff;
