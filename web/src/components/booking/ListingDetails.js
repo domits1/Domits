@@ -192,12 +192,11 @@ const ListingDetails = () => {
 
     useEffect(() => {
         const calculateTotal = () => {
-            if (!accommodation) return;
+            if (!accommodation || !checkIn || !checkOut) return;
     
             const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
             const basePrice = nights * accommodation.Rent * 100;
-            // const discount = 75;
-            const cleaningFee = parseFloat(accommodation.CleaningFee * 100);
+            const cleaningFee = accommodation.CleaningFee ? parseFloat(accommodation.CleaningFee * 100) : 0;
             const calculatedServiceFee = basePrice * 0.15;
             const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee;
     
