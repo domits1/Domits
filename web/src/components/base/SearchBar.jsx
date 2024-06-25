@@ -12,25 +12,6 @@ import { countries } from 'country-data';
 import './SearchBar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-const handleButtonClick = (e) => {
-  e.stopPropagation();
-};
-
-const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
-  return (
-    <div className="guestCounter" onClick={handleButtonClick}>
-      <div>
-        <p className="guestLabel">{label}</p>
-        <p className="guestDescription">{description}</p>
-      </div>
-      <div className="controls">
-        <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
-        <span>{value}</span>
-        <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
-      </div>
-    </div>
-  );
-});
 
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -38,7 +19,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
@@ -54,13 +34,32 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
 
+  const handleButtonClick = (e) => {
+    e.stopPropagation();
+  };
+  
+  const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
+    return (
+      <div className="Search-guestCounter" onClick={handleButtonClick}>
+        <div>
+          <p className="Search-guestLabel">{label}</p>
+          <p className="Search-guestDescription">{description}</p>
+        </div>
+        <div className="Search-controls">
+          <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
+          <span>{value}</span>
+          <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
+        </div>
+      </div>
+    );
+  });
+
   const navigate = useNavigate();
   const location = useLocation();
 
-
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 730);
+      setIsMobile(window.innerWidth <= 768);
     };
 
     window.addEventListener('resize', handleResize);
@@ -124,6 +123,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
   const handleChange = (address) => {
     setAddress(address);
+  };
+
+  const incrementGuests = (guestType, setGuestType) => {
+    setGuestType(prev => prev < 13 ? prev + 1 : prev);
+    if (adults === 0) {
+      setAdults(1);
+    }
   };
 
   const handleSelect = async (selectedAddress) => {
@@ -265,7 +271,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     }
   }, [selectedDayRange]);
 
-
   //voor de date format
   function formatDateToEnglish(date) {
     const options = { day: 'numeric', month: 'short' };
@@ -276,17 +281,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setError(null);
   };
 
-  const incrementGuests = (guestType, setGuestType) => {
-    setGuestType(prev => prev < 13 ? prev + 1 : prev);
-    if (adults === 0) {
-      setAdults(1);
-    }
-  };
-
   return (
     <>
       {error && (
-        <div className="error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
+        <div className="Search-error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
       <div className="bar-container">
         {isMobile && (
           <button className="mobile-search-button" onClick={toggleSearchBar}>
@@ -296,8 +294,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         )}
 
         {(showSearchBar || !isMobile) && (
-          <div className="bar">
-            <div className="location">
+          <div className="Search-bar">
+            <div className="Search-location">
               <PlacesAutocomplete
                 value={address}
                 onChange={handleChange}
@@ -311,7 +309,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
                     <input
                       {...getInputProps({
-                        className: 'searchBar',
+                        className: 'searchBar_inputfield',
                         type: 'search',
                         placeholder: 'Search Destination'
                       })}
@@ -328,7 +326,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                           backgroundColor: 'white',
                           borderRadius: '15px',
                           padding: isMobile ? '0.5rem' : '1rem',
-                          boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)'
+                          boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)',
+                          zIndex: '999',
                         }}
                       >
                         {loading && <div>Loading <FaSpinner /></div>}
@@ -409,22 +408,22 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 placeholder={<span className="searchTitle">Accommodation</span>}
                 styles={{
                   control: (provided) => {
-                    const isMobile = window.innerWidth <= 730;
+                    const isMobile = window.innerWidth <= 768;
                     return {
                       ...provided,
                       border: 'none',
                       height: '2.7rem',
-                      transform: isMobile ? 'translateX(-28px)' : 'translateY(2px)',
+                      transform: isMobile ? 'translateX(-0px)' : 'translateY(7px)',
                       boxShadow: 'none',
                       background: 'none',
                       padding: '0',
                       margin: 'auto',
                       cursor: 'pointer',
-                      width: isMobile ? '140%' : '150px',
+                      width: isMobile ? '100%' : '150px',
                     };
                   },
                   menu: (provided, state) => {
-                    const isMobile = window.innerWidth <= 730;
+                    const isMobile = window.innerWidth <= 768;
                     return {
                       ...provided,
                       backgroundColor: 'white',
@@ -485,11 +484,11 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
             </div>
 
-            <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
+            <div className={`Search-button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
               <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests • Rooms</p>
               {totalGuests > 0 && (
                 <button
-                  className="clear-guests"
+                  className="Search-clear-guests"
                   onClick={resetGuests}
                   style={{
                     position: 'absolute',
@@ -506,13 +505,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 </button>
               )}
 
-              <p className={`guestP ${hasTwoGuests ? 'nowrap' : ''}`}>
+              <p className={`Search-guestP ${hasTwoGuests ? 'nowrap' : ''}`}>
                 {totalGuestsDescription}
               </p>
-              <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+              <div className={`Search-guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
                 {isMobile && (
                   <button
-                    className="close-guest-dropdown"
+                    className="Search-close-guest-dropdown"
                     onClick={closeGuestDropdown}
                     style={{
                       position: 'absolute',
@@ -568,7 +567,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             </div>
 
 
-            <div className="check-in" style={{ position: 'relative' }}>
+            <div className="Search-check-in" style={{ position: 'relative' }}>
               <input
                 className="input-calendar"
                 type="text"
@@ -587,7 +586,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
-                    transform: 'translate(-50%, -40%)',
+                    transform: 'translate(-50%, -36.5%)',
                     color: '#0D9813',
                     fontWeight: 500,
                     fontSize: '1rem',
@@ -602,7 +601,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               <DatePicker
                 value={selectedDayRange}
                 onChange={(range) => setSelectedDayRange(range)}
-                minimumDate={utils("en").getToday()}  // Set minimumDate to today's date
+                minimumDate={utils("en").getToday()}
                 shouldHighlightWeekends
                 format="MMM DD, YYYY"
                 calendarClassName="responsive-calendar"

@@ -28,8 +28,8 @@ const ChatWidget = () => {
 
   const loadChatHistory = async () => {
     try {
-      const params = chatID ? { chatID } : { userID: user.id };
-      const response = await axios.get('http://localhost:3001/chat-history', { params });
+      const params = user ? { userID: user.attributes.sub } : { chatID };
+      const response = await axios.get('https://ec2-13-53-187-20.eu-north-1.compute.amazonaws.com3001/chat-history', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
           text: msg.content,
@@ -65,13 +65,13 @@ const ChatWidget = () => {
 
     try {
       const payload = { query: tempUserInput };
-      if (chatID) {
+      if (user) {
+        payload.userID = user.attributes.sub;
+      } else if (chatID) {
         payload.chatID = chatID;
-      } else if (user) {
-        payload.userID = user.id;
       }
 
-      const response = await axios.post('http://localhost:3001/query', payload);
+      const response = await axios.post('http://ec2-13-53-187-20.eu-north-1.compute.amazonaws.com:3001/query', payload);
 
       if (response.data.chatID && !chatID) {
         setChatID(response.data.chatID);
@@ -88,6 +88,10 @@ const ChatWidget = () => {
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: 'Chatbot is currently unavailable. Please try again later.', sender: 'ai' }
+      ]);
       scrollToBottom();
     } finally {
       setLoading(false);
@@ -102,20 +106,20 @@ const ChatWidget = () => {
     <div className={`chatwidget-widget ${isOpen ? 'open' : ''}`}>
       {!isOpen && (
         <button className="chatwidget-toggle" onClick={() => setIsOpen(true)}>
-          Chat
+          &#128172; {/* Unicode character for a chat bubble */}
         </button>
       )}
       {isOpen && (
         <ResizableBox
-          width={300}
-          height={400}
+          width={500}
+          height={600}
           minConstraints={[200, 200]}
           maxConstraints={[600, 600]}
           className="chatwidget-resizable"
-          resizeHandles={['se']}
+          handle={<span className="chatwidget-resize-handle" />}
         >
           <div className="chatwidget-header">
-            <span className="chatwidget-resize-handle" />
+            <span className="chatwidget-title">Chat</span>
             <button className="chatwidget-close" onClick={() => setIsOpen(false)}>×</button>
           </div>
           <div className="chatwidget-container">
