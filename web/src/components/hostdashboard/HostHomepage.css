@@ -157,7 +157,7 @@
 .enlist-info {
   padding: 2em;
 }
-.contentContainer-dashboard-calendar {
+.contentContainer-dashboard {
   width: 100%;
   display: flex;
   flex-direction: row;
@@ -430,12 +430,18 @@
 .alert-message {
   margin: 15px;
   font-weight: bold;
+  text-align: center;
   font-size: 1.5rem;
 }
 .undo-txt {
   font-size: 15px;
 }
-
+.contentContainer-calendar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 75%;
+}
 @media (max-width: 1024px) {
   .dashboard-1, .dashboard-2 {
       width: 100%;
