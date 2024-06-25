@@ -85,8 +85,18 @@ const Faq = () => {
 
       payment: [
         {
+          question: "How do payments work?",
+          answer: "You will have to create a Stripe Connect account that is coupled to Domits, through which we process all payments and take necessary fees  ",
+          isOpen: false
+        },
+        {
           question: "When can I expect payment after my guest's check-in...",
           answer: "You will receive payment for your booking shortly after your guest's check-in date...",
+          isOpen: false
+        },
+        {
+          question: "How do payouts work?",
+          answer: "You will receive payment for your booking on your Stripe account, and within a week or so it should be paid out to your bank or otherwise connected wallet",
           isOpen: false
         }
       ],
