@@ -150,7 +150,7 @@ const BookingOverview = () => {
             userId,
             accommodationId,
             ownerId,
-            State: "Pending",
+            State: "Accepted",
             price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate
