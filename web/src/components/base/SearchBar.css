@@ -1,3 +1,5 @@
+
+
 .bar {
   width: 45rem;
   margin: auto;
@@ -333,7 +335,7 @@
     width: calc(120% - 1.875rem);
     left: 50%;
     right: 50%;
-    top: -270%;
+    top: -275%;
   }
 }
 
@@ -480,7 +482,7 @@
     flex-direction: column;
     align-items: flex-start;
     height: auto;
-    padding: 10px;
+    padding: 0.6rem;
     box-sizing: border-box;
   }
 }
@@ -517,9 +519,13 @@
     text-align: center;
     width: 95%;
     height: 2.5rem;
-    transform: translateY(-0%);
+    transform: translateY(10%);
     text-overflow: ellipsis;
     margin: auto;
+  }
+  /* kan problemen veroorzaken bij mobile-view */
+  .searchBar::placeholder {
+    transform: translateX(2.5%)
   }
 
   .searchBar * {
@@ -557,10 +563,9 @@
   /* tijdelijke oplossing het is nog niet responsive */
   .DatePicker__input {
     border: solid transparent;
-    transform: translateX(-0%) translateY(-100%);
+    transform: translateX(-0%) translateY(-130%);
     width: 60vw;
-    max-width: 80%;
-    min-width: 20vw;
+    max-width: 62vw;
     box-sizing: border-box;
   }
   .searchbar-button {
@@ -621,12 +626,12 @@
 @media (max-width: 730px) {
   .mobile-search-button {
     display: block;
-    width: 100%;
-    max-width: 300px;
+    width: 75vw;
+    /* max-width: 300px; */
     padding: 0.8rem; 
     background-color: #ffffff;
     border: 1px solid #e2e2e4;
-    border-radius: 1.8rem; 
+    border-radius: 0.8rem; 
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     font-size: 1rem;
     color: #484848;
@@ -649,3 +654,4 @@
     display: block;
   }
 }
+

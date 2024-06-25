@@ -38,6 +38,7 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('adults'), 10);
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
+    const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
@@ -139,7 +140,7 @@ const BookingOverview = () => {
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100); // Convert to cents and round to ensure integer
-        const totalAmount = Math.round(basePrice * 1.15); // Total amount including 15% fee, rounding to ensure integer
+        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee); // Total amount including 15% fee, rounding to ensure integer
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -149,7 +150,7 @@ const BookingOverview = () => {
             userId,
             accommodationId,
             ownerId,
-            State: "Pending",
+            State: "Accepted",
             price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate

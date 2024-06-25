@@ -68,6 +68,8 @@ function OnboardingHost() {
 
         if (!isNew && oldAccoID) {
             fetchAccommodation();
+        } else {
+            setIsLoading(false)
         }
     }, [isNew, oldAccoID]);
     function generateUUID() {
