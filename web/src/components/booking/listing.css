@@ -114,7 +114,7 @@
 }
 
 /* Stijl voor individuele functies */
-.feature-item {
+.acco-feature-item {
   display: flex;
   flex-direction: column;
   align-items: center;
