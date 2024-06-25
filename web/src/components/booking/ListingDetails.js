@@ -225,7 +225,8 @@ const ListingDetails = () => {
             checkOut,
             adults,
             kids,
-            pets
+            pets,
+            cleaningFee
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
