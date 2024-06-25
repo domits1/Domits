@@ -519,9 +519,13 @@
     text-align: center;
     width: 95%;
     height: 2.5rem;
-    transform: translateY(-0%);
+    transform: translateY(10%);
     text-overflow: ellipsis;
     margin: auto;
+  }
+  /* kan problemen veroorzaken bij mobile-view */
+  .searchBar::placeholder {
+    transform: translateX(2.5%)
   }
 
   .searchBar * {

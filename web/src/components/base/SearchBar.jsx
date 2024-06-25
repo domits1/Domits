@@ -32,7 +32,6 @@ const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, descr
   );
 });
 
-
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
@@ -54,7 +53,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [showSearchBar, setShowSearchBar] = useState(false);
 
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
-
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -127,8 +125,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const handleChange = (address) => {
     setAddress(address);
   };
-
-
 
   const handleSelect = async (selectedAddress) => {
     if (!selectedAddress || !selectedAddress.description) {
@@ -326,7 +322,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                         className="suggestions-container"
                         style={{
                           position: 'absolute',
-                          top: isMobile ? '85%' : '150%',
+                          top: isMobile ? '120%' : '150%',
                           left: isMobile ? -8 : -30,
                           width: isMobile ? '100%' : '135%',
                           backgroundColor: 'white',
