@@ -42,6 +42,7 @@ const ListingDetails = () => {
     const [bookedDates, setBookedDates] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
+    const [cleaningFee, setCleaningFee] = useState(0);
 
     const featureIcons = {
         WashingMachine: Washingmashine,
@@ -196,12 +197,13 @@ const ListingDetails = () => {
             const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
             const basePrice = nights * accommodation.Rent * 100;
             // const discount = 75;
-            // const cleaningFee = 100;
+            const cleaningFee = parseFloat(accommodation.CleaningFee * 100);
             const calculatedServiceFee = basePrice * 0.15;
-            const calculatedTotalPrice = basePrice + calculatedServiceFee;
+            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee;
     
             setServiceFee(calculatedServiceFee / 100);
             setTotalPrice(calculatedTotalPrice / 100);
+            setCleaningFee(cleaningFee / 100);
         };
     
         calculateTotal();
@@ -223,7 +225,8 @@ const ListingDetails = () => {
             checkOut,
             adults,
             kids,
-            pets
+            pets,
+            cleaningFee
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
@@ -292,7 +295,7 @@ const ListingDetails = () => {
                                 <ul className='features'>
                                     {Object.entries(accommodation.Features).map(([feature, value]) => (
                                         value && (
-                                            <li key={feature} className='feature-item'>
+                                            <li key={feature} className='acco-feature-item'>
                                                 <img
                                                     src={featureIcons[feature]}
                                                     alt={feature}
@@ -433,10 +436,10 @@ const ListingDetails = () => {
                                             €{accommodation.Rent} a night</p>
                                         <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
                                     </div>
-                                    {/* <div className="price-item">
+                                    <div className="price-item">
                                         <p>Cleaning fee</p>
-                                        <p>€ 100</p>
-                                    </div> */}
+                                        <p>&euro;{cleaningFee}</p>
+                                    </div>
                                     <div className="price-item">
                                         <p>Domits service fee</p>
                                         <p>€{serviceFee.toFixed(2)}</p>
