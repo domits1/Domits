@@ -43,6 +43,7 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
+    const [hostID, setHostID] = useState();
 
     const featureIcons = {
         WashingMachine: Washingmashine,
@@ -75,6 +76,7 @@ const ListingDetails = () => {
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
+                setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
