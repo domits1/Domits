@@ -43,7 +43,7 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
-    const [hostID, setHostID] = useState(0);
+    const [hostID, setHostID] = useState();
 
     const featureIcons = {
         WashingMachine: Washingmashine,
