@@ -5,8 +5,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/messages.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/schema.graphql" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/backend/api/domits/schema.graphql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/amplify/team-provider-info.json" beforeDir="false" afterPath="$PROJECT_DIR$/amplify/team-provider-info.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/amplify/backend/api/domits/schema.graphql" beforeDir="false" afterPath="$PROJECT_DIR$/web/amplify/backend/api/domits/schema.graphql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/__tests__/Chat.test.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/__tests__/Chat.test.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/chat/Chat.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/chat/Chat.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/chat/chat.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/chat/chat.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/hostdashboard/Hostchat.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/hostdashboard/Hostchat.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/graphql/mutations.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/graphql/mutations.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/graphql/queries.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/graphql/queries.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />

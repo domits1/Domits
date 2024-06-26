@@ -21,6 +21,8 @@ const ListingDetails = () => {
     const [adults, setAdults] = useState(0);
     const [kids, setKids] = useState(0);
     const [pets, setPets] = useState('');
+    const [userID, setUserID] = useState(null);
+    console.log('test')
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -36,7 +38,10 @@ const ListingDetails = () => {
                     throw new Error('Failed to fetch accommodation data');
                 }
                 const responseData = await response.json();
+                
                 const data = JSON.parse(responseData.body);
+                setUserID(data.user_id)
+
                 setAccommodation(data);
                 await setDates(data.StartDate, data.EndDate);
             } catch (error) {
@@ -45,6 +50,12 @@ const ListingDetails = () => {
         };
         fetchAccommodation();
     }, [id]);
+
+    useEffect(() => {
+        if (userID) {
+            console.log('User ID of the user who listed the accommodation:', userID);
+        }
+    }, [userID]);
 
     const handleChange = (value, setType) => {
         const newValue = parseInt(value, 10) || 0;
