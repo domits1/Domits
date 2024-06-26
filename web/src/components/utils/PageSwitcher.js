@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 import ImageSlider from "./ImageSlider";
 import './PageSwitcher.css';
-function PageSwitcher({accommodations, amount, hasStripe, onDelete , onUpdate}) {
+function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onUpdate}) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = amount;
     const pageCount = Math.ceil(accommodations.length / itemsPerPage);
@@ -64,6 +64,9 @@ function PageSwitcher({accommodations, amount, hasStripe, onDelete , onUpdate}) 
                             }
                         </section>
                         <div className="listing-button-box">
+                            <button className="listing-button listing-edit"
+                                    onClick={() => onEdit(accommodation.ID, accommodation.Title)}>Edit
+                            </button>
                             <button className="listing-button listing-delete"
                                     onClick={() => onDelete(accommodation)}>Remove
                             </button>
