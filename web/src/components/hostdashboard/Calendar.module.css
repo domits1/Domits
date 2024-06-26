@@ -1,0 +1,94 @@
+.body {
+    margin: 0;
+    box-sizing: border-box;
+    padding: 2rem;
+    background: linear-gradient(to bottom, #0065C9, #003366);
+
+}
+.calendar {
+    margin: auto;
+    width: 23.75rem;
+    background: #FFFFFF;
+    border-radius: 0.625rem;
+    box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
+
+    header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        h3 {
+            padding: 0 2%;
+            font-weight: normal;
+        }
+    }
+    ul {
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        text-align: center;
+        li {
+            width: calc(100% / 7);
+            margin-top: 1.563rem;
+            position: relative;
+            z-index: 2;
+            font-weight: normal;
+        }
+    }
+    .prev, .next {
+        width: 1.25rem;
+        height: 1.25rem;
+        position: relative;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+        font-weight: bold;
+    }
+
+    .prev::before, .next::before {
+        content: '';
+        width: 50%;
+        height: 50%;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        border-style: solid;
+        border-width: 0.25em 0.25em 0 0;
+        border-color: #cccccc;
+        transform-origin: center;
+        transition: border-color 0.3s ease; /* Added transition for hover effect */
+    }
+
+    .prev::before {
+        transform: translate(-50%, -50%) rotate(-135deg);
+    }
+
+    .next::before {
+        transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .prev:hover::before, .next:hover::before { /* Corrected the hover selector */
+        border-color: #000000;
+    }
+
+    .days {
+        font-weight: 600;
+    }
+    .today {
+        color: #FFFFFF;
+    }
+    .today::before {
+        content: '';
+        width: 2rem;
+        height: 2rem;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #000000;
+        border-radius: 50%;
+        z-index: -1;
+    }
+    .inactive {
+        color: #cccccc;
+    }
+}
