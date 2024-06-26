@@ -34,28 +34,28 @@ function JobDetails() {
             <h3>Technologies</h3>
               <ul>
                 {job.details.technologies.map((tech, index) => (
-                    <li key={index}>{tech}</li>
+                    <li key={index}>- {tech}</li>
                 ))}
               </ul>
 
             <h3>Pre if you have experience with</h3>
             <ul>
                 {job.details.preferredExperience.map((exp, index) => (
-                    <li key={index}>{exp}</li>
+                    <li key={index}>- {exp}</li>
                 ))}
             </ul><br></br>
 
             <h3>What we offer</h3>
             <ul>
               {job.details.offerings.map((offering, index) => (
-                <li key={index}>{offering}</li>
+                <li key={index}>- {offering}</li>
               ))}
             </ul>
 
             <h3>What we ask</h3>
             <ul>
                 {job.details.requirements.map((requirement, index) => (
-                    <li key={index}>{requirement}</li>
+                    <li key={index}>- {requirement}</li>
                 ))}
             </ul>
             
@@ -64,7 +64,7 @@ function JobDetails() {
             <h3>Extra information</h3>
             <ul>
                 {job.details.extraInformation.map((extra, index) => (
-                    <li key={index}>{extra}</li>
+                    <li key={index}>- {extra}</li>
                 ))}
             </ul>
 
