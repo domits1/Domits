@@ -32,6 +32,12 @@
             position: relative;
             z-index: 2;
             font-weight: normal;
+            cursor: pointer;
+        }
+        li:hover {
+            background: #003366;
+            border-radius: 2em;
+            color: #FFFFFF;
         }
     }
     .prev, .next {
@@ -93,6 +99,18 @@
     }
     .selected {
         color: #FFFFFF;
-        background: linear-gradient(to bottom left, #003366, #0D9813);
+        background: #003366;
+    }
+    .selected:hover {
+        background: #FFFFFF;
+        color: black;
+        border-radius: 0;
+    }
+    .startDate {
+        border-radius: 2em 0 0 2em;
+    }
+
+    .endDate {
+        border-radius: 0 2em 2em 0;
     }
 }

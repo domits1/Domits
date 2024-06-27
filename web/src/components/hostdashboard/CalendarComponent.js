@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styles from './Calendar.module.css';
+import { isSameDay } from "date-fns";
 
 function CalendarComponent() {
     const [month, setMonth] = useState(new Date().getMonth());
@@ -16,6 +17,19 @@ function CalendarComponent() {
         'May', 'June', 'July', 'August',
         'September', 'October', 'November', 'December'
     ];
+
+    // Function to check if two date ranges overlap
+    const dateRangesOverlap = (range1, range2) => {
+        const { startDate: start1, endDate: end1 } = range1;
+        const { startDate: start2, endDate: end2 } = range2;
+
+        return (
+            (start1 <= start2 && start2 <= end1) ||   // Range 2 starts between Range 1
+            (start1 <= end2 && end2 <= end1) ||       // Range 2 ends between Range 1
+            (start2 <= start1 && start1 <= end2) ||   // Range 1 starts between Range 2
+            (start2 <= end1 && end1 <= end2)          // Range 1 ends between Range 2
+        );
+    };
 
     const renderDates = () => {
         const start = new Date(year, month, 1).getDay();
@@ -34,12 +48,14 @@ function CalendarComponent() {
 
         for (let i = 1; i <= endDate; i++) {
             const currentDate = new Date(year, month, i);
-            const isActiveDay = i === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
-            const isSelected = isDateInRange(currentDate, dateRange.startDate, dateRange.endDate);
+            const isActiveDay = isSameDay(currentDate, new Date());
+            const isSelected = selectedRanges.some(range => isDateInRange(currentDate, range.startDate, range.endDate));
+            const isStartDate = selectedRanges.some(range => isSameDay(range.startDate, currentDate));
+            const isEndDate = selectedRanges.some(range => isSameDay(range.endDate, currentDate));
             newDates.push(
                 <li
                     key={`active-${i}`}
-                    className={`${isActiveDay ? styles.today : ''} ${isSelected ? styles.selected : ''}`}
+                    className={`${isActiveDay ? styles.today : ''} ${isSelected ? styles.selected : ''} ${isStartDate ? styles.startDate : ''} ${isEndDate ? styles.endDate : ''}`}
                     onClick={() => handleDateClick(currentDate)}
                 >
                     {`${i}`}
@@ -75,14 +91,45 @@ function CalendarComponent() {
             if (prevDateRange.startDate && !prevDateRange.endDate) {
                 // Ensure endDate is after startDate
                 if (clickedDate > prevDateRange.startDate) {
-                    const updatedRanges = [
-                        ...selectedRanges,
-                        {
-                            startDate: prevDateRange.startDate,
-                            endDate: clickedDate
+                    // Check for overlapping ranges
+                    const overlappingIndex = selectedRanges.findIndex(range =>
+                        dateRangesOverlap(prevDateRange, range)
+                    );
+
+                    if (overlappingIndex !== -1) {
+                        const updatedRanges = [...selectedRanges];
+
+                        // Check for complete overlap
+                        const overlappingRange = updatedRanges[overlappingIndex];
+                        if (
+                            (prevDateRange.startDate <= overlappingRange.startDate && clickedDate >= overlappingRange.endDate) ||
+                            (prevDateRange.startDate >= overlappingRange.startDate && clickedDate <= overlappingRange.endDate)
+                        ) {
+                            // Complete overlap, remove the overlapping range
+                            updatedRanges.splice(overlappingIndex, 1);
+                        } else {
+                            // Partial overlap, adjust the existing range
+                            const newStartDate = overlappingRange.startDate < prevDateRange.startDate ? overlappingRange.startDate : prevDateRange.startDate;
+                            const newEndDate = overlappingRange.endDate > clickedDate ? overlappingRange.endDate : clickedDate;
+                            updatedRanges[overlappingIndex] = {
+                                startDate: newStartDate,
+                                endDate: newEndDate
+                            };
                         }
-                    ];
-                    setSelectedRanges(updatedRanges);
+
+                        setSelectedRanges(updatedRanges);
+                    } else {
+                        // No overlap, add new range
+                        const updatedRanges = [
+                            ...selectedRanges,
+                            {
+                                startDate: prevDateRange.startDate,
+                                endDate: clickedDate
+                            }
+                        ];
+                        setSelectedRanges(updatedRanges);
+                    }
+
                     return {
                         startDate: null,
                         endDate: null
@@ -102,8 +149,6 @@ function CalendarComponent() {
             if (existingRangeIndex !== -1) {
                 // Remove the range if clicked again
                 updatedRanges.splice(existingRangeIndex, 1);
-            } else {
-                updatedRanges.push(dateRange);
             }
 
             // Update selectedRanges and reset dateRange state
@@ -115,16 +160,8 @@ function CalendarComponent() {
         });
     };
 
-
-
-
     const isDateInRange = (date, startDate, endDate) => {
         return startDate && endDate && date >= startDate && date <= endDate;
-    };
-
-    const deleteRange = (rangeToDelete) => {
-        const filteredRanges = selectedRanges.filter(range => range !== rangeToDelete);
-        setSelectedRanges(filteredRanges);
     };
 
     const navigateDates = (nav) => {
@@ -146,10 +183,6 @@ function CalendarComponent() {
     useEffect(() => {
         renderDates();
     }, [month, year, selectedRanges]);
-
-    useEffect(() => {
-        console.log("dateRange updated:", dateRange);
-    }, [dateRange]);
 
     return (
         <main className={styles.body}>
@@ -176,7 +209,7 @@ function CalendarComponent() {
                     </ul>
                 </section>
                 <section>
-                    <button onClick={()=> console.log(selectedRanges)}>Show</button>
+                    <button onClick={() => console.log(selectedRanges)}>Show</button>
                 </section>
             </div>
         </main>
