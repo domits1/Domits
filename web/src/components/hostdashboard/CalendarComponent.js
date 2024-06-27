@@ -1,18 +1,22 @@
-import React, {useEffect, useState} from "react";
-import spinner from "../../images/spinnner.gif";
+import React, { useEffect, useState } from "react";
 import styles from './Calendar.module.css';
-
 
 function CalendarComponent() {
     const [month, setMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
     const [dates, setDates] = useState([]);
+    const [selectedRanges, setSelectedRanges] = useState([]);
+    const [dateRange, setDateRange] = useState({
+        startDate: null,
+        endDate: null
+    });
 
     const months = [
         'January', 'February', 'March', 'April',
         'May', 'June', 'July', 'August',
         'September', 'October', 'November', 'December'
     ];
+
     const renderDates = () => {
         const start = new Date(year, month, 1).getDay();
         const endDate = new Date(year, month + 1, 0).getDate();
@@ -29,9 +33,15 @@ function CalendarComponent() {
         }
 
         for (let i = 1; i <= endDate; i++) {
+            const currentDate = new Date(year, month, i);
             const isActiveDay = i === new Date().getDate() && month === new Date().getMonth() && year === new Date().getFullYear();
+            const isSelected = isDateInRange(currentDate, dateRange.startDate, dateRange.endDate);
             newDates.push(
-                <li key={`active-${i}`} className={isActiveDay ? styles.today : ''}>
+                <li
+                    key={`active-${i}`}
+                    className={`${isActiveDay ? styles.today : ''} ${isSelected ? styles.selected : ''}`}
+                    onClick={() => handleDateClick(currentDate)}
+                >
                     {`${i}`}
                 </li>
             );
@@ -48,9 +58,74 @@ function CalendarComponent() {
         setDates(newDates);
     };
 
-    useEffect(() => {
-        renderDates();
-    }, [month, year]);
+    const handleDateClick = (dateClicked) => {
+        const clickedDate = new Date(dateClicked);
+
+        // Using a callback to ensure correct state update based on previous state
+        setDateRange(prevDateRange => {
+            // Case 1: No startDate set, start a new range
+            if (!prevDateRange.startDate) {
+                return {
+                    startDate: clickedDate,
+                    endDate: null
+                };
+            }
+
+            // Case 2: startDate set, but no endDate set, complete the range selection
+            if (prevDateRange.startDate && !prevDateRange.endDate) {
+                // Ensure endDate is after startDate
+                if (clickedDate > prevDateRange.startDate) {
+                    const updatedRanges = [
+                        ...selectedRanges,
+                        {
+                            startDate: prevDateRange.startDate,
+                            endDate: clickedDate
+                        }
+                    ];
+                    setSelectedRanges(updatedRanges);
+                    return {
+                        startDate: null,
+                        endDate: null
+                    };
+                } else {
+                    // If clickedDate is before startDate, treat as starting a new range
+                    return {
+                        startDate: clickedDate,
+                        endDate: null
+                    };
+                }
+            }
+
+            // Case 3: Both startDate and endDate set, handle range removal or other logic
+            const updatedRanges = [...selectedRanges];
+            const existingRangeIndex = updatedRanges.findIndex(range => isDateInRange(clickedDate, range.startDate, range.endDate));
+            if (existingRangeIndex !== -1) {
+                // Remove the range if clicked again
+                updatedRanges.splice(existingRangeIndex, 1);
+            } else {
+                updatedRanges.push(dateRange);
+            }
+
+            // Update selectedRanges and reset dateRange state
+            setSelectedRanges(updatedRanges);
+            return {
+                startDate: null,
+                endDate: null
+            };
+        });
+    };
+
+
+
+
+    const isDateInRange = (date, startDate, endDate) => {
+        return startDate && endDate && date >= startDate && date <= endDate;
+    };
+
+    const deleteRange = (rangeToDelete) => {
+        const filteredRanges = selectedRanges.filter(range => range !== rangeToDelete);
+        setSelectedRanges(filteredRanges);
+    };
 
     const navigateDates = (nav) => {
         let newMonth = month;
@@ -67,6 +142,14 @@ function CalendarComponent() {
         setMonth(newMonth);
         setYear(newYear);
     };
+
+    useEffect(() => {
+        renderDates();
+    }, [month, year, selectedRanges]);
+
+    useEffect(() => {
+        console.log("dateRange updated:", dateRange);
+    }, [dateRange]);
 
     return (
         <main className={styles.body}>
@@ -91,6 +174,9 @@ function CalendarComponent() {
                     <ul className="dates">
                         {dates}
                     </ul>
+                </section>
+                <section>
+                    <button onClick={()=> console.log(selectedRanges)}>Show</button>
                 </section>
             </div>
         </main>

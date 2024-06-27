@@ -91,4 +91,8 @@
     .inactive {
         color: #cccccc;
     }
+    .selected {
+        color: #FFFFFF;
+        background: linear-gradient(to bottom left, #003366, #0D9813);
+    }
 }
