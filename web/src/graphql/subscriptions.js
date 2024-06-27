@@ -5,6 +5,8 @@ export const onCreateChat = /* GraphQL */ `
   subscription OnCreateChat($filter: ModelSubscriptionChatFilterInput) {
     onCreateChat(filter: $filter) {
       id
+      userId
+      recipientId
       text
       email
       recipientEmail
@@ -35,6 +37,8 @@ export const onDeleteChat = /* GraphQL */ `
   subscription OnDeleteChat($filter: ModelSubscriptionChatFilterInput) {
     onDeleteChat(filter: $filter) {
       id
+      userId
+      recipientId
       text
       email
       recipientEmail

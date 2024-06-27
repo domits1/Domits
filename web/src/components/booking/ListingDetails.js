@@ -212,10 +212,9 @@ const ListingDetails = () => {
     
 
     const handleStartChat = () => {
-        const userEmail = "nabilsalimi0229@gmail.com";
-        const recipientEmail = "jejego4569@javnoi.com";
+        const recipientId = hostID;
         const channelUUID = generateUUID();
-        localStorage.setItem(channelUUID, recipientEmail);
+        localStorage.setItem(channelUUID, recipientId);
         navigate(`/chat?channelID=${channelUUID}`);
     };
 
@@ -265,6 +264,9 @@ const ListingDetails = () => {
     const filterBookedDates = (date) => {
         return !isDateBooked(date) && !isDateAfterBookedNight(date);
     };
+
+    console.log(hostID)
+
 
     return (
         <main className="container">
@@ -326,6 +328,7 @@ const ListingDetails = () => {
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
+                                        <button className='button' onClick={handleStartChat} >Chat</button>
                                     </div>
                                 </section>
                                 <br />
