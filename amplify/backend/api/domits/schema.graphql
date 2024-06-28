@@ -1,11 +1,13 @@
 type Chat @model @auth(rules: [{allow: public}, {allow: private}]) {
   id: ID!
   text: String!
+  userId: ID
+  recipientId: ID
   email: String
   recipientEmail: String
   isRead: Boolean
-  sortKey: String
   createdAt: String
+  sortKey: String
   channelID: ID
 }
 
