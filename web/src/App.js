@@ -12,9 +12,9 @@ import Release from "./components/about/release.js";
 import ReleaseTwo from "./components/about/releaseTwo.js";
 import Datasafety from "./components/about/datasafety.js";
 import Helpdesk from "./components/about/Helpdesk.js";
-import Faq from "./components/landingpage/Faq";
 import Howitworks from "./components/about/Howitworks.js";
 import Careers from "./components/careers/Careers";
+import JobDetails from "./components/careers/jobDetails.js";
 import Contact from "./components/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
@@ -160,6 +160,7 @@ function App() {
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />
+                            <Route path ="/job/:id" element={<JobDetails />} />
                             <Route path="/policy" element={<Policy />} />
                             <Route path="/terms" element={<Terms />} />
                             <Route path="/disclaimers" element={<Disclaimers />} />
