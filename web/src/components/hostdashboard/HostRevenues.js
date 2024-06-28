@@ -27,7 +27,7 @@ const HostRevenues = () => {
     }, []);
 
     const handleStripeOAuth = () => {
-        const clientId = 'your_stripe_client_id'; // Replace with your Stripe client ID
+        const clientId = 'ca_PULlrr0bwd0krdUxRljDVciQ6B5wUZPZ';
         const redirectUri = 'https://your-app.com/stripe/callback'; // Replace with your redirect URI
         const state = userId;
         const stripeOAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${clientId}&scope=read_write&redirect_uri=${redirectUri}&state=${state}`;
@@ -76,13 +76,20 @@ const HostRevenues = () => {
                 return;
             }
             try {
-                const stripe = await stripePromise;
-                const response = await stripe.paymentIntents.list({
-                    limit: 10,
-                    stripeAccount: stripeAccountId,
+                const response = await fetch(`https://api.stripe.com/v1/payment_intents?limit=10`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${process.env.STRIPE_SECRET_KEY}`, // Replace with your Stripe secret key
+                        'Stripe-Account': stripeAccountId,
+                    },
                 });
 
-                setPaymentsData(response.data);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch payment intents');
+                }
+
+                const data = await response.json();
+                setPaymentsData(data.data);
                 setLoading(false);
             } catch (error) {
                 console.error("Unexpected error:", error);
