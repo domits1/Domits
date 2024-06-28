@@ -3,6 +3,9 @@
     box-sizing: border-box;
     padding: 2rem;
     background: linear-gradient(to bottom left, #003366, #0D9813);
+    display: flex;
+    flex-direction: row;
+    gap: 5%;
 
 }
 .calendar {
@@ -113,4 +116,70 @@
     .endDate {
         border-radius: 0 2em 2em 0;
     }
+}
+.dateRanges {
+    width: 15rem;
+    background: #FFFFFF;
+    border-radius: 0.625rem;
+    box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 1rem;
+
+    header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+
+        h3 {
+            padding: 0 2%;
+            font-weight: normal;
+            margin: 0;
+        }
+    }
+
+    .dateRangeSection {
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+        max-height: 22rem;
+        justify-content: center;
+        gap: 0.025%;
+    }
+    .dateRange {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+        background: #FFFFFF;
+        margin-bottom: 0.5rem;
+        padding: 0.25rem;
+        border-radius: 0.3125rem;
+        box-shadow: 0 0 0.3125rem rgba(0, 0, 0, 0.1);
+        font-size: 0.85rem;
+        border: 0.025em solid black;
+    }
+    .removeButton {
+        background-color: #ff4d4d;
+        color: white;
+        border: none;
+        padding: 0.25rem;
+        cursor: pointer;
+        border-radius: 50%;
+        width: 1rem;
+        height: 1rem;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        align-self: center;
+        outline: none;
+        transition: background-color 0.3s ease;
+    }
+
+    .removeButton:hover {
+        background-color: #ff6666;
+    }
+
 }

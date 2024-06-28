@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styles from './Calendar.module.css';
 import { isSameDay } from "date-fns";
+import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 function CalendarComponent() {
     const [month, setMonth] = useState(new Date().getMonth());
@@ -18,18 +20,22 @@ function CalendarComponent() {
         'September', 'October', 'November', 'December'
     ];
 
-    // Function to check if two date ranges overlap
     const dateRangesOverlap = (range1, range2) => {
         const { startDate: start1, endDate: end1 } = range1;
         const { startDate: start2, endDate: end2 } = range2;
 
+        console.log((start1 <= start2 && start2 <= end1) ||
+            (start1 <= end2 && end2 <= end1) ||
+            (start2 <= start1 && start1 <= end2) ||
+            (start2 <= end1 && end1 <= end2));
         return (
-            (start1 <= start2 && start2 <= end1) ||   // Range 2 starts between Range 1
-            (start1 <= end2 && end2 <= end1) ||       // Range 2 ends between Range 1
-            (start2 <= start1 && start1 <= end2) ||   // Range 1 starts between Range 2
-            (start2 <= end1 && end1 <= end2)          // Range 1 ends between Range 2
+            (start1 <= start2 && (end1 === null || start2 <= end1)) ||
+            (start1 <= end2 && (end1 === null || end2 <= end1)) ||
+            (start2 <= start1 && (end2 === null || start1 <= end2)) ||
+            (start2 <= end1 && (end2 === null || end1 <= end2))
         );
     };
+
 
     const renderDates = () => {
         const start = new Date(year, month, 1).getDay();
@@ -77,9 +83,7 @@ function CalendarComponent() {
     const handleDateClick = (dateClicked) => {
         const clickedDate = new Date(dateClicked);
 
-        // Using a callback to ensure correct state update based on previous state
         setDateRange(prevDateRange => {
-            // Case 1: No startDate set, start a new range
             if (!prevDateRange.startDate) {
                 return {
                     startDate: clickedDate,
@@ -87,78 +91,63 @@ function CalendarComponent() {
                 };
             }
 
-            // Case 2: startDate set, but no endDate set, complete the range selection
             if (prevDateRange.startDate && !prevDateRange.endDate) {
-                // Ensure endDate is after startDate
-                if (clickedDate > prevDateRange.startDate) {
-                    // Check for overlapping ranges
+                let newDateRange = {
+                    ...prevDateRange,
+                    endDate: clickedDate
+                };
+                if (clickedDate < newDateRange.startDate) {
+
+                    console.log('nope');
+                    newDateRange = {
+                        startDate: clickedDate,
+                        endDate: newDateRange.startDate
+                    };
+
                     const overlappingIndex = selectedRanges.findIndex(range =>
-                        dateRangesOverlap(prevDateRange, range)
+                        dateRangesOverlap(newDateRange, range)
                     );
 
                     if (overlappingIndex !== -1) {
                         const updatedRanges = [...selectedRanges];
-
-                        // Check for complete overlap
-                        const overlappingRange = updatedRanges[overlappingIndex];
-                        if (
-                            (prevDateRange.startDate <= overlappingRange.startDate && clickedDate >= overlappingRange.endDate) ||
-                            (prevDateRange.startDate >= overlappingRange.startDate && clickedDate <= overlappingRange.endDate)
-                        ) {
-                            // Complete overlap, remove the overlapping range
-                            updatedRanges.splice(overlappingIndex, 1);
-                        } else {
-                            // Partial overlap, adjust the existing range
-                            const newStartDate = overlappingRange.startDate < prevDateRange.startDate ? overlappingRange.startDate : prevDateRange.startDate;
-                            const newEndDate = overlappingRange.endDate > clickedDate ? overlappingRange.endDate : clickedDate;
-                            updatedRanges[overlappingIndex] = {
-                                startDate: newStartDate,
-                                endDate: newEndDate
-                            };
-                        }
-
+                        updatedRanges[overlappingIndex] = newDateRange;
                         setSelectedRanges(updatedRanges);
                     } else {
-                        // No overlap, add new range
-                        const updatedRanges = [
-                            ...selectedRanges,
-                            {
-                                startDate: prevDateRange.startDate,
-                                endDate: clickedDate
-                            }
-                        ];
-                        setSelectedRanges(updatedRanges);
+                        setSelectedRanges([...selectedRanges, newDateRange]);
                     }
 
                     return {
                         startDate: null,
                         endDate: null
                     };
-                } else {
-                    // If clickedDate is before startDate, treat as starting a new range
-                    return {
-                        startDate: clickedDate,
-                        endDate: null
-                    };
                 }
-            }
 
-            // Case 3: Both startDate and endDate set, handle range removal or other logic
-            const updatedRanges = [...selectedRanges];
-            const existingRangeIndex = updatedRanges.findIndex(range => isDateInRange(clickedDate, range.startDate, range.endDate));
-            if (existingRangeIndex !== -1) {
-                // Remove the range if clicked again
-                updatedRanges.splice(existingRangeIndex, 1);
-            }
+                const overlappingIndex = selectedRanges.findIndex(range =>
+                    isDateInRange(newDateRange.startDate, range.startDate, range.endDate) ||
+                    isDateInRange(newDateRange.endDate, range.startDate, range.endDate) ||
+                    isDateInRange(range.startDate, newDateRange.startDate, newDateRange.endDate)
+                );
 
-            // Update selectedRanges and reset dateRange state
-            setSelectedRanges(updatedRanges);
+                if (overlappingIndex !== -1) {
+                    const updatedRanges = [...selectedRanges];
+                    updatedRanges[overlappingIndex] = newDateRange;
+                    setSelectedRanges(updatedRanges);
+                } else {
+                    setSelectedRanges([...selectedRanges, newDateRange]);
+                }
+
+                return {
+                    startDate: null,
+                    endDate: null
+                };
+            }
             return {
                 startDate: null,
                 endDate: null
             };
         });
     };
+
 
     const isDateInRange = (date, startDate, endDate) => {
         return startDate && endDate && date >= startDate && date <= endDate;
@@ -184,6 +173,13 @@ function CalendarComponent() {
         renderDates();
     }, [month, year, selectedRanges]);
 
+    const handleRemoveDateRange = (indexToRemove) => {
+        const updatedRanges = [...selectedRanges];
+        updatedRanges.splice(indexToRemove, 1);
+        setSelectedRanges(updatedRanges);
+    };
+
+
     return (
         <main className={styles.body}>
             <div className={styles.calendar}>
@@ -208,12 +204,23 @@ function CalendarComponent() {
                         {dates}
                     </ul>
                 </section>
-                <section>
-                    <button onClick={() => console.log(selectedRanges)}>Show</button>
+            </div>
+            <div className={styles.dateRanges}>
+                <header>
+                    <h3>Selected date ranges:</h3>
+                </header>
+                <section className={styles.dateRangeSection}>
+                    {selectedRanges.length > 0 ? selectedRanges.map((dateRange, index) => (
+                        <div key={index} className={styles.dateRange}>
+                            {`${DateFormatterDD_MM_YYYY(dateRange.startDate)} - ${DateFormatterDD_MM_YYYY(dateRange.endDate)}`}
+                            <button className={styles.removeButton} onClick={() => handleRemoveDateRange(index)}>x</button>
+                        </div>
+                    )) : <div>Start by selecting your date range</div>}
                 </section>
             </div>
         </main>
     );
+
 }
 
 export default CalendarComponent;
