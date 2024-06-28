@@ -428,10 +428,9 @@
   color: transparent;
 }
 
-.Calendar__monthYear {
-  font-size: 1.8em;
-  text-decoration: underline;
-  
+.Calendar__monthYear>* {
+  font-size: 1.5em;
+  color: black;
 }
 
 .Calendar__yearSelectorText {
