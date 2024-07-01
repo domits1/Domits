@@ -57,9 +57,9 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
         for (let i = 1; i <= endDate; i++) {
             const currentDate = new Date(year, month, i);
             const isActiveDay = isSameDay(currentDate, new Date());
-            const isSelected = selectedRanges.some(range => isDateInRange(currentDate, new Date(range.startDate), new Date(range.endDate)));
-            const isStartDate = selectedRanges.some(range => isSameDay(new Date(range.startDate), currentDate));
-            const isEndDate = selectedRanges.some(range => isSameDay(new Date(range.endDate), currentDate));
+            const isSelected = selectedRanges.some(range => isDateInRange(currentDate, range.startDate, range.endDate));
+            const isStartDate = selectedRanges.some(range => isSameDay(range.startDate, currentDate));
+            const isEndDate = selectedRanges.some(range => isSameDay(range.endDate, currentDate));
             newDates.push(
                 <li
                     key={`active-${i}`}
@@ -174,7 +174,10 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
     };
 
     const isDateInRange = (date, startDate, endDate) => {
-        return startDate && endDate && date >= startDate && date <= endDate;
+        const selectedDate = new Date(date);
+        const rangeStart = new Date(startDate);
+        const rangeEnd = new Date(endDate);
+        return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
     };
 
     const navigateDates = (nav) => {
