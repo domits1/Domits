@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate } from 'react-router-dom';
+import {useLocation, useNavigate} from 'react-router-dom';
 import spinner from "../../images/spinnner.gif";
 import info from "../../images/icons/info.png";
 import './onboardingHost.css';
@@ -9,20 +9,69 @@ import MapComponent from "./data/MapComponent";
 import { Storage, Auth } from "aws-amplify"
 import Calendar from "../hostdashboard/Calendar";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
-
+import Apartment from "../../images/icons/flat.png";
+import House from "../../images/icons/house.png";
+import Villa from "../../images/icons/mansion.png";
+import Boat from "../../images/icons/house-boat.png";
+import Camper from "../../images/icons/camper-van.png";
+import Cottage from "../../images/icons/cottage.png";
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
+    const [isNew, setIsNew] = useState(true);
+    const [oldAccoID, setOldAccoID] = useState('');
+    const { search } = useLocation();
+    const searchParams = new URLSearchParams(search);
+    const accommodationID = searchParams.get('ID');
     const [location, setLocation] = useState({
         latitude: 0,
         longitude: 0,
     });
-    let [stepOne, setStepOne] = useState(null);
-    let [stepTwo, setStepTwo] = useState(null);
-    let [stepThree, setStepThree] = useState(null);
+    let [hasAccoType, setHasAccoType] = useState(false);
+    let [hasGuestAccess, setHasGuestAccess] =useState(false);
+    let [hasAddress, setHasAddress] = useState(false);
+    let [updatedIndex, setUpdatedIndex] = useState([]);
 
+    useEffect(() => {
+        const fetchAccommodation = async () => {
+            setIsLoading(true);
+            try {
+                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ ID: oldAccoID }),
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to fetch accommodation data');
+                }
+
+                const responseData = await response.json();
+                const data = JSON.parse(responseData.body);
+
+                if (!data.hasOwnProperty('CleaningFee')) {
+                    data.CleaningFee = 1;
+                }
+
+                setFormData(data);
+            } catch (error) {
+                console.error('Error fetching accommodation data:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+
+        if (!isNew && oldAccoID) {
+            fetchAccommodation();
+        } else {
+            setIsLoading(false)
+        }
+    }, [isNew, oldAccoID]);
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -33,11 +82,23 @@ function OnboardingHost() {
 
     let [userId, setUserId] = useState(null);
     const [hasStripe, setHostStripe] = useState(false);
-
+    const [accoTypes] = useState(["Apartment", "House", "Villa", "Boat", "Camper", "Cottage"]);
+    const accommodationIcons = {
+        "Apartment": Apartment,
+        "House": House,
+        "Villa": Villa,
+        "Boat": Boat,
+        "Camper": Camper,
+        "Cottage": Cottage
+    };
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
                 setUserId(user.attributes.sub);
+                if (accommodationID) {
+                    setOldAccoID(accommodationID);
+                    setIsNew(false);
+                }
             } else {
                 navigate('/login');
             }
@@ -68,34 +129,36 @@ function OnboardingHost() {
         checkHostStripeAcc(userId);
     }, [userId]);
 
-    const [page, setPage] = useState(1);
+    const [page, setPage] = useState(0);
     const [formData, setFormData] = useState({
         ID: generateUUID(),
         Title: "",
         Subtitle: "",
         Description: "",
-        Rent: "100",
-        Guestamount: "",
-        Bedrooms: "",
-        Bathrooms: "",
-        Beds: "",
+        Rent: 1,
+        GuestAmount: 0,
+        Bedrooms: 0,
+        Bathrooms: 0,
+        Beds: 0,
         Country: "",
         PostalCode: "",
         Street: "",
         City: "",
         Features: {
-            Wifi: false,
-            Television: false,
-            Kitchen: false,
-            WashingMachine: false,
-            Airconditioning: false,
-            Onsiteparking: false,
-            Homeoffice: false,
-            Smokedetector: false,
-            FirstAidkit: false,
-            Fireextinguisher: false,
-            CleaningFeeEnabled: false,
-            CleaningFee: 0,
+            Essentials: [],
+            Kitchen: [],
+            Bathroom: [],
+            Bedroom: [],
+            LivingArea: [],
+            Technology: [],
+            Safety: [],
+            Outdoor: [],
+            FamilyFriendly: [],
+            Laundry: [],
+            Convenience: [],
+            Accessibility: [],
+            ExtraServices: [],
+            EcoFriendly: []
         },
         Images: {
             image1: "",
@@ -107,9 +170,129 @@ function OnboardingHost() {
         StartDate: "",
         EndDate: "",
         Drafted: true,
-        AccommodationType: "Room",
-        OwnerId: ""
+        AccommodationType: "",
+        ServiceFee: 0,
+        GuestAccess: "",
+        OwnerId: "",
+        CleaningFee: 0
     });
+
+    const allAmenities = {
+        Essentials: [
+            'Wi-Fi',
+            'Air conditioning',
+            'Heating',
+            'TV with cable/satellite',
+            'Hot water',
+            'Towels',
+            'Bed linens',
+            'Extra pillows and blankets',
+            'Toilet paper',
+            'Soap and shampoo'
+        ],
+            Kitchen: [
+            'Refrigerator',
+            'Microwave',
+            'Oven',
+            'Stove',
+            'Dishwasher',
+            'Coffee maker',
+            'Toaster',
+            'Basic cooking essentials',
+            'Dishes and silverware',
+            'Glasses and mugs',
+            'Cutting board and knives',
+            'Blender',
+            'Kettle'
+        ],
+            Bathroom: [
+            'Hair dryer',
+            'Shower gel',
+            'Conditioner',
+            'Body lotion',
+            'First aid kit'
+        ],
+            Bedroom: [
+            'Hangers',
+            'Iron and ironing board',
+            'Closet/drawers',
+            'Alarm clock'
+        ],
+            LivingArea: [
+            'Sofa',
+            'Armchairs',
+            'Coffee table',
+            'Books and magazines',
+            'Board games'
+        ],
+            Technology: [
+            'Smart TV',
+            'Streaming services',
+            'Bluetooth speaker',
+            'Universal chargers',
+            'Work desk and chair'
+        ],
+            Safety: [
+            'Smoke detector',
+            'Carbon monoxide detector',
+            'Fire extinguisher',
+            'Lock on bedroom door'
+        ],
+            Outdoor: [
+            'Patio or balcony',
+            'Outdoor furniture',
+            'Grill',
+            'Fire pit',
+            'Pool',
+            'Hot tub',
+            'Garden or backyard',
+            'Bicycle'
+        ],
+            FamilyFriendly: [
+            'High chair',
+            'Crib',
+            'Children’s books and toys',
+            'Baby safety gates',
+            'Baby bath',
+            'Baby monitor'
+        ],
+            Laundry: [
+            'Washer and dryer',
+            'Laundry detergent',
+            'Clothes drying rack'
+        ],
+            Convenience: [
+            'Keyless entry',
+            'Self-check-in',
+            'Local maps and guides',
+            'Luggage drop-off allowed',
+            'Parking space',
+            'EV charger'
+        ],
+            Accessibility: [
+            'Step-free access',
+            'Wide doorways',
+            'Accessible-height bed',
+            'Accessible-height toilet',
+            'Shower chair'
+        ],
+            ExtraServices: [
+            'Cleaning service (add service fee manually)',
+            'Concierge service',
+            'Housekeeping',
+            'Grocery delivery',
+            'Airport shuttle',
+            'Private chef',
+            'Personal trainer',
+            'Massage therapist'
+        ],
+            EcoFriendly: [
+            'Recycling bins',
+            'Energy-efficient appliances',
+            'Solar panels',
+            'Composting bin'
+        ]
+    };
 
     const pageUpdater = (pageNumber) => {
         setPage(pageNumber);
@@ -124,52 +307,46 @@ function OnboardingHost() {
         return true;
     }
     useEffect(() => {
-        if (formData.Title && formData.Subtitle && formData.Description && hasImages()) {
-            setStepOne(false);
-        } else {
-            setStepOne(true);
+        if (formData.AccommodationType) {
+            setHasAccoType(true);
         }
-
-        if (formData.Guestamount && formData.Bedrooms && formData.Bathrooms && formData.Beds) {
-            setStepTwo(false);
-        } else {
-            setStepTwo(true);
+        if (formData.GuestAccess) {
+            setHasGuestAccess(true);
         }
-
         if (formData.Country && formData.City && formData.Street && formData.PostalCode) {
-            setStepThree(false);
+            setHasAddress(true);
         } else {
-            setStepThree(true);
+            setHasAddress(false);
         }
     }, [formData]);
 
-    const isFormFilled = () => {
-        const excludedFields = ['OwnerId', 'StartDate', 'EndDate'];
-        for (const key in formData) {
-            if (excludedFields.includes(key)) {
-                continue;
-            }
-            if (key === 'Images') {
-                // Check if all keys inside the Images object are filled
-                for (const imageKey in formData.Images) {
-                    if (formData.Images[imageKey] === '') {
-                        return false;
-                    }
-                }
-            } else if (formData[key] === "" || formData[key] === 0) {
-                return false;
-            }
+    const calculateServiceFee = () => {
+        const rent = parseFloat(formData.Rent);
+        if (isNaN(rent)) {
+            return 0;
+        } else {
+            return rent * 0.15;
         }
-        return true;
-    }
+    };
 
-
-    const appendUserId = () => {
-        setFormData((prevData) => ({
+    useEffect(() => {
+        const fee = calculateServiceFee();
+        setFormData(prevData => ({
             ...prevData,
-            OwnerId: userId
+            ServiceFee: fee
         }));
-    }
+    }, [formData.Rent]);
+
+
+    useEffect(() => {
+        const appendUserId = () => {
+            setFormData((prevData) => ({
+                ...prevData,
+                OwnerId: userId
+            }));
+        }
+        appendUserId();
+    }, [userId]);
 
     const handleLocationChange = async (Country, City, PostalCode, Street) => {
         const address = `${Country} ${City} ${Street} ${PostalCode}`;
@@ -198,45 +375,109 @@ function OnboardingHost() {
         }
     };
 
-    const handleInputChange = (event) => {
-        const { name, type, checked, value } = event.target;
-    
-        setFormData((prevData) => {
-            if (name in prevData.Features) {
-                if (type === 'checkbox') {
-                    return {
-                        ...prevData,
-                        Features: {
-                            ...prevData.Features,
-                            [name]: checked,
-                        },
-                    };
-                } else {
-                    return {
-                        ...prevData,
-                        Features: {
-                            ...prevData.Features,
-                            [name]: type === 'number' ? Number(value) : value,
-                        },
-                    };
-                }
-            } else {
-                return {
-                    ...prevData,
-                    [name]: type === 'number' ? Number(value) : value,
-                };
-            }
-        });
-    
-        if (name === 'City') {
-            handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
-        } else if (name === 'PostalCode') {
-            handleLocationChange(formData.Country, formData.City, value, formData.Street);
-        } else if (name === 'Street') {
-            handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
+    const changeAccoType = (accommodationType) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            AccommodationType: accommodationType
+        }));
+    };
+    const changeGuestAccess = (access) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            GuestAccess: access
+        }));
+    };
+
+    const resetCleaningFee = () => {
+        if (!formData.Features.ExtraServices.includes('Cleaning service (add service fee manually)')) {
+            setFormData((prevData) => ({
+                ...prevData,
+                CleaningFee: 0
+            }));
         }
     };
-    
+
+    const incrementAmount = (field) => {
+        setFormData(prevData => ({
+            ...prevData,
+            [field]: prevData[field] + 1
+        }));
+    };
+
+    const decrementAmount = (field) => {
+        if (formData[field] > 0) {
+            setFormData(prevData => ({
+                ...prevData,
+                [field]: prevData[field] - 1
+            }));
+        }
+    };
+
+    const setDrafted = (value) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            Drafted: value
+        }));
+    }
+
+    const handleAmenities = (category, amenity, checked) => {
+        setFormData(prevFormData => {
+            const updatedFeatures = { ...prevFormData.Features };
+
+            if (amenity === 'Cleaning service (add service fee manually)') {
+                resetCleaningFee();
+            }
+            if (checked) {
+                updatedFeatures[category] = [...updatedFeatures[category], amenity];
+            } else {
+                updatedFeatures[category] = updatedFeatures[category].filter(item => item !== amenity);
+            }
+
+            return {
+                ...prevFormData,
+                Features: updatedFeatures
+            };
+        });
+    };
+
+
+    const handleInputChange = (event) => {
+        const { name, type, checked, value } = event.target;
+        console.log(formData);
+        if (type === 'checkbox') {
+            setFormData((prevData) => ({
+                ...prevData,
+                Features: {
+                    ...prevData.Features,
+                    [name]: checked,
+                },
+                SystemConfiguration: {
+                    ...prevData.Features,
+                    [name]: checked,
+                }
+            }));
+        } else if (type === 'number' || type === 'range') {
+            const newValue = value || '';
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: newValue
+            }));
+        } else {
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: value
+            }));
+
+            if (name === 'City') {
+                handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
+            } else if (name === 'PostalCode') {
+                handleLocationChange(formData.Country, formData.City, value, formData.Street);
+            } else if (name === 'Street') {
+                handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
+            }
+        }
+    };
+
     const handleCountryChange = (selectedOption) => {
         setFormData(currentFormData => ({
             ...currentFormData,
@@ -266,15 +507,69 @@ function OnboardingHost() {
             throw err;
         }
     }
+
+    const removeImageFromS3 = async (userId, accommodationId, index) => {
+        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+
+        try {
+            await Storage.remove(key, {
+                bucket: S3_BUCKET_NAME,
+                region: region,
+                level: null,
+                customPrefix: { public: '' }
+            });
+        } catch (err) {
+            console.error("Failed to remove file:", err);
+            throw err;
+        }
+    }
+    const handleUpdate = async () => {
+        try {
+            setIsLoading(true);
+            const AccoID = formData.ID;
+            const updatedFormData = { ...formData };
+            for (let i = 0; i < updatedIndex.length; i++) {
+                const index = updatedIndex[i];
+                await removeImageFromS3(userId, AccoID, index);
+            }
+            for (let i = 0; i < updatedIndex.length; i++) {
+                const index = updatedIndex[i];
+                const file = imageFiles[index];
+                const location =  await uploadImageToS3(userId, AccoID, file, index);
+                updatedFormData.Images[`image${i + 1}`] = location;
+            }
+            await setFormData(updatedFormData);
+            setImageFiles([]);
+
+            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
+                method: 'PUT',
+                body: JSON.stringify(formData),
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            });
+
+            if (response.ok) {
+                console.log('Accommodation updated successfully');
+            } else {
+                console.error('Error updating accommodation');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+
     const handleSubmit = async () => {
         try {
             setIsLoading(true);
             const AccoID = formData.ID;
-            const updatedFormData = { ...formData }; // Copy the original formData object
+            const updatedFormData = { ...formData };
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
-                const location = await uploadImageToS3(userId, AccoID, file, i);
-                console.log(location);
+                const location =  await uploadImageToS3(userId, AccoID, file, i);
                 updatedFormData.Images[`image${i + 1}`] = location;
             }
             await setFormData(updatedFormData);
@@ -306,7 +601,6 @@ function OnboardingHost() {
         newImageFiles[index] = file;
         setImageFiles(newImageFiles);
 
-        // Construct formData based on current imageFiles
         const updatedFormData = { ...formData };
         if (file) {
             const key = `image${index + 1}`;
@@ -320,11 +614,14 @@ function OnboardingHost() {
         newImageFiles[index] = null;
         setImageFiles(newImageFiles);
 
-        // Construct formData based on current imageFiles
         const updatedFormData = { ...formData };
         const key = `image${index + 1}`;
-        updatedFormData.Images[key] = ""; // Clear the value associated with the key
+        updatedFormData.Images[key] = "";
         setFormData(updatedFormData);
+
+        if (!updatedIndex.includes(index)) {
+            setUpdatedIndex(prevUpdatedIndex => [...prevUpdatedIndex, index]);
+        }
     };
 
     const updateDates = (start, end) => {
@@ -334,113 +631,68 @@ function OnboardingHost() {
 
     const renderPageContent = (page) => {
         switch (page) {
+            case 0:
+                if (isLoading) {
+                    return (
+                        <main className="loading">
+                            <h2 className="spinner-text">Please wait a moment...</h2>
+                            <img className="spinner" src={spinner}/>
+                        </main>
+                    );
+                } else
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">{isNew ? 'What best describes your accommodation?' : 'Edit your accommodation type'}</h2>
+
+                        <section className="accommodation-types">
+                            {accoTypes.map((option, index) => (
+                                <div
+                                    key={index}
+                                    className={`option ${formData.AccommodationType === option ? 'selected' : ''}`}
+                                    onClick={() => changeAccoType(option)}
+                                >
+                                    <img className="accommodation-icon" src={accommodationIcons[option]} alt={option}/>
+                                    {option}
+                                </div>
+                            ))}
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => navigate("/hostdashboard")} style={{opacity: "75%"}}>
+                                Go to dashboard
+                            </button>
+                            <button className={!hasAccoType ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
             case 1:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">Step 1: Accommodation Information</h2>
-                        <section className="flex-row form-row">
-                            <section className="form-section">
+                        <h2 className="onboardingSectionTitle">{isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}</h2>
 
-                                <label htmlFor="title">Title*</label>
-                                <input
-                                    className="textInput locationText"
-                                    id="title"
-                                    name="Title"
-                                    onChange={handleInputChange}
-                                    value={formData.Title}
-                                    placeholder="Enter your title here..."
-                                    required={true}
-                                />
-                                <label htmlFor="Subtitle">Subtitle*</label>
-                                <input
-                                    className="textInput locationText"
-                                    id="Subtitle"
-                                    name="Subtitle"
-                                    onChange={handleInputChange}
-                                    value={formData.Subtitle}
-                                    placeholder="Enter your subtitle here..."
-                                    required={true}
-                                />
-                                <label htmlFor="description">Description*</label>
-                                <textarea
-                                    className="textInput locationText"
-                                    id="description"
-                                    name="Description"
-                                    onChange={handleInputChange}
-                                    rows="5"
-                                    value={formData.Description}
-                                    placeholder="Tell us something about your accommodation..."
-                                    required={true}
-                                ></textarea>
-                                <label htmlFor="accommodationType">Accommodation Type*</label>
-                                <select
-                                    value={formData.AccommodationType}
-                                    onChange={handleInputChange}
-                                    name="AccommodationType"
-                                    className="textInput"
-                                    required={true}
-                                >
-                                    <option value="Room">Room</option>
-                                    <option value="Shared Room">Shared Room</option>
-                                    <option value="House">House</option>
-                                    <option value="Apartment">Apartment</option>
-                                    <option value="Villa">Villa</option>
-                                    <option value="Cottage">Cottage</option>
-                                    <option value="Hotel">Hotel</option>
-                                    <option value="Boat">Boat</option>
-                                    <option value="Camper">Camper</option>
-                                </select>
-                            </section>
-                            <section className="images-container thumbnail-container">
-                                {imageFiles[0] && (
-                                    <img
-                                        src={URL.createObjectURL(imageFiles[0])}
-                                        alt="First Image"
-                                        className="file-image placeholder"
-                                    />
-                                )}
-                                {!imageFiles[0] && <div className="placeholder">Your Thumbnail</div>}
-                            </section>
+                        <section className="guest-access">
+                            <div className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                 onClick={() => changeGuestAccess("Entire house")}>
+                                <h3 className="guest-access-header">Entire house</h3>
+                                <p>Guests have the entire space to themselves</p>
+                            </div>
+                            <div className={formData.GuestAccess === 'Room' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                 onClick={() => changeGuestAccess("Room")}>
+                                <h3 className="guest-access-header">Room</h3>
+                                <p>Guests have their own room in a house and share other spaces</p>
+                            </div>
+                            <div className={formData.GuestAccess === 'Shared room' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                 onClick={() => changeGuestAccess("Shared room")}>
+                                <h3 className="guest-access-header">A shared room</h3>
+                                <p>Guests sleep in a room or common area that they may share with you or others</p>
+                            </div>
                         </section>
-                        <section className="form-section">
-                            <h2 className="onboardingSectionTitle">Images*</h2>
-                            <section className="flex-row">
-                                {[...Array(5)].map((_, index) => (
-                                    <section key={index} className="images-container">
-                                        <input
-                                            type="file"
-                                            onChange={(e) => handleFileChange(e.target.files[0], index)}
-                                            accept="image/*"
-                                            className="file-input"
-                                            required={true}
-                                        />
-                                        {imageFiles[index] && (
-                                            <>
-                                                <img
-                                                    src={URL.createObjectURL(imageFiles[index])}
-                                                    alt={`Image ${index + 1}`}
-                                                    className="file-image"
-                                                />
-                                                <button className="delete-button" onClick={() => handleDelete(index)}>
-                                                    Delete
-                                                </button>
-                                            </>
-                                        )}
-                                        {!imageFiles[index] && <div className="placeholder">Image {index + 1}</div>}
-                                    </section>
-                                ))}
-                            </section>
-                        </section>
-
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav className="formContainer">
-                            <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>
-                                Go to dashboard
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                                Go back
                             </button>
-                            <button className="nextButtons" disabled={stepOne} onClick={() => pageUpdater(page + 1)}>
+                            <button className={!hasGuestAccess ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasGuestAccess} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
@@ -449,256 +701,25 @@ function OnboardingHost() {
             case 2:
                 return (
                     <main className="container">
-                        <section className="quantity">
-                            <h2 className="onboardingSectionTitle">Step 2: Specifications</h2>
-                            <div className="input-group">
-                            </div>
-                            <div className="form-row">
-                                <label htmlFor="guests">Maximum amount of guests*</label>
-                                <input
-                                    type="number"
-                                    id="guests"
-                                    name="Guestamount"
-                                    onChange={handleInputChange}
-                                    value={formData.Guestamount}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many guests can you accept?"
-                                    required={true}
-                                />
-                                <label htmlFor="bedrooms">Amount of bedrooms*</label>
-                                <input
-                                    type="number"
-                                    id="bedrooms"
-                                    name="Bedrooms"
-                                    onChange={handleInputChange}
-                                    value={formData.Bedrooms}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many badrooms does it have?"
-                                    required={true}
-                                />
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Where can we find your accommodation?' : 'Change the location of your accommodation'}</h2>
+                        <p className="onboardingSectionSubtitle">We only share your address with guests after they have
+                            booked</p>
 
-                                <label htmlFor="bathrooms">Amount of bathrooms*</label>
-                                <input
-                                    type="number"
-                                    id="bathrooms"
-                                    name="Bathrooms"
-                                    onChange={handleInputChange}
-                                    value={formData.Bathrooms}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many bathrooms does it have?"
-                                    required={true}
-                                />
-
-                                <label htmlFor="beds">Amount of beds*</label>
-                                <input
-                                    type="number"
-                                    id="beds"
-                                    name="Beds"
-                                    onChange={handleInputChange}
-                                    value={formData.Beds}
-                                    min={0}
-                                    className="textInput"
-                                    placeholder="How many fixed beds does it have?"
-                                    required={true}
-                                />
-                            </div>
-                        </section>
-                        <div className="form-group">
-                            <h2 className="onboardingSectionTitle">Fill in safety measures</h2>
-                            <section className="check-box">
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Smokedetector"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Smokedetector}
-                                    />
-                                    Smoke detector
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="FirstAidkit"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.FirstAidkit}
-                                    />
-                                    First Aid kit
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Fireextinguisher"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Fireextinguisher}
-                                    />
-                                    Fire extinguisher
-                                </label>
-                            </section>
-                        </div>
-                        <div className="form-group">
-                            <h2 className="onboardingSectionTitle">Add accommodation features</h2>
-                            <p>You can select one or more items below</p>
-                            <section className="check-box">
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Wifi"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Wifi}
-                                    />
-                                    Wifi
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Television"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Television}
-                                    />
-                                    Television
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Kitchen"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Kitchen}
-                                    />
-                                    Kitchen
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="WashingMachine"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.WashingMachine}
-                                    />
-                                    Washing machine
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Airconditioning"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Airconditioning}
-                                    />
-                                    Airconditioning
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Onsiteparking"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Onsiteparking}
-                                    />
-                                    Onsite parking
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="Homeoffice"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.Homeoffice}
-                                    />
-                                    Home office
-                                </label>
-                                <label>
-                                    <input
-                                        type="checkbox"
-                                        className="radioInput"
-                                        name="CleaningFeeEnabled"
-                                        onChange={handleInputChange}
-                                        checked={formData.Features.CleaningFeeEnabled}
-                                    />
-                                    Cleaning Fee
-                                </label>
-                                {formData.Features.CleaningFeeEnabled && (
-                                    <label>
-                                        Cleaning Fee Amount
-                                        <input
-                                            type="number"
-                                            className="textInput"
-                                            name="CleaningFee"
-                                            value={formData.Features.CleaningFee}
-                                            onChange={handleInputChange}
-                                            min={0}
-                                            placeholder="Enter the cleaning fee amount"
-                                        />
-                                    </label>
-                                )}
-                            </section>
-                        </div>
-
-
-                        {/*<section className="details-policies formContainer">*/}
-                        {/*    <div className="formHolder">*/}
-                        {/*        <h2 className="onboardingSectionTitle">Details and Policies</h2>*/}
-                        {/*        <div className="formRow">*/}
-                        {/*            <div className="room-features formRow">*/}
-                        {/*                <div className="configurations">*/}
-                        {/*                    <label htmlFor="measurement">Measurements*</label>*/}
-                        {/*                    <input*/}
-                        {/*                        type="number"*/}
-                        {/*                        name="Measurement"*/}
-                        {/*                        placeholder="What are your measurements in M²?"*/}
-                        {/*                        onChange={handleInputChange}*/}
-                        {/*                        value={formData.Measurement}*/}
-                        {/*                        min={0}*/}
-                        {/*                        className="textInput"*/}
-                        {/*                    />*/}
-                        {/*                </div>*/}
-                        {/*            </div>*/}
-                        {/*        </div>*/}
-                        {/*    </div>*/}
-                        {/*</section>*/}
-
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav className="formContainer">
-                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>
-                                Go back to change
-                            </button>
-                            <button className="nextButtons" disabled={stepTwo} onClick={() => pageUpdater(page + 1)}>
-                                Confirm and proceed
-                            </button>
-                        </nav>
-                    </main>
-                );
-
-            case 3:
-                return (
-                    <main className="container">
-                        <section>
-                            <section className="locationInput">
-                                <h2 className="onboardingSectionTitle">Step 3: Location</h2>
+                        <section className="acco-location">
+                            <section className="location-left">
                                 <label htmlFor="country">Country*</label>
                                 <Select
-                                    options={options.map(country => ({ value: country, label: country }))}
+                                    options={options.map(country => ({value: country, label: country}))}
                                     name="Country"
                                     className="locationText"
-                                    value={{ value: formData.Country, label: formData.Country }}
+                                    value={{value: formData.Country, label: formData.Country}}
                                     onChange={handleCountryChange}
                                     id="country"
                                     required={true}
                                 />
                                 <label htmlFor="city">City*</label>
                                 <input
-                                    className="textInput locationText"
+                                    className="textInput-field locationText"
                                     name="City"
                                     onChange={handleInputChange}
                                     value={formData.City}
@@ -708,7 +729,7 @@ function OnboardingHost() {
                                 />
                                 <label htmlFor="street">Street + house nr.*</label>
                                 <input
-                                    className="textInput locationText"
+                                    className="textInput-field locationText"
                                     name="Street"
                                     onChange={handleInputChange}
                                     value={formData.Street}
@@ -718,7 +739,7 @@ function OnboardingHost() {
                                 />
                                 <label htmlFor="postal">Postal Code*</label>
                                 <input
-                                    className="textInput locationText"
+                                    className="textInput-field locationText"
                                     name="PostalCode"
                                     onChange={handleInputChange}
                                     value={formData.PostalCode}
@@ -727,263 +748,474 @@ function OnboardingHost() {
                                     required={true}
                                 />
                             </section>
-                            <section className="map-section">
+                            <section className="location-right">
                                 <h2 className="onboardingSectionTitle">What we show on Domits</h2>
-                                <MapComponent location={location} />
+                                <MapComponent location={location}/>
                             </section>
                         </section>
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
+                            <img src={info} className="info-icon"/>
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
-                        <nav className="formContainer">
-                            <button className="nextButtons" onClick={() => pageUpdater(page - 1)}>Go back to change
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                                Go back
                             </button>
-                            <button className="nextButtons" disabled={stepThree} onClick={() => pageUpdater(page + 1)}>Confirm and proceed
+                            <button className={!hasAddress ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!hasAddress} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
                             </button>
                         </nav>
                     </main>
                 );
-
-            // case 4:
-            //     return (
-            //         <main className="container">
-            //             <section className="room-features formRow">
-            //                 <h2 className="onboardingSectionTitle">Systems and configurations</h2>
-            //                 <div className="form-group">
-            //                     <p>Cancel policy*</p>
-            //                     <label>
-            //                         <input
-            //                             type="radio"
-            //                             className="radioInput"
-            //                             name="CancelPolicy"
-            //                             onChange={handleInputChange}
-            //                             checked={formData.CancelPolicy === "Users can cancel anytime"}
-            //                             value="Users can cancel anytime"
-            //                         />
-            //                         Users can cancel anytime
-            //                     </label>
-            //                     <label>
-            //                         <input
-            //                             type="radio"
-            //                             className="radioInput"
-            //                             name="CancelPolicy"
-            //                             onChange={handleInputChange}
-            //                             checked={formData.CancelPolicy === "No cancel 24h before arrival"}
-            //                             value="No cancel 24h before arrival"
-            //                         />
-            //                         No cancel 24h before arrival
-            //                     </label>
-            //                 </div>
-            //                 <div className="form-group">
-            //                     <p>Guest type*</p>
-            //                     <label>
-            //                         <input
-            //                             type="radio"
-            //                             className="radioInput"
-            //                             name="Guesttype"
-            //                             onChange={handleInputChange}
-            //                             checked={formData.Guesttype === "Any guest"}
-            //                             value="Any guest"
-            //                         />
-            //                         Any Guest
-            //                     </label>
-            //                     <label>
-            //                         <input
-            //                             type="radio"
-            //                             className="radioInput"
-            //                             name="Guesttype"
-            //                             onChange={handleInputChange}
-            //                             checked={formData.Guesttype === "Verified Domits guest"}
-            //                             value="Verified Domits guest"
-            //                         />
-            //                         Verified Domits guest
-            //                     </label>
-            //                 </div>
-            //             </section>
-            //             <section className="listing-info enlist-info">
-            //                 <img src={info} className="info-icon"/>
-            //                 <p className="info-msg">Fields with * are mandatory</p>
-            //             </section>
-            //             <nav className="formContainer">
-            //                 <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
-            //                 </button>
-            //                 <button className='nextButtons' onClick={() => pageUpdater(page + 1)}>Confirm and proceed
-            //                 </button>
-            //             </nav>
-            //         </main>
-            //     );
-
-
+            case 3:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">{isNew ? 'How many people can stay here?' : 'Adjust the maximum amount of guests'}</h2>
+                        <section className="guest-amount">
+                            <div className="guest-amount-item">
+                                <p>Guests</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('GuestAmount')}>-
+                                    </button>
+                                    {formData.GuestAmount}
+                                    <button className="round-button" onClick={() => incrementAmount('GuestAmount')}>+
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="guest-amount-item">
+                                <p>Bedrooms</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
+                                    </button>
+                                    {formData.Bedrooms}
+                                    <button className="round-button" onClick={() => incrementAmount('Bedrooms')}>+
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="guest-amount-item">
+                                <p>Bathrooms</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('Bathrooms')}>-
+                                    </button>
+                                    {formData.Bathrooms}
+                                    <button className="round-button" onClick={() => incrementAmount('Bathrooms')}>+
+                                    </button>
+                                </div>
+                            </div>
+                            <div className="guest-amount-item">
+                                <p>Beds</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('Beds')}>-</button>
+                                    {formData.Beds}
+                                    <button className="round-button" onClick={() => incrementAmount('Beds')}>+</button>
+                                </div>
+                            </div>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button className="onboarding-button"
+                                    onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
             case 4:
                 return (
                     <main className="container">
-                        <section class="room-features formRow">
-                            <h2 className="onboardingSectionTitle">Step 4: Pricing</h2>
-                            <p>Price per night*: {formData.Rent}</p>
-                            <div className="slider-bar">
-                                <p>1</p>
-                                <input className="priceSlider" type="range" name="Rent" onChange={handleInputChange}
-                                    defaultValue={formData.Rent} min="1" max="1000" step="1"
-                                    required={true} />
-                                <p>1000</p>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Let guests know what your space has to offer.' : 'Edit your amenities'}</h2>
+                        <p className="onboardingSectionSubtitle">You can add more facilities after publishing your
+                            listing</p>
+                        <div>
+                            {Object.keys(allAmenities).map(category => (
+                                <div key={category} style={{marginBottom: '5%'}}>
+                                    <h2 className="amenity-header">{category}</h2>
+                                    <section className="check-box">
+                                        {allAmenities[category].map(amenity => (
+                                            <label key={amenity}>
+                                                <input
+                                                    type="checkbox"
+                                                    className="radioInput"
+                                                    name={amenity}
+                                                    onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
+                                                    checked={formData.Features[category].includes(amenity)}
+                                                />
+                                                {amenity}
+                                            </label>
+                                        ))}
+                                    </section>
+                                </div>
+                            ))}
+                        </div>
+
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button className="onboarding-button"
+                                    onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 5:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Add photos of your home' : 'Edit photos of your home'}</h2>
+
+                        <section className="accommodation-photos">
+                            {!formData.Images ?
+                                <section className="image-upload">
+                                    <h2>Drag your photos here</h2>
+                                    <p>Choose at least five photos</p>
+                                    <input
+                                        type="file"
+                                        onChange={(e) => handleFileChange(e.target.files[0], 0)}
+                                        accept="image/*"
+                                        className="file-input-thumbnail"
+                                        required={true}
+                                    />
+                                </section>
+                                :
+                                <section className="accommodation-images">
+                                    {[...Array(5)].map((_, index) => (
+                                        <section key={index} className="images-container">
+                                            <input
+                                                type="file"
+                                                onChange={(e) => handleFileChange(e.target.files[0], index)}
+                                                accept="image/*"
+                                                className="file-input"
+                                                required={true}
+                                            />
+                                            {formData.Images[`image${index + 1}`] && (
+                                                <>
+                                                    <img
+                                                        src={formData.Images[`image${index + 1}`]}
+                                                        alt={`Image ${index + 1}`}
+                                                        className={index === 0 ? "accommodation-thumbnail" : "file-image"}
+                                                    />
+                                                    <button className="delete-button"
+                                                            onClick={() => handleDelete(index)}>
+                                                        Delete
+                                                    </button>
+                                                </>
+                                            )}
+                                            {!formData.Images[`image${index + 1}`] &&
+                                                <div className="placeholder">Image {index + 1}</div>}
+                                        </section>
+                                    ))}
+                                </section>
+                            }
+                        </section>
+
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button className={!hasImages() ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!hasImages()} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 6:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Name your home' : 'Edit the name of your home'}</h2>
+                        <p className="onboardingSectionSubtitle">A short title works best. Don't worry, you can always
+                            change it later.</p>
+
+                        <section className="accommodation-title">
+                            <textarea
+                                className="textInput locationText"
+                                id="title"
+                                name="Title"
+                                onChange={handleInputChange}
+                                value={formData.Title}
+                                placeholder="Enter your title here..."
+                                required={true}
+                                maxLength={32}
+                            />
+                            <p>{formData.Title.length}/32</p>
+                        </section>
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Give it a suitable subtitle' : 'Edit your subtitle'}</h2>
+                        <section className="accommodation-title">
+                            <textarea
+                                className="textInput locationText"
+                                id="Subtitle"
+                                name="Subtitle"
+                                onChange={handleInputChange}
+                                value={formData.Subtitle}
+                                placeholder="Enter your subtitle here..."
+                                required={true}
+                                maxLength={32}
+                            />
+                            <p>{formData.Subtitle.length}/32</p>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button
+                                className={!(formData.Title && formData.Subtitle) ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                disabled={!(formData.Title && formData.Subtitle)} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 7:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Provide a description' : 'Edit your description'}</h2>
+                        <p className="onboardingSectionSubtitle">Share what makes your space special.</p>
+
+                        <section className="accommodation-title">
+                            <textarea
+                                className="textInput locationText title-input"
+                                id="description"
+                                name="Description"
+                                onChange={handleInputChange}
+                                value={formData.Description}
+                                placeholder="Enter your title here..."
+                                required={true}
+                                maxLength={500}
+                            />
+                            <p>{formData.Description.length}/500</p>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button className={!formData.Description ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!formData.Description} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 8:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Now set your rate' : 'Edit your rate'}</h2>
+                        <h2 className="acco-price">{!isNaN(parseFloat(formData.Rent)) ? `€ ${parseFloat(formData.Rent).toFixed(0)}` : 'Enter your base rate'}</h2>
+                        <section className="accommodation-pricing">
+                            <div className="pricing-row">
+                                <label>Base rate</label>
+                                <input className="pricing-input" type="number" name="Rent" onChange={handleInputChange}
+                                       defaultValue={formData.Rent} min={1} step={0.1}
+                                       required={true}/>
+                            </div>
+                            {formData.Features.ExtraServices.includes('Cleaning service (add service fee manually)') &&
+                                <div className="pricing-row">
+                                    <label>Cleaning fee</label>
+                                    <input className="pricing-input" type="number" name="CleaningFee"
+                                           onChange={handleInputChange}
+                                           defaultValue={formData.CleaningFee ? formData.CleaningFee : 1} min={1} step={0.1}
+                                           required={true}/>
+                                </div>}
+                            <div className="pricing-row">
+                                <label>Service fees</label>
+                                <p className="pricing-input">
+                                    €{((!isNaN(parseFloat(formData.ServiceFee)) ? parseFloat(formData.ServiceFee) : 0)).toFixed(2)}
+                                </p>
+                            </div>
+                            <hr/>
+                            <div className="pricing-row">
+                                <label>Guest's price</label>
+                                <p className="pricing-input">
+                                    €{((!isNaN(parseFloat(formData.Rent)) ? parseFloat(formData.Rent) : 0) +
+                                    (!isNaN(parseFloat(formData.CleaningFee)) ? parseFloat(formData.CleaningFee) : 0) +
+                                    (!isNaN(parseFloat(formData.ServiceFee)) ? parseFloat(formData.ServiceFee) : 0)).toFixed(2)}
+                                </p>
                             </div>
                         </section>
-                        <h2 className="onboardingSectionTitle">Availabilities</h2>
-                        <section className="listing-calendar">
-                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates} />
+                        <section className="accommodation-pricing">
+                            <div className="pricing-row">
+                                <label>You earn</label>
+                                <p className="pricing-input">
+                                    €{((!isNaN(parseFloat(formData.Rent)) ? parseFloat(formData.Rent) : 0) +
+                                    (!isNaN(parseFloat(formData.CleaningFee)) ? parseFloat(formData.CleaningFee) : 0)).toFixed(2)}
+                                </p>
+                            </div>
                         </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button className={!formData.Rent ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!formData.Rent} onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 9:
+                return (
+                    <main className="container">
+                        <h2 className="onboardingSectionTitle">{isNew ? 'Share your first availability' : 'Edit your availability'}</h2>
+                        <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within
+                            your dashboard</p>
+                        <section className="listing-calendar">
+                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
+                        </section>
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button className='onboarding-button'
+                                    onClick={() => pageUpdater(page + 1)}>
+                                Confirm and proceed
+                            </button>
+                        </nav>
+                    </main>
+                );
+            case 10:
+                return (
+                    <div className="container" style={{width: '80%'}}>
+                        <h2>Please check if everything is correct</h2>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                            <tbody>
+                            <tr>
+                                <th style={{
+                                    textAlign: 'left',
+                                    borderBottom: '1px solid #ccc',
+                                    paddingBottom: '8px'
+                                }}>Property Details
+                                </th>
+                                <th style={{
+                                    textAlign: 'left',
+                                    borderBottom: '1px solid #ccc',
+                                    paddingBottom: '8px'
+                                }}>Value
+                                </th>
+                            </tr>
+                            <tr>
+                                <td>Title:</td>
+                                <td>{formData.Title}</td>
+                            </tr>
+                            <tr>
+                                <td>Description:</td>
+                                <td>{formData.Description}</td>
+                            </tr>
+                            <tr>
+                                <td>Rent:</td>
+                                <td>{formData.Rent}</td>
+                            </tr>
+                            <tr>
+                                <td>Room Type:</td>
+                                <td>{formData.AccommodationType}</td>
+                            </tr>
+                            <tr>
+                                <td>Date Range:</td>
+                                <td>
+                                    {formData.StartDate && formData.EndDate ? (
+                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
+                                    ) : "Date range not set"}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Number of Guests:</td>
+                                <td>{formData.Guestamount}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Bedrooms:</td>
+                                <td>{formData.Bedrooms}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Bathrooms:</td>
+                                <td>{formData.Bathrooms}</td>
+                            </tr>
+                            <tr>
+                                <td>Number of Fixed Beds:</td>
+                                <td>{formData.Beds}</td>
+                            </tr>
+                            <tr>
+                                <td>Country:</td>
+                                <td>{formData.Country}</td>
+                            </tr>
+                            <tr>
+                                <td>Postal Code:</td>
+                                <td>{formData.PostalCode}</td>
+                            </tr>
+                            <tr>
+                                <td>Street + House Nr.:</td>
+                                <td>{formData.Street}</td>
+                            </tr>
+                            </tbody>
+                        </table>
+                        <h3>Features:</h3>
+                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                            <tbody>
+                            {Object.keys(formData.Features).map(category => (
+                                <>
+                                    {formData.Features[category].length > 0 && (
+                                        <tr key={category}>
+                                            <td colSpan={2}
+                                                style={{fontWeight: 'bold', borderBottom: '1px solid #ccc'}}>{category}:
+                                            </td>
+                                        </tr>
+                                    )}
+                                    {formData.Features[category].map((amenity, index) => (
+                                        <tr key={`${category}-${index}`}>
+                                            <td style={{borderBottom: '1px solid #ccc'}}>{amenity}</td>
+                                            <td style={{borderBottom: '1px solid #ccc'}}>Yes</td>
+                                        </tr>
+                                    ))}
+                                </>
+                            ))}
+                            </tbody>
+                        </table>
+
+                        <p>Your accommodation ID: {formData.ID}</p>
+                        <p>{formData.Drafted ? "Guests cannot book your accommodation before you set it live via Hostdashboard -> Listing"
+                            : "Guests can book your accommodation anytime now!"}
+                        </p>
                         <label>
                             <input
                                 type="checkbox"
                                 className="radioInput"
                                 name="Drafted"
-                                onChange={handleInputChange}
+                                onChange={() => setDrafted(!formData.Drafted)}
                                 disabled={!(formData.StartDate && formData.EndDate && hasStripe)}
                                 checked={formData.Drafted}
                             />
                             Mark as draft (Stripe account and date range is required)
                         </label>
-                        <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" />
-                            <p className="info-msg">Fields with * are mandatory</p>
-                        </section>
-                        <nav class="formContainer">
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
+                        <div className='onboarding-button-box'>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back to change
                             </button>
-                            <button
-                                className='nextButtons'
-                                onClick={() => {
-                                    if (isFormFilled) {
-                                        appendUserId();
-                                        pageUpdater(page + 1);
-                                    }
-                                }}
-                                style={{
-                                    backgroundColor: 'green',
-                                    width: '7vw',
-                                    cursor: isFormFilled() ? 'pointer' : 'not-allowed',
-                                    opacity: isFormFilled() ? 1 : 0.5
-                                }}
-                                disabled={!isFormFilled()}
-                            >Enlist
-                            </button>
-                        </nav>
-                    </main>
-                );
-
-
-            case 5:
-                return (
-                    <div className="container" style={{ width: '80%' }}>
-                        <h2>Step 5: Review your information</h2>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <tbody>
-                                <tr>
-                                    <th style={{
-                                        textAlign: 'left',
-                                        borderBottom: '1px solid #ccc',
-                                        paddingBottom: '8px'
-                                    }}>Property Details
-                                    </th>
-                                    <th style={{
-                                        textAlign: 'left',
-                                        borderBottom: '1px solid #ccc',
-                                        paddingBottom: '8px'
-                                    }}>Value
-                                    </th>
-                                </tr>
-                                <tr>
-                                    <td>Title:</td>
-                                    <td>{formData.Title}</td>
-                                </tr>
-                                <tr>
-                                    <td>Description:</td>
-                                    <td>{formData.Description}</td>
-                                </tr>
-                                <tr>
-                                    <td>Rent:</td>
-                                    <td>{formData.Rent}</td>
-                                </tr>
-                                <tr>
-                                    <td>Cleaning Fee:</td>
-                                    <td>{formData.Features.CleaningFeeEnabled ? `Yes, ${formData.Features.CleaningFee}` : 'No'}</td>
-                                </tr>
-
-                                <tr>
-                                    <td>Room Type:</td>
-                                    <td>{formData.AccommodationType}</td>
-                                </tr>
-                                <tr>
-                                    <td>Date Range:</td>
-                                    <td>
-                                        {formData.StartDate && formData.EndDate ? (
-                                            `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
-                                        ) : "Date range not set"}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Guests:</td>
-                                    <td>{formData.Guestamount}</td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Bedrooms:</td>
-                                    <td>{formData.Bedrooms}</td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Bathrooms:</td>
-                                    <td>{formData.Bathrooms}</td>
-                                </tr>
-                                <tr>
-                                    <td>Number of Fixed Beds:</td>
-                                    <td>{formData.Beds}</td>
-                                </tr>
-                                <tr>
-                                    <td>Country:</td>
-                                    <td>{formData.Country}</td>
-                                </tr>
-                                <tr>
-                                    <td>Postal Code:</td>
-                                    <td>{formData.PostalCode}</td>
-                                </tr>
-                                <tr>
-                                    <td>Street + House Nr.:</td>
-                                    <td>{formData.Street}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <h3>Features:</h3>
-                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                            <tbody>
-                                {Object.entries(formData.Features).map(([feature, value]) => (
-                                    <tr key={feature}>
-                                        <td style={{ borderBottom: '1px solid #ccc' }}>{feature}:</td>
-                                        <td style={{ borderBottom: '1px solid #ccc' }}>{value ? 'Yes' : 'No'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                        <div className='buttonHolder'>
-                            <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to change
-                            </button>
-                            <button className='nextButtons' onClick={() => {
-                                handleSubmit();
-                                pageUpdater(page + 1)
-                            }}>Confirm and proceed
+                            <button className='onboarding-button' onClick={
+                                isNew ? () => {
+                                    handleSubmit();
+                                    pageUpdater(page + 1)
+                                } : () => {
+                                    handleUpdate();
+                                    pageUpdater(page + 1)
+                                }
+                            }>{isNew ? 'Confirm' : 'Confirm and update'}
                             </button>
                         </div>
-                        <p>Your accommodation ID: {formData.ID}</p>
                     </div>
                 );
-
-
-            case 6:
+            case 11:
                 if (isLoading) {
                     return (
-                        <div className="loading">
-                            <p className="spinner-text">Please wait a moment...</p>
-                            <img className="spinner" src={spinner} />
-                        </div>
+                        <main className="loading">
+                            <h2 className="spinner-text">Please wait a moment...</h2>
+                            <img className="spinner" src={spinner}/>
+                        </main>
                     );
                 } else {
                     return (
@@ -991,12 +1223,12 @@ function OnboardingHost() {
                             <h2>
                                 Congratulations! Your accommodation is being listed
                             </h2>
-                            <p>It may take a while before your accommodation is verified</p>
-                            <div className='buttonHolder'>
-                                <button className='nextButtons' onClick={() => pageUpdater(page - 1)}>Go back to
-                                    change
+                            <p className="onboardingSectionSubtitle">It may take a while before your accommodation is
+                                verified</p>
+                            <div className='button-box-last'>
+                            <button className='onboarding-button' onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
                                 </button>
-                                <button className='nextButtons' onClick={() => navigate("/hostdashboard")}>Go to
+                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard")}>Go to
                                     dashboard
                                 </button>
                             </div>

@@ -9,10 +9,12 @@ import Home from './components/home/Accommodations';
 import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomitstwo.js";
 import Release from "./components/about/release.js";
+import ReleaseTwo from "./components/about/releaseTwo.js";
+import Datasafety from "./components/about/datasafety.js";
 import Helpdesk from "./components/about/Helpdesk.js";
-import Faq from "./components/landingpage/Faq";
 import Howitworks from "./components/about/Howitworks.js";
 import Careers from "./components/careers/Careers";
+import JobDetails from "./components/careers/jobDetails.js";
 import Contact from "./components/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
@@ -42,6 +44,7 @@ import GuestReviews from "./components/guestdashboard/GuestReviews";
 import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat";
 import Chatbot from "./components/chatbot/chatbot";
+import ChatWidget from './components/chatwidget/ChatWidget';
 import FlowContext from './FlowContext'
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
@@ -58,6 +61,7 @@ import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
 import { initializeUserAttributes } from './components/utils/userAttributes';
 import PageNotFound from "./components/error/404NotFound";
+
 
 Modal.setAppElement('#root');
 
@@ -96,6 +100,8 @@ function App() {
                             <Route path="/" element={<Home searchResults={searchResults} />} />
                             <Route path="/about" element={<About />} />
                             <Route path="/release" element={<Release />} />
+                            <Route path="/releaseTwo" element={<ReleaseTwo />} />
+                            <Route path="/data-safety" element={<Datasafety />} />
                             <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} /> 
                             <Route path="/helpdesk-host" element={<Helpdesk category="host" />} /> 
                             <Route path="/how-it-works" element={<Howitworks />} />
@@ -154,6 +160,7 @@ function App() {
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />
+                            <Route path ="/job/:id" element={<JobDetails />} />
                             <Route path="/policy" element={<Policy />} />
                             <Route path="/terms" element={<Terms />} />
                             <Route path="/disclaimers" element={<Disclaimers />} />
@@ -162,6 +169,7 @@ function App() {
                             <Route path="/*" element={<PageNotFound />} />
                         </Routes>
                         {renderFooter()}
+                        <ChatWidget />
                     </div>
                     </UserProvider>
                 </AuthProvider>

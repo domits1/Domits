@@ -75,7 +75,7 @@ function HostCalendar() {
     return (
         <div className="container">
             <h2>Calendar</h2>
-            <div className="dashboard">
+            <div className="dashboardHost">
                 <Pages />
                 {isLoading ? (
                         <div>
@@ -84,7 +84,7 @@ function HostCalendar() {
                     ) : accommodations.length < 1 ? (
                         <p>No accommodations found...</p>
                     ) :
-                <div className="contentContainer">
+                <div className="contentContainer-calendar">
                     <div className="boxColumns fullColumn">
                         <div className="box locationBox selector">
                             <select className="locationBox"

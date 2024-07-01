@@ -54,7 +54,7 @@
 .personalMenuDropdown {
     position: relative;
     display: inline-block;
-    z-index: 2;
+    z-index: 1;
 }
 
 .personalMenuDropdownContent {
@@ -150,8 +150,6 @@
     word-wrap: break-word;
 }
 
-
-
 @media screen and (max-width: 650px) {
 
     .header-nav, .headerRight {
@@ -165,7 +163,7 @@
         margin-top: 20px;
     }
 
-    .headerButtons, .personalMenu, .bar {
+    .headerButtons, .personalMenu, .Search-bar{
         width: 100%;
         margin-top: 10px;
         margin-right: 0;

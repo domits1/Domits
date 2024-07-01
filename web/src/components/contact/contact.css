@@ -1,12 +1,18 @@
+.namemessage input[type="text"]{
+  width: 10px;
+  margin-right: 20px;
+}
+
 .contact {
     width: 93%;
     margin: 50px auto;
   }
 
   .contact p {
-    width: 50%;
+    width: 95%;
     color: #1a1a1a;
     font-size: 1.1em;
+    margin-bottom: 50px;
   }
   
   .contactform {
@@ -14,21 +20,23 @@
     flex-wrap: wrap;
     margin-top: 25px;
   }
-  
+
   .contact h1 {
     font-family: 'Kanit', sans-serif;
     font-weight: 500;
   }
-  
+
   .namemessage,
   .biginput {
-    flex: 1 1 calc(50% - 20px);
-    margin-right: 20px;
+    flex: 1 1 45%; 
+    margin-right: 34px; 
+    width: 20%;
   }
-  
+
   .biginput textarea {
     width: 100%;
-    height: 272px;
+    height: 240px;
+    margin-top: 10px;
     box-sizing: border-box;
     text-align: left;
     padding: 10px;
@@ -37,7 +45,7 @@
 
   .contactform input::placeholder,
   .contactform textarea::placeholder {
-  text-align: left;
+     text-align: left;
   }
   
   .contactform input:not(.biginput input) {
@@ -57,10 +65,9 @@
   
   #attachmentsbutton,
   #sendbutton {
-    width: 40%;
+    width: 47%;
     height: 40px; /* Adjusted height for laptops */
     padding: 8px 15px;
-    margin-right: 20px;
     margin-bottom: 20px;
     flex-shrink: 0;
     color: #FFF;
@@ -75,6 +82,7 @@
   
   #sendbutton {
     background: var(--primary-color);
+    margin-left: auto;
   }
   
   #attachmentsbutton:hover {
@@ -87,14 +95,8 @@
     cursor: pointer;
   }
   
-  @media (max-width: 860px) {
-    .contact p {
-      width: 100%;
-    }
-  }
-  
   /* Media query for phone screens */
-  @media screen and (max-width: 768px) {
+  @media screen and (max-width: 930px) {
     .contact {
       padding: 10px;
       margin: 10px auto;
@@ -113,21 +115,14 @@
     .biginput,
     .formbuttons {
       flex: 100%;
-      margin-right: 0;
+      width: 103%;
     }
   
     .biginput textarea {
       height: 100px;
       padding: 8px;
+      width: 103%;
     }
   
-    #attachmentsbutton,
-    #sendbutton {
-      width: 100%;
-      height: 40px;
-      padding: 8px 15px;
-      margin-right: 0;
-      margin-bottom: 20px;
-    }
   }
   

@@ -40,11 +40,14 @@
     transition: all 0.2s;
     max-height: 2em;
 }
+.listing-edit {
+    background-color: #0D9813;
+}
 .listing-delete {
     background-color: red;
 }
 .listing-draft {
-    background-color: #0D9813;
+    background-color: #003366;
 }
 .listing-delete:hover {
     background-color: darkred;

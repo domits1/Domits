@@ -1,11 +1,100 @@
 .release {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    height: 50vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: Arial, sans-serif;
 }
 
-.release h1 {
-    font-weight: 500;
+.release-header-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 50px auto;
+}
+
+.release-header {
+  margin-left: 50px;
+  text-align: left;
+}
+
+.release-header h1 {
+  font-size: 2.5em;
+  margin-bottom: 10px;
+}
+
+.release-header h4 {
+  font-size: 1.2em;
+  margin-bottom: 5px;
+}
+
+.release-header button {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1em;
+  cursor: pointer;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+.release-header button:hover {
+  background-color: #45a049;
+}
+
+.image-header {
+  width: 380px;
+  max-width: 400px;
+}
+
+.release-notes {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.release-item {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.release-item img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.release-item h4 {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+}
+
+.release-item p {
+  font-size: 1em;
+  display: none;
+}
+
+.release-item.expanded p {
+  display: block;
+}
+
+.release-item:hover {
+  transform: scale(1.05);
+}
+
+@media screen and (max-width: 768px) {
+  .release-notes {
+    grid-template-columns: 1fr;
+  }
+
+  .image-header {
+    margin-left: 0;
+    margin-top: 20px;
+    max-width: 200px;
+  }
 }

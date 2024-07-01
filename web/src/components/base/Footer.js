@@ -19,8 +19,8 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 className='footer-headers'>Navigation</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/howitworks" className='footer-links'>How it works</Link></li>
-                        <li><Link to="/why-domits" className='footer-links'>Why Domits</Link></li>
+                        <li><Link to="/how-it-works" className='footer-links'>How-it-works</Link></li>
+                        <li><Link to="/why-domits" className='footer-links'>Why-Domits</Link></li>
                         <li><Link to="/career" className='footer-links'>Jobs</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
                         <li><Link to="/release" className='footer-links'>Release</Link></li>
@@ -104,8 +104,16 @@ const Footer = () => {
                     <div className="footer-section">
                         <h4 className='footer-headers'>Office</h4>
                         <ul className='footer-lists'>
-                            <li className='footer-links'>2013 AS, Haarlem</li>
-                            <li className='footer-links'>Kinderhuissingel 6-K</li>
+                            <li className='footer-links'>
+                                <a href="https://maps.google.com/?q=2013+AS+Haarlem+Kinderhuissingel+6-K" target="_blank" rel="noopener noreferrer" className='footer-links'>
+                                    2013 AS, Haarlem
+                                </a>
+                            </li>
+                            <li className='footer-links'>
+                                <a href="https://maps.google.com/?q=2013+AS+Haarlem+Kinderhuissingel+6-K" target="_blank" rel="noopener noreferrer" className='footer-links'>
+                                    Kinderhuissingel 6-K
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
@@ -133,7 +141,7 @@ const Footer = () => {
 
             {/* Copyright Block */}
             <div className='footer-copyright'>
-                <p className='footer-copyright-text'>Rights reserved, Domits.com ©{currentYear}</p>
+                <p className='footer-copyright-text'>Rights reserved, Domits.com © {currentYear}</p>
             </div>
         </footer>
     );

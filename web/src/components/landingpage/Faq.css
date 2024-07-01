@@ -14,6 +14,45 @@
   font-weight: bolder;
 }
 
+.faq-button-container {
+  display: flex;
+  justify-content: left; 
+  align-items: left;
+  margin-bottom: 50px;
+  gap: 20px;
+}
+
+.faqButton{
+  display: flex;
+  flex-direction: row ;
+  color: white;
+  border-radius: 8px;
+  background-color: #0D9813;
+  border: 2px solid var(--primary-color);
+  padding: 10px 20px;
+  margin: 10px 0px;
+  cursor: pointer;
+  max-width: 200px; /* Set the maximum width for the buttons */
+  flex: 1; /* Ensure buttons grow to take available space */
+  text-align: center; 
+  font-weight: 500;
+  font-size: 15px;
+}
+
+.faq-box {
+  min-width: 90%;
+  border-radius: 10px;
+  margin: 10px 0;
+  padding: 15px;
+  cursor: pointer;
+  transition: max-height 0.4s ease; 
+  overflow: hidden;
+}
+
+.faqButton:hover {
+  background-color: #367a4a;
+}
+
 .category{
   color: white;
   border-radius: 8px;
@@ -31,7 +70,7 @@
   margin: 10px 0;
   padding: 15px;
   cursor: pointer;
-  transition: max-height 2s ease; 
+  transition: max-height 0.4s ease; 
   overflow: hidden;
 }
 
@@ -42,7 +81,7 @@
 
 .answer {
   overflow: hidden;
-  transition: max-height 1s ease-in-out; 
+  transition: max-height 0.4s ease-in-out; 
 }
 
 @media (max-width: 900px) {

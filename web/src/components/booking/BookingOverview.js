@@ -38,6 +38,7 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('adults'), 10);
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
+    const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
@@ -132,24 +133,24 @@ const BookingOverview = () => {
             setError('Cognito user ID or Owner Stripe ID is not available.');
             return;
         }
-    
+
         const paymentID = generateUUID();
         const userId = cognitoUserId;
         const accommodationTitle = accommodation.Title;
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100); // Convert to cents and round to ensure integer
-        const totalAmount = Math.round(basePrice * 1.15); // Total amount including 15% fee, rounding to ensure integer
+        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee); // Total amount including 15% fee, rounding to ensure integer
         const startDate = checkIn;
         const endDate = checkOut;
-    
+
         const successQueryParams = new URLSearchParams({
             paymentID,
             accommodationTitle,
             userId,
             accommodationId,
             ownerId,
-            State: "Pending",
+            State: "Accepted",
             price: totalAmount / 100, // Convert back to EUR for display
             startDate,
             endDate
@@ -165,10 +166,10 @@ const BookingOverview = () => {
             startDate,
             endDate
         }).toString();
-    
+
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
         const cancelUrl = `${currentDomain}/bookingconfirmation?${cancelQueryParams}`;
-    
+
         const checkoutData = {
             userId: cognitoUserId,
             basePrice: basePrice, // Already in cents
@@ -179,7 +180,7 @@ const BookingOverview = () => {
             cancelUrl: cancelUrl,
             connectedAccountId: ownerStripeId,
         };
-    
+
         try {
             const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/create-checkout-session', {
                 method: 'POST',
@@ -188,15 +189,15 @@ const BookingOverview = () => {
                     'Content-Type': 'application/json; charset=UTF-8',
                 },
             });
-    
+
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-    
+
             const result = await response.json();
             const stripe = await stripePromise;
             const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
-    
+
             if (error) {
                 console.error('Stripe Checkout error:', error.message);
                 setError('Stripe Checkout error: ' + error.message);
@@ -250,7 +251,9 @@ const BookingOverview = () => {
                     <form>
                         {isLoggedIn ? (
                             <>
-                                <div className="helloUsername">Hello {userData.username}!</div>
+                                <div className="form-group">
+                                    <label htmlFor="helloUsername">Hello {userData.username}!</label>
+                                </div>
                                 <div className="form-group">
                                     <label htmlFor="name">Name</label>
                                     <input type="text" id="name" name="name" defaultValue={userData.username} />
