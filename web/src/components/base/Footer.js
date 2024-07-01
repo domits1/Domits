@@ -100,8 +100,16 @@ const Footer = () => {
                     <div className="footer-section">
                         <h4 className='footer-headers'>Office</h4>
                         <ul className='footer-lists'>
-                            <li className='footer-links'>2013 AS, Haarlem</li>
-                            <li className='footer-links'>Kinderhuissingel 6-K</li>
+                            <li className='footer-links'>
+                                <a href="https://maps.google.com/?q=2013+AS+Haarlem+Kinderhuissingel+6-K" target="_blank" rel="noopener noreferrer" className='footer-links'>
+                                    2013 AS, Haarlem
+                                </a>
+                            </li>
+                            <li className='footer-links'>
+                                <a href="https://maps.google.com/?q=2013+AS+Haarlem+Kinderhuissingel+6-K" target="_blank" rel="noopener noreferrer" className='footer-links'>
+                                    Kinderhuissingel 6-K
+                                </a>
+                            </li>
                         </ul>
                     </div>
 
@@ -129,7 +137,7 @@ const Footer = () => {
 
             {/* Copyright Block */}
             <div className='footer-copyright'>
-                <p className='footer-copyright-text'>Rights reserved, Domits.com ©{currentYear}</p>
+                <p className='footer-copyright-text'>Rights reserved, Domits.com © {currentYear}</p>
             </div>
         </footer>
     );

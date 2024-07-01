@@ -20,9 +20,9 @@ const Accommodations = ({ searchResults }) => {
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
-        setCurrentPage(page);
+      setCurrentPage(page);
     }
-};
+  };
 
   const formatData = (items) => {
     return items.map((item) => ({
@@ -57,10 +57,16 @@ const Accommodations = ({ searchResults }) => {
     };
     if (searchResults && searchResults.length > 0) {
       setAccolist(formatData(searchResults));
+      setCurrentPage(1); 
     } else {
       fetchData();
     }
   }, [searchResults]);
+
+//optioneel
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
   if (loading) {
     return (
@@ -71,8 +77,6 @@ const Accommodations = ({ searchResults }) => {
       </div>
     );
   }
-
-  
 
   const handleClick = (ID) => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);

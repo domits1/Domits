@@ -84,7 +84,7 @@ function HostCalendar() {
                     ) : accommodations.length < 1 ? (
                         <p>No accommodations found...</p>
                     ) :
-                <div className="contentContainer">
+                <div className="contentContainer-calendar">
                     <div className="boxColumns fullColumn">
                         <div className="box locationBox selector">
                             <select className="locationBox"

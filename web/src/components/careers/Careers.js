@@ -1,12 +1,17 @@
 import React, { useState } from "react";
 import Jobs from "./jobs.json";
-import { useNavigate } from 'react-router-dom';
+import JobDetails from "./jobDetails";
+import { useNavigate, useParams } from 'react-router-dom';
 import "./careers.css";
 
 function Career() {
     const navigate = useNavigate();
     const navigateToContact = () => {
         navigate('/contact');
+    };
+
+    const navigateToJobDetails = (index) => {
+        navigate(`/job/${index}`);
     };
 
     const [currentPage, setCurrentPage] = useState(1);
@@ -47,7 +52,7 @@ function Career() {
             </div>
             <div className="container job-list">
                 {displayedJobs.map((job, index) => (
-                    <div className="job-box" key={index}>
+                    <div className="job-box" key={index} onClick={() => navigateToJobDetails(startIndex + index)}>
                         <div className="job-info">
                             <div className="job-title">{job.title}</div>
                             <div className="experience-level">{job.experience}</div>

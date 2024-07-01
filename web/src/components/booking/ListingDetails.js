@@ -42,6 +42,8 @@ const ListingDetails = () => {
     const [bookedDates, setBookedDates] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
+    const [cleaningFee, setCleaningFee] = useState(0);
+    const [hostID, setHostID] = useState();
 
     const featureIcons = {
         WashingMachine: Washingmashine,
@@ -74,6 +76,7 @@ const ListingDetails = () => {
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
+                setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
@@ -191,17 +194,17 @@ const ListingDetails = () => {
 
     useEffect(() => {
         const calculateTotal = () => {
-            if (!accommodation) return;
+            if (!accommodation || !checkIn || !checkOut) return;
     
             const nights = Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24));
             const basePrice = nights * accommodation.Rent * 100;
-            // const discount = 75;
-            // const cleaningFee = 100;
+            const cleaningFee = accommodation.CleaningFee ? parseFloat(accommodation.CleaningFee * 100) : 0;
             const calculatedServiceFee = basePrice * 0.15;
-            const calculatedTotalPrice = basePrice + calculatedServiceFee;
+            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee;
     
             setServiceFee(calculatedServiceFee / 100);
             setTotalPrice(calculatedTotalPrice / 100);
+            setCleaningFee(cleaningFee / 100);
         };
     
         calculateTotal();
@@ -209,10 +212,9 @@ const ListingDetails = () => {
     
 
     const handleStartChat = () => {
-        const userEmail = "nabilsalimi0229@gmail.com";
-        const recipientEmail = "jejego4569@javnoi.com";
+        const recipientId = hostID;
         const channelUUID = generateUUID();
-        localStorage.setItem(channelUUID, recipientEmail);
+        localStorage.setItem(channelUUID, recipientId);
         navigate(`/chat?channelID=${channelUUID}`);
     };
 
@@ -223,7 +225,8 @@ const ListingDetails = () => {
             checkOut,
             adults,
             kids,
-            pets
+            pets,
+            cleaningFee
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
@@ -262,6 +265,9 @@ const ListingDetails = () => {
         return !isDateBooked(date) && !isDateAfterBookedNight(date);
     };
 
+    console.log(hostID)
+
+
     return (
         <main className="container">
             <section className="detailContainer">
@@ -292,7 +298,7 @@ const ListingDetails = () => {
                                 <ul className='features'>
                                     {Object.entries(accommodation.Features).map(([feature, value]) => (
                                         value && (
-                                            <li key={feature} className='feature-item'>
+                                            <li key={feature} className='acco-feature-item'>
                                                 <img
                                                     src={featureIcons[feature]}
                                                     alt={feature}
@@ -322,6 +328,7 @@ const ListingDetails = () => {
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
+                                        <button className='button' onClick={handleStartChat} >Chat</button>
                                     </div>
                                 </section>
                                 <br />
@@ -433,10 +440,10 @@ const ListingDetails = () => {
                                             €{accommodation.Rent} a night</p>
                                         <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
                                     </div>
-                                    {/* <div className="price-item">
+                                    <div className="price-item">
                                         <p>Cleaning fee</p>
-                                        <p>€ 100</p>
-                                    </div> */}
+                                        <p>&euro;{cleaningFee}</p>
+                                    </div>
                                     <div className="price-item">
                                         <p>Domits service fee</p>
                                         <p>€{serviceFee.toFixed(2)}</p>

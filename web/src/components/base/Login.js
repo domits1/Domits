@@ -3,6 +3,7 @@ import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import logo from "../../logo.svg";
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import FlowContext from '../../FlowContext';
 
 const Login = () => {
@@ -14,6 +15,7 @@ const Login = () => {
     });
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         const setUserGroup = async () => {
@@ -88,6 +90,10 @@ const Login = () => {
         navigate('/register');
     };
 
+    const togglePasswordVisibility = () => {
+        setShowPassword(!showPassword);
+    };
+
     return (
         <>
             {isAuthenticated ? (
@@ -111,14 +117,23 @@ const Login = () => {
                             <br />
                             <label htmlFor="password" className="passwordLabel">Password:</label>
                             <br />
-                            <input
-                                id="password"
-                                className="loginInput"
-                                type="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                            />
+                            <div className="passwordContainer">
+                                <input
+                                    id="password"
+                                    className="loginInput"
+                                    type={showPassword ? "text" : "password"}
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                />
+                                <button
+                                    type="button"
+                                    className="togglePasswordButton"
+                                    onClick={togglePasswordVisibility}
+                                >
+                                    {showPassword ? <FaEye /> : <FaEyeSlash />}
+                                </button>
+                            </div>
                             <br />
                             {errorMessage && (
                                 <div className="errorText">{errorMessage}</div>
@@ -130,7 +145,6 @@ const Login = () => {
                         <div className="noAccountText">
                             No account yet? Register for free!
                         </div>
-                    
                         <button
                             onClick={handleRegisterClick}
                             className="registerButtonLogin"
