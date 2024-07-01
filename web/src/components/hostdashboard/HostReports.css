@@ -32,10 +32,15 @@ h2 {
     display: flex !important;
     flex-direction: column !important;
     width: 100% !important;
+    align-items: center;
 }
 
 .overview {
     margin-bottom: 20px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
 .overview h3 {
@@ -52,7 +57,11 @@ h2 {
 }
 
 .waterfall {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     margin-bottom: 20px !important;
+    width: 75%;
 }
 
 .waterfall h3 {
@@ -83,6 +92,10 @@ h2 {
     padding: 20px !important;
     margin-bottom: 15px !important;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 75%;
 }
 
 .reportBox h4 {
@@ -106,6 +119,8 @@ h2 {
     border-radius: 5px !important;
     cursor: pointer !important;
     transition: background-color 0.3s !important;
+    width: 24%;
+    margin-top: 5%;
 }
 
 .exportButton:hover {
