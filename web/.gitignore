@@ -7,13 +7,10 @@ web/.idea
 app/.idea
 ../.idea/
 
-
-
 # dependencies
 /node_modules
 /.pnp
 .pnp.js
-
 
 # testing
 /coverage
@@ -36,8 +33,8 @@ yarn-error.log*
 /node_modules/.cache/
 /node_modules/.cache/default-development/
 
-#amplify-do-not-edit-begin
-amplify/\#current-cloud-backend
+# amplify-do-not-edit-begin
+amplify/#current-cloud-backend
 amplify/.config/local-*
 amplify/logs
 amplify/mock-data
@@ -56,4 +53,4 @@ amplify-gradle-config.json
 amplifytools.xcconfig
 .secret-*
 **.sample
-#amplify-do-not-edit-end
+# amplify-do-not-edit-end
