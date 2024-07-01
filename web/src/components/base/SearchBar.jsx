@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker from '@hassanmojab/react-modern-calendar-datepicker';
-import { FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel, FaShip, FaTree, FaSpinner, FaTimesCircle } from 'react-icons/fa';
+import {
+  FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel,
+  FaShip, FaTree, FaSpinner, FaTimesCircle, FaUmbrellaBeach, FaUser, FaChild, FaBaby, FaPaw, FaDoorClosed
+} from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
 import './SearchBar.css';
-import { useNavigate , useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
+
 const handleButtonClick = (e) => {
   e.stopPropagation();
 };
@@ -28,6 +32,7 @@ const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, descr
   );
 });
 
+
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
@@ -40,12 +45,15 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
   const [pets, setPets] = useState(0);
+  const [rooms, setRooms] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [startDate, endDate] = dateRange;
   const [error, setError] = useState("");
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
-  const [isOpen, setIsOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+
+  const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
+
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,24 +71,17 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     };
   }, []);
 
-  const handleSelectChange = (selectedOption) => {
-    setAccommodation(selectedOption ? selectedOption.value : '');
-    setIsOpen(false);
-  };
 
-  const handleButtonClick = (e) => {
-    if (isOpen) {
-      e.stopPropagation();
-    }
-  };
+
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
     if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
     if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
     if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
     if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
+    if (rooms > 0) parts.push(`${rooms} Room${rooms > 1 ? 's' : ''}`);
     return parts.join(', ');
-  }, [adults, children, infants, pets]);
+  }, [adults, children, infants, pets, rooms]);
 
   const guestDropdownRef = useRef();
   const resetGuests = useCallback((e) => {
@@ -89,6 +90,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setChildren(0);
     setInfants(0);
     setPets(0);
+    setRooms(0);
   }, []);
 
   const toggleGuestDropdown = useCallback((e) => {
@@ -126,61 +128,109 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setIsFocused(false);
   };
 
-  const handleSelect = async (address) => {
-    setAddress(address);
+
+   const handleSelect = async (selectedAddress) => {
+    if (!selectedAddress || !selectedAddress.description) {
+      return;
+    }
+
+    const parts = selectedAddress.description.split(', ');
+    let city, country;
+
+    if (parts.length > 1) {
+      city = parts[0];
+      country = parts[parts.length - 1].trim();
+    } else {
+      country = parts[0];
+    }
+
+    setAddress(`${city ? city + ', ' : ''}${country}`);
+    setShowResults(true);
+
     try {
-      const results = await geocodeByAddress(address);
+      const results = await geocodeByAddress(selectedAddress.description);
       const latLng = await getLatLng(results[0]);
-      setShowResults(true);
     } catch (error) {
-      setShowResults(false);
     }
   };
-
   const handleClear = (event) => {
     event.preventDefault();
     setAddress('');
     setIsFocused(false);
   };
 
-
-  // Verbinding met API Gateway naar de lambda
-  const handleSearchWithDelay = () => {
+  useEffect(() => {
+    handleSearchWithDelay(false);
+  }, [accommodation, address, totalGuests]); 
+  
+  useEffect(() => {
+    if (location.state && location.state.searchResults) {
+      setSearchResults(location.state.searchResults);
+    }
+  }, [location]);
+  
+  const handleSearchWithDelay = async (shouldNavigate) => {
     setLoading(true);
-    setError("");
-    navigate('/');
-    const params = new URLSearchParams();
-    if (accommodation) params.append('type', accommodation);
-    if (address) params.append('searchTerm', address);
-    if (totalGuests > 0) params.append('guests', totalGuests);
+    setError(""); 
   
-    const searchParams = params.toString();
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${searchParams}`;
+    const queryParams = [
+      accommodation ? `type=${accommodation}` : null,
+      address ? `searchTerm=${address}` : null,
+      totalGuests > 0 ? `guests=${totalGuests}` : null,
+    ].filter(Boolean).join('&');
   
-    setTimeout(async () => {
-      try {
-        const response = await fetch(apiUrl);
-        const data = await response.json();
-        if (data.length === 0) {
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+  
+    //Cache function doesnt work right when there are accommodations that were deleted, because it saves those thats what cache does it saves the previous
+    //data that was and if accommdoation was removed you still be able to see those. That cant happend so for now it wont be
+
+    // const cachedResults = localStorage.getItem(apiUrl);
+    // if (cachedResults) {
+    //   const parsedResults = JSON.parse(cachedResults);
+    //   if (shouldNavigate) {
+    //     navigate('/', { state: { searchResults: parsedResults } });
+    //   } else {
+    //     setSearchResults(parsedResults);
+    //   }
+    //   setLoading(false);
+    //   return;
+    // }
+    try {
+      const response = await fetch(apiUrl);
+      const data = await response.json();
+      if (data.length === 0) {
+        setTimeout(() => {
           setError("No results have been found");
+        }, 500); 
+      } else {
+        localStorage.setItem(apiUrl, JSON.stringify(data));
+        if (shouldNavigate) {
+          navigate('/', { state: { searchResults: data } });
         } else {
           setSearchResults(data);
         }
-      } catch (error) {
-        console.error('Error during fetch:', error);
-        setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
-      } finally {
-        setLoading(false);
       }
-    }, 500); 
+    }
+     catch (error) {
+      console.error('Error during fetch:', error);
+      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+    } finally {
+      setLoading(false);
+    }
   };
-  
   const handleSearch = () => {
-    handleSearchWithDelay(); 
+    const shouldNavigate = location.pathname !== '/';
+    if (shouldNavigate) {
+      setSearchResults([]);
+    }
+    handleSearchWithDelay(shouldNavigate);
+    setTimeout(() => {
+      handleSearchWithDelay(shouldNavigate);
+    }, 1000);
+  
+    
   };
   
-  
-
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
     const knownAbbreviations = {
@@ -257,127 +307,128 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
       <div className="bar">
 
         <div className="location">
-          {/* <p className="searchTitle">Location</p> */}
-          <PlacesAutocomplete
-            value={address}
-            onChange={handleChange}
-            onSelect={handleSelect}
-            searchOptions={{
-              types: ['locality', 'country'],
-              language: 'en', 
-            }}>
-            {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-              <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
-                <input
-                  {...getInputProps({
-                    className: 'searchBar',
-                    onFocus: handleFocus,
-                    onBlur: handleBlur,
-                    placeholder: 'Location'
-                  })}
-                />
-                {address && isFocused && (
-                  <button
-                    className="ClearButton"
-                    onMouseDown={handleClear}
-                    style={{
-                      position: 'absolute',
-                      right: '10px',
-                      top: '50%',
-                      transform: 'translateY(-30%)',
-                      border: 'none',
-                      background: 'transparent',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <FaTimes />
-                  </button>
-                )}
-                {suggestions.length > 0 && (
+        <PlacesAutocomplete
+      value={address}
+      onChange={handleChange}
+      onSelect={handleSelect}
+      searchOptions={{
+        types: ['locality', 'country'],
+        language: 'en',
+      }}
+    >
+      {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+        <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
+          <input
+            {...getInputProps({
+              className: 'searchBar',
+              onFocus: handleFocus,
+              onBlur: handleBlur,
+              placeholder: 'Search Destination'
+            })}
+          />
+          {address && isFocused && (
+            <button
+              className="ClearButton"
+              onMouseDown={handleClear}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: isMobile ? 'translateY(-100%)' : 'translateY(-30%)',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+              }}
+            >
+              <FaTimes />
+            </button>
+          )}
+          {suggestions.length > 0 && (
+            <div
+              className="suggestions-container"
+              style={{
+                position: 'absolute',
+                top: isMobile ? '95%' : '150%',
+                left: isMobile ? -8 : -30,
+                width: isMobile ? '100%' : '135%',
+                backgroundColor: 'white',
+                borderRadius: '15px',
+                padding: isMobile ? '0.5rem' : '1rem',
+                boxShadow: '0 6px 8px rgba(0, 0, 0, 0.15)',
+              }}
+            >
+              {loading && <div>Loading <FaSpinner /></div>}
+              {suggestions.map((suggestion, index) => {
+                const parts = suggestion.description.split(', ');
+                const city = parts[0];
+                const country = parts[parts.length - 1].trim();
+                const countryCode = getCountryCode(country);
+
+                return (
                   <div
-                    className="suggestions-container"
-                    style={{
-                      position: 'absolute',
-                      top: isMobile ? '100%' : '150%',
-                      left: isMobile ? 0 : -30,
-                      width: isMobile ? '100%' : '135%',
-                      backgroundColor: 'white',
-                      borderRadius: '15px',
-                      padding: isMobile ? '0.5rem' : '1rem',
-                    }}
-                  >
-                    {loading && <div>Loading <FaSpinner /></div>}
-                    {suggestions.map((suggestion, index) => {
-                      const parts = suggestion.description.split(', ');
-                      const locality = parts.length > 1 ? parts.slice(0, -1).join(', ').substring(0, 30) : parts[0].substring(0, 30);
-                      const countryName = parts[parts.length - 1].trim().substring(0, 30);
-                      const countryCode = getCountryCode(countryName);
-
-                      return (
-                        <div
-                          key={index}
-                          {...getSuggestionItemProps(suggestion, {
-                            style: {
-                              backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                              padding: isMobile ? '1px 0px' : '20px 10px',
-                              cursor: 'pointer',
-                              transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
-                              fontSize: '1rem',
-                              color: '#000',
-                              borderBottom: '1px solid #ddd',
-                              margin: '0',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'flex-start',
-                              justifyContent: 'flex-start',
-                              transform: suggestion.active ? 'scale(1.04)' : 'none',
-                              zIndex: suggestion.active ? '1' : '0',
-                            },
-                            onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
-                            onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
-                          })}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center' }}>
-                            <ReactCountryFlag
-                              countryCode={countryCode}
-                              svg
-                              style={{
-                                marginRight: '10px',
-                                width: '20px',
-                                height: '15px',
-                                boxShadow: '2px 2px 10px #777',
-                                marginBottom: '-0.8rem'
-                              }}
-                              title={countryName}
-                            />
-                            <span>{locality}</span>
-                          </div>
-                          <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
-                            {countryName}
-                          </div>
-                        </div>
-                      );
+                    key={index}
+                    {...getSuggestionItemProps(suggestion, {
+                      style: {
+                        backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
+                        padding: isMobile ? '1px 0px' : '20px 10px',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
+                        fontSize: '1rem',
+                        color: '#000',
+                        borderBottom: '1px solid #ddd',
+                        margin: '0',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'flex-start',
+                        justifyContent: 'flex-start',
+                        transform: suggestion.active ? 'scale(1.04)' : 'none',
+                        zIndex: suggestion.active ? '1' : '0',
+                      },
+                      onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
+                      onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
+                      onClick: () => handleSelect(suggestion)
                     })}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <ReactCountryFlag
+                        countryCode={countryCode}
+                        svg
+                        style={{
+                          marginRight: '10px',
+                          width: '20px',
+                          height: '15px',
+                          boxShadow: '2px 2px 10px #777',
+                          marginBottom: '-0.8rem'
+                        }}
+                        title={country}
+                      />
+                      <span>{city}</span>
+                    </div>
+                    <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
+                      {country}
+                    </div>
                   </div>
-                )}
-              </div>
-            )}
-          </PlacesAutocomplete>
-
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </PlacesAutocomplete>
         </div>
 
-        <div className=" searchInputContainer">
-          {/* <p className="searchTitleCenterAcco searchTitleAccommodation">Accommodation</p> */}
+        <div className="searchInputContainer">
           <Select
             value={accommodation ? { label: accommodation, value: accommodation } : null}
             onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
             options={[
               { value: 'Apartment', label: <><FaBuilding /> Apartment</> },
               { value: 'House', label: <><FaHome /> House</> },
-              { value: 'Villa', label: <><FaHotel /> Villa</> },
+              { value: 'Villa', label: <><FaUmbrellaBeach /> Villa</> },
               { value: 'Boat', label: <><FaShip /> Boat</> },
               { value: 'Camper', label: <><FaCaravan /> Camper</> },
               { value: 'Cottage', label: <><FaTree /> Cottage</> },
+              { value: 'Hotel', label: <><FaHotel /> Hotel</> },
             ]}
             isSearchable={false}
             isClearable={true}
@@ -389,12 +440,12 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   ...provided,
                   width: '100%',
                   border: 'none',
-                  height: '2rem',
-                  transform: isMobile ? 'translateX(-120px)' : 'translateY(5px)',
+                  height: '2.7rem',
+                  transform: isMobile ? 'translateX(-28px)' : 'translateY(2px)',
                   boxShadow: 'none',
                   background: 'none',
                   padding: '0',
-                  margin: '0',
+                  margin: 'auto',
                   cursor: 'pointer',
                   width: isMobile ? '140%' : '150px',
                 };
@@ -404,26 +455,24 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 return {
                   ...provided,
                   backgroundColor: 'white',
-                  borderRadius: '8px',
+                  borderRadius: '10px',
                   boxShadow: '0 4px 8px rgba(0, 0, 0, 0.15)',
-                  marginTop: '15px',
-                  left: '-2rem',
-                  width: '220px',
+                  marginTop: '1rem',
+                  width: '15rem',
                   overflowX: 'hidden',
                   overflowY: 'auto',
-                  transform: isMobile ? 'translateX(-95px)' : 'none',
+                  transform: isMobile ? 'translateX(-40px)' : 'translateX(-40px)',
+                  boxShadow: '0 4px 8px rgba(0, 0, 0, 0.4)',
+                  zIndex: 9999,
                 };
               },
               indicatorSeparator: () => ({ display: 'none' }),
-              dropdownIndicator: (provided, state) => ({
-                ...provided,
-                display: state.selectProps.value ? 'none' : 'block',
-              }),
+              dropdownIndicator: () => ({ display: 'none' }),
               option: (provided, state) => ({
                 ...provided,
                 backgroundColor: state.isSelected ? '#f0f0f0' : state.isFocused ? '#e6e6e6' : 'white',
                 color: state.isFocused ? 'black' : '#666',
-                fontWeight: state.isFocused ? '600' : 'normal',
+                fontWeight: state.isFocused ? '800' : 'normal',
                 fontSize: '14px',
                 padding: '13.8px 16px',
                 display: 'flex',
@@ -438,119 +487,148 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 '&:hover': {
                   color: 'black',
                   backgroundColor: '#e6e6e6',
-                  transform: 'scale(0.96)',
+                  transform: 'scale(1)',
                 },
               }),
               clearIndicator: (provided) => ({
                 ...provided,
                 color: 'black',
-                position: 'absolute',
-                right: '0px',
-                transform: 'translateY(-15%)',
-                width: '32px',
-                height: '32px',
+
+                position: 'relative',
+                transform: 'translateY(0%)',
+                width: '35px',
+                height: '35px',
               }),
+
               singleValue: (provided) => ({
                 ...provided,
                 textAlign: 'center',
-                color: '#333',
-                fontSize: '14px',
+                fontWeight: 500,
+                color: '#000',
+                fontSize: '1rem',
               }),
             }}
           />
-          {isOpen && (
-            <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onClick={() => setIsOpen(false
-            )}></div>
-          )}
+
         </div>
 
         <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
-      <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests</p>
-      {totalGuests > 0 && (
-        <button
-          className="clear-guests"
-          onClick={resetGuests}
-          style={{
-            position: 'absolute',
-            right: '0px',
-            top: '50%',
-            transform: 'translateY(-35%)',
-            border: 'none',
-            background: 'transparent',
-            cursor: 'pointer',
-          }}
-        >
-          <FaTimes />
-        </button>
-      )}
-      
-      <p className='guestP'>{totalGuestsDescription}</p>
-      <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+          <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests • Rooms</p>
+          {totalGuests > 0 && (
+            <button
+              className="clear-guests"
+              onClick={resetGuests}
+              style={{
+                position: 'absolute',
+                right: '0.2rem',
+                top: '50%',
+                transform: 'translateY(-35%)',
+                border: 'none',
+                background: 'transparent',
+                cursor: 'pointer',
+              }}
+            >
+              <FaTimes />
+            </button>
+          )}
 
-        <GuestCounter
-          label="Adults"
-          description="Ages 16 or above"
-          value={adults}
-          onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
-          onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
-        />
-        <GuestCounter
-          label="Children"
-          description="Ages 2–16"
-          value={children}
-          onIncrement={() => incrementGuests(children, setChildren)}
-          onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
-        />
-        <GuestCounter
-          label="Infants"
-          description="Ages 0–2"
-          value={infants}
-          onIncrement={() => incrementGuests(infants, setInfants)}
-          onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
-        />
-        <GuestCounter
-          label="Pets"
-          description="Normal sized pets"
-          value={pets}
-          onIncrement={() => incrementGuests(pets, setPets)}
-          onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
-        />
-      </div>
-    </div>
+          <p className={`guestP ${hasTwoGuests ? 'nowrap' : ''}`}>
+            {totalGuestsDescription}
+          </p>
+          <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+
+            <GuestCounter
+              label={<><FaUser /> Adults</>}
+              description="Ages 16 or above"
+              value={adults}
+              onIncrement={() => setAdults(adults < 13 ? adults + 1 : adults)}
+              onDecrement={() => setAdults(adults > 0 ? adults - 1 : adults)}
+            />
+            <GuestCounter
+              label={<><FaChild /> Children</>}
+              description="Ages 2–16"
+              value={children}
+              onIncrement={() => incrementGuests(children, setChildren)}
+              onDecrement={() => setChildren(children > 0 ? children - 1 : children)}
+            />
+            <GuestCounter
+              label={<><FaBaby /> Infants</>}
+              description="Ages 0–2"
+              value={infants}
+              onIncrement={() => incrementGuests(infants, setInfants)}
+              onDecrement={() => setInfants(infants > 0 ? infants - 1 : infants)}
+            />
+            <GuestCounter
+              label={<><FaPaw /> Pets</>}
+              description="Normal sized pets"
+              value={pets}
+              onIncrement={() => incrementGuests(pets, setPets)}
+              onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
+            />
+            <GuestCounter
+              label={<><FaDoorClosed /> Rooms</>}
+              description="Amount of rooms in the Accommodation"
+              value={rooms}
+              onIncrement={() => incrementGuests(rooms, setRooms)}
+              onDecrement={() => setRooms(rooms > 0 ? rooms - 1 : rooms)}
+            />
+          </div>
+        </div>
 
 
-        <div className="check-in" >
+        <div className="check-in" style={{ position: 'relative' }}>
           <input
             className="input-calendar"
             type="text"
-            placeholder="Check in/out"
             value={startDate && endDate
               ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
               : ''}
             readOnly={true}
+            style={{ fontSize: '0.85rem' }}
           />
+          {!startDate && !endDate && (
+            <span
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -40%)',
+                color: '#0D9813',
+                fontWeight: 500,
+                fontSize: '1rem',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              Check in • out
+            </span>
+          )}
           <DatePicker
             label="Basic date picker"
             value={selectedDayRange}
             calendarClassName="responsive-calendar"
             format="MMM DD, YYYY"
-            onChange={setSelectedDayRange}
+            onChange={(range) => {
+              setSelectedDayRange(range);
+            }}
             shouldHighlightWeekends
             style={{ transform: 'translateX(-20px)' }}
             renderFooter={() => (
               <div style={{ display: 'flex', justifyContent: 'center', padding: '0.5rem 0' }}>
                 <button
                   type="button"
-                  onClick={() => setSelectedDayRange({ from: null, to: null })}
+                  onClick={() => {
+                    setSelectedDayRange({ from: null, to: null });
+                  }}
                   style={{
-                    border: 'solid',
-                    background: 'rgb(15, 188, 249)',
-                    border: '#d3d9d9',
+                    background: 'rgb(250, 50, 50)',
+                    border: 'none',
                     color: '#fff',
                     borderRadius: '0.5rem',
                     padding: '0.8rem 2.4rem',
                     cursor: 'pointer',
-                    transform: 'translateY(-30px)'
                   }}
                 >
                   Reset Dates
@@ -560,9 +638,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
           />
         </div>
 
-        <button className="searchbar-button" type="button" onClick={handleSearch}>
+        <button className={`searchbar-button `} type="button" onClick={handleSearch}>
+          <FaSearchLocation size={15} style={{ position: 'relative', right: '2px' }} className="search-icon" />
           <span className="search-text">Search</span>
-          <FaSearchLocation size={15} style={{ position: 'relative', right: '-3px' }} className="search-icon" />
         </button>
 
       </div>

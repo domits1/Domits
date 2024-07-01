@@ -98,9 +98,10 @@ const Login = () => {
                     <div className="loginTitle">Good to see you again</div>
                     <div className="loginForm">
                         <form onSubmit={handleSubmit}>
-                            <label>Email:</label>
+                            <label htmlFor="email">Email:</label>
                             <br />
                             <input
+                                id="email"
                                 className="loginInput"
                                 type="email"
                                 name="email"
@@ -108,9 +109,10 @@ const Login = () => {
                                 onChange={handleChange}
                             />
                             <br />
-                            <label className="passwordLabel">Password:</label>
+                            <label htmlFor="password" className="passwordLabel">Password:</label>
                             <br />
                             <input
+                                id="password"
                                 className="loginInput"
                                 type="password"
                                 name="password"

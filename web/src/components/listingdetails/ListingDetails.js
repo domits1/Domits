@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import "./listing.css";
+import "./listing.module.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 const ListingDetails = () => {
     const {search} = useLocation();
+    const navigate = useNavigate();
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
@@ -37,7 +38,7 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setDates(data.StartDate, data.EndDate);
+                await setDates(data.StartDate, data.EndDate);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -59,19 +60,32 @@ const ListingDetails = () => {
     };
     const setDates = (StartDate, EndDate) => {
         const today = new Date();
-        const parsedStartDate = today > new Date(StartDate) ? today : StartDate
+        const parsedStartDate = today > new Date(StartDate) ? today : new Date(StartDate)
         const parsedEndDate = new Date(EndDate);
+        const maxStart = new Date(parsedEndDate);
+        maxStart.setUTCDate(maxStart.getUTCDate() - 1);
 
-        const maxStart = new Date();
-        maxStart.setDate(parsedEndDate.getDate() - 1);
-
-        const minEnd = new Date();
-        minEnd.setDate(parsedStartDate.getDate() + 1);
+        const minEnd = new Date(parsedStartDate);
+        minEnd.setUTCDate(minEnd.getUTCDate() + 1);
         setMinStart(DateFormatterYYYY_MM_DD(parsedStartDate));
         setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
         setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
         setMaxEnd(DateFormatterYYYY_MM_DD(parsedEndDate));
     };
+    useEffect(() => {
+        const restrictDates = () => {
+            if (checkIn && !checkOut) {
+                const minEnd = new Date(checkIn);
+                minEnd.setUTCDate(minEnd.getUTCDate() + 1);
+                setMinEnd(DateFormatterYYYY_MM_DD(minEnd));
+            } else if (!checkIn && checkOut) {
+                const maxStart = new Date(checkOut);
+                maxStart.setUTCDate(maxStart.getUTCDate() - 1);
+                setMaxStart(DateFormatterYYYY_MM_DD(maxStart));
+            }
+        }
+        restrictDates();
+    }, [checkIn, checkOut]);
     const calculateTotal = () => {
         if (!accommodation) return 0;
         const nights = (new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24);
@@ -98,8 +112,21 @@ const ListingDetails = () => {
             });
         };
 
+    const handleConfirmation = () => {
+        const bookingData = {
+            checkIn: checkIn,
+            checkOut: checkOut,
+            adults: adults,
+            kids: kids,
+            pets: pets
+        }
+        console.log(bookingData);
+        const encodedData = encodeURIComponent(JSON.stringify(bookingData));
+        navigate(`/bookingdetails?data=${encodedData}`);
+    };
 
-        return (
+
+    return (
             <main className="container">
                 <section className="detailContainer">
                     <section className='detailInfo'>
@@ -197,7 +224,7 @@ const ListingDetails = () => {
                                         <option value="other">Other</option>
                                     </select>
                                 </div>
-                                <button className="reserve-button">Reserve</button>
+                                <button className="reserve-button" onClick={handleConfirmation}>Reserve</button>
                                 <p className="disclaimer">*You won't be charged yet</p>
                                 { (checkIn && checkOut) ? (
                                     <div className="price-details">

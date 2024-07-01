@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import MapView from 'react-native-maps';
 
-function FillInLocationScreen({navigation}) {
+function FillInLocationScreen({route, navigation}) {
   const [inputs, setInputs] = useState({
-    country: '',
-    postalCode: '',
-    street: '',
-    neighbourhood: '',
+    City: '',
+    Country: '',
+    Street: '',
+    PostalCode: '',
   });
 
   const handleInputChange = (key, value) => {
@@ -23,7 +23,12 @@ function FillInLocationScreen({navigation}) {
   };
 
   const goToPreviousStep = () => navigation.goBack();
-  const goToNextStep = () => navigation.navigate('selectAmenities');
+  const goToNextStep = () => {
+    const updatedListingData = {...route.params.listingData, ...inputs};
+    navigation.navigate('selectAmenities', {
+      listingData: updatedListingData,
+    });
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -41,10 +46,7 @@ function FillInLocationScreen({navigation}) {
           </View>
         ))}
         <Text style={styles.mapHeader}>What we show on Domits.com</Text>
-        <MapView style={styles.map}
-
-                 //moet nog wat gedaan worden voor de map.
-        />
+        <MapView style={styles.map} />
         <View style={styles.buttonContainer}>
           <TouchableOpacity style={styles.button} onPress={goToPreviousStep}>
             <Text style={styles.buttonText}>Previous step</Text>

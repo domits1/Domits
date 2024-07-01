@@ -35,7 +35,11 @@ const Footer = () => {
                     <h4 className='footer-headers'>Guest</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>Search and book</Link></li>
+<<<<<<< HEAD
                         <li><Link to="/help" className='footer-links'>Helpdesk</Link></li>
+=======
+                        <li><Link to="/helpdesk-guest" className='footer-links'>Helpdesk for Guest</Link></li>
+>>>>>>> eaf2c446c707343d13b6cb557264ae5a2c6f03e6
                     </ul>
                 </div>
 
@@ -44,7 +48,7 @@ const Footer = () => {
                     <h4 className='footer-headers'>Hosts</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/landing" className='footer-links'>Become a host</Link></li>
-                        <li><Link to="/" className='footer-links'>Helpdesk for hosts</Link></li>
+                        <li><Link to="/helpdesk-host" className='footer-links'>Helpdesk for hosts</Link></li>
                     </ul>
                 </div>
 
@@ -54,12 +58,12 @@ const Footer = () => {
                 <div className="footer-section borderline">
                     <h4 className='footer-headers '>Network</h4>
                     <ul className='footer-lists'>
-                        <li><Link  className='footer-links'>Traveller</Link></li>
-                        <li><Link  className='footer-links'>Hosts</Link></li>
-                        <li><Link  className='footer-links'>Developers</Link></li>
-                        <li><Link  className='footer-links'>Partners</Link></li>
-                        <li><Link  className='footer-links'>Students</Link></li>
-                        <li><Link  className='footer-links'>Startups</Link></li>
+                        <li className='footer-links'>Traveller</li>
+                        <li className='footer-links'>Hosts</li>
+                        <li className='footer-links'>Developers</li>
+                        <li className='footer-links'>Partners</li>
+                        <li className='footer-links'>Students</li>
+                        <li className='footer-links'>Startups</li>
                     </ul>
                 </div>
 

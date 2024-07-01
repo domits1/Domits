@@ -6,7 +6,6 @@ import HomeScreen from '../screens/homeScreen';
 import Messages from '../screens/messages';
 import AccountPage from '../screens/account';
 import GuestDashboard from '../screens/guestdashboard/guestDashboard';
-// import Header from '../header/header';
 import Scan from '../header/scan';
 import Pay from '../header/pay';
 import Bookings from '../header/bookings';
@@ -38,6 +37,10 @@ import selectAmenities from '../screens/hostonboarding/selectAmenities';
 import PriceProperty from '../screens/hostonboarding/PriceProperty';
 import SignupScreen from '../screens/login/signup';
 import LoginScreen from '../screens/login/loginScreen';
+import Register from '../screens/login/register';
+import ConfirmMail from '../screens/login/confirmMail';
+import HostDetailPage from '../screens/hostdashboard/HostDetailPage';
+import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -91,6 +94,13 @@ function HomeStack() {
       <Stack.Screen name="LocationFillIn" component={LocationFillIn} />
       <Stack.Screen name="selectAmenities" component={selectAmenities} />
       <Stack.Screen name="PriceProperty" component={PriceProperty} />
+      <Stack.Screen name="Register" component={Register} />
+      <Stack.Screen name="ConfirmEmail" component={ConfirmMail} />
+      <Stack.Screen name="HostDetailPage" component={HostDetailPage} />
+      <Stack.Screen
+        name="ReviewAndSubmitScreen"
+        component={ReviewAndSubmitScreen}
+      />
     </Stack.Navigator>
   );
 }

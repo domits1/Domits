@@ -28,13 +28,12 @@ function CheckoutFrontend() {
     
         const checkoutData = {
             userId: cognitoUserId,
-            amount: 50,  // example value in cents
+            amount: 50,
             currency: 'eur',
             productName: 'EERSTE BETALING JONGENS',
             successUrl: 'https://domits.com/success',
             cancelUrl: 'https://domits.com/cancel',
             connectedAccountId: 'acct_1P15xO2enydXJo9e',
-            client_reference_id: cognitoUserId  // Add this line
         };
     
         try {
@@ -62,8 +61,6 @@ function CheckoutFrontend() {
         }
     };
     
-    
-
     return (
         <button onClick={initiateStripeCheckout} disabled={!cognitoUserId}>Test Payment</button>
     );

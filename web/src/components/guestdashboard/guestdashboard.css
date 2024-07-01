@@ -11,6 +11,11 @@
     grid-template-columns: 200px auto;
 }
 
+.dashboard {
+    display: grid;
+    grid-template-columns: 200px auto;
+}
+
 .wijzers {
     display: flex;
     flex-direction: row;
@@ -75,6 +80,7 @@
     height: 100%;
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
     border-radius: 10px;
+    flex-wrap: wrap;
 
 }
 
@@ -134,11 +140,13 @@
     .dashboards {
         display: flex;
         flex-direction: column;
-        justify-content: center;
+        align-items: center;
     }
 
-    .dashboardSections {
-       
+    .dashboard {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
     }
 
     .wijzers {
@@ -155,7 +163,8 @@
 .content {
     padding: 20px;
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
+    
 }
 
 .leftContent {
