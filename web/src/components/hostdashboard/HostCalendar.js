@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from "react";
 import Pages from "./Pages";
-import Calendar from "./Calendar";
-import chevron from "../../images/icons/chevron-horizontal.png";
 import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
+import CalendarComponent from "./CalendarComponent";
+import {useNavigate} from "react-router-dom";
 
 
 function HostCalendar() {
@@ -99,7 +99,6 @@ function HostCalendar() {
                                     </option>
                                 ))}
                             </select>
-
                         </div>
                         {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
                         <div className="calendar-box">
@@ -108,7 +107,7 @@ function HostCalendar() {
                             </p>
                             <div className="locationBox">
                                 <div className="boxColumns locationContent">
-                                    <Calendar passedProp={selectedAccommodation} isNew={false}/>
+                                    <CalendarComponent/>
                                 </div>
                             </div>
                         </div>

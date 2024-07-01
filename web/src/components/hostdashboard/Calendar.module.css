@@ -4,9 +4,34 @@
     padding: 2rem;
     background: linear-gradient(to bottom left, #003366, #0D9813);
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     gap: 5%;
-
+    .calendarContent {
+        display: flex;
+        flex-direction: row;
+        gap: 5%;
+    }
+    .buttonBox {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        margin-top: 2%;
+        padding: 0.5rem;
+        background: white;
+        border-radius: 0.5rem;
+        button {
+            padding: 0.2rem;
+            border-radius: 0.5rem;
+            color: white;
+            cursor: pointer;
+        }
+        .undo {
+            background-color: red;
+        }
+        .save {
+            background-color: #0fa616;
+        }
+    }
 }
 .calendar {
     margin: auto;
@@ -98,6 +123,14 @@
         z-index: -1;
     }
     .inactive {
+        color: #cccccc;
+    }
+    .disabled {
+        color: #cccccc;
+        cursor: not-allowed;
+    }
+    .disabled:hover {
+        background: none;
         color: #cccccc;
     }
     .selected {
