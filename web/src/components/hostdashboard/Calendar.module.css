@@ -25,6 +25,9 @@
             color: white;
             cursor: pointer;
         }
+        button:hover {
+            opacity: 60%;
+        }
         .undo {
             background-color: red;
         }
@@ -62,7 +65,7 @@
             font-weight: normal;
             cursor: pointer;
         }
-        li:hover {
+        .date:hover {
             background: #003366;
             border-radius: 2em;
             color: #FFFFFF;

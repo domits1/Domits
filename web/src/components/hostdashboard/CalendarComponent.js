@@ -47,7 +47,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
             newDates.push(
                 <li
                     key={`inactive-prev-${endDatePrev - i + 1}`}
-                    className={`${styles.inactive} ${date < today ? styles.disabled : ''}`}
+                    className={`${styles.date} ${styles.inactive} ${date < today ? styles.disabled : ''}`}
                 >
                     {`${endDatePrev - i + 1}`}
                 </li>
@@ -63,7 +63,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
             newDates.push(
                 <li
                     key={`active-${i}`}
-                    className={`${isActiveDay ? styles.today : ''} 
+                    className={`${styles.date} ${isActiveDay ? styles.today : ''} 
                             ${isSelected ? styles.selected : ''} 
                             ${isStartDate ? styles.startDate : ''} 
                             ${isEndDate ? styles.endDate : ''} 
@@ -77,7 +77,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
 
         for (let i = end + 1; i <= 6; i++) {
             newDates.push(
-                <li key={`inactive-next-${i}`} className={styles.inactive}>
+                <li key={`inactive-next-${i}`} className={`${styles.date} ${styles.inactive}`}>
                     {`${i - end}`}
                 </li>
             );
