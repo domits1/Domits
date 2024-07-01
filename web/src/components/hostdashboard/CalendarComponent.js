@@ -2,12 +2,15 @@ import React, { useEffect, useState } from "react";
 import styles from './Calendar.module.css';
 import { isSameDay } from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import {useNavigate} from "react-router-dom";
 
 function CalendarComponent({ passedProp, isNew, updateDates }) {
+    const navigate = useNavigate();
     const [month, setMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
     const [dates, setDates] = useState([]);
-    const [selectedRanges, setSelectedRanges] = useState([])
+    const [selectedRanges, setSelectedRanges] = useState([]);
+    const [originalRanges, setOriginalRanges] = useState([]);
     let [dateRange, setDateRange] = useState({
         startDate: null,
         endDate:null
@@ -22,8 +25,14 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setSelectedRanges(passedProp.DateRanges);
+            setOriginalRanges(passedProp.DateRanges);
         }
     }, [passedProp.ID, passedProp.DateRanges]);
+    useEffect(() => {
+        if (passedProp && passedProp.DateRanges) {
+            setOriginalRanges(passedProp.DateRanges);
+        }
+    }, [passedProp.ID]);
 
     const renderDates = () => {
         const today = new Date();
@@ -76,6 +85,19 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
 
         setDates(newDates);
     };
+
+    const dateRangesOverlap = (range1, range2) => {
+        const { startDate: start1, endDate: end1 } = range1;
+        const { startDate: start2, endDate: end2 } = range2;
+
+        return (
+            (start1 <= start2 && (end1 === null || start2 <= end1)) ||
+            (start1 <= end2 && (end1 === null || end2 <= end1)) ||
+            (start2 <= start1 && (end2 === null || start1 <= end2)) ||
+            (start2 <= end1 && (end2 === null || end1 <= end2))
+        );
+    };
+
 
 
     useEffect(() => {
@@ -171,6 +193,41 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
         setYear(newYear);
     };
 
+    const asyncSaveDates = async () => {
+        const body = {
+            DateRanges: selectedRanges,
+            ID: passedProp.ID
+        }
+        console.log(body);
+        try {
+            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/UpdateAccommodation', {
+                method: 'PUT',
+                body: JSON.stringify(body),
+                headers: {'Content-type': 'application/json; charset=UTF-8',
+                }
+            });
+            if (!response.ok) {
+                alert("Something went wrong, please try again later...")
+                throw new Error('Failed to fetch');
+            } else {
+                const data = await response.json();
+                const jsonData = JSON.parse(data.body);
+                if (jsonData.updatedAttributes) {
+                    const updatedAttributes = jsonData.updatedAttributes;
+                    passedProp.DateRanges = updatedAttributes.DateRanges;
+                    alert("Update successful!")
+                } else {
+                    alert("Something went wrong, please try again later...")
+                    console.log("updatedAttributes is missing in the response");
+                }
+            }
+        } catch (error) {
+            console.error("Unexpected error:", error);
+        } finally {
+            navigate("/hostdashboard/listings");
+        }
+    };
+
     const handleRemoveDateRange = (indexToRemove) => {
         setSelectedRanges(prevSelectedRanges => {
             const updatedRanges = [...prevSelectedRanges];
@@ -221,8 +278,8 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                 </div>
             </section>
             {!isNew && <section className={styles.buttonBox}>
-                <button className={styles.undo} onClick={() => setSelectedRanges([])}>Undo</button>
-                <button className={styles.save}>Save</button>
+                <button className={styles.undo} onClick={() => setSelectedRanges(originalRanges)}>Undo</button>
+                <button className={styles.save} onClick={() => asyncSaveDates()}>Save</button>
             </section>}
         </main>
     );

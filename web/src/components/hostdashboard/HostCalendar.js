@@ -4,7 +4,6 @@ import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import CalendarComponent from "./CalendarComponent";
-import {useNavigate} from "react-router-dom";
 
 
 function HostCalendar() {
@@ -31,6 +30,10 @@ function HostCalendar() {
 
         setUserIdAsync();
     }, []);
+
+    const updateDates = (dateRanges) => {
+
+    };
 
     useEffect(() => {
         const fetchAccommodations = async () => {
@@ -107,7 +110,7 @@ function HostCalendar() {
                             </p>
                             <div className="locationBox">
                                 <div className="boxColumns locationContent">
-                                    <CalendarComponent/>
+                                    <CalendarComponent passedProp={selectedAccommodation} isNew={false} updateDates={updateDates}/>
                                 </div>
                             </div>
                         </div>
