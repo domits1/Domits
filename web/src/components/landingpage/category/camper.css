@@ -1,0 +1,251 @@
+p{
+    font-size: 1.2em;
+}
+.camper-container {
+    position: relative;
+    width: 100%;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: auto;
+}
+
+.banner {
+    width: 100%;
+    height: 500px;
+    object-fit: cover;
+}
+
+.camper-header-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    height: 550px;
+    width: 70%;
+    border: 3px solid white;
+    border-radius: 12px;
+    position: absolute;
+    top: 16%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+
+.camper-header-content{
+    background-color: #B57646;
+    height: 250px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    border-radius: 5px;
+}
+
+.camper-header-text {
+    padding-left: 20px;
+    color: white;
+    font-size: 1.6em;
+}
+
+.h1-first{
+    margin-top: 33px;
+}
+
+.h1-second {
+    color: #4B1002; 
+}
+
+.host-button {
+    background-color: #4B1002; 
+    color: white;
+    border: none;
+    padding: 20px 40px;
+    font-size: 1.4em;
+    cursor: pointer;
+    border-radius: 12px;
+    margin: 60px;
+    display: flex;
+    justify-content: end;
+    align-items: flex-end;
+}
+
+.host-button:hover {
+    background-color: #601502;
+}
+
+.discover-container{
+    text-align: center;
+    border: 3px solid #B57646;
+    border-radius: 5px;
+    margin-top: 250px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 10px;
+    width: 70%;
+}
+
+.discover-text{
+    text-align: left;
+    font-size: 1.2em;
+    padding: 20px 38px;
+}
+
+.discover-text p{
+    padding: 0;
+}
+
+.discover-images1 h3, p{
+    text-align: left;
+    padding-left: 12px;
+}
+
+.discover-images {
+    display: flex;
+    margin: 0 auto;
+    justify-content: center;
+    width: 100%; 
+    flex-wrap: wrap; 
+}
+
+.booking-button {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 240px;
+    font-size: 1em;
+    cursor: pointer;
+    border-radius: 5px;
+    margin: 7px;
+}
+
+.booking-button:hover {
+    background-color: #45a049;
+}
+
+.booking-review{
+    margin-top: 39px;
+    margin-left: 20px;
+    border: 1px solid #55bcbc;
+    border-radius: 12px;
+    padding-bottom: 30px;
+}
+
+.review-container{
+    text-align: center;
+    margin: 120px auto;
+    padding: 10px;
+    width: 70%;
+    max-height: 80%;
+    flex-grow: inherit;
+}
+
+.review-booking-test {
+    display: flex;
+    justify-content: space-between; 
+    align-items: flex-start; 
+}
+
+.booking-image{
+    margin-top:40px
+}
+
+.reviewer-header {
+    display: flex;
+    align-items: center; 
+    margin: 20px;
+}
+
+.reviewer-content {
+    padding: 6px;
+}
+
+.reviewer-header h3 {
+    margin-left: 15px; 
+    align-self: center; 
+    font-weight: bold;
+}
+
+img[alt="stars"] {
+    width: 40%;
+    height: auto; 
+    margin-top: 20px;
+    display: block; 
+    margin-left: auto;
+    max-width: 100%; 
+}
+
+.day{
+    font-size: 15px;
+    font-weight: 300;
+}
+
+@media (max-width: 768px) {
+    .camper-header-container {
+        height: 300px;
+        width: 90%;
+        top: 10%;
+        border: 2px solid white;
+    }
+
+    .camper-header-content {
+        flex-direction: column;
+        justify-content: center;
+        height: auto;
+    }
+
+    .camper-header-text {
+        font-size: 1.2em;
+        padding: 10px;
+    }
+
+    .host-button {
+        font-size: 1em;
+        padding: 10px 20px;
+        margin: 20px;
+    }
+
+    .discover-container {
+        width: 90%;
+        margin-top: 150px;
+    }
+
+    .discover-text {
+        font-size: 1em;
+        padding: 10px 20px;
+    }
+
+    .discover-images {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .discover-images1 {
+        width: 100%;
+        margin-bottom: 20px; 
+    }
+
+    .booking-button {
+        padding: 10px 50px;
+        font-size: 1em;
+    }
+
+    .review-container {
+        width: 90%;
+    }
+
+    .review-booking-test {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .reviewer-header {
+        margin: 20px 0;
+    }
+
+    .reviewer-content {
+        margin: 20px 0;
+    }
+
+    img[alt="stars"] {
+        width: 80%;
+        margin: 10px auto;
+    }
+}
