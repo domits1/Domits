@@ -1,105 +1,113 @@
 .container {
-    padding: 20px;
+    padding: 20px !important;
 }
 
 h2 {
-    color: #333;
-    margin-bottom: 20px;
-    font-size: 24px;
-    text-align: center;
+    color: #333 !important;
+    margin-bottom: 20px !important;
+    font-size: 24px !important;
+    text-align: center !important;
 }
 
 .dashboard {
-    display: flex;
-    justify-content: center;
+    display: flex !important;
+    justify-content: flex-start !important; /* Ensures the tabs stay to the left */
+    width: 100% !important;
+}
+
+.tabsContainer {
+    flex: 0 0 auto !important; /* Prevents the tabs from stretching */
 }
 
 .contentContainer {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    max-width: 800px !important;
+    margin: 0 auto !important; /* Centers the contentContainer */
 }
 
 .reportsSection {
-    width: 100%;
-    max-width: 800px;
+    display: flex !important;
+    flex-direction: column !important;
+    width: 100% !important;
 }
 
 .overview {
-    margin-bottom: 20px;
+    margin-bottom: 20px !important;
 }
 
 .overview h3 {
-    font-size: 20px;
-    color: #555;
+    font-size: 20px !important;
+    color: #555 !important;
 }
 
 .chart {
-    margin-bottom: 20px;
+    margin-bottom: 20px !important;
 }
 
 .summary {
-    margin-bottom: 20px;
+    margin-bottom: 20px !important;
 }
 
 .waterfall {
-    margin-bottom: 20px;
+    margin-bottom: 20px !important;
 }
 
 .waterfall h3 {
-    font-size: 20px;
-    color: #555;
+    font-size: 20px !important;
+    color: #555 !important;
 }
 
 .waterfall table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 20px !important;
 }
 
 .waterfall th, .waterfall td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
+    border: 1px solid #ddd !important;
+    padding: 8px !important;
+    text-align: left !important;
 }
 
 .waterfall th {
-    background-color: #f2f2f2;
+    background-color: #f2f2f2 !important;
 }
 
 .reportBox {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 20px;
-    margin-bottom: 15px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9 !important;
+    border: 1px solid #ddd !important;
+    border-radius: 5px !important;
+    padding: 20px !important;
+    margin-bottom: 15px !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
 }
 
 .reportBox h4 {
-    margin-top: 0;
-    font-size: 18px;
-    color: #333;
+    margin-top: 0 !important;
+    font-size: 18px !important;
+    color: #333 !important;
 }
 
 .reportBox p {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 10px;
+    font-size: 14px !important;
+    color: #666 !important;
+    margin-bottom: 10px !important;
 }
 
 .exportButton {
-    padding: 10px 15px;
-    font-size: 14px;
-    color: #fff;
-    background-color: #007bff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    padding: 10px 15px !important;
+    font-size: 14px !important;
+    color: #fff !important;
+    background-color: #007bff !important;
+    border: none !important;
+    border-radius: 5px !important;
+    cursor: pointer !important;
+    transition: background-color 0.3s !important;
 }
 
 .exportButton:hover {
-    background-color: #0056b3;
+    background-color: #0056b3 !important;
 }

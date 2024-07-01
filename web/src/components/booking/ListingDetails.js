@@ -43,6 +43,7 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
+    const [hostID, setHostID] = useState();
 
     const featureIcons = {
         WashingMachine: Washingmashine,
@@ -75,6 +76,7 @@ const ListingDetails = () => {
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
+                setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
@@ -210,10 +212,9 @@ const ListingDetails = () => {
     
 
     const handleStartChat = () => {
-        const userEmail = "nabilsalimi0229@gmail.com";
-        const recipientEmail = "jejego4569@javnoi.com";
+        const recipientId = hostID;
         const channelUUID = generateUUID();
-        localStorage.setItem(channelUUID, recipientEmail);
+        localStorage.setItem(channelUUID, recipientId);
         navigate(`/chat?channelID=${channelUUID}`);
     };
 
@@ -263,6 +264,9 @@ const ListingDetails = () => {
     const filterBookedDates = (date) => {
         return !isDateBooked(date) && !isDateAfterBookedNight(date);
     };
+
+    console.log(hostID)
+
 
     return (
         <main className="container">
@@ -324,6 +328,7 @@ const ListingDetails = () => {
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
+                                        <button className='button' onClick={handleStartChat} >Chat</button>
                                     </div>
                                 </section>
                                 <br />

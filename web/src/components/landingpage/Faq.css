@@ -45,7 +45,7 @@
   margin: 10px 0;
   padding: 15px;
   cursor: pointer;
-  transition: max-height 2s ease; 
+  transition: max-height 0.4s ease; 
   overflow: hidden;
 }
 
@@ -70,7 +70,7 @@
   margin: 10px 0;
   padding: 15px;
   cursor: pointer;
-  transition: max-height 2s ease; 
+  transition: max-height 0.4s ease; 
   overflow: hidden;
 }
 
@@ -81,7 +81,7 @@
 
 .answer {
   overflow: hidden;
-  transition: max-height 1s ease-in-out; 
+  transition: max-height 0.4s ease-in-out; 
 }
 
 @media (max-width: 900px) {

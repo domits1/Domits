@@ -101,6 +101,8 @@ export const listTodos = /* GraphQL */ `
 export const getChat = /* GraphQL */ `query GetChat($id: ID!) {
   getChat(id: $id) {
     id
+    userId
+    recipientId
     text
     email
     recipientEmail
@@ -120,6 +122,8 @@ export const listChats = /* GraphQL */ `query ListChats(
   listChats(filter: $filter, limit: $limit, nextToken: $nextToken) {
     items {
       id
+      userId
+      recipientId
       text
       email
       recipientEmail
