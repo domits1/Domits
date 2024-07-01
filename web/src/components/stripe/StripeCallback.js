@@ -10,7 +10,7 @@ const StripeCallback = () => {
         const state = urlParams.get('state');
 
         if (code && state) {
-            fetch('https://your-backend.com/stripe/callback', {
+            fetch('https://jhkeknu1w3.execute-api.eu-north-1.amazonaws.com/dev', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
