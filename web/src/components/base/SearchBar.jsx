@@ -11,6 +11,8 @@ import Select from 'react-select';
 import { countries } from 'country-data';
 import './SearchBar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
+import Script from 'react-load-script';
+
 
 
 export const SearchBar = ({ setSearchResults, setLoading }) => {
@@ -31,13 +33,20 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isMobile, setIsMobile] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  const handleScriptLoad = () => {
+    setScriptLoaded(true);
+  };
+
+ 
 
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
 
   const handleButtonClick = (e) => {
     e.stopPropagation();
   };
-  
+
   const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
     return (
       <div className="Search-guestCounter" onClick={handleButtonClick}>
@@ -296,99 +305,111 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         {(showSearchBar || !isMobile) && (
           <div className="Search-bar">
             <div className="Search-location">
-              <PlacesAutocomplete
-                value={address}
-                onChange={handleChange}
-                onSelect={handleSelect}
-                searchOptions={{
-                  types: ['locality', 'country'],
-                  language: 'en',
-                }}
-              >
-                {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-                  <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
-                    <input
-                      {...getInputProps({
-                        className: 'searchBar_inputfield',
-                        type: 'search',
-                        placeholder: 'Search Destination'
-                      })}
-                    />
 
-                    {suggestions.length > 0 && (
-                      <div
-                        className="suggestions-container"
-                        style={{
-                          position: 'absolute',
-                          top: isMobile ? '120%' : '150%',
-                          left: isMobile ? -8 : -30,
-                          width: isMobile ? '100%' : '135%',
-                          backgroundColor: 'white',
-                          borderRadius: '15px',
-                          padding: isMobile ? '0.5rem' : '1rem',
-                          boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)',
-                          zIndex: '999',
-                        }}
-                      >
-                        {loading && <div>Loading <FaSpinner /></div>}
-                        {suggestions.map((suggestion, index) => {
-                          const parts = suggestion.description.split(', ');
-                          const city = parts[0];
-                          const country = parts[parts.length - 1].trim();
-                          const countryCode = getCountryCode(country);
-
-                          return (
-                            <div
-                              key={index}
-                              {...getSuggestionItemProps(suggestion, {
-                                style: {
-                                  backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                                  padding: isMobile ? '1px 0px' : '20px 10px',
-                                  cursor: 'pointer',
-                                  transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
-                                  fontSize: '1rem',
-                                  color: '#000',
-                                  borderBottom: '1px solid #ddd',
-                                  margin: '0',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'flex-start',
-                                  justifyContent: 'flex-start',
-                                  transform: suggestion.active ? 'scale(1.04)' : 'none',
-                                  zIndex: suggestion.active ? '1' : '0',
-                                },
-                                onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
-                                onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
-                                onClick: () => handleSelect(suggestion)
-                              })}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <ReactCountryFlag
-                                  countryCode={countryCode}
-                                  svg
-                                  style={{
-                                    marginRight: '10px',
-                                    width: '20px',
-                                    height: '15px',
-                                    boxShadow: '2px 2px 10px #777',
-                                    marginBottom: '-0.8rem'
-                                  }}
-                                  title={country}
-                                />
-                                <span>{city}</span>
-                              </div>
-                              <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
-                                {country}
-                              </div>
-                            </div>
-                          );
+              <Script
+                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`}
+                onLoad={handleScriptLoad}
+              />
+              {scriptLoaded ? (
+                <PlacesAutocomplete
+                  value={address}
+                  onChange={handleChange}
+                  onSelect={handleSelect}
+                  searchOptions={{
+                    types: ['locality', 'country'],
+                    language: 'en',
+                  }}
+                >
+                  {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+                    <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
+                      <input
+                        {...getInputProps({
+                          className: 'searchBar_inputfield',
+                          type: 'search',
+                          placeholder: 'Search Destination'
                         })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </PlacesAutocomplete>
+                      />
+
+                      {suggestions.length > 0 && (
+                        <div
+                          className="suggestions-container"
+                          style={{
+                            position: 'absolute',
+                            top: isMobile ? '120%' : '150%',
+                            left: isMobile ? -8 : -30,
+                            width: isMobile ? '100%' : '135%',
+                            backgroundColor: 'white',
+                            borderRadius: '15px',
+                            padding: isMobile ? '0.5rem' : '1rem',
+                            boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)',
+                            zIndex: '999',
+                          }}
+                        >
+                          {loading && <div>Loading <FaSpinner /></div>}
+                          {suggestions.map((suggestion, index) => {
+                            const parts = suggestion.description.split(', ');
+                            const city = parts[0];
+                            const country = parts[parts.length - 1].trim();
+                            const countryCode = getCountryCode(country);
+
+                            return (
+                              <div
+                                key={index}
+                                {...getSuggestionItemProps(suggestion, {
+                                  style: {
+                                    backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
+                                    padding: isMobile ? '1px 0px' : '20px 10px',
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
+                                    fontSize: '1rem',
+                                    color: '#000',
+                                    borderBottom: '1px solid #ddd',
+                                    margin: '0',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                    justifyContent: 'flex-start',
+                                    transform: suggestion.active ? 'scale(1.04)' : 'none',
+                                    zIndex: suggestion.active ? '1' : '0',
+                                  },
+                                  onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
+                                  onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
+                                  onClick: () => handleSelect(suggestion)
+                                })}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                  <ReactCountryFlag
+                                    countryCode={countryCode}
+                                    svg
+                                    style={{
+                                      marginRight: '10px',
+                                      width: '20px',
+                                      height: '15px',
+                                      boxShadow: '2px 2px 10px #777',
+                                      marginBottom: '-0.8rem'
+                                    }}
+                                    title={country}
+                                  />
+                                  <span>{city}</span>
+                                </div>
+                                <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
+                                  {country}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </PlacesAutocomplete>
+              ) : (
+                <div>Loading Google Maps...</div>
+              )}
             </div>
+
+
+
 
             <div className="searchInputContainer">
               <Select
