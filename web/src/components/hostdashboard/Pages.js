@@ -131,10 +131,6 @@ function Pages() {
               )}
           </div>
           <div className="dashboardSection section-1 host-navigation">
-              <div className="wijzer addAcco" onClick={() => navigate("/enlist")} style={{maxWidth: 250,}}>
-                  <img src={add} alt="add"></img>
-                  <p>Add new accommodation</p>
-              </div>
               <div className="wijzer" onClick={() => navigate("/hostdashboard")}>
                   <img src={dashboard} alt="Dashboard"></img>
                   <p>Dashboard</p>
