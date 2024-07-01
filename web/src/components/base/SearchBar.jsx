@@ -306,7 +306,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
           <div className="Search-bar">
             <div className="Search-location">
 
-              <Script
+              <Script 
                 url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`}
                 onLoad={handleScriptLoad}
               />
@@ -325,7 +325,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                       <input
                         {...getInputProps({
                           className: 'searchBar_inputfield',
-                          type: 'search',
+                          type: 'search' ,
                           placeholder: 'Search Destination'
                         })}
                       />
@@ -440,7 +440,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                       padding: '0',
                       margin: 'auto',
                       cursor: 'pointer',
-                      width: isMobile ? '100%' : '150px',
+                      width: isMobile ? '100%' : '8.7rem',
                     };
                   },
                   menu: (provided, state) => {
