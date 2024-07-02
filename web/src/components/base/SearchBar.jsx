@@ -8,7 +8,7 @@ import {
   FaShip, FaTree, FaSpinner, FaTimesCircle, FaUmbrellaBeach, FaUser, FaChild, FaBaby, FaPaw, FaSearch,
 } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
-import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
+import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
 import './SearchBar.css';
@@ -159,7 +159,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     try {
       const results = await geocodeByAddress(selectedAddress.description);
-      const latLng = await getLatLng(results[0]);
     } catch (error) {
     }
   };
@@ -167,7 +166,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   useEffect(() => {
     handleSearchWithDelay(false);
   }, [accommodation, address, totalGuests]);
-
 
   //There is a bug that when you press on a accommodation and decide to go back to homepage the accommodations wont load the bug fixable
   //in these function from 175 - 231.
@@ -237,8 +235,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
       handleSearchWithDelay(shouldNavigate);
     }, 1300);
   };
-
-
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -320,7 +316,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             <div className="Search-location">
 
               <Script
-                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&loading=async&libraries=places`}
+                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`}
                 onLoad={handleScriptLoad}
               />
               {scriptLoaded ? (
@@ -492,7 +488,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     '&:hover': {
                       color: 'black',
                       backgroundColor: '#e6e6e6',
-                      transform: 'scale(1)' ,
+                      transform: 'scale(1)',
                     },
                   }),
                   clearIndicator: (provided) => ({
