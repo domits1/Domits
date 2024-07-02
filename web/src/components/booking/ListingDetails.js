@@ -312,8 +312,6 @@ const ListingDetails = () => {
         return !isDateBooked(date) && !isDateAfterBookedNight(date);
     };
 
-    console.log(hostID)
-
 
     return (
         <main className="container">
