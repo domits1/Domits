@@ -13,6 +13,7 @@ const HostRevenues = () => {
     const [paymentsData, setPaymentsData] = useState(null);
     const [loading, setLoading] = useState(true);
 
+    // Fetch the current user's information
     useEffect(() => {
         const setUserIdAsync = async () => {
             try {
@@ -26,23 +27,40 @@ const HostRevenues = () => {
         setUserIdAsync();
     }, []);
 
+    // Determine the correct redirect URI based on the hostname
+    const getRedirectUri = () => {
+        const hostname = window.location.hostname;
+        if (hostname === 'domits.com') {
+            return 'https://domits.com/stripe/callback';
+        } else {
+            return 'https://acceptance.domits.com/stripe/callback';
+        }
+    };
+
+    // Handle Stripe OAuth flow initiation
     const handleStripeOAuth = () => {
         const clientId = 'ca_PULlrr0bwd0krdUxRljDVciQ6B5wUZPZ';
-        const redirectUri = 'https://your-app.com/stripe/callback'; // Replace with your redirect URI
+        const redirectUri = getRedirectUri();
         const state = userId;
         const stripeOAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${clientId}&scope=read_write&redirect_uri=${redirectUri}&state=${state}`;
+        console.log("Redirecting to Stripe OAuth URL:", stripeOAuthUrl);
         window.location.href = stripeOAuthUrl;
     };
 
+    // Handle the OAuth callback
     useEffect(() => {
         const fetchStripeAccount = async () => {
             const urlParams = new URLSearchParams(window.location.search);
             const code = urlParams.get('code');
             const state = urlParams.get('state');
 
+            console.log("URL Params:", window.location.search);
+            console.log("Code:", code);
+            console.log("State:", state);
+
             if (code && state) {
                 try {
-                    const response = await fetch('https://your-backend.com/stripe/callback', {
+                    const response = await fetch('https://jhkeknu1w3.execute-api.eu-north-1.amazonaws.com/dev', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -58,6 +76,7 @@ const HostRevenues = () => {
                     }
 
                     const data = await response.json();
+                    console.log("Stripe Account Data:", data);
                     setStripeAccountId(data.stripe_user_id);
                 } catch (error) {
                     console.error("OAuth Error:", error);
@@ -70,6 +89,7 @@ const HostRevenues = () => {
         }
     }, [stripeAccountId]);
 
+    // Fetch payments data from Stripe
     useEffect(() => {
         const fetchStripePaymentsData = async () => {
             if (!stripeAccountId) {
@@ -89,6 +109,7 @@ const HostRevenues = () => {
                 }
 
                 const data = await response.json();
+                console.log("Payments Data:", data);
                 setPaymentsData(data.data);
                 setLoading(false);
             } catch (error) {
