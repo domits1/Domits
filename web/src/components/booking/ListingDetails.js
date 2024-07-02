@@ -18,6 +18,30 @@ import FirstAidKit from "../../images/icons/FirstAidKit.png";
 import Kitchen from "../../images/icons/Kitchen.png";
 import Onsiteparking from "../../images/icons/Onsiteparking.png";
 import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import Armchair from "../../images/icons/armchair.png";
+import BabyMonitor from "../../images/icons/baby-monitor.png";
+import Baby from "../../images/icons/baby.png";
+import Backyard from "../../images/icons/backyard.png";
+import Blender from "../../images/icons/blender.png";
+import BoardGame from "../../images/icons/board-game.png";
+import Bus from "../../images/icons/bus.png";
+import Car from "../../images/icons/car.png";
+import ChargingStation from "../../images/icons/charging-station.png";
+import CheckIn from "../../images/icons/check-in.png";
+import Cleaner from "../../images/icons/cleaner.png";
+import Clothes from "../../images/icons/clothes.png";
+import CoffeeTable from "../../images/icons/coffee-table.png";
+import Crib from "../../images/icons/crib.png";
+import Dishwasher from "../../images/icons/dishwasher.png";
+import Food from "../../images/icons/food.png";
+import Gate from "../../images/icons/gate.png";
+import GraphicDesign from "../../images/icons/graphic-design.png";
+import Grill from "../../images/icons/grill.png";
+import HighChair from "../../images/icons/high-chair.png";
+import HotTub from "../../images/icons/hot-tub.png";
+import CoffeeMachine from "../../images/icons/coffee-machine.png";
+import AlarmClock from "../../images/icons/alarm-clock.png";
+import AntiqueBalcony from "../../images/icons/antique-balcony.png";
 import deleteIcon from "../../images/icons/cross.png";
 
 const ListingDetails = () => {
@@ -56,6 +80,30 @@ const ListingDetails = () => {
         Airconditioning: Airconditioning,
         FirstAidKit: FirstAidKit,
         Kitchen: Kitchen,
+        Armchair: Armchair,
+        BabyMonitor: BabyMonitor,
+        Baby: Baby,
+        Backyard: Backyard,
+        Blender: Blender,
+        BoardGame: BoardGame,
+        Bus: Bus,
+        Car: Car,
+        ChargingStation: ChargingStation,
+        CheckIn: CheckIn,
+        Cleaner: Cleaner,
+        Clothes: Clothes,
+        CoffeeTable: CoffeeTable,
+        Crib: Crib,
+        Dishwasher: Dishwasher,
+        Food: Food,
+        Gate: Gate,
+        GraphicDesign: GraphicDesign,
+        Grill: Grill,
+        HighChair: HighChair,
+        HotTub: HotTub,
+        CoffeeMachine: CoffeeMachine,
+        AlarmClock: AlarmClock,
+        AntiqueBalcony: AntiqueBalcony,
     };
 
     useEffect(() => {
