@@ -27,10 +27,20 @@ const HostRevenues = () => {
         setUserIdAsync();
     }, []);
 
+    // Determine the correct redirect URI based on the hostname
+    const getRedirectUri = () => {
+        const hostname = window.location.hostname;
+        if (hostname === 'domits.com') {
+            return 'https://domits.com/stripe/callback';
+        } else {
+            return 'https://acceptance.domits.com/stripe/callback';
+        }
+    };
+
     // Handle Stripe OAuth flow initiation
     const handleStripeOAuth = () => {
         const clientId = 'ca_PULlrr0bwd0krdUxRljDVciQ6B5wUZPZ';
-        const redirectUri = 'https://domits.com/stripe/callback'; // Replace with your redirect URI
+        const redirectUri = getRedirectUri();
         const state = userId;
         const stripeOAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${clientId}&scope=read_write&redirect_uri=${redirectUri}&state=${state}`;
         console.log("Redirecting to Stripe OAuth URL:", stripeOAuthUrl);
