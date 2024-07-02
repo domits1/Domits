@@ -320,7 +320,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             <div className="Search-location">
 
               <Script
-                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`}
+                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`}
                 onLoad={handleScriptLoad}
               />
               {scriptLoaded ? (
