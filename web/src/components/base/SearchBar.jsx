@@ -320,7 +320,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             <div className="Search-location">
 
               <Script
-                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places&loading=async`}
+                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&loading=async&libraries=places`}
                 onLoad={handleScriptLoad}
               />
               {scriptLoaded ? (
@@ -352,7 +352,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                             left: isMobile ? -8 : -30,
                             width: isMobile ? '100%' : '135%',
                             backgroundColor: 'white',
-                            borderRadius: '15px',
+                            borderRadius: '1rem',
                             padding: isMobile ? '0.5rem' : '1rem',
                             boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)',
                             zIndex: '999',
@@ -492,7 +492,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     '&:hover': {
                       color: 'black',
                       backgroundColor: '#e6e6e6',
-                      transform: 'scale(1)',
+                      transform: 'scale(1)' ,
                     },
                   }),
                   clearIndicator: (provided) => ({
