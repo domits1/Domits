@@ -1,3 +1,5 @@
+// For explenation on how search works: https://github.com/domits1/Domits/wiki/Web-Search
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
@@ -11,26 +13,7 @@ import Select from 'react-select';
 import { countries } from 'country-data';
 import './SearchBar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-
-const handleButtonClick = (e) => {
-  e.stopPropagation();
-};
-
-const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
-  return (
-    <div className="guestCounter" onClick={handleButtonClick}>
-      <div>
-        <p className="guestLabel">{label}</p>
-        <p className="guestDescription">{description}</p>
-      </div>
-      <div className="controls">
-        <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
-        <span>{value}</span>
-        <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
-      </div>
-    </div>
-  );
-});
+import Script from 'react-load-script';
 
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -38,7 +21,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [dateRange, setDateRange] = useState([null, null]);
   const [accommodation, setAccommodation] = useState('');
   const [address, setAddress] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [adults, setAdults] = useState(0);
   const [children, setChildren] = useState(0);
@@ -51,16 +33,40 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isMobile, setIsMobile] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [scriptLoaded, setScriptLoaded] = useState(false);
+
+  const handleScriptLoad = () => {
+    setScriptLoaded(true);
+  };
 
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
+
+  const handleButtonClick = (e) => {
+    e.stopPropagation();
+  };
+
+  const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
+    return (
+      <div className="Search-guestCounter" onClick={handleButtonClick}>
+        <div>
+          <p className="Search-guestLabel">{label}</p>
+          <p className="Search-guestDescription">{description}</p>
+        </div>
+        <div className="Search-controls">
+          <button onClick={(e) => { handleButtonClick(e); onDecrement(); }} disabled={value <= 0}>-</button>
+          <span>{value}</span>
+          <button onClick={(e) => { handleButtonClick(e); onIncrement(); }}>+</button>
+        </div>
+      </div>
+    );
+  });
 
   const navigate = useNavigate();
   const location = useLocation();
 
-
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 730);
+      setIsMobile(window.innerWidth <= 768);
     };
 
     window.addEventListener('resize', handleResize);
@@ -126,6 +132,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setAddress(address);
   };
 
+  const incrementGuests = (guestType, setGuestType) => {
+    setGuestType(prev => prev < 13 ? prev + 1 : prev);
+    if (adults === 0) {
+      setAdults(1);
+    }
+  };
+
   const handleSelect = async (selectedAddress) => {
     if (!selectedAddress || !selectedAddress.description) {
       return;
@@ -155,6 +168,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     handleSearchWithDelay(false);
   }, [accommodation, address, totalGuests]);
 
+
+  //There is a bug that when you press on a accommodation and decide to go back to homepage the accommodations wont load the bug fixable
+  //in these function from 175 - 231.
   useEffect(() => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
@@ -165,13 +181,22 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setLoading(true);
     setError("");
 
-    const queryParams = [
-      accommodation ? `type=${accommodation}` : null,
-      address ? `searchTerm=${address}` : null,
-      totalGuests > 0 ? `guests=${totalGuests}` : null,
-    ].filter(Boolean).join('&');
+    const queryParams = new URLSearchParams();
 
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+    if (accommodation) {
+      queryParams.append('type', accommodation);
+    }
+
+    if (address) {
+      queryParams.append('searchTerm', address);
+    }
+
+    if (totalGuests > 0) {
+      queryParams.append('guests', totalGuests);
+    }
+
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams.toString()}`;
+
 
     try {
       const response = await fetch(apiUrl);
@@ -210,8 +235,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     handleSearchWithDelay(shouldNavigate);
     setTimeout(() => {
       handleSearchWithDelay(shouldNavigate);
-    }, 1000);
+    }, 1300);
   };
+
+
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -242,6 +269,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
+
   // calendar gedeelte
   useEffect(() => {
     if (selectedDayRange.from && selectedDayRange.to) {
@@ -265,7 +293,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     }
   }, [selectedDayRange]);
 
-
   //voor de date format
   function formatDateToEnglish(date) {
     const options = { day: 'numeric', month: 'short' };
@@ -276,119 +303,122 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setError(null);
   };
 
-  const incrementGuests = (guestType, setGuestType) => {
-    setGuestType(prev => prev < 13 ? prev + 1 : prev);
-    if (adults === 0) {
-      setAdults(1);
-    }
-  };
-
   return (
     <>
       {error && (
-        <div className="error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
+        <div className="Search-error-message" onClick={handleClick}>{error} <FaTimesCircle /></div>)}
       <div className="bar-container">
         {isMobile && (
           <button className="mobile-search-button" onClick={toggleSearchBar}>
-            <FaSearch size={15} /> Search & Filter Accommodations
+            <FaSearchLocation size={15} /> Search & Filter Accommodations
 
           </button>
         )}
 
         {(showSearchBar || !isMobile) && (
-          <div className="bar">
-            <div className="location">
-              <PlacesAutocomplete
-                value={address}
-                onChange={handleChange}
-                onSelect={handleSelect}
-                searchOptions={{
-                  types: ['locality', 'country'],
-                  language: 'en',
-                }}
-              >
-                {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-                  <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
-                    <input
-                      {...getInputProps({
-                        className: 'searchBar',
-                        type: 'search',
-                        placeholder: 'Search Destination'
-                      })}
-                    />
+          <div className="Search-bar">
+            <div className="Search-location">
 
-                    {suggestions.length > 0 && (
-                      <div
-                        className="suggestions-container"
-                        style={{
-                          position: 'absolute',
-                          top: isMobile ? '120%' : '150%',
-                          left: isMobile ? -8 : -30,
-                          width: isMobile ? '100%' : '135%',
-                          backgroundColor: 'white',
-                          borderRadius: '15px',
-                          padding: isMobile ? '0.5rem' : '1rem',
-                          boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)'
-                        }}
-                      >
-                        {loading && <div>Loading <FaSpinner /></div>}
-                        {suggestions.map((suggestion, index) => {
-                          const parts = suggestion.description.split(', ');
-                          const city = parts[0];
-                          const country = parts[parts.length - 1].trim();
-                          const countryCode = getCountryCode(country);
-
-                          return (
-                            <div
-                              key={index}
-                              {...getSuggestionItemProps(suggestion, {
-                                style: {
-                                  backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                                  padding: isMobile ? '1px 0px' : '20px 10px',
-                                  cursor: 'pointer',
-                                  transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
-                                  fontSize: '1rem',
-                                  color: '#000',
-                                  borderBottom: '1px solid #ddd',
-                                  margin: '0',
-                                  display: 'flex',
-                                  flexDirection: 'column',
-                                  alignItems: 'flex-start',
-                                  justifyContent: 'flex-start',
-                                  transform: suggestion.active ? 'scale(1.04)' : 'none',
-                                  zIndex: suggestion.active ? '1' : '0',
-                                },
-                                onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
-                                onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
-                                onClick: () => handleSelect(suggestion)
-                              })}
-                            >
-                              <div style={{ display: 'flex', alignItems: 'center' }}>
-                                <ReactCountryFlag
-                                  countryCode={countryCode}
-                                  svg
-                                  style={{
-                                    marginRight: '10px',
-                                    width: '20px',
-                                    height: '15px',
-                                    boxShadow: '2px 2px 10px #777',
-                                    marginBottom: '-0.8rem'
-                                  }}
-                                  title={country}
-                                />
-                                <span>{city}</span>
-                              </div>
-                              <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
-                                {country}
-                              </div>
-                            </div>
-                          );
+              <Script
+                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`}
+                onLoad={handleScriptLoad}
+              />
+              {scriptLoaded ? (
+                <PlacesAutocomplete
+                  value={address}
+                  onChange={handleChange}
+                  onSelect={handleSelect}
+                  searchOptions={{
+                    types: ['locality', 'country'],
+                    language: 'en',
+                  }}
+                >
+                  {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+                    <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
+                      <input
+                        {...getInputProps({
+                          className: 'searchBar_inputfield',
+                          type: 'search',
+                          placeholder: 'Search Destination'
                         })}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </PlacesAutocomplete>
+                      />
+
+                      {suggestions.length > 0 && (
+                        <div
+                          className="suggestions-container"
+                          style={{
+                            position: 'absolute',
+                            top: isMobile ? '120%' : '150%',
+                            left: isMobile ? -8 : -30,
+                            width: isMobile ? '100%' : '135%',
+                            backgroundColor: 'white',
+                            borderRadius: '1rem',
+                            padding: isMobile ? '0.5rem' : '1rem',
+                            boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)',
+                            zIndex: '999',
+                          }}
+                        >
+                          {loading && <div>Loading <FaSpinner /></div>}
+                          {suggestions.map((suggestion, index) => {
+                            const parts = suggestion.description.split(', ');
+                            const city = parts[0];
+                            const country = parts[parts.length - 1].trim();
+                            const countryCode = getCountryCode(country);
+
+                            return (
+                              <div
+                                key={index}
+                                {...getSuggestionItemProps(suggestion, {
+                                  style: {
+                                    backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
+                                    padding: isMobile ? '1px 0px' : '20px 10px',
+                                    cursor: 'pointer',
+                                    transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
+                                    fontSize: '1rem',
+                                    color: '#000',
+                                    borderBottom: '1px solid #ddd',
+                                    margin: '0',
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    alignItems: 'flex-start',
+                                    justifyContent: 'flex-start',
+                                    transform: suggestion.active ? 'scale(1.04)' : 'none',
+                                    zIndex: suggestion.active ? '1' : '0',
+                                  },
+                                  onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
+                                  onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
+                                  onClick: () => handleSelect(suggestion)
+                                })}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                  <ReactCountryFlag
+                                    countryCode={countryCode}
+                                    svg
+                                    style={{
+                                      marginRight: '10px',
+                                      width: '20px',
+                                      height: '15px',
+                                      boxShadow: '2px 2px 10px #777',
+                                      marginBottom: '-0.8rem'
+                                    }}
+                                    title={country}
+                                  />
+                                  <span>{city}</span>
+                                </div>
+                                <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
+                                  {country}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </PlacesAutocomplete>
+              ) : (
+                <div></div>
+              )}
             </div>
 
             <div className="searchInputContainer">
@@ -409,22 +439,22 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 placeholder={<span className="searchTitle">Accommodation</span>}
                 styles={{
                   control: (provided) => {
-                    const isMobile = window.innerWidth <= 730;
+                    const isMobile = window.innerWidth <= 768;
                     return {
                       ...provided,
                       border: 'none',
                       height: '2.7rem',
-                      transform: isMobile ? 'translateX(-28px)' : 'translateY(2px)',
+                      transform: isMobile ? 'translateX(-0px)' : 'translateY(7px)',
                       boxShadow: 'none',
                       background: 'none',
                       padding: '0',
                       margin: 'auto',
                       cursor: 'pointer',
-                      width: isMobile ? '140%' : '150px',
+                      width: isMobile ? '100%' : '8.7rem',
                     };
                   },
                   menu: (provided, state) => {
-                    const isMobile = window.innerWidth <= 730;
+                    const isMobile = window.innerWidth <= 768;
                     return {
                       ...provided,
                       backgroundColor: 'white',
@@ -462,7 +492,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     '&:hover': {
                       color: 'black',
                       backgroundColor: '#e6e6e6',
-                      transform: 'scale(1)',
+                      transform: 'scale(1)' ,
                     },
                   }),
                   clearIndicator: (provided) => ({
@@ -485,11 +515,11 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
             </div>
 
-            <div className={`button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
+            <div className={`Search-button-section ${showGuestDropdown ? 'active' : ''}`} onClick={toggleGuestDropdown}>
               <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests • Rooms</p>
               {totalGuests > 0 && (
                 <button
-                  className="clear-guests"
+                  className="Search-clear-guests"
                   onClick={resetGuests}
                   style={{
                     position: 'absolute',
@@ -506,13 +536,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                 </button>
               )}
 
-              <p className={`guestP ${hasTwoGuests ? 'nowrap' : ''}`}>
+              <p className={`Search-guestP ${hasTwoGuests ? 'nowrap' : ''}`}>
                 {totalGuestsDescription}
               </p>
-              <div className={`guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+              <div className={`Search-guest-dropdown ${showGuestDropdown ? 'active' : ''}`} ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
                 {isMobile && (
                   <button
-                    className="close-guest-dropdown"
+                    className="Search-close-guest-dropdown"
                     onClick={closeGuestDropdown}
                     style={{
                       position: 'absolute',
@@ -568,7 +598,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
             </div>
 
 
-            <div className="check-in" style={{ position: 'relative' }}>
+            <div className="Search-check-in" style={{ position: 'relative' }}>
               <input
                 className="input-calendar"
                 type="text"
@@ -587,7 +617,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     position: 'absolute',
                     top: '50%',
                     left: '50%',
-                    transform: 'translate(-50%, -40%)',
+                    transform: 'translate(-50%, -36.5%)',
                     color: '#0D9813',
                     fontWeight: 500,
                     fontSize: '1rem',
@@ -602,7 +632,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
               <DatePicker
                 value={selectedDayRange}
                 onChange={(range) => setSelectedDayRange(range)}
-                minimumDate={utils("en").getToday()}  // Set minimumDate to today's date
+                minimumDate={utils("en").getToday()}
                 shouldHighlightWeekends
                 format="MMM DD, YYYY"
                 calendarClassName="responsive-calendar"

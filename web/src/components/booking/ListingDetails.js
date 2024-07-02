@@ -6,7 +6,6 @@ import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-
 import Washingmashine from "../../images/icons/Washingmachine.png";
 import Television from "../../images/icons/Television.png";
 import Smokedetector from "../../images/icons/Smokedetector.png";
@@ -18,6 +17,30 @@ import FirstAidKit from "../../images/icons/FirstAidKit.png";
 import Kitchen from "../../images/icons/Kitchen.png";
 import Onsiteparking from "../../images/icons/Onsiteparking.png";
 import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import Armchair from "../../images/armchair.png";
+import BabyMonitor from "../../images/baby-monitor.png";
+import Baby from "../../images/baby.png";
+import Backyard from "../../images/backyard.png";
+import Blender from "../../images/blender.png";
+import BoardGame from "../../images/board-game.png";
+import Bus from "../../images/bus.png";
+import Car from "../../images/car.png";
+import ChargingStation from "../../images/charging-station.png";
+import CheckIn from "../../images/check-in.png";
+import Cleaner from "../../images/cleaner.png";
+import Clothes from "../../images/clothes.png";
+import CoffeeTable from "../../images/coffee-table.png";
+import Crib from "../../images/crib.png";
+import Dishwasher from "../../images/dishwasher.png";
+import Food from "../../images/food.png";
+import Gate from "../../images/gate.png";
+import GraphicDesign from "../../images/graphic-design.png";
+import Grill from "../../images/grill.png";
+import HighChair from "../../images/high-chair.png";
+import HotTub from "../../images/hot-tub.png";
+import CoffeeMachine from "../../images/coffee-machine.png";
+import AlarmClock from "../../images/alarm-clock.png";
+import AntiqueBalcony from "../../images/antique-balcony.png";
 import deleteIcon from "../../images/icons/cross.png";
 
 const ListingDetails = () => {
@@ -43,6 +66,7 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
+    const [hostID, setHostID] = useState();
 
     const featureIcons = {
         WashingMachine: Washingmashine,
@@ -55,6 +79,30 @@ const ListingDetails = () => {
         Airconditioning: Airconditioning,
         FirstAidKit: FirstAidKit,
         Kitchen: Kitchen,
+        Armchair: Armchair,
+        BabyMonitor: BabyMonitor,
+        Baby: Baby,
+        Backyard: Backyard,
+        Blender: Blender,
+        BoardGame: BoardGame,
+        Bus: Bus,
+        Car: Car,
+        ChargingStation: ChargingStation,
+        CheckIn: CheckIn,
+        Cleaner: Cleaner,
+        Clothes: Clothes,
+        CoffeeTable: CoffeeTable,
+        Crib: Crib,
+        Dishwasher: Dishwasher,
+        Food: Food,
+        Gate: Gate,
+        GraphicDesign: GraphicDesign,
+        Grill: Grill,
+        HighChair: HighChair,
+        HotTub: HotTub,
+        CoffeeMachine: CoffeeMachine,
+        AlarmClock: AlarmClock,
+        AntiqueBalcony: AntiqueBalcony,
     };
 
     useEffect(() => {
@@ -75,6 +123,7 @@ const ListingDetails = () => {
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
+                setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
@@ -210,10 +259,9 @@ const ListingDetails = () => {
     
 
     const handleStartChat = () => {
-        const userEmail = "nabilsalimi0229@gmail.com";
-        const recipientEmail = "jejego4569@javnoi.com";
+        const recipientId = hostID;
         const channelUUID = generateUUID();
-        localStorage.setItem(channelUUID, recipientEmail);
+        localStorage.setItem(channelUUID, recipientId);
         navigate(`/chat?channelID=${channelUUID}`);
     };
 
@@ -263,6 +311,7 @@ const ListingDetails = () => {
     const filterBookedDates = (date) => {
         return !isDateBooked(date) && !isDateAfterBookedNight(date);
     };
+
 
     return (
         <main className="container">
@@ -324,6 +373,7 @@ const ListingDetails = () => {
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
+                                        <button className='button' onClick={handleStartChat} >Chat</button>
                                     </div>
                                 </section>
                                 <br />

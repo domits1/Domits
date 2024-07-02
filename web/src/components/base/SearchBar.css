@@ -1,7 +1,5 @@
-
-
-.bar {
-  width: 45rem;
+.Search-bar {
+  width: 42.5rem;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 1.875rem;
@@ -11,14 +9,14 @@
   box-sizing: border-box;
 }
 
-.bar .searchInputContainer {
+.Search-bar .Search-searchInputContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 0.3125rem;
 }
 
-.suggestions-container {
+.Search-suggestions-container {
   position: relative;
   z-index: 1;
 }
@@ -36,16 +34,16 @@
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
   text-overflow: ellipsis;
+  transform: translateY(-15%);
 
 }
-.check-in {
+.Search-check-in {
   width: 17%;
   cursor: auto;
 }
-.location {
+.Search-location {
   width: 34%;
 }
-
 
 .input-calendar {
   background: none;
@@ -55,35 +53,35 @@
   height: 3.5rem;
 }
 
-.bar>div {
+.Search-bar>div {
   position: relative;
   transition: background 150ms ease, width 150ms ease;
 }
 
-.bar>div::before {
+.Search-bar>div::before {
   position: absolute;
   content: "";
   left: -1.85%;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translateY(-40%);
   width: 0.05rem;
   height: 60%;
   background: rgb(88, 153, 22);
 }
 
-.bar>div:nth-of-type(1)::before {
+.Search-bar>div:nth-of-type(1)::before {
   background: transparent;
 }
 
-.bar>div:nth-of-type(3)::before {
+.Search-bar>div:nth-of-type(3)::before {
   transform: translateY(-40%);
   left: -0.01%;
 }
 
-.bar>div:nth-of-type(4)::before {
+.Search-bar>div:nth-of-type(4)::before {
   background: solid;
   height: 56%;
-  transform: translateY(-43%);
+  transform: translateY(-40%);
 }
 
 .DatePicker__calendarContainer {
@@ -110,7 +108,7 @@
   height: 2.5rem;
   width: 2.5rem;
   margin-top: 0.45rem;
-  margin-left: 0.5rem;
+  margin-left: 0.3rem;
 }
 
 .searchbar-button:hover {
@@ -130,24 +128,28 @@
   margin-right: 1rem;
 }
 
-.searchBar {
+.searchBar_inputfield {
   background: none;
   border: none;
   text-align: left;
   transform: translateY(10%);
   width: 90%;
   height: 2rem;
+  margin-left: 1rem;
+}
+.searchBar_inputfield[type="search"]::-webkit-search-cancel-button {
+  position: relative;
+  color: black;
+  font-size: large;
+  filter: grayscale(100%);
+  
 }
 
-/* .suggestion-item:hover {
-  border-radius: 10px;
-} */
-
-.searchBar:focus {
+.searchBar_inputfield:focus {
   outline: none;
 }
 
-.searchBar::placeholder {
+.searchBar_inputfield::placeholder {
   color: #0D9813;
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
@@ -155,7 +157,7 @@
   margin: auto;
 }
 
-.button-section {
+.Search-button-section {
   border: none;
   display: flex;
   justify-content: center;
@@ -164,10 +166,10 @@
   padding: 1.625rem;
   background-color: #fff;
   border-radius: 1.25rem;
-  width: 13%;
+  width: 13.2%;
 }
 
-.error-message {
+.Search-error-message {
   background-color: #f8d7da;
   color: #721c24;
   border: 2px solid #f5c6cb;
@@ -183,7 +185,7 @@
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
-.guest-dropdown {
+.Search-guest-dropdown {
   display: none;
   position: absolute;
   top: calc(100% + 0.625rem);
@@ -200,7 +202,7 @@
   cursor: auto;
 }
 
-.guest-dropdown.active {
+.Search-guest-dropdown.active {
   display: block;
   opacity: 1;
   transform: translateX(-50%) scale(1);
@@ -218,15 +220,15 @@
   }
 }
 
-.guest-dropdown.active {
+.Search-guest-dropdown.active {
   animation: dropdownFadeIn 0.3s ease;
 }
 
-.button-section.active .guest-dropdown {
+.Search-button-section.active .Search-guest-dropdown {
   display: block;
 }
 
-.guestCounter {
+.Search-guestCounter {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -234,38 +236,38 @@
   border-bottom: 1px solid #0a770f;
 }
 
-.guestCounter:last-child {
+.Search-guestCounter:last-child {
   border-bottom: none;
 }
 
-.guestLabel {
+.Search-guestLabel {
   font-size: 1rem;
   color: #0a770f;
   text-align: left;
 }
 
-.selected {
+.Search-selected {
   color: green;
 }
 
-.guestDescription {
+.Search-guestDescription {
   font-size: 0.7rem;
   color: #666;
   text-align: left;
 }
 
-.guestCounter .controls {
+.Search-guestCounter .Search-controls {
   display: flex;
   align-items: center;
   padding: 0 0.625rem;
 }
 
-.guestCounter .controls span {
+.Search-guestCounter .Search-controls span {
   margin: 0 0.625rem;
   font-size: 1rem;
 }
 
-.guestCounter .controls button {
+.Search-guestCounter .Search-controls button {
   border: 2px solid #cccccc;
   border-radius: 50%;
   background-color: #fff;
@@ -280,12 +282,12 @@
   color: #000;
 }
 
-.guestCounter .controls button:hover {
+.Search-guestCounter .Search-controls button:hover {
   border-color: #0a770f;
 }
 
 /* test */
-.guestCounter .controls button:disabled {
+.Search-guestCounter .Search-controls button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
 }
@@ -303,19 +305,17 @@
 
 }
 
-.button-section {
+.Search-button-section {
   margin-bottom: 1.8125rem;
 }
 
-.guestP {
+.Search-guestP {
   text-align: left;
   font-weight: 500;
   color: #000;
   font-size: 0.75rem;
   margin-top: 1rem;
 }
-
-
 
 .responsive-calendar {
   font-size: 11px !important;
@@ -330,8 +330,8 @@
   transform: translateY(0);
 }
 
-@media (max-width: 730px) {
-  .guest-dropdown {
+@media (max-width: 768px) {
+  .Search-guest-dropdown {
     width: calc(120% - 1.875rem);
     left: 50%;
     right: 50%;
@@ -340,7 +340,7 @@
 }
 
 @media (max-width: 1000px) {
-  .bar {
+  .Search-bar {
     width: 95%;
   }
 }
@@ -363,7 +363,7 @@
   }
 }
 
-@media (max-width: 730px) {
+@media (max-width: 768px) {
   .responsive-calendar {
     font-size: 0.7rem !important;
   }
@@ -385,7 +385,7 @@
   }
 }
 
-@media (max-width: 730px) {
+@media (max-width: 768px) {
 
   .Calendar__monthSelectorItemText,
   .Calendar__yearSelectorText {
@@ -417,7 +417,7 @@
   outline: none;
   width: 80%;
   text-align: center;
-  transform: translateY(-3.67rem);
+  transform: translateY(-3.77rem);
   padding-bottom: 1rem;
   color: transparent;
   cursor: pointer;
@@ -432,10 +432,9 @@
   color: transparent;
 }
 
-.Calendar__monthYear {
-  font-size: 1.8em;
-  text-decoration: underline;
-  
+.Calendar__monthYear>* {
+  font-size: 1.4em;
+  color: black;
 }
 
 .Calendar__yearSelectorText {
@@ -460,7 +459,7 @@
   color: inherit;
 }
 
-@media (max-width: 730px) {
+@media (max-width: 768px) {
 
   .input-calendar,
   .DatePicker__input {
@@ -468,8 +467,8 @@
   }
 }
 
-@media (max-width: 730px) {
-  .bar {
+@media (max-width: 768px) {
+  .Search-bar {
     border: 2px solid #0a770f;
     width: 110%;
     max-width: 400px;
@@ -487,23 +486,21 @@
   }
 }
 
-@media (max-width: 730px) {
-
-
-  .button-section,
+@media (max-width: 768px) {
+  .Search-button-section,
   .searchInputContainer,
-  .check-in {
+  .Search-check-in {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
     margin-bottom: 0.4rem;
   }
 
-  .check-in {
+  .Search-check-in {
     height: 3.4rem;
   }
 
-  .location {
+  .Search-location {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
@@ -512,7 +509,7 @@
     text-overflow: ellipsis;
   }
 
-  .searchBar {
+  .searchBar_inputfield {
     position: relative;
     background: none;
     border: none;
@@ -524,15 +521,15 @@
     margin: auto;
   }
   /* kan problemen veroorzaken bij mobile-view */
-  .searchBar::placeholder {
+  .searchBar_inputfield::placeholder {
     transform: translateX(2.5%)
   }
 
-  .searchBar * {
+  .searchBar_inputfield * {
     margin: auto;
   }
 
-  .button-section {
+  .Search-button-section {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
@@ -550,7 +547,7 @@
     text-align: center;
     text-overflow: ellipsis;
   }
-  .guestP {
+  .Search-guestP {
     position: absolute;
   }
   .input-calendar {
@@ -575,7 +572,7 @@
     transform: translateX(-2.25%);
     margin-top: 0.5rem;
   }
-  .bar>div::before {
+  .Search-bar>div::before {
     background: transparent;
   }
   .DatePicker__calendarContainer {
@@ -587,10 +584,10 @@
   .DatePicker__calendarArrow {
     border-color: transparent;
   }
-  .ClearButton {
+  .Search-ClearButton {
     margin-top: 0.5rem;
   }
-  .error-message {
+  .Search-error-message {
     background-color: #f8d7da;
     color: #721c24;
     border: 2px solid #f5c6cb;
@@ -618,12 +615,12 @@
   display: none;
 }
 
-@media (max-width: 730px) {
+@media (max-width: 768px) {
   .search-text {
     display: inline;
   }
 }
-@media (max-width: 730px) {
+@media (max-width: 768px) {
   .mobile-search-button {
     display: block;
     width: 75vw;
@@ -634,7 +631,7 @@
     border-radius: 0.8rem; 
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     font-size: 1rem;
-    color: #484848;
+    color: #000;
     outline: none;
     text-align: left;
     font-weight: 400;
@@ -646,11 +643,11 @@
   }
   
 
-  .bar {
+  .Search-bar {
     display: none;
   }
 
-  .bar-container .bar {
+  .bar-container .Search-bar {
     display: block;
   }
 }

@@ -7,6 +7,8 @@ export const updateChat = /* GraphQL */ `
   ) {
     updateChat(input: $input, condition: $condition) {
       id
+      userId
+      recipientId
       text
       email
       recipientEmail
@@ -28,6 +30,8 @@ export const deleteChat = /* GraphQL */ `
       id
       text
       email
+      userId
+      recipientId
       recipientEmail
       isRead
       sortKey
@@ -182,6 +186,8 @@ export const createChat = /* GraphQL */ `mutation CreateChat(
 ) {
   createChat(input: $input, condition: $condition) {
     id
+    userId
+    recipientId
     text
     email
     recipientEmail

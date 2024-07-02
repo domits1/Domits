@@ -9,7 +9,6 @@ import spinner from "../../images/spinnner.gif";
 import info from "../../images/icons/info.png";
 import ImageSlider from "../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
-import PagesDropdown from "./PagesDropdown";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 function HostDashboard() {
@@ -101,7 +100,6 @@ function HostDashboard() {
             </div>
             <div className="dashboardHost">
                 <Pages/>
-                <PagesDropdown/>
                 <div>
                 <div className="contentContainer-dashboard">
                     <div className="dashboard-1">
