@@ -1,3 +1,5 @@
+// For explenation on how search works: https://github.com/domits1/Domits/wiki/Web-Search
+
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
@@ -12,8 +14,6 @@ import { countries } from 'country-data';
 import './SearchBar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Script from 'react-load-script';
-
-
 
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -38,8 +38,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const handleScriptLoad = () => {
     setScriptLoaded(true);
   };
-
- 
 
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
 
@@ -170,6 +168,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     handleSearchWithDelay(false);
   }, [accommodation, address, totalGuests]);
 
+
+  //There is a bug that when you press on a accommodation and decide to go back to homepage the accommodations wont load the bug fixable
+  //in these function from 175 - 231.
   useEffect(() => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
@@ -180,13 +181,22 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     setLoading(true);
     setError("");
 
-    const queryParams = [
-      accommodation ? `type=${accommodation}` : null,
-      address ? `searchTerm=${address}` : null,
-      totalGuests > 0 ? `guests=${totalGuests}` : null,
-    ].filter(Boolean).join('&');
+    const queryParams = new URLSearchParams();
 
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
+    if (accommodation) {
+      queryParams.append('type', accommodation);
+    }
+
+    if (address) {
+      queryParams.append('searchTerm', address);
+    }
+
+    if (totalGuests > 0) {
+      queryParams.append('guests', totalGuests);
+    }
+
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams.toString()}`;
+
 
     try {
       const response = await fetch(apiUrl);
@@ -225,8 +235,10 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     handleSearchWithDelay(shouldNavigate);
     setTimeout(() => {
       handleSearchWithDelay(shouldNavigate);
-    }, 1000);
+    }, 1300);
   };
+
+
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
   const getCountryCode = (countryName) => {
@@ -257,6 +269,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
+
   // calendar gedeelte
   useEffect(() => {
     if (selectedDayRange.from && selectedDayRange.to) {
@@ -306,7 +319,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
           <div className="Search-bar">
             <div className="Search-location">
 
-              <Script 
+              <Script
                 url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`}
                 onLoad={handleScriptLoad}
               />
@@ -325,7 +338,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                       <input
                         {...getInputProps({
                           className: 'searchBar_inputfield',
-                          type: 'search' ,
+                          type: 'search',
                           placeholder: 'Search Destination'
                         })}
                       />
@@ -404,12 +417,9 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                   )}
                 </PlacesAutocomplete>
               ) : (
-                <div>Loading Google Maps...</div>
+                <div></div>
               )}
             </div>
-
-
-
 
             <div className="searchInputContainer">
               <Select
