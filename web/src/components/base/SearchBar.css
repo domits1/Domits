@@ -108,7 +108,7 @@
   height: 2.5rem;
   width: 2.5rem;
   margin-top: 0.45rem;
-  margin-left: 0.5rem;
+  margin-left: 0.3rem;
 }
 
 .searchbar-button:hover {
@@ -166,7 +166,7 @@
   padding: 1.625rem;
   background-color: #fff;
   border-radius: 1.25rem;
-  width: 13%;
+  width: 13.2%;
 }
 
 .Search-error-message {
@@ -433,7 +433,7 @@
 }
 
 .Calendar__monthYear>* {
-  font-size: 1.5em;
+  font-size: 1.4em;
   color: black;
 }
 
