@@ -20,6 +20,30 @@
 .summaryBlock {
   display: flex;
   flex-direction: column;
+  .dateInput {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    .disabled {
+      background: gray;
+      cursor: not-allowed;
+    }
+    .disabled:hover {
+      opacity: 100%;
+    }
+    button {
+      align-self: center;
+      height: 10%;
+      border: none;
+      border-radius: 2rem;
+      background: red;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 50%;
+    }
+  }
 }
 .summary-section {
   display: flex;

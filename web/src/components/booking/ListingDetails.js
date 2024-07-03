@@ -41,7 +41,6 @@ import HotTub from "../../images/hot-tub.png";
 import CoffeeMachine from "../../images/coffee-machine.png";
 import AlarmClock from "../../images/alarm-clock.png";
 import AntiqueBalcony from "../../images/antique-balcony.png";
-import deleteIcon from "../../images/icons/cross.png";
 import BookingCalendar from "./BookingCalendar";
 
 const ListingDetails = () => {
@@ -229,6 +228,36 @@ const ListingDetails = () => {
         setMaxEnd(DateFormatterYYYY_MM_DD(parsedEndDate));
         setBookedDates(bookedDates); // Save booked dates in state
     };
+    useEffect(() => {
+        const restrictCheckOutToDateRange = () => {
+            if (checkIn) {
+                for (let i = 0; i < accommodation.DateRanges.length; i++) {
+                    let index = accommodation.DateRanges[i];
+                    if (isDateInRange(new Date(checkIn), new Date(index.startDate), new Date(index.endDate))) {
+                        setMaxEnd(DateFormatterYYYY_MM_DD(new Date(index.endDate)));
+                    }
+                }
+            } else {
+                setMaxEnd(null);
+            }
+        }
+        restrictCheckOutToDateRange();
+    }, [checkIn]);
+    useEffect(() => {
+        const restrictCheckInToDateRange = () => {
+           if (checkOut) {
+               for (let i = 0; i < accommodation.DateRanges.length; i++) {
+                   let index = accommodation.DateRanges[i];
+                   if (isDateInRange(new Date(checkOut), new Date(index.startDate), new Date(index.endDate))) {
+                       setMinStart(DateFormatterYYYY_MM_DD(new Date(index.startDate)));
+                   }
+               }
+           } else {
+               setMinStart(null);
+           }
+        }
+        restrictCheckInToDateRange();
+    }, [checkOut]);
 
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
@@ -436,16 +465,23 @@ const ListingDetails = () => {
                             <div className="dates">
                                 <div className="summaryBlock">
                                     <label htmlFor="checkIn">Check In</label>
-                                    <DatePicker
-                                        id="checkIn"
-                                        selected={checkIn}
-                                        className='datePickerLD'
-                                        onChange={(date) => setCheckIn(date)}
-                                        minDate={minStart && new Date(minStart)}
-                                        maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={filterDisabledDays || filterBookedDates}
-                                        dateFormat="yyyy-MM-dd"
-                                    />
+                                    <div className="dateInput">
+                                        <DatePicker
+                                            id="checkIn"
+                                            selected={checkIn}
+                                            className='datePickerLD'
+                                            onChange={(date) => setCheckIn(date)}
+                                            minDate={minStart && new Date(minStart)}
+                                            maxDate={maxStart && new Date(maxStart)}
+                                            filterDate={filterDisabledDays || filterBookedDates}
+                                            dateFormat="yyyy-MM-dd"
+                                        />
+                                        <button
+                                            onClick={() => setCheckIn(null)}
+                                            disabled={!checkIn}
+                                            className={`${!checkIn ? 'disabled' : ' '}`}
+                                        >Delete</button>
+                                    </div>
                                 </div>
                                 {(checkIn && checkOut) ? (
                                     <div className="nights">
@@ -459,16 +495,23 @@ const ListingDetails = () => {
 
                                 <div className="summaryBlock">
                                     <label htmlFor="checkOut">Check Out</label>
-                                    <DatePicker
-                                        id="checkOut"
-                                        selected={checkOut}
-                                        className='datePickerLD'
-                                        onChange={(date) => setCheckOut(date)}
-                                        minDate={minEnd && new Date(minEnd)}
-                                        maxDate={maxEnd && new Date(maxEnd)}
-                                        filterDate={filterDisabledDays || filterBookedDates}
-                                        dateFormat="yyyy-MM-dd"
-                                    />
+                                    <div className="dateInput">
+                                        <DatePicker
+                                            id="checkOut"
+                                            selected={checkOut}
+                                            className='datePickerLD'
+                                            onChange={(date) => setCheckOut(date)}
+                                            minDate={minEnd && new Date(minEnd)}
+                                            maxDate={maxEnd && new Date(maxEnd)}
+                                            filterDate={filterDisabledDays || filterBookedDates}
+                                            dateFormat="yyyy-MM-dd"
+                                        />
+                                        <button
+                                            onClick={() => setCheckOut(null)}
+                                            disabled={!checkOut}
+                                            className={`${!checkOut ? 'disabled' : ' '}`}
+                                        >Delete</button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="travelers">
