@@ -164,20 +164,19 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   };
 
   useEffect(() => {
-    handleSearchWithDelay(false);
-  }, [accommodation, address, totalGuests]);
-
-  //There is a bug that when you press on a accommodation and decide to go back to homepage the accommodations wont load the bug fixable
-  //in these function from 175 - 231.
-  useEffect(() => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
+    } else if (location.pathname === '/' && location.state && location.state.searchParams) {
+      const { accommodation, address, totalGuests } = location.state.searchParams;
+      setTimeout(() => {
+        performSearch(accommodation, address, totalGuests);
+      }, 1000);  // Delay of 1000 milliseconds (1 second)
     }
   }, [location]);
 
-  const handleSearchWithDelay = async (shouldNavigate) => {
+  const performSearch = async (accommodation, address, totalGuests) => {
     setLoading(true);
-    setError("");
+    setError('');
 
     const queryParams = new URLSearchParams();
 
@@ -195,31 +194,26 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams.toString()}`;
 
-
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) {
         if (response.status === 404) {
-          setError("No results have been found...");
+          setError('No results have been found...');
         } else {
-          setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+          setError('Er is een fout opgetreden bij het ophalen van de gegevens.');
         }
         return;
       }
       const data = await response.json();
       if (data.length === 0) {
         setTimeout(() => {
-          setError("No results have been found...");
+          setError('No results have been found...');
         }, 500);
       } else {
-        if (shouldNavigate) {
-          navigate('/', { state: { searchResults: data } });
-        } else {
-          setSearchResults(data);
-        }
+        setSearchResults(data);
       }
     } catch (error) {
-      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
+      setError('Er is een fout opgetreden bij het ophalen van de gegevens.');
     } finally {
       setLoading(false);
     }
@@ -229,11 +223,19 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     const shouldNavigate = location.pathname !== '/';
     if (shouldNavigate) {
       setSearchResults([]);
+      navigate('/', {
+        state: {
+          searchParams: { accommodation, address, totalGuests }
+        }
+      });
+    } else {
+      performSearch(accommodation, address, totalGuests);
     }
-    handleSearchWithDelay(shouldNavigate);
-    setTimeout(() => {
-      handleSearchWithDelay(shouldNavigate);
-    }, 1300);
+  };
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
   };
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
@@ -335,7 +337,8 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                         {...getInputProps({
                           className: 'searchBar_inputfield',
                           type: 'search',
-                          placeholder: 'Search Destination'
+                          placeholder: 'Search Destination',
+                          onKeyDown: handleKeyDown
                         })}
                       />
 
