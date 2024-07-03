@@ -13,7 +13,6 @@ const HostRevenues = () => {
     const [paymentsData, setPaymentsData] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Fetch the current user's information
     useEffect(() => {
         const setUserIdAsync = async () => {
             try {
@@ -27,7 +26,6 @@ const HostRevenues = () => {
         setUserIdAsync();
     }, []);
 
-    // Determine the correct redirect URI based on the hostname
     const getRedirectUri = () => {
         const hostname = window.location.hostname;
         if (hostname === 'domits.com') {
@@ -37,17 +35,36 @@ const HostRevenues = () => {
         }
     };
 
-    // Handle Stripe OAuth flow initiation
-    const handleStripeOAuth = () => {
-        const clientId = 'ca_PULlrr0bwd0krdUxRljDVciQ6B5wUZPZ';
-        const redirectUri = getRedirectUri();
-        const state = userId;
-        const stripeOAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${clientId}&scope=read_write&redirect_uri=${redirectUri}&state=${state}`;
-        console.log("Redirecting to Stripe OAuth URL:", stripeOAuthUrl);
-        window.location.href = stripeOAuthUrl;
+    const handleStripeOAuth = async () => {
+        try {
+            // Check if the user already has a connected Stripe account
+            const response = await fetch('https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ userId }),
+            });
+
+            const data = await response.json();
+
+            if (data.stripeAccountId) {
+                // If the user already has a connected Stripe account, set the account ID
+                setStripeAccountId(data.stripeAccountId);
+            } else {
+                // If the user doesn't have a connected Stripe account, initiate OAuth
+                const clientId = 'ca_PULlrr0bwd0krdUxRljDVciQ6B5wUZPZ';
+                const redirectUri = getRedirectUri();
+                const state = userId;
+                const stripeOAuthUrl = `https://connect.stripe.com/oauth/authorize?response_type=code&client_id=${clientId}&scope=read_write&redirect_uri=${redirectUri}&state=${state}`;
+                console.log("Redirecting to Stripe OAuth URL:", stripeOAuthUrl);
+                window.location.href = stripeOAuthUrl;
+            }
+        } catch (error) {
+            console.error("Error checking Stripe account:", error);
+        }
     };
 
-    // Handle the OAuth callback
     useEffect(() => {
         const fetchStripeAccount = async () => {
             const urlParams = new URLSearchParams(window.location.search);
@@ -89,7 +106,6 @@ const HostRevenues = () => {
         }
     }, [stripeAccountId]);
 
-    // Fetch payments data from Stripe
     useEffect(() => {
         const fetchStripePaymentsData = async () => {
             if (!stripeAccountId) {
