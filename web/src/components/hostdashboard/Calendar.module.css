@@ -1,8 +1,9 @@
 .body {
     margin: 0;
     box-sizing: border-box;
-    padding: 2rem;
-    background: linear-gradient(to bottom left, #003366, #0D9813);
+    padding: 0.75rem;
+    border-radius: 1rem;
+    background: black;
     display: flex;
     flex-direction: column;
     gap: 5%;
