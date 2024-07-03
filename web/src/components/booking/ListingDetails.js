@@ -19,6 +19,7 @@ import Kitchen from "../../images/icons/Kitchen.png";
 import Onsiteparking from "../../images/icons/Onsiteparking.png";
 import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import deleteIcon from "../../images/icons/cross.png";
+import BookingCalendar from "./BookingCalendar";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -74,7 +75,9 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
+                const start = new Date(data.DateRanges[0].startDate);
+                const end = new Date(data.DateRanges[data.DateRanges.length - 1].endDate);
+                setDates(start, end, data.BookedDates || []);
                 fetchHostInfo(data.OwnerId);
                 setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
@@ -240,7 +243,9 @@ const ListingDetails = () => {
         });
     };
 
-    // Check if a date is within any booked range
+    const selectDates = () => {
+        return true;
+    }
     const isDateBooked = (date) => {
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0]);
@@ -281,7 +286,7 @@ const ListingDetails = () => {
                                 <h1>{accommodation.Title}</h1>
                             </div>
                             <div>
-                                <ImageGallery images={Object.values(accommodation.Images)} />
+                                <ImageGallery images={Object.values(accommodation.Images)}/>
                             </div>
                             <div>
                                 <div className='extraDetails'>
@@ -292,8 +297,11 @@ const ListingDetails = () => {
                                     <p className='details'>{`${accommodation.Bathrooms} bathrooms`}</p>
                                 </div>
                             </div>
+                            <p className='description'>{accommodation.Description}</p>
                             <div>
-                                <p className='description'>{accommodation.Description}</p>
+                                <BookingCalendar passedProp={accommodation} selectDates={selectDates}/>
+                            </div>
+                            <div>
                                 <h3>This place offers the following:</h3>
                                 <ul className='features'>
                                     {Object.entries(accommodation.Features).map(([feature, value]) => (
@@ -312,7 +320,7 @@ const ListingDetails = () => {
                                 <div>
                                     <button className='button'>Show more</button>
                                 </div>
-                                <br />
+                                <br/>
                                 <section className="listing-reviews">
                                     <h2>Reviews</h2>
                                     {reviews.length > 0 ? (
@@ -320,18 +328,20 @@ const ListingDetails = () => {
                                             <div key={index} className="review-card">
                                                 <h2 className="review-header">{review.title}</h2>
                                                 <p className="review-content">{review.content}</p>
-                                                <p className="review-date">Written on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
+                                                <p className="review-date">Written
+                                                    on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="review-alert">This accommodation does not have any reviews yet...</p>
+                                        <p className="review-alert">This accommodation does not have any reviews
+                                            yet...</p>
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
-                                        <button className='button' onClick={handleStartChat} >Chat</button>
+                                        <button className='button' onClick={handleStartChat}>Chat</button>
                                     </div>
                                 </section>
-                                <br />
+                                <br/>
                                 <section className="listing-host-info">
                                     <h2>Host profile</h2>
                                     {host && (
@@ -357,7 +367,8 @@ const ListingDetails = () => {
                     <aside className='detailSummary'>
                         <div className="summary-section">
                             <h2>Booking details</h2>
-                            <p>Available from {DateFormatterDD_MM_YYYY(accommodation.StartDate)} to {DateFormatterDD_MM_YYYY(accommodation.EndDate)}</p>
+                            <p>Available from {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
+                                to {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
                             <div className="dates">
                                 <div className="summaryBlock">
                                     <label htmlFor="checkIn">Check In</label>
