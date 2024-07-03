@@ -391,6 +391,7 @@ const ListingDetails = () => {
                             </div>
                             <p className='description'>{accommodation.Description}</p>
                             <div>
+                                <h3>Calendar overview:</h3>
                                 <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
                             </div>
                             <div>
