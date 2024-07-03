@@ -1,53 +1,61 @@
-.guestdashboard {
+/* guestdashboard.css */
+.container {
     display: flex;
+    flex-direction: column;
     width: 90%;
     margin: auto;
     margin-top: 30px;
     margin-bottom: 30px;
-}
-
-.dashboards {
+  }
+  
+  .dashboards {
     display: grid;
-    grid-template-columns: 200px auto;
+    grid-template-columns: 250px auto;
     gap: 5%;
-}
-
-.dashboard {
+  }
+  
+  .dashboard {
     display: grid;
-    grid-template-columns: 200px auto;
-}
-
-.wijzers {
+    grid-template-columns: 250px auto;
+  }
+  
+  .dashboardSections {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .wijzers {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     cursor: pointer;
     margin-bottom: 10px;
     align-items: center;
-    width: 100%;
-    min-width: 200px;
-
+    min-width: 10vw;
     border: 0.5px solid black;
     border-radius: 15px;
-    padding: 5px;
+    padding: 10px;
+    box-sizing: border-box;
+  }
 
-}
-
-.reviewText {
-    border: 0.5px solid black;
-    border-radius: 15px;
-    padding: 5px;
-    width: 80%;
-    margin: auto;
-    text-align: center;
-}
-
-.wijzers:hover {
+  .wijzers img {
+    width: 24px;
+    height: 24px;
+    margin-right: 10px;
+  }
+  
+  .wijzers p {
+    flex-grow: 1;
+    margin: 0; 
+    text-align: left; 
+  }
+  
+  .wijzers:hover {
     box-shadow: 4px 4px #0D9813;
     transition: .3s;
-}
-
-.wijzers.active {
+  }
+  
+  .wijzers.active {
     background-color: #0D9813;
     color: white;
   }
@@ -55,35 +63,31 @@
   .wijzers.active p {
     color: white;
   }
-
-
-.disabled:hover {
+  
+  .disabled:hover {
     cursor: not-allowed;
     box-shadow: none;
     border: 0.5px solid black;
-}
-
-.contentContainer {
+  }
+  
+  .contentContainer {
     width: 100%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-
-}
-
-.reviewColumn {
+  }
+  
+  .reviewColumn {
     width: 48%;
     height: auto;
     margin: 10px;
     min-width: 155px;
-
     display: flex;
     flex-direction: column;
-
-}
-
-.reviewBox {
+  }
+  
+  .reviewBox {
     margin-right: 5px;
     margin-top: 10px;
     padding: 10px;
@@ -91,10 +95,9 @@
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
     border-radius: 10px;
     flex-wrap: wrap;
-
-}
-
-.review-tab{
+  }
+  
+  .review-tab {
     display: flex;
     flex-direction: column;
     border: 2px;
@@ -102,18 +105,18 @@
     margin: 5%;
     animation: fade-up 1s;
     padding: 12px;
-}
-
-.review-tab:hover {
+  }
+  
+  .review-tab:hover {
     box-shadow: 4px 4px #0D9813;
     transition: .3s;
-}
-
-.review-date {
+  }
+  
+  .review-date {
     color: #0D9813;
-}
-
-.review-delete {
+  }
+  
+  .review-delete {
     align-self: end;
     width: 40px;
     height: 40px;
@@ -121,118 +124,111 @@
     padding: 0;
     border: none;
     background-color: white;
-}
-.review-alert {
+  }
+  
+  .review-alert {
     margin: 10%;
-}
-.review-delete:hover {
+  }
+  
+  .review-delete:hover {
     cursor: pointer;
     transform: scale(1.2);
-}
-.cross {
+  }
+  
+  .cross {
     width: 30px;
     height: 30px;
-}
-@keyframes fade-up {
+  }
+  
+  @keyframes fade-up {
     0% {
-        opacity: 0;
-        transform: translateY(30px) scale(0.9);
+      opacity: 0;
+      transform: translateY(30px) scale(0.9);
     }
-
     100% {
-        opacity: 1;
-        transform: translateY(0px) scale(1);
+      opacity: 1;
+      transform: translateY(0px) scale(1);
     }
-}
-
-
-@media screen and (max-width: 830px) {
+  }
+  
+  @media screen and (max-width: 830px) {
     .dashboards {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-
+  
     .dashboard {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
-
+  
     .wijzers {
-        width: 90%;
+      width: 90%;
     }
-}
-
-
-.button i {
+  }
+  
+  .button i {
     margin-right: 10px;
     color: #888;
-}
-
-.content {
+  }
+  
+  .content {
     padding: 20px;
     display: flex;
     justify-content: center;
-    
-}
-
-.leftContent {
-    /* If .leftContent's height isn't defined by its content or an explicit height, consider setting one here. */
+  }
+  
+  .leftContent {
     height: 360px;
-    /* Example fixed height; adjust as needed. */
-}
-
-.bookingBox {
-    /* Adjust the percentage to increase the height relative to .leftContent */
+  }
+  
+  .bookingBox {
     height: 60%;
-    /* Example adjustment */
     margin-bottom: 20px;
-    /* Maintain spacing between boxes */
     overflow: auto;
-    /* In case the content exceeds the box */
-}
-
-.messageBoxes {
+  }
+  
+  .messageBoxes {
     height: 40%;
     overflow: auto;
-}
-
-.bookingBox,
-.messageBox {
+  }
+  
+  .bookingBox,
+  .messageBox {
     background-color: #fff;
     border-radius: 15px;
     padding: 20px;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 20px;
     width: 60%;
-}
-
-.bookingBox img {
+  }
+  
+  .bookingBox img {
     width: 20%;
     height: auto;
     border-radius: 15px;
     margin-top: 10px;
-}
-
-.messageBox button {
+  }
+  
+  .messageBox button {
     align-self: flex-end;
     padding: 10px 20px;
     font-size: 14px;
     border: none;
     border-radius: 15px;
     cursor: pointer;
-}
-
-.personalInfoContent {
+  }
+  
+  .personalInfoContent {
     display: flex;
     flex-direction: column;
     margin-left: 1px;
     width: 100%;
-    /* Ensure it expands to the full available width of its parent */
-}
-
-.infoBox {
+  }
+  
+  .infoBox {
     background-color: #fff;
     border-radius: 15px;
     padding: 20px;
@@ -241,46 +237,39 @@
     display: flex;
     align-items: center;
     width: auto;
-    /* Adjust this to control the width more explicitly, e.g., 100% for full width */
-}
-
-.infoBox i {
+  }
+  
+  .infoBox i {
     margin-right: 10px;
     color: #0A760F;
-}
-
-.infoBox span {
+  }
+  
+  .infoBox span {
     margin-right: auto;
-}
-
-.button.last-button {
+  }
+  
+  .button.last-button {
     margin-top: 60px;
-}
-
-.icon {
+  }
+  
+  .icon {
     width: 24px;
-    /* Or the size you want */
     height: 24px;
-    /* Or the size you want */
     object-fit: contain;
     margin-right: 10px;
     display: inline-block;
-    /* To apply padding and borders */
     border: 1px solid #ccc;
-    /* Example border color */
     padding: 5px;
-    /* Adjust the padding as needed */
     border-radius: 12px;
-    /* Optional, for rounded corners */
     background-color: #f9f9f9;
-    /* Example background color */
-}
-
-@media (max-width: 480px) {
+  }
+  
+  @media (max-width: 480px) {
     .reviewColumn {
-        width: 100%;
-        h2.review-header {
-            font-size: 1.5em;
-        }
+      width: 100%;
+      h2.review-header {
+        font-size: 1.5em;
+      }
     }
-}
+  }
+  
