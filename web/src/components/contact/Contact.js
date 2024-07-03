@@ -1,14 +1,50 @@
-import React from "react";
-import './contact.css'
+import React, { useState } from "react";
+import './contact.css';
 
 function Contact() {
-      // Functie voor het afhandelen van het verzenden van het formulier
-      const handleSubmit = (event) => {
-        event.preventDefault(); // Voorkom dat het formulier daadwerkelijk verstuurt wordt
-        // Hier zou je form-validatie en vervolgens de form-data verzending implementeren
+    const [sourceEmail, setSourceEmail] = useState('');
+
+    const handleSubmit = (event) => {
+        event.preventDefault();
+
+        const name = document.getElementById('name').value;
+        const subject = document.getElementById('subject').value;
+        const message = document.getElementById('message').value;
+
+        if (!name || !subject || !sourceEmail || !message) {
+            alert("Please fill out all fields.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('subject', subject);
+        formData.append('sourceEmail', sourceEmail);
+        formData.append('message', message);
+
+        const fileInput = document.getElementById('fileInput');
+        for (let i = 0; i < fileInput.files.length; i++) {
+            formData.append('attachments', fileInput.files[i]);
+        }
+
+        fetch('https://your-api-id.execute-api.region.amazonaws.com/prod/sendEmail', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert("Message sent successfully!");
+            } else {
+                alert("Failed to send message.");
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Error sending message.");
+        });
     };
 
-    // Functie voor het simuleren van een klik op de verborgen file-input
     const handleAttachmentClick = () => {
         document.getElementById('fileInput').click();
     };
@@ -22,9 +58,8 @@ function Contact() {
                 We always get back to you within 24 hours of reaching out. Not received any response from us yet?
                 Check your spam inbox.
             </p>
-            
-                <form onSubmit={handleSubmit}>
-                    <div className="contactform">
+            <form onSubmit={handleSubmit}>
+                <div className="contactform">
                     <div className="namemessage">
                         <label htmlFor="name">Name</label>
                         <input type="text" id="name" placeholder="ex. Lotte Summer" />
@@ -32,28 +67,28 @@ function Contact() {
                         <label htmlFor="subject">Subject</label>
                         <input type="text" id="subject" placeholder="ex. Payment issues" />
 
-                        <label htmlFor="email">Enter your email</label>
-                        <input type="email" id="email" placeholder="ex. lotte_summer@gmail.com" />
+                        <label htmlFor="sourceEmail">Your Email</label>
+                        <input 
+                            type="email" 
+                            id="sourceEmail" 
+                            placeholder="ex. lotte_summer@gmail.com" 
+                            value={sourceEmail} 
+                            onChange={(e) => setSourceEmail(e.target.value)} 
+                        />
                     </div>
-
-            <div className="biginput">
-                <label htmlFor="message">Your message</label>
-                <textarea id="message" placeholder="ex. I am still waiting to get paid and would like a follow up or open a dispute about this..."></textarea>
-                <div className="formbuttons">
-                    <input type="file" id="fileInput" style={{ display: 'none' }} multiple />
-                    <button 
-                        type="button" 
-                        id="attachmentsbutton" 
-                        onClick={handleAttachmentClick}>
-                        Add attachments
-                    </button>
-                    <button type="submit" id="sendbutton">Send message</button>
-                </div>
-            </div>
+                    <div className="biginput">
+                        <label htmlFor="message">Your message</label>
+                        <textarea id="message" placeholder="ex. I am still waiting to get paid and would like a follow up or open a dispute about this..."></textarea>
+                        <div className="formbuttons">
+                            <input type="file" id="fileInput" style={{ display: 'none' }} multiple />
+                            <button type="button" id="attachmentsbutton" onClick={handleAttachmentClick}>
+                                Add attachments
+                            </button>
+                            <button type="submit" id="sendbutton">Send message</button>
+                        </div>
+                    </div>
                 </div>
             </form>
-            
-            
         </div>
     );
 }

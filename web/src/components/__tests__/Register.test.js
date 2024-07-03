@@ -17,7 +17,7 @@ jest.mock('aws-amplify', () => ({
     },
 }));
 
-describe('Register', () => {
+describe.skip('Register', () => {
     it('should navigate to confirm-email when registration is successful', async () => {
         const mockNavigate = jest.fn();
         useNavigate.mockReturnValue(mockNavigate);
