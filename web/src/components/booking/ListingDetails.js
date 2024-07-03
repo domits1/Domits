@@ -392,7 +392,7 @@ const ListingDetails = () => {
                             </div>
                             <p className='description'>{accommodation.Description}</p>
                             <div>
-                                <BookingCalendar passedProp={accommodation} selectDates={selectDates}/>
+                                <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
                             </div>
                             <div>
                                 <h3>This place offers the following:</h3>
