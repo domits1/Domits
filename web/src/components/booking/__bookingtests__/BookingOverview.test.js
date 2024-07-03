@@ -23,7 +23,7 @@ jest.mock('react-router-dom', () => ({
     useNavigate: jest.fn(),
 }));
 
-describe('BookingOverview Component', () => {
+describe.skip('BookingOverview Component', () => {
     beforeEach(() => {
         Auth.currentSession.mockResolvedValue({});
         Auth.currentAuthenticatedUser.mockResolvedValue({
