@@ -297,24 +297,43 @@ const ListingDetails = () => {
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0]);
             const end = new Date(bookedRange[1]);
-            return date >= start && date <= end;
+            const selectedDate = new Date(date);
+            return selectedDate >= start && selectedDate <= end;
         });
     };
 
     const isDateAfterBookedNight = (date) => {
+        const selectedDate = new Date(date);
         if (!checkIn) return false;
 
         for (let bookedRange of bookedDates) {
             const start = new Date(bookedRange[0]);
-            if (checkIn <= start && date >= start) {
+            if (checkIn <= start && selectedDate >= start) {
                 return true;
             }
         }
         return false;
     };
 
+    const isDateInRange = (date, startDate, endDate) => {
+        const selectedDate = new Date(date);
+        const rangeStart = new Date(startDate);
+        const rangeEnd = new Date(endDate);
+        return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
+    };
+
     const filterBookedDates = (date) => {
         return !isDateBooked(date) && !isDateAfterBookedNight(date);
+    };
+
+    const filterDisabledDays = (date) => {
+        for (let i = 0; i < accommodation.DateRanges.length; i++) {
+            let index = accommodation.DateRanges[i];
+            if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
+                return true;
+            }
+        }
+        return false;
     };
 
 
@@ -424,7 +443,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={minStart && new Date(minStart)}
                                         maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={filterBookedDates}
+                                        filterDate={filterDisabledDays || filterBookedDates}
                                         dateFormat="yyyy-MM-dd"
                                     />
                                 </div>
@@ -447,7 +466,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckOut(date)}
                                         minDate={minEnd && new Date(minEnd)}
                                         maxDate={maxEnd && new Date(maxEnd)}
-                                        filterDate={filterBookedDates}
+                                        filterDate={filterDisabledDays || filterBookedDates}
                                         dateFormat="yyyy-MM-dd"
                                     />
                                 </div>
