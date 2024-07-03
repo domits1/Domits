@@ -260,9 +260,8 @@ const ListingDetails = () => {
 
     const handleStartChat = () => {
         const recipientId = hostID;
-        const channelUUID = generateUUID();
-        localStorage.setItem(channelUUID, recipientId);
-        navigate(`/chat?channelID=${channelUUID}`);
+       
+        navigate(`/chat?recipient=${hostID}`);
     };
 
     const handleBooking = () => {
