@@ -700,7 +700,7 @@ function OnboardingHost() {
                 );
             case 2:
                 return (
-                    <main className="container">
+                    <main style={{padding: '1.25rem'}}>
                         <h2 className="onboardingSectionTitle">{isNew ? 'Where can we find your accommodation?' : 'Change the location of your accommodation'}</h2>
                         <p className="onboardingSectionSubtitle">We only share your address with guests after they have
                             booked</p>
@@ -829,9 +829,12 @@ function OnboardingHost() {
                         <h2 className="onboardingSectionTitle">{isNew ? 'Let guests know what your space has to offer.' : 'Edit your amenities'}</h2>
                         <p className="onboardingSectionSubtitle">You can add more facilities after publishing your
                             listing</p>
-                        <div>
+                        <div className="amenity-groups">
                             {Object.keys(allAmenities).map(category => (
-                                <div key={category} style={{marginBottom: '5%'}}>
+                                <div key={category} style={{marginBottom: '5%',
+                                    boxShadow: 'inset 0 0 20px 10px #dedede',
+                                    padding: '5%',
+                                    borderRadius: '2rem'}} >
                                     <h2 className="amenity-header">{category}</h2>
                                     <section className="check-box">
                                         {allAmenities[category].map(amenity => (
