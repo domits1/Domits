@@ -21,8 +21,6 @@ export const onUpdateChat = /* GraphQL */ `
   subscription OnUpdateChat($filter: ModelSubscriptionChatFilterInput) {
     onUpdateChat(filter: $filter) {
       id
-      userId
-      recipientId
       text
       email
       recipientEmail

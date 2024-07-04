@@ -9,6 +9,8 @@
 
 .about__subtitle-container h3 {
     font-family: 'Kanit', sans-serif;
+    text-align: center;
+    font-size: 1.2rem;
     font-weight: 400;
 }
 
@@ -25,6 +27,15 @@
     justify-content: space-between;
     color: white;
     gap: 3.75rem;
+}
+
+.factsHeader p{
+    text-align: center;
+}
+
+.underbigtext{
+    margin: 3rem 1.2rem;
+    font-size: 1.1rem;
 }
 
 .about__title-container {
@@ -66,6 +77,7 @@
 .about__fact-text {
     margin-top: 20px;
     color: white;
+    font-size: 1.1rem;
 }
 
 .about__fact-title {
@@ -116,7 +128,7 @@
     background-color: white;
     border-radius: 50%;
     margin: auto;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .about__avatar-image {
@@ -129,7 +141,7 @@
     text-align: left;
     display: flex;
     flex-direction: column;
-    margin-top: 2rem;
+    margin: 3rem auto;
 }
 
 .about__footer p {
@@ -139,6 +151,47 @@
 
 .about__footer p:first-child {
     margin-right: 50px;
+}
+
+@media (max-width: 1370px) {
+    .team-container {
+        grid-template-columns: repeat(4, 1fr);
+    }
+
+    .aboutus{
+        width: 90%;
+    }
+
+    .awesomefacts{
+        width: 44%;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 1100px) {
+    .team-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .AboutDomitsTitleContainer{
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 1000px) {
+    .team-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .avatar {
+        height: 190px;
+        width: 190px;
+    }
+
+    .avatar img {
+        height: 190px;
+        width: 190px;
+    }
 }
 
 @media (max-width: 850px) {

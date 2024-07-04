@@ -9,13 +9,13 @@
 .hiwCard {
   display: flex;
   flex-direction: column;
-  width: 1000px;
+  width: 70%;
   margin: 0 50px;
 }
 
 .hiwCardImg, .hiwCardImgHost {
   background-color: var(--primary-color);
-  width: 100%;
+  width: 70%;
   height: 150px;
 }
 

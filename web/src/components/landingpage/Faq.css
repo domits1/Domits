@@ -1,16 +1,9 @@
-.faq-container {
-  display: flex;
-  flex-direction: column;
-  align-items: left;
-  margin-bottom: 50px;
-} 
-
 .faqHeader3 {
-  font-size: clamp(20px, 4vw, 32px);
+  font-size: 1.7rem;
 }
 
 .faqHeader4 {
-  font-size: clamp(10px, 4vw, 25px);
+  font-size: 1.5rem;
   font-weight: bolder;
 }
 
@@ -32,21 +25,11 @@
   padding: 10px 20px;
   margin: 10px 0px;
   cursor: pointer;
-  max-width: 200px; /* Set the maximum width for the buttons */
-  flex: 1; /* Ensure buttons grow to take available space */
+  max-width: 43.5%;
+  flex: 1; 
   text-align: center; 
   font-weight: 500;
-  font-size: 15px;
-}
-
-.faq-box {
-  min-width: 90%;
-  border-radius: 10px;
-  margin: 10px 0;
-  padding: 15px;
-  cursor: pointer;
-  transition: max-height 0.4s ease; 
-  overflow: hidden;
+  font-size: 1rem;
 }
 
 .faqButton:hover {
@@ -64,10 +47,11 @@
 }
 
 .faq-box {
-  width: 50%;
+  width: 85%;
   border: 2px solid var(--primary-color);
   border-radius: 10px;
-  margin: 10px 0;
+  margin: 0;
+  margin-bottom: 0.8rem;
   padding: 15px;
   cursor: pointer;
   transition: max-height 0.4s ease; 
@@ -76,7 +60,14 @@
 
 .question {
   font-weight: bold;
-  margin-bottom: 8px;
+  font-size: 1.2rem;
+
+}
+
+.question-container{
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
 }
 
 .answer {
@@ -86,6 +77,12 @@
 
 @media (max-width: 900px) {
   .faq-box {
+    width: 82%;
+  }
+
+  .faq-button-container {
+    max-width: 990px;
     width: 100%;
+    margin: 1rem -1%;
   }
 }

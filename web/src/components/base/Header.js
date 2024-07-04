@@ -80,9 +80,9 @@ function Header({ setSearchResults, setLoading }) {
     };
     const navigateToMessages = () => {
         if (currentView === 'host') {
-            navigate('/hostdashboard/chat');
+            navigate('/hostdashboard/messages');
         } else {
-            navigate('/guestdashboard/chat');
+            navigate('/guestdashboard/messages');
         }
     };
     const navigateToPayments = () => {

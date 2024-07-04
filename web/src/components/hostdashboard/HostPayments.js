@@ -57,7 +57,7 @@ function HostReports() {
 
     return (
         <div className="container">
-
+            <h2>Reports</h2>
             <div className="dashboard">
                 <div className="tabsContainer">
                     <Pages />
@@ -67,7 +67,6 @@ function HostReports() {
                     {error && <p>Error loading data: {error}</p>}
                     {revenueData && (
                         <div className="reportsSection">
-                            <h2>Reports</h2>
                             <div className="overview">
                                 <h3>Revenue Overview</h3>
                                 <div className="chart">

@@ -1,11 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Auth } from 'aws-amplify';
-import { loadStripe } from '@stripe/stripe-js';
-import 'chart.js/auto';
+import React from 'react';
 import Pages from "./Pages.js";
-import './HostRevenueStyle.css';
-
-const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1'); // Replace with your Stripe publishable key
 
 const HostRevenues = () => {
     const [userId, setUserId] = useState(null);
@@ -141,30 +135,17 @@ const HostRevenues = () => {
 
     return (
         <main className="container">
-            <section className="host-revenues">
-                <div className="pages">
-                    <Pages />
-                </div>
+            <section className='host-revenues' style={{
+                display: "flex",
+                flexDirection: "row"
+            }}>
+                <Pages />
                 <div className="content">
-                    <div className="chart-container">
-                        <h3>Revenue Overview</h3>
-                        {loading ? (
-                            <p>Loading...</p>
-                        ) : (
-                            paymentsData ? (
-                                <div>
-                                    <pre>{JSON.stringify(paymentsData, null, 2)}</pre>
-                                </div>
-                            ) : (
-                                <p>No payment data available.</p>
-                            )
-                        )}
-                    </div>
-                    <button onClick={handleStripeOAuth}>Connect with Stripe</button>
+                    <h1>Coming soon...</h1>
                 </div>
             </section>
         </main>
     );
-};
+}
 
 export default HostRevenues;

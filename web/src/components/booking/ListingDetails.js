@@ -6,6 +6,7 @@ import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
+
 import Washingmashine from "../../images/icons/Washingmachine.png";
 import Television from "../../images/icons/Television.png";
 import Smokedetector from "../../images/icons/Smokedetector.png";
@@ -124,15 +125,16 @@ const ListingDetails = () => {
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
-                setHostID(data.OwnerId)
+                setHostID(data.OwnerId);
                 fetchReviewsByAccommodation(data.ID);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
         };
-
+    
         fetchAccommodation();
     }, [id]);
+    
 
     const fetchReviewsByAccommodation = async (accoId) => {
         try {
@@ -291,8 +293,9 @@ const ListingDetails = () => {
 
     const handleStartChat = () => {
         const recipientId = hostID;
-       
-        navigate(`/chat?recipient=${hostID}`);
+        const channelUUID = generateUUID();
+        localStorage.setItem(channelUUID, recipientId);
+        navigate(`/chat?channelID=${channelUUID}`);
     };
 
     const handleBooking = () => {

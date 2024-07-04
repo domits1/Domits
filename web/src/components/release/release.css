@@ -56,7 +56,7 @@
 .release__item {
   border: 1px solid #ddd;
   border-radius: 10px;
-  padding: 20px;
+  padding: 10px;
   text-align: center;
   cursor: pointer;
   transition: transform 0.3s;
@@ -72,6 +72,7 @@
 .release__item-title {
   font-size: 1.2em;
   margin-bottom: 10px;
+  margin-top: -10px;
 }
 
 .release__item-text {
@@ -87,6 +88,12 @@
   transform: scale(1.05);
 }
 
+.release-notes img{
+  width: 550px;
+  height: 299px;
+  object-fit: cover;
+  object-position: top;
+}
 @media screen and (max-width: 768px) {
   .release__notes {
     grid-template-columns: 1fr;

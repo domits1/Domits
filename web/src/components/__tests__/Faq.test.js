@@ -3,18 +3,18 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import Helpdesk from "../about/Helpdesk";
 import Faq from '../landingpage/Faq';
 
-test.skip('shows search input and button', () => {
+test('shows search input and button', () => {
     render(<Helpdesk category="guest" />);
     screen.getByPlaceholderText(/What do you need help with?/i);
     screen.getByRole('button', {name: /Search/i });
   });
 
-test.skip('shows FAQ component', () => {
+test('shows FAQ component', () => {
     render(<Helpdesk category='guest' />);
     screen.getByText(/FAQ - Frequently Asked Questions/i);
 });
 
-test.skip('shows guest FAQ', () => {
+test('shows guest FAQ', () => {
     render(<Helpdesk category='guest' />);
     screen.getByText(/Is my information stored securely?/i);
     screen.getByText(/How much does Domits charge?/i);
@@ -22,7 +22,7 @@ test.skip('shows guest FAQ', () => {
     screen.getByText(/How do I create and manage my account?/i);
 });
 
-test.skip('shows host FAQ', () => {
+test('shows host FAQ', () => {
     render(<Helpdesk category='host' />);
     screen.getByText(/How long will my listing stay active on your platform.../i);
     screen.getByText(/What steps are required to become a verified Domits host.../i);
@@ -31,7 +31,7 @@ test.skip('shows host FAQ', () => {
     screen.getByText(/How to see, change or cancel your reservations?/i);
 });
 
-test.skip('clicking question shows answer', () => {
+test('clicking question shows answer', () => {
     render(<Faq category='guest' />);
     const question = screen.getByText(/Is my information stored securely?/i);
     fireEvent.click(question);

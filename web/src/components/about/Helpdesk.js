@@ -6,6 +6,7 @@ const Helpdesk = ({ category }) => {
 
   return (
     <div className="helpContainer">
+       <h3 className="faqHeader3">FAQ - Frequently Asked Questions</h3>
       <div className="helpSearchWrapper">
         <input
             type="text"
