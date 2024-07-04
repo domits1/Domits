@@ -136,7 +136,22 @@
   padding: 0;
   margin-top: 20px;
 }
-
+.features-category {
+  ul {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 2%;
+  }
+}
+.category-item {
+  display: flex;
+  flex-direction: row;
+  gap: 1.5%;
+  span {
+    font-weight: lighter;
+    font-size: 1rem;
+  }
+}
 /* Stijl voor individuele functies */
 .acco-feature-item {
   display: flex;
@@ -162,9 +177,9 @@
 
 /* Stijl voor de feature iconen */
 .feature-icon {
-  width: 40px;
-  height: 40px;
-  margin-bottom: 10px;
+  width: 1.25rem;
+  height: 1.25rem;
+  align-self: center;
 }
 
 .feature-item span {

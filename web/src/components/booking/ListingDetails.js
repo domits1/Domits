@@ -69,27 +69,27 @@ const ListingDetails = () => {
     const [hostID, setHostID] = useState();
 
     const featureIcons = {
-        WashingMachine: Washingmashine,
-        Television: Television,
-        Smokedetector: Smokedetector,
-        Wifi: Wifi,
+        'Washer and dryer': Washingmashine,
+        'Smart TV': Television,
+        'Smoke detector': Smokedetector,
+        'Wi-Fi': Wifi,
         Onsiteparking: Onsiteparking,
-        Homeoffice: Homeoffice,
-        Fireextinguisher: Fireextinguisher,
-        Airconditioning: Airconditioning,
-        FirstAidKit: FirstAidKit,
+        'Work desk and chair': Homeoffice,
+        'Fire extinguisher': Fireextinguisher,
+        'Air conditioning': Airconditioning,
+        'First aid kit': FirstAidKit,
         Kitchen: Kitchen,
-        Armchair: Armchair,
-        BabyMonitor: BabyMonitor,
+        Armchairs: Armchair,
+        'Baby monitor': BabyMonitor,
         Baby: Baby,
         Backyard: Backyard,
         Blender: Blender,
-        BoardGame: BoardGame,
+        'Board games': BoardGame,
         Bus: Bus,
         Car: Car,
         ChargingStation: ChargingStation,
-        CheckIn: CheckIn,
-        Cleaner: Cleaner,
+        'Self-check-in': CheckIn,
+        'Concierge service': Cleaner,
         Clothes: Clothes,
         CoffeeTable: CoffeeTable,
         Crib: Crib,
@@ -98,10 +98,10 @@ const ListingDetails = () => {
         Gate: Gate,
         GraphicDesign: GraphicDesign,
         Grill: Grill,
-        HighChair: HighChair,
-        HotTub: HotTub,
-        CoffeeMachine: CoffeeMachine,
-        AlarmClock: AlarmClock,
+        'High chair': HighChair,
+        'Hot tub': HotTub,
+        'Coffee maker': CoffeeMachine,
+        'Alarm clock': AlarmClock,
         AntiqueBalcony: AntiqueBalcony,
     };
 
@@ -121,6 +121,7 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
+                console.log(data.Features);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
                 setHostID(data.OwnerId)
@@ -315,13 +316,17 @@ const ListingDetails = () => {
                 const item =items[category];
                 if (item.length > 0) {
                     return (
-                        <div key={category}>
+                        <div key={category} className='features-category'>
                             <h3>{category}</h3>
                             <ul>
                                 {item.map((item, index) => (
-                                    <li key={index}>
-                                        <img src={featureIcons[item]}/>
-                                        {item === 'Cleaning service (add service fee manually)' ? 'Cleaning service' : item}</li>
+                                    <li key={index} className='category-item'>
+                                        <img
+                                            src={featureIcons[item]}
+                                            className='feature-icon'
+                                        />
+                                        <span>{item === 'Cleaning service (add service fee manually)' ? 'Cleaning service' : item}</span>
+                                    </li>
                                 ))}
                             </ul>
                         </div>
@@ -330,10 +335,6 @@ const ListingDetails = () => {
             })
         }
     };
-
-    const selectDates = () => {
-        return true;
-    }
     const isDateBooked = (date) => {
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0]);
