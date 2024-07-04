@@ -1,4 +1,4 @@
-.howitworksmain{
+.howitworks__main {
   width: 100%;
   display: flex;
   align-items: center;
@@ -6,17 +6,17 @@
   flex-direction: column;
 }
 
-.howitworksTitleDomits{
+.howitworks__title {
   font-size: 2.25rem;
   margin: 0rem;
 }
 
-.howitworkssmallerTitleDomits{
+.howitworks__subtitle {
   font-size: 1.25rem;
   margin: 0rem;
 }
 
-.howitworkstitlescontainer{
+.howitworks__titles-container {
   width: 100%;
   gap: 1.375rem;
   height: 10rem;
@@ -27,22 +27,21 @@
   margin-top: 3rem;
 }
 
-.guestSmallTitleContainer{
+.howitworks__section-title-container {
   width: 84.12rem;
   margin-top: 1.4rem;
   display: flex;
   margin-bottom: 0.6rem;
 }
 
-.infoTitleGuest{
+.howitworks__section-title {
   font-size: 2.25rem;
   font-weight: 500;
   margin: 0rem;
 }
 
-.guestinfoblockhowitworks{
+.howitworks__info-block {
   width: 84.12rem;
-  background: #0D9813;
   border-radius: 0.4rem;
   display: flex;
   flex-wrap: wrap;
@@ -51,7 +50,16 @@
   gap: 2rem;
 }
 
-.informationContainerHowItWorks{
+.howitworks__info-block--guests {
+  background: #0D9813;
+}
+
+.howitworks__info-block--hosts {
+  background: #052C5A;
+  margin-bottom: 7rem;
+}
+
+.howitworks__info-item {
   width: 23.8rem;
   margin-top: 1rem;
   margin-bottom: 1rem;
@@ -60,18 +68,16 @@
   flex-direction: column;
 }
 
-
-.borderleft{
+.borderleft {
   border-left: 0.2rem solid white;
   padding-left: 2rem;
-
 }
 
-.borderright{
+.borderright {
   border-right: 0.2rem solid white;
 }
 
-.titleIconHowItWorks{
+.howitworks__info-header {
   height: 3rem;
   width: 100%;
   display: flex;
@@ -82,70 +88,56 @@
   margin-bottom: 2.5rem;
 }
 
-.titleinformationH3{
+.howitworks__info-title {
   font-size: 1.5rem;
   color: white;
   font-weight: 500;
 }
 
-.informationHowItWorksP{
+.howitworks__info-text {
   font-size: 1rem;
   color: white;
   max-width: 19rem;
 }
 
-.bluebackground{
-  background: #052C5A;
-  margin-bottom: 7rem;
-}
-
 @media (max-width: 1364px) {
-
-  .howitworksmain{
+  .howitworks__main {
     padding-left: 1rem;
   }
-  .guestinfoblockhowitworks{
-    width:100%;
+  .howitworks__info-block {
+    width: 100%;
   }
-
-  .guestSmallTitleContainer{
+  .howitworks__section-title-container {
     width: 100%;
     align-items: center;
     justify-content: center;
     margin-bottom: 1.1rem;
   }
-
-
-} 
+}
 
 @media (max-width: 1238px) {
-
-  .howitworksmain{
+  .howitworks__main {
     padding-left: 1rem;
     padding-right: 1rem;
   }
-
-  .borderleft{
+  .borderleft {
     border-left: 0.0rem solid white;
     border-top: 0.2rem solid white;
     padding-left: 2rem;
-  
   }
-  
-  .borderright{
+  .borderright {
     border-right: 0.2rem solid white;
   }
 }
 
-@media (max-width:796px){  
-  .borderright{
+@media (max-width: 796px) {
+  .borderright {
     border-right: 0.0rem solid white;
     border-bottom: 0.2rem solid white;
     padding-left: 0rem;
     padding-bottom: 2rem;
   }
-
-  .borderleft{
-    padding-top: 2rem; 
+  .borderleft {
+    padding-top: 2rem;
   }
 }
