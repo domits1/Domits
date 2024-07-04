@@ -23,13 +23,15 @@
   display: flex;
   align-items: center;
   flex-direction: column;
+  justify-content: center;
+  margin-top: 3rem;
 }
 
 .howitworks__section-title-container {
   width: 84.12rem;
   margin-top: 1.4rem;
   display: flex;
-  justify-content: flex-start;
+  margin-bottom: 0.6rem;
 }
 
 .howitworks__section-title {
@@ -41,10 +43,11 @@
 .howitworks__info-block {
   width: 84.12rem;
   border-radius: 0.4rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 1rem;
-  padding: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
 }
 
 .howitworks__info-block--guests {
@@ -63,8 +66,6 @@
   height: 14rem;
   display: flex;
   flex-direction: column;
-  padding: 1rem;
-  text-align: left;
 }
 
 .borderleft {
@@ -74,35 +75,29 @@
 
 .borderright {
   border-right: 0.2rem solid white;
-  padding-right: 3rem;
 }
 
 .howitworks__info-header {
   height: 3rem;
   width: 100%;
   display: flex;
-  justify-content: space-between; 
   align-items: center;
-  height: auto; 
-  width: 100%; 
-  margin-bottom: 0.5rem; 
-  margin-bottom: 1rem;
+  justify-content: flex-start;
+  text-align: center;
+  gap: 2rem;
+  margin-bottom: 2.5rem;
 }
 
 .howitworks__info-title {
   font-size: 1.5rem;
   color: white;
   font-weight: 500;
-  margin: 0; 
 }
 
 .howitworks__info-text {
   font-size: 1rem;
   color: white;
   max-width: 19rem;
-  min-width: 100%;
-  margin-top: 1.6rem;
-  text-align: left;
 }
 
 @media (max-width: 1364px) {
@@ -115,9 +110,8 @@
   .howitworks__section-title-container {
     width: 100%;
     align-items: center;
-    height: auto; 
-    width: 100%; 
-    margin-bottom: 0.5rem; 
+    justify-content: center;
+    margin-bottom: 1.1rem;
   }
 }
 
