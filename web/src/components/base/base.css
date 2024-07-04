@@ -150,8 +150,6 @@
     word-wrap: break-word;
 }
 
-
-
 @media screen and (max-width: 650px) {
 
     .header-nav, .headerRight {
@@ -214,7 +212,7 @@
 
     color: #000;
     font-family: Kanit, sans-serif;
-    font-size: 20px;
+    font-size: 1rem;
     font-style: normal;
     font-weight: 300;
     line-height: 150%;
@@ -229,8 +227,13 @@
     align-items: center;
     justify-content: center;
     padding: 15px;
-
-
+}
+.footer-icons img {
+    width: 3rem; 
+    height: auto; 
+    margin-left: 0.6rem;
+    margin-bottom: 0.5rem;
+    border-radius: 25%;
 }
 
 .footer-copyright-text {

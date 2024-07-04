@@ -1,5 +1,5 @@
 .Search-bar {
-  width: 45rem;
+  width: 42.5rem;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 1.875rem;
@@ -108,7 +108,7 @@
   height: 2.5rem;
   width: 2.5rem;
   margin-top: 0.45rem;
-  margin-left: 0.5rem;
+  margin-left: 0.3rem;
 }
 
 .searchbar-button:hover {
@@ -135,11 +135,15 @@
   transform: translateY(10%);
   width: 90%;
   height: 2rem;
+  margin-left: 1rem;
 }
-
-/* .suggestion-item:hover {
-  border-radius: 10px;
-} */
+.searchBar_inputfield[type="search"]::-webkit-search-cancel-button {
+  position: relative;
+  color: black;
+  font-size: large;
+  filter: grayscale(100%);
+  
+}
 
 .searchBar_inputfield:focus {
   outline: none;
@@ -162,7 +166,7 @@
   padding: 1.625rem;
   background-color: #fff;
   border-radius: 1.25rem;
-  width: 13%;
+  width: 13.2%;
 }
 
 .Search-error-message {
@@ -413,7 +417,7 @@
   outline: none;
   width: 80%;
   text-align: center;
-  transform: translateY(-3.67rem);
+  transform: translateY(-3.77rem);
   padding-bottom: 1rem;
   color: transparent;
   cursor: pointer;
@@ -429,7 +433,7 @@
 }
 
 .Calendar__monthYear>* {
-  font-size: 1.5em;
+  font-size: 1.4em;
   color: black;
 }
 
