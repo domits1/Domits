@@ -67,6 +67,7 @@ const ListingDetails = () => {
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
     const [hostID, setHostID] = useState();
+    const [showAll, setShowAll] = useState(false);
 
     const featureIcons = {
         'Washer and dryer': Washingmashine,
@@ -121,7 +122,6 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                console.log(data.Features);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
                 setHostID(data.OwnerId)
@@ -309,32 +309,37 @@ const ListingDetails = () => {
         navigate(`/bookingoverview?${queryString}`);
     };
 
-    const renderCategories = () => {
-        if (accommodation) {
-            const items = accommodation.Features;
-            return Object.keys(items).map(category => {
-                const item =items[category];
-                if (item.length > 0) {
-                    return (
-                        <div key={category} className='features-category'>
-                            <h3>{category}</h3>
-                            <ul>
-                                {item.map((item, index) => (
-                                    <li key={index} className='category-item'>
-                                        <img
-                                            src={featureIcons[item]}
-                                            className='feature-icon'
-                                        />
-                                        <span>{item === 'Cleaning service (add service fee manually)' ? 'Cleaning service' : item}</span>
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
-                    )
-                }
-            })
-        }
-    };
+        const toggleShowAll = () => {
+            setShowAll(!showAll);
+        };
+
+        const renderCategories = () => {
+            if (accommodation) {
+                const items = accommodation.Features;
+                const categoriesToShow = showAll ? Object.keys(items) : Object.keys(items).slice(0, 2);
+
+                return categoriesToShow.map(category => {
+                    const item = items[category];
+                    if (item.length > 0) {
+                        return (
+                            <div key={category} className='features-category'>
+                                <h3>{category}</h3>
+                                <ul>
+                                    {item.map((item, index) => (
+                                        <li key={index} className='category-item'>
+                                            <img src={featureIcons[item]} className='feature-icon' alt={`${item} icon`} />
+                                            <span>{item === 'Cleaning service (add service fee manually)' ? 'Cleaning service' : item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        );
+                    }
+                    return null;
+                });
+            }
+            return null;
+        };
     const isDateBooked = (date) => {
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0]);
@@ -412,7 +417,11 @@ const ListingDetails = () => {
                                 <h3>This place offers the following:</h3>
                                 {accommodation ?  renderCategories() : ''}
                                 <div>
-                                    <button className='button'>Show more</button>
+                                    {Object.keys(accommodation.Features).length > 2 && (
+                                        <button className='button' onClick={toggleShowAll}>
+                                            {showAll ? 'Show less' : 'Show more'}
+                                        </button>
+                                    )}
                                 </div>
                                 <br/>
                                 <section className="listing-reviews">
