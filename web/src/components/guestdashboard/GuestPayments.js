@@ -20,7 +20,7 @@ const PaymentsGuestDashboard = () => {
                 const userId = userInfo.attributes.sub;
                 setCognitoUserId(userId);
 
-                const response = await fetch(`https://j1ids2iygi.execute-api.eu-north-1.amazonaws.com/default/FetchGuestPayments`, {
+                const response = await fetch('https://j1ids2iygi.execute-api.eu-north-1.amazonaws.com/default/FetchGuestPayments', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -47,31 +47,36 @@ const PaymentsGuestDashboard = () => {
 
     return (
         <div className="container">
-            <h2>Payments</h2>
+
             <div className='dashboards'>
                 <Pages />
-            </div>
-            <div className="content">
-                {loading ? (
-                    <div className="loading-spinner">
-                        <img src={spinner} alt="Loading..." />
-                    </div>
-                ) : (
-                    <div className="payments-content">
-                        <div className="fulfilled-payments">
-                            <h2>Fulfilled payments</h2>
-                            {payments.map(payment => (
-                                <div className="payment-item" key={payment.paymentId}>
-                                    <h3>{payment.productName}</h3>
-                                    <p>Paid: {DateFormatterDD_MM_YYYY(payment.createdAt)}</p>
-                                    <h3>{payment.description}</h3>
-                                    <p>Total: &euro;{payment.amount / 100}</p>
-                                </div>
-                            ))}
+
+                <div className="content">
+                <h2>Payments</h2>
+                    {loading ? (
+                        <div className="loading-spinner">
+                            <img src={spinner} alt="Loading..." />
                         </div>
-                        {/* Payment methods section */}
-                    </div>
-                )}
+                    ) : (
+                        <div className="payments-content">
+                            <div className="fulfilled-payments">
+                                <h2>Fulfilled payments</h2>
+                                {payments.length === 0 ? (
+                                    <p>There are no payments yet. They will appear here once you have made payments.</p>
+                                ) : (
+                                    payments.map(payment => (
+                                        <div className="payment-item" key={payment.paymentId}>
+                                            <h3>{payment.productName}</h3>
+                                            <p>Paid: {DateFormatterDD_MM_YYYY(payment.createdAt)}</p>
+                                            <h3>{payment.description}</h3>
+                                            <p>Total: &euro;{payment.amount / 100}</p>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
