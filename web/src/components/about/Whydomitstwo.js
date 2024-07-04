@@ -3,28 +3,27 @@ import "./whydomits.css";
 import FAQ from "../landingpage/Faq";
 import barchart from "../../images/icons/bar-chart.png";
 import chartbreakout from "../../images/icons/chart-breakout-circle.png";
-
+import check from "../../images/icons/check.png";
 
 function Whydomits() {
   return (
     <section className="WhyDomitsTwoMain">
       <article className="WhyDomitsTwoTitleTextContainer">
-        <h3 className="WhyDomitsTwoH3">Why Domits & how we win together</h3>
-        <h4 className="WhyDomitsTwoH4">
-          One of the fastest improving travel platforms.
-        </h4>
+        <h3 className="WhyDomitsTwoH3">Why Choose Domits? How We Succeed Together</h3>
+        <h5 className="WhyDomitsTwoH4">
+          One of the fastest-growing travel platforms
+        </h5>
         <p className="WhyDomitsTwoP">
-          Besides our resourceful traveltech network and talents, we are one of
-          the fastest improving travel platforms. Although we only launched
-          Domits in late 2023, we have been supporting travel companies to grow
-          since 2015.
+          Leveraging our extensive travel tech network and talent, we are proud to be one of the 
+          fastest-growing travel platforms. Although Domits was launched in late 2023, we have been 
+          supporting the growth of travel companies since 2015.
         </p>
         <p className="WhyDomitsTwoP">
-          Start your journey as a Guest or host within minutes. List, search and
-          book holiday accommodations, campers and boats. Save cost with our
-          small system charges. There are no hidden costs or percentage cuts.
-          Save administrative time. Make use of our global payment methods.
-          Enjoy our warmhearted customer centric approach. Try it out for free.
+          <h3>Join Us: Host or Guest</h3>
+          <p><img src={check} alt="check"/>Start your journey as a guest or host in minutes. </p>
+          <p><img src={check} alt="check"/>Easily list, search, and book holiday accommodations, campers, and boats. Save costs with our minimal system charges. </p>
+          <p><img src={check} alt="check"/>Enjoy no hidden costs or percentage cuts, and save administrative time with our global payment methods. </p>
+          <p><img src={check} alt="check"/>Experience our warm, customer-centric approach. Try it out for free.</p>
         </p>
       </article>
       <section className="WhyDomitsTwoCardsContainer">

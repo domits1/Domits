@@ -1,5 +1,5 @@
 .job-detail-container{
-    max-width: 1200px;
+    max-width: 70%;
     margin: 0 auto;
     padding: 20px;
     font-family: Arial, sans-serif;
@@ -35,4 +35,10 @@
 
 .apply-button:hover {
     background-color: #45a049;
+}
+
+@media (max-width: 1100px){
+    .job-detail-container{
+        max-width: 90%;
+    }
 }

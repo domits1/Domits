@@ -1,16 +1,22 @@
 .helpContainer {
-  width: 100%;
-  padding: 50px;
+  margin: 0 auto;
+  width: 80%;
+  margin-bottom: 2rem;
+  margin-top: 3.5rem;
 }
 
 .helpSearchWrapper {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
   position: relative;
-  width: 40%;
-  max-width: 100%;
+  width: 88.9%;
+  margin-bottom: 2rem;
 }
 
 .helpSearchInput {
-  width: 100%;
+  width: 98%;
   padding: 10px;
   border: 2px solid #ccc;
   border-radius: 5px;
@@ -23,18 +29,21 @@
   background-color: var(--primary-color);
   color: white;
   font-weight: 500;
-  right: 1px;
+  right: 1.3px;
   top: 5px;
   padding: 7px 15px;
 }
 
-/* Optioneel: Voeg een hover effect toe aan de knop */
 .helpSearchButton:hover {
   background-color: #367a4a;
 }
 
+h3{
+  font-size: 2rem;
+}
+
 @media (max-width: 900px) {
-  .helpSearchWrapper {
-    width: 100%;
+  .helpContainer {
+    width: 90%;
   }
 }

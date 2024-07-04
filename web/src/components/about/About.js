@@ -19,10 +19,10 @@ function About() {
     return (
         <div className="aboutus">
             <div className="AboutDomitsTitleContainer">
-                <h2>About Domits</h2>
+                <h3>About Domits</h3>
             </div>
             <div>
-                <h3>Tailor made partnership</h3>
+                <h5>Tailor made partnership</h5>
             </div>
 
             <div className="underbigtext">
@@ -81,128 +81,121 @@ function About() {
                 </div>
             </div>
             <div className="crew">
-                <h1 className="aboutWhoWeAreText margintop">Who we are</h1>
+                <h3 className="aboutWhoWeAreText margintop">Who we are</h3>
                 <p className="aboutWhoWeAreText marginbottom">We are all conscious founders.</p>
-
-                <div class="team">
+            </div>
+            <div class="team-container">
                     <div class="member">
                         <div class="avatar">
                             <img src={stefan} alt="" />
                         </div>
-                        <p>Stefan Hopman</p>
+                        <p className="name">Stefan Hopman</p>
                         <p>Founder and CEO</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={tim} alt="" />
                         </div>
-                        <p>Tim Hart</p>
+                        <p className="name">Tim Hart</p>
                         <p>Product Owner</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={standard} alt="" />
                         </div>
-                        <p>Hamza Zaraoui</p>
+                        <p className="name">Hamza Zaraoui</p>
                         <p>Fullstack developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={sebastiaan} alt="" />
                         </div>
-                        <p>Sebastiaan van der Wilt</p>
+                        <p className="name">Sebastiaan van der Wilt</p>
                         <p>Fullstack developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={muhammed} alt="" />
                         </div>
-                        <p>Muhammed Çetinkaya</p>
+                        <p className="name">Muhammed Çetinkaya</p>
                         <p>Back-end developer</p>
                     </div>
-                </div>
-
-                <div class="team">
                     <div class="member">
                         <div class="avatar">
                             <img src={kacper} alt="" />
                         </div>
-                        <p>Kacper Flak</p>
+                        <p className="name">Kacper Flak</p>
                         <p>Back-end developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={standard} alt="" />
                         </div>
-                        <p>Tim Seijlhouwer</p>
+                        <p className="name">Tim Seijlhouwer</p>
                         <p>Fullstack developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={chahid} alt="" />
                         </div>
-                        <p>Chahid Laaouar</p>
+                        <p className="name">Chahid Laaouar</p>
                         <p>Fullstack developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={jiaming} alt="" />
                         </div>
-                        <p>Jiaming Yan</p>
+                        <p className="name">Jiaming Yan</p>
                         <p>Back-end developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={leila} alt="" />
                         </div>
-                        <p>Leila Boutkabout</p>
+                        <p className="name">Leila Boutkabout</p>
                         <p>UX/UI Designer</p>
                     </div>
-                </div>
-
-                <div class="team">
                     <div class="member">
                         <div class="avatar">
                         <img src={standard} alt="" />
                         </div>
-                            <p>Aniss Bouabdallah</p>
+                        <p className="name">Aniss Bouabdallah</p>
                         <p>Business developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={timE} alt="" />
                         </div>
-                        <p>Tim Eerdmans</p>
+                        <p className="name">Tim Eerdmans</p>
                         <p>Business developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={nick} alt="" />
                         </div>
-                        <p>Nick Ryan</p>
+                        <p className="name">Nick Ryan</p>
                         <p>Back-end developer</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={standard} alt="" />
                         </div>
-                        <p>This can be you!</p>
+                        <p className="name">This can be you!</p>
                         <p>We're hiring!</p>
                     </div>
                     <div class="member">
                         <div class="avatar">
                             <img src={standard} alt="" />
                         </div>
-                        <p>This can be you!</p>
+                        <p className="name">This can be you!</p>
                         <p>We're hiring!</p>
                     </div>
-                </div>
-
+            </div>
                 <div class="about">
                     <p>We believe that every employee can be a conscious founder. And you are allowed to think and act that way. A conscious founder is an entrepreneur who makes decisions based on health, safety and future-proofing. For themselves, the organization, customers, partners and society.</p>
                     <p>You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders.</p>
                 </div>
-            </div>
+
             {/* <FAQ /> */}
         </div>
 

@@ -22,12 +22,8 @@ function JobDetails() {
             <p>{job.experience}</p><br></br> 
             <h3>Category</h3>
             <p>{job.category}</p><br></br> 
-            <h3>Experience</h3> 
-            <p>{job.experience}</p><br></br> 
             <h3>Location</h3>
             <p>{job.location}</p><br></br> 
-           {/* <p>Description</p><br></br>
-            <p>{job.description}</p><br></br>*/}
             <h3>What are you going to do</h3>
             <p>{job.details.responsibilities}</p><br></br>
 

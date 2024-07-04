@@ -1,5 +1,5 @@
 .aboutus{
-    width: 90%;
+    width: 86%;
     margin: auto;
     margin-top: 40px;
     color: #000;
@@ -7,8 +7,10 @@
     font-style: normal;
 }
 
-.aboutus h3 {
+.aboutus h5 {
     font-family: 'Kanit', sans-serif;
+    text-align: center;
+    font-size: 1.2rem;
     font-weight: 400;
 }
 
@@ -20,9 +22,20 @@
     gap: 3.75rem;
 }
 
+.factsHeader p{
+    text-align: center;
+}
+
+.underbigtext{
+    margin: 3rem 1.2rem;
+    font-size: 1.1rem;
+}
+
 .AboutDomitsTitleContainer{
-    display: flex;
-    align-items: flex-start;
+    font-size: 2rem;
+    font-weight: 500;
+    text-align: center;
+    margin-bottom: -33px;
 }
 
 .awesomefacts{
@@ -39,13 +52,17 @@
 }
 
 .aboutText {
-    font-size: 1.25rem;
     color: black;
     margin: 0rem;
 }
 
 .aboutWhoWeAreText{
-    text-align: left;
+    margin-left: -40px;
+    font-size: 2.2rem;
+}
+
+.crew p{
+    font-size: 1.35rem;
 }
 
 .marginbottom{
@@ -59,12 +76,13 @@
 .factsText {
     margin-top: 20px;
     color: white;
+    font-size: 1.1rem;
 }
 
 .factsTitle {
     margin: 0;
     /* font-size: 22px; */
-    font-size: clamp(0.8rem, 1.2vw + 0.8rem, 1.5rem);    
+    font-size: clamp(0.8rem, 1.6vw + 0.8rem, 1.4rem);    
     color: white;
 }
 
@@ -83,21 +101,25 @@
     object-fit: contain;
 }
 
-
-.crew {
+.team-container {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+    padding: 20px;
+}
+.member {
     text-align: center;
 }
-.team {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    flex-wrap: wrap;
-    margin-top: 20px;
+
+.name{
+    font-size: 1.5rem;
+    font-weight: 500;
 }
 
-.member {
-    width: 20%;
-    margin-bottom: 20px;
+.avatar img {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
 }
 
 .member > p:nth-of-type(1) {
@@ -105,17 +127,17 @@
 }
 
 .avatar {
-    height: 100px;
-    width: 100px;
+    height: 130px;
+    width: 130px;
     background-color: white;
     border-radius: 50%;
     margin: auto;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .avatar img {
-    height: 100px;
-    width: 100px;
+    height: 130px;
+    width: 130px;
     border-radius: 50%;
 }
 
@@ -123,7 +145,7 @@
     text-align: left;
     display: flex;
     flex-direction: column;
-    margin-top: 2rem;
+    margin: 3rem auto;
 }
 
 .about p {
@@ -135,27 +157,85 @@
     margin-right: 50px;
 }
 
-@media (max-width: 850px) {
-    .member {
-        width: 100%;
+@media (max-width: 1370px) {
+    .team-container {
+        grid-template-columns: repeat(4, 1fr);
     }
+
+    .aboutus{
+        width: 90%;
+    }
+
+    .awesomefacts{
+        width: 44%;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 1100px) {
+    .team-container {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .AboutDomitsTitleContainer{
+        font-size: 1.5rem;
+    }
+}
+
+@media (max-width: 1000px) {
+    .team-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .avatar {
+        height: 190px;
+        width: 190px;
+    }
+
+    .avatar img {
+        height: 190px;
+        width: 190px;
+    }
+}
+
+@media (max-width: 850px) {
+    .avatar {
+        height: 250px;
+        width: 250px;
+        margin-bottom: 30px;
+    }
+
+    .avatar img {
+        height: 250px;
+        width: 250px;
+    }
+
+    .team-container {
+        grid-template-columns: repeat(1, 1fr);
+    }
+    
     .factsbox{
         display: flex;
         flex-direction: column;
         align-items: center;
     }
+
     .awesomefacts {
-        width: 100%;
+        width: 90%;
     }
-    .factsHeader {
-        flex-direction: column-reverse;
+
+    .crew p{
+        font-size: 1.5rem;
     }
+
     .about {
         flex-direction: column;
     }
+
     .about p:first-child {
         margin: 0 0 25px 0;
     }
+
     .about p {
         width: 100%;
     }

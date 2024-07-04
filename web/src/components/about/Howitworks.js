@@ -12,7 +12,7 @@ function Howitworks() {
                 <h5 className="howitworkssmallerTitleDomits">Discover how Domits makes it easy for both guests and hosts.</h5>
             </article>
             <article className="guestSmallTitleContainer">
-                <h3 className="infoTitleGuest">Guests</h3>
+                <h4 className="infoTitleGuest">Guests</h4>
             </article>
             <article className="guestinfoblockhowitworks">
                 <section className="informationContainerHowItWorks borderright">
@@ -39,7 +39,7 @@ function Howitworks() {
             </article>
 
             <article className="guestSmallTitleContainer">
-                <h3 className="infoTitleGuest">Hosts</h3>
+                <h4 className="infoTitleGuest">Hosts</h4>
             </article>
             <article className="guestinfoblockhowitworks bluebackground">
                 <section className="informationContainerHowItWorks borderright">

@@ -18,12 +18,12 @@
 }
 
 .release-header h1 {
-  font-size: 2.5em;
+  font-size: 2rem;
   margin-bottom: 10px;
 }
 
 .release-header h4 {
-  font-size: 1.2em;
+  font-size: 1em;
   margin-bottom: 5px;
 }
 
@@ -43,8 +43,8 @@
 }
 
 .image-header {
-  width: 380px;
-  max-width: 400px;
+  width: 300px;
+  max-width: 380px;
 }
 
 .release-notes {
@@ -56,7 +56,7 @@
 .release-item {
   border: 1px solid #ddd;
   border-radius: 10px;
-  padding: 20px;
+  padding: 10px;
   text-align: center;
   cursor: pointer;
   transition: transform 0.3s;
@@ -70,8 +70,9 @@
 }
 
 .release-item h4 {
-  font-size: 1.2em;
+  font-size: 1em;
   margin-bottom: 10px;
+  margin-top: -10px;
 }
 
 .release-item p {
@@ -84,9 +85,15 @@
 }
 
 .release-item:hover {
-  transform: scale(1.05);
+  transform: scale(1.01);
 }
 
+.release-notes img{
+  width: 550px;
+  height: 299px;
+  object-fit: cover;
+  object-position: top;
+}
 @media screen and (max-width: 768px) {
   .release-notes {
     grid-template-columns: 1fr;
