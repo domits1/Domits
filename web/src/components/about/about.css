@@ -1,5 +1,5 @@
-.aboutus{
-    width: 86%;
+.about {
+    width: 90%;
     margin: auto;
     margin-top: 40px;
     color: #000;
@@ -7,14 +7,21 @@
     font-style: normal;
 }
 
-.aboutus h5 {
+.about__subtitle-container h3 {
     font-family: 'Kanit', sans-serif;
     text-align: center;
     font-size: 1.2rem;
     font-weight: 400;
 }
 
-.factsbox{
+.about__fact-subtitle{
+    margin: 0;
+  font-size: 22px;
+  font-size: clamp(0.8rem, 1.2vw + 0.8rem, 1.5rem);
+  color: white;
+}
+
+.about__factsbox {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -31,14 +38,12 @@
     font-size: 1.1rem;
 }
 
-.AboutDomitsTitleContainer{
-    font-size: 2rem;
-    font-weight: 500;
-    text-align: center;
-    margin-bottom: -33px;
+.about__title-container {
+    display: flex;
+    align-items: flex-start;
 }
 
-.awesomefacts{
+.about__fact {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
@@ -51,42 +56,37 @@
     position: relative;
 }
 
-.aboutText {
+.about__text {
+    font-size: 1.25rem;
     color: black;
     margin: 0rem;
 }
 
-.aboutWhoWeAreText{
-    margin-left: -40px;
-    font-size: 2.2rem;
+.about__who-we-are-title {
+    text-align: left;
 }
 
-.crew p{
-    font-size: 1.35rem;
-}
-
-.marginbottom{
+.about__who-we-are-subtitle--marginbottom {
     margin-bottom: 4rem;
 }
 
-.margintop{
+.about__text--margintop {
     margin-top: 1.2rem;
 }
 
-.factsText {
+.about__fact-text {
     margin-top: 20px;
     color: white;
     font-size: 1.1rem;
 }
 
-.factsTitle {
+.about__fact-title {
     margin: 0;
-    /* font-size: 22px; */
-    font-size: clamp(0.8rem, 1.6vw + 0.8rem, 1.4rem);    
+    font-size: clamp(0.8rem, 1.2vw + 0.8rem, 1.5rem);    
     color: white;
 }
 
-.factsHeader {
+.about__fact-header {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
@@ -96,64 +96,60 @@
     margin-bottom: 10px;
 }
 
-.factsImage {
+.about__fact-image {
     height: auto;
     object-fit: contain;
 }
 
-.team-container {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 20px;
-    padding: 20px;
-}
-.member {
+.about__crew {
     text-align: center;
 }
 
-.name{
-    font-size: 1.5rem;
-    font-weight: 500;
+.about__team {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
 }
 
-.avatar img {
-    width: 130px;
-    height: 130px;
-    border-radius: 50%;
+.about__member {
+    width: 20%;
+    margin-bottom: 20px;
 }
 
-.member > p:nth-of-type(1) {
+.about__member > p:nth-of-type(1) {
     color: var(--primary-color);
 }
 
-.avatar {
-    height: 130px;
-    width: 130px;
+.about__avatar {
+    height: 100px;
+    width: 100px;
     background-color: white;
     border-radius: 50%;
     margin: auto;
     margin-bottom: 20px;
 }
 
-.avatar img {
-    height: 130px;
-    width: 130px;
+.about__avatar-image {
+    height: 100px;
+    width: 100px;
     border-radius: 50%;
 }
 
-.about {
+.about__footer {
     text-align: left;
     display: flex;
     flex-direction: column;
     margin: 3rem auto;
 }
 
-.about p {
+.about__footer p {
     color: black;
     font-size: 1.25rem;
 }
 
-.about p:first-child {
+.about__footer p:first-child {
     margin-right: 50px;
 }
 
@@ -199,44 +195,27 @@
 }
 
 @media (max-width: 850px) {
-    .avatar {
-        height: 250px;
-        width: 250px;
-        margin-bottom: 30px;
+    .about__member {
+        width: 100%;
     }
-
-    .avatar img {
-        height: 250px;
-        width: 250px;
-    }
-
-    .team-container {
-        grid-template-columns: repeat(1, 1fr);
-    }
-    
-    .factsbox{
+    .about__factsbox {
         display: flex;
         flex-direction: column;
         align-items: center;
     }
-
-    .awesomefacts {
-        width: 90%;
+    .about__fact {
+        width: 100%;
     }
-
-    .crew p{
-        font-size: 1.5rem;
+    .about__fact-header {
+        flex-direction: column-reverse;
     }
-
-    .about {
+    .about__footer {
         flex-direction: column;
     }
-
-    .about p:first-child {
+    .about__footer p:first-child {
         margin: 0 0 25px 0;
     }
-
-    .about p {
+    .about__footer p {
         width: 100%;
     }
 }

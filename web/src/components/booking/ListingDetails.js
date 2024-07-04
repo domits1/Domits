@@ -18,7 +18,31 @@ import FirstAidKit from "../../images/icons/FirstAidKit.png";
 import Kitchen from "../../images/icons/Kitchen.png";
 import Onsiteparking from "../../images/icons/Onsiteparking.png";
 import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
-import deleteIcon from "../../images/icons/cross.png";
+import Armchair from "../../images/armchair.png";
+import BabyMonitor from "../../images/baby-monitor.png";
+import Baby from "../../images/baby.png";
+import Backyard from "../../images/backyard.png";
+import Blender from "../../images/blender.png";
+import BoardGame from "../../images/board-game.png";
+import Bus from "../../images/bus.png";
+import Car from "../../images/car.png";
+import ChargingStation from "../../images/charging-station.png";
+import CheckIn from "../../images/check-in.png";
+import Cleaner from "../../images/cleaner.png";
+import Clothes from "../../images/clothes.png";
+import CoffeeTable from "../../images/coffee-table.png";
+import Crib from "../../images/crib.png";
+import Dishwasher from "../../images/dishwasher.png";
+import Food from "../../images/food.png";
+import Gate from "../../images/gate.png";
+import GraphicDesign from "../../images/graphic-design.png";
+import Grill from "../../images/grill.png";
+import HighChair from "../../images/high-chair.png";
+import HotTub from "../../images/hot-tub.png";
+import CoffeeMachine from "../../images/coffee-machine.png";
+import AlarmClock from "../../images/alarm-clock.png";
+import AntiqueBalcony from "../../images/antique-balcony.png";
+import BookingCalendar from "./BookingCalendar";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -44,18 +68,43 @@ const ListingDetails = () => {
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
     const [hostID, setHostID] = useState();
+    const [showAll, setShowAll] = useState(false);
 
     const featureIcons = {
-        WashingMachine: Washingmashine,
-        Television: Television,
-        Smokedetector: Smokedetector,
-        Wifi: Wifi,
+        'Washer and dryer': Washingmashine,
+        'Smart TV': Television,
+        'Smoke detector': Smokedetector,
+        'Wi-Fi': Wifi,
         Onsiteparking: Onsiteparking,
-        Homeoffice: Homeoffice,
-        Fireextinguisher: Fireextinguisher,
-        Airconditioning: Airconditioning,
-        FirstAidKit: FirstAidKit,
+        'Work desk and chair': Homeoffice,
+        'Fire extinguisher': Fireextinguisher,
+        'Air conditioning': Airconditioning,
+        'First aid kit': FirstAidKit,
         Kitchen: Kitchen,
+        Armchairs: Armchair,
+        'Baby monitor': BabyMonitor,
+        Baby: Baby,
+        Backyard: Backyard,
+        Blender: Blender,
+        'Board games': BoardGame,
+        Bus: Bus,
+        Car: Car,
+        ChargingStation: ChargingStation,
+        'Self-check-in': CheckIn,
+        'Concierge service': Cleaner,
+        Clothes: Clothes,
+        CoffeeTable: CoffeeTable,
+        Crib: Crib,
+        Dishwasher: Dishwasher,
+        Food: Food,
+        Gate: Gate,
+        GraphicDesign: GraphicDesign,
+        Grill: Grill,
+        'High chair': HighChair,
+        'Hot tub': HotTub,
+        'Coffee maker': CoffeeMachine,
+        'Alarm clock': AlarmClock,
+        AntiqueBalcony: AntiqueBalcony,
     };
 
     useEffect(() => {
@@ -76,15 +125,16 @@ const ListingDetails = () => {
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
-                setHostID(data.OwnerId)
+                setHostID(data.OwnerId);
                 fetchReviewsByAccommodation(data.ID);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
         };
-
+    
         fetchAccommodation();
     }, [id]);
+    
 
     const fetchReviewsByAccommodation = async (accoId) => {
         try {
@@ -179,6 +229,36 @@ const ListingDetails = () => {
         setMaxEnd(DateFormatterYYYY_MM_DD(parsedEndDate));
         setBookedDates(bookedDates); // Save booked dates in state
     };
+    useEffect(() => {
+        const restrictCheckOutToDateRange = () => {
+            if (checkIn) {
+                for (let i = 0; i < accommodation.DateRanges.length; i++) {
+                    let index = accommodation.DateRanges[i];
+                    if (isDateInRange(new Date(checkIn), new Date(index.startDate), new Date(index.endDate))) {
+                        setMaxEnd(DateFormatterYYYY_MM_DD(new Date(index.endDate)));
+                    }
+                }
+            } else {
+                setMaxEnd(null);
+            }
+        }
+        restrictCheckOutToDateRange();
+    }, [checkIn]);
+    useEffect(() => {
+        const restrictCheckInToDateRange = () => {
+           if (checkOut) {
+               for (let i = 0; i < accommodation.DateRanges.length; i++) {
+                   let index = accommodation.DateRanges[i];
+                   if (isDateInRange(new Date(checkOut), new Date(index.startDate), new Date(index.endDate))) {
+                       setMinStart(DateFormatterYYYY_MM_DD(new Date(index.startDate)));
+                   }
+               }
+           } else {
+               setMinStart(null);
+           }
+        }
+        restrictCheckInToDateRange();
+    }, [checkOut]);
 
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
@@ -232,40 +312,79 @@ const ListingDetails = () => {
         navigate(`/bookingoverview?${queryString}`);
     };
 
-    const generateUUID = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    };
+        const toggleShowAll = () => {
+            setShowAll(!showAll);
+        };
 
-    // Check if a date is within any booked range
+        const renderCategories = () => {
+            if (accommodation) {
+                const items = accommodation.Features;
+                const categoriesToShow = showAll ? Object.keys(items) : Object.keys(items).slice(0, 2);
+
+                return categoriesToShow.map(category => {
+                    const item = items[category];
+                    if (item.length > 0) {
+                        return (
+                            <div key={category} className='features-category'>
+                                <h3>{category}</h3>
+                                <ul>
+                                    {item.map((item, index) => (
+                                        <li key={index} className='category-item'>
+                                            <img src={featureIcons[item]} className='feature-icon' alt={`${item} icon`} />
+                                            <span>{item === 'Cleaning service (add service fee manually)' ? 'Cleaning service' : item}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        );
+                    }
+                    return null;
+                });
+            }
+            return null;
+        };
     const isDateBooked = (date) => {
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0]);
             const end = new Date(bookedRange[1]);
-            return date >= start && date <= end;
+            const selectedDate = new Date(date);
+            return selectedDate >= start && selectedDate <= end;
         });
     };
 
     const isDateAfterBookedNight = (date) => {
+        const selectedDate = new Date(date);
         if (!checkIn) return false;
 
         for (let bookedRange of bookedDates) {
             const start = new Date(bookedRange[0]);
-            if (checkIn <= start && date >= start) {
+            if (checkIn <= start && selectedDate >= start) {
                 return true;
             }
         }
         return false;
     };
 
+    const isDateInRange = (date, startDate, endDate) => {
+        const selectedDate = new Date(date);
+        const rangeStart = new Date(startDate);
+        const rangeEnd = new Date(endDate);
+        return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
+    };
+
     const filterBookedDates = (date) => {
         return !isDateBooked(date) && !isDateAfterBookedNight(date);
     };
 
-    console.log(hostID)
+    const filterDisabledDays = (date) => {
+        for (let i = 0; i < accommodation.DateRanges.length; i++) {
+            let index = accommodation.DateRanges[i];
+            if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
+                return true;
+            }
+        }
+        return false;
+    };
 
 
     return (
@@ -281,7 +400,7 @@ const ListingDetails = () => {
                                 <h1>{accommodation.Title}</h1>
                             </div>
                             <div>
-                                <ImageGallery images={Object.values(accommodation.Images)} />
+                                <ImageGallery images={Object.values(accommodation.Images)}/>
                             </div>
                             <div>
                                 <div className='extraDetails'>
@@ -292,27 +411,22 @@ const ListingDetails = () => {
                                     <p className='details'>{`${accommodation.Bathrooms} bathrooms`}</p>
                                 </div>
                             </div>
+                            <p className='description'>{accommodation.Description}</p>
                             <div>
-                                <p className='description'>{accommodation.Description}</p>
+                                <h3>Calendar overview:</h3>
+                                <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
+                            </div>
+                            <div>
                                 <h3>This place offers the following:</h3>
-                                <ul className='features'>
-                                    {Object.entries(accommodation.Features).map(([feature, value]) => (
-                                        value && (
-                                            <li key={feature} className='acco-feature-item'>
-                                                <img
-                                                    src={featureIcons[feature]}
-                                                    alt={feature}
-                                                    className='feature-icon'
-                                                />
-                                                <span>{feature}</span>
-                                            </li>
-                                        )
-                                    ))}
-                                </ul>
+                                {accommodation ?  renderCategories() : ''}
                                 <div>
-                                    <button className='button'>Show more</button>
+                                    {Object.keys(accommodation.Features).length > 2 && (
+                                        <button className='button' onClick={toggleShowAll}>
+                                            {showAll ? 'Show less' : 'Show more'}
+                                        </button>
+                                    )}
                                 </div>
-                                <br />
+                                <br/>
                                 <section className="listing-reviews">
                                     <h2>Reviews</h2>
                                     {reviews.length > 0 ? (
@@ -320,18 +434,20 @@ const ListingDetails = () => {
                                             <div key={index} className="review-card">
                                                 <h2 className="review-header">{review.title}</h2>
                                                 <p className="review-content">{review.content}</p>
-                                                <p className="review-date">Written on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
+                                                <p className="review-date">Written
+                                                    on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="review-alert">This accommodation does not have any reviews yet...</p>
+                                        <p className="review-alert">This accommodation does not have any reviews
+                                            yet...</p>
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
-                                        <button className='button' onClick={handleStartChat} >Chat</button>
+                                        <button className='button' onClick={handleStartChat}>Chat</button>
                                     </div>
                                 </section>
-                                <br />
+                                <br/>
                                 <section className="listing-host-info">
                                     <h2>Host profile</h2>
                                     {host && (
@@ -357,20 +473,28 @@ const ListingDetails = () => {
                     <aside className='detailSummary'>
                         <div className="summary-section">
                             <h2>Booking details</h2>
-                            <p>Available from {DateFormatterDD_MM_YYYY(accommodation.StartDate)} to {DateFormatterDD_MM_YYYY(accommodation.EndDate)}</p>
+                            <p>Available from {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
+                                to {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
                             <div className="dates">
                                 <div className="summaryBlock">
                                     <label htmlFor="checkIn">Check In</label>
-                                    <DatePicker
-                                        id="checkIn"
-                                        selected={checkIn}
-                                        className='datePickerLD'
-                                        onChange={(date) => setCheckIn(date)}
-                                        minDate={minStart && new Date(minStart)}
-                                        maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={filterBookedDates}
-                                        dateFormat="yyyy-MM-dd"
-                                    />
+                                    <div className="dateInput">
+                                        <DatePicker
+                                            id="checkIn"
+                                            selected={checkIn}
+                                            className='datePickerLD'
+                                            onChange={(date) => setCheckIn(date)}
+                                            minDate={minStart && new Date(minStart)}
+                                            maxDate={maxStart && new Date(maxStart)}
+                                            filterDate={filterDisabledDays || filterBookedDates}
+                                            dateFormat="yyyy-MM-dd"
+                                        />
+                                        <button
+                                            onClick={() => setCheckIn(null)}
+                                            disabled={!checkIn}
+                                            className={`${!checkIn ? 'disabled' : ' '}`}
+                                        >Delete</button>
+                                    </div>
                                 </div>
                                 {(checkIn && checkOut) ? (
                                     <div className="nights">
@@ -384,16 +508,23 @@ const ListingDetails = () => {
 
                                 <div className="summaryBlock">
                                     <label htmlFor="checkOut">Check Out</label>
-                                    <DatePicker
-                                        id="checkOut"
-                                        selected={checkOut}
-                                        className='datePickerLD'
-                                        onChange={(date) => setCheckOut(date)}
-                                        minDate={minEnd && new Date(minEnd)}
-                                        maxDate={maxEnd && new Date(maxEnd)}
-                                        filterDate={filterBookedDates}
-                                        dateFormat="yyyy-MM-dd"
-                                    />
+                                    <div className="dateInput">
+                                        <DatePicker
+                                            id="checkOut"
+                                            selected={checkOut}
+                                            className='datePickerLD'
+                                            onChange={(date) => setCheckOut(date)}
+                                            minDate={minEnd && new Date(minEnd)}
+                                            maxDate={maxEnd && new Date(maxEnd)}
+                                            filterDate={filterDisabledDays || filterBookedDates}
+                                            dateFormat="yyyy-MM-dd"
+                                        />
+                                        <button
+                                            onClick={() => setCheckOut(null)}
+                                            disabled={!checkOut}
+                                            className={`${!checkOut ? 'disabled' : ' '}`}
+                                        >Delete</button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="travelers">

@@ -229,8 +229,13 @@
     align-items: center;
     justify-content: center;
     padding: 15px;
-
-
+}
+.footer-icons img {
+    width: 2.3rem; 
+    height: auto; 
+    margin-left: 1.2rem;
+    margin-bottom: 0.6rem;
+    border-radius: 25%;
 }
 
 .footer-copyright-text {

@@ -62,31 +62,32 @@ const Release = () => {
 
   return (
     <div className="release">
-      <div className="release-header-container">
-        <div className="release-header">
-          <h1>What’s New</h1>
-          <h4>Innovative Vacation Rentals.</h4>
-          <h4>Redesigned for You.</h4>
-          <button type="button" onClick={() => navigate('/releaseTwo')}>Read More</button>
+      <div className="release__header-container">
+        <div className="release__header">
+          <h1 className="release__title">What’s New</h1>
+          <h4 className="release__subtitle">Innovative Vacation Rentals.</h4>
+          <h4 className="release__subtitle">Redesigned for You.</h4>
+          <button className="release__button" type="button" onClick={() => navigate('/releaseTwo')}>Read More</button>
         </div>
-        <img className="image-header" src={release} alt="Release" width={300} />
+        <img className="release__image-header" src={release} alt="Release" width={300} />
       </div>
 
-      <div className="release-notes">
+      <div className="release__notes">
         {releaseNotes.map((note, index) => (
-          <div className={`release-item ${note.isOpen ? 'expanded' : ''}`} onClick={() => toggleOpen(index)} key={index}>
-            <img src={note.image} alt={note.releaseNote}/>
-            <h4>{note.releaseNote}</h4>
-            <div className="release-details">
+          <div className={`release__item ${note.isOpen ? 'release__item--expanded' : ''}`} onClick={() => toggleOpen(index)} key={index}>
+            <img className="release__item-image" src={note.image} alt={note.releaseNote} />
+            <h4 className="release__item-title">{note.releaseNote}</h4>
+            <div className="release__details">
             {note.details.split('\n').map((line, index) => (
-              <p key={index}>{line}</p>
+              <p className="release__item-text" key={index}>{line}</p>
             ))}
             </div>
           </div>
         ))}
       </div>
     </div>
-  );
+);
+
 };
 
 export default Release;
