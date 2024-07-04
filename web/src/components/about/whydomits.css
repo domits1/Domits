@@ -1,26 +1,26 @@
-.WhyDomitsTwoMain {
+.why-domits {
     width: 100%;
 }
 
-.WhyDomitsTwoTitleTextContainer {
+.why-domits__title-text-container {
     padding: 6.75rem;
     padding-bottom: 1rem;
 }
 
-.WhyDomitsTwoH3 {
+.why-domits__h3 {
     font-size: 2.25rem;
-    margin: 0rem;
+    margin: 0;
     font-weight: 400;
 }
 
-.WhyDomitsTwoH4 {
+.why-domits__h4 {
     font-size: 2rem;
     font-weight: 400;
     margin-top: 1.6rem;
     margin-bottom: 3rem;
 }
 
-.WhyDomitsTwoP {
+.why-domits__p {
     font-size: 1.25rem;
     font-weight: 400;
     margin-top: 1.6rem;
@@ -28,7 +28,7 @@
     color: black;
 }
 
-.WhyDomitsTwoCardsContainer {
+.why-domits__cards-container {
     min-height: 20rem;
     width: 100%;
     display: flex;
@@ -38,7 +38,7 @@
     flex-wrap: wrap;
 }
 
-.WhyDomitsTwoCard {
+.why-domits__card {
     width: 39.2%;
     background: #0D9813;
     min-height: 9.3rem;
@@ -51,84 +51,84 @@
     gap: 2rem;
 }
 
-.WhyDomitsTwoCardP {
+.why-domits__card-p {
     font-size: 1.25rem;
     font-weight: 400;
     color: white;
 }
 
 @media (max-width: 1024px) {
-    .WhyDomitsTwoTitleTextContainer {
+    .why-domits__title-text-container {
         padding: 5rem;
     }
 
-    .WhyDomitsTwoH3 {
+    .why-domits__h3 {
         font-size: 2rem;
     }
 
-    .WhyDomitsTwoH4 {
+    .why-domits__h4 {
         font-size: 1.75rem;
     }
 
-    .WhyDomitsTwoP {
+    .why-domits__p {
         font-size: 1.125rem;
     }
 
-    .WhyDomitsTwoCardP {
+    .why-domits__card-p {
         font-size: 1.125rem;
     }
 }
 
 @media (max-width: 768px) {
-    .WhyDomitsTwoTitleTextContainer {
+    .why-domits__title-text-container {
         padding: 4rem;
     }
 
-    .WhyDomitsTwoH3 {
+    .why-domits__h3 {
         font-size: 1.75rem;
     }
 
-    .WhyDomitsTwoH4 {
+    .why-domits__h4 {
         font-size: 1.5rem;
     }
 
-    .WhyDomitsTwoP {
+    .why-domits__p {
         font-size: 1rem;
     }
 
-    .WhyDomitsTwoCard {
+    .why-domits__card {
         width: 100%;
         min-height: 7rem;
     }
 
-    .WhyDomitsTwoCardP {
+    .why-domits__card-p {
         font-size: 1rem;
     }
 }
 
 @media (max-width: 480px) {
-    .WhyDomitsTwoTitleTextContainer {
+    .why-domits__title-text-container {
         padding: 2rem;
     }
 
-    .WhyDomitsTwoH3 {
+    .why-domits__h3 {
         font-size: 1.5rem;
     }
 
-    .WhyDomitsTwoH4 {
+    .why-domits__h4 {
         font-size: 1.25rem;
     }
 
-    .WhyDomitsTwoP {
+    .why-domits__p {
         font-size: 0.875rem;
     }
 
-    .WhyDomitsTwoCard {
+    .why-domits__card {
         width: 100%;
         min-height: 5rem;
     }
 
-    .WhyDomitsTwoCardP {
+    .why-domits__card-p {
         font-size: 0.875rem;
     }
 }

@@ -109,6 +109,7 @@ function HostDashboard() {
                             <button className="refresh-btn" onClick={() => navigate("/hostdashboard/listings")}>Go to
                                 listing
                             </button>
+                            <button className="refresh-btn" onClick={() => navigate("/enlist")}>Add accommodation</button>
                         </div>
                         <div className="listing-info">
                             <img className="info-icon" src={info}/>

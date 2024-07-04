@@ -15,6 +15,7 @@ import Villa from "../../images/icons/mansion.png";
 import Boat from "../../images/icons/house-boat.png";
 import Camper from "../../images/icons/camper-van.png";
 import Cottage from "../../images/icons/cottage.png";
+import CalendarComponent from "../hostdashboard/CalendarComponent";
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
 function OnboardingHost() {
@@ -167,8 +168,7 @@ function OnboardingHost() {
             image4: "",
             image5: "",
         },
-        StartDate: "",
-        EndDate: "",
+        DateRanges: [],
         Drafted: true,
         AccommodationType: "",
         ServiceFee: 0,
@@ -624,9 +624,15 @@ function OnboardingHost() {
         }
     };
 
-    const updateDates = (start, end) => {
-        setFormData(prev => ({ ...prev, StartDate: start, EndDate: end }));
+    const updateDates = (dateRanges) => {
+        if (dateRanges !== formData.DateRanges) {
+            setFormData({
+                ...formData,
+                DateRanges: dateRanges
+            });
+        }
     };
+
     const [isLoading, setIsLoading] = useState(true);
 
     const renderPageContent = (page) => {
@@ -1065,7 +1071,7 @@ function OnboardingHost() {
                         <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within
                             your dashboard</p>
                         <section className="listing-calendar">
-                            <Calendar passedProp={formData} isNew={true} updateDates={updateDates}/>
+                            <CalendarComponent passedProp={formData} isNew={true} updateDates={updateDates}/>
                         </section>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
@@ -1186,7 +1192,7 @@ function OnboardingHost() {
                                 className="radioInput"
                                 name="Drafted"
                                 onChange={() => setDrafted(!formData.Drafted)}
-                                disabled={!(formData.StartDate && formData.EndDate && hasStripe)}
+                                disabled={!(formData.DateRanges && hasStripe)}
                                 checked={formData.Drafted}
                             />
                             Mark as draft (Stripe account and date range is required)
