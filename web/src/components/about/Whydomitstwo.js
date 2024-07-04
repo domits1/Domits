@@ -19,7 +19,7 @@ function Whydomits() {
           supporting the growth of travel companies since 2015.
         </p>
         <p className="WhyDomitsTwoP">
-          <h3>Join Us: Host or Guest</h3>
+          <h4>Join Us: Host or Guest</h4>
           <p><img src={check} alt="check"/>Start your journey as a guest or host in minutes. </p>
           <p><img src={check} alt="check"/>Easily list, search, and book holiday accommodations, campers, and boats. Save costs with our minimal system charges. </p>
           <p><img src={check} alt="check"/>Enjoy no hidden costs or percentage cuts, and save administrative time with our global payment methods. </p>
