@@ -31,4 +31,5 @@ jobs:
         run: |
           cd web
           npm test  -- --detectOpenHandles
-      
+env:
+  REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}     

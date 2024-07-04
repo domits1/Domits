@@ -41,7 +41,7 @@ import HotTub from "../../images/hot-tub.png";
 import CoffeeMachine from "../../images/coffee-machine.png";
 import AlarmClock from "../../images/alarm-clock.png";
 import AntiqueBalcony from "../../images/antique-balcony.png";
-import deleteIcon from "../../images/icons/cross.png";
+import BookingCalendar from "./BookingCalendar";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -121,8 +121,7 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                console.log(data.Features);
-                setDates(data.StartDate, data.EndDate, data.BookedDates || []);
+                setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
                 setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
@@ -227,6 +226,36 @@ const ListingDetails = () => {
         setMaxEnd(DateFormatterYYYY_MM_DD(parsedEndDate));
         setBookedDates(bookedDates); // Save booked dates in state
     };
+    useEffect(() => {
+        const restrictCheckOutToDateRange = () => {
+            if (checkIn) {
+                for (let i = 0; i < accommodation.DateRanges.length; i++) {
+                    let index = accommodation.DateRanges[i];
+                    if (isDateInRange(new Date(checkIn), new Date(index.startDate), new Date(index.endDate))) {
+                        setMaxEnd(DateFormatterYYYY_MM_DD(new Date(index.endDate)));
+                    }
+                }
+            } else {
+                setMaxEnd(null);
+            }
+        }
+        restrictCheckOutToDateRange();
+    }, [checkIn]);
+    useEffect(() => {
+        const restrictCheckInToDateRange = () => {
+           if (checkOut) {
+               for (let i = 0; i < accommodation.DateRanges.length; i++) {
+                   let index = accommodation.DateRanges[i];
+                   if (isDateInRange(new Date(checkOut), new Date(index.startDate), new Date(index.endDate))) {
+                       setMinStart(DateFormatterYYYY_MM_DD(new Date(index.startDate)));
+                   }
+               }
+           } else {
+               setMinStart(null);
+           }
+        }
+        restrictCheckInToDateRange();
+    }, [checkOut]);
 
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
@@ -302,29 +331,50 @@ const ListingDetails = () => {
         }
     };
 
-    // Check if a date is within any booked range
+    const selectDates = () => {
+        return true;
+    }
     const isDateBooked = (date) => {
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0]);
             const end = new Date(bookedRange[1]);
-            return date >= start && date <= end;
+            const selectedDate = new Date(date);
+            return selectedDate >= start && selectedDate <= end;
         });
     };
 
     const isDateAfterBookedNight = (date) => {
+        const selectedDate = new Date(date);
         if (!checkIn) return false;
 
         for (let bookedRange of bookedDates) {
             const start = new Date(bookedRange[0]);
-            if (checkIn <= start && date >= start) {
+            if (checkIn <= start && selectedDate >= start) {
                 return true;
             }
         }
         return false;
     };
 
+    const isDateInRange = (date, startDate, endDate) => {
+        const selectedDate = new Date(date);
+        const rangeStart = new Date(startDate);
+        const rangeEnd = new Date(endDate);
+        return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
+    };
+
     const filterBookedDates = (date) => {
         return !isDateBooked(date) && !isDateAfterBookedNight(date);
+    };
+
+    const filterDisabledDays = (date) => {
+        for (let i = 0; i < accommodation.DateRanges.length; i++) {
+            let index = accommodation.DateRanges[i];
+            if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
+                return true;
+            }
+        }
+        return false;
     };
 
 
@@ -341,7 +391,7 @@ const ListingDetails = () => {
                                 <h1>{accommodation.Title}</h1>
                             </div>
                             <div>
-                                <ImageGallery images={Object.values(accommodation.Images)} />
+                                <ImageGallery images={Object.values(accommodation.Images)}/>
                             </div>
                             <div>
                                 <div className='extraDetails'>
@@ -352,14 +402,18 @@ const ListingDetails = () => {
                                     <p className='details'>{`${accommodation.Bathrooms} bathrooms`}</p>
                                 </div>
                             </div>
+                            <p className='description'>{accommodation.Description}</p>
                             <div>
-                                <p className='description'>{accommodation.Description}</p>
+                                <h3>Calendar overview:</h3>
+                                <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
+                            </div>
+                            <div>
                                 <h3>This place offers the following:</h3>
                                 {accommodation ?  renderCategories() : ''}
                                 <div>
                                     <button className='button'>Show more</button>
                                 </div>
-                                <br />
+                                <br/>
                                 <section className="listing-reviews">
                                     <h2>Reviews</h2>
                                     {reviews.length > 0 ? (
@@ -367,18 +421,20 @@ const ListingDetails = () => {
                                             <div key={index} className="review-card">
                                                 <h2 className="review-header">{review.title}</h2>
                                                 <p className="review-content">{review.content}</p>
-                                                <p className="review-date">Written on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
+                                                <p className="review-date">Written
+                                                    on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
                                             </div>
                                         ))
                                     ) : (
-                                        <p className="review-alert">This accommodation does not have any reviews yet...</p>
+                                        <p className="review-alert">This accommodation does not have any reviews
+                                            yet...</p>
                                     )}
                                     <div>
                                         <button className='button'>Show more</button>
-                                        <button className='button' onClick={handleStartChat} >Chat</button>
+                                        <button className='button' onClick={handleStartChat}>Chat</button>
                                     </div>
                                 </section>
-                                <br />
+                                <br/>
                                 <section className="listing-host-info">
                                     <h2>Host profile</h2>
                                     {host && (
@@ -404,20 +460,28 @@ const ListingDetails = () => {
                     <aside className='detailSummary'>
                         <div className="summary-section">
                             <h2>Booking details</h2>
-                            <p>Available from {DateFormatterDD_MM_YYYY(accommodation.StartDate)} to {DateFormatterDD_MM_YYYY(accommodation.EndDate)}</p>
+                            <p>Available from {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
+                                to {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
                             <div className="dates">
                                 <div className="summaryBlock">
                                     <label htmlFor="checkIn">Check In</label>
-                                    <DatePicker
-                                        id="checkIn"
-                                        selected={checkIn}
-                                        className='datePickerLD'
-                                        onChange={(date) => setCheckIn(date)}
-                                        minDate={minStart && new Date(minStart)}
-                                        maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={filterBookedDates}
-                                        dateFormat="yyyy-MM-dd"
-                                    />
+                                    <div className="dateInput">
+                                        <DatePicker
+                                            id="checkIn"
+                                            selected={checkIn}
+                                            className='datePickerLD'
+                                            onChange={(date) => setCheckIn(date)}
+                                            minDate={minStart && new Date(minStart)}
+                                            maxDate={maxStart && new Date(maxStart)}
+                                            filterDate={filterDisabledDays || filterBookedDates}
+                                            dateFormat="yyyy-MM-dd"
+                                        />
+                                        <button
+                                            onClick={() => setCheckIn(null)}
+                                            disabled={!checkIn}
+                                            className={`${!checkIn ? 'disabled' : ' '}`}
+                                        >Delete</button>
+                                    </div>
                                 </div>
                                 {(checkIn && checkOut) ? (
                                     <div className="nights">
@@ -431,16 +495,23 @@ const ListingDetails = () => {
 
                                 <div className="summaryBlock">
                                     <label htmlFor="checkOut">Check Out</label>
-                                    <DatePicker
-                                        id="checkOut"
-                                        selected={checkOut}
-                                        className='datePickerLD'
-                                        onChange={(date) => setCheckOut(date)}
-                                        minDate={minEnd && new Date(minEnd)}
-                                        maxDate={maxEnd && new Date(maxEnd)}
-                                        filterDate={filterBookedDates}
-                                        dateFormat="yyyy-MM-dd"
-                                    />
+                                    <div className="dateInput">
+                                        <DatePicker
+                                            id="checkOut"
+                                            selected={checkOut}
+                                            className='datePickerLD'
+                                            onChange={(date) => setCheckOut(date)}
+                                            minDate={minEnd && new Date(minEnd)}
+                                            maxDate={maxEnd && new Date(maxEnd)}
+                                            filterDate={filterDisabledDays || filterBookedDates}
+                                            dateFormat="yyyy-MM-dd"
+                                        />
+                                        <button
+                                            onClick={() => setCheckOut(null)}
+                                            disabled={!checkOut}
+                                            className={`${!checkOut ? 'disabled' : ' '}`}
+                                        >Delete</button>
+                                    </div>
                                 </div>
                             </div>
                             <div className="travelers">
