@@ -29,7 +29,7 @@ const ChatWidget = () => {
   const loadChatHistory = async () => {
     try {
       const params = user ? { userID: user.attributes.sub } : { chatID };
-      const response = await axios.get('https://ec2-13-53-187-20.eu-north-1.compute.amazonaws.com3001/chat-history', { params });
+      const response = await axios.get('https://djs95w5kug.execute-api.eu-north-1.amazonaws.com/default/chatWidgetHistory', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
           text: msg.content,
@@ -71,7 +71,7 @@ const ChatWidget = () => {
         payload.chatID = chatID;
       }
 
-      const response = await axios.post('http://ec2-13-53-187-20.eu-north-1.compute.amazonaws.com:3001/query', payload);
+      const response = await axios.post('https://eja46okj64.execute-api.eu-north-1.amazonaws.com/default/chatWidgetQuery', payload);
 
       if (response.data.chatID && !chatID) {
         setChatID(response.data.chatID);
