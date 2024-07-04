@@ -16,26 +16,25 @@
 .why-domits__h4 {
     font-size: 2rem;
     font-weight: 400;
-    margin-top: 0.4rem;
+    margin-top: 1.6rem;
     margin-bottom: 3rem;
-    text-align: center;
 }
 
 .why-domits__p {
     font-size: 1.25rem;
     font-weight: 400;
+    margin-top: 1.6rem;
     margin-bottom: 3rem;
     color: black;
 }
 
 .why-domits__cards-container {
     min-height: 20rem;
-    width: 90%;
-    margin: auto;
+    width: 100%;
     display: flex;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 0.6rem;
+    align-items: center;
+    justify-content: center;
+    gap: 5.6rem;
     flex-wrap: wrap;
 }
 
@@ -46,9 +45,10 @@
     border-radius: 10px;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1.3rem;
-    padding: 0rem 1rem;
+    justify-content: center;
+    padding-left: 1.8rem;
+    padding-right: 1.8rem;
+    gap: 2rem;
 }
 
 .why-domits__card-p {
@@ -98,13 +98,7 @@
 
     .why-domits__card {
         width: 100%;
-        margin: auto;
-        display: flex;
-        align-items: flex-start;
-        flex-direction: column;
-        justify-content: flex-start;
-        gap: 0.6rem;
-        flex-wrap: wrap;
+        min-height: 7rem;
     }
 
     .why-domits__card-p {

@@ -1,13 +1,12 @@
 .disclaimers{
-    margin: 4rem auto;
+    padding: 50px;
+    padding-left: 150px;
     font-weight: 450;
-    width: 86%;
-    line-height: 150%;
+    width: 950px;;
 }
 
 .disclaimers input{
-    width: 97%;
-    margin: 1rem auto;
+    width: 800px;
     border-radius: 15px;
     padding: 10px;
     border: 1px solid;
@@ -16,15 +15,15 @@
 }
 
 .policy{
-    margin: 4rem auto;
+    padding: 50px;
+    padding-left: 150px;
     font-weight: 450;
-    width: 86%;
+    width: 950px;
     line-height: 150%;
 }
 
 .policy input{
-    width: 97%;
-    margin: 1rem auto;
+    width: 800px;
     border-radius: 15px;
     padding: 10px;
     border: 1px solid;
@@ -33,15 +32,15 @@
 }
 
 .terms{
-    margin: 4rem auto;
+    padding: 50px;
+    padding-left: 150px;
     font-weight: 450;
-    width: 86%;
+    width: 950px;
     line-height: 150%;
 }
 
 .terms input{
-    width: 97%;
-    margin: 1rem auto;
+    width: 800px;
     border-radius: 15px;
     padding: 10px;
     border: 1px solid;
