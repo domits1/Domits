@@ -121,7 +121,8 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
+                console.log(data.Features);
+                setDates(data.StartDate, data.EndDate, data.BookedDates || []);
                 fetchHostInfo(data.OwnerId);
                 setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
@@ -278,12 +279,27 @@ const ListingDetails = () => {
         navigate(`/bookingoverview?${queryString}`);
     };
 
-    const generateUUID = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
+    const renderCategories = () => {
+        if (accommodation) {
+            const items = accommodation.Features;
+            return Object.keys(items).map(category => {
+                const item =items[category];
+                if (item.length > 0) {
+                    return (
+                        <div key={category}>
+                            <h3>{category}</h3>
+                            <ul>
+                                {item.map((item, index) => (
+                                    <li key={index}>
+                                        <img src={featureIcons[item]}/>
+                                        {item === 'Cleaning service (add service fee manually)' ? 'Cleaning service' : item}</li>
+                                ))}
+                            </ul>
+                        </div>
+                    )
+                }
+            })
+        }
     };
 
     // Check if a date is within any booked range
@@ -339,20 +355,7 @@ const ListingDetails = () => {
                             <div>
                                 <p className='description'>{accommodation.Description}</p>
                                 <h3>This place offers the following:</h3>
-                                <ul className='features'>
-                                    {Object.entries(accommodation.Features).map(([feature, value]) => (
-                                        value && (
-                                            <li key={feature} className='acco-feature-item'>
-                                                <img
-                                                    src={featureIcons[feature]}
-                                                    alt={feature}
-                                                    className='feature-icon'
-                                                />
-                                                <span>{feature}</span>
-                                            </li>
-                                        )
-                                    ))}
-                                </ul>
+                                {accommodation ?  renderCategories() : ''}
                                 <div>
                                     <button className='button'>Show more</button>
                                 </div>
