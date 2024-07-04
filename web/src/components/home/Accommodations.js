@@ -65,7 +65,7 @@ const Accommodations = ({ searchResults }) => {
 
 //optioneel
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
   if (loading) {
