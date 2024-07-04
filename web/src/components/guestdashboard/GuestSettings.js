@@ -1,14 +1,21 @@
 import React, { useEffect, useState } from "react";
 import editIcon from "../../images/icons/edit-05.png";
-import { useNavigate } from 'react-router-dom';
-import { API, graphqlOperation, Auth } from "aws-amplify";
+import settingsIcon from "../../images/icons/settings-icon.png";
+import faceHappyIcon from "../../images/icons/face-happy.png";
 import Pages from "./Pages.js";
+import { Link } from 'react-router-dom';
+import { API, graphqlOperation, Auth } from "aws-amplify";
+import { changeEmail, confirmEmailChange } from "./emailSettings";
 
 const GuestSettings = () => {
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
+    const [newEmail, setNewEmail] = useState('');
+    const [confirmEmail, setConfirmEmail] = useState('');
+    const [verificationCode, setVerificationCode] = useState('');
+    const [showMailSettings, setShowMailSettings] = useState(false);
+    const [showPhotoSettings, setShowPhotoSettings] = useState(false);
 
     useEffect(() => {
-        fetchAccommodations();
         fetchUserData();
     }, []);
 
@@ -27,17 +34,30 @@ const GuestSettings = () => {
         }
     };
 
-    const fetchAccommodations = async () => {
-        try {
-            const response = await API.graphql(graphqlOperation(listAccommodationsQuery));
-            console.log("Accommodations:", response.data.listAccommodations.items);
-        } catch (error) {
-            console.error("Error listing accommodations:", error);
+    const handleChangeEmail = async () => {
+        if (newEmail !== confirmEmail) {
+            alert("Email addresses do not match.");
+            return;
+        }
+
+        const result = await changeEmail(newEmail);
+        if (result.success) {
+            alert("Verification code sent to your new email.");
+        } else {
+            alert("Error changing email.");
         }
     };
 
-    useEffect(() => {
-    }, [user.email]);
+    const handleConfirmEmailChange = async () => {
+        const result = await confirmEmailChange(verificationCode);
+        if (result.success) {
+            alert("Email change confirmed.");
+            setShowMailSettings(false);
+            fetchUserData();
+        } else {
+            alert("Error confirming email change.");
+        }
+    };
 
     return (
         <div className="container">
@@ -46,7 +66,7 @@ const GuestSettings = () => {
                 <Pages />
                 <div className="content flexwrap">
                     <div className="settingsContent">
-                        <h1>{username}'s Settings</h1>
+                        <h1>{user.name}'s Settings</h1>
                         <div className="settingsOptions">
                             <div className="settingsOption" onClick={() => setShowMailSettings(!showMailSettings)}>
                                 <img src={settingsIcon} alt="Settings Icon" className="icon" />

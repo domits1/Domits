@@ -2,8 +2,12 @@ import React from 'react';
 import logo from "../../logo.svg";
 import Appstorebadge from '../../images/assets/appstorebadge.svg';
 import Playstorebadge from '../../images/assets/playstorebadge.svg';
+import Instagram from '../../images/icons/Instagram.jpg'
+import linkedinIcon from '../../images/icons/LinkedIn.png';
+import instagramIcon from '../../images/icons/Instagram.jpg';
+import xIcon from '../../images/icons/x.png';
+
 import { ReactComponent as InstagramIcon } from '../../images/instagram.svg';
-import linkedinIcon from "../../images/linkedin.png";
 import { Link } from 'react-router-dom';
 import './base.css'
 
@@ -71,28 +75,23 @@ const Footer = () => {
                         <h4 className='footer-headers'>Socials</h4>
                         <ul className='footer-lists'>
                             <li>
-                                <a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" className='footer-links'>
-                                <img src={linkedinIcon} alt="LinkedIn" />
+                                <a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" className='footer-icons'>
+                                    <img src={linkedinIcon} alt="LinkedIn" />
                                 </a>
                             </li>
                             <li>
-                                <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className='footer-links'>
-                                    <InstagramIcon/>
+                                <a href="https://www.instagram.com/domits_/" target="_blank" rel="noopener noreferrer" className='footer-icons'>
+                                    <img src={instagramIcon} alt="Instagram" />
+                                </a>
+                            </li>
+                            <li>
+                                <a href="https://x.com/Domits_" target="_blank" rel="noopener noreferrer" className='footer-icons'>
+                                    <img src={xIcon} alt="X" />
                                 </a>
                             </li>
                         </ul>
                     </div>
 
-                    {/* Currency section */}
-                    {/* <div className="footer-endsection">
-                        <h4 className='footer-headers'>Currencies</h4>
-                        <select id='currency-dropdown' className='footer-lists footer-select'>
-                            <option value="euro">EUR</option>
-                            <option value="dollar">US</option>
-                        </select>
-                    </div>
-
-                    <img id='appstorebadge' src={Appstorebadge} alt="App Store Badge" className="app-store-badge" /> */}
                 </div>
 
                 {/* Office section */}
@@ -113,15 +112,6 @@ const Footer = () => {
                         </ul>
                     </div>
 
-                    {/* Languages section */}
-                    {/* <div className="footer-endsection">
-                        <h4 className='footer-headers'>Languages</h4>
-                        <select id='language-dropdown' className='footer-lists footer-select'>
-                            <option value="english">English</option>
-                            <option value="dutch">Dutch</option>
-                        </select>
-                    </div>
-                    <img id='playstorebadge' src={Playstorebadge} alt="Play Store Badge" className="play-store-badge" /> */}
                 </div>
             </div>
 
