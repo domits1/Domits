@@ -30,7 +30,7 @@
     width: 30%;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
 
 }
 
@@ -167,7 +167,6 @@ p{
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 100%;
-    background: white;
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -185,15 +184,13 @@ p{
 .chat__user{
     width: 100%;
     height: 130px;
-    background: white;
-    border-radius: 2rem;
     display: flex;
     justify-content: flex-start;
     align-items: center;
     gap: 20px;
     padding-left: 15px;
-    box-shadow: 0 20px 50px 0 rgba(0, 0, 0, 0.1);
     position: relative;
+    border-bottom: #eee solid 1.5px;
 }
 
 
@@ -253,11 +250,11 @@ p{
     flex-direction: column;
     border-top-left-radius: 1.5rem;
     border-top-right-radius: 1.5rem;
-    box-shadow: 0 20px 50px 0 rgba(0, 0, 0, 0.2);
     border-bottom-left-radius: 1.5rem;
     border-bottom-right-radius: 1.5rem;
     padding-left: 25px;
     padding-right: 25px;
+    border: 1.5px solid #eee;
 
 }
 
@@ -300,7 +297,9 @@ p{
     margin-left: auto; 
     display: flex;
     justify-content: flex-end;
-    background: #D1C4DA;
+    background: #28a745;
+    border-bottom-right-radius: 0;
+    color: white;
 }
 
 .chat__output{
@@ -309,7 +308,9 @@ p{
 
 .chat__dialog--guest {
     margin-right: auto; 
-    background: #C2E5C4;
+    background: #eee;
+    color: black;
+    border-bottom-left-radius: 0;
 
 
 }
@@ -326,9 +327,9 @@ p{
 
 .chat__input{
     width: 85%;
-    height: 50px;
-    border-radius: 1rem;
-    border: 1.5px solid black;
+    height: 41px;
+    border-radius: 20px;
+    border: 1.5px solid #ccc;
     padding-left: 20px;
 }
 
@@ -342,19 +343,19 @@ p{
     justify-content: center;
     align-items: center;
     gap: 15px;
-    border-bottom: 1px solid black;
+    border-bottom: 1px solid #eee;
     padding: 5px;
 }
 
 
 
 .chat__send{
-    border-radius: 1rem;
-    color: #707070;
+    border-radius: 20px;
+    color: white;
     border: none;
     width: 70px;
     cursor: pointer;
-    background: #C2E5C4;
+    background: #28a745;
     height: 100%;
     /* background-image: url(send.png);
     background-repeat: no-repeat;
@@ -688,4 +689,95 @@ a{
     .chat__notification {
         right: -10%; 
     }
+}
+
+/* Add these styles to chat.css */
+
+.chat__message {
+    display: none;
+}
+
+.chat__people {
+    display: block;
+}
+
+.chat__message--open {
+    display: block;
+}
+
+.chat__people--hidden {
+    display: none;
+}
+
+@media (min-width: 1277px) {
+    .chat__message,
+    .chat__people {
+        display: flex;
+    }
+
+ 
+
+    .chat__message--open,
+    .chat__people--hidden {
+        display: flex;
+    }
+}
+
+.chat__backButton {
+    display: none;
+    background-color: #f0f0f0;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    margin-bottom: 15px;
+}
+
+@media (max-width: 1277px) {
+    .chat__backButton {
+        display: block;
+    }
+
+    .chat__message{
+        width: 100%;
+    }
+
+    .chat__figure{
+        height: 75%;
+        padding: 0;
+    }
+
+    .chat__aside{
+        padding: 0;
+    }
+
+    .chat__input {
+        width: 60%;
+        height: 41px;
+        border-radius: 20px;
+        border: 1.5px solid #ccc;
+        padding-left: 20px;
+      }
+
+      .chat__send{
+        height: 41px;
+      }
+
+      .chat__inputContainer {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: auto;
+        gap: 10px;
+        padding-bottom: 10px;
+      }
+
+      .chat__chatContainer {
+        height: 350px;
+      }
+
+      .chat__people{
+        width: 100%;
+        display: flex;
+      }
 }
