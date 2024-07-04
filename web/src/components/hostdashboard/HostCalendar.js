@@ -1,10 +1,9 @@
 import React, {useEffect, useState} from "react";
 import Pages from "./Pages";
-import Calendar from "./Calendar";
-import chevron from "../../images/icons/chevron-horizontal.png";
 import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
+import CalendarComponent from "./CalendarComponent";
 
 
 function HostCalendar() {
@@ -31,6 +30,10 @@ function HostCalendar() {
 
         setUserIdAsync();
     }, []);
+
+    const updateDates = (dateRanges) => {
+
+    };
 
     useEffect(() => {
         const fetchAccommodations = async () => {
@@ -99,7 +102,6 @@ function HostCalendar() {
                                     </option>
                                 ))}
                             </select>
-
                         </div>
                         {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
                         <div className="calendar-box">
@@ -108,7 +110,7 @@ function HostCalendar() {
                             </p>
                             <div className="locationBox">
                                 <div className="boxColumns locationContent">
-                                    <Calendar passedProp={selectedAccommodation} isNew={false}/>
+                                    <CalendarComponent passedProp={selectedAccommodation} isNew={false} updateDates={updateDates}/>
                                 </div>
                             </div>
                         </div>
