@@ -108,7 +108,7 @@
   height: 2.5rem;
   width: 2.5rem;
   margin-top: 0.45rem;
-  margin-left: 0.3rem;
+  margin-left: 0.4rem;
 }
 
 .searchbar-button:hover {
@@ -304,11 +304,6 @@
   margin-top: 1rem;
 
 }
-
-.Search-button-section {
-  margin-bottom: 1.8125rem;
-}
-
 .Search-guestP {
   text-align: left;
   font-weight: 500;
