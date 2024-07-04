@@ -85,6 +85,15 @@
   transition: .3s;
 }
 
+.wijzer.active {
+  background-color: #0D9813;
+  color: white;
+}
+
+.wijzer.active p {
+  color: white;
+}
+
 
 .dashboardSection {
   display: flex;
