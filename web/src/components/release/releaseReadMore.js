@@ -1,7 +1,5 @@
 import React from 'react';
-import './releaseTwo.css';
-import note1 from '../../images/house.jpeg';
-import note2 from '../../images/phone1.webp';
+import './releaseReadMore.css';
 import search from '../../images/search.webp';
 import stripe from '../../images/Stripe.webp';
 import listings from '../../images/listings.webp';
