@@ -61,7 +61,6 @@ import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
 import { initializeUserAttributes } from './components/utils/userAttributes';
 import PageNotFound from "./components/error/404NotFound";
-import StripeCallback from "./components/stripe/StripeCallback";
 
 
 Modal.setAppElement('#root');
@@ -158,7 +157,6 @@ function App() {
                             <Route path="/hostdashboard/screening" element={<HostScreening />} />
                             <Route path="/hostdashboard/setup" element={<HostSetup />} />
                             <Route path="/hostdashboard/promo-codes" element={<HostPromoCodes />} />
-                            <Route path="/stripe/callback" element={<StripeCallback />} />
 
                             {/* Career, Policies, and Terms */}
                             <Route path="/career" element={<Careers />} />

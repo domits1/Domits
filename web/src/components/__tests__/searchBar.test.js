@@ -36,7 +36,7 @@ import '@testing-library/jest-dom';
 import { BrowserRouter } from 'react-router-dom'; 
 import { SearchBar } from '../base/SearchBar';
 
-describe.skip('SearchBar Component', () => {
+describe('SearchBar Component', () => {
     test('laadt de autocomplete input', () => {
         render(
             <BrowserRouter> 
@@ -47,7 +47,7 @@ describe.skip('SearchBar Component', () => {
         expect(inputElement).toBeInTheDocument();
     });
 
-    test.skip('controleert de lege toestand van het adresveld', () => {
+    test('controleert de lege toestand van het adresveld', () => {
         render(
             <BrowserRouter> 
                 <SearchBar />

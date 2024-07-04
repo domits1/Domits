@@ -26,7 +26,7 @@ jest.mock('react-router-dom', () => ({
     })
 }));
 
-describe.skip('ConfirmEmail', () => {
+describe('ConfirmEmail', () => {
     const renderComponent = (flowState) => {
         render(
             <FlowContext.Provider value={{ flowState }}>

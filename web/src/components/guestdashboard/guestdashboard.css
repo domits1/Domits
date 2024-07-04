@@ -9,7 +9,6 @@
 .dashboards {
     display: grid;
     grid-template-columns: 200px auto;
-    gap: 5%;
 }
 
 .dashboard {

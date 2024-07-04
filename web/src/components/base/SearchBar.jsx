@@ -1,5 +1,3 @@
-// For explenation on how search works: https://github.com/domits1/Domits/wiki/Web-Search
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
@@ -8,12 +6,12 @@ import {
   FaShip, FaTree, FaSpinner, FaTimesCircle, FaUmbrellaBeach, FaUser, FaChild, FaBaby, FaPaw, FaSearch,
 } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
-import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
+import PlacesAutocomplete, { geocodeByAddress, getLatLng } from 'react-places-autocomplete';
 import Select from 'react-select';
 import { countries } from 'country-data';
 import './SearchBar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Script from 'react-load-script';
+
 
 export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -33,18 +31,13 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isMobile, setIsMobile] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
-
-  const handleScriptLoad = () => {
-    setScriptLoaded(true);
-  };
 
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
 
   const handleButtonClick = (e) => {
     e.stopPropagation();
   };
-
+  
   const GuestCounter = React.memo(({ label, value, onIncrement, onDecrement, description }) => {
     return (
       <div className="Search-guestCounter" onClick={handleButtonClick}>
@@ -159,61 +152,57 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     try {
       const results = await geocodeByAddress(selectedAddress.description);
+      const latLng = await getLatLng(results[0]);
     } catch (error) {
     }
   };
 
   useEffect(() => {
+    handleSearchWithDelay(false);
+  }, [accommodation, address, totalGuests]);
+
+  useEffect(() => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
-    } else if (location.pathname === '/' && location.state && location.state.searchParams) {
-      const { accommodation, address, totalGuests } = location.state.searchParams;
-      setTimeout(() => {
-        performSearch(accommodation, address, totalGuests);
-      }, 1000);  // Delay of 1000 milliseconds (1 second)
     }
   }, [location]);
 
-  const performSearch = async (accommodation, address, totalGuests) => {
+  const handleSearchWithDelay = async (shouldNavigate) => {
     setLoading(true);
-    setError('');
+    setError("");
 
-    const queryParams = new URLSearchParams();
+    const queryParams = [
+      accommodation ? `type=${accommodation}` : null,
+      address ? `searchTerm=${address}` : null,
+      totalGuests > 0 ? `guests=${totalGuests}` : null,
+    ].filter(Boolean).join('&');
 
-    if (accommodation) {
-      queryParams.append('type', accommodation);
-    }
-
-    if (address) {
-      queryParams.append('searchTerm', address);
-    }
-
-    if (totalGuests > 0) {
-      queryParams.append('guests', totalGuests);
-    }
-
-    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams.toString()}`;
+    const apiUrl = `https://dviy5mxbjj.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodationTypes?${queryParams}`;
 
     try {
       const response = await fetch(apiUrl);
       if (!response.ok) {
         if (response.status === 404) {
-          setError('No results have been found...');
+          setError("No results have been found...");
         } else {
-          setError('Er is een fout opgetreden bij het ophalen van de gegevens.');
+          setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
         }
         return;
       }
       const data = await response.json();
       if (data.length === 0) {
         setTimeout(() => {
-          setError('No results have been found...');
+          setError("No results have been found...");
         }, 500);
       } else {
-        setSearchResults(data);
+        if (shouldNavigate) {
+          navigate('/', { state: { searchResults: data } });
+        } else {
+          setSearchResults(data);
+        }
       }
     } catch (error) {
-      setError('Er is een fout opgetreden bij het ophalen van de gegevens.');
+      setError("Er is een fout opgetreden bij het ophalen van de gegevens.");
     } finally {
       setLoading(false);
     }
@@ -223,19 +212,11 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
     const shouldNavigate = location.pathname !== '/';
     if (shouldNavigate) {
       setSearchResults([]);
-      navigate('/', {
-        state: {
-          searchParams: { accommodation, address, totalGuests }
-        }
-      });
-    } else {
-      performSearch(accommodation, address, totalGuests);
     }
-  };
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
+    handleSearchWithDelay(shouldNavigate);
+    setTimeout(() => {
+      handleSearchWithDelay(shouldNavigate);
+    }, 1000);
   };
 
   //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
@@ -267,7 +248,6 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
 
     return country ? country.alpha2 : "";
   };
-
   // calendar gedeelte
   useEffect(() => {
     if (selectedDayRange.from && selectedDayRange.to) {
@@ -316,108 +296,98 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
         {(showSearchBar || !isMobile) && (
           <div className="Search-bar">
             <div className="Search-location">
+              <PlacesAutocomplete
+                value={address}
+                onChange={handleChange}
+                onSelect={handleSelect}
+                searchOptions={{
+                  types: ['locality', 'country'],
+                  language: 'en',
+                }}
+              >
+                {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
+                  <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
+                    <input
+                      {...getInputProps({
+                        className: 'searchBar_inputfield',
+                        type: 'search',
+                        placeholder: 'Search Destination'
+                      })}
+                    />
 
-              <Script
-                url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`}
-                onLoad={handleScriptLoad}
-              />
-              {scriptLoaded ? (
-                <PlacesAutocomplete
-                  value={address}
-                  onChange={handleChange}
-                  onSelect={handleSelect}
-                  searchOptions={{
-                    types: ['locality', 'country'],
-                    language: 'en',
-                  }}
-                >
-                  {({ getInputProps, suggestions, getSuggestionItemProps, loading }) => (
-                    <div className="autocomplete-container" style={{ marginTop: '10px', position: 'relative' }}>
-                      <input
-                        {...getInputProps({
-                          className: 'searchBar_inputfield',
-                          type: 'search',
-                          placeholder: 'Search Destination',
-                          onKeyDown: handleKeyDown
-                        })}
-                      />
+                    {suggestions.length > 0 && (
+                      <div
+                        className="suggestions-container"
+                        style={{
+                          position: 'absolute',
+                          top: isMobile ? '120%' : '150%',
+                          left: isMobile ? -8 : -30,
+                          width: isMobile ? '100%' : '135%',
+                          backgroundColor: 'white',
+                          borderRadius: '15px',
+                          padding: isMobile ? '0.5rem' : '1rem',
+                          boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)',
+                          zIndex: '999',
+                        }}
+                      >
+                        {loading && <div>Loading <FaSpinner /></div>}
+                        {suggestions.map((suggestion, index) => {
+                          const parts = suggestion.description.split(', ');
+                          const city = parts[0];
+                          const country = parts[parts.length - 1].trim();
+                          const countryCode = getCountryCode(country);
 
-                      {suggestions.length > 0 && (
-                        <div
-                          className="suggestions-container"
-                          style={{
-                            position: 'absolute',
-                            top: isMobile ? '120%' : '150%',
-                            left: isMobile ? -8 : -30,
-                            width: isMobile ? '100%' : '135%',
-                            backgroundColor: 'white',
-                            borderRadius: '1rem',
-                            padding: isMobile ? '0.5rem' : '1rem',
-                            boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)',
-                            zIndex: '999',
-                          }}
-                        >
-                          {loading && <div>Loading <FaSpinner /></div>}
-                          {suggestions.map((suggestion, index) => {
-                            const parts = suggestion.description.split(', ');
-                            const city = parts[0];
-                            const country = parts[parts.length - 1].trim();
-                            const countryCode = getCountryCode(country);
-
-                            return (
-                              <div
-                                key={index}
-                                {...getSuggestionItemProps(suggestion, {
-                                  style: {
-                                    backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                                    padding: isMobile ? '1px 0px' : '20px 10px',
-                                    cursor: 'pointer',
-                                    transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
-                                    fontSize: '1rem',
-                                    color: '#000',
-                                    borderBottom: '1px solid #ddd',
-                                    margin: '0',
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    alignItems: 'flex-start',
-                                    justifyContent: 'flex-start',
-                                    transform: suggestion.active ? 'scale(1.04)' : 'none',
-                                    zIndex: suggestion.active ? '1' : '0',
-                                  },
-                                  onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
-                                  onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
-                                  onClick: () => handleSelect(suggestion)
-                                })}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center' }}>
-                                  <ReactCountryFlag
-                                    countryCode={countryCode}
-                                    svg
-                                    style={{
-                                      marginRight: '10px',
-                                      width: '20px',
-                                      height: '15px',
-                                      boxShadow: '2px 2px 10px #777',
-                                      marginBottom: '-0.8rem'
-                                    }}
-                                    title={country}
-                                  />
-                                  <span>{city}</span>
-                                </div>
-                                <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
-                                  {country}
-                                </div>
+                          return (
+                            <div
+                              key={index}
+                              {...getSuggestionItemProps(suggestion, {
+                                style: {
+                                  backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
+                                  padding: isMobile ? '1px 0px' : '20px 10px',
+                                  cursor: 'pointer',
+                                  transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
+                                  fontSize: '1rem',
+                                  color: '#000',
+                                  borderBottom: '1px solid #ddd',
+                                  margin: '0',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'flex-start',
+                                  justifyContent: 'flex-start',
+                                  transform: suggestion.active ? 'scale(1.04)' : 'none',
+                                  zIndex: suggestion.active ? '1' : '0',
+                                },
+                                onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
+                                onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
+                                onClick: () => handleSelect(suggestion)
+                              })}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center' }}>
+                                <ReactCountryFlag
+                                  countryCode={countryCode}
+                                  svg
+                                  style={{
+                                    marginRight: '10px',
+                                    width: '20px',
+                                    height: '15px',
+                                    boxShadow: '2px 2px 10px #777',
+                                    marginBottom: '-0.8rem'
+                                  }}
+                                  title={country}
+                                />
+                                <span>{city}</span>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </PlacesAutocomplete>
-              ) : (
-                <div></div>
-              )}
+                              <div style={{ marginLeft: '30px', fontSize: '0.8rem', color: '#666' }}>
+                                {country}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </PlacesAutocomplete>
             </div>
 
             <div className="searchInputContainer">
@@ -449,7 +419,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                       padding: '0',
                       margin: 'auto',
                       cursor: 'pointer',
-                      width: isMobile ? '100%' : '8.7rem',
+                      width: isMobile ? '100%' : '150px',
                     };
                   },
                   menu: (provided, state) => {

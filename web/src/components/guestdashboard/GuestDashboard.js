@@ -42,7 +42,7 @@ const GuestDashboard = () => {
     return (
         <div className="container">
             <h2>Dashboard</h2>
-            <div className="dashboards">
+            <div className="dashboard">
                 <Pages />
                 <div className="content">
                     <div className="personalInfoContent">
