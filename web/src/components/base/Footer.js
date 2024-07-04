@@ -80,7 +80,7 @@ const Footer = () => {
                                 </a>
                             </li>
                             <li>
-                                <a href="https://www.instagram.com/" target="_blank" rel="noopener noreferrer" className='footer-icons'>
+                                <a href="https://www.instagram.com/domits_/" target="_blank" rel="noopener noreferrer" className='footer-icons'>
                                     <img src={instagramIcon} alt="Instagram" />
                                 </a>
                             </li>
@@ -92,16 +92,6 @@ const Footer = () => {
                         </ul>
                     </div>
 
-                    {/* Currency section */}
-                    {/* <div className="footer-endsection">
-                        <h4 className='footer-headers'>Currencies</h4>
-                        <select id='currency-dropdown' className='footer-lists footer-select'>
-                            <option value="euro">EUR</option>
-                            <option value="dollar">US</option>
-                        </select>
-                    </div>
-
-                    <img id='appstorebadge' src={Appstorebadge} alt="App Store Badge" className="app-store-badge" /> */}
                 </div>
 
                 {/* Office section */}
@@ -122,15 +112,6 @@ const Footer = () => {
                         </ul>
                     </div>
 
-                    {/* Languages section */}
-                    {/* <div className="footer-endsection">
-                        <h4 className='footer-headers'>Languages</h4>
-                        <select id='language-dropdown' className='footer-lists footer-select'>
-                            <option value="english">English</option>
-                            <option value="dutch">Dutch</option>
-                        </select>
-                    </div>
-                    <img id='playstorebadge' src={Playstorebadge} alt="Play Store Badge" className="play-store-badge" /> */}
                 </div>
             </div>
 
