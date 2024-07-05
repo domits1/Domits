@@ -7,7 +7,6 @@ import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
 import { Storage, Auth } from "aws-amplify"
-import Calendar from "../hostdashboard/Calendar";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import Apartment from "../../images/icons/flat.png";
 import House from "../../images/icons/house.png";

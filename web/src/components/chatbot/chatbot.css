@@ -173,6 +173,15 @@
 
 .accommodation-details {
   padding: 10px;
+  p {
+    font-size: 0.75rem;
+  }
+  .isDrafted {
+    color: #003366;
+  }
+  .isLive {
+    color: #0fa616;
+  }
 }
 
 .accommodation-details h3 {
