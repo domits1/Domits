@@ -4,8 +4,7 @@
 }
 
 .contact {
-    width: 86%;
-    margin: 0 auto;
+    width: 93%;
     margin: 50px auto;
   }
 
@@ -46,7 +45,7 @@
 
   .contactform input::placeholder,
   .contactform textarea::placeholder {
-      text-align: left;
+     text-align: left;
   }
   
   .contactform input:not(.biginput input) {
@@ -96,11 +95,16 @@
     cursor: pointer;
   }
   
-  @media screen and (max-width: 1030px) {
+  /* Media query for phone screens */
+  @media screen and (max-width: 930px) {
     .contact {
-      padding: 20px;
+      padding: 10px;
       margin: 10px auto;
       font-size: 14px;
+    }
+  
+    .contactform {
+      padding: 10px;
     }
   
     .contactform h2 {

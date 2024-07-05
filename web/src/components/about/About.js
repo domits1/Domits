@@ -202,7 +202,7 @@ function About() {
                         You take responsibility. Discovers new ways to get things done. And comes up with new ideas and solutions. You want to create, build and develop together. We are always looking for new founders.
                     </p>
                 </div>
-           </div>
+            </div>
             {/* <FAQ /> */}
         </div>
     );

@@ -41,7 +41,7 @@ function Career() {
 
     return (
         <main>
-            <h3 className="crew">Let's find a fitting job</h3>
+            <h2 className="crew">Let's find a fitting job</h2>
             <div className="filter-container">
                 <button onClick={() => handleCategoryChange("All")} className={selectedCategory === "All" ? "active" : ""}>All</button>
                 <button onClick={() => handleCategoryChange("People")} className={selectedCategory === "People" ? "active" : ""}>People</button>

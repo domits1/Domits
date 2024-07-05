@@ -1,5 +1,4 @@
 .new-features {
-  width: 86%;
   max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
@@ -8,7 +7,7 @@
 }
 
 .new-features h1 {
-  font-size: 2em;
+  font-size: 2.5em;
   margin-bottom: 20px;
 }
 
@@ -33,21 +32,17 @@
 
 .feature-item img {
   max-width: 100%;
-  width: 400px;
-  height: 240px;
-  object-fit: cover;
-  object-position: center;
+  height: auto;
   border-radius: 10px;
 }
 
 .feature-item h3 {
-  font-size: 1.4em;
+  font-size: 1.5em;
   margin-top: 15px;
 }
 
 .feature-item p {
-  font-size: 1em;
-  margin-bottom: auto;
+  font-size: 1.1em;
 }
 
 @media screen and (max-width: 888px) {
@@ -62,7 +57,7 @@
   }
 
   .feature-item h3 {
-    font-size: 1em; 
+    font-size: 1.2em; 
   }
 
   .feature-item p {
