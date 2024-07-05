@@ -5,7 +5,6 @@
     display: flex;
     justify-content: space-evenly;
     align-items: center;
- gap: 50px;
 }
 
 .chat__container{
@@ -39,10 +38,10 @@
 .chat__message{
     height: 100%;
     width: 60%;
-    /* display: flex;
+    display: flex;
     flex-direction: column;
     justify-content: center;
-    align-items: center; */
+    align-items: center;
     border-top-left-radius: 1.5rem;
     border-top-right-radius: 1.5rem;
 
@@ -702,7 +701,7 @@ a{
 }
 
 .chat__message--open {
-    display: block;
+    display: flex;
 }
 
 .chat__people--hidden {
