@@ -91,8 +91,48 @@
             background: #0fa616;
             color: white;
         }
+        .disabled {
+            background: darkgray !important;
+            box-shadow: 0.25rem 0.25rem gray;
+        }
         button:hover {
             background: lightgreen;
         }
+    }
+    input {
+        font-size: 1rem;
+        border-radius: 0.25rem;
+        border: 1px solid #cccccc;
+        padding: 0.5rem;
+    }
+    .title {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 0;
+        input {
+            width: 40%;
+        }
+    }
+    .content {
+        display: flex;
+        flex-direction: column;
+        padding: 1rem 0;
+        margin-bottom: 5%;
+        input {
+            height: 30vh;
+            width: 100%;
+            text-align: left;
+            line-height: 1rem;
+        }
+        .textarea {
+            font-size: 1rem;
+            border-radius: 0.25rem;
+            border: 1px solid #cccccc;
+            padding: 0.5rem;
+            height: 30vh;
+            width: 100%;
+            resize: vertical;
+        }
+
     }
 }

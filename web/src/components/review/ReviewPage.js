@@ -15,11 +15,21 @@ const ReviewPage = () => {
     const type = searchParams.get('TYPE');
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
+    const [feedBack, setFeedBack] = useState('');
     const [comment, setComment] = useState('');
+    const [isCompleted, setIsCompleted] = useState(false);
 
     useEffect(() => {
         renderRating();
     }, [rating]);
+
+    useEffect(() => {
+        if (rating && title && content) {
+            setIsCompleted(true);
+        } else {
+            setIsCompleted(false);
+        }
+    }, [rating, title, content]);
 
     const renderRating = () => {
         if (rating) {
@@ -106,9 +116,43 @@ const ReviewPage = () => {
                 return (
                     <main className={styles.main}>
                         <h1>Start writing your review</h1>
+                        <section className={styles.title}>
+                            <label htmlFor="title">Title*</label>
+                            <input
+                                name="Title"
+                                onChange={(e) => setTitle(e.target.value)}
+                                placeholder="Type here..."
+                                required={true}
+                                maxLength={32}
+                            />
+                            <p>{title.length}/32</p>
+                        </section>
+                        <section className={styles.content}>
+                            <label htmlFor="content">Please justify your rating*</label>
+                            <textarea
+                                className={styles.textarea}
+                                name="Content"
+                                onChange={(e) => setContent(e.target.value)}
+                                placeholder="Type here..."
+                                required={true}
+                                maxLength={500}
+                            />
+                            <p>{content.length}/500</p>
+                        </section>
+                        <section className={styles.content}>
+                            <label htmlFor="content">Do you have any feedbacks? (not required)</label>
+                            <textarea
+                                className={styles.textarea}
+                                name="Content"
+                                onChange={(e) => setFeedBack(e.target.value)}
+                                placeholder="Type here..."
+                                maxLength={500}
+                            />
+                            <p>{feedBack.length}/500</p>
+                        </section>
                         <div className={styles.buttonBox}>
                             <button onClick={() => pageUpdater(page - 1)}>Go back</button>
-                            <button onClick={() => pageUpdater(page + 1)}>Proceed</button>
+                            <button className={!isCompleted ? styles.disabled : ''} onClick={() => pageUpdater(page + 1)}>Confirm and publish</button>
                         </div>
                     </main>
                 );
