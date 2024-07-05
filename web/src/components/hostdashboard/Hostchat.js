@@ -4,7 +4,7 @@ import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
 import * as queries from "../../graphql/queries";
-import Pages from "../guestdashboard/Pages";
+import Pages from "./Pages";
 import * as subscriptions from "../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
