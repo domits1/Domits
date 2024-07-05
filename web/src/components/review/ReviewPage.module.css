@@ -11,7 +11,7 @@
     .rating {
         display: inline-block;
         position: relative;
-        height: 40vh;
+        height: 10vh;
         line-height: 100px;
         font-size: 2rem;
         align-self: center;
@@ -74,5 +74,25 @@
     .rating label input:focus:not(:checked) ~ .icon:last-child {
         color: gray;
         text-shadow: 0 0 5px gold;
+    }
+    .comment {
+        text-align: center;
+        padding: 0 0 10% 0;
+    }
+    .buttonBox {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-between;
+        button {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border: none;
+            box-shadow: 0.25rem 0.25rem #0A760F;
+            background: #0fa616;
+            color: white;
+        }
+        button:hover {
+            background: lightgreen;
+        }
     }
 }

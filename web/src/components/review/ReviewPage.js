@@ -1,11 +1,13 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from "./ReviewPage.module.css";
-import {Auth} from "aws-amplify";
-import {useLocation, useNavigate} from "react-router-dom";
+import { Auth } from "aws-amplify";
+import { useLocation, useNavigate } from "react-router-dom";
+
 const ReviewPage = () => {
     const [userId, setUserId] = useState(null);
     const [username, setUsername] = useState('');
     const [page, setPage] = useState(0);
+    const [rating, setRating] = useState(null);
     const navigate = useNavigate();
     const { search } = useLocation();
     const searchParams = new URLSearchParams(search);
@@ -13,24 +15,45 @@ const ReviewPage = () => {
     const type = searchParams.get('TYPE');
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [rating, setRating] = useState(null);
+    const [comment, setComment] = useState('');
+
+    useEffect(() => {
+        renderRating();
+    }, [rating]);
 
     const renderRating = () => {
         if (rating) {
-            switch (rating) {
+            switch (parseInt(rating)) {
                 case 1:
-                    return (<h3>Horrible</h3>);
+                    setComment('Horrible');
+                    break;
                 case 2:
-                    return (<h3>Could be better</h3>);
+                    setComment('Could be better');
+                    break;
                 case 3:
-                    return (<h3>It was okay</h3>);
+                    setComment('It was okay');
+                    break;
                 case 4:
-                    return (<h3>Decent</h3>);
+                    setComment('Decent');
+                    break;
                 case 5:
-                    return (<h3>Amazing</h3>);
+                    setComment('Amazing');
+                    break;
+                default:
+                    setComment('');
+                    break;
             }
+        } else {
+            setComment('');
         }
     }
+    const pageUpdater = (pageNumber) => {
+        setPage(pageNumber);
+    };
+
+    const handleRatingChange = (value) => {
+        setRating(value);
+    };
 
     const renderPageContent = (page) => {
         switch (page) {
@@ -40,29 +63,29 @@ const ReviewPage = () => {
                         <h1>{type === 'HostToGuest' ? 'How did the guest(s) behave?' : 'How was the experience?'}</h1>
                         <form className={styles.rating}>
                             <label>
-                                <input type="radio" name="stars" value="1" onClick={(e) => setRating(e.target.value)}/>
+                                <input type="radio" name="stars" value="1" checked={rating === '1'} onChange={() => handleRatingChange('1')} />
                                 <span className={styles.icon}>★</span>
                             </label>
                             <label>
-                                <input type="radio" name="stars" value="2" onClick={(e) => setRating(e.target.value)}/>
-                                <span className={styles.icon}>★</span>
-                                <span className={styles.icon}>★</span>
-                            </label>
-                            <label>
-                                <input type="radio" name="stars" value="3" onClick={(e) => setRating(e.target.value)}/>
-                                <span className={styles.icon}>★</span>
+                                <input type="radio" name="stars" value="2" checked={rating === '2'} onChange={() => handleRatingChange('2')} />
                                 <span className={styles.icon}>★</span>
                                 <span className={styles.icon}>★</span>
                             </label>
                             <label>
-                                <input type="radio" name="stars" value="4" onClick={(e) => setRating(e.target.value)}/>
-                                <span className={styles.icon}>★</span>
+                                <input type="radio" name="stars" value="3" checked={rating === '3'} onChange={() => handleRatingChange('3')} />
                                 <span className={styles.icon}>★</span>
                                 <span className={styles.icon}>★</span>
                                 <span className={styles.icon}>★</span>
                             </label>
                             <label>
-                                <input type="radio" name="stars" value="5" onClick={(e) => setRating(e.target.value)}/>
+                                <input type="radio" name="stars" value="4" checked={rating === '4'} onChange={() => handleRatingChange('4')} />
+                                <span className={styles.icon}>★</span>
+                                <span className={styles.icon}>★</span>
+                                <span className={styles.icon}>★</span>
+                                <span className={styles.icon}>★</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="stars" value="5" checked={rating === '5'} onChange={() => handleRatingChange('5')} />
                                 <span className={styles.icon}>★</span>
                                 <span className={styles.icon}>★</span>
                                 <span className={styles.icon}>★</span>
@@ -71,7 +94,11 @@ const ReviewPage = () => {
                             </label>
                         </form>
                         <div>
-                            {renderRating()}
+                            <h3 className={styles.comment}>{comment}</h3>
+                        </div>
+                        <div className={styles.buttonBox}>
+                            <button onClick={() => navigate('/')}>Cancel</button>
+                            <button onClick={() => pageUpdater(page + 1)}>Proceed</button>
                         </div>
                     </main>
                 );
@@ -79,12 +106,17 @@ const ReviewPage = () => {
                 return (
                     <main className={styles.main}>
                         <h1>Start writing your review</h1>
+                        <div className={styles.buttonBox}>
+                            <button onClick={() => pageUpdater(page - 1)}>Go back</button>
+                            <button onClick={() => pageUpdater(page + 1)}>Proceed</button>
+                        </div>
                     </main>
                 );
             default:
                 return null;
         }
     }
+
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
