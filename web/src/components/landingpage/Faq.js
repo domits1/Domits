@@ -1,12 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Faq.css';
-import Helpdesk from '../about/Helpdesk';
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   const answerRef = useRef(null);
   return (
     <div className="faq-box" onClick={toggleOpen}>
-      <div className="question">{question}</div>
+        <div className="faq-box-question">
+          <div className="question">{question}</div>
+          <div className="question-isOpen">{isOpen? '-' : '+'}</div>
+        </div>
       <div
         className="answer"
         style={{ maxHeight: isOpen ? `${answerRef.current.scrollHeight}px` : '0', overflow: 'hidden' }}
@@ -427,7 +429,6 @@ const Faq = () => {
 
   return (
     <div className="faq-container">
-      <h3 className="faqHeader3">FAQ - Frequently Asked Questions</h3>
       <div className="faq-button-container">
         <button className="faqButton" onClick={() => setCategory('host')}>Host</button>
         <button className="faqButton" onClick={() => setCategory('guest')}>Guest</button>

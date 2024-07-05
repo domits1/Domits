@@ -1,25 +1,30 @@
-.faq-container {
+.faq-container{
+  width: 46%;
   display: flex;
   flex-direction: column;
-  align-items: left;
-  margin-bottom: 50px;
-} 
-
-.faqHeader3 {
-  font-size: clamp(20px, 4vw, 32px);
+  justify-content: center;
+  align-items: center;
+  text-align: left;
+  margin: 0 auto;
 }
 
 .faqHeader4 {
-  font-size: clamp(10px, 4vw, 25px);
+  font-size: clamp(10px, 4vw, 20px);
   font-weight: bolder;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
+  text-align: left;
+  width: 54%;
 }
 
 .faq-button-container {
+  width: 70%;
   display: flex;
-  justify-content: left; 
-  align-items: left;
-  margin-bottom: 50px;
-  gap: 20px;
+  flex-direction: row;
+  justify-content: space-between;
+  margin: 2rem auto;
+  gap: 27px;
 }
 
 .faqButton{
@@ -32,23 +37,32 @@
   padding: 10px 20px;
   margin: 10px 0px;
   cursor: pointer;
-  max-width: 200px; /* Set the maximum width for the buttons */
-  flex: 1; /* Ensure buttons grow to take available space */
+  max-width: 200px; 
+  flex: 1; 
   text-align: center; 
   font-weight: 500;
   font-size: 15px;
 }
 
 .faq-box {
-  min-width: 90%;
+  display: flex;
+  flex-direction: column;
+  border: 2px solid var(--primary-color);
   border-radius: 10px;
-  margin: 10px 0;
+  margin: 10px auto;
   padding: 15px;
-  cursor: pointer;
   transition: max-height 0.4s ease; 
   overflow: hidden;
+  cursor: pointer;
 }
 
+.faq-box-question{
+  display: flex;
+}
+
+.question-isOpen{
+  margin-left: auto;
+}
 .faqButton:hover {
   background-color: #367a4a;
 }
@@ -63,20 +77,10 @@
   cursor: pointer;
 }
 
-.faq-box {
-  width: 50%;
-  border: 2px solid var(--primary-color);
-  border-radius: 10px;
-  margin: 10px 0;
-  padding: 15px;
-  cursor: pointer;
-  transition: max-height 0.4s ease; 
-  overflow: hidden;
-}
-
 .question {
   font-weight: bold;
   margin-bottom: 8px;
+  margin: 0;
 }
 
 .answer {
@@ -84,8 +88,12 @@
   transition: max-height 0.4s ease-in-out; 
 }
 
-@media (max-width: 900px) {
-  .faq-box {
-    width: 100%;
+@media (max-width: 960px) {
+  .faq-container {
+    width: 83%;
+    margin-left: 11.1%;
+  }
+  .faq-button-container{
+    width: 98%;
   }
 }
