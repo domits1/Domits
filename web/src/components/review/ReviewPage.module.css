@@ -143,4 +143,8 @@
             padding: 1.5rem;
         }
     }
+    .spinnerDiv {
+        align-self: center;
+        padding: 2rem;
+    }
 }

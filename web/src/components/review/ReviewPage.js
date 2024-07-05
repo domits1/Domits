@@ -72,6 +72,7 @@ const ReviewPage = () => {
     const asyncCreateReview = async () => {
         if (isCompleted) {
             setLoading(true);
+            setPage(page + 1);
             const body = {
                 reviewId: generateUUID(),
                 accoId: type === 'GuestToHost' ? searchParams.get('ACCOID') : '',
@@ -91,11 +92,8 @@ const ReviewPage = () => {
                     body: JSON.stringify(body),
                 });
                 const data = await response.json();
-                console.log(data);
                 if (!response.ok) {
                     console.error('Error saving review');
-                } else {
-                    setPage(page + 1);
                 }
             } catch (error) {
                 window.alert('Something went wrong, please try again later...');
@@ -207,7 +205,7 @@ const ReviewPage = () => {
                 return (
                         loading ?
                             <main className={styles.main}>
-                                <div>
+                                <div className={styles.spinnerDiv}>
                                     <img src={spinner} alt='spinner'/>
                                 </div>
                             </main> :
@@ -218,7 +216,7 @@ const ReviewPage = () => {
                                     <img className={styles.happy} src={happy} alt='happy'/>
                                 </div>
                                 <button
-                                    style={{width: '15%', alignSelf: 'center'}}
+                                    style={{width: '15%', alignSelf: 'center', margin: '5% 0'}}
                                     onClick={() => navigate('/')}>Back to home</button>
                             </main>
                 );
