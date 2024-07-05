@@ -79,10 +79,11 @@ const ReviewPage = () => {
                 title: title,
                 itemIdTo: recipientID,
                 userIdFrom: userId,
-                usernameFrom: username
+                usernameFrom: username,
+                feedBack: feedBack
             }
             try {
-                const response = await fetch(`https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/CreateReview`, {
+                const response = await fetch(`https://slixu87at0.execute-api.eu-north-1.amazonaws.com/default/CreateReview`, {
                     method: 'POST',
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
