@@ -81,7 +81,8 @@ const ReviewPage = () => {
                 itemIdTo: recipientID,
                 userIdFrom: userId,
                 usernameFrom: username,
-                feedBack: feedBack
+                feedBack: feedBack,
+                rating: rating
             }
             try {
                 const response = await fetch(`https://slixu87at0.execute-api.eu-north-1.amazonaws.com/default/CreateReview`, {
