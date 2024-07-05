@@ -83,21 +83,23 @@
         display: flex;
         flex-direction: row;
         justify-content: space-between;
-        button {
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border: none;
-            box-shadow: 0.25rem 0.25rem #0A760F;
-            background: #0fa616;
-            color: white;
-        }
-        .disabled {
-            background: darkgray !important;
-            box-shadow: 0.25rem 0.25rem gray;
-        }
-        button:hover {
-            background: lightgreen;
-        }
+    }
+    button {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: none;
+        box-shadow: 0.25rem 0.25rem #0A760F;
+        background: #0fa616;
+        color: white;
+        cursor: pointer;
+    }
+    .disabled {
+        background: darkgray !important;
+        box-shadow: 0.25rem 0.25rem gray;
+        cursor: not-allowed;
+    }
+    button:hover {
+        background: lightgreen;
     }
     input {
         font-size: 1rem;
@@ -132,5 +134,13 @@
             resize: vertical;
         }
 
+    }
+    .imageDiv {
+        align-self: center;
+        .happy {
+            width: 50%;
+            height: 50%;
+            padding: 1.5rem;
+        }
     }
 }

@@ -2,8 +2,11 @@ import React, { useEffect, useState } from 'react';
 import styles from "./ReviewPage.module.css";
 import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
+import spinner from "../../images/spinnner.gif";
+import happy from "../../images/icons/face-happy.png";
 
 const ReviewPage = () => {
+    const [loading, setLoading] = useState(false);
     const [userId, setUserId] = useState(null);
     const [username, setUsername] = useState('');
     const [page, setPage] = useState(0);
@@ -55,6 +58,49 @@ const ReviewPage = () => {
             }
         } else {
             setComment('');
+        }
+    };
+
+    const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            let r = Math.random() * 16 | 0,
+                v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
+    const asyncCreateReview = async () => {
+        if (isCompleted) {
+            setLoading(true);
+            const body = {
+                reviewId: generateUUID(),
+                accoId: type === 'GuestToHost' ? searchParams.get('ACCOID') : '',
+                content: content,
+                title: title,
+                itemIdTo: recipientID,
+                userIdFrom: userId,
+                usernameFrom: username
+            }
+            try {
+                const response = await fetch(`https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/CreateReview`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    },
+                    body: JSON.stringify(body),
+                });
+                const data = await response.json();
+                console.log(data);
+                if (!response.ok) {
+                    console.error('Error saving review');
+                } else {
+                    setPage(page + 1);
+                }
+            } catch (error) {
+                window.alert('Something went wrong, please try again later...');
+            } finally {
+                setLoading(false);
+            }
         }
     }
     const pageUpdater = (pageNumber) => {
@@ -123,9 +169,9 @@ const ReviewPage = () => {
                                 onChange={(e) => setTitle(e.target.value)}
                                 placeholder="Type here..."
                                 required={true}
-                                maxLength={32}
+                                maxLength={64}
                             />
-                            <p>{title.length}/32</p>
+                            <p>{title.length}/64</p>
                         </section>
                         <section className={styles.content}>
                             <label htmlFor="content">Please justify your rating*</label>
@@ -152,9 +198,28 @@ const ReviewPage = () => {
                         </section>
                         <div className={styles.buttonBox}>
                             <button onClick={() => pageUpdater(page - 1)}>Go back</button>
-                            <button className={!isCompleted ? styles.disabled : ''} onClick={() => pageUpdater(page + 1)}>Confirm and publish</button>
+                            <button className={!isCompleted ? styles.disabled : ''} onClick={() => asyncCreateReview()}>Confirm and publish</button>
                         </div>
                     </main>
+                );
+            case 2:
+                return (
+                        loading ?
+                            <main className={styles.main}>
+                                <div>
+                                    <img src={spinner} alt='spinner'/>
+                                </div>
+                            </main> :
+
+                            <main className={styles.main}>
+                                <h1>Congratulations! Your review has been published.</h1>
+                                <div className={styles.imageDiv}>
+                                    <img className={styles.happy} src={happy} alt='happy'/>
+                                </div>
+                                <button
+                                    style={{width: '15%', alignSelf: 'center'}}
+                                    onClick={() => navigate('/')}>Back to home</button>
+                            </main>
                 );
             default:
                 return null;
