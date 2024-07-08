@@ -1,5 +1,6 @@
 .why-domits {
-    width: 100%;
+    width: 85%;
+    margin: 0 auto;
 }
 
 .why-domits__title-text-container {
@@ -8,20 +9,22 @@
 }
 
 .why-domits__h3 {
-    font-size: 2.25rem;
+    text-align: center;
+    font-size: 2rem;
     margin: 0;
-    font-weight: 400;
+    font-weight: 450;
 }
 
 .why-domits__h4 {
-    font-size: 2rem;
+    text-align: center;
+    font-size: 1.4rem;
     font-weight: 400;
     margin-top: 1.6rem;
     margin-bottom: 3rem;
 }
 
 .why-domits__p {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     font-weight: 400;
     margin-top: 1.6rem;
     margin-bottom: 3rem;
@@ -30,16 +33,18 @@
 
 .why-domits__cards-container {
     min-height: 20rem;
-    width: 100%;
+    min-width: 84%;
+    margin: 0 auto;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 5.6rem;
+    gap: 5rem;
+    margin-bottom: 3.2rem;
     flex-wrap: wrap;
 }
 
 .why-domits__card {
-    width: 39.2%;
+    width: 36%;
     background: #0D9813;
     min-height: 9.3rem;
     border-radius: 10px;
@@ -57,9 +62,22 @@
     color: white;
 }
 
+
+@media(max-width: 1200px){
+    .why-domits__cards-container{
+        width: 90%;
+    }
+
+    .why-domits__card {
+        min-width: 80%;
+        margin: 0 auto;
+    }
+}
+
 @media (max-width: 1024px) {
-    .why-domits__title-text-container {
-        padding: 5rem;
+    .why-domits {
+        width: 100%;
+        margin: 0 auto;
     }
 
     .why-domits__h3 {
@@ -80,10 +98,6 @@
 }
 
 @media (max-width: 768px) {
-    .why-domits__title-text-container {
-        padding: 4rem;
-    }
-
     .why-domits__h3 {
         font-size: 1.75rem;
     }
@@ -96,21 +110,12 @@
         font-size: 1rem;
     }
 
-    .why-domits__card {
-        width: 100%;
-        min-height: 7rem;
-    }
-
     .why-domits__card-p {
         font-size: 1rem;
     }
 }
 
 @media (max-width: 480px) {
-    .why-domits__title-text-container {
-        padding: 2rem;
-    }
-
     .why-domits__h3 {
         font-size: 1.5rem;
     }
@@ -122,12 +127,6 @@
     .why-domits__p {
         font-size: 0.875rem;
     }
-
-    .why-domits__card {
-        width: 100%;
-        min-height: 5rem;
-    }
-
     .why-domits__card-p {
         font-size: 0.875rem;
     }
