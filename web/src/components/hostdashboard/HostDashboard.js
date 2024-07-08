@@ -92,7 +92,7 @@ function HostDashboard() {
         }
     };
     return (
-        <div className="container">
+        <main className="container">
             <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)}/>
             <div className="dashboard-header">
                 <h2>Dashboard</h2>
@@ -134,12 +134,15 @@ function HostDashboard() {
                                     </div>
                                     <ImageSlider images={accommodation.Images} seconds={5}/>
                                     <div className="accommodation-details">
+                                        <p className={accommodation.Drafted ? 'isDrafted' : 'isLive'}
+                                        >Status: {accommodation.Drafted ? 'Drafted' : 'Live'}</p>
                                         <p>Listed on: {DateFormatterDD_MM_YYYY(accommodation.createdAt)}</p>
-                                        {accommodation.StartDate && accommodation.EndDate ?
+                                        {accommodation.DateRanges ?
                                             (<p>
                                                 Available from
-                                                {" " + DateFormatterDD_MM_YYYY(accommodation.StartDate) + " "}
-                                                to {" " + DateFormatterDD_MM_YYYY(accommodation.EndDate) + " "}
+                                                {" " + DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + " "}
+                                                to {" " +
+                                                DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate) + " "}
                                             </p>) :
                                             (<p>Date range not set</p>)
                                         }
@@ -172,7 +175,7 @@ function HostDashboard() {
             </div>
             </div>
             
-        </div>
+        </main>
     );
 }
 

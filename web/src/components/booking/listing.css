@@ -249,6 +249,15 @@
 .review-card {
   padding: 1.5em;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  .stars-div {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    span {
+      color: gold;
+      font-size: 1.5rem;
+    }
+  }
 }
 .error {
   border: 1px solid red !important;

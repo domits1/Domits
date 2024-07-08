@@ -383,6 +383,23 @@ const ListingDetails = () => {
         return false;
     };
 
+    const renderStars = (review) => {
+        if (review.rating) {
+            const numStars = parseInt(review.rating);
+            if (!isNaN(numStars)) {
+                const stars = Array.from({ length: numStars }, (_, index) => (
+                    <span key={index}>★</span>
+                ));
+                return stars;
+            } else {
+                return <span>Rating: {review.rating}</span>;
+            }
+        } else {
+            return <span>No rating available</span>;
+        }
+    };
+
+
 
     return (
         <main className="container">
@@ -429,6 +446,9 @@ const ListingDetails = () => {
                                     {reviews.length > 0 ? (
                                         reviews.map((review, index) => (
                                             <div key={index} className="review-card">
+                                                <div className="stars-div">
+                                                    {renderStars(review)}
+                                                </div>
                                                 <h2 className="review-header">{review.title}</h2>
                                                 <p className="review-content">{review.content}</p>
                                                 <p className="review-date">Written
