@@ -1,12 +1,10 @@
-.faq-container{
-  width: 46%;
+.faq-container {
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  text-align: left;
   margin: 0 auto;
-}
+  margin-bottom: 50px;
+  width: 79%;
+} 
 
 .faqHeader4 {
   font-size: clamp(10px, 4vw, 20px);
@@ -19,12 +17,11 @@
 }
 
 .faq-button-container {
-  width: 70%;
+  width: 49%;
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   margin: 2rem auto;
-  gap: 27px;
 }
 
 .faqButton{
@@ -63,6 +60,7 @@
 .question-isOpen{
   margin-left: auto;
 }
+
 .faqButton:hover {
   background-color: #367a4a;
 }

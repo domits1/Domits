@@ -1,7 +1,9 @@
 .crew {
     text-align: center;
-    font-size: 28px;
+    font-size: 2rem;
+    font-weight: 450;
     margin-bottom: 20px;
+    margin-top: 2.5rem;
     color: #333;
 }
 
@@ -53,7 +55,7 @@
 }
 
 .job-title {
-    font-size: 20px;
+    font-size: 1.3rem;
     font-weight: bold;
     color: #333;
     margin-bottom: 5px;

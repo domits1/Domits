@@ -19,7 +19,7 @@ function About() {
     return (
         <div className="about">
             <div className="about__title-container">
-                <h2 className="about__title">About Domits</h2>
+                <h3 className="about__title">About Domits</h3>
             </div>
             <div className="about__subtitle-container">
                 <h3 className="about__subtitle">Tailor made partnership</h3>
@@ -77,7 +77,7 @@ function About() {
                 </div>
             </div>
             <div className="about__crew">
-                <h1 className="about__who-we-are-title about__who-we-are-title--margintop">Who we are</h1>
+                <h3 className="about__who-we-are-title about__who-we-are-title--margintop">Who we are</h3>
                 <p className="about__who-we-are-subtitle about__who-we-are-subtitle--marginbottom">We are all conscious founders.</p>
 
                 <div className="about__team">
@@ -116,9 +116,6 @@ function About() {
                         <p className="about__member-name">Muhammed Çetinkaya</p>
                         <p className="about__member-role">Back-end developer</p>
                     </div>
-                </div>
-
-                <div className="about__team">
                     <div className="about__member">
                         <div className="about__avatar">
                             <img className="about__avatar-image" src={kacper} alt="Kacper Flak" />
@@ -154,9 +151,7 @@ function About() {
                         <p className="about__member-name">Leila Boutkabout</p>
                         <p className="about__member-role">UX/UI Designer</p>
                     </div>
-                </div>
 
-                <div className="about__team">
                     <div className="about__member">
                         <div className="about__avatar">
                             <img className="about__avatar-image" src={standard} alt="Aniss Bouabdallah" />

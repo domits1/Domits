@@ -1,5 +1,5 @@
 .helpContainer {
-  width: 100%;
+  width: 90%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,7 +14,7 @@
 
 .helpSearchWrapper {
   position: relative;
-  width: 44.5%;
+  width: 78%;
   max-width: 100%;
 }
 
