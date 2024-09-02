@@ -402,7 +402,7 @@ const ListingDetails = () => {
 
 
     return (
-        <main className="container">
+        <main>
             <section className="detailContainer">
                 <section className='detailInfo'>
                     {accommodation && (

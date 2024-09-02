@@ -1,3 +1,8 @@
+main{
+  width: 93%;
+  margin: 10px auto;
+}
+
 .detailContainer {
   flex: 1;
   display: flex;
@@ -9,10 +14,10 @@
 }
 
 .detailSummary {
-  width: 29%;
+  width: 50%;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  margin: 40px;
-  margin-top: 90px;
+  margin: 146px 0 40px 20px;
+  /* margin-top: 145px; */
   padding: 20px;
   border-radius: 10px;
 }

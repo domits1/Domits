@@ -4,12 +4,20 @@ import Helpdesk from '../about/Helpdesk';
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   const answerRef = useRef(null);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    if (answerRef.current) {
+      setHeight(answerRef.current.scrollHeight);
+    }
+  }, [isOpen]);
+
   return (
     <div className="faq-box" onClick={toggleOpen}>
       <div className="question">{question}</div>
       <div
         className="answer"
-        style={{ maxHeight: isOpen ? `${answerRef.current.scrollHeight}px` : '0', overflow: 'hidden' }}
+        style={{ maxHeight: isOpen ? `${height}px` : '0', overflow: 'hidden' }}
         ref={answerRef}
       >
         {answer}
@@ -18,13 +26,14 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   );
 };
 
+
 const Faq = () => {
   const faqData = {
     guest: {
       aboutDomits: [
         {
           question: "What is Domits and how does it work?",
-          answer: "Domits is a platform where you can rent out your property for guests to book",
+          answer: "Domits is a platform where you can rent out your property for guests to book. As a host, you list your property on Domits, and guests can book it for short or long-term stays",
           isOpen: false
         },
         {
