@@ -4,6 +4,14 @@ import { isSameDay } from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";
 
+/**
+ * TEST
+ * @param passedProp
+ * @param isNew
+ * @param updateDates
+ * @returns {Element}
+ * @constructor
+ */
 function CalendarComponent({ passedProp, isNew, updateDates }) {
     const navigate = useNavigate();
     const [month, setMonth] = useState(new Date().getMonth());
