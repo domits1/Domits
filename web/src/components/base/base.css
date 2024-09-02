@@ -36,7 +36,7 @@
 
 .personalMenu {
     border: none;
-    background-color: #0D9813;
+    background-color: var(--primary-color);
     justify-content: center;
     align-items: center;
     gap: 10px;
@@ -68,22 +68,18 @@
 .personalMenuDropdown .personalMenuDropdownContent {
     padding: 20px 25px 20px 25px;
     position: absolute;
-    /* background-color: red; */
     background-color: white;
-    width: auto; /* Adjust width as needed */
+    width: auto;
     min-width: 240px;
     box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
     z-index: 1;
-    top: calc(100% + 5px); /* Position below the personalMenu button */
-    right: 0; /* Align with the left edge of the button */
-    /* border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px; */
+    top: calc(100% + 5px);
+    right: 0;
     border-radius: 10px;
 }
 
 .personalMenuDropdownContent button {
     padding: 8px 15px;
-    /* box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25); */
     border-radius: 15px;
     justify-content: center;
     align-items: center;
@@ -101,7 +97,7 @@
 .dropdownLoginButton {
     margin-top: 0;
     margin-bottom: 10px;
-    background: #0D9813;
+    background: var(--primary-color);
     border: none;
     box-shadow: none;
 }
@@ -140,7 +136,7 @@
 }
 
 .personalMenu:hover {
-    background-color: #3fb366;
+    opacity: 90%;
 }
 
 .helloUsername {
@@ -195,7 +191,7 @@
 }
 
 .footer-headers {
-    color: #0D9813;
+    color: var(--primary-color);
     font-family: Kanit, sans-serif;
     font-size: 24px;
     font-style: normal;
@@ -222,7 +218,7 @@
 
 .footer-copyright {
 
-    background-color: #0D9813;
+    background-color: var(--primary-color);
     flex-shrink: 0;
     margin-top: auto;
     display: flex;
@@ -265,7 +261,7 @@
     align-items: center;
     gap: 10px;
     border-radius: 15px;
-    border: 0.5px solid #0D9813;
+    border: 0.5px solid var(--primary-color);
 }
 
 #appstorebadge {
@@ -304,7 +300,7 @@
 }
 
 .borderline {
-    border-right: 1px solid #0A760F;
+    border-right: 1px solid var(--primary-color);
     padding-right: 5%;
 }
 
@@ -322,7 +318,7 @@ a:hover {
 
     .footer-section, .footer-endsection {
         margin: 0;
-        border-top: 1px solid #0A760F;
+        border-top: 1px solid var(--primary-color);
         margin-bottom: 20px;
         width: 80%;
     }

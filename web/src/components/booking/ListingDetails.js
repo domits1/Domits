@@ -409,7 +409,7 @@ const ListingDetails = () => {
                         <div>
                             <div>
                                 <Link to="/">
-                                    <button className="button">Go Back</button>
+                                    <button className="backButton">Go Back</button>
                                 </Link>
                                 <h1>{accommodation.Title}</h1>
                             </div>
