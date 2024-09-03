@@ -88,6 +88,9 @@ const Login = () => {
     };
 
     const handleSignIn = async () => {
+        if (errorMessage) {
+            setErrorMessage('');
+        }
         const { email, password } = formData;
         try {
             await Auth.signIn(email, password);
@@ -164,19 +167,17 @@ const Login = () => {
     }
 
     async function forgotPasswordSubmit(username, code, newPassword) {
+        setErrorMessage('');
         try {
             const data = await Auth.forgotPasswordSubmit(username, code, newPassword);
-            console.log(data);
-            if (!data) {
-                throw new Error('The code you entered was incorrect, please try again.')
-            }
         } catch (err) {
             console.log(err);
-            setErrorMessage(err);
+            setErrorMessage(err.message);
         }finally {
-            setErrorMessage('');
-            window.alert('Your password has been updated successfully! Sending you back to the login page...');
-            setConfirmCode(false);
+            if (errorMessage === '') {
+                window.alert('Your password has been updated successfully! Sending you back to the login page...');
+                setConfirmCode(false);
+            }
         }
     }
 
