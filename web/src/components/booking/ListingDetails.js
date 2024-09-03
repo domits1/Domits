@@ -42,6 +42,7 @@ import CoffeeMachine from "../../images/coffee-machine.png";
 import AlarmClock from "../../images/alarm-clock.png";
 import AntiqueBalcony from "../../images/antique-balcony.png";
 import BookingCalendar from "./BookingCalendar";
+import {Auth} from "aws-amplify";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -295,6 +296,14 @@ const ListingDetails = () => {
         navigate(`/chat?recipient=${hostID}`);
     };
 
+    const addUserToContactList = async () => {
+        const [userID, setUserID] = useState('');
+        const userInfo = await Auth.currentUserInfo();
+        if (userInfo) {
+            setUserID(userInfo.attributes.sub);
+        }
+    }
+
     const handleBooking = () => {
         const details = {
             id,
@@ -459,9 +468,9 @@ const ListingDetails = () => {
                                         <p className="review-alert">This accommodation does not have any reviews
                                             yet...</p>
                                     )}
-                                    <div>
+                                    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', gap: '2rem'}}>
                                         <button className='button'>Show more</button>
-                                        <button className='button' onClick={handleStartChat}>Chat</button>
+                                        <button className='button' onClick={addUserToContactList}>Add to contact list</button>
                                     </div>
                                 </section>
                                 <br/>
