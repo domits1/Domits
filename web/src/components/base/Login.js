@@ -168,6 +168,7 @@ const Login = () => {
 
     async function forgotPasswordSubmit(username, code, newPassword) {
         setErrorMessage('');
+        setErrorMsg('');
         try {
             const data = await Auth.forgotPasswordSubmit(username, code, newPassword);
         } catch (err) {
