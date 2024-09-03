@@ -9,10 +9,12 @@ import FlowContext from '../../FlowContext';
 const Login = () => {
     const navigate = useNavigate();
     const [group, setGroup] = useState('');
+    const [forgotPassword, setForgotPassword] = useState(false);
     const [formData, setFormData] = useState({
         email: '',
         password: '',
     });
+    const [username, setUsername] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -58,6 +60,9 @@ const Login = () => {
             [e.target.name]: e.target.value,
         });
     };
+    const handleUsernameChange = (e) => {
+        setUsername(e.target.value);
+    }
 
     const handleSignIn = async () => {
         const { email, password } = formData;
@@ -94,6 +99,53 @@ const Login = () => {
         setShowPassword(!showPassword);
     };
 
+    const setValueForForgotPassword = (value) => {
+        setForgotPassword(value);
+    };
+    const handlePasswordRecovery = async () => {
+        console.log(formData.email);
+        const response = await getUserIDUsingEmail(formData.email);
+        console.log(response);
+        try {
+            const data = await Auth.forgotPassword(response);
+            console.log(data);
+            return data;
+        } catch (err) {
+            console.log(err);
+        }
+    };
+
+    const getUserIDUsingEmail = async (email) => {
+        try {
+            const response = await fetch('https://mncmdr9bol.execute-api.eu-north-1.amazonaws.com/default/GetUserIDUsingEmail', {
+                method: 'POST',
+                body: JSON.stringify({email: email}),
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data) {
+                return data.body;
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    async function forgotPasswordSubmit(username, code, newPassword) {
+        try {
+            const data = await Auth.forgotPasswordSubmit(username, code, newPassword);
+            console.log(data);
+        } catch (err) {
+            console.log(err);
+        }
+    }
+
     return (
         <>
             {isAuthenticated ? (
@@ -102,56 +154,80 @@ const Login = () => {
                 <div className="loginContainer">
                     <img src={logo} alt="Logo Domits" className='loginLogo' />
                     <div className="loginTitle">Good to see you again</div>
-                    <div className="loginForm">
-                        <form onSubmit={handleSubmit}>
-                            <label htmlFor="email">Email:</label>
-                            <br />
+                    {forgotPassword ? (
+                        <div>
+                            <label htmlFor="email">What is your E-mail?</label>
                             <input
-                                id="email"
                                 className="loginInput"
                                 type="email"
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
                             />
-                            <br />
-                            <label htmlFor="password" className="passwordLabel">Password:</label>
-                            <br />
-                            <div className="passwordContainer">
+                            <button type="click" className="loginButton" onClick={handlePasswordRecovery}>
+                                Recover password
+                            </button>
+                            <button type="click" className="registerButtonLogin"
+                                    onClick={() => setValueForForgotPassword(false)}>
+                                Go back
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="loginForm">
+                            <form onSubmit={handleSubmit}>
+                                <label htmlFor="email">Email:</label>
+                                <br/>
                                 <input
-                                    id="password"
+                                    id="email"
                                     className="loginInput"
-                                    type={showPassword ? "text" : "password"}
-                                    name="password"
-                                    value={formData.password}
+                                    type="email"
+                                    name="email"
+                                    value={formData.email}
                                     onChange={handleChange}
                                 />
-                                <button
-                                    type="button"
-                                    className="togglePasswordButton"
-                                    onClick={togglePasswordVisibility}
-                                >
-                                    {showPassword ? <FaEye /> : <FaEyeSlash />}
+                                <br/>
+                                <label htmlFor="password" className="passwordLabel">Password:</label>
+                                <br/>
+                                <div className="passwordContainer">
+                                    <input
+                                        id="password"
+                                        className="loginInput"
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="togglePasswordButton"
+                                        onClick={togglePasswordVisibility}
+                                    >
+                                        {showPassword ? <FaEye/> : <FaEyeSlash/>}
+                                    </button>
+                                </div>
+                                <br/>
+                                {errorMessage && (
+                                    <div className="errorText">{errorMessage}</div>
+                                )}
+                                <div className="noAccountText" onClick={() => setValueForForgotPassword(true)}>
+                                    I forgot my password
+                                </div>
+                                <button type="submit" className="loginButton">
+                                    Login
                                 </button>
+                            </form>
+                            <div className="noAccountText">
+                                No account yet? Register for free!
                             </div>
-                            <br />
-                            {errorMessage && (
-                                <div className="errorText">{errorMessage}</div>
-                            )}
-                            <button type="submit" className="loginButton">
-                                Login
+                            <button
+                                onClick={handleRegisterClick}
+                                className="registerButtonLogin"
+                            >
+                                Register
                             </button>
-                        </form>
-                        <div className="noAccountText">
-                            No account yet? Register for free!
                         </div>
-                        <button
-                            onClick={handleRegisterClick}
-                            className="registerButtonLogin"
-                        >
-                            Register
-                        </button>
-                    </div>
+                    )}
+
                 </div>
             )}
         </>
