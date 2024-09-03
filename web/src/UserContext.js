@@ -32,10 +32,11 @@ export const UserProvider = ({ children }) => {
         };
         checkUser();
     }, []);
-    
+
     return (
         <UserContext.Provider value={{ user, role, isLoading }}>
             {children}
         </UserContext.Provider>
     );
+
 };
