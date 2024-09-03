@@ -27,7 +27,8 @@ const Chat = () => {
   const loadChatHistory = async () => {
     try {
       const params = chatID ? { chatID } : { userID: user.id };
-      const response = await axios.get('https://djs95w5kug.execute-api.eu-north-1.amazonaws.com/default/chatWidgetHistory', { params });
+      //const response = await axios.get('https://djs95w5kug.execute-api.eu-north-1.amazonaws.com/default/chatWidgetHistory', { params });
+      const response = await axios.get('http://localhost:3001/chat-history', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
           text: msg.content,
@@ -69,8 +70,8 @@ const Chat = () => {
         payload.userID = user.id;
       }
 
-      const response = await axios.post('https://eja46okj64.execute-api.eu-north-1.amazonaws.com/default/chatWidgetQuery', payload);
-
+      //const response = await axios.post('https://eja46okj64.execute-api.eu-north-1.amazonaws.com/default/chatWidgetQuery', payload);
+      const response = await axios.post('http://localhost:3001/query', payload);
       if (response.data.chatID && !chatID) {
         setChatID(response.data.chatID);
         localStorage.setItem('chatID', response.data.chatID);
