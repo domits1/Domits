@@ -1,15 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
 import logo from "../../logo.svg";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import FlowContext from '../../FlowContext';
+import DigitInputs from "../ui/DigitsInputs/DigitsInputs";
 
 const Login = () => {
     const navigate = useNavigate();
     const [group, setGroup] = useState('');
     const [forgotPassword, setForgotPassword] = useState(false);
+    const [confirmCode, setConfirmCode] = useState(false);
+    const [errorMsg, setErrorMsg] = useState('');
+
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -18,7 +22,36 @@ const Login = () => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [showPassword, setShowPassword] = useState(false);
+    const inputRef = useRef([]);
+    const handleResendCode = () => {
+        if (formData.email === '') {
+            navigate('/register');
+        } else {
+            handlePasswordRecovery().catch(err => {
+                console.error("Error resending code:", err);
+                setErrorMessage("Failed to resend code, please try again later.");
+            });
+        }
+    };
 
+    const submitCodeAndPassword = async () => {
+        let code = "";
+        inputRef.current.forEach((input) => { code += input.value });
+
+        try {
+            console.log({
+                username: username,
+                code: code,
+                newPassword: formData.password
+            });
+            const response = await forgotPasswordSubmit(username, code, formData.password);
+            console.log(response);
+        } catch (err) {
+            console.error(err);
+        } finally {
+            //setConfirmCode(false);
+        }
+    };
     useEffect(() => {
         const setUserGroup = async () => {
             try {
@@ -60,9 +93,6 @@ const Login = () => {
             [e.target.name]: e.target.value,
         });
     };
-    const handleUsernameChange = (e) => {
-        setUsername(e.target.value);
-    }
 
     const handleSignIn = async () => {
         const { email, password } = formData;
@@ -107,11 +137,13 @@ const Login = () => {
         const response = await getUserIDUsingEmail(formData.email);
         console.log(response);
         try {
-            const data = await Auth.forgotPassword(response);
-            console.log(data);
-            return data;
+            return await Auth.forgotPassword(response);
         } catch (err) {
+            setErrorMsg('This user does not exist!');
             console.log(err);
+        } finally {
+            setForgotPassword(false);
+            setConfirmCode(true);
         }
     };
 
@@ -130,6 +162,7 @@ const Login = () => {
 
             const data = await response.json();
             if (data) {
+                setUsername(data);
                 return data.body;
             }
         } catch (error) {
@@ -164,6 +197,9 @@ const Login = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                             />
+                            {errorMsg && (
+                                <p>{errorMsg}</p>
+                            )}
                             <button type="click" className="loginButton" onClick={handlePasswordRecovery}>
                                 Recover password
                             </button>
@@ -172,6 +208,42 @@ const Login = () => {
                                 Go back
                             </button>
                         </div>
+                    ) : confirmCode ? (
+                        <main className="confirmEmailContainer">
+                            <div className="confirmEmailTitle">Enter your two-factor authentication code</div>
+                            <div className="confirmEmailForm">
+                                <div className="enter6DigitText">
+                                    Enter 6 digit code sent to your email
+                                </div>
+                                <DigitInputs amount={6} inputRef={inputRef}/>
+                                {errorMessage && (
+                                    <div className="errorText">{errorMessage}</div>
+                                )}
+                                <div className="notReceivedCodeText">
+                                    Didn't received a code? Check your spam folder or let us resend a code.
+                                </div>
+                                <button className="resendCodeButton" type="button" onClick={handleResendCode}>Resend
+                                    code
+                                </button>
+                            </div>
+                            <div className="confirmEmailForm">
+                                <div className="enter6DigitText">
+                                    Enter your new password
+                                </div>
+                                <div>
+                                    <label htmlFor="password" className="passwordLabel">New password:</label>
+                                    <input
+                                        id="password"
+                                        className="loginInput"
+                                        type={showPassword ? "text" : "password"}
+                                        name="password"
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                                <button className="verifyRegisterButton" type="submit" onClick={submitCodeAndPassword}>Confirm</button>
+                            </div>
+                        </main>
                     ) : (
                         <div className="loginForm">
                             <form onSubmit={handleSubmit}>
@@ -227,7 +299,6 @@ const Login = () => {
                             </button>
                         </div>
                     )}
-
                 </div>
             )}
         </>
