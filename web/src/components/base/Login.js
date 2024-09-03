@@ -40,7 +40,6 @@ const Login = () => {
 
         try {
             const response = await forgotPasswordSubmit(username, code, formData.password);
-            console.log(response);
         } catch (err) {
             console.error(err);
         }
@@ -129,14 +128,11 @@ const Login = () => {
         setForgotPassword(value);
     };
     const handlePasswordRecovery = async () => {
-        console.log(formData.email);
         const response = await getUserIDUsingEmail(formData.email);
-        console.log(response);
         try {
             return await Auth.forgotPassword(response);
         } catch (err) {
             setErrorMsg('This user does not exist!');
-            console.log(err);
         } finally {
             setForgotPassword(false);
             setConfirmCode(true);
@@ -172,7 +168,6 @@ const Login = () => {
         try {
             const data = await Auth.forgotPasswordSubmit(username, code, newPassword);
         } catch (err) {
-            console.log(err);
             setErrorMessage(err.message);
         }finally {
             if (errorMessage === '') {
