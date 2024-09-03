@@ -63,6 +63,9 @@ import { initializeUserAttributes } from './components/utils/userAttributes';
 import PageNotFound from "./components/error/404NotFound";
 import StripeCallback from "./components/stripe/StripeCallback";
 
+import { Auth } from 'aws-amplify';
+import GuestProtectedRoute from "./GuestProtectedRoute";
+
 
 Modal.setAppElement('#root');
 
@@ -125,13 +128,22 @@ function App() {
 
 
                             {/* Guest Dashboard */}
-                            <Route path="/guestdashboard" element={<GuestDashboard />} />
-                            <Route path="/guestdashboard/messages" element={<ListingDetails />} />
-                            <Route path="/guestdashboard/payments" element={<GuestPayments />} />
-                            <Route path="/guestdashboard/reviews" element={<GuestReviews />} />
-                            <Route path="/guestdashboard/bookings" element={<GuestBooking />} />
-                            <Route path="/guestdashboard/settings" element={<GuestSettings />} />
-                            <Route path="/guestdashboard/chat" element={<Chat />} />
+                            <Route
+                                path="/guestdashboard/*"
+                                element={
+                                    <GuestProtectedRoute>
+                                        <Routes>
+                                            <Route path="/" element={<GuestDashboard />} />
+                                            <Route path="messages" element={<ListingDetails />} />
+                                            <Route path="payments" element={<GuestPayments />} />
+                                            <Route path="reviews" element={<GuestReviews />} />
+                                            <Route path="bookings" element={<GuestBooking />} />
+                                            <Route path="settings" element={<GuestSettings />} />
+                                            <Route path="chat" element={<Chat />} />
+                                        </Routes>
+                                    </GuestProtectedRoute>
+                                }
+                            />
                             {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}
 
                             {/* Host Management */}
@@ -148,7 +160,7 @@ function App() {
                                     <HostProtectedRoute>
                                         <Routes>
                                             <Route path="listings" element={<HostListings />} />
-                                            <Route path="calendar" element={<HostDashboard />} />
+                                            <Route path="calendar" element={<HostCalendar />} />
                                             <Route path="messages" element={<HostMessages />} />
                                             <Route path="reporting" element={<HostPayments />} />
                                             <Route path="settings" element={<HostSettings />} />
