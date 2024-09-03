@@ -68,7 +68,7 @@ Modal.setAppElement('#root');
 
 function App() {
     const [searchResults, setSearchResults] = useState([]);
-    const [loading, setLoading] = useState(false); 
+    const [loading, setLoading] = useState(false);
     useEffect(() => {
         // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
@@ -103,8 +103,8 @@ function App() {
                             <Route path="/release" element={<Release />} />
                             <Route path="/releaseTwo" element={<ReleaseTwo />} />
                             <Route path="/data-safety" element={<Datasafety />} />
-                            <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} /> 
-                            <Route path="/helpdesk-host" element={<Helpdesk category="host" />} /> 
+                            <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
+                            <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
                             <Route path="/how-it-works" element={<Howitworks />} />
                             <Route path="/why-domits" element={<Whydomits />} />
                             <Route path="/contact" element={<Contact />} />
@@ -123,6 +123,7 @@ function App() {
                             {/* Chatbot */}
                             <Route path="/chatbot" element={<Chatbot />} />
 
+
                             {/* Guest Dashboard */}
                             <Route path="/guestdashboard" element={<GuestDashboard />} />
                             <Route path="/guestdashboard/messages" element={<ListingDetails />} />
@@ -135,29 +136,39 @@ function App() {
 
                             {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
+
                             <Route path="/hostdashboard" element={
                                     <HostProtectedRoute>
                                         <HostDashboard />
                                     </HostProtectedRoute>
                                 } />
-                            <Route path="/hostdashboard/listings" element={<HostListings />} />
-                            <Route path="/hostdashboard/calendar" element={<HostCalendar />} />
-                            <Route path="/hostdashboard/messages" element={<HostMessages />} />
-                            <Route path="/hostdashboard/reporting" element={<HostPayments />} />
-                            <Route path="/hostdashboard/settings" element={<HostSettings />} />
-                            <Route path="/hostdashboard/reviews" element={<HostReviews />} />
-                            <Route path="/hostdashboard/chat" element={<Hostchat />} />
-                            <Route path="/hostdashboard/reservations" element={<HostReservations />}/>
-                            <Route path="/hostdashboard/revenues" element={<HostRevenues />} />
-                            <Route path="/hostdashboard/occupancy" element={<HostOccupancy />} />
-                            <Route path="/hostdashboard/property-care" element={<HostPropertyCare />} />
-                            <Route path="/hostdashboard/iot-hub" element={<HostIoTHub />} />
-                            <Route path="/hostdashboard/pricing" element={<HostPricing />} />
-                            <Route path="/hostdashboard/distribution" element={<HostDistribution />} />
-                            <Route path="/hostdashboard/monitoring" element={<HostMonitoring />} />
-                            <Route path="/hostdashboard/screening" element={<HostScreening />} />
-                            <Route path="/hostdashboard/setup" element={<HostSetup />} />
-                            <Route path="/hostdashboard/promo-codes" element={<HostPromoCodes />} />
+                            <Route
+                                path="/hostdashboard/*"
+                                element={
+                                    <HostProtectedRoute>
+                                        <Routes>
+                                            <Route path="listings" element={<HostListings />} />
+                                            <Route path="calendar" element={<HostDashboard />} />
+                                            <Route path="messages" element={<HostMessages />} />
+                                            <Route path="reporting" element={<HostPayments />} />
+                                            <Route path="settings" element={<HostSettings />} />
+                                            <Route path="reviews" element={<HostReviews />} />
+                                            <Route path="chat" element={<Hostchat />} />
+                                            <Route path="reservations" element={<HostReservations />} />
+                                            <Route path="revenues" element={<HostRevenues />} />
+                                            <Route path="occupancy" element={<HostOccupancy />} />
+                                            <Route path="property-care" element={<HostPropertyCare />} />
+                                            <Route path="iot-hub" element={<HostIoTHub />} />
+                                            <Route path="pricing" element={<HostPricing />} />
+                                            <Route path="distribution" element={<HostDistribution />} />
+                                            <Route path="monitoring" element={<HostMonitoring />} />
+                                            <Route path="screening" element={<HostScreening />} />
+                                            <Route path="setup" element={<HostSetup />} />
+                                            <Route path="promo-codes" element={<HostPromoCodes />} />
+                                        </Routes>
+                                    </HostProtectedRoute>
+                                }
+                            />
                             <Route path="/stripe/callback" element={<StripeCallback />} />
 
                             {/* Career, Policies, and Terms */}

@@ -8,11 +8,11 @@ const HostProtectedRoute = ({ children }) => {
   if (isLoading) {
     return <div>Loading...</div>;
   }
-  
+
   if (role !== 'Host') {
     return <Navigate to="/" replace />;
   }
-  
+
   return children;
 };
 
