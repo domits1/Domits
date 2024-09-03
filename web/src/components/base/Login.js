@@ -187,7 +187,7 @@ const Login = () => {
             ) : (
                 <main className="loginContainer">
                     {forgotPassword ? (
-                        <main className="loginContainer">
+                        <main className="loginContainer emailSection">
                             <div className="confirmEmailTitle">Please provide your E-Mail</div>
                             <label htmlFor="email">What is your E-Mail?</label>
                             <input
@@ -290,7 +290,7 @@ const Login = () => {
                                     {errorMessage && (
                                         <div className="errorText">{errorMessage}</div>
                                     )}
-                                    <div className="noAccountText" onClick={() => setValueForForgotPassword(true)}>
+                                    <div className="forgotPasswordText noAccountText" onClick={() => setValueForForgotPassword(true)}>
                                         I forgot my password
                                     </div>
                                     <button type="submit" className="loginButton">
