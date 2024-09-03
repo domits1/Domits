@@ -393,6 +393,7 @@
   justify-content: space-between;
   gap: 2em;
   margin: 1em;
+  width: auto;
 }
 
 .accommodation-left {

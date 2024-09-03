@@ -156,7 +156,7 @@ function HostListings() {
             <h2>Listings</h2>
             <div className="dashboardHost">
                 <Pages />
-                <div className="contentContainer">
+                <div className="contentContainer-dashboard">
                     <div className="boxColumns fullColumn">
                         <div className="wijzer addAcco" onClick={() => navigate("/enlist")} style={{maxWidth: 250,}}>
                             <img src={add} alt="add"></img>
