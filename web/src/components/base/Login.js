@@ -49,7 +49,7 @@ const Login = () => {
         } catch (err) {
             console.error(err);
         } finally {
-            //setConfirmCode(false);
+            setConfirmCode(false);
         }
     };
     useEffect(() => {
@@ -162,7 +162,7 @@ const Login = () => {
 
             const data = await response.json();
             if (data) {
-                setUsername(data);
+                setUsername(data.body);
                 return data.body;
             }
         } catch (error) {
