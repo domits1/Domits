@@ -76,11 +76,12 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
                                 <button className={"listing-button listing-live"}
                                         onClick={() => onUpdate(accommodation.ID, false)}
                                         disabled={!(hasStripe && accommodation.DateRanges)}
-                                        style={{backgroundColor: !(hasStripe && accommodation.DateRanges) ? 'gray' : '#003366'}}
+                                        style={{backgroundColor: !(hasStripe && accommodation.DateRanges) ? 'gray' : '#003366', fontSize: '0.8rem'}}
                                 >Set Live</button>
                                 :
                                 <button className="listing-button listing-draft"
                                         onClick={() => onUpdate(accommodation.ID, true)}
+                                        style={{backgroundColor: '#003366', fontSize: '0.75rem'}}
                                 >Set Draft</button>}
                         </div>
                     </section>
