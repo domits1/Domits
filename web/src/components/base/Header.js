@@ -116,7 +116,7 @@ function Header({ setSearchResults, setLoading }) {
                     <button onClick={navigateToHostDashboard} className="dropdownLoginButton">Dashboard</button>
                     <button onClick={() => navigate('/hostdashboard/calendar')} className="dropdownLoginButton">Calendar</button>
                     <button onClick={() => navigate('/hostdashboard/reservations')} className="dropdownLoginButton">Reservations</button>
-                    <button onClick={() => navigate('/hostdashboard/messages')} className="dropdownLoginButton">Messages</button>
+                    <button onClick={() => navigate('/hostdashboard/chat')} className="dropdownLoginButton">Messages</button>
                     <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
                         src={logoutArrow} alt="Logout Arrow" /></button>
                 </>
