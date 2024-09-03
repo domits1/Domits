@@ -62,6 +62,7 @@ import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
 import { initializeUserAttributes } from './components/utils/userAttributes';
 import PageNotFound from "./components/error/404NotFound";
 import StripeCallback from "./components/stripe/StripeCallback";
+import ReviewPage from "./components/review/ReviewPage";
 
 import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
@@ -126,6 +127,8 @@ function App() {
                             {/* Chatbot */}
                             <Route path="/chatbot" element={<Chatbot />} />
 
+                            {/* Review */}
+                            <Route path="/review" element={<ReviewPage/>}/>
 
                             {/* Guest Dashboard */}
                             <Route

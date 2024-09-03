@@ -7,7 +7,6 @@ import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
 import { Storage, Auth } from "aws-amplify"
-import Calendar from "../hostdashboard/Calendar";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import Apartment from "../../images/icons/flat.png";
 import House from "../../images/icons/house.png";
@@ -950,9 +949,9 @@ function OnboardingHost() {
                                 value={formData.Title}
                                 placeholder="Enter your title here..."
                                 required={true}
-                                maxLength={32}
+                                maxLength={128}
                             />
-                            <p>{formData.Title.length}/32</p>
+                            <p>{formData.Title.length}/128</p>
                         </section>
                         <h2 className="onboardingSectionTitle">{isNew ? 'Give it a suitable subtitle' : 'Edit your subtitle'}</h2>
                         <section className="accommodation-title">
@@ -964,9 +963,9 @@ function OnboardingHost() {
                                 value={formData.Subtitle}
                                 placeholder="Enter your subtitle here..."
                                 required={true}
-                                maxLength={32}
+                                maxLength={128}
                             />
-                            <p>{formData.Subtitle.length}/32</p>
+                            <p>{formData.Subtitle.length}/128</p>
                         </section>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>

@@ -4,6 +4,14 @@ import { isSameDay } from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";
 
+/**
+ * TEST
+ * @param passedProp
+ * @param isNew
+ * @param updateDates
+ * @returns {Element}
+ * @constructor
+ */
 function CalendarComponent({ passedProp, isNew, updateDates }) {
     const navigate = useNavigate();
     const [month, setMonth] = useState(new Date().getMonth());
@@ -106,6 +114,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
 
     const handleDateClick = (dateClicked) => {
         const clickedDate = new Date(dateClicked);
+
         if (clickedDate >= new Date()) {
             setDateRange(prevDateRange => {
                 if (!prevDateRange.startDate) {
@@ -120,34 +129,16 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                         ...prevDateRange,
                         endDate: clickedDate
                     };
+
                     if (clickedDate < newDateRange.startDate) {
                         newDateRange = {
                             startDate: clickedDate,
                             endDate: newDateRange.startDate
                         };
-
-                        const overlappingIndex = selectedRanges.findIndex(range =>
-                            dateRangesOverlap(newDateRange, range)
-                        );
-
-                        if (overlappingIndex !== -1) {
-                            const updatedRanges = [...selectedRanges];
-                            updatedRanges[overlappingIndex] = newDateRange;
-                            setSelectedRanges(updatedRanges);
-                        } else {
-                            setSelectedRanges([...selectedRanges, newDateRange]);
-                        }
-
-                        return {
-                            startDate: null,
-                            endDate: null
-                        };
                     }
 
                     const overlappingIndex = selectedRanges.findIndex(range =>
-                        isDateInRange(newDateRange.startDate, range.startDate, range.endDate) ||
-                        isDateInRange(newDateRange.endDate, range.startDate, range.endDate) ||
-                        isDateInRange(range.startDate, newDateRange.startDate, newDateRange.endDate)
+                        dateRangesOverlap(newDateRange, range)
                     );
 
                     if (overlappingIndex !== -1) {
@@ -158,13 +149,14 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                         setSelectedRanges([...selectedRanges, newDateRange]);
                     }
 
-                    updateDates(selectedRanges);
+                    updateDates([...selectedRanges, newDateRange]);
 
                     return {
                         startDate: null,
                         endDate: null
                     };
                 }
+
                 return {
                     startDate: null,
                     endDate: null
@@ -172,6 +164,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
             });
         }
     };
+
 
     const isDateInRange = (date, startDate, endDate) => {
         const selectedDate = new Date(date);
@@ -235,6 +228,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
         setSelectedRanges(prevSelectedRanges => {
             const updatedRanges = [...prevSelectedRanges];
             updatedRanges.splice(indexToRemove, 1);
+            updateDates(updatedRanges);
             return updatedRanges;
         });
     };
