@@ -39,17 +39,10 @@ const Login = () => {
         inputRef.current.forEach((input) => { code += input.value });
 
         try {
-            console.log({
-                username: username,
-                code: code,
-                newPassword: formData.password
-            });
             const response = await forgotPasswordSubmit(username, code, formData.password);
             console.log(response);
         } catch (err) {
             console.error(err);
-        } finally {
-            setConfirmCode(false);
         }
     };
     useEffect(() => {
@@ -174,8 +167,16 @@ const Login = () => {
         try {
             const data = await Auth.forgotPasswordSubmit(username, code, newPassword);
             console.log(data);
+            if (!data) {
+                throw new Error('The code you entered was incorrect, please try again.')
+            }
         } catch (err) {
             console.log(err);
+            setErrorMessage(err);
+        }finally {
+            setErrorMessage('');
+            window.alert('Your password has been updated successfully! Sending you back to the login page...');
+            setConfirmCode(false);
         }
     }
 
@@ -184,12 +185,11 @@ const Login = () => {
             {isAuthenticated ? (
                 <button onClick={handleSignOut}>Sign out</button>
             ) : (
-                <div className="loginContainer">
-                    <img src={logo} alt="Logo Domits" className='loginLogo' />
-                    <div className="loginTitle">Good to see you again</div>
+                <main className="loginContainer">
                     {forgotPassword ? (
-                        <div>
-                            <label htmlFor="email">What is your E-mail?</label>
+                        <main className="loginContainer">
+                            <div className="confirmEmailTitle">Please provide your E-Mail</div>
+                            <label htmlFor="email">What is your E-Mail?</label>
                             <input
                                 className="loginInput"
                                 type="email"
@@ -207,10 +207,10 @@ const Login = () => {
                                     onClick={() => setValueForForgotPassword(false)}>
                                 Go back
                             </button>
-                        </div>
+                        </main>
                     ) : confirmCode ? (
                         <main className="confirmEmailContainer">
-                            <div className="confirmEmailTitle">Enter your two-factor authentication code</div>
+                            <div className="confirmEmailTitle">Step 1: Enter your two-factor authentication code</div>
                             <div className="confirmEmailForm">
                                 <div className="enter6DigitText">
                                     Enter 6 digit code sent to your email
@@ -226,6 +226,7 @@ const Login = () => {
                                     code
                                 </button>
                             </div>
+                            <div className="confirmEmailTitle">Step 2: Create a new password</div>
                             <div className="confirmEmailForm">
                                 <div className="enter6DigitText">
                                     Enter your new password
@@ -241,65 +242,74 @@ const Login = () => {
                                         onChange={handleChange}
                                     />
                                 </div>
-                                <button className="verifyRegisterButton" type="submit" onClick={submitCodeAndPassword}>Confirm</button>
+                                {errorMessage && (
+                                    <p>{errorMessage}</p>
+                                )}
+                                <button className="verifyRegisterButton" type="click"
+                                        onClick={submitCodeAndPassword}>Confirm
+                                </button>
                             </div>
                         </main>
                     ) : (
-                        <div className="loginForm">
-                            <form onSubmit={handleSubmit}>
-                                <label htmlFor="email">Email:</label>
-                                <br/>
-                                <input
-                                    id="email"
-                                    className="loginInput"
-                                    type="email"
-                                    name="email"
-                                    value={formData.email}
-                                    onChange={handleChange}
-                                />
-                                <br/>
-                                <label htmlFor="password" className="passwordLabel">Password:</label>
-                                <br/>
-                                <div className="passwordContainer">
+                        <main className="loginContainer">
+                            <img src={logo} alt="Logo Domits" className='loginLogo'/>
+                            <div className="loginTitle">Good to see you again</div>
+                            <div className="loginForm">
+                                <form onSubmit={handleSubmit}>
+                                    <label htmlFor="email">Email:</label>
+                                    <br/>
                                     <input
-                                        id="password"
+                                        id="email"
                                         className="loginInput"
-                                        type={showPassword ? "text" : "password"}
-                                        name="password"
-                                        value={formData.password}
+                                        type="email"
+                                        name="email"
+                                        value={formData.email}
                                         onChange={handleChange}
                                     />
-                                    <button
-                                        type="button"
-                                        className="togglePasswordButton"
-                                        onClick={togglePasswordVisibility}
-                                    >
-                                        {showPassword ? <FaEye/> : <FaEyeSlash/>}
+                                    <br/>
+                                    <label htmlFor="password" className="passwordLabel">Password:</label>
+                                    <br/>
+                                    <div className="passwordContainer">
+                                        <input
+                                            id="password"
+                                            className="loginInput"
+                                            type={showPassword ? "text" : "password"}
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleChange}
+                                        />
+                                        <button
+                                            type="button"
+                                            className="togglePasswordButton"
+                                            onClick={togglePasswordVisibility}
+                                        >
+                                            {showPassword ? <FaEye/> : <FaEyeSlash/>}
+                                        </button>
+                                    </div>
+                                    <br/>
+                                    {errorMessage && (
+                                        <div className="errorText">{errorMessage}</div>
+                                    )}
+                                    <div className="noAccountText" onClick={() => setValueForForgotPassword(true)}>
+                                        I forgot my password
+                                    </div>
+                                    <button type="submit" className="loginButton">
+                                        Login
                                     </button>
+                                </form>
+                                <div className="noAccountText">
+                                    No account yet? Register for free!
                                 </div>
-                                <br/>
-                                {errorMessage && (
-                                    <div className="errorText">{errorMessage}</div>
-                                )}
-                                <div className="noAccountText" onClick={() => setValueForForgotPassword(true)}>
-                                    I forgot my password
-                                </div>
-                                <button type="submit" className="loginButton">
-                                    Login
+                                <button
+                                    onClick={handleRegisterClick}
+                                    className="registerButtonLogin"
+                                >
+                                    Register
                                 </button>
-                            </form>
-                            <div className="noAccountText">
-                                No account yet? Register for free!
                             </div>
-                            <button
-                                onClick={handleRegisterClick}
-                                className="registerButtonLogin"
-                            >
-                                Register
-                            </button>
-                        </div>
+                        </main>
                     )}
-                </div>
+                </main>
             )}
         </>
     );
