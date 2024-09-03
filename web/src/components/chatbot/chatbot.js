@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import './chatbot.css'; // Ensure you have the CSS file
-import { useUser } from '../../UserContext'; // Make sure this path is correct
+import './chatbot.css';
+import { useUser } from '../../UserContext';
 
 const Chat = () => {
   const { user, isLoading } = useUser();
@@ -9,7 +9,193 @@ const Chat = () => {
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [chatID, setChatID] = useState(localStorage.getItem('chatID') || null);
+  const [predefinedMessagesVisible, setPredefinedMessagesVisible] = useState(true);
+  const [subQuestions, setSubQuestions] = useState([]);
+  const [currentLayer, setCurrentLayer] = useState('main');
+  const [subSubQuestions, setSubSubQuestions] = useState([]);
   const chatMessagesRef = useRef(null);
+
+  const predefinedMessages = [
+    "Inspire Me Where to Go",
+    "I Need Customer Support",
+    "Plan My Trip",
+    "I Want a Sunny Vacation",
+    "I'm Traveling on a Budget",
+    "I'm Planning a Family Vacation",
+    "I'm Looking for a Unique Experience"
+  ];
+
+  const decisionTree = {
+    "Inspire Me Where to Go": {
+      main: [
+        "Do you prefer cities or nature?",
+        "What's your budget range?",
+        "Are you looking for an adventure or relaxation?"
+      ],
+      "Do you prefer cities or nature?": [
+        "Popular Destinations",
+        "Personalized Recommendations",
+        "Special Interests"
+      ],
+      "What's your budget range?": [
+        "Popular Destinations",
+        "Personalized Recommendations",
+        "Special Interests"
+      ],
+      "Are you looking for an adventure or relaxation?": [
+        "Popular Destinations",
+        "Personalized Recommendations",
+        "Special Interests"
+      ],
+      "Popular Destinations": [
+        "What are the top trending destinations right now?",
+        "Can you suggest a hidden gem destination?",
+        "Show me the best places to visit this season."
+      ],
+      "Personalized Recommendations": [
+        "Suggest a destination based on my budget.",
+        "Where should I go if I love nature/adventure/culture?",
+        "Recommend a place based on my previous travels."
+      ],
+      "Special Interests": [
+        "Where can I go for the best food experiences?",
+        "Suggest destinations for a romantic getaway.",
+        "Where should I go for an unforgettable wildlife experience?"
+      ]
+    },
+    "I Need Customer Support": {
+      main: [
+        "Booking Issues",
+        "Payment Problems",
+        "General Inquiries"
+      ],
+      "Booking Issues": [
+        "I need help with my booking confirmation.",
+        "How can I modify or cancel my reservation?",
+        "I haven’t received my booking details. What should I do?"
+      ],
+      "Payment Problems": [
+        "My payment didn’t go through. Can you assist?",
+        "How can I get a refund?",
+        "What are the accepted payment methods?"
+      ],
+      "General Inquiries": [
+        "How do I contact customer service directly?",
+        "What is your cancellation policy?",
+        "Can you explain the terms and conditions of my booking?"
+      ]
+    },
+    "Plan My Trip": {
+      main: [
+        "Travel Itinerary",
+        "Transportation",
+        "Packing and Preparation"
+      ],
+      "Travel Itinerary": [
+        "Help me create an itinerary for my trip.",
+        "What are the must-see attractions in [Destination]?",
+        "Can you suggest a day trip from [Destination]?"
+      ],
+      "Transportation": [
+        "What are the best ways to travel within [Destination]?",
+        "How can I get from the airport to my accommodation?",
+        "Should I rent a car, or is public transport better?"
+      ],
+      "Packing and Preparation": [
+        "What should I pack for a trip to [Destination]?",
+        "What travel documents do I need for [Destination]?",
+        "Are there any travel advisories for [Destination]?"
+      ]
+    },
+    "I Want a Sunny Vacation": {
+      main: [
+        "Beach Destinations",
+        "Warm Weather Activities",
+        "Tropical Getaways"
+      ],
+      "Beach Destinations": [
+        "Where are the best beaches for relaxation?",
+        "Can you recommend a family-friendly beach resort?",
+        "What are the best beaches with water sports?"
+      ],
+      "Warm Weather Activities": [
+        "Suggest outdoor activities for a sunny vacation.",
+        "Where can I find the best snorkeling/diving spots?",
+        "Recommend sunny destinations with cultural attractions."
+      ],
+      "Tropical Getaways": [
+        "What are the best tropical islands to visit?",
+        "Can you suggest luxury resorts in warm destinations?",
+        "Where should I go for a budget-friendly beach vacation?"
+      ]
+    },
+    "I'm Traveling on a Budget": {
+      main: [
+        "Budget-Friendly Destinations",
+        "Accommodation Options",
+        "Money-Saving Tips"
+      ],
+      "Budget-Friendly Destinations": [
+        "Where can I go for a cheap but amazing vacation?",
+        "Suggest budget-friendly European/Asian/American destinations.",
+        "What are the best off-season travel deals?"
+      ],
+      "Accommodation Options": [
+        "Can you recommend affordable hotels/hostels?",
+        "What are the best tips for finding cheap flights?",
+        "How can I save money on accommodation?"
+      ],
+      "Money-Saving Tips": [
+        "How can I travel on a budget?",
+        "What are the best ways to save money on food while traveling?",
+        "Can you suggest free or low-cost activities in [Destination]?"
+      ]
+    },
+    "I'm Planning a Family Vacation": {
+      main: [
+        "Family-Friendly Destinations",
+        "Travel with Kids",
+        "Safety and Comfort"
+      ],
+      "Family-Friendly Destinations": [
+        "Where are the best places for a family vacation?",
+        "Can you suggest a kid-friendly resort?",
+        "What are the best family-friendly attractions in [Destination]?"
+      ],
+      "Travel with Kids": [
+        "How can I keep my kids entertained on a long flight?",
+        "What should I pack for traveling with children?",
+        "Can you recommend child-friendly restaurants in [Destination]?"
+      ],
+      "Safety and Comfort": [
+        "What are the safest destinations for families?",
+        "How can I ensure a smooth travel experience with kids?",
+        "What are the best family travel tips?"
+      ]
+    },
+    "I'm Looking for a Unique Experience": {
+      main: [
+        "Adventure Travel",
+        "Cultural Experiences",
+        "Unusual Accommodations"
+      ],
+      "Adventure Travel": [
+        "Where can I go for an adrenaline-filled vacation?",
+        "Can you suggest unique outdoor activities in [Destination]?",
+        "What are the best places for hiking/trekking?"
+      ],
+      "Cultural Experiences": [
+        "Recommend destinations with rich cultural heritage.",
+        "What are the best cultural festivals to attend?",
+        "Where can I learn about traditional crafts or local cuisine?"
+      ],
+      "Unusual Accommodations": [
+        "Can you suggest unique places to stay (treehouses, igloos, etc.)?",
+        "What are the most unusual accommodations around the world?",
+        "Where can I stay for a truly off-the-grid experience?"
+      ]
+    }
+  };
 
   useEffect(() => {
     if (!isLoading) {
@@ -27,7 +213,6 @@ const Chat = () => {
   const loadChatHistory = async () => {
     try {
       const params = chatID ? { chatID } : { userID: user.id };
-      //const response = await axios.get('https://djs95w5kug.execute-api.eu-north-1.amazonaws.com/default/chatWidgetHistory', { params });
       const response = await axios.get('http://localhost:3001/chat-history', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
@@ -42,16 +227,35 @@ const Chat = () => {
     }
   };
 
-  const sendMessage = async () => {
-    if (userInput.trim() === '') return;
+  const sendMessage = async (message = userInput) => {
+    if (message.trim() === '') return;
 
     setMessages((prevMessages) => [
       ...prevMessages,
-      { text: userInput, sender: 'user' }
+      { text: message, sender: 'user' }
     ]);
+
+    if (currentLayer === 'main' && decisionTree[message]) {
+      setSubQuestions(decisionTree[message].main);
+      setCurrentLayer(message);
+      setPredefinedMessagesVisible(false);
+      setSubSubQuestions([]);
+    } else if (decisionTree[currentLayer] && decisionTree[currentLayer][message]) {
+      if (Object.values(decisionTree[currentLayer]).flat().includes(message)) {
+        setSubSubQuestions(decisionTree[currentLayer][message]);
+      }
+      setSubQuestions([]);
+      setCurrentLayer(message);
+    } else {
+      setPredefinedMessagesVisible(false);
+      setSubQuestions([]);
+      setSubSubQuestions([]);
+      setCurrentLayer('main');
+    }
+
     scrollToBottom();
 
-    const tempUserInput = userInput;
+    const tempUserInput = message;
     setUserInput('');
     setLoading(true);
 
@@ -70,7 +274,6 @@ const Chat = () => {
         payload.userID = user.id;
       }
 
-      //const response = await axios.post('https://eja46okj64.execute-api.eu-north-1.amazonaws.com/default/chatWidgetQuery', payload);
       const response = await axios.post('http://localhost:3001/query', payload);
       if (response.data.chatID && !chatID) {
         setChatID(response.data.chatID);
@@ -78,10 +281,10 @@ const Chat = () => {
       }
 
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
-      const { message, accommodations } = response.data;
+      const { message: aiMessage, accommodations } = response.data;
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: message, sender: 'ai', accommodations: accommodations }
+        { text: aiMessage, sender: 'ai', accommodations: accommodations }
       ]);
       scrollToBottom();
     } catch (error) {
@@ -135,6 +338,52 @@ const Chat = () => {
             </div>
           ))}
         </div>
+
+        {predefinedMessagesVisible && currentLayer === 'main' && (
+          <div className="predefined-messages">
+            {predefinedMessages.map((message, index) => (
+              <button 
+                key={index} 
+                className="predefined-message-button" 
+                onClick={() => sendMessage(message)}
+                disabled={loading}
+              >
+                {message}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {subQuestions.length > 0 && (
+          <div className="sub-questions">
+            {subQuestions.map((question, index) => (
+              <button 
+                key={index} 
+                className="sub-question-button" 
+                onClick={() => sendMessage(question)}
+                disabled={loading}
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {subSubQuestions.length > 0 && (
+          <div className="sub-sub-questions">
+            {subSubQuestions.map((question, index) => (
+              <button 
+                key={index} 
+                className="sub-sub-question-button" 
+                onClick={() => sendMessage(question)}
+                disabled={loading}
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        )}
+
         <div className="chat-input">
           <input
             type="text"
@@ -144,7 +393,7 @@ const Chat = () => {
             placeholder="Type a message..."
             disabled={loading}
           />
-          <button onClick={sendMessage} disabled={loading}>Send</button>
+          <button onClick={() => sendMessage()} disabled={loading}>Send</button>
         </div>
       </div>
     </div>
