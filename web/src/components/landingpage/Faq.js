@@ -4,12 +4,20 @@ import Helpdesk from '../about/Helpdesk';
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   const answerRef = useRef(null);
+  const [height, setHeight] = useState(0);
+
+  useEffect(() => {
+    if (answerRef.current) {
+      setHeight(answerRef.current.scrollHeight);
+    }
+  }, [isOpen]);
+
   return (
     <div className="faq-box" onClick={toggleOpen}>
       <div className="question">{question}</div>
       <div
         className="answer"
-        style={{ maxHeight: isOpen ? `${answerRef.current.scrollHeight}px` : '0', overflow: 'hidden' }}
+        style={{ maxHeight: isOpen ? `${height}px` : '0', overflow: 'hidden' }}
         ref={answerRef}
       >
         {answer}
@@ -18,18 +26,35 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   );
 };
 
+
 const Faq = () => {
   const faqData = {
     guest: {
       aboutDomits: [
         {
-          question: "What is Domits and how does it work?",
-          answer: "Domits is a platform where you can rent out your property for guests to book",
+          question: "What is Domits and how does it work?",          
+          answer: (
+            <>
+              Domits is a platform where you can rent out your property for guests to book. As a host, you list your property on Domits, and guests can book it for short or long-term stays. A full explanation about how Domits works can be found on{" "}
+              <a href="https://www.domits.com/how-it-works" target="_blank" rel="noopener noreferrer">
+                here
+              </a>.
+            </>
+          ),
           isOpen: false
         },
         {
           question: "Why Domits?",
-          answer: "Domits offers an unique experience for both Hosts and Guests by making use of innovative ideas that enhance the experience.",
+
+          answer: (
+            <>
+              Domits offers a unique experience for both Hosts and Guests by using innovative ideas that enhance the booking and hosting experience. We prioritize ease of use, security, and transparency for all users. More about why Domits can be found on{" "} 
+              <a href="https://www.domits.com/why-domits" target="_blank" rel="noopener noreferrer">
+                here
+              </a>.
+            </>
+          ),
+
           isOpen: false
         }
       ],
@@ -37,17 +62,12 @@ const Faq = () => {
       manageAccount: [
         {
           question: "How do I register on Domits?",
-          answer: "To create your account,  simply click 'Sign Up' or 'Log In' on the website, follow the prompts to enter your details. After the verification step you will have acces to your own Domits account!",
+          answer: "To create your account, simply click 'Sign Up' or 'Log In' on the website, and follow the prompts to enter your details. After the verification step, you will have access to your own Domits account!",
           isOpen: false
         },
         {
           question: "How do I manage my account?",
-          answer: "Managing your account is as simple as navigating to your dashboard and using the designated tabs for each setting or overview.",
-          isOpen: false
-        },
-        {
-          question: "How do I create and manage my account?",
-          answer: "To create and manage your account, click 'Sign Up' or 'Log In' on the website, follow the prompts to enter your details, and use the account settings to manage your information.",
+          answer: "Managing your account is simple. Navigate to your dashboard and use the designated tabs for each setting or overview, including profile management, booking history, and payment settings.",
           isOpen: false
         },
         {
@@ -57,17 +77,17 @@ const Faq = () => {
         },
         {
           question: "Will my data be shared with third parties?",
-          answer: "All the information you share with Domits will stay with us.",
+          answer: "All the information you share with Domits stays with us. We do not share your data with third parties without your explicit consent.",
           isOpen: false
         },
         {
-          question: "I forgot my password?",
-          answer: "To reset your password, simply click the 'I forgot my password' button on the sign-in page.",
+          question: "I forgot my password.",
+          answer: "To reset your password, simply click the 'I forgot my password' button on the sign-in page and follow the instructions.",
           isOpen: false
         },
         {
           question: "How can I change my password?",
-          answer: "To change your password, navigate to the dashboard and click on the 'settings' tab. There you will see the option to change your password.",
+          answer: "To change your password, navigate to the dashboard and click on the 'Settings' tab. There you will see the option to change your password.",
           isOpen: false
         },
         {
@@ -77,35 +97,35 @@ const Faq = () => {
         },
         {
           question: "How can I delete my account?",
-          answer: "To delete your account, navigate to the dashboard and click on the 'settings' tab. There you will see the option delete your Domits account.",
+          answer: "To delete your account, navigate to the dashboard and click on the 'Settings' tab. There you will see the option to delete your Domits account.",
           isOpen: false
         }
       ],
 
       searchAndBook: [
         {
-          question: "How to search and book?",
+          question: "How do I search and book?",
           answer: "To search and book, enter your destination and dates in the search bar on the homepage, browse the listings, and follow the booking process for your chosen accommodation.",
           isOpen: false
         },
         {
-          question: "How to see my booking?",
+          question: "How do I see my bookings?",
           answer: "To see your bookings, navigate to the dashboard and click on the tab 'Bookings'.",
           isOpen: false
         },
         {
-          question: "How to change my booking?",
-          answer: "Currently not possible.",
+          question: "How do I change my booking?",
+          answer: "Currently, it is not possible to change a booking after it has been confirmed.",
           isOpen: false
         },
         {
           question: "How do I cancel my booking?",
-          answer: "Currently not possible.",
+          answer: "Currently, it is not possible to cancel a booking through the platform. Please contact the host directly if you need to discuss changes.",
           isOpen: false
         },
         {
           question: "How do I know if an accommodation is available?",
-          answer: "When searching for accommodations you can choose a date range, that way you will know for sure that the accommodations you see are available. Without using the search, you can click on any accommodation and see the dates it is available on under 'Booking details'.",
+          answer: "When searching for accommodations, you can select a date range to ensure that the accommodations you see are available. Without using the search, you can click on any accommodation and see the dates it is available under 'Booking details'.",
           isOpen: false
         },
         {
