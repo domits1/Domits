@@ -69,6 +69,7 @@ const ListingDetails = () => {
     const [cleaningFee, setCleaningFee] = useState(0);
     const [hostID, setHostID] = useState();
     const [showAll, setShowAll] = useState(false);
+    const [userID, setUserID] = useState('');
 
     const featureIcons = {
         'Washer and dryer': Washingmashine,
@@ -107,6 +108,19 @@ const ListingDetails = () => {
         AntiqueBalcony: AntiqueBalcony,
     };
 
+    useEffect(() => {
+        const appendUserID = async () => {
+            try {
+                const userInfo = await Auth.currentUserInfo();
+                if (userInfo) {
+                    setUserID(userInfo.attributes.sub);
+                }
+            } catch (error) {
+                console.error('Error logging in:', error);
+            }
+        };
+        appendUserID();
+    }, []);
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
@@ -297,10 +311,25 @@ const ListingDetails = () => {
     };
 
     const addUserToContactList = async () => {
-        const [userID, setUserID] = useState('');
-        const userInfo = await Auth.currentUserInfo();
-        if (userInfo) {
-            setUserID(userInfo.attributes.sub);
+        try {
+            const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/AddUserToContactList', {
+                method: 'POST',
+                body: JSON.stringify({
+                    userID: userID,
+                    hostID: hostID,
+                    Status: 'pending'
+                }),
+                headers: {'Content-type': 'application/json; charset=UTF-8',
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch');
+            }
+            const data = await response.json();
+            const body = JSON.parse(data.body);
+            window.alert(body.message);
+        } catch (error) {
+            console.error("Unexpected error:", error);
         }
     }
 
@@ -470,7 +499,14 @@ const ListingDetails = () => {
                                     )}
                                     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', gap: '2rem'}}>
                                         <button className='button'>Show more</button>
-                                        <button className='button' onClick={addUserToContactList}>Add to contact list</button>
+                                        <button className='button'
+                                                onClick={addUserToContactList}
+                                                style={{
+                                                    backgroundColor: !userID ? 'gray' : '',
+                                                    cursor: !userID ? 'not-allowed' : 'pointer'
+                                        }}
+                                                disabled={!userID}
+                                        >Add to contact list</button>
                                     </div>
                                 </section>
                                 <br/>
