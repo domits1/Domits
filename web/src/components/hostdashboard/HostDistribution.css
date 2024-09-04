@@ -1,0 +1,34 @@
+.host-dist-content {
+    display: flex;
+    justify-content: flex-start;
+    gap: 5rem;
+    width: 100%;
+}
+
+.contentContainer-channel {
+    display: flex;
+    flex-direction: column;
+    /*align-items: center;*/
+    width: 75%;
+    border: #b9b9b9 1px solid;
+    border-radius: 2%;
+}
+
+.host-dist-box-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    margin: 16px 16px 16px 16px;
+    border-bottom: #b9b9b9 1px solid;
+    align-items: center;
+}
+
+.channelLogo {
+    max-width: 5em;
+    max-height: 5em;
+}
+
+.channelFont {
+    font-weight: bold;
+    color: black;
+}
