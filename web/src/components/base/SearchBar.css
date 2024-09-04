@@ -29,7 +29,7 @@
   text-align: center;
 }
 .searchTitle {
-  color: #0D9813;
+  color: var(--primary-color);
   font-size: 1rem;
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
@@ -100,10 +100,10 @@
   padding: 3px;
   font-size: 0.6rem;
   line-height: 1.875rem;
-  border: 1px solid #0fa616;
+  border: 1px solid var(--primary-color);
   border-radius: 50%;
   color: #ffffff;
-  background-color: #0fa616;
+  background-color: var(--primary-color);
   box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
   height: 2.5rem;
   width: 2.5rem;
@@ -112,8 +112,7 @@
 }
 
 .searchbar-button:hover {
-  background-color: #0a770f;
-  border-color: #0a770f;
+  opacity: 90%;
   transition-duration: 0.0s
 }
 
@@ -150,7 +149,7 @@
 }
 
 .searchBar_inputfield::placeholder {
-  color: #0D9813;
+  color: var(--primary-color);
   font-family: 'Kanit', sans-serif;
   font-weight: 500;
   font-size: 1rem;
@@ -233,7 +232,7 @@
   align-items: center;
   justify-content: space-between;
   margin-top: 0.40rem;
-  border-bottom: 1px solid #0a770f;
+  border-bottom: 1px solid var(--primary-color);
 }
 
 .Search-guestCounter:last-child {
@@ -242,7 +241,7 @@
 
 .Search-guestLabel {
   font-size: 1rem;
-  color: #0a770f;
+  color: var(--primary-color);
   text-align: left;
 }
 
@@ -283,7 +282,7 @@
 }
 
 .Search-guestCounter .Search-controls button:hover {
-  border-color: #0a770f;
+  border-color: var(--primary-color);
 }
 
 /* test */
@@ -298,7 +297,7 @@
 
 .searchTitleGuest {
   position: absolute;
-  color: #0D9813;
+  color: var(--primary-color);
   font-size: 1rem;
   font-weight: 500;
   margin-top: 1rem;
@@ -464,7 +463,7 @@
 
 @media (max-width: 768px) {
   .Search-bar {
-    border: 2px solid #0a770f;
+    border: 2px solid var(--primary-color);
     width: 110%;
     max-width: 400px;
     transform: translateX(-0.9rem);
@@ -619,7 +618,6 @@
   .mobile-search-button {
     display: block;
     width: 75vw;
-    /* max-width: 300px; */
     padding: 0.8rem; 
     background-color: #ffffff;
     border: 1px solid #e2e2e4;

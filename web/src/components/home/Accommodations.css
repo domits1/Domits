@@ -1,4 +1,4 @@
-.assortment{
+#card-visibility{
   padding-top: 30px;
 }
 
@@ -69,7 +69,7 @@
 
 .accocard-price {
   font-size: 18px;
-  color: #0D9813;
+  color: var(--primary-color);
   margin-bottom: 8px;
   font-weight: 500;
 }

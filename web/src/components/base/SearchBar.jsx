@@ -617,7 +617,7 @@ export const SearchBar = ({ setSearchResults, setLoading }) => {
                     top: '50%',
                     left: '50%',
                     transform: 'translate(-50%, -36.5%)',
-                    color: '#0D9813',
+                    color: 'var(--primary-color)',
                     fontWeight: 500,
                     fontSize: '1rem',
                     whiteSpace: 'nowrap',
