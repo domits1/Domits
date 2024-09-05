@@ -42,6 +42,7 @@ import CoffeeMachine from "../../images/coffee-machine.png";
 import AlarmClock from "../../images/alarm-clock.png";
 import AntiqueBalcony from "../../images/antique-balcony.png";
 import BookingCalendar from "./BookingCalendar";
+import {Auth} from "aws-amplify";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -68,6 +69,7 @@ const ListingDetails = () => {
     const [cleaningFee, setCleaningFee] = useState(0);
     const [hostID, setHostID] = useState();
     const [showAll, setShowAll] = useState(false);
+    const [userID, setUserID] = useState('');
 
     const featureIcons = {
         'Washer and dryer': Washingmashine,
@@ -106,6 +108,19 @@ const ListingDetails = () => {
         AntiqueBalcony: AntiqueBalcony,
     };
 
+    useEffect(() => {
+        const appendUserID = async () => {
+            try {
+                const userInfo = await Auth.currentUserInfo();
+                if (userInfo) {
+                    setUserID(userInfo.attributes.sub);
+                }
+            } catch (error) {
+                console.error('Error logging in:', error);
+            }
+        };
+        appendUserID();
+    }, []);
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
@@ -295,6 +310,29 @@ const ListingDetails = () => {
         navigate(`/chat?recipient=${hostID}`);
     };
 
+    const addUserToContactList = async () => {
+        try {
+            const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/AddUserToContactList', {
+                method: 'POST',
+                body: JSON.stringify({
+                    userID: userID,
+                    hostID: hostID,
+                    Status: 'pending'
+                }),
+                headers: {'Content-type': 'application/json; charset=UTF-8',
+                }
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch');
+            }
+            const data = await response.json();
+            const body = JSON.parse(data.body);
+            window.alert(body.message);
+        } catch (error) {
+            console.error("Unexpected error:", error);
+        }
+    }
+
     const handleBooking = () => {
         const details = {
             id,
@@ -402,7 +440,7 @@ const ListingDetails = () => {
 
 
     return (
-        <main>
+        <main className="container">
             <section className="detailContainer">
                 <section className='detailInfo'>
                     {accommodation && (
@@ -435,7 +473,7 @@ const ListingDetails = () => {
                                 {accommodation ?  renderCategories() : ''}
                                 <div>
                                     {Object.keys(accommodation.Features).length > 2 && (
-                                        <button className='button' onClick={toggleShowAll}>
+                                        <button className='backButton' onClick={toggleShowAll}>
                                             {showAll ? 'Show less' : 'Show more'}
                                         </button>
                                     )}
@@ -459,9 +497,16 @@ const ListingDetails = () => {
                                         <p className="review-alert">This accommodation does not have any reviews
                                             yet...</p>
                                     )}
-                                    <div>
-                                        <button className='button'>Show more</button>
-                                        <button className='button' onClick={handleStartChat}>Chat</button>
+                                    <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', gap: '2rem'}}>
+                                        <button className='backButton'>Show more</button>
+                                        <button className='backButton'
+                                                onClick={addUserToContactList}
+                                                style={{
+                                                    backgroundColor: !userID ? 'gray' : '',
+                                                    cursor: !userID ? 'not-allowed' : 'pointer'
+                                        }}
+                                                disabled={!userID}
+                                        >Add to contact list</button>
                                     </div>
                                 </section>
                                 <br/>
