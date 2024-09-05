@@ -22,6 +22,8 @@ const Chat = ({ user }) => {
     const [chatUsers, setChatUsers] = useState([]);
     const [channelUUID, setChannelUUID] = useState(null);
     const [isChatOpen, setIsChatOpen] = useState(false); // New state variable
+    const [pendingContacts, setPendingContacts] = useState([]);
+    const [contacts, setContacts] = useState([]);
     const userId = user.attributes.sub;
 
     const navigate = useNavigate();
@@ -43,8 +45,35 @@ const Chat = ({ user }) => {
     };
 
     useEffect(() => {
-        console.log(userId);
+        if (userId) {
+            fetchHostContacts();
+        }
     }, [userId]);
+
+    const fetchHostContacts = async () => {
+        try {
+            const requestData = {
+                hostID: userId
+            };
+            const response = await fetch(`https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch host information');
+            }
+            const responseData = await response.json();
+            const JSONData = JSON.parse(responseData.body);
+            console.log(JSONData);
+            setContacts(JSONData.accepted);
+            setPendingContacts(JSONData.pending);
+        } catch (error) {
+            console.error('Error fetching host contacts:', error);
+        }
+    }
 
     useEffect(() => {
         const subscription = API.graphql(
@@ -315,8 +344,8 @@ const Chat = ({ user }) => {
                 <section className="chat__body">
                     <div className="contact-list">
                         <div className="switcher">
-                            <button>My contacts</button>
-                            <button>Incoming requests</button>
+                            <button className="backButton">My contacts</button>
+                            <button className="backButton">Incoming requests</button>
                         </div>
                         <div className="switch-content">
 
