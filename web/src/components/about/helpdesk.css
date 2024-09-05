@@ -28,7 +28,6 @@
   padding: 7px 15px;
 }
 
-/* Optioneel: Voeg een hover effect toe aan de knop */
 .helpSearchButton:hover {
   background-color: #367a4a;
 }
