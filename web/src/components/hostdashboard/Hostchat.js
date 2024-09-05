@@ -68,7 +68,6 @@ const Chat = ({ user }) => {
             }
             const responseData = await response.json();
             const JSONData = JSON.parse(responseData.body);
-            console.log(JSONData);
             setContacts(JSONData.accepted);
             setPendingContacts(JSONData.pending);
         } catch (error) {
@@ -142,8 +141,7 @@ const Chat = ({ user }) => {
             console.error("Recipient ID is undefined");
             return;
         }
-        console.log(`Fetching chats for recipient ID: ${recipientId}`);
-        
+
         try {
             const sentMessagesResponse = await API.graphql({
                 query: queries.listChats,
@@ -299,10 +297,7 @@ const Chat = ({ user }) => {
                     },
                 },
             });
-    
-            // Ensure the new chat message is correctly logged or processed here
-            console.log("Message sent successfully:", result);
-    
+            
             // Clear input and update UI state
             setNewMessage('');
             setShowDate(true);
