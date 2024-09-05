@@ -24,6 +24,7 @@ const Chat = ({ user }) => {
     const [isChatOpen, setIsChatOpen] = useState(false); // New state variable
     const [pendingContacts, setPendingContacts] = useState([]);
     const [contacts, setContacts] = useState([]);
+    const [itemsDisplay, setItemsDisplay] = useState([]);
     const userId = user.attributes.sub;
 
     const navigate = useNavigate();
@@ -343,13 +344,23 @@ const Chat = ({ user }) => {
                 <Pages />
                 <section className="chat__body">
                     <div className="contact-list">
-                        <div className="switcher">
-                            <button className="backButton">My contacts</button>
-                            <button className="backButton">Incoming requests</button>
-                        </div>
-                        <div className="switch-content">
-
-                        </div>
+                        <section className="switcher">
+                            <button className="backButton" onClick={() => setItemsDisplay(contacts)}>My contacts</button>
+                            <button className="backButton" onClick={() => setItemsDisplay(pendingContacts)}>Incoming requests</button>
+                        </section>
+                        {itemsDisplay.length > 0 ? (
+                            <section className="display-body">
+                                {itemsDisplay.map((item) => (
+                                    <div className="display-item">
+                                        {item.userId}
+                                    </div>
+                                ))}
+                            </section>
+                        ) : (
+                            <section className="display-body">
+                                <p>This is empty for now...</p>
+                            </section>
+                        )}
                     </div>
                     <div className="chat">
                         <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>

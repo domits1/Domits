@@ -12,12 +12,31 @@
     flex-direction: row;
     gap: 10%;
     .contact-list {
+        display: flex;
         flex-direction: column;
         width: 40vw;
+        gap: 5%;
         .switcher {
             display: flex;
             justify-content: start;
             gap: 5%;
+        }
+        .display-body {
+            background: lightgray;
+            border-radius: 1rem;
+            min-height: 50vh;
+            display: flex;
+            flex-direction: column;
+            gap: 2%;
+            justify-content: start;
+            padding: 2rem;
+            .display-item {
+                text-align: start;
+                padding: 0.5rem;
+                background-color: var(--primary-color);
+                color: white;
+                border-radius: 1rem;
+            }
         }
     }
 }
