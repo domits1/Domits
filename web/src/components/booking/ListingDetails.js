@@ -473,7 +473,7 @@ const ListingDetails = () => {
                                 {accommodation ?  renderCategories() : ''}
                                 <div>
                                     {Object.keys(accommodation.Features).length > 2 && (
-                                        <button className='button' onClick={toggleShowAll}>
+                                        <button className='backButton' onClick={toggleShowAll}>
                                             {showAll ? 'Show less' : 'Show more'}
                                         </button>
                                     )}
@@ -498,8 +498,8 @@ const ListingDetails = () => {
                                             yet...</p>
                                     )}
                                     <div style={{display: 'flex', flexDirection: 'row', justifyContent: 'flex-start', gap: '2rem'}}>
-                                        <button className='button'>Show more</button>
-                                        <button className='button'
+                                        <button className='backButton'>Show more</button>
+                                        <button className='backButton'
                                                 onClick={addUserToContactList}
                                                 style={{
                                                     backgroundColor: !userID ? 'gray' : '',
