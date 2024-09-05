@@ -440,7 +440,7 @@ const ListingDetails = () => {
 
 
     return (
-        <main>
+        <main className="container">
             <section className="detailContainer">
                 <section className='detailInfo'>
                     {accommodation && (
