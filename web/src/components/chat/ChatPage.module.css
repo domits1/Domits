@@ -16,7 +16,8 @@
             }
         }
         .displayBody {
-            background: lightgray;
+            background: white;
+            border: 1.5px solid #eee;
             border-radius: 1rem;
             height: auto;
             display: flex;
@@ -25,6 +26,9 @@
             justify-content: start;
             padding: 2rem;
             .displayItem {
+                display: flex;
+                flex-direction: row;
+                justify-content: space-between;
                 text-align: start;
                 padding: 0.5rem;
                 background-color: var(--primary-color);
@@ -44,4 +48,44 @@
     border: 1px solid var(--primary-color);
     color: var(--primary-color);
     background-color: white;
+}
+.verticalButtonBox {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 5%;
+}
+.horizontalButtonBox {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 5%;
+}
+.accept {
+    background-color: mediumseagreen;
+    color: white;
+}
+.accept:hover {
+    background-color: white;
+    color: mediumseagreen;
+}
+.deny {
+    background-color: red;
+    color: white;
+}
+.deny:hover {
+    background-color: white;
+    color: red;
+}
+.roundButton {
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 700;
+    height: 1.5em;
+    line-height: 1.25em;
+    outline: none;
+    text-align: center;
+    transition: background-color .3s;
+    width: 1.5em;
 }

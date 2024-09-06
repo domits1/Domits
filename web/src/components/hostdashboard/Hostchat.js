@@ -9,6 +9,7 @@ import Pages from "./Pages";
 import * as subscriptions from "../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
+import ContactItem from "../chat/ContactItem";
 
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
@@ -364,9 +365,7 @@ const Chat = ({ user }) => {
                         {itemsDisplay.length > 0 ? (
                             <section className={styles.displayBody}>
                                 {itemsDisplay.map((item) => (
-                                    <div className={styles.displayItem}>
-                                        {item.userId}
-                                    </div>
+                                    <ContactItem userID={item.userId} type={displayType}/>
                                 ))}
                             </section>
                         ) : (
@@ -378,7 +377,6 @@ const Chat = ({ user }) => {
                     <div className="chat">
                         <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
                             <button className="chat__backButton" onClick={() => setIsChatOpen(false)}>Back</button>
-                            {/* Back button */}
                             <article className="chat__figure">
                                 <aside className="chat__aside">
                                     <h2>{recipientId}</h2>
