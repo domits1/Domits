@@ -58,11 +58,11 @@
 }
 
 .personalMenuDropdownContent {
-    display: none; /* Hidden by default */
+    display: none;
 }
 
 .personalMenuDropdownContent.show {
-    display: block; /* Show when the "show" class is applied */
+    display: block;
 }
 
 .personalMenuDropdown .personalMenuDropdownContent {
@@ -174,11 +174,6 @@
 /* Footer styles */
 .main-footer {
     background-color: #f8f8f8;
-    /*min-height: 50vh;*/
-    /*display: 'flex';*/
-    /*flexDirection: 'column';*/
-    /*max-height: 100px;*/
-    /*overflowY: 'auto';*/
 }
 
 .footer-content {
@@ -252,7 +247,6 @@
     display: block;
     flex-wrap: wrap;
     gap: 20px;
-    /* Adjust the gap as needed */
 }
 
 .footer-select {
@@ -289,7 +283,6 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    /* text-decoration-line: underline; */
     margin-top: 20px;
 }
 
