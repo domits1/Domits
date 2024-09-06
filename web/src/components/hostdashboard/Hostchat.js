@@ -25,6 +25,7 @@ const Chat = ({ user }) => {
     const [isChatOpen, setIsChatOpen] = useState(false); // New state variable
     const [pendingContacts, setPendingContacts] = useState([]);
     const [contacts, setContacts] = useState([]);
+    const [displayType, setDisplayType] = useState('My contacts');
     const [itemsDisplay, setItemsDisplay] = useState([]);
     const userId = user.attributes.sub;
 
@@ -51,6 +52,16 @@ const Chat = ({ user }) => {
             fetchHostContacts();
         }
     }, [userId]);
+
+    useEffect(() => {
+        if (displayType) {
+            if (displayType === 'My contacts') {
+                setItemsDisplay(contacts);
+            } else {
+                setItemsDisplay(pendingContacts);
+            }
+        }
+    }, [displayType]);
 
     const fetchHostContacts = async () => {
         try {
@@ -338,22 +349,28 @@ const Chat = ({ user }) => {
             <h2 className="chat__heading">Messages</h2>
             <section className="chat__container">
                 <Pages />
-                <section className="chat__body">
-                    <div className="contact-list">
-                        <section className="switcher">
-                            <button className="backButton" onClick={() => setItemsDisplay(contacts)}>My contacts</button>
-                            <button className="backButton" onClick={() => setItemsDisplay(pendingContacts)}>Incoming requests</button>
+                <section className={styles.chat__body}>
+                    <div className={styles.contactList}>
+                        <section className={styles.switcher}>
+                            <button
+                                className={`${styles.switchButton} ${(displayType === 'My contacts') ? styles.selected : styles.disabled}`}
+                                onClick={() => setDisplayType('My contacts')}>My contacts ({contacts.length})
+                            </button>
+                            <button
+                                className={`${styles.switchButton} ${(displayType === 'Pending contacts') ? styles.selected : styles.disabled}`}
+                                    onClick={() => setDisplayType('Pending contacts')}>Incoming requests ({pendingContacts.length})
+                            </button>
                         </section>
                         {itemsDisplay.length > 0 ? (
-                            <section className="display-body">
+                            <section className={styles.displayBody}>
                                 {itemsDisplay.map((item) => (
-                                    <div className="display-item">
+                                    <div className={styles.displayItem}>
                                         {item.userId}
                                     </div>
                                 ))}
                             </section>
                         ) : (
-                            <section className="display-body">
+                            <section className={styles.displayBody}>
                                 <p>This is empty for now...</p>
                             </section>
                         )}

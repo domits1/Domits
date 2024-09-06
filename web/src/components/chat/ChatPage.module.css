@@ -1,3 +1,47 @@
-.main {
+.chat__body {
+    display: flex;
+    flex-direction: row;
+    gap: 10%;
+    .contactList {
+        display: flex;
+        flex-direction: column;
+        width: 20vw;
+        .switcher {
+            display: flex;
+            flex-direction: column;
+            .switchButton {
+                padding: 2.5%;
+                border-radius: 2rem;
+                margin-bottom: 5%;
+            }
+        }
+        .displayBody {
+            background: lightgray;
+            border-radius: 1rem;
+            height: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2%;
+            justify-content: start;
+            padding: 2rem;
+            .displayItem {
+                text-align: start;
+                padding: 0.5rem;
+                background-color: var(--primary-color);
+                color: white;
+                border-radius: 1rem;
+            }
+        }
+    }
+}
 
+.selected {
+    border: none;
+    color: white;
+    background-color: var(--primary-color);
+}
+.disabled {
+    border: 1px solid var(--primary-color);
+    color: var(--primary-color);
+    background-color: white;
 }
