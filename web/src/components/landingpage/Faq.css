@@ -27,13 +27,13 @@
   flex-direction: row ;
   color: white;
   border-radius: 8px;
-  background-color: #0D9813;
+  background-color: var(--primary-color);
   border: 2px solid var(--primary-color);
   padding: 10px 20px;
   margin: 10px 0px;
   cursor: pointer;
-  max-width: 200px; /* Set the maximum width for the buttons */
-  flex: 1; /* Ensure buttons grow to take available space */
+  max-width: 200px;
+  flex: 1;
   text-align: center; 
   font-weight: 500;
   font-size: 15px;
@@ -50,13 +50,13 @@
 }
 
 .faqButton:hover {
-  background-color: #367a4a;
+  opacity: 90%;
 }
 
 .category{
   color: white;
   border-radius: 8px;
-  background-color: #0D9813;
+  background-color: var(--primary-color);
   border: 2px solid var(--primary-color);
   padding: 10px 20px;
   margin: 30px 20px;

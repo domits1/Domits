@@ -84,7 +84,14 @@ label {
     align-items: center;
     display: inline-flex;
 }
-
+.emailSection {
+    padding: 6rem;
+    margin-bottom: 15%;
+}
+.forgotPasswordText:hover {
+    color: royalblue;
+    cursor: pointer;
+}
 .noAccountText {
     color: black;
     margin-top: 20px;

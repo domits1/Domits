@@ -66,7 +66,7 @@
   #attachmentsbutton,
   #sendbutton {
     width: 47%;
-    height: 40px; /* Adjusted height for laptops */
+    height: 40px;
     padding: 8px 15px;
     margin-bottom: 20px;
     flex-shrink: 0;

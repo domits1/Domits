@@ -1,4 +1,4 @@
-.assortment{
+#card-visibility{
   padding-top: 30px;
 }
 
@@ -29,11 +29,11 @@
   object-fit: cover;
   border-radius: 15px;
   display: block;
-  transition: transform 0.4s ease-in-out; /* Add transition for smooth animation */
+  transition: transform 0.4s ease-in-out;
 }
 
 .accocard:hover img {
-  transform: scale(1.06); /* Scale the image to 110% */
+  transform: scale(1.06);
 }
 
 .accocard:hover .accocard-title{
@@ -63,13 +63,13 @@
   color: white;
   font-size: 18px;
   font-weight: 500;
-  transition: background 0.4s ease-in-out; /* Add transition for smooth background color change */
+  transition: background 0.4s ease-in-out;
 
 }
 
 .accocard-price {
   font-size: 18px;
-  color: #0D9813;
+  color: var(--primary-color);
   margin-bottom: 8px;
   font-weight: 500;
 }
@@ -78,9 +78,8 @@
   margin-bottom: 8px;
   width: 300px;
   display: -webkit-box;
-  -webkit-line-clamp: 2; /* Aantal regels dat je wilt tonen */
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;  
-  /* white-space: nowrap; */
   overflow: hidden;
   text-overflow: ellipsis;
   height: 3em;
