@@ -46,7 +46,7 @@ const ContactItem = ({ userID, type }) => {
                     {user}
                     <div className={styles.horizontalButtonBox}>
                         <button className={`${styles.accept} ${styles.roundButton}`}>✓</button>
-                        <button className={`${styles.deny} ${styles.roundButton}`}>X</button>
+                        <button className={`${styles.deny} ${styles.roundButton}`}>x</button>
                     </div>
                 </div>
             );

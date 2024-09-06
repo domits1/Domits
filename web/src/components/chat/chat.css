@@ -1,9 +1,10 @@
 .chat{
     height: 80vh;
-    width: 100%;
+    width: 65vw;
     background: white;
     display: flex;
     justify-content: space-evenly;
+    gap: 5%;
     align-items: center;
 }
 .chat__container{
@@ -29,7 +30,7 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-
+    border: 1.5px solid #eee;
 }
 
 

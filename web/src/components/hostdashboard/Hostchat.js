@@ -359,7 +359,7 @@ const Chat = ({ user }) => {
                             </button>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'Pending contacts') ? styles.selected : styles.disabled}`}
-                                    onClick={() => setDisplayType('Pending contacts')}>Incoming requests ({pendingContacts.length})
+                                onClick={() => setDisplayType('Pending contacts')}>Incoming requests ({pendingContacts.length})
                             </button>
                         </section>
                         {itemsDisplay.length > 0 ? (
