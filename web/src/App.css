@@ -4,6 +4,11 @@
     --secondary-color: #003366;
 }
 
+.page-body {
+  width: 93%;
+  margin: 0 auto;
+  padding: 20px;
+}
 /* Beginning of the accommodation styling */
 
 /* Host dashboard */

@@ -6,13 +6,6 @@
     padding: 0;
 } */
 
-.container {
-    width: 90%;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
 h1 {
     font-size: 2em;
     margin-bottom: 20px;

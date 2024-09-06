@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
 import "../../components/chat/chat.css";
+import styles from "../../components/chat/ChatPage.module.css";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
@@ -333,7 +334,7 @@ const Chat = ({ user }) => {
     };
 
     return (
-        <main className="container">
+        <main className="page-body">
             <h2 className="chat__heading">Messages</h2>
             <section className="chat__container">
                 <Pages />
