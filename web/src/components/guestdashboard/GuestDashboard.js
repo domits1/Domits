@@ -8,10 +8,15 @@ const GuestDashboard = () => {
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
     const [editButton, setEditButton] = useState(false);
 
-    const editClicked = () => {
+    const editClicked = (type) => {
         setEditButton(!editButton);
-        if(editButton){
-            console.log("Edit button is clicked");
+        if (type === 'email') {
+            console.log("Email edit clicked. Email:", user.email);
+            // swap the <p> tag with an input field
+            // swap the edit icon with a save icon
+            
+        } else if (type === 'name') {
+            console.log("Name edit clicked. Name:", user.name);
         }
     }
 
@@ -55,11 +60,41 @@ const GuestDashboard = () => {
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
-                        <div className="infoBox"><span>Email:</span> <p>{user.email}</p> <div onClick={editClicked} className="edit-icon-background"><img src={editIcon} alt="Email Icon" className="guest-edit-icon"/></div> </div>
-                        <div className="infoBox"><span>Name:</span> <p>{user.name}</p>  <div onClick={editClicked} className="edit-icon-background"><img src={editIcon} alt="Name Icon" className="guest-edit-icon"/></div></div>
-                        <div className="infoBox"><span>Address:</span> <p>{user.address}</p>  <div className="edit-icon-background"><img src={editIcon} alt="Address Icon" className="guest-edit-icon"/></div></div>
-                        <div className="infoBox"><span>Phone:</span> <p>{user.phone}</p>  <div className="edit-icon-background"><img src={editIcon} alt="Phone Icon" className="guest-edit-icon"/></div></div>
-                        <div className="infoBox"><span>Family:</span> <p>{user.family}</p>  <div className="edit-icon-background"><img src={editIcon} alt="Family Icon" className="guest-edit-icon"/></div></div>
+                        <div className="infoBox">
+                            <span>Email:</span>
+                            <p>{user.email}</p>
+                            <div onClick={() => editClicked('email')} className="edit-icon-background">
+                                <img src={editIcon} alt="Email Icon" className="guest-edit-icon" />
+                            </div>
+                        </div>
+                        <div className="infoBox">
+                            <span>Name:</span>
+                            <p>{user.name}</p>
+                            <div onClick={() => editClicked('name')} className="edit-icon-background">
+                                <img src={editIcon} alt="Name Icon" className="guest-edit-icon" />
+                            </div>
+                        </div>
+                        <div className="infoBox">
+                            <span>Address:</span>
+                            <p>{user.address}</p>
+                            <div className="edit-icon-background">
+                                <img src={editIcon} alt="Address Icon" className="guest-edit-icon" />
+                            </div>
+                        </div>
+                        <div className="infoBox">
+                            <span>Phone:</span>
+                            <p>{user.phone}</p>
+                            <div className="edit-icon-background">
+                                <img src={editIcon} alt="Phone Icon" className="guest-edit-icon" />
+                            </div>
+                        </div>
+                        <div className="infoBox">
+                            <span>Family:</span>
+                            <p>{user.family}</p>
+                            <div className="edit-icon-background">
+                                <img src={editIcon} alt="Family Icon" className="guest-edit-icon" />
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
