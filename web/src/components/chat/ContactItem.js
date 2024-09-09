@@ -3,7 +3,7 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
 import spinner from "../../images/spinnner.gif";
 
-const ContactItem = ({ userID, type, acceptOrDenyRequest }) => {
+const ContactItem = ({ userID, ID, type, index, acceptOrDenyRequest }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -42,14 +42,14 @@ const ContactItem = ({ userID, type, acceptOrDenyRequest }) => {
             );
         } else {
             return (
-                <div className={styles.displayItem}>
+                <div className={styles.displayItem} key={index}>
                     {user}
                     <div className={styles.horizontalButtonBox}>
                         <button className={`${styles.accept} ${styles.roundButton}`}
-                                onClick={() => acceptOrDenyRequest('accepted', userID)}
+                                onClick={() => acceptOrDenyRequest('accepted', ID, userID)}
                         >✓</button>
                         <button className={`${styles.deny} ${styles.roundButton}`}
-                                onClick={() => acceptOrDenyRequest('denied', userID)}
+                                onClick={() => acceptOrDenyRequest('denied', ID, userID)}
                         >x</button>
                     </div>
                 </div>

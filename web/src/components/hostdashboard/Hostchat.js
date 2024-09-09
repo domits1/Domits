@@ -10,6 +10,8 @@ import * as subscriptions from "../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ContactItem from "../chat/ContactItem";
+import spinner from "../../images/spinnner.gif";
+
 
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
@@ -28,6 +30,7 @@ const Chat = ({ user }) => {
     const [contacts, setContacts] = useState([]);
     const [displayType, setDisplayType] = useState('My contacts');
     const [itemsDisplay, setItemsDisplay] = useState([]);
+    const [loading, setLoading] = useState(false);
     const userId = user.attributes.sub;
 
     const navigate = useNavigate();
@@ -65,6 +68,7 @@ const Chat = ({ user }) => {
     }, [displayType]);
 
     const fetchHostContacts = async () => {
+        setLoading(true);
         try {
             const requestData = {
                 hostID: userId
@@ -85,6 +89,8 @@ const Chat = ({ user }) => {
             setPendingContacts(JSONData.pending);
         } catch (error) {
             console.error('Error fetching host contacts:', error);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -345,14 +351,13 @@ const Chat = ({ user }) => {
             date.getFullYear() === today.getFullYear();
     };
 
-    const acceptOrDenyRequest = async (status, userID) => {
-        if (status && userID) {
+    const acceptOrDenyRequest = async (status, id, userId) => {
+        if (status && id) {
             const body = {
                 Status: status,
-                userID: userID,
-                hostID: userId
+                Id: id,
+                userId: userId
             };
-            console.log(body);
             try {
                 const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
                     method: 'PUT',
@@ -365,7 +370,7 @@ const Chat = ({ user }) => {
                 }
                 const data = await response.json();
                 const parsedData = JSON.parse(data.body);
-                console.log(parsedData);
+                fetchHostContacts();
             } catch (error) {
                 console.error("Unexpected error:", error);
             }
@@ -386,23 +391,36 @@ const Chat = ({ user }) => {
                             </button>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'Pending contacts') ? styles.selected : styles.disabled}`}
-                                onClick={() => setDisplayType('Pending contacts')}>Incoming requests ({pendingContacts.length})
+                                onClick={() => setDisplayType('Pending contacts')}>Incoming requests
+                                ({pendingContacts.length})
                             </button>
                         </section>
-                        {itemsDisplay.length > 0 ? (
-                            <section className={styles.displayBody}>
-                                {itemsDisplay.map((item) => (
-                                    <ContactItem userID={item.userId} type={displayType} acceptOrDenyRequest={acceptOrDenyRequest}/>
-                                ))}
-                            </section>
-                        ) : (
-                            <section className={styles.displayBody}>
-                                <p>This is empty for now...</p>
-                            </section>
-                        )}
+                        <section className={styles.displayBody}>
+                            {loading ? (
+                                <div>
+                                    <img src={spinner} alt='spinner' style={{maxWidth: '50%', maxHeight: '50%'}}/>
+                                </div>
+                            ) : (
+                                itemsDisplay.length > 0 ? (
+                                    itemsDisplay.map((item, index) => (
+                                            <ContactItem userID={item.userId} ID={item.ID} index={index} type={displayType}
+                                                         acceptOrDenyRequest={acceptOrDenyRequest}/>
+                                        )
+                                    )
+                                ) : (
+                                    <div>
+                                        <p>This is empty for now...</p>
+                                        <button className={styles.mainButton}
+                                                onClick={() => fetchHostContacts()}>Refresh
+                                        </button>
+                                    </div>
+                                ))
+                            }
+                        </section>
+
                     </div>
                     <div className="chat">
-                        <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
+                    <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
                             <button className="chat__backButton" onClick={() => setIsChatOpen(false)}>Back</button>
                             <article className="chat__figure">
                                 <aside className="chat__aside">

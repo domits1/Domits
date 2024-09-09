@@ -89,3 +89,15 @@
     transition: background-color .3s;
     width: 1.5em;
 }
+.mainButton {
+    border-radius: 0.5rem;
+    color: white;
+    background-color: var(--primary-color);
+    border: none;
+    padding: 0.5rem;
+}
+.mainButton:hover {
+    color: var(--primary-color);
+    background-color: white;
+    border: 1px solid var(--primary-color);
+}
