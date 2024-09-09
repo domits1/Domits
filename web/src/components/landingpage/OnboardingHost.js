@@ -1194,7 +1194,7 @@ function OnboardingHost() {
                                 className="radioInput"
                                 name="Drafted"
                                 onChange={() => setDrafted(!formData.Drafted)}
-                                disabled={!(formData.DateRanges && hasStripe)}
+                                disabled={!(formData.DateRanges.length > 0 && hasStripe)}
                                 checked={formData.Drafted}
                             />
                             Mark as draft (Stripe account and date range is required)
