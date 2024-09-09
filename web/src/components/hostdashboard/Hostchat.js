@@ -353,26 +353,23 @@ const Chat = ({ user }) => {
                 hostID: userId
             };
             console.log(body);
+            try {
+                const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
+                    method: 'PUT',
+                    body: JSON.stringify(body),
+                    headers: {'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to update');
+                }
+                const data = await response.json();
+                const parsedData = JSON.parse(data.body);
+                console.log(parsedData);
+            } catch (error) {
+                console.error("Unexpected error:", error);
+            }
         }
-
-        // try {
-        //     const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
-        //         method: 'POST',
-        //         body: JSON.stringify({
-        //             Status: status
-        //         }),
-        //         headers: {'Content-type': 'application/json; charset=UTF-8',
-        //         }
-        //     });
-        //     if (!response.ok) {
-        //         throw new Error('Failed to update');
-        //     }
-        //     const data = await response.json();
-        //     const parsedData = JSON.parse(data.body);
-        //     console.log(parsedData);
-        // } catch (error) {
-        //     console.error("Unexpected error:", error);
-        // }
     }
 
     return (
