@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from 'react';
+import React, {useEffect, useState, useContext} from 'react';
 import './base.css';
 import logo from "../../logo.svg";
 import nineDots from '../../images/dots-grid.svg';
@@ -7,14 +7,14 @@ import arrowDown from '../../images/arrow-down-icon.svg';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
 import FlowContext from '../../FlowContext';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { SearchBar } from './SearchBar';
-import { Auth } from "aws-amplify";
+import {useNavigate, useLocation} from 'react-router-dom';
+import {SearchBar} from './SearchBar';
+import {Auth} from "aws-amplify";
 
 function Header({ setSearchResults, setLoading }) {
     const navigate = useNavigate();
     const location = useLocation();
-    const { setFlowState } = useContext(FlowContext);
+    const {setFlowState} = useContext(FlowContext);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [group, setGroup] = useState('');
     const [username, setUsername] = useState('');
@@ -97,7 +97,7 @@ function Header({ setSearchResults, setLoading }) {
 
     const navigateToDashboard = () => {
         if (!isLoggedIn) {
-            setFlowState({ isHost: true });
+            setFlowState({isHost: true});
             navigate('/landing');
         } else {
             if (currentView === 'host') {
@@ -114,11 +114,16 @@ function Header({ setSearchResults, setLoading }) {
                 <>
                     <div className="helloUsername">Hello {username}!</div>
                     <button onClick={navigateToHostDashboard} className="dropdownLoginButton">Dashboard</button>
-                    <button onClick={() => navigate('/hostdashboard/calendar')} className="dropdownLoginButton">Calendar</button>
-                    <button onClick={() => navigate('/hostdashboard/reservations')} className="dropdownLoginButton">Reservations</button>
-                    <button onClick={() => navigate('/hostdashboard/chat')} className="dropdownLoginButton">Messages</button>
+                    <button onClick={() => navigate('/hostdashboard/calendar')}
+                            className="dropdownLoginButton">Calendar
+                    </button>
+                    <button onClick={() => navigate('/hostdashboard/reservations')}
+                            className="dropdownLoginButton">Reservations
+                    </button>
+                    <button onClick={() => navigate('/hostdashboard/chat')} className="dropdownLoginButton">Messages
+                    </button>
                     <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
-                        src={logoutArrow} alt="Logout Arrow" /></button>
+                        src={logoutArrow} alt="Logout Arrow"/></button>
                 </>
             );
         } else {
@@ -131,7 +136,7 @@ function Header({ setSearchResults, setLoading }) {
                     <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
                     <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
                     <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
-                        src={logoutArrow} alt="Logout Arrow" /></button>
+                        src={logoutArrow} alt="Logout Arrow"/></button>
                 </>
             );
         }
@@ -141,15 +146,18 @@ function Header({ setSearchResults, setLoading }) {
         <div className="App">
             <header className="app-header">
                 <nav className="header-nav">
-                    <div className="logo">
-                        <a href="/">
-                            <img src={logo} width={150} alt="Logo" />
-                        </a>
+                    <div className="header-top">
+                        <div className="logo">
+                            <a href="/">
+                                <img src={logo} width={150} alt="Logo"/>
+                            </a>
+                        </div>
+                        <div className='App'>
+                            <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
+                        </div>
                     </div>
-                    <div className='App'>
-                        <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
-                    </div>
-                    <div className='headerRight'>
+                    <div className="header-bottom">
+                        <div className='headerRight'>
                         {!isLoggedIn ? (
                             <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
                                 Become a Host
@@ -169,18 +177,18 @@ function Header({ setSearchResults, setLoading }) {
                             </button>
                         )}
                         <button className="headerButtons" onClick={navigateToNinedots}>
-                            <img src={nineDots} alt="Nine Dots" />
+                            <img src={nineDots} alt="Nine Dots"/>
                         </button>
                         <div className="personalMenuDropdown">
                             <button className="personalMenu" onClick={toggleDropdown}>
-                                <img src={profile} alt="Profile Icon" />
-                                <img src={arrowDown} alt="Dropdown Arrow" />
+                                <img src={profile} alt="Profile Icon"/>
+                                <img src={arrowDown} alt="Dropdown Arrow"/>
                             </button>
                             <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                 {isLoggedIn ? renderDropdownMenu() : (
                                     <>
                                         <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img
-                                            src={loginArrow} alt="Login Arrow" /></button>
+                                            src={loginArrow} alt="Login Arrow"/></button>
                                         <button onClick={navigateToRegister}
                                                 className="dropdownRegisterButton">Register
                                         </button>
@@ -188,6 +196,7 @@ function Header({ setSearchResults, setLoading }) {
                                 )}
                             </div>
                         </div>
+                    </div>
                     </div>
                 </nav>
             </header>
