@@ -6,6 +6,14 @@ import Pages from "./Pages.js";
 
 const GuestDashboard = () => {
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
+    const [editButton, setEditButton] = useState(false);
+
+    const editClicked = () => {
+        setEditButton(!editButton);
+        if(editButton){
+            console.log("Edit button is clicked");
+        }
+    }
 
     useEffect(() => {
         fetchAccommodations();
@@ -47,11 +55,11 @@ const GuestDashboard = () => {
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
-                        <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> {user.name}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> {user.address}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> {user.phone}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Family Icon" /><span>Family:</span> {user.family}</div>
+                        <div className="infoBox"><span>Email:</span> <p>{user.email}</p> <div onClick={editClicked} className="edit-icon-background"><img src={editIcon} alt="Email Icon" className="guest-edit-icon"/></div> </div>
+                        <div className="infoBox"><span>Name:</span> <p>{user.name}</p>  <div onClick={editClicked} className="edit-icon-background"><img src={editIcon} alt="Name Icon" className="guest-edit-icon"/></div></div>
+                        <div className="infoBox"><span>Address:</span> <p>{user.address}</p>  <div className="edit-icon-background"><img src={editIcon} alt="Address Icon" className="guest-edit-icon"/></div></div>
+                        <div className="infoBox"><span>Phone:</span> <p>{user.phone}</p>  <div className="edit-icon-background"><img src={editIcon} alt="Phone Icon" className="guest-edit-icon"/></div></div>
+                        <div className="infoBox"><span>Family:</span> <p>{user.family}</p>  <div className="edit-icon-background"><img src={editIcon} alt="Family Icon" className="guest-edit-icon"/></div></div>
                     </div>
                 </div>
             </div>
