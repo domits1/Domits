@@ -50,6 +50,12 @@ const Register = () => {
             setPasswordShake(true);
             return;
         }
+        const regex = /^(?=.*[A-Z])(?=.*\d).+$/;
+        if (!regex.test(password)) {
+            setErrorMessage('Password must contain at least one uppercase letter and one number.');
+            setPasswordShake(true);
+            return;
+        }
         if (!email) {
             setErrorMessage('Email can\'t be empty!');
             return;
