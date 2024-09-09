@@ -35,6 +35,11 @@
                 color: white;
                 border-radius: 1rem;
             }
+            .displayItem:hover {
+                background-color: white;
+                color: var(--primary-color);
+                border: 1px solid var(--primary-color);
+            }
         }
     }
 }

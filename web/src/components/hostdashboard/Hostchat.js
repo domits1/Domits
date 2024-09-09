@@ -23,6 +23,7 @@ const Chat = ({ user }) => {
     const [imageUrl, setImageUrl] = useState("");
     const [recipientId, setRecipientId] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedUserName, setSelectedUserName] = useState('');
     const [chatUsers, setChatUsers] = useState([]);
     const [channelUUID, setChannelUUID] = useState(null);
     const [isChatOpen, setIsChatOpen] = useState(false); // New state variable
@@ -85,6 +86,7 @@ const Chat = ({ user }) => {
             }
             const responseData = await response.json();
             const JSONData = JSON.parse(responseData.body);
+            console.log(JSONData);
             setContacts(JSONData.accepted);
             setPendingContacts(JSONData.pending);
         } catch (error) {
@@ -128,7 +130,9 @@ const Chat = ({ user }) => {
     }, [location.search]);
 
     useEffect(() => {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        if (selectedUser) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
     }, [chats]);
 
     const handleImageUpload = (e) => {
@@ -351,6 +355,15 @@ const Chat = ({ user }) => {
             date.getFullYear() === today.getFullYear();
     };
 
+    const selectUser = async (index, user) => {
+        if (index != null) {
+            await handleUserClick(contacts[index].userId);
+        }
+        if (user) {
+            setSelectedUserName(user);
+        }
+    }
+
     const acceptOrDenyRequest = async (status, id, userId) => {
         if (status && id) {
             const body = {
@@ -404,7 +417,7 @@ const Chat = ({ user }) => {
                                 itemsDisplay.length > 0 ? (
                                     itemsDisplay.map((item, index) => (
                                             <ContactItem userID={item.userId} ID={item.ID} index={index} type={displayType}
-                                                         acceptOrDenyRequest={acceptOrDenyRequest}/>
+                                                         acceptOrDenyRequest={acceptOrDenyRequest} selectUser={selectUser}/>
                                         )
                                     )
                                 ) : (
@@ -419,78 +432,80 @@ const Chat = ({ user }) => {
                         </section>
 
                     </div>
-                    <div className="chat">
-                    <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
-                            <button className="chat__backButton" onClick={() => setIsChatOpen(false)}>Back</button>
-                            <article className="chat__figure">
-                                <aside className="chat__aside">
-                                    <h2>{recipientId}</h2>
-                                </aside>
-                                <article className="chat__chatContainer" ref={chatContainerRef}>
-                                    {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
-                                        <React.Fragment key={chat.id}>
-                                            {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
-                                                <p className="chat__date">
+                    {selectedUser && (
+                        <div className="chat">
+                            <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
+                                <button className="chat__backButton" onClick={() => setIsChatOpen(false)}>Back</button>
+                                <article className="chat__figure">
+                                    <aside className="chat__aside">
+                                        <h2>{selectedUserName}</h2>
+                                    </aside>
+                                    <article className="chat__chatContainer" ref={chatContainerRef}>
+                                        {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
+                                            <React.Fragment key={chat.id}>
+                                                {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
+                                                    <p className="chat__date">
                                                 <span>
                                                     {isToday(new Date(chat.createdAt)) ? "Today" : new Date(chat.createdAt).toLocaleDateString('en-US', {
                                                         month: 'short',
                                                         day: 'numeric'
                                                     })}
                                                 </span>
-                                                </p>
-                                            )}
-                                            <div
-                                                className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
-                                                {chat.text}
-                                            </div>
-                                        </React.Fragment>
-                                    ))}
-                                    {imageUrl && <img src={imageUrl} alt="Selected"
-                                                      style={{maxWidth: "100%", maxHeight: "200px"}}/>}
+                                                    </p>
+                                                )}
+                                                <div
+                                                    className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
+                                                    {chat.text}
+                                                </div>
+                                            </React.Fragment>
+                                        ))}
+                                        {imageUrl && <img src={imageUrl} alt="Selected"
+                                                          style={{maxWidth: "100%", maxHeight: "200px"}}/>}
+                                    </article>
+                                    <div className="chat__inputContainer">
+                                        <input
+                                            className="chat__input"
+                                            type="text"
+                                            value={newMessage}
+                                            onChange={(e) => setNewMessage(e.target.value)}
+                                            placeholder="Type your message..."
+                                            onKeyUp={(e) => {
+                                                if (e.key === "Enter") {
+                                                    sendMessage();
+                                                }
+                                            }}
+                                        />
+                                        <button className="chat__send" onClick={() => sendMessage()}>Send</button>
+                                    </div>
                                 </article>
-                                <div className="chat__inputContainer">
-                                    <input
-                                        className="chat__input"
-                                        type="text"
-                                        value={newMessage}
-                                        onChange={(e) => setNewMessage(e.target.value)}
-                                        placeholder="Type your message..."
-                                        onKeyUp={(e) => {
-                                            if (e.key === "Enter") {
-                                                sendMessage();
-                                            }
-                                        }}
-                                    />
-                                    <button className="chat__send" onClick={() => sendMessage()}>Send</button>
-                                </div>
+                                <nav className="chat__nav">
+                                    <div className="chat__buttonWrapper">
+                                        <button className="chat__button chat__button--review">Send review link</button>
+                                    </div>
+                                </nav>
                             </article>
-                            <nav className="chat__nav">
-                                <div className="chat__buttonWrapper">
-                                    <button className="chat__button chat__button--review">Send review link</button>
-                                </div>
-                            </nav>
-                        </article>
-                        <article className={`chat__people ${isChatOpen ? 'chat__people--hidden' : ''}`}>
-                            <ul className="chat__users">
-                                {chatUsers.map((chatUser) => (
-                                    <li className="chat__user" key={chatUser.userId}
-                                        onClick={() => handleUserClick(chatUser.userId)}>
-                                        {unreadMessages[chatUser.userId] > 0 && (
-                                            <figure className="chat__notification">
-                                                {unreadMessages[chatUser.userId] > 9 ? '9+' : unreadMessages[chatUser.userId]}
-                                            </figure>
-                                        )}
-                                        <div className="chat__pfp">
-                                            {/* Placeholder for user profile image */}
-                                        </div>
-                                        <div className="chat__wrapper">
-                                            <h2 className="chat__name">{chatUser.userId}</h2>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        </article>
-                    </div>
+                            <article className={`chat__people ${isChatOpen ? 'chat__people--hidden' : ''}`}>
+                                <ul className="chat__users">
+                                    {chatUsers.map((chatUser) => (
+                                        <li className="chat__user" key={chatUser.userId}
+                                            onClick={() => handleUserClick(chatUser.userId)}>
+                                            {unreadMessages[chatUser.userId] > 0 && (
+                                                <figure className="chat__notification">
+                                                    {unreadMessages[chatUser.userId] > 9 ? '9+' : unreadMessages[chatUser.userId]}
+                                                </figure>
+                                            )}
+                                            <div className="chat__pfp">
+                                                {/* Placeholder for user profile image */}
+                                            </div>
+                                            <div className="chat__wrapper">
+                                                <h2 className="chat__name">{chatUser.userId}</h2>
+                                            </div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </article>
+                        </div>
+                    )}
                 </section>
             </section>
         </main>

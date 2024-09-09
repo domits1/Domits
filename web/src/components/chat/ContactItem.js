@@ -3,7 +3,7 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
 import spinner from "../../images/spinnner.gif";
 
-const ContactItem = ({ userID, ID, type, index, acceptOrDenyRequest }) => {
+const ContactItem = ({ userID, ID, type, index, acceptOrDenyRequest, selectUser }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -36,7 +36,7 @@ const ContactItem = ({ userID, ID, type, index, acceptOrDenyRequest }) => {
     if (user) {
         if (type === 'My contacts') {
             return (
-                <div className={styles.displayItem}>
+                <div className={styles.displayItem} onClick={() => selectUser(index, user)}>
                     {user}
                 </div>
             );
