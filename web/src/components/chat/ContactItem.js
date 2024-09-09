@@ -3,14 +3,14 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
 import spinner from "../../images/spinnner.gif";
 
-const ContactItem = ({ userID, ID, type, index, acceptOrDenyRequest, selectUser }) => {
+const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selectedUser }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
                 const requestData = {
-                    UserId: userID
+                    UserId: item.userId
                 };
                 const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
                     method: 'POST',
@@ -31,12 +31,12 @@ const ContactItem = ({ userID, ID, type, index, acceptOrDenyRequest, selectUser 
         };
 
         fetchUserInfo();
-    }, [userID]);
+    }, [item]);
 
     if (user) {
         if (type === 'My contacts') {
             return (
-                <div className={styles.displayItem} onClick={() => selectUser(index, user)}>
+                <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`} onClick={() => selectUser(index, user)}>
                     {user}
                 </div>
             );
@@ -46,10 +46,10 @@ const ContactItem = ({ userID, ID, type, index, acceptOrDenyRequest, selectUser 
                     {user}
                     <div className={styles.horizontalButtonBox}>
                         <button className={`${styles.accept} ${styles.roundButton}`}
-                                onClick={() => acceptOrDenyRequest('accepted', ID, userID)}
+                                onClick={() => acceptOrDenyRequest('accepted', item.ID, item.userID)}
                         >✓</button>
                         <button className={`${styles.deny} ${styles.roundButton}`}
-                                onClick={() => acceptOrDenyRequest('denied', ID, userID)}
+                                onClick={() => acceptOrDenyRequest('denied', item.ID, item.userID)}
                         >x</button>
                     </div>
                 </div>

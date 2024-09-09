@@ -22,7 +22,7 @@
             height: auto;
             display: flex;
             flex-direction: column;
-            gap: 2%;
+            gap: 1rem;
             justify-content: start;
             padding: 2rem;
             .displayItem {
@@ -38,6 +38,12 @@
             .displayItem:hover {
                 background-color: white;
                 color: var(--primary-color);
+                border: 1px solid var(--primary-color);
+                cursor: pointer;
+            }
+            .selectedUser{
+                color: var(--primary-color);
+                background-color: white;
                 border: 1px solid var(--primary-color);
             }
         }

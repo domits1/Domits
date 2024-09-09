@@ -394,8 +394,9 @@ const Chat = ({ user }) => {
                             ) : (
                                 itemsDisplay.length > 0 ? (
                                     itemsDisplay.map((item, index) => (
-                                            <ContactItem userID={item.hostId} ID={item.ID} index={index} type={displayType}
-                                                         selectUser={selectUser}/>
+                                            <ContactItem item={item} index={index} type={displayType}
+                                                         selectUser={selectUser}
+                                                         selectedUser={selectedUserName}/>
                                         )
                                     )
                                 ) : (

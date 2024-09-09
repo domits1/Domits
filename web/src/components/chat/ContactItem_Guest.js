@@ -3,14 +3,14 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
 import spinner from "../../images/spinnner.gif";
 
-const ContactItem = ({ userID, ID, type, index, selectUser }) => {
+const ContactItem = ({ item, type, index, selectUser, selectedUser }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
                 const requestData = {
-                    UserId: userID
+                    UserId: item.hostId
                 };
                 const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
                     method: 'POST',
@@ -31,12 +31,13 @@ const ContactItem = ({ userID, ID, type, index, selectUser }) => {
         };
 
         fetchUserInfo();
-    }, [userID]);
+    }, [item]);
 
     if (user) {
         if (type === 'My contacts') {
             return (
-                <div className={styles.displayItem} onClick={() => selectUser(index, user)}>
+                <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`}
+                     onClick={() => selectUser(index, user)}>
                     {user}
                 </div>
             );

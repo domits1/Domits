@@ -86,7 +86,6 @@ const Chat = ({ user }) => {
             }
             const responseData = await response.json();
             const JSONData = JSON.parse(responseData.body);
-            console.log(JSONData);
             setContacts(JSONData.accepted);
             setPendingContacts(JSONData.pending);
         } catch (error) {
@@ -416,8 +415,9 @@ const Chat = ({ user }) => {
                             ) : (
                                 itemsDisplay.length > 0 ? (
                                     itemsDisplay.map((item, index) => (
-                                            <ContactItem userID={item.userId} ID={item.ID} index={index} type={displayType}
-                                                         acceptOrDenyRequest={acceptOrDenyRequest} selectUser={selectUser}/>
+                                            <ContactItem item={item} index={index} type={displayType}
+                                                         acceptOrDenyRequest={acceptOrDenyRequest} selectUser={selectUser}
+                                            selectedUser={selectedUserName}/>
                                         )
                                     )
                                 ) : (
