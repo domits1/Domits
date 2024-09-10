@@ -1,4 +1,4 @@
-.reservation-content {
+.reservationContent {
     display: flex;
     flex-direction: column;
     margin-left: 10%;
@@ -7,24 +7,24 @@
         text-align: left;
         padding-left: 2em;
     }
-    .reservation-info {
+    .reservationInfo {
         display: flex;
         flex-direction: row;
         gap: 1em;
-        .info-icon {
+        .infoIcon {
             max-width: 1.5em;
             max-height: 1.5em;
             align-self: center;
         }
     }
-    .reservation-selector {
+    .reservationSelector {
         display: flex;
         flex-direction: row;
-        justify-content: space-around;
+        justify-content: start;
         gap: 0.5em;
         width: 100%;
         margin-bottom: 2rem;
-        align-self: center;
+        justify-self: center;
         flex-wrap: wrap;
         .option {
             border-radius: 5%;
@@ -41,15 +41,15 @@
             box-shadow: none;
         }
     }
-    .reservation-th {
+    .reservationTh {
         min-width: 7vw;
     }
-    .reservation-display {
+    .reservationDisplay {
         display: flex;
         flex-direction: column;
         box-shadow: 0 0 20px 10px #dedede;
         padding: 5%;
-        min-width: 50vw;
+        width: 100%;
         gap: 1.5em;
         margin: 1.5em;
     }
@@ -62,16 +62,22 @@
     .sort:hover {
         cursor: pointer;
     }
-    .util-box {
+    .utilBox {
         display: flex;
         flex-direction: row;
         gap: 5%;
         align-self: end;
-        .refresh-btn {
-            margin: 0;
-        }
+        .refreshBtn {
+            color: white;
+            background-color: var(--primary-color);
+            border: none;
+        }.refreshBtn:hover {
+             color: var(--primary-color);
+             background-color: white;
+             border: 1px solid var(--primary-color);
+         }
     }
-    .btn-box {
+    .btnBox {
         display: grid;
         grid-template-columns: auto auto auto;
         gap: 1em;
@@ -82,7 +88,7 @@
         align-items: center;
     }
 
-    .selected-text {
+    .selectedText {
         color: white;
         font-size: 1.1em;
     }
@@ -97,16 +103,16 @@
         cursor: pointer;
         color: white;
     }
-    .btn-undo:hover {
+    .btnUndo:hover {
         background-color: black;
     }
-    .btn-deny:hover {
+    .btnDeny:hover {
         background-color: red;
     }
-    .btn-approve:hover {
+    .btnApprove:hover {
         background-color: #0A760F;
     }
-    .btn-group {
+    .btnGroup {
         display: flex;
         justify-self: end;
         gap: 1em;
