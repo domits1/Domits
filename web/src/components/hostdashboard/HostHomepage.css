@@ -256,11 +256,6 @@
   justify-content: center;
 }
 
-.select-option {
-  display: flex;
-  text-align: center;
-}
-
 .header {
   font-size: 1.75em;
 }
@@ -368,13 +363,6 @@
 
 .save-btn .btn-text {
   color: white;
-}
-
-.alert-message {
-  margin: 15px;
-  font-weight: bold;
-  text-align: center;
-  font-size: 1.5rem;
 }
 
 .undo-txt {
@@ -576,21 +564,6 @@
   max-height: none;
 }
 
-.locationBox {
-  height: auto;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  overflow: hidden;
-  font-size: 1.1em;
-  width: 100%;
-  max-width: 100%;
-  padding: 0.75em;
-  margin: 1em auto;
-}
-
 .locationBox select {
   width: 100%;
   max-width: 100%;
@@ -665,13 +638,6 @@
 .review-content {
   text-align: start;
 }
-
-.selector {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-}
-
 .select-option {
   display: flex;
   text-align: center;

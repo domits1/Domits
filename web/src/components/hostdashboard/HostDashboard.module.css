@@ -136,3 +136,9 @@
         max-height: 1.5em;
     }
 }
+.alertMessage {
+    margin: 15px;
+    font-weight: bold;
+    text-align: center;
+    font-size: 1.5rem;
+}

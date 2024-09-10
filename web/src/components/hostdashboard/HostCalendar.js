@@ -4,6 +4,8 @@ import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import CalendarComponent from "./CalendarComponent";
+import styles from "./HostDashboard.module.css";
+import calenderStyles from "./HostCalendar.module.css";
 
 
 function HostCalendar() {
@@ -76,9 +78,9 @@ function HostCalendar() {
         }
     }, [userId]);
     return (
-        <div className="container">
+        <div className="page-body">
             <h2>Calendar</h2>
-            <div className="dashboardHost">
+            <div className={styles.dashboardHost}>
                 <Pages />
                 {isLoading ? (
                         <div>
@@ -87,12 +89,12 @@ function HostCalendar() {
                     ) : accommodations.length < 1 ? (
                         <p>No accommodations found...</p>
                     ) :
-                <div className="contentContainer-calendar">
-                    <div className="boxColumns fullColumn">
-                        <div className="box locationBox selector">
-                            <select className="locationBox"
+                <div className={calenderStyles.contentContainerCalendar}>
+                    <div className={calenderStyles.calendarDropdown}>
+                        <div>
+                            <select className={calenderStyles.locationBox}
                                     onChange={handleSelectAccommodation}>
-                                <option value="" className="select-option">
+                                <option value="" className={calenderStyles.selectOption}>
                                     Select your Accommodation
                                 </option>
                                 {accommodations.map(accommodation => (
@@ -104,18 +106,16 @@ function HostCalendar() {
                             </select>
                         </div>
                         {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
-                        <div className="calendar-box">
+                        <div>
                             <p>Booking availability for
                                     {" " + selectedAccommodation.Title}
                             </p>
-                            <div className="locationBox">
-                                <div className="boxColumns locationContent">
-                                    <CalendarComponent passedProp={selectedAccommodation} isNew={false} updateDates={updateDates}/>
-                                </div>
+                            <div className={calenderStyles.locationBox}>
+                                <CalendarComponent passedProp={selectedAccommodation} isNew={false} updateDates={updateDates}/>
                             </div>
                         </div>
                             ) : (
-                                <div className="alert-message">Please select your Accommodation first</div>
+                                <div className={styles.alertMessage}>Please select your Accommodation first</div>
                             )
                         }
                     </div>
