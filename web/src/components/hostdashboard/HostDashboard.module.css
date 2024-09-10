@@ -1,0 +1,138 @@
+.dashboardHeader {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+.welcomeMsg {
+    padding: 0;
+    margin-left: 15%;
+    font-size: 2em;
+}
+.dashboardHost {
+    display: flex;
+    justify-content: flex-start;
+    gap: 5rem;
+    width: 100%;
+}
+.dashboardContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4em;
+}
+.dashboardLeft {
+    display: flex;
+    flex-direction: column;
+    gap: 2em;
+    animation: fade-up 2s;
+    .dashboardHead {
+        .buttonBox {
+            display: flex;
+            flex-direction: row;
+            justify-content: start;
+            gap: 5%;
+        }
+    }
+}
+.dashboardRight {
+    animation: fade-up 4s;
+    .personalInfoContent {
+        display: flex;
+        flex-direction: column;
+        margin-left: 1px;
+        width: 100%;
+        .personalInfoBox {
+            background-color: #fff;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            width: auto;
+            span {
+                margin-right: auto;
+            }
+        }
+    }
+}
+.dashboardCard {
+    height: 35vh;
+    width: 17vw;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 0.5em;
+    position: relative;
+    .accommodationText {
+        padding: 0.25em;
+        width: 80%;
+        background-color: black;
+        backdrop-filter: blur(10px);
+        border-radius: 0.5em;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        position: absolute;
+        justify-self: center;
+        top: 10%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+    }
+    .accommodationTitle {
+        color: white;
+        margin: 0;
+        font-size: 0.75em;
+        background-color: black;
+    }
+    .accommodationLocation {
+        color: white;
+        font-size: 0.6em;
+        margin-top: 1%;
+    }
+    .accommodationImg {
+        max-height: 70%;
+        max-width: none;
+        border-radius: 0.5em 0.5em 0 0;
+        padding: 0;
+        align-self: center;
+        width: 100%;
+        height: 70%;
+    }
+    .accommodationDetails {
+        padding: 10px;
+        p {
+            font-size: 0.75rem;
+        }
+        .isDrafted {
+            color: #003366;
+        }
+        .isLive {
+            color: #0fa616;
+        }
+    }
+
+}
+.greenBtn {
+    color: white;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 1rem;
+    padding: 0.5rem;
+}
+.greenBtn:hover {
+    color: var(--primary-color);
+    background-color: white;
+    border: 1px solid var(--primary-color);
+    cursor: pointer;
+}
+.infoBox {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1em;
+    .infoIcon {
+        max-width: 1.5em;
+        max-height: 1.5em;
+    }
+}

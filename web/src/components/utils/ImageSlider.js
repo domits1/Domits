@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import styles from ".././hostdashboard/HostDashboard.module.css";
 
 /**
  * @param images = images you want to slide through
@@ -37,7 +38,7 @@ function ImageSlider({ images, seconds }) {
         <img
             src={imageSrc}
             alt="Slideshow"
-            className={`accommodation-img ${isVisible ? 'visible' : ''}`}
+            className={`${styles.accommodationImg} ${isVisible ? 'visible' : ''}`}
         />
     );
 }
