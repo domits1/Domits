@@ -118,16 +118,13 @@
   border: none;
   background-color: white;
 }
-
-.review-alert {
-  margin: 10%;
-}
-
 .review-delete:hover {
   cursor: pointer;
   transform: scale(1.2);
 }
-
+.review-alert {
+  margin: 10%;
+}
 .cross {
   width: 30px;
   height: 30px;
