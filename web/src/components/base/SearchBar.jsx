@@ -15,7 +15,7 @@ import './SearchBar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Script from 'react-load-script';
 
-export const SearchBar = ({ setSearchResults, setLoading, onLoad}) => {
+export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
   const [checkIn, setCheckIn] = useState(null);
   const [checkOut, setCheckOut] = useState(null);
   const [dateRange, setDateRange] = useState([null, null]);
@@ -80,6 +80,7 @@ export const SearchBar = ({ setSearchResults, setLoading, onLoad}) => {
   const toggleSearchBar = () => {
     setShowSearchBar(!showSearchBar);
     setIsBarActive(!isBarActive);
+    toggleBar(!isBarActive);
   };
 
   const totalGuestsDescription = useMemo(() => {
