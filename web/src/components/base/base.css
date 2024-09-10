@@ -216,7 +216,6 @@
     }
 
     .Search-bar.active{
-        height: 37vh;
         align-content: center;
         margin: 4vh auto 0 3.5vw;
     }
