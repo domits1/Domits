@@ -27,14 +27,6 @@
     flex-direction: column;
     gap: 2em;
     animation: fade-up 2s;
-    .dashboardHead {
-        .buttonBox {
-            display: flex;
-            flex-direction: row;
-            justify-content: start;
-            gap: 5%;
-        }
-    }
 }
 .dashboardRight {
     animation: fade-up 4s;
@@ -57,6 +49,15 @@
             }
         }
     }
+}
+.buttonBox {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    gap: 5%;
+    box-shadow: 0 2px 8px 0 #63636333;
+    padding: 0.5rem;
+    border-radius: 1rem;
 }
 .dashboardCard {
     height: 35vh;
@@ -141,4 +142,62 @@
     font-weight: bold;
     text-align: center;
     font-size: 1.5rem;
+}
+.wijzer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    cursor: pointer;
+    margin-bottom: 10px;
+    align-items: center;
+    width: 200px;
+    border: 0.5px solid black;
+    border-radius: 15px;
+    padding: 5px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    font-size: 0.75em;
+    text-align: center;
+}
+.header {
+    font-size: 1.75em;
+}
+.imgSliderImage {
+    border-radius: 2em;
+    height: auto;
+    max-height: 15vh;
+    max-width: 25vw;
+    opacity: 0;
+    padding: 1em;
+    transition: opacity 1s ease-in-out;
+}
+.visible {
+    opacity: 1;
+}
+.hostListingContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 4em;
+}
+.listingBody {
+    display: flex;
+    flex-direction: column;
+    .listingsDisplay {
+        box-shadow: 0 2px 8px 0 #63636333;
+        border-radius: 1rem;
+        padding: 1rem;
+        margin-top: 5%;
+    }
+}
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 2rem;
+    .spinner {
+        max-width: 25vw;
+        max-height: 25vh;
+    }
 }

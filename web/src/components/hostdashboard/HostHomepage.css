@@ -273,50 +273,6 @@
   background-color: limegreen;
 }
 
-.accommodation-title {
-  font-size: 1.2em;
-  font-weight: bolder;
-}
-
-.accommodation-tab {
-  border-radius: 15px;
-  border: 1px solid gray;
-  text-align: left;
-  padding: 1.5em;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 2em;
-  margin: 1em;
-  width: auto;
-}
-
-.accommodation-left {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-}
-
-.accommodation-right {
-  display: flex;
-  flex-direction: column;
-  align-items: start;
-}
-
-.accommodation-tab:hover {
-  box-shadow: 4px 4px #003366;
-}
-
-.accommodation-img {
-  padding: 1em;
-  border-radius: 2em;
-  max-height: 15vh;
-  max-width: 25vw;
-  height: auto;
-  transition: opacity 1s ease-in-out;
-  opacity: 0;
-}
-
 .visible {
   opacity: 1;
 }

@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Pages from "./Pages.js";
 import styles from './HostReservations.module.css';
+import pageSwitcherStyling from "../utils/PageSwitcher.module.css";
 import info from "../../images/icons/info.png";
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
@@ -231,7 +232,7 @@ const HostReservations = () => {
                                 <p>You do not have any booking requests at the moment...</p>
                             )}
                     </section>
-                    <section className="pagination">
+                    <section className={pageSwitcherStyling.pagination}>
                         <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
                             {'<'}
                         </button>

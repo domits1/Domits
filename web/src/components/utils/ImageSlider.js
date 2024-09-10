@@ -7,7 +7,7 @@ import styles from ".././hostdashboard/HostDashboard.module.css";
  * @returns {Element}
  * @constructor
  */
-function ImageSlider({ images, seconds }) {
+function ImageSlider({ images, seconds, page}) {
     const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const [isVisible, setIsVisible] = useState(false);
     const ms = seconds * 1000;
@@ -38,7 +38,7 @@ function ImageSlider({ images, seconds }) {
         <img
             src={imageSrc}
             alt="Slideshow"
-            className={`${styles.accommodationImg} ${isVisible ? 'visible' : ''}`}
+            className={`${(page === 'dashboard') ? styles.accommodationImg : styles.imgSliderImage} ${isVisible ? styles.visible : ''}`}
         />
     );
 }

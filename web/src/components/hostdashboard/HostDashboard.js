@@ -138,7 +138,7 @@ function HostDashboard() {
                                             {accommodation.PostalCode}
                                         </p>
                                     </div>
-                                    <ImageSlider images={accommodation.Images} seconds={5}/>
+                                    <ImageSlider images={accommodation.Images} seconds={5} page={'dashboard'}/>
                                     <div className={styles.accommodationDetails}>
                                         <p className={`${(accommodation.Drafted) ? styles.isDrafted : styles.isLive}`}
                                         >Status: {accommodation.Drafted ? 'Drafted' : 'Live'}</p>
