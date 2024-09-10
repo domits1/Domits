@@ -46,10 +46,10 @@ const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selec
                     {user}
                     <div className={styles.horizontalButtonBox}>
                         <button className={`${styles.accept} ${styles.roundButton}`}
-                                onClick={() => acceptOrDenyRequest('accepted', item.ID, item.userID)}
+                                onClick={() => acceptOrDenyRequest('accepted', item.ID, item.userId)}
                         >✓</button>
                         <button className={`${styles.deny} ${styles.roundButton}`}
-                                onClick={() => acceptOrDenyRequest('denied', item.ID, item.userID)}
+                                onClick={() => acceptOrDenyRequest('denied', item.ID, item.userId)}
                         >x</button>
                     </div>
                 </div>

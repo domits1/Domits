@@ -370,6 +370,7 @@ const Chat = ({ user }) => {
                 Id: id,
                 userId: userId
             };
+            console.log(body);
             try {
                 const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
                     method: 'PUT',
