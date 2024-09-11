@@ -146,7 +146,7 @@ function GuestReviews() {
         }
     }
     return (
-        <div className="container">
+        <div className="page-body">
             <h2>Reviews</h2>
             <div className="dashboards">
                 <Pages />
