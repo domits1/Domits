@@ -95,14 +95,12 @@ function HostDashboard() {
     return (
         <main className="page-body">
             <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)}/>
-            <div className={styles.dashboardHeader}>
-                <h3 className={styles.welcomeMsg}>Welcome {user.name}</h3>
-            </div>
             <div className={styles.dashboardHost}>
                 <Pages/>
                 <div>
                 <div className={styles.dashboardContainer}>
                     <div className={styles.dashboardLeft}>
+                        <h3 className={styles.welcomeMsg}>Welcome {user.name}</h3>
                         <div className={styles.dashboardHead}>
                             <div className={styles.buttonBox}>
                                 <button className={styles.greenBtn} onClick={fetchRecentAccommodations}>Refresh
@@ -130,7 +128,7 @@ function HostDashboard() {
                                 <div key={index} className={styles.dashboardCard}
                                      onClick={() => !accommodation.Drafted ? navigate(`/listingdetails?ID=${accommodation.ID}`) :
                                          alert('This accommodation is drafted and cannot be viewed in listing details!')
-                                }>
+                                     }>
                                     <div className={styles.accommodationText}>
                                         <p className={styles.accommodationTitle}>{accommodation.Title}</p>
                                         <p className={styles.accommodationLocation}> {accommodation.City},

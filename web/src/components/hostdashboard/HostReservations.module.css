@@ -1,7 +1,7 @@
 .reservationContent {
     display: flex;
     flex-direction: column;
-    margin-left: 10%;
+    margin-left: 5%;
     min-height: 55rem;
     .header {
         text-align: left;
@@ -65,8 +65,9 @@
     .utilBox {
         display: flex;
         flex-direction: row;
-        gap: 5%;
-        align-self: end;
+        gap: 1%;
+        justify-content: end;
+        width: auto;
         .refreshBtn {
             color: white;
             background-color: var(--primary-color);

@@ -5,8 +5,6 @@
 }
 .welcomeMsg {
     padding: 0;
-    margin-left: 15%;
-    font-size: 2em;
 }
 .dashboardHost {
     display: flex;
