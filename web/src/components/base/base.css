@@ -3,6 +3,7 @@
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 20px 50px;
     text-align: center;
+    /*background-color: white;*/
 }
 
 .header-nav {
@@ -117,7 +118,7 @@
     opacity: 90%;
 }
 
-.headerButtons button{
+.headerButtons button {
     width: 100%;
     height: 100%;
     padding: 5px 15px;
@@ -149,7 +150,6 @@
 }
 
 @media screen and (max-width: 650px) {
-
     .header-nav, .headerRight {
         flex-direction: row;
         justify-content: center;
@@ -157,11 +157,11 @@
     }
 
     .headerRight {
-        width: 90%;
+        width: 69%;
         margin-top: 20px;
     }
 
-    .headerButtons, .personalMenu, .Search-bar{
+    .headerButtons, .personalMenu, .Search-bar {
         width: 100%;
         margin-top: 10px;
         margin-right: 0;
@@ -169,6 +169,56 @@
         float: none;
     }
 
+    .app-header {
+        padding: 0;
+    }
+
+    .App, .header-top {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+        padding-top: 10px;
+    }
+
+    .header-top {
+        box-shadow: 0 2px 0 0 #0d1a2626;
+    }
+
+    .header-top.active {
+        height: 90vh;
+    }
+
+    .header-top.active.no-scroll {
+        overflow: hidden;
+    }
+
+    .header-bottom {
+        display: none;
+    }
+
+    .headerRight {
+        display: flex;
+        justify-content: center;
+        justify-items: center;
+        align-content: center;
+        margin: 0 70px 0 auto;
+        height: auto;
+    }
+
+    .bar-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 10px 20px;
+    }
+
+    .Search-bar.active{
+        align-content: center;
+        margin: 4vh auto 0 3.5vw;
+    }
 }
 
 /* Footer styles */
@@ -221,9 +271,10 @@
     justify-content: center;
     padding: 15px;
 }
+
 .footer-icons img {
-    width: 2.3rem; 
-    height: auto; 
+    width: 2.3rem;
+    height: auto;
     margin-left: 1.2rem;
     margin-bottom: 0.6rem;
     border-radius: 25%;
