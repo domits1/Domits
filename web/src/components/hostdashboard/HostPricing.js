@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostPricing = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-pricing' style={{
                 display: "flex",
                 flexDirection: "row"

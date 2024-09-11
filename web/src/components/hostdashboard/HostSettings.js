@@ -34,7 +34,7 @@ const HostSettings = () => {
     const navigate = useNavigate();
 
     return (
-        <div className="guestdashboard">
+        <main className="page-body">
             <div className="dashboard">
                 <Pages />
                 <div className="content">
@@ -49,7 +49,7 @@ const HostSettings = () => {
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }
 

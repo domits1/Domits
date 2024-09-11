@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostScreening = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-screening' style={{
                 display: "flex",
                 flexDirection: "row"
