@@ -70,6 +70,8 @@ const Chat = ({ user }) => {
 
     const fetchHostContacts = async () => {
         setLoading(true);
+        setContacts([]);
+        setPendingContacts([]);
         try {
             const requestData = {
                 hostID: userId
@@ -363,12 +365,11 @@ const Chat = ({ user }) => {
         }
     }
 
-    const acceptOrDenyRequest = async (status, id, userId) => {
+    const acceptOrDenyRequest = async (status, id) => {
         if (status && id) {
             const body = {
                 Status: status,
-                Id: id,
-                userId: userId
+                Id: id
             };
             console.log(body);
             try {
@@ -383,9 +384,10 @@ const Chat = ({ user }) => {
                 }
                 const data = await response.json();
                 const parsedData = JSON.parse(data.body);
-                fetchHostContacts();
             } catch (error) {
                 console.error("Unexpected error:", error);
+            } finally {
+                fetchHostContacts();
             }
         }
     }
