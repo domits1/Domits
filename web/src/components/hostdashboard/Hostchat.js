@@ -28,7 +28,6 @@ const Chat = ({ user }) => {
     const [channelUUID, setChannelUUID] = useState(null);
     const [isChatOpen, setIsChatOpen] = useState(false); // New state variable
     const [pendingContacts, setPendingContacts] = useState([]);
-    const [contacts, setContacts] = useState([]);
     const [displayType, setDisplayType] = useState('My contacts');
     const [itemsDisplay, setItemsDisplay] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -61,7 +60,7 @@ const Chat = ({ user }) => {
     useEffect(() => {
         if (displayType) {
             if (displayType === 'My contacts') {
-                setItemsDisplay(contacts);
+                setItemsDisplay(chatUsers);
             } else {
                 setItemsDisplay(pendingContacts);
             }
@@ -70,7 +69,6 @@ const Chat = ({ user }) => {
 
     const fetchHostContacts = async () => {
         setLoading(true);
-        setContacts([]);
         setPendingContacts([]);
         try {
             const requestData = {
@@ -88,7 +86,6 @@ const Chat = ({ user }) => {
             }
             const responseData = await response.json();
             const JSONData = JSON.parse(responseData.body);
-            setContacts(JSONData.accepted);
             setPendingContacts(JSONData.pending);
         } catch (error) {
             console.error('Error fetching host contacts:', error);
@@ -232,8 +229,8 @@ const Chat = ({ user }) => {
             });
     
             const filteredUsersData = usersWithData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-    
             setChatUsers(filteredUsersData);
+            setItemsDisplay(filteredUsersData);
         } catch (error) {
             console.error("Error fetching chat users:", error);
         }
@@ -267,7 +264,6 @@ const Chat = ({ user }) => {
         setSelectedUser({ userId });
         const channelName = generateChannelName(userId, userId);
         setChannelUUID(channelName);
-        updateRecipientIdInUrl(userId);
         setIsChatOpen(true); // Open chat view
 
         try {
@@ -334,12 +330,6 @@ const Chat = ({ user }) => {
             console.error("Error sending message:", error);
         }
     };
-    
-    const updateRecipientIdInUrl = (userId) => {
-        const searchParams = new URLSearchParams(location.search);
-        searchParams.set('recipient', userId);
-        navigate(`?${searchParams.toString()}`);
-    };
 
     const generateUUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -358,14 +348,14 @@ const Chat = ({ user }) => {
 
     const selectUser = async (index, user) => {
         if (index != null) {
-            await handleUserClick(contacts[index].userId);
+            await handleUserClick(chatUsers[index].userId);
         }
         if (user) {
             setSelectedUserName(user);
         }
     }
 
-    const acceptOrDenyRequest = async (status, id) => {
+    const acceptOrDenyRequest = async (status, id, origin) => {
         if (status && id) {
             const body = {
                 Status: status,
@@ -384,10 +374,29 @@ const Chat = ({ user }) => {
                 }
                 const data = await response.json();
                 const parsedData = JSON.parse(data.body);
+                console.log(parsedData);
+                if (parsedData.isAccepted) {
+                    const result = await API.graphql({
+                        query: mutations.createChat,
+                        variables: {
+                            input: {
+                                text: '',
+                                userId: userId,
+                                recipientId: origin,
+                                isRead: false,
+                                createdAt: new Date().toISOString(),
+                                channelID: channelUUID
+                            },
+                        },
+                    });
+                    console.log(result);
+                }
             } catch (error) {
                 console.error("Unexpected error:", error);
             } finally {
                 fetchHostContacts();
+                fetchChats(origin);
+                fetchChatUsers();
             }
         }
     }
@@ -402,7 +411,7 @@ const Chat = ({ user }) => {
                         <section className={styles.switcher}>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'My contacts') ? styles.selected : styles.disabled}`}
-                                onClick={() => setDisplayType('My contacts')}>My contacts ({contacts.length})
+                                onClick={() => setDisplayType('My contacts')}>My contacts ({chatUsers.length})
                             </button>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'Pending contacts') ? styles.selected : styles.disabled}`}
@@ -456,10 +465,12 @@ const Chat = ({ user }) => {
                                                 </span>
                                                     </p>
                                                 )}
-                                                <div
-                                                    className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
-                                                    {chat.text}
-                                                </div>
+                                                {chat.text !== '' && (
+                                                    <div
+                                                        className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
+                                                        {chat.text}
+                                                    </div>
+                                                )}
                                             </React.Fragment>
                                         ))}
                                         {imageUrl && <img src={imageUrl} alt="Selected"
