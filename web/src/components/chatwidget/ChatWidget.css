@@ -230,7 +230,7 @@
 @media (max-width: 768px) {
   .chatwidget-widget {
     width: 80%;
-    bottom: 10px;
+    bottom: 5%;
     right: 10px;
   }
 }
