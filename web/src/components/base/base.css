@@ -3,7 +3,7 @@
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 20px 50px;
     text-align: center;
-    /*background-color: white;*/
+    /*width: 102%;*/
 }
 
 .header-nav {
@@ -149,7 +149,7 @@
     word-wrap: break-word;
 }
 
-@media screen and (max-width: 650px) {
+@media screen and (max-width: 768px) {
     .header-nav, .headerRight {
         flex-direction: row;
         justify-content: center;
@@ -215,11 +215,81 @@
         padding: 10px 20px;
     }
 
-    .Search-bar.active{
+    .Search-bar.active {
         align-content: center;
-        margin: 4vh auto 0 3.5vw;
+        margin: 4vh 0 0 4vw;
     }
+
 }
+
+/*@media screen and (max-width: 768px) {*/
+/*    .app-header {*/
+/*        padding: 0;*/
+/*    }*/
+/*    .header-nav {*/
+/*        display: flex;*/
+/*        flex-wrap: nowrap;*/
+/*        justify-content: center;*/
+/*    }*/
+
+/*    .bar-container {*/
+/*        display: flex;*/
+/*        flex-direction: column;*/
+/*        justify-content: center;*/
+/*        align-items: center;*/
+/*        padding: 10px 20px;*/
+/*    }*/
+
+/*    .Search-bar.active {*/
+/*        align-content: center;*/
+/*    }*/
+
+/*    .header-bottom {*/
+/*        display: none;*/
+/*    }*/
+
+/*    .header-top.active {*/
+/*        height: 90vh;*/
+/*    }*/
+
+/*}*/
+
+/*@media screen and (max-width: 1000px){*/
+/*    .header-nav {*/
+/*        display: contents;*/
+/*    }*/
+/*    !*.header-bottom {*!*/
+/*    !*    display: none;*!*/
+/*    !*}*!*/
+/*}*/
+
+/*@media screen and (max-width: 1200px) {*/
+/*    .app-header {*/
+/*        padding-left: 0%;*/
+/*    }*/
+/*    .header-nav {*/
+/*        display: flex;*/
+/*        flex-direction: row;*/
+/*        flex-wrap: nowrap;*/
+/*    }*/
+
+/*    .header-top {*/
+/*        display: flex;*/
+/*        flex-direction: row;*/
+/*        justify-content: center;*/
+/*        align-items: center;*/
+/*        padding: 10px 20px;*/
+/*    }*/
+
+/*    .logo {*/
+/*        margin-right: 3vw;*/
+/*    }*/
+
+/*    .personalMenuDropdownContent.show {*/
+/*        margin-top: 2vh;*/
+/*    }*/
+
+/*}*/
 
 /* Footer styles */
 .main-footer {

@@ -160,7 +160,6 @@
     .headerRight {
         flex-direction: row;
         justify-content: center;
-        width: 100%;
     }
 
     .headerRight {
@@ -189,3 +188,57 @@
         border-radius: 10px;
     }
 }
+
+@media screen and (max-width: 768px) {
+    .bottom-menu-bar {
+        display: flex;
+        position: sticky;
+        bottom: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+        box-shadow: 0 0 2px 0 #0d1a2626;
+        justify-content: center;
+    }
+
+    .menu {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        padding: 0 0 0 5px;
+        margin: -23px 10px 5px 20px;
+    }
+
+    .headerRight {
+        margin: 5% 7% 1% 7%;
+    }
+
+}
+
+/*@media screen and (max-width: 1000px) {*/
+/*    .element {*/
+/*        min-width: 769px;*/
+/*    }*/
+/*    .bottom-menu-bar {*/
+/*        display: flex;*/
+/*        position: sticky;*/
+/*        bottom: 0;*/
+/*        z-index: 1000;*/
+/*        background: white;*/
+/*        width: 100%;*/
+/*        box-shadow: 0 0 2px 0 #0d1a2626;*/
+/*        justify-content: center;*/
+/*    }*/
+
+/*    .menu {*/
+/*        display: flex;*/
+/*        justify-content: center;*/
+/*        width: 100%;*/
+/*        padding: 0 0 0 5px;*/
+/*        margin: -23px 10px 5px 20px;*/
+/*    }*/
+
+/*    .headerRight {*/
+/*        margin: 5% 7% 1% 7%;*/
+/*    }*/
+/*}*/
