@@ -1,7 +1,6 @@
 .container {
-    width: 60%;
+    width: 100%;
     margin: auto;
-    margin-top: 30px;
     margin-bottom: 30px;
     display: flex;
     flex-direction: column;
@@ -157,6 +156,22 @@
     justify-content: center;
     align-items: center;
     padding-bottom: 4%;
+    margin-left: 7.5%;
+    width: 25%;
+    margin-top: 10%;
+
+}
+
+.MainText h1, .MainText p{
+    text-align: left;
+
+
+}
+.MainText h1 {
+    font-size: 40px;
+}
+.highlightText{
+    color: #003366;
 }
 
 .WhyHow {
@@ -166,6 +181,36 @@
     align-items: center;
     padding-bottom: 5%;
 }
+.easyHosting {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-bottom: 5%;
+    background-color: #f9f9f9;
+}
+.threeSteps{
+    display: flex;
+    justify-content: space-between;
+    padding-bottom: 4%;
+}
+.steps{
+    display: flex;
+    flex-direction: column;
+    width: 27%;  
+    
+}
+.steps h1{
+    font-size: 100px;
+    
+}
+.steps h2{
+    font-weight: bold;
+}
+.steps h1, .steps h2, .steps p {
+    margin-bottom: 0px;
+    margin-top: 0px;
+}  
 
 .Cards {
     display: flex;
@@ -177,9 +222,38 @@
 .RegisterBlock {
     display: flex;
     text-align: left;
+    padding-top: 1%;
+    background-color: #f9f9f9;
+}
+.firstSection{
+    display: flex;    
+    justify-content: space-between;
+}
+.firstPicture{
+    width: 50%;
+}
+.firstPicture img{
+    border-bottom-left-radius: 80% 100%; 
+    border-top-left-radius: 80% 100%; 
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+.whyHost{
+    display: flex;
+    padding-top: 5%;
+}
+.SecPicture{
+    width: 45%;
+    height: 60%;
+}
+.SecPicture img{
+    width: 100%;
+    height: 100%;
 }
 
-.First_Icons {
+
+/* .First_Icons {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -190,15 +264,17 @@
 
 .First_Icons img {
     max-width: 7vw;
-}
+} */
+
+
 
 .WhyHow_text {
     padding-bottom: 5%;
 }
-
+/* 
 .infoCard p {
     max-width: 10vw;
-}
+} */
 
 .updateGroupButtonDiv {
     display: flex;
@@ -219,7 +295,7 @@
         font-size: 1.6rem;
     }
 
-    .infoCard img {
+    /* .infoCard img {
         width: auto;
         height: auto;
         object-fit: contain;
@@ -247,7 +323,7 @@
     .infoCard p {
         font-size: 1rem !important;
         max-width: none !important;
-    }
+    } */
 }
 
 @media (max-width: 480px) {
@@ -259,12 +335,12 @@
         font-size: 1.4rem;
     }
 
-    .infoCard img {
+    /* .infoCard img {
         width: 50px;
         height: 50px;
     }
 
     .infoCard p, .Cards p {
         font-size: 0.75rem;
-    }
+    } */
 }

@@ -13,6 +13,9 @@ import boothuis from "../../images/icons/house-boat.png";
 import appartement from "../../images/icons/flat.png";
 import camper from "../../images/icons/camper-van.png";
 import villa from "../../images/icons/mansion.png";
+import MainTextpicture from "../../images/host-landing-example.png";
+import whyHostpicture from "../../images/host-landing-example2.jpg";
+
 
 function Landing() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -54,31 +57,37 @@ function Landing() {
 
     return (
         <div className={styles.container}>
-            <div className={styles.MainText}>
-                <h1>Host your property on Domits - The All-In-1 Travel App</h1>
-                <p>Increase your earning potential, revenue, occupancy & average daily rate</p>
-            </div>
-            <div className={styles.First_Icons}>
-                <div className={styles.infoCard}>
-                    <img src={huis} alt="House" />
-                    <p>House</p>
+            <div className={styles.firstSection}>
+                <div className={styles.MainText}>
+                    <h1>List your <span className={styles.highlightText}>House</span> for free on Domits</h1>
+                    
+                    <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
+
+                    <button className={styles.nextButtons}></button>
                 </div>
-                <div className={styles.infoCard}>
-                    <img src={appartement} alt="Flat" />
-                    <p>Apartment</p>
+                
+                <div className={styles.firstPicture}>
+                    <img src={MainTextpicture} alt="House"/>
                 </div>
-                <div className={styles.infoCard}>
-                    <img src={camper} alt="Camper" />
-                    <p>Camper</p>
-                </div>
-                <div className={styles.infoCard}>
-                    <img src={boothuis} alt="Boat" />
-                    <p>Boat</p>
-                </div>
-                <div className={styles.infoCard}>
-                    <img src={villa} alt="Villa" />
-                    <p>Villa</p>
-                </div>
+
+                {/* <div className={styles.First_Icons}>
+                    <div className={styles.infoCard}>
+                        <img src={appartement} alt="Flat" />
+                        <p>Apartment</p>
+                    </div>
+                    <div className={styles.infoCard}>
+                        <img src={camper} alt="Camper" />
+                        <p>Camper</p>
+                    </div>
+                    <div className={styles.infoCard}>
+                        <img src={boothuis} alt="Boat" />
+                        <p>Boat</p>
+                    </div>
+                    <div className={styles.infoCard}>
+                        <img src={villa} alt="Villa" />
+                        <p>Villa</p>
+                    </div>
+                </div> */}
             </div>
             <div className={styles.RegisterBlock}>
                 {isAuthenticated && group !== 'Host' ? (
@@ -91,9 +100,49 @@ function Landing() {
                     <Register />
                 )}
             </div>
+            
+            <section className={styles.easyHosting}>
+                <div className={styles.easyHosting_text}>
+                    <h1>Hosting on <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
+                    <h3>It only takes 3 steps</h3>
+                </div>
+                <div className={styles.threeSteps}>
+                    <div className={styles.steps}>
+                        <h1><span className={styles.highlightText}>1.</span></h1>
+                        <h2>List your property</h2>
+                        <p>Start earning by listing your property for free in just minutes</p>
+                    </div>
+                    <div className={styles.steps}>
+                        <h1><span className={styles.highlightText}>2.</span></h1>
+                        <h2>Get paid</h2>
+                        <p>Enjoy fast, easy and secure payments.</p>
+                    </div>
+                    <div className={styles.steps}>
+                        <h1><span className={styles.highlightText}>3.</span></h1>
+                        <h2>Receive guest</h2>
+                        <p>Welcome your guest with a warm and personal touch</p>
+                    </div>
+                </div>
+
+
+            </section>
+            
+            <section className={styles.whyHost}>
+                <div className={styles.SecPicture}>
+                    <img src={whyHostpicture} alt="House"/>
+                </div>
+                <div className={styles.whyHostText}>
+                    <h1>Why should i host on <span className={styles.highlightText}>Domits?</span></h1>
+
+                </div>
+
+            </section>
+
+
+{/*             
             <section className={styles.WhyHow}>
                 <div className={styles.WhyHow_text}>
-                    <h1>Why host on Domits?</h1>
+                    <h1>Why should i host on Domits?</h1>
                 </div>
                 <div className={styles.proHosting}>
                     <div className={styles.Cards}>
@@ -119,8 +168,8 @@ function Landing() {
                         </div>
                     </div>
                 </div>
-            </section>
-            <section className={styles.WhyHow}>
+            </section> */}
+            {/* <section className={styles.WhyHow}>
                 <div className={styles.WhyHow_text}>
                     <h1>How to host on Domits?</h1>
                 </div>
@@ -143,7 +192,7 @@ function Landing() {
                         </div>
                     </div>
                 </div>
-            </section>
+            </section> */}
         </div>
     );
 }
