@@ -618,10 +618,10 @@
   .mobile-search-button {
     display: block;
     width: 75vw;
-    padding: 0.8rem; 
+    padding: 0.8rem;
     background-color: #ffffff;
     border: 1px solid #e2e2e4;
-    border-radius: 0.8rem; 
+    border-radius: 0.8rem;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
     font-size: 1rem;
     color: #000;
@@ -672,4 +672,36 @@
     }
   }
 }
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .Search-bar {
+    width: 100%;
+    margin-right: 35vw;
+  }
+
+  .Search-location {
+    width: 28%;
+  }
+
+  /*.searchBar_inputfield::placeholder {*/
+  /*  color: var(--primary-color);*/
+  /*  font-family: 'Kanit', sans-serif;*/
+  /*  font-weight: 500;*/
+  /*  font-size: 0.875rem;*/
+  /*  margin: auto;*/
+  /*}*/
+
+  /*.searchTitle {*/
+  /*  font-size: 0.875rem;*/
+  /*}*/
+  /*.searchTitleGuest {*/
+  /*  font-size: 0.875rem;*/
+  /*}*/
+  .DatePicker__input {
+    padding-left: 0%;
+  }
+}
+
+
+
 
