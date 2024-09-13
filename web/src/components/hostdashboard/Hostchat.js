@@ -36,7 +36,6 @@ const Chat = ({ user }) => {
     const [accommodation, setAccommodation] = useState(null);
     const userId = user.attributes.sub;
     const navigate = useNavigate();
-    const location = useLocation();
     const chatContainerRef = useRef(null);
 
     const getUUIDForUser = (userId) => {
@@ -321,7 +320,6 @@ const Chat = ({ user }) => {
             }
             const responseData = await response.json();
             const data = JSON.parse(responseData.body);
-            console.log(data);
             setAccommodation(data);
         } catch (error) {
             console.error('Error fetching accommodation data:', error);
