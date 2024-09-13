@@ -50,3 +50,47 @@ Cypress.Commands.add('loginAsGuest', () => {
     cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard');
     cy.reload();
   });
+  
+  Cypress.Commands.add('loginAsHostWithStripe', () => {
+    cy.visit('https://acceptance.domits.com/');
+    cy.wait(500);
+    cy.get('.personalMenu').click();
+    cy.get('.dropdownLoginButton').click();
+    cy.get('input[name="email"]').type('mdinle9@gmail.com');
+    cy.get('input[name="password"]').type('Heemskerk123');
+    cy.get('button[type="submit"]').click();
+    cy.wait(1000);
+    cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard');
+    cy.reload();
+  });
+
+  Cypress.Commands.add('selectDatesFromTomorrowUntilEndOfMonth', () => {
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(today.getDate() + 1);
+  
+    const tomorrowDay = tomorrow.getDate();
+    const endOfMonthDay = new Date(tomorrow.getFullYear(), tomorrow.getMonth() + 1, 0).getDate();
+  
+    cy.get('.Calendar_calendarContent__-Oc8E .dates')
+      .contains(tomorrowDay)
+      .click();
+
+    cy.get('.Calendar_calendarContent__-Oc8E .dates')
+        .contains(endOfMonthDay)
+        .click();
+  
+    cy.get('.Calendar_dateRanges__IGJzK')
+      .should('contain', tomorrowDay)
+      .and('contain', endOfMonthDay);
+  });
+
+  Cypress.Commands.add('increaseAmountToTwoForAllOptions', (label) => {
+    cy.get('.guest-amount-item')
+      .contains(label)
+      .parent()
+      .find('.round-button')
+      .eq(1)
+      .click()
+      .click();
+  });
