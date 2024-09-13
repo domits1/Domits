@@ -4,6 +4,18 @@
     --secondary-color: #003366;
 }
 
+.page-body {
+  width: 93%;
+  margin: 0 auto;
+  padding: 20px;
+}
+/* Beginning of the accommodation styling */
+
+/* Host dashboard */
+.accommodation {
+  /* Add styles for the accommodation container if needed */
+}
+
 .accommodation-row {
   display: flex;
   align-items: center;
@@ -86,6 +98,10 @@ li a {
   padding: 10px;
 }
 
+.sidebar-link:hover {
+  /* Add styles for hover state if needed */
+}
+
 /* Code for the alignments of the cards */
 .array {
   margin: 20px;
@@ -166,7 +182,7 @@ li a {
   border: none;
   border-bottom: 2px solid #0A760F;
   padding: 1em 0.3em;
-  outline: none;
+  outline: none; /* Remove default focus outline */
 }
 
 .midtext {

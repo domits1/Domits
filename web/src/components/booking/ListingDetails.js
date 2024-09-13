@@ -71,6 +71,14 @@ const ListingDetails = () => {
     const [showAll, setShowAll] = useState(false);
     const [userID, setUserID] = useState('');
 
+    function generateUUID() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+
     const featureIcons = {
         'Washer and dryer': Washingmashine,
         'Smart TV': Television,
@@ -312,12 +320,15 @@ const ListingDetails = () => {
 
     const addUserToContactList = async () => {
         try {
+            const uu_id = generateUUID();
             const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/AddUserToContactList', {
                 method: 'POST',
                 body: JSON.stringify({
+                    ID: uu_id,
                     userID: userID,
                     hostID: hostID,
-                    Status: 'pending'
+                    Status: 'pending',
+                    AccoId: id
                 }),
                 headers: {'Content-type': 'application/json; charset=UTF-8',
                 }

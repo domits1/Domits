@@ -1,44 +1,10 @@
 .chat{
     height: 80vh;
-    width: 100%;
+    width: 100vw;
     background: white;
     display: flex;
-    justify-content: space-evenly;
+    gap: 5%;
     align-items: center;
-}
-
-.chat__body {
-    display: flex;
-    flex-direction: row;
-    gap: 10%;
-    .contact-list {
-        display: flex;
-        flex-direction: column;
-        width: 40vw;
-        gap: 5%;
-        .switcher {
-            display: flex;
-            justify-content: start;
-            gap: 5%;
-        }
-        .display-body {
-            background: lightgray;
-            border-radius: 1rem;
-            min-height: 50vh;
-            display: flex;
-            flex-direction: column;
-            gap: 2%;
-            justify-content: start;
-            padding: 2rem;
-            .display-item {
-                text-align: start;
-                padding: 0.5rem;
-                background-color: var(--primary-color);
-                color: white;
-                border-radius: 1rem;
-            }
-        }
-    }
 }
 .chat__container{
     width: 100%;
@@ -63,7 +29,7 @@
     display: flex;
     justify-content: center;
     align-items: flex-start;
-
+    border: 1.5px solid #eee;
 }
 
 
@@ -273,7 +239,7 @@ p{
 }
 
 .chat__figure{
-    width: 100%;
+    width: 60%;
     height: 85%;
     background: white;
     display: flex;
@@ -281,9 +247,7 @@ p{
     align-items: flex-start;
     flex-direction: column;
     border-top-left-radius: 1.5rem;
-    border-top-right-radius: 1.5rem;
     border-bottom-left-radius: 1.5rem;
-    border-bottom-right-radius: 1.5rem;
     padding-left: 25px;
     padding-right: 25px;
     border: 1.5px solid #eee;
@@ -639,15 +603,6 @@ a{
         flex-direction: row;
         align-items: center;
     }
-
-    .chat__user{
-        
-    }
-
-    .chat__people{
-      
-    }
-
 
     .chat__people.active {
         width: 100%;
