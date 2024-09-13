@@ -648,7 +648,6 @@ function OnboardingHost() {
                 return (
                     <main className="container">
                         <h2 className="onboardingSectionTitle">{isNew ? 'What best describes your accommodation?' : 'Edit your accommodation type'}</h2>
-
                         <section className="accommodation-types">
                             {accoTypes.map((option, index) => (
                                 <div
@@ -675,29 +674,37 @@ function OnboardingHost() {
                 return (
                     <main className="container">
                         <h2 className="onboardingSectionTitle">{isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}</h2>
-
-                        <section className="guest-access">
-                            <div className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
-                                 onClick={() => changeGuestAccess("Entire house")}>
-                                <h3 className="guest-access-header">Entire house</h3>
-                                <p>Guests have the entire space to themselves</p>
-                            </div>
-                            <div className={formData.GuestAccess === 'Room' ? 'guest-access-item-selected' : 'guest-access-item'}
-                                 onClick={() => changeGuestAccess("Room")}>
-                                <h3 className="guest-access-header">Room</h3>
-                                <p>Guests have their own room in a house and share other spaces</p>
-                            </div>
-                            <div className={formData.GuestAccess === 'Shared room' ? 'guest-access-item-selected' : 'guest-access-item'}
-                                 onClick={() => changeGuestAccess("Shared room")}>
-                                <h3 className="guest-access-header">A shared room</h3>
-                                <p>Guests sleep in a room or common area that they may share with you or others</p>
-                            </div>
-                        </section>
+                        {formData.AccommodationType === 'Boat' ? (
+                            <div></div>
+                        ) : (
+                            <section className="guest-access">
+                                <div
+                                    className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                    onClick={() => changeGuestAccess("Entire house")}>
+                                    <h3 className="guest-access-header">Entire house</h3>
+                                    <p>Guests have the entire space to themselves</p>
+                                </div>
+                                <div
+                                    className={formData.GuestAccess === 'Room' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                    onClick={() => changeGuestAccess("Room")}>
+                                    <h3 className="guest-access-header">Room</h3>
+                                    <p>Guests have their own room in a house and share other spaces</p>
+                                </div>
+                                <div
+                                    className={formData.GuestAccess === 'Shared room' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                    onClick={() => changeGuestAccess("Shared room")}>
+                                    <h3 className="guest-access-header">A shared room</h3>
+                                    <p>Guests sleep in a room or common area that they may share with you or others</p>
+                                </div>
+                            </section>
+                        )}
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
                                 Go back
                             </button>
-                            <button className={!hasGuestAccess ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasGuestAccess} onClick={() => pageUpdater(page + 1)}>
+                            <button className={!hasGuestAccess ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!hasGuestAccess} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
