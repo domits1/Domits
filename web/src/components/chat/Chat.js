@@ -26,15 +26,16 @@ const Chat = ({ user }) => {
     const [chatUsers, setChatUsers] = useState([]);
     const [channelUUID, setChannelUUID] = useState(null);
     const [isChatOpen, setIsChatOpen] = useState(false);
-    const [pendingContacts, setPendingContacts] = useState([]);
     const [contacts, setContacts] = useState([]);
+    const [pendingContacts, setPendingContacts] = useState([]);
     const [displayType, setDisplayType] = useState('My contacts');
     const [itemsDisplay, setItemsDisplay] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [accoId, setAccoId] = useState('');
+    const [accommodation, setAccommodation] = useState(null);
     const userId = user.attributes.sub;
 
     const navigate = useNavigate();
-    const location = useLocation();
     const chatContainerRef = useRef(null);
 
     const getUUIDForUser = (userId) => {
@@ -82,9 +83,23 @@ const Chat = ({ user }) => {
     }, [userId]);
 
     useEffect(() => {
+        contacts.map((contact, index)=> {
+            if (contact.hostId === selectedUser.userId) {
+                setAccoId(contact.AccoId);
+            }
+        })
+    }, [selectedUser]);
+
+    useEffect(() => {
+        if (accoId) {
+            fetchAccommodation(accoId);
+        }
+    }, [accoId]);
+
+    useEffect(() => {
         if (displayType) {
             if (displayType === 'My contacts') {
-                setItemsDisplay(contacts);
+                setItemsDisplay(chatUsers);
             } else {
                 setItemsDisplay(pendingContacts);
             }
@@ -92,7 +107,6 @@ const Chat = ({ user }) => {
     }, [displayType]);
 
     const fetchGuestContacts = async () => {
-        console.log('userId: ' + userId);
         setLoading(true);
         try {
             const requestData = {
@@ -110,24 +124,14 @@ const Chat = ({ user }) => {
             }
             const responseData = await response.json();
             const JSONData = JSON.parse(responseData.body);
-            console.log(JSONData);
-            setContacts(JSONData.accepted);
             setPendingContacts(JSONData.pending);
+            setContacts(JSONData.accepted);
         } catch (error) {
             console.error('Error fetching host contacts:', error);
         } finally {
             setLoading(false);
         }
     }
-
-    useEffect(() => {
-        const recipientIdFromUrl = new URLSearchParams(location.search).get('recipient');
-        if (recipientIdFromUrl) {
-            setRecipientId(recipientIdFromUrl);
-            setSelectedUser({ userId: recipientIdFromUrl });
-            setIsChatOpen(true); // Open chat view
-        }
-    }, [location.search]);
 
     useEffect(() => {
         if (selectedUser) {
@@ -164,8 +168,6 @@ const Chat = ({ user }) => {
             console.error("Recipient ID is undefined");
             return;
         }
-        console.log(`Fetching chats for recipient ID: ${recipientId}`);
-        
         try {
             const sentMessagesResponse = await API.graphql({
                 query: queries.listChats,
@@ -232,8 +234,8 @@ const Chat = ({ user }) => {
             });
 
             const filteredUsersData = usersWithData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-
             setChatUsers(filteredUsersData);
+            setItemsDisplay(filteredUsersData);
         } catch (error) {
             console.error("Error fetching chat users:", error);
         }
@@ -263,11 +265,30 @@ const Chat = ({ user }) => {
         }
     };
 
+    const fetchAccommodation = async (id) => {
+        try {
+            const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ID: id }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch accommodation data');
+            }
+            const responseData = await response.json();
+            const data = JSON.parse(responseData.body);
+            setAccommodation(data);
+        } catch (error) {
+            console.error('Error fetching accommodation data:', error);
+        }
+    }
+
     const handleUserClick = async (userId) => {
         setSelectedUser({ userId });
         const channelName = generateChannelName(userId, userId);
         setChannelUUID(channelName);
-        updateRecipientIdInUrl(userId);
         setIsChatOpen(true);
 
         try {
@@ -322,26 +343,17 @@ const Chat = ({ user }) => {
                 },
             });
     
-            // Ensure the new chat message is correctly logged or processed here
             console.log("Message sent successfully:", result);
     
-            // Clear input and update UI state
             setNewMessage('');
             setShowDate(true);
             setLastMessageDate(new Date());
     
-            // Fetch chats and users to refresh the list
             await fetchChats(recipientIdToSend);
             await fetchChatUsers();
         } catch (error) {
             console.error("Error sending message:", error);
         }
-    };
-    
-    const updateRecipientIdInUrl = (userId) => {
-        const searchParams = new URLSearchParams(location.search);
-        searchParams.set('recipient', userId);
-        navigate(`?${searchParams.toString()}`);
     };
 
     const generateUUID = () => {
@@ -361,7 +373,7 @@ const Chat = ({ user }) => {
 
     const selectUser = async (index, user) => {
         if (index != null) {
-            await handleUserClick(contacts[index].userId);
+            await handleUserClick(chatUsers[index].userId);
         }
         if (user) {
             setSelectedUserName(user);
@@ -378,7 +390,7 @@ const Chat = ({ user }) => {
                         <section className={styles.switcher}>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'My contacts') ? styles.selected : styles.disabled}`}
-                                onClick={() => setDisplayType('My contacts')}>My contacts ({contacts.length})
+                                onClick={() => setDisplayType('My contacts')}>My contacts ({chatUsers.length})
                             </button>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'Pending contacts') ? styles.selected : styles.disabled}`}
@@ -396,7 +408,8 @@ const Chat = ({ user }) => {
                                     itemsDisplay.map((item, index) => (
                                             <ContactItem item={item} index={index} type={displayType}
                                                          selectUser={selectUser}
-                                                         selectedUser={selectedUserName}/>
+                                                         selectedUser={selectedUserName}
+                                                         unreadMessages={unreadMessages}/>
                                         )
                                     )
                                 ) : (
@@ -415,73 +428,70 @@ const Chat = ({ user }) => {
                         <div className="chat">
                             <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
                                 <button className="chat__backButton" onClick={() => setIsChatOpen(false)}>Back</button>
-                                <article className="chat__figure">
-                                    <aside className="chat__aside">
-                                        <h2>{selectedUserName}</h2>
-                                    </aside>
-                                    <article className="chat__chatContainer" ref={chatContainerRef}>
-                                        {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
-                                            <React.Fragment key={chat.id}>
-                                                {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
-                                                    <p className="chat__date">
+                                <div className={styles.chatContainer}>
+                                    <article className="chat__figure">
+                                        <aside className="chat__aside">
+                                            <h2>{selectedUserName}</h2>
+                                        </aside>
+                                        <article className="chat__chatContainer" ref={chatContainerRef}>
+                                            {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
+                                                <React.Fragment key={chat.id}>
+                                                    {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
+                                                        <p className="chat__date">
                                                 <span>
                                                     {isToday(new Date(chat.createdAt)) ? "Today" : new Date(chat.createdAt).toLocaleDateString('en-US', {
                                                         month: 'short',
                                                         day: 'numeric'
                                                     })}
                                                 </span>
-                                                    </p>
-                                                )}
-                                                <div
-                                                    className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
-                                                    {chat.text}
-                                                </div>
-                                            </React.Fragment>
-                                        ))}
-                                        {imageUrl && <img src={imageUrl} alt="Selected"
-                                                          style={{maxWidth: "100%", maxHeight: "200px"}}/>}
+                                                        </p>
+                                                    )}
+                                                    {chat.text !== '' && (
+                                                        <div
+                                                            className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
+                                                            {chat.text}
+                                                        </div>
+                                                    )}
+                                                </React.Fragment>
+                                            ))}
+                                            {imageUrl && <img src={imageUrl} alt="Selected"
+                                                              style={{maxWidth: "100%", maxHeight: "200px"}}/>}
+                                        </article>
+                                        <div className="chat__inputContainer">
+                                            <input
+                                                className="chat__input"
+                                                type="text"
+                                                value={newMessage}
+                                                onChange={(e) => setNewMessage(e.target.value)}
+                                                placeholder="Type your message..."
+                                                onKeyUp={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        sendMessage();
+                                                    }
+                                                }}
+                                            />
+                                            <button className="chat__send" onClick={() => sendMessage()}>Send</button>
+                                        </div>
                                     </article>
-                                    <div className="chat__inputContainer">
-                                        <input
-                                            className="chat__input"
-                                            type="text"
-                                            value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                            placeholder="Type your message..."
-                                            onKeyUp={(e) => {
-                                                if (e.key === "Enter") {
-                                                    sendMessage();
-                                                }
-                                            }}
-                                        />
-                                        <button className="chat__send" onClick={() => sendMessage()}>Send</button>
-                                    </div>
-                                </article>
+                                    <article className={styles.accoDisplay}>
+                                        <h4>Referenced accommodation:</h4>
+                                        {accommodation && (
+                                            <div className={styles.textDisplay}>
+                                                <h3>{accommodation.Title}</h3>
+                                                <p>{`${accommodation.Country}, ${accommodation.City}, ${accommodation.Street}, ${accommodation.PostalCode}`}</p>
+                                                <button className={styles.mainButton}
+                                                        onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>View
+                                                    listing details
+                                                </button>
+                                            </div>
+                                        )}
+                                    </article>
+                                </div>
                                 <nav className="chat__nav">
                                     <div className="chat__buttonWrapper">
                                         <button className="chat__button chat__button--review">Send review link</button>
                                     </div>
                                 </nav>
-                            </article>
-                            <article className={`chat__people ${isChatOpen ? 'chat__people--hidden' : ''}`}>
-                                <ul className="chat__users">
-                                    {chatUsers.map((chatUser) => (
-                                        <li className="chat__user" key={chatUser.userId}
-                                            onClick={() => handleUserClick(chatUser.userId)}>
-                                            {unreadMessages[chatUser.userId] > 0 && (
-                                                <figure className="chat__notification">
-                                                    {unreadMessages[chatUser.userId] > 9 ? '9+' : unreadMessages[chatUser.userId]}
-                                                </figure>
-                                            )}
-                                            <div className="chat__pfp">
-                                                {/* Placeholder for user profile image */}
-                                            </div>
-                                            <div className="chat__wrapper">
-                                                <h2 className="chat__name">{chatUser.userId}</h2>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
                             </article>
                         </div>
                     )}

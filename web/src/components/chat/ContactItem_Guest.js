@@ -3,14 +3,14 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
 import spinner from "../../images/spinnner.gif";
 
-const ContactItem = ({ item, type, index, selectUser, selectedUser }) => {
+const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessages }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
                 const requestData = {
-                    UserId: item.hostId
+                    UserId: item.userId
                 };
                 const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
                     method: 'POST',
@@ -38,7 +38,12 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser }) => {
             return (
                 <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`}
                      onClick={() => selectUser(index, user)}>
-                    {user}
+                    <div>{user}</div>
+                    {unreadMessages[item.userId] > 0 && (
+                        <div>
+                            {unreadMessages[item.userId] > 9 ? '9+' : unreadMessages[item.userId]} new messages
+                        </div>
+                    )}
                 </div>
             );
         } else {

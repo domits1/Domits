@@ -327,7 +327,8 @@ const ListingDetails = () => {
                     ID: uu_id,
                     userID: userID,
                     hostID: hostID,
-                    Status: 'pending'
+                    Status: 'pending',
+                    AccoId: id
                 }),
                 headers: {'Content-type': 'application/json; charset=UTF-8',
                 }
