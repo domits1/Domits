@@ -3,14 +3,14 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
 import spinner from "../../images/spinnner.gif";
 
-const ContactItem = ({ item, type, index, selectUser, selectedUser }) => {
+const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessages }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
         const fetchUserInfo = async () => {
             try {
                 const requestData = {
-                    UserId: item.hostId
+                    UserId: item.userId
                 };
                 const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
                     method: 'POST',

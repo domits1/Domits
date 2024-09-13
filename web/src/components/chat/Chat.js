@@ -27,7 +27,6 @@ const Chat = ({ user }) => {
     const [channelUUID, setChannelUUID] = useState(null);
     const [isChatOpen, setIsChatOpen] = useState(false);
     const [pendingContacts, setPendingContacts] = useState([]);
-    const [contacts, setContacts] = useState([]);
     const [displayType, setDisplayType] = useState('My contacts');
     const [itemsDisplay, setItemsDisplay] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -84,7 +83,7 @@ const Chat = ({ user }) => {
     useEffect(() => {
         if (displayType) {
             if (displayType === 'My contacts') {
-                setItemsDisplay(contacts);
+                setItemsDisplay(chatUsers);
             } else {
                 setItemsDisplay(pendingContacts);
             }
@@ -92,7 +91,6 @@ const Chat = ({ user }) => {
     }, [displayType]);
 
     const fetchGuestContacts = async () => {
-        console.log('userId: ' + userId);
         setLoading(true);
         try {
             const requestData = {
@@ -110,8 +108,6 @@ const Chat = ({ user }) => {
             }
             const responseData = await response.json();
             const JSONData = JSON.parse(responseData.body);
-            console.log(JSONData);
-            setContacts(JSONData.accepted);
             setPendingContacts(JSONData.pending);
         } catch (error) {
             console.error('Error fetching host contacts:', error);
@@ -119,15 +115,6 @@ const Chat = ({ user }) => {
             setLoading(false);
         }
     }
-
-    useEffect(() => {
-        const recipientIdFromUrl = new URLSearchParams(location.search).get('recipient');
-        if (recipientIdFromUrl) {
-            setRecipientId(recipientIdFromUrl);
-            setSelectedUser({ userId: recipientIdFromUrl });
-            setIsChatOpen(true); // Open chat view
-        }
-    }, [location.search]);
 
     useEffect(() => {
         if (selectedUser) {
@@ -164,8 +151,6 @@ const Chat = ({ user }) => {
             console.error("Recipient ID is undefined");
             return;
         }
-        console.log(`Fetching chats for recipient ID: ${recipientId}`);
-        
         try {
             const sentMessagesResponse = await API.graphql({
                 query: queries.listChats,
@@ -232,8 +217,8 @@ const Chat = ({ user }) => {
             });
 
             const filteredUsersData = usersWithData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-
             setChatUsers(filteredUsersData);
+            setItemsDisplay(filteredUsersData);
         } catch (error) {
             console.error("Error fetching chat users:", error);
         }
@@ -267,7 +252,6 @@ const Chat = ({ user }) => {
         setSelectedUser({ userId });
         const channelName = generateChannelName(userId, userId);
         setChannelUUID(channelName);
-        updateRecipientIdInUrl(userId);
         setIsChatOpen(true);
 
         try {
@@ -322,15 +306,12 @@ const Chat = ({ user }) => {
                 },
             });
     
-            // Ensure the new chat message is correctly logged or processed here
             console.log("Message sent successfully:", result);
     
-            // Clear input and update UI state
             setNewMessage('');
             setShowDate(true);
             setLastMessageDate(new Date());
     
-            // Fetch chats and users to refresh the list
             await fetchChats(recipientIdToSend);
             await fetchChatUsers();
         } catch (error) {
@@ -361,7 +342,7 @@ const Chat = ({ user }) => {
 
     const selectUser = async (index, user) => {
         if (index != null) {
-            await handleUserClick(contacts[index].userId);
+            await handleUserClick(chatUsers[index].userId);
         }
         if (user) {
             setSelectedUserName(user);
@@ -378,7 +359,7 @@ const Chat = ({ user }) => {
                         <section className={styles.switcher}>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'My contacts') ? styles.selected : styles.disabled}`}
-                                onClick={() => setDisplayType('My contacts')}>My contacts ({contacts.length})
+                                onClick={() => setDisplayType('My contacts')}>My contacts ({chatUsers.length})
                             </button>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'Pending contacts') ? styles.selected : styles.disabled}`}
@@ -396,7 +377,8 @@ const Chat = ({ user }) => {
                                     itemsDisplay.map((item, index) => (
                                             <ContactItem item={item} index={index} type={displayType}
                                                          selectUser={selectUser}
-                                                         selectedUser={selectedUserName}/>
+                                                         selectedUser={selectedUserName}
+                                                         unreadMessages={unreadMessages}/>
                                         )
                                     )
                                 ) : (
@@ -432,10 +414,12 @@ const Chat = ({ user }) => {
                                                 </span>
                                                     </p>
                                                 )}
-                                                <div
-                                                    className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
-                                                    {chat.text}
-                                                </div>
+                                                {chat.text !== '' && (
+                                                    <div
+                                                        className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
+                                                        {chat.text}
+                                                    </div>
+                                                )}
                                             </React.Fragment>
                                         ))}
                                         {imageUrl && <img src={imageUrl} alt="Selected"
@@ -463,25 +447,7 @@ const Chat = ({ user }) => {
                                     </div>
                                 </nav>
                             </article>
-                            <article className={`chat__people ${isChatOpen ? 'chat__people--hidden' : ''}`}>
-                                <ul className="chat__users">
-                                    {chatUsers.map((chatUser) => (
-                                        <li className="chat__user" key={chatUser.userId}
-                                            onClick={() => handleUserClick(chatUser.userId)}>
-                                            {unreadMessages[chatUser.userId] > 0 && (
-                                                <figure className="chat__notification">
-                                                    {unreadMessages[chatUser.userId] > 9 ? '9+' : unreadMessages[chatUser.userId]}
-                                                </figure>
-                                            )}
-                                            <div className="chat__pfp">
-                                                {/* Placeholder for user profile image */}
-                                            </div>
-                                            <div className="chat__wrapper">
-                                                <h2 className="chat__name">{chatUser.userId}</h2>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                            <article className='chat__people'>
                             </article>
                         </div>
                     )}

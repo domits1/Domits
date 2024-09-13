@@ -112,3 +112,20 @@
     background-color: white;
     border: 1px solid var(--primary-color);
 }
+.chatNotification {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    position: absolute;
+    background: #0D9813;
+    right: -13%;
+    top: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.1rem;
+    color: white;
+    font-family: "Kanit";
+    src: local("KanitRegular"),
+    url("../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
+}

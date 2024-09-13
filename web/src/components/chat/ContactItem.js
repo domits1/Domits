@@ -3,7 +3,7 @@ import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
 import spinner from "../../images/spinnner.gif";
 
-const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selectedUser }) => {
+const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selectedUser, unreadMessages }) => {
     const [user, setUser] = useState(null);
 
     useEffect(() => {
@@ -38,6 +38,11 @@ const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selec
             return (
                 <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`} onClick={() => selectUser(index, user)}>
                     {user}
+                    {unreadMessages[item.userId] > 0 && (
+                        <figure className={styles.chatNotification}>
+                            {unreadMessages[item.userId] > 9 ? '9+' : unreadMessages[item.userId]}
+                        </figure>
+                    )}
                 </div>
             );
         } else {

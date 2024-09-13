@@ -119,15 +119,6 @@ const Chat = ({ user }) => {
     }, [recipientId]);
 
     useEffect(() => {
-        const recipientIdFromUrl = new URLSearchParams(location.search).get('recipient');
-        if (recipientIdFromUrl) {
-            setRecipientId(recipientIdFromUrl);
-            setSelectedUser({ userId: recipientIdFromUrl });
-            setIsChatOpen(true); // Open chat view
-        }
-    }, [location.search]);
-
-    useEffect(() => {
         if (selectedUser) {
             chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
         }
@@ -264,7 +255,7 @@ const Chat = ({ user }) => {
         setSelectedUser({ userId });
         const channelName = generateChannelName(userId, userId);
         setChannelUUID(channelName);
-        setIsChatOpen(true); // Open chat view
+        setIsChatOpen(true);
 
         try {
             const unreadMessagesIds = chats
@@ -318,12 +309,10 @@ const Chat = ({ user }) => {
                 },
             });
             
-            // Clear input and update UI state
             setNewMessage('');
             setShowDate(true);
             setLastMessageDate(new Date());
     
-            // Fetch chats and users to refresh the list
             await fetchChats(recipientIdToSend);
             await fetchChatUsers();
         } catch (error) {
@@ -429,6 +418,7 @@ const Chat = ({ user }) => {
                                     itemsDisplay.map((item, index) => (
                                             <ContactItem item={item} index={index} type={displayType}
                                                          acceptOrDenyRequest={acceptOrDenyRequest} selectUser={selectUser}
+                                                         unreadMessages={unreadMessages}
                                             selectedUser={selectedUserName}/>
                                         )
                                     )
@@ -498,25 +488,7 @@ const Chat = ({ user }) => {
                                     </div>
                                 </nav>
                             </article>
-                            <article className={`chat__people ${isChatOpen ? 'chat__people--hidden' : ''}`}>
-                                <ul className="chat__users">
-                                    {chatUsers.map((chatUser) => (
-                                        <li className="chat__user" key={chatUser.userId}
-                                            onClick={() => handleUserClick(chatUser.userId)}>
-                                            {unreadMessages[chatUser.userId] > 0 && (
-                                                <figure className="chat__notification">
-                                                    {unreadMessages[chatUser.userId] > 9 ? '9+' : unreadMessages[chatUser.userId]}
-                                                </figure>
-                                            )}
-                                            <div className="chat__pfp">
-                                                {/* Placeholder for user profile image */}
-                                            </div>
-                                            <div className="chat__wrapper">
-                                                <h2 className="chat__name">{chatUser.userId}</h2>
-                                            </div>
-                                        </li>
-                                    ))}
-                                </ul>
+                            <article className='chat__people'>
                             </article>
                         </div>
                     )}
