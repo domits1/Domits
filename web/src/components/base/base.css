@@ -3,7 +3,6 @@
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 20px 50px;
     text-align: center;
-    /*background-color: white;*/
 }
 
 .header-nav {
@@ -149,7 +148,10 @@
     word-wrap: break-word;
 }
 
-@media screen and (max-width: 650px) {
+@media screen and (max-width: 768px) {
+    .logo {
+        padding-top: 2vh;
+    }
     .header-nav, .headerRight {
         flex-direction: row;
         justify-content: center;
@@ -173,38 +175,21 @@
         padding: 0;
     }
 
-    .App, .header-top {
+    .App, .header-nav {
         position: sticky;
         top: 0;
         z-index: 1000;
         background: white;
         width: 100%;
-        padding-top: 10px;
     }
 
-    .header-top {
+    .header-nav {
         box-shadow: 0 2px 0 0 #0d1a2626;
-    }
-
-    .header-top.active {
-        height: 90vh;
-    }
-
-    .header-top.active.no-scroll {
-        overflow: hidden;
-    }
-
-    .header-bottom {
-        display: none;
+        width: auto;
     }
 
     .headerRight {
-        display: flex;
-        justify-content: center;
-        justify-items: center;
-        align-content: center;
-        margin: 0 70px 0 auto;
-        height: auto;
+        display: none;
     }
 
     .bar-container {
@@ -215,9 +200,49 @@
         padding: 10px 20px;
     }
 
-    .Search-bar.active{
+    .SearchBarContainer.inactive {
+        display: none;
+    }
+
+    .Search-bar.inactive {
+        display: none;
+    }
+
+    .Search-bar.active {
+        display: block;
+        overflow: hidden;
+    }
+
+    .SearchBarContainer.active {
         align-content: center;
-        margin: 4vh auto 0 3.5vw;
+        margin: 4vh 0 31vh 4vw;
+    }
+
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px){
+    .header-nav {
+        flex-wrap: nowrap;
+    }
+    .App, .header-nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+    }
+    .logo {
+        margin: 0 1vw 0 -4vw;
+    }
+    .headerRight {
+        margin-left: 3vw;
+    }
+    .headerButtons.headerHostButton {
+        margin-left: -15%;
+        font-size: 13px;
+    }
+    .personalMenu {
+        margin-left: -15%;
     }
 }
 
