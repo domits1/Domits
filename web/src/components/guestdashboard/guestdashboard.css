@@ -289,7 +289,21 @@
   object-fit: contain;
 }
 
+.guest-check-icon{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+}
 
+.guest-edit-input{
+    font-size: 1.3rem;
+    font-weight: 300;
+    margin-left: -2%;
+}
 @media (max-width: 480px) {
   .reviewColumn {
       width: 100%;
