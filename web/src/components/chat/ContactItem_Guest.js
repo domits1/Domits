@@ -38,7 +38,12 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
             return (
                 <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`}
                      onClick={() => selectUser(index, user)}>
-                    {user}
+                    <div>{user}</div>
+                    {unreadMessages[item.userId] > 0 && (
+                        <div>
+                            {unreadMessages[item.userId] > 9 ? '9+' : unreadMessages[item.userId]} new messages
+                        </div>
+                    )}
                 </div>
             );
         } else {

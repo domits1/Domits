@@ -37,11 +37,11 @@ const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selec
         if (type === 'My contacts') {
             return (
                 <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`} onClick={() => selectUser(index, user)}>
-                    {user}
+                    <div>{user}</div>
                     {unreadMessages[item.userId] > 0 && (
-                        <figure className={styles.chatNotification}>
-                            {unreadMessages[item.userId] > 9 ? '9+' : unreadMessages[item.userId]}
-                        </figure>
+                        <div>
+                            {unreadMessages[item.userId] > 9 ? '9+' : unreadMessages[item.userId]} new messages
+                        </div>
                     )}
                 </div>
             );

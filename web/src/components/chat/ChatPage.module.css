@@ -29,22 +29,29 @@
                 display: flex;
                 flex-direction: row;
                 justify-content: space-between;
-                text-align: start;
                 padding: 0.5rem;
                 background-color: var(--primary-color);
-                color: white;
                 border-radius: 1rem;
+                div {
+                    color: white;
+                }
             }
             .displayItem:hover {
                 background-color: white;
                 color: var(--primary-color);
                 border: 1px solid var(--primary-color);
                 cursor: pointer;
+                div {
+                    color: var(--primary-color);
+                }
             }
             .selectedUser{
                 color: var(--primary-color);
                 background-color: white;
                 border: 1px solid var(--primary-color);
+                div {
+                    color: var(--primary-color) !important;
+                }
             }
         }
     }
