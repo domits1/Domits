@@ -26,13 +26,15 @@ const Chat = ({ user }) => {
     const [selectedUserName, setSelectedUserName] = useState('');
     const [chatUsers, setChatUsers] = useState([]);
     const [channelUUID, setChannelUUID] = useState(null);
-    const [isChatOpen, setIsChatOpen] = useState(false); // New state variable
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [contacts, setContacts] = useState([]);
     const [pendingContacts, setPendingContacts] = useState([]);
     const [displayType, setDisplayType] = useState('My contacts');
     const [itemsDisplay, setItemsDisplay] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [accoId, setAccoId] = useState('');
+    const [accommodation, setAccommodation] = useState(null);
     const userId = user.attributes.sub;
-
     const navigate = useNavigate();
     const location = useLocation();
     const chatContainerRef = useRef(null);
@@ -56,6 +58,7 @@ const Chat = ({ user }) => {
             fetchHostContacts();
         }
     }, [userId]);
+
 
     useEffect(() => {
         if (displayType) {
@@ -87,12 +90,27 @@ const Chat = ({ user }) => {
             const responseData = await response.json();
             const JSONData = JSON.parse(responseData.body);
             setPendingContacts(JSONData.pending);
+            setContacts(JSONData.accepted);
         } catch (error) {
             console.error('Error fetching host contacts:', error);
         } finally {
             setLoading(false);
         }
     }
+
+    useEffect(() => {
+        contacts.map((contact, index)=> {
+            if (contact.userId === selectedUser.userId) {
+                setAccoId(contact.AccoId);
+            }
+        })
+    }, [selectedUser]);
+
+    useEffect(() => {
+        if (accoId) {
+            fetchAccommodation(accoId);
+        }
+    }, [accoId]);
 
     useEffect(() => {
         const subscription = API.graphql(
@@ -289,6 +307,27 @@ const Chat = ({ user }) => {
         }
     };
 
+    const fetchAccommodation = async (id) => {
+        try {
+            const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ID: id }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch accommodation data');
+            }
+            const responseData = await response.json();
+            const data = JSON.parse(responseData.body);
+            console.log(data);
+            setAccommodation(data);
+        } catch (error) {
+            console.error('Error fetching accommodation data:', error);
+        }
+    }
+
     const sendMessage = async () => {
         if (!newMessage.trim() || !selectedUser || !selectedUser.userId) return;
     
@@ -438,57 +477,67 @@ const Chat = ({ user }) => {
                         <div className="chat">
                             <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
                                 <button className="chat__backButton" onClick={() => setIsChatOpen(false)}>Back</button>
-                                <article className="chat__figure">
-                                    <aside className="chat__aside">
-                                        <h2>{selectedUserName}</h2>
-                                    </aside>
-                                    <article className="chat__chatContainer" ref={chatContainerRef}>
-                                        {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
-                                            <React.Fragment key={chat.id}>
-                                                {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
-                                                    <p className="chat__date">
+                                <div className={styles.chatContainer}>
+                                    <article className="chat__figure">
+                                        <aside className="chat__aside">
+                                            <h2>{selectedUserName}</h2>
+                                        </aside>
+                                        <article className="chat__chatContainer" ref={chatContainerRef}>
+                                            {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
+                                                <React.Fragment key={chat.id}>
+                                                    {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
+                                                        <p className="chat__date">
                                                 <span>
                                                     {isToday(new Date(chat.createdAt)) ? "Today" : new Date(chat.createdAt).toLocaleDateString('en-US', {
                                                         month: 'short',
                                                         day: 'numeric'
                                                     })}
                                                 </span>
-                                                    </p>
-                                                )}
-                                                {chat.text !== '' && (
-                                                    <div
-                                                        className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
-                                                        {chat.text}
-                                                    </div>
-                                                )}
-                                            </React.Fragment>
-                                        ))}
-                                        {imageUrl && <img src={imageUrl} alt="Selected"
-                                                          style={{maxWidth: "100%", maxHeight: "200px"}}/>}
+                                                        </p>
+                                                    )}
+                                                    {chat.text !== '' && (
+                                                        <div
+                                                            className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
+                                                            {chat.text}
+                                                        </div>
+                                                    )}
+                                                </React.Fragment>
+                                            ))}
+                                            {imageUrl && <img src={imageUrl} alt="Selected"
+                                                              style={{maxWidth: "100%", maxHeight: "200px"}}/>}
+                                        </article>
+                                        <div className="chat__inputContainer">
+                                            <input
+                                                className="chat__input"
+                                                type="text"
+                                                value={newMessage}
+                                                onChange={(e) => setNewMessage(e.target.value)}
+                                                placeholder="Type your message..."
+                                                onKeyUp={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        sendMessage();
+                                                    }
+                                                }}
+                                            />
+                                            <button className="chat__send" onClick={() => sendMessage()}>Send</button>
+                                        </div>
                                     </article>
-                                    <div className="chat__inputContainer">
-                                        <input
-                                            className="chat__input"
-                                            type="text"
-                                            value={newMessage}
-                                            onChange={(e) => setNewMessage(e.target.value)}
-                                            placeholder="Type your message..."
-                                            onKeyUp={(e) => {
-                                                if (e.key === "Enter") {
-                                                    sendMessage();
-                                                }
-                                            }}
-                                        />
-                                        <button className="chat__send" onClick={() => sendMessage()}>Send</button>
-                                    </div>
-                                </article>
+                                    <article className={styles.accoDisplay}>
+                                        <h4>Referenced accommodation:</h4>
+                                        {accommodation && (
+                                            <div className={styles.textDisplay}>
+                                                <h3>{accommodation.Title}</h3>
+                                                <p>{`${accommodation.Country}, ${accommodation.City}, ${accommodation.Street}, ${accommodation.PostalCode}`}</p>
+                                                <button className={styles.mainButton} onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>View listing details</button>
+                                            </div>
+                                        )}
+                                    </article>
+                                </div>
                                 <nav className="chat__nav">
                                     <div className="chat__buttonWrapper">
                                         <button className="chat__button chat__button--review">Send review link</button>
                                     </div>
                                 </nav>
-                            </article>
-                            <article className='chat__people'>
                             </article>
                         </div>
                     )}
