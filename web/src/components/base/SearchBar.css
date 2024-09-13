@@ -683,20 +683,6 @@
     width: 28%;
   }
 
-  /*.searchBar_inputfield::placeholder {*/
-  /*  color: var(--primary-color);*/
-  /*  font-family: 'Kanit', sans-serif;*/
-  /*  font-weight: 500;*/
-  /*  font-size: 0.875rem;*/
-  /*  margin: auto;*/
-  /*}*/
-
-  /*.searchTitle {*/
-  /*  font-size: 0.875rem;*/
-  /*}*/
-  /*.searchTitleGuest {*/
-  /*  font-size: 0.875rem;*/
-  /*}*/
   .DatePicker__input {
     padding-left: 0%;
   }
