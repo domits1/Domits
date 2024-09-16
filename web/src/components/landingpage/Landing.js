@@ -52,7 +52,7 @@ function Landing() {
     };
 
     return (
-        <div className={styles.container}>
+        <main className={styles.container}>
             <div className={styles.firstSection}>
                 <div className={styles.MainText}>
                     <h1>List your <span className={styles.highlightText}>House</span> for free on Domits</h1>
@@ -197,7 +197,62 @@ function Landing() {
                     </div>
                 </div>
             </div>
-{/*             
+
+            <div className={styles.checkList}>
+                <h1>Is your property suitable for <span className={styles.highlightText}>renting out</span>?</h1>
+                <h3 className={styles.subText}>Here is the minimal requirements checklist for renting out properties</h3>
+                <div className={styles.checkListItems}>
+                    <div className={styles.checkListItem}>
+                        <h3 className={styles.checkListItem__header}>General ✓</h3>
+                        <span className={styles.checkListItem__text}>
+                            The property is a fully equipped living unit that meets local rental regulations and is technically sound for renting.
+                        </span>
+                    </div>
+                    <div className={styles.checkListItem}>
+                        <h3 className={styles.checkListItem__header}>Building ✓</h3>
+                        <span className={styles.checkListItem__text}>
+                            The building's exterior, windows, doors, and common areas are well-maintained, and the heating system provides sufficient warmth and hot water.
+                        </span>
+                    </div>
+                    <div className={styles.checkListItem}>
+                        <h3 className={styles.checkListItem__header}>Furnishing ✓</h3>
+                        <span className={styles.checkListItem__text}>
+                            The furnishing is in good condition, with safe electrical outlets, proper lighting, and available cleaning materials.
+                        </span>
+                    </div>
+                    <div className={styles.checkListItem}>
+                        <h3 className={styles.checkListItem__header}>Bedrooms ✓</h3>
+                        <span className={styles.checkListItem__text}>
+                            The bedroom is equipped with intact beds, clean mattresses, and properly sized bedding.
+                        </span>
+                    </div>
+                    <div className={styles.checkListItem}>
+                        <h3 className={styles.checkListItem__header}>Kitchen ✓</h3>
+                        <span className={styles.checkListItem__text}>
+                            The kitchen is fully equipped with functioning appliances, cooking tools, and clean dishware.
+                        </span>
+                    </div>
+                    <div className={styles.checkListItem}>
+                        <h3 className={styles.checkListItem__header}>Pool and Jacuzzi ✓</h3>
+                        <span className={styles.checkListItem__text}>
+                            The pool and Jacuzzi are professionally installed and maintained regularly.
+                        </span>
+                    </div>
+                    <div className={styles.checkListItem}>
+                        <h3 className={styles.checkListItem__header}>Surroundings ✓</h3>
+                        <span className={styles.checkListItem__text}>
+                            The outdoor areas are well-maintained, with paths and parking kept clear during winter.
+                        </span>
+                    </div>
+                    <div className={styles.checkListItem}>
+                        <h3 className={styles.checkListItem__header}>Safety ✓</h3>
+                        <span className={styles.checkListItem__text}>
+                            The property meets safety standards with functional smoke detectors, secured balconies, safe playgrounds, and clear access paths.
+                        </span>
+                    </div>
+                </div>
+            </div>
+            {/*
             <section className={styles.WhyHow}>
                 <div className={styles.WhyHow_text}>
                     <h1>Why should i host on Domits?</h1>
@@ -251,7 +306,7 @@ function Landing() {
                     </div>
                 </div>
             </section> */}
-        </div>
+        </main>
     );
 }
 
