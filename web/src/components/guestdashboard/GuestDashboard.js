@@ -16,7 +16,7 @@ const GuestDashboard = () => {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setTempUser({ ...tempUser, [name]: value }); // Update the temporary state
+        setTempUser({ ...tempUser, [name]: value });
     };
 
     const handleVerificationInputChange = (e) => {
@@ -34,13 +34,12 @@ const GuestDashboard = () => {
 
     const saveUserEmail = async () => {
         if (isVerifying) {
-            // Verify the confirmation code
             try {
                 const result = await confirmEmailChange(verificationCode);
                 if (result.success) {
                     console.log("Email verification successful");
-                    setUser({ ...user, email: tempUser.email }); // Save the email after verification
-                    toggleEditState('email'); // Close the input field after saving
+                    setUser({ ...user, email: tempUser.email });
+                    toggleEditState('email');
                 } else {
                     console.error("Verification failed:", result.error);
                 }
@@ -70,13 +69,10 @@ const GuestDashboard = () => {
 
             const result = await response.json();
             console.log("Update result:", result);
-
-            // Check the status code to determine if the email already exists
             if (response.status === 200) {
-                setIsVerifying(true); // Set to verifying mode after successful update
+                setIsVerifying(true);
             } else if (response.status === 400 && result.message === "This email address is already in use.") {
-                // This is where you show the alert if the email is already in use
-                alert(result.message); // Popup alert for user feedback
+                alert(result.message);
             } else {
                 console.error("Unexpected error:", result.message);
             }
@@ -109,8 +105,8 @@ const GuestDashboard = () => {
             console.log("Update result:", result);
 
             if (result.statusCode === 200) {
-                setUser({ ...user, name: tempUser.name }); // Save the name after successful update
-                toggleEditState('name'); // Close the input field immediately after saving
+                setUser({ ...user, name: tempUser.name });
+                toggleEditState('name');
             }
         } catch (error) {
             console.error("Error updating username:", error);
@@ -154,8 +150,6 @@ const GuestDashboard = () => {
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
-
-                        {/* Email section */}
                         <div className="infoBox">
                             <span>Email:</span>
                             {editState.email ? (
@@ -165,7 +159,7 @@ const GuestDashboard = () => {
                                             <input
                                                 type="email"
                                                 name="email"
-                                                value={tempUser.email} // Bind the temporary state to input
+                                                value={tempUser.email}
                                                 onChange={handleInputChange}
                                                 className="guest-edit-input"
                                             />
@@ -197,7 +191,6 @@ const GuestDashboard = () => {
                             </div>
                         </div>
 
-                        {/* Username section */}
                         <div className="infoBox">
                             <span>Name:</span>
                             {editState.name ? (
