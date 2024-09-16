@@ -1,22 +1,115 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, {useState, useEffect, useContext, useRef} from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import styles from './landing.module.css';
-
 import Register from "../base/Register";
 import MainTextpicture from "../../images/host-landing-example.png";
 import whyHostpicture from "../../images/host-landing-example2.jpg";
 import verifiedLogo from "../../images/icons/verify-icon.png";
-import approveLogo from "../../images/icons/approve-accept-icon.png"
-import banknoteLogo from "../../images/icons/banknote-icon.png"
-import supportLogo from "../../images/icons/question-mark-round-icon.png"
-import internationalLogo from "../../images/icons/world-globe-line-icon.png"
-import rulesLogo from "../../images/icons/result-pass-icon.png"
- 
+import approveLogo from "../../images/icons/approve-accept-icon.png";
+import banknoteLogo from "../../images/icons/banknote-icon.png";
+import supportLogo from "../../images/icons/question-mark-round-icon.png";
+import internationalLogo from "../../images/icons/world-globe-line-icon.png";
+import rulesLogo from "../../images/icons/result-pass-icon.png";
+
+const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
+    const answerRef = useRef(null);
+    const [height, setHeight] = useState(0);
+
+    useEffect(() => {
+        if (answerRef.current) {
+            setHeight(answerRef.current.scrollHeight);
+        }
+    }, [isOpen]);
+    useEffect(() => {
+        if (isOpen) {
+            console.log(answer);
+        }
+    }, [isOpen]);
+
+    return (
+        <div className={styles.landing__faq} onClick={toggleOpen}>
+            <div className={styles.landing__faq__body}>
+                <span className={styles.landing__faq__question}>{question}</span>
+                <span className={styles.landing__faq__arrow}>{isOpen ? '▲' : '▼'}</span>
+            </div>
+            <div
+                className={styles.landing__faq__answer}
+                style={{maxHeight: isOpen ? `${height}px` : '0', overflow: 'hidden' }}
+                ref={answerRef}
+            >
+                {answer}
+            </div>
+        </div>
+    );
+};
 function Landing() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [group, setGroup] = useState('');
     const navigate = useNavigate();
+    const [faqs, setFaqs] = useState([
+        {
+            question: "Getting started as a host",
+            answer: (
+                <>
+                    Register as a host, connect or create your stripe account, start listing your accommodation.
+                </>
+            ),
+            isOpen: false
+        },
+        {
+            question: "How to list your holiday rental?",
+            answer: (
+                <>
+                    You can list your rental by <span onClick={!isAuthenticated ? () => navigate('/register') : ''}>becoming a Domits host</span> and filling in the required information. We will
+                    contact you shortly after you submit your holiday rental so you can start renting and earning!
+                </>
+            ),
+            isOpen: false
+        },
+        {
+            question: "How do I create and manage my host account?",
+            answer: (
+                <>
+                    ...
+                </>
+            ),
+            isOpen: false
+        },
+        {
+            question: "How reservations work",
+            answer: (
+                <>
+                    ...
+                </>
+            ),
+            isOpen: false
+        },
+        {
+            question: "How payouts and taxes work",
+            answer: (
+                <>
+                    ...
+                </>
+            ),
+            isOpen: false
+        },
+        {
+            question: "How to manage your calendar and bookings",
+            answer: (
+                <>
+                    ...
+                </>
+            ),
+            isOpen: false
+        }
+    ]);
+    const toggleOpen = (index) => {
+        const updatedFaqs = faqs.map((faq, i) =>
+            i === index ? { ...faq, isOpen: !faq.isOpen } : faq
+        );
+        setFaqs(updatedFaqs);
+    };
 
     useEffect(() => {
         checkAuthentication();
@@ -250,6 +343,24 @@ function Landing() {
                             The property meets safety standards with functional smoke detectors, secured balconies, safe playgrounds, and clear access paths.
                         </span>
                     </div>
+                </div>
+            </div>
+
+            <div className={styles.faq}>
+                <div className={styles.faq__header}>
+                    <img src={supportLogo} alt='support'/>
+                    <h1>Answers to <span className={styles.highlightText}>your</span> questions</h1>
+                </div>
+                <div className={styles.faq__list}>
+                    {faqs.map((faq, index) => (
+                        <FaqItem
+                            key={index}
+                            question={faq.question}
+                            answer={faq.answer}
+                            isOpen={faq.isOpen}
+                            toggleOpen={() => toggleOpen(index)}
+                        />
+                    ))}
                 </div>
             </div>
             {/*

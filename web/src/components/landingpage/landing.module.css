@@ -314,6 +314,54 @@
         }
     }
 }
+.faq {
+    .landing__faq {
+        width: 50%;
+        border: 2px solid #003366;
+        border-radius: 10px;
+        margin: 10px 0;
+        padding: 15px;
+        cursor: pointer;
+        transition: max-height 0.4s ease;
+        overflow: hidden;
+        .landing__faq__body {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            p {
+                color: black;
+            }
+        }
+        .landing__faq__question {
+            font-weight: bold;
+        }
+        .landing__faq__answer {
+            text-align: left;
+        }
+    }
+    background-color: #f9f9f9;
+    margin: 5% 0 5% 0;
+    padding: 2rem;
+    .faq__header {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        img {
+            max-width: 3vw;
+            max-height: 3vh;
+            align-self: center;
+
+        }
+        h1 {
+            margin: 0;
+        }
+    }
+    .faq__list {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+}
 .cardFirstHalf, .cardSecondHalf {
 
 }
