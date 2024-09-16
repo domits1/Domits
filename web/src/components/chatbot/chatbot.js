@@ -10,7 +10,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [chatID, setChatID] = useState(localStorage.getItem('chatID') || null);
   const chatMessagesRef = useRef(null);
-
+  
   useEffect(() => {
     if (!isLoading) {
       if (chatID || user) {
