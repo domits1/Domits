@@ -159,13 +159,9 @@
     margin-left: 7.5%;
     width: 25%;
     margin-top: 10%;
-
 }
-
 .MainText h1, .MainText p{
     text-align: left;
-
-
 }
 .MainText h1 {
     font-size: 40px;
@@ -187,7 +183,10 @@
     justify-content: center;
     align-items: center;
     padding-bottom: 5%;
-    background-color: #f9f9f9;
+    background-color: #f9f9f9;   
+}
+.easyHosting_text{
+    font-size: 25px;
 }
 .threeSteps{
     display: flex;
@@ -211,7 +210,18 @@
     margin-bottom: 0px;
     margin-top: 0px;
 }  
+.whyHostText{
+    width: 50%;
+    margin-left: 10%;
+    text-align: left;
+}
+.whyHostText p{
+    width: 85%;
 
+}
+.simpleSafe{
+    background-color: #f9f9f9;
+}
 .Cards {
     display: flex;
     justify-content: space-between;
@@ -242,6 +252,7 @@
 .whyHost{
     display: flex;
     padding-top: 5%;
+    padding-bottom: 5%;
 }
 .SecPicture{
     width: 45%;
@@ -251,8 +262,34 @@
     width: 100%;
     height: 100%;
 }
+.simpleSafeCards{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2%;
+    width: 90%;
+    text-align: left;
+}
+.simpleSafeCards img{
+    max-width:3vw;
+    
+}
+.simpleSafeAll{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    
+}
+.SimpleSafeAllCards{
+    display: flex;
+    align-items: center;
+    width: 75%;
+   
+}
+.cardFirstHalf, .cardSecondHalf {
 
-
+}
 /* .First_Icons {
     display: flex;
     flex-direction: row;
@@ -265,8 +302,6 @@
 .First_Icons img {
     max-width: 7vw;
 } */
-
-
 
 .WhyHow_text {
     padding-bottom: 5%;
@@ -295,6 +330,11 @@
         font-size: 1.6rem;
     }
 
+    .SecPicture{
+        width: 45%;
+        height: 60%;
+        
+    }
     /* .infoCard img {
         width: auto;
         height: auto;

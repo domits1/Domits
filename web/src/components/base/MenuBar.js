@@ -143,7 +143,7 @@ function MenuBar() {
     return (
         <div className="bottom-menu-bar">
             <div className="menu">
-                <div className='headerRight'>
+                <div className='menuButtons'>
                     {!isLoggedIn ? (
                         <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
                             Become a Host
