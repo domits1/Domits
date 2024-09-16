@@ -14,6 +14,16 @@ import Villa from "../../images/icons/mansion.png";
 import Boat from "../../images/icons/house-boat.png";
 import Camper from "../../images/icons/camper-van.png";
 import Cottage from "../../images/icons/cottage.png";
+import Motorboat from "../../images/boat_types/motorboat.png";
+import Sailboat from "../../images/boat_types/sailboat.png";
+import RIB from "../../images/boat_types/rib.png";
+import Catamaran from "../../images/boat_types/catamaran.png";
+import Yacht from "../../images/boat_types/yacht.png";
+import Barge from "../../images/boat_types/barge.png";
+import HouseBoat from "../../images/boat_types/house_boat.png";
+import JetSki from "../../images/boat_types/jetski.png";
+import ElectricBoat from "../../images/boat_types/electric-boat.png";
+import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png";
 import CalendarComponent from "../hostdashboard/CalendarComponent";
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
@@ -83,6 +93,8 @@ function OnboardingHost() {
     let [userId, setUserId] = useState(null);
     const [hasStripe, setHostStripe] = useState(false);
     const [accoTypes] = useState(["Apartment", "House", "Villa", "Boat", "Camper", "Cottage"]);
+    const [boatTypes] = useState(["Motorboat", "Sailboat", "RIB", "Catamaran", "Yacht", "Barge", "House boat", "Jet ski", "Electric boat", "Boat without license"]);
+    const [camperTypes] = useState(["Campervan", "Sprinter-Type", "Cabover Motorhome", "Semi-integrated Motorhome", "Integrated Motorhome", "Roof Tent", "Other"]);
     const accommodationIcons = {
         "Apartment": Apartment,
         "House": House,
@@ -91,6 +103,18 @@ function OnboardingHost() {
         "Camper": Camper,
         "Cottage": Cottage
     };
+    const boatIcons = {
+        "Motorboat": Motorboat,
+        "Sailboat": Sailboat,
+        "RIB": RIB,
+        "Catamaran": Catamaran,
+        "Yacht": Yacht,
+        "Barge": Barge,
+        "House boat": HouseBoat,
+        "Jet ski": JetSki,
+        "Electric boat": ElectricBoat,
+        "Boat without license": BoatWithoutLicense
+    }
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
@@ -673,11 +697,41 @@ function OnboardingHost() {
             case 1:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">{isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}</h2>
                         {formData.AccommodationType === 'Boat' ? (
-                            <div></div>
+                            <div>
+                                <h2 className="onboardingSectionTitle">{isNew ? 'What type of boat do you own?' : 'Change the type of boat that you own'}</h2>
+                                <section className="boat-types">
+                                    {boatTypes.map((option, index) => (
+                                        <div
+                                            key={index}
+                                            className={`option ${formData.GuestAccess === option ? 'selected' : ''}`}
+                                            onClick={() => changeGuestAccess(option)}
+                                        >
+                                            <img className="accommodation-icon" src={boatIcons[option]} alt={option}/>
+                                            {option}
+                                        </div>
+                                    ))}
+                                </section>
+                            </div>
+                        ) : formData.AccommodationType === 'Camper' ? (
+                            <div>
+                                <h2 className="onboardingSectionTitle">{isNew ? 'What type of camper do you own?' : 'Change the type of camper that you own'}</h2>
+                                <section className="accommodation-types" style={{padding: "5rem"}}>
+                                    {camperTypes.map((option, index) => (
+                                        <div
+                                            key={index}
+                                            className={`option ${formData.GuestAccess === option ? 'selected' : ''}`}
+                                            onClick={() => changeGuestAccess(option)}
+                                        >
+                                            <img className="accommodation-icon" src={Camper} alt={option}/>
+                                            {option}
+                                        </div>
+                                    ))}
+                                </section>
+                            </div>
                         ) : (
                             <section className="guest-access">
+                                <h2 className="onboardingSectionTitle">{isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}</h2>
                                 <div
                                     className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
                                     onClick={() => changeGuestAccess("Entire house")}>

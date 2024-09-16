@@ -144,8 +144,17 @@
   justify-items: center;
   align-items: center;
 }
+.boat-types {
+  padding: 5%;
+  margin-bottom: 10%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 5%;
+  justify-items: center;
+  align-items: center;
+}
 
-.accommodation-types .option {
+.option {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -155,7 +164,7 @@
   transition: border-color 0.3s;
 }
 
-.accommodation-types .option.selected {
+.option.selected {
   border-color: #003366;
 }
 
