@@ -14,6 +14,16 @@ import Villa from "../../images/icons/mansion.png";
 import Boat from "../../images/icons/house-boat.png";
 import Camper from "../../images/icons/camper-van.png";
 import Cottage from "../../images/icons/cottage.png";
+import Motorboat from "../../images/boat_types/motorboat.png";
+import Sailboat from "../../images/boat_types/sailboat.png";
+import RIB from "../../images/boat_types/rib.png";
+import Catamaran from "../../images/boat_types/catamaran.png";
+import Yacht from "../../images/boat_types/yacht.png";
+import Barge from "../../images/boat_types/barge.png";
+import HouseBoat from "../../images/boat_types/house_boat.png";
+import JetSki from "../../images/boat_types/jetski.png";
+import ElectricBoat from "../../images/boat_types/electric-boat.png";
+import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png";
 import CalendarComponent from "../hostdashboard/CalendarComponent";
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
@@ -83,6 +93,8 @@ function OnboardingHost() {
     let [userId, setUserId] = useState(null);
     const [hasStripe, setHostStripe] = useState(false);
     const [accoTypes] = useState(["Apartment", "House", "Villa", "Boat", "Camper", "Cottage"]);
+    const [boatTypes] = useState(["Motorboat", "Sailboat", "RIB", "Catamaran", "Yacht", "Barge", "House boat", "Jet ski", "Electric boat", "Boat without license"]);
+    const [camperTypes] = useState(["Campervan", "Sprinter-Type", "Cabover Motorhome", "Semi-integrated Motorhome", "Integrated Motorhome", "Roof Tent", "Other"]);
     const accommodationIcons = {
         "Apartment": Apartment,
         "House": House,
@@ -91,6 +103,18 @@ function OnboardingHost() {
         "Camper": Camper,
         "Cottage": Cottage
     };
+    const boatIcons = {
+        "Motorboat": Motorboat,
+        "Sailboat": Sailboat,
+        "RIB": RIB,
+        "Catamaran": Catamaran,
+        "Yacht": Yacht,
+        "Barge": Barge,
+        "House boat": HouseBoat,
+        "Jet ski": JetSki,
+        "Electric boat": ElectricBoat,
+        "Boat without license": BoatWithoutLicense
+    }
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
@@ -646,9 +670,8 @@ function OnboardingHost() {
                     );
                 } else
                 return (
-                    <main className="container">
+                    <main className="page-body">
                         <h2 className="onboardingSectionTitle">{isNew ? 'What best describes your accommodation?' : 'Edit your accommodation type'}</h2>
-
                         <section className="accommodation-types">
                             {accoTypes.map((option, index) => (
                                 <div
@@ -673,31 +696,69 @@ function OnboardingHost() {
                 );
             case 1:
                 return (
-                    <main className="container">
-                        <h2 className="onboardingSectionTitle">{isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}</h2>
-
-                        <section className="guest-access">
-                            <div className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
-                                 onClick={() => changeGuestAccess("Entire house")}>
-                                <h3 className="guest-access-header">Entire house</h3>
-                                <p>Guests have the entire space to themselves</p>
+                    <main className='container'>
+                        {formData.AccommodationType === 'Boat' ? (
+                            <div>
+                                <h2 className="onboardingSectionTitle">{isNew ? 'What type of boat do you own?' : 'Change the type of boat that you own'}</h2>
+                                <section className="boat-types">
+                                    {boatTypes.map((option, index) => (
+                                        <div
+                                            key={index}
+                                            className={`option ${formData.GuestAccess === option ? 'selected' : ''}`}
+                                            onClick={() => changeGuestAccess(option)}
+                                        >
+                                            <img className="accommodation-icon" src={boatIcons[option]} alt={option}/>
+                                            {option}
+                                        </div>
+                                    ))}
+                                </section>
                             </div>
-                            <div className={formData.GuestAccess === 'Room' ? 'guest-access-item-selected' : 'guest-access-item'}
-                                 onClick={() => changeGuestAccess("Room")}>
-                                <h3 className="guest-access-header">Room</h3>
-                                <p>Guests have their own room in a house and share other spaces</p>
+                        ) : formData.AccommodationType === 'Camper' ? (
+                            <div>
+                                <h2 className="onboardingSectionTitle">{isNew ? 'What type of camper do you own?' : 'Change the type of camper that you own'}</h2>
+                                <section className="accommodation-types" style={{padding: "5rem"}}>
+                                    {camperTypes.map((option, index) => (
+                                        <div
+                                            key={index}
+                                            className={`option ${formData.GuestAccess === option ? 'selected' : ''}`}
+                                            onClick={() => changeGuestAccess(option)}
+                                        >
+                                            <img className="accommodation-icon" src={Camper} alt={option}/>
+                                            {option}
+                                        </div>
+                                    ))}
+                                </section>
                             </div>
-                            <div className={formData.GuestAccess === 'Shared room' ? 'guest-access-item-selected' : 'guest-access-item'}
-                                 onClick={() => changeGuestAccess("Shared room")}>
-                                <h3 className="guest-access-header">A shared room</h3>
-                                <p>Guests sleep in a room or common area that they may share with you or others</p>
-                            </div>
-                        </section>
+                        ) : (
+                            <section className="guest-access">
+                                <h2 className="onboardingSectionTitle">{isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}</h2>
+                                <div
+                                    className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                    onClick={() => changeGuestAccess("Entire house")}>
+                                    <h3 className="guest-access-header">Entire house</h3>
+                                    <p>Guests have the entire space to themselves</p>
+                                </div>
+                                <div
+                                    className={formData.GuestAccess === 'Room' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                    onClick={() => changeGuestAccess("Room")}>
+                                    <h3 className="guest-access-header">Room</h3>
+                                    <p>Guests have their own room in a house and share other spaces</p>
+                                </div>
+                                <div
+                                    className={formData.GuestAccess === 'Shared room' ? 'guest-access-item-selected' : 'guest-access-item'}
+                                    onClick={() => changeGuestAccess("Shared room")}>
+                                    <h3 className="guest-access-header">A shared room</h3>
+                                    <p>Guests sleep in a room or common area that they may share with you or others</p>
+                                </div>
+                            </section>
+                        )}
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
                                 Go back
                             </button>
-                            <button className={!hasGuestAccess ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasGuestAccess} onClick={() => pageUpdater(page + 1)}>
+                            <button className={!hasGuestAccess ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!hasGuestAccess} onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
@@ -705,8 +766,11 @@ function OnboardingHost() {
                 );
             case 2:
                 return (
-                    <main style={{padding: '1.25rem'}}>
-                        <h2 className="onboardingSectionTitle">{isNew ? 'Where can we find your accommodation?' : 'Change the location of your accommodation'}</h2>
+                    <main className='page-body'>
+                        <h2 className="onboardingSectionTitle">
+                            {isNew ? `Where can we find your 
+                            ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}?`
+                                : `Change the location of your ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}`}</h2>
                         <p className="onboardingSectionSubtitle">We only share your address with guests after they have
                             booked</p>
 
@@ -830,7 +894,7 @@ function OnboardingHost() {
                 );
             case 4:
                 return (
-                    <main className="container">
+                    <main className="page-body">
                         <h2 className="onboardingSectionTitle">{isNew ? 'Let guests know what your space has to offer.' : 'Edit your amenities'}</h2>
                         <p className="onboardingSectionSubtitle">You can add more facilities after publishing your
                             listing</p>
@@ -874,7 +938,7 @@ function OnboardingHost() {
             case 5:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">{isNew ? 'Add photos of your home' : 'Edit photos of your home'}</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? `Add photos of your ${formData.AccommodationType.toLowerCase()}` : `Edit photos of your ${formData.AccommodationType.toLowerCase()}`}</h2>
 
                         <section className="accommodation-photos">
                             {!formData.Images ?
@@ -936,7 +1000,7 @@ function OnboardingHost() {
             case 6:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">{isNew ? 'Name your home' : 'Edit the name of your home'}</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? `Name your ${formData.AccommodationType.toLowerCase()}` : `Edit the name of your ${formData.AccommodationType.toLowerCase()}`}</h2>
                         <p className="onboardingSectionSubtitle">A short title works best. Don't worry, you can always
                             change it later.</p>
 
@@ -1126,14 +1190,15 @@ function OnboardingHost() {
                             <tr>
                                 <td>Date Range:</td>
                                 <td>
-                                    {formData.StartDate && formData.EndDate ? (
-                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
+                                    {formData.DateRanges.length > 0 ? (
+                                        `Available from ${DateFormatterDD_MM_YYYY(formData.DateRanges[0].startDate)} 
+                                        to ${DateFormatterDD_MM_YYYY(formData.DateRanges[formData.DateRanges.length - 1].endDate)}`
                                     ) : "Date range not set"}
                                 </td>
                             </tr>
                             <tr>
                                 <td>Number of Guests:</td>
-                                <td>{formData.Guestamount}</td>
+                                <td>{formData.GuestAmount}</td>
                             </tr>
                             <tr>
                                 <td>Number of Bedrooms:</td>
