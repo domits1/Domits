@@ -9,10 +9,9 @@
 }
 
 .detailSummary {
-  width: 29%;
+  width: 50%;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  margin: 40px;
-  margin-top: 90px;
+  margin: 146px 0 40px 20px;
   padding: 20px;
   border-radius: 10px;
 }
@@ -36,7 +35,7 @@
       height: 10%;
       border: none;
       border-radius: 2rem;
-      background: red;
+      background: var(--primary-color);
       color: white;
       cursor: pointer;
     }
@@ -56,7 +55,7 @@
 }
 
 .reserve-button {
-  background-color: #0D9813;
+  background-color: var(--primary-color);
   color: white;
   padding: 10px;
   border: none;
@@ -88,7 +87,7 @@
 }
 
 .price {
-  color: #0D9813;
+  color: var(--primary-color);
 }
 
 .extraDetails {
@@ -188,8 +187,8 @@
 }
 
 /* Stijl voor de knop */
-.button {
-  background-color: #4CAF50;
+.backButton {
+  background-color: var(--primary-color);
   border: none;
   color: white;
   padding: 12px 24px;

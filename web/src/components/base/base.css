@@ -36,7 +36,7 @@
 
 .personalMenu {
     border: none;
-    background-color: #0D9813;
+    background-color: var(--primary-color);
     justify-content: center;
     align-items: center;
     gap: 10px;
@@ -58,30 +58,28 @@
 }
 
 .personalMenuDropdownContent {
-    display: none; /* Hidden by default */
+    display: none;
 }
 
 .personalMenuDropdownContent.show {
-    display: block; /* Show when the "show" class is applied */
+    display: block;
 }
 
 .personalMenuDropdown .personalMenuDropdownContent {
-    padding: 15px;
+    padding: 20px 25px 20px 25px;
     position: absolute;
-    background-color: #EBFAED;
-    width: auto; /* Adjust width as needed */
+    background-color: white;
+    width: auto;
     min-width: 240px;
     box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
     z-index: 1;
-    top: calc(100% + 25px); /* Position below the personalMenu button */
-    right: 10px; /* Align with the left edge of the button */
-    border-bottom-left-radius: 15px;
-    border-bottom-right-radius: 15px;
+    top: calc(100% + 5px);
+    right: 0;
+    border-radius: 10px;
 }
 
 .personalMenuDropdownContent button {
     padding: 8px 15px;
-    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
     border-radius: 15px;
     justify-content: center;
     align-items: center;
@@ -99,14 +97,14 @@
 .dropdownLoginButton {
     margin-top: 0;
     margin-bottom: 10px;
-    background: #0D9813;
+    background: var(--primary-color);
     border: none;
     box-shadow: none;
 }
 
 .dropdownRegisterButton, .dropdownLogoutButton {
     margin-top: 10px;
-    background-color: #49146A;
+    background-color: var(--secondary-color);
     border: none;
     box-shadow: none;
 }
@@ -119,7 +117,7 @@
     opacity: 90%;
 }
 
-.headerButtons button{
+.headerButtons button {
     width: 100%;
     height: 100%;
     padding: 5px 15px;
@@ -138,7 +136,7 @@
 }
 
 .personalMenu:hover {
-    background-color: #3fb366;
+    opacity: 90%;
 }
 
 .helloUsername {
@@ -150,8 +148,10 @@
     word-wrap: break-word;
 }
 
-@media screen and (max-width: 650px) {
-
+@media screen and (max-width: 768px) {
+    .logo {
+        padding-top: 2vh;
+    }
     .header-nav, .headerRight {
         flex-direction: row;
         justify-content: center;
@@ -159,11 +159,11 @@
     }
 
     .headerRight {
-        width: 90%;
+        width: 69%;
         margin-top: 20px;
     }
 
-    .headerButtons, .personalMenu, .Search-bar{
+    .headerButtons, .personalMenu, .Search-bar {
         width: 100%;
         margin-top: 10px;
         margin-right: 0;
@@ -171,16 +171,84 @@
         float: none;
     }
 
+    .app-header {
+        padding: 0;
+    }
+
+    .App, .header-nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+    }
+
+    .header-nav {
+        box-shadow: 0 2px 0 0 #0d1a2626;
+        width: auto;
+    }
+
+    .headerRight {
+        display: none;
+    }
+
+    .bar-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 10px 20px;
+    }
+
+    .SearchBarContainer.inactive {
+        display: none;
+    }
+
+    .Search-bar.inactive {
+        display: none;
+    }
+
+    .Search-bar.active {
+        display: block;
+        overflow: hidden;
+    }
+
+    .SearchBarContainer.active {
+        align-content: center;
+        margin: 4vh 0 31vh 4vw;
+    }
+
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px){
+    .header-nav {
+        flex-wrap: nowrap;
+    }
+    .App, .header-nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+    }
+    .logo {
+        margin: 0 1vw 0 -4vw;
+    }
+    .headerRight {
+        margin-left: 3vw;
+    }
+    .headerButtons.headerHostButton {
+        margin-left: -15%;
+        font-size: 13px;
+    }
+    .personalMenu {
+        margin-left: -15%;
+    }
 }
 
 /* Footer styles */
 .main-footer {
     background-color: #f8f8f8;
-    /*min-height: 50vh;*/
-    /*display: 'flex';*/
-    /*flexDirection: 'column';*/
-    /*max-height: 100px;*/
-    /*overflowY: 'auto';*/
 }
 
 .footer-content {
@@ -193,7 +261,7 @@
 }
 
 .footer-headers {
-    color: #0D9813;
+    color: var(--primary-color);
     font-family: Kanit, sans-serif;
     font-size: 24px;
     font-style: normal;
@@ -220,7 +288,7 @@
 
 .footer-copyright {
 
-    background-color: #0D9813;
+    background-color: var(--primary-color);
     flex-shrink: 0;
     margin-top: auto;
     display: flex;
@@ -228,9 +296,10 @@
     justify-content: center;
     padding: 15px;
 }
+
 .footer-icons img {
-    width: 2.3rem; 
-    height: auto; 
+    width: 2.3rem;
+    height: auto;
     margin-left: 1.2rem;
     margin-bottom: 0.6rem;
     border-radius: 25%;
@@ -254,7 +323,6 @@
     display: block;
     flex-wrap: wrap;
     gap: 20px;
-    /* Adjust the gap as needed */
 }
 
 .footer-select {
@@ -263,7 +331,7 @@
     align-items: center;
     gap: 10px;
     border-radius: 15px;
-    border: 0.5px solid #0D9813;
+    border: 0.5px solid var(--primary-color);
 }
 
 #appstorebadge {
@@ -291,7 +359,6 @@
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
-    /* text-decoration-line: underline; */
     margin-top: 20px;
 }
 
@@ -302,7 +369,7 @@
 }
 
 .borderline {
-    border-right: 1px solid #0A760F;
+    border-right: 1px solid var(--primary-color);
     padding-right: 5%;
 }
 
@@ -320,7 +387,7 @@ a:hover {
 
     .footer-section, .footer-endsection {
         margin: 0;
-        border-top: 1px solid #0A760F;
+        border-top: 1px solid var(--primary-color);
         margin-bottom: 20px;
         width: 80%;
     }

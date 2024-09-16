@@ -98,7 +98,7 @@
         border-width: 0.25em 0.25em 0 0;
         border-color: #cccccc;
         transform-origin: center;
-        transition: border-color 0.3s ease; /* Added transition for hover effect */
+        transition: border-color 0.3s ease;
     }
 
     .prev::before {
@@ -109,7 +109,7 @@
         transform: translate(-50%, -50%) rotate(45deg);
     }
 
-    .prev:hover::before, .next:hover::before { /* Corrected the hover selector */
+    .prev:hover::before, .next:hover::before {
         border-color: #000000;
     }
 

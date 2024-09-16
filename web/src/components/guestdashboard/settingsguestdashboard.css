@@ -5,8 +5,8 @@
 
 .horizontalOptions {
     display: flex;
-    justify-content: flex-start; /* Aligns items to the start */
-    margin-bottom: 10px; /* Adds some space below the container */
+    justify-content: flex-start; 
+    margin-bottom: 10px;
 }
 
 .flexwrap{
@@ -22,12 +22,11 @@
     display: flex;
     align-items: center;
     cursor: pointer;
-    flex: 1; /* Allows flexible box sizes */
-    min-width: 120px; /* Minimum width for smaller screens, adjust as needed */
-    margin-right: 10px; /* Adds spacing between horizontal options */
+    flex: 1;
+    min-width: 120px;
+    margin-right: 10px; 
 }
 
-/* Reset the margin-right for the last item in a flex container to prevent extra spacing */
 .horizontalOptions .settingsOption:last-child {
     margin-right: 0;
 }
@@ -35,13 +34,13 @@
 
 .dataRemovalSection {
     display: flex;
-    flex-wrap: wrap; /* Allows items to wrap as needed */
-    justify-content: flex-start; /* Align items to the start of the container */
+    flex-wrap: wrap;
+    justify-content: flex-start;
     margin-top: 20px;
 }
 
 .dataRemovalSection h2 {
-    width: 100%; /* Ensures the heading takes full width to force items below */
+    width: 100%;
     margin-bottom: 10px;
 }
 

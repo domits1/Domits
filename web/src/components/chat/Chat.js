@@ -8,6 +8,9 @@ import Pages from "../guestdashboard/Pages";
 import * as subscriptions from "../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
+import styles from './ChatPage.module.css';
+import spinner from "../../images/spinnner.gif";
+import ContactItem from "./ContactItem_Guest";
 
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
@@ -19,13 +22,20 @@ const Chat = ({ user }) => {
     const [imageUrl, setImageUrl] = useState("");
     const [recipientId, setRecipientId] = useState('');
     const [selectedUser, setSelectedUser] = useState(null);
+    const [selectedUserName, setSelectedUserName] = useState('');
     const [chatUsers, setChatUsers] = useState([]);
     const [channelUUID, setChannelUUID] = useState(null);
-    const [isChatOpen, setIsChatOpen] = useState(false); // New state variable
+    const [isChatOpen, setIsChatOpen] = useState(false);
+    const [contacts, setContacts] = useState([]);
+    const [pendingContacts, setPendingContacts] = useState([]);
+    const [displayType, setDisplayType] = useState('My contacts');
+    const [itemsDisplay, setItemsDisplay] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [accoId, setAccoId] = useState('');
+    const [accommodation, setAccommodation] = useState(null);
     const userId = user.attributes.sub;
 
     const navigate = useNavigate();
-    const location = useLocation();
     const chatContainerRef = useRef(null);
 
     const getUUIDForUser = (userId) => {
@@ -67,16 +77,66 @@ const Chat = ({ user }) => {
     }, [recipientId]);
 
     useEffect(() => {
-        const recipientIdFromUrl = new URLSearchParams(location.search).get('recipient');
-        if (recipientIdFromUrl) {
-            setRecipientId(recipientIdFromUrl);
-            setSelectedUser({ userId: recipientIdFromUrl });
-            setIsChatOpen(true); // Open chat view
+        if (userId) {
+            fetchGuestContacts();
         }
-    }, [location.search]);
+    }, [userId]);
 
     useEffect(() => {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        contacts.map((contact, index)=> {
+            if (contact.hostId === selectedUser.userId) {
+                setAccoId(contact.AccoId);
+            }
+        })
+    }, [selectedUser]);
+
+    useEffect(() => {
+        if (accoId) {
+            fetchAccommodation(accoId);
+        }
+    }, [accoId]);
+
+    useEffect(() => {
+        if (displayType) {
+            if (displayType === 'My contacts') {
+                setItemsDisplay(chatUsers);
+            } else {
+                setItemsDisplay(pendingContacts);
+            }
+        }
+    }, [displayType]);
+
+    const fetchGuestContacts = async () => {
+        setLoading(true);
+        try {
+            const requestData = {
+                userID: userId
+            };
+            const response = await fetch(`https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch host information');
+            }
+            const responseData = await response.json();
+            const JSONData = JSON.parse(responseData.body);
+            setPendingContacts(JSONData.pending);
+            setContacts(JSONData.accepted);
+        } catch (error) {
+            console.error('Error fetching host contacts:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        if (selectedUser) {
+            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+        }
     }, [chats]);
 
     const handleImageUpload = (e) => {
@@ -108,8 +168,6 @@ const Chat = ({ user }) => {
             console.error("Recipient ID is undefined");
             return;
         }
-        console.log(`Fetching chats for recipient ID: ${recipientId}`);
-        
         try {
             const sentMessagesResponse = await API.graphql({
                 query: queries.listChats,
@@ -154,18 +212,18 @@ const Chat = ({ user }) => {
         try {
             const response = await API.graphql({ query: queries.listChats });
             const allChats = response.data.listChats.items;
-    
+
             const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.userId, chat.recipientId]))]
-                .filter(id => id && id !== userId && id !== '7e50fbfa-3b06-486d-a96c-21a3a93b1647' && id !== '383e96b7-7cd1-4377-83a4-5454ed9c9374'); 
-    
+                .filter(id => id && id !== userId && id !== '7e50fbfa-3b06-486d-a96c-21a3a93b1647' && id !== '383e96b7-7cd1-4377-83a4-5454ed9c9374');
+
             const usersWithData = [];
-    
+
             uniqueUsers.forEach(id => {
                 const userChats = allChats.filter(chat =>
                     (chat.userId === id && chat.recipientId === userId) ||
                     (chat.recipientId === id && chat.userId === userId)
                 );
-    
+
                 if (userChats.length > 0) {
                     const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
                     usersWithData.push({
@@ -174,10 +232,10 @@ const Chat = ({ user }) => {
                     });
                 }
             });
-    
+
             const filteredUsersData = usersWithData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-    
             setChatUsers(filteredUsersData);
+            setItemsDisplay(filteredUsersData);
         } catch (error) {
             console.error("Error fetching chat users:", error);
         }
@@ -207,12 +265,31 @@ const Chat = ({ user }) => {
         }
     };
 
+    const fetchAccommodation = async (id) => {
+        try {
+            const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ID: id }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch accommodation data');
+            }
+            const responseData = await response.json();
+            const data = JSON.parse(responseData.body);
+            setAccommodation(data);
+        } catch (error) {
+            console.error('Error fetching accommodation data:', error);
+        }
+    }
+
     const handleUserClick = async (userId) => {
         setSelectedUser({ userId });
         const channelName = generateChannelName(userId, userId);
         setChannelUUID(channelName);
-        updateRecipientIdInUrl(userId);
-        setIsChatOpen(true); // Open chat view
+        setIsChatOpen(true);
 
         try {
             const unreadMessagesIds = chats
@@ -266,26 +343,17 @@ const Chat = ({ user }) => {
                 },
             });
     
-            // Ensure the new chat message is correctly logged or processed here
             console.log("Message sent successfully:", result);
     
-            // Clear input and update UI state
             setNewMessage('');
             setShowDate(true);
             setLastMessageDate(new Date());
     
-            // Fetch chats and users to refresh the list
             await fetchChats(recipientIdToSend);
             await fetchChatUsers();
         } catch (error) {
             console.error("Error sending message:", error);
         }
-    };
-    
-    const updateRecipientIdInUrl = (userId) => {
-        const searchParams = new URLSearchParams(location.search);
-        searchParams.set('recipient', userId);
-        navigate(`?${searchParams.toString()}`);
     };
 
     const generateUUID = () => {
@@ -303,77 +371,131 @@ const Chat = ({ user }) => {
             date.getFullYear() === today.getFullYear();
     };
 
+    const selectUser = async (index, user) => {
+        if (index != null) {
+            await handleUserClick(chatUsers[index].userId);
+        }
+        if (user) {
+            setSelectedUserName(user);
+        }
+    }
+
     return (
-        <main className="container">
+        <main className="page-body">
             <h2 className="chat__heading">Messages</h2>
             <section className="chat__container">
-                <Pages />
-                <div className="chat">
-                    <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
-                        <button className="chat__backButton" onClick={() => setIsChatOpen(false)}>Back</button> {/* Back button */}
-                        <article className="chat__figure">
-                            <aside className="chat__aside">
-                               <h2>{recipientId}</h2>
-                            </aside>
-                            <article className="chat__chatContainer" ref={chatContainerRef}>
-                            {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
-                                    <React.Fragment key={chat.id}>
-                                     {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
-                                            <p className="chat__date">
+                <Pages/>
+                <section className={styles.chat__body}>
+                    <div className={styles.contactList}>
+                        <section className={styles.switcher}>
+                            <button
+                                className={`${styles.switchButton} ${(displayType === 'My contacts') ? styles.selected : styles.disabled}`}
+                                onClick={() => setDisplayType('My contacts')}>My contacts ({chatUsers.length})
+                            </button>
+                            <button
+                                className={`${styles.switchButton} ${(displayType === 'Pending contacts') ? styles.selected : styles.disabled}`}
+                                onClick={() => setDisplayType('Pending contacts')}>Requested
+                                ({pendingContacts.length})
+                            </button>
+                        </section>
+                        <section className={styles.displayBody}>
+                            {loading ? (
+                                <div>
+                                    <img src={spinner} alt='spinner' style={{maxWidth: '50%', maxHeight: '50%'}}/>
+                                </div>
+                            ) : (
+                                itemsDisplay.length > 0 ? (
+                                    itemsDisplay.map((item, index) => (
+                                            <ContactItem item={item} index={index} type={displayType}
+                                                         selectUser={selectUser}
+                                                         selectedUser={selectedUserName}
+                                                         unreadMessages={unreadMessages}/>
+                                        )
+                                    )
+                                ) : (
+                                    <div>
+                                        <p>This is empty for now...</p>
+                                        <button className={styles.mainButton}
+                                                onClick={() => fetchGuestContacts()}>Refresh
+                                        </button>
+                                    </div>
+                                ))
+                            }
+                        </section>
+
+                    </div>
+                    {selectedUser && (
+                        <div className="chat">
+                            <article className={`chat__message ${isChatOpen ? 'chat__message--open' : ''}`}>
+                                <button className="chat__backButton" onClick={() => setIsChatOpen(false)}>Back</button>
+                                <div className={styles.chatContainer}>
+                                    <article className="chat__figure">
+                                        <aside className="chat__aside">
+                                            <h2>{selectedUserName}</h2>
+                                        </aside>
+                                        <article className="chat__chatContainer" ref={chatContainerRef}>
+                                            {chats.slice().sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)).map((chat, index, array) => (
+                                                <React.Fragment key={chat.id}>
+                                                    {(index === 0 || new Date(chat.createdAt).toDateString() !== new Date(array[index - 1].createdAt).toDateString()) && (
+                                                        <p className="chat__date">
                                                 <span>
-                                                    {isToday(new Date(chat.createdAt)) ? "Today" : new Date(chat.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                                                    {isToday(new Date(chat.createdAt)) ? "Today" : new Date(chat.createdAt).toLocaleDateString('en-US', {
+                                                        month: 'short',
+                                                        day: 'numeric'
+                                                    })}
                                                 </span>
-                                            </p>
-                                        )}
-                                        <div className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
-                                            {chat.text}
+                                                        </p>
+                                                    )}
+                                                    {chat.text !== '' && (
+                                                        <div
+                                                            className={`chat__dialog chat__dialog--${chat.userId === userId ? "user" : "guest"}`}>
+                                                            {chat.text}
+                                                        </div>
+                                                    )}
+                                                </React.Fragment>
+                                            ))}
+                                            {imageUrl && <img src={imageUrl} alt="Selected"
+                                                              style={{maxWidth: "100%", maxHeight: "200px"}}/>}
+                                        </article>
+                                        <div className="chat__inputContainer">
+                                            <input
+                                                className="chat__input"
+                                                type="text"
+                                                value={newMessage}
+                                                onChange={(e) => setNewMessage(e.target.value)}
+                                                placeholder="Type your message..."
+                                                onKeyUp={(e) => {
+                                                    if (e.key === "Enter") {
+                                                        sendMessage();
+                                                    }
+                                                }}
+                                            />
+                                            <button className="chat__send" onClick={() => sendMessage()}>Send</button>
                                         </div>
-                                    </React.Fragment>
-                                ))}
-                                {imageUrl && <img src={imageUrl} alt="Selected" style={{ maxWidth: "100%", maxHeight: "200px" }} />}
+                                    </article>
+                                    <article className={styles.accoDisplay}>
+                                        <h4>Referenced accommodation:</h4>
+                                        {accommodation && (
+                                            <div className={styles.textDisplay}>
+                                                <h3>{accommodation.Title}</h3>
+                                                <p>{`${accommodation.Country}, ${accommodation.City}, ${accommodation.Street}, ${accommodation.PostalCode}`}</p>
+                                                <button className={styles.mainButton}
+                                                        onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>View
+                                                    listing details
+                                                </button>
+                                            </div>
+                                        )}
+                                    </article>
+                                </div>
+                                <nav className="chat__nav">
+                                    <div className="chat__buttonWrapper">
+                                        <button className="chat__button chat__button--review">Send review link</button>
+                                    </div>
+                                </nav>
                             </article>
-                            <div className="chat__inputContainer">
-                                <input
-                                    className="chat__input"
-                                    type="text"
-                                    value={newMessage}
-                                    onChange={(e) => setNewMessage(e.target.value)}
-                                    placeholder="Type your message..."
-                                    onKeyUp={(e) => {
-                                        if (e.key === "Enter") {
-                                            sendMessage();
-                                        }
-                                    }}
-                                />
-                                <button className="chat__send" onClick={() => sendMessage()}>Send</button>
-                            </div>
-                        </article>
-                        <nav className="chat__nav">
-                            <div className="chat__buttonWrapper">
-                                <button className="chat__button chat__button--review">Send review link</button>
-                            </div>
-                        </nav>
-                    </article>
-                    <article className={`chat__people ${isChatOpen ? 'chat__people--hidden' : ''}`}>
-                        <ul className="chat__users">
-                            {chatUsers.map((chatUser) => (
-                                <li className="chat__user" key={chatUser.userId} onClick={() => handleUserClick(chatUser.userId)}>
-                                    {unreadMessages[chatUser.userId] > 0 && (
-                                        <figure className="chat__notification">
-                                            {unreadMessages[chatUser.userId] > 9 ? '9+' : unreadMessages[chatUser.userId]}
-                                        </figure>
-                                    )}
-                                    <div className="chat__pfp">
-                                        {/* Placeholder for user profile image */}
-                                    </div>
-                                    <div className="chat__wrapper">
-                                        <h2 className="chat__name">{chatUser.userId}</h2>
-                                    </div>
-                                </li>
-                            ))}
-                        </ul>
-                    </article>
-                </div>
+                        </div>
+                    )}
+                </section>
             </section>
         </main>
     );

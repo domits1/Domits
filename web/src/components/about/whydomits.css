@@ -3,7 +3,7 @@
 }
 
 .why-domits__title-text-container {
-    padding: 6.75rem;
+    padding: 100px 50px;
     padding-bottom: 1rem;
 }
 
@@ -40,7 +40,7 @@
 
 .why-domits__card {
     width: 39.2%;
-    background: #0D9813;
+    background: var(--primary-color);
     min-height: 9.3rem;
     border-radius: 10px;
     display: flex;

@@ -28,7 +28,7 @@
 }
 
 .release__button {
-  background-color: #4CAF50;
+  background-color: var(--primary-color);
   color: white;
   border: none;
   padding: 10px 20px;
@@ -39,7 +39,7 @@
 }
 
 .release__button:hover {
-  background-color: #45a049;
+  background-color: var(--primary-color);
 }
 
 .release__image-header {

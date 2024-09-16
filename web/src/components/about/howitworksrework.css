@@ -51,7 +51,7 @@
 }
 
 .howitworks__info-block--guests {
-  background: #0D9813;
+  background: var(--primary-color);
 }
 
 .howitworks__info-block--hosts {
