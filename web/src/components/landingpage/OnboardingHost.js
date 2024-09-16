@@ -670,7 +670,7 @@ function OnboardingHost() {
                     );
                 } else
                 return (
-                    <main className="container">
+                    <main className="page-body">
                         <h2 className="onboardingSectionTitle">{isNew ? 'What best describes your accommodation?' : 'Edit your accommodation type'}</h2>
                         <section className="accommodation-types">
                             {accoTypes.map((option, index) => (
@@ -696,7 +696,7 @@ function OnboardingHost() {
                 );
             case 1:
                 return (
-                    <main className="container">
+                    <main className='container'>
                         {formData.AccommodationType === 'Boat' ? (
                             <div>
                                 <h2 className="onboardingSectionTitle">{isNew ? 'What type of boat do you own?' : 'Change the type of boat that you own'}</h2>
@@ -766,8 +766,11 @@ function OnboardingHost() {
                 );
             case 2:
                 return (
-                    <main style={{padding: '1.25rem'}}>
-                        <h2 className="onboardingSectionTitle">{isNew ? 'Where can we find your accommodation?' : 'Change the location of your accommodation'}</h2>
+                    <main className='page-body'>
+                        <h2 className="onboardingSectionTitle">
+                            {isNew ? `Where can we find your 
+                            ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}?`
+                                : `Change the location of your ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}`}</h2>
                         <p className="onboardingSectionSubtitle">We only share your address with guests after they have
                             booked</p>
 
@@ -891,7 +894,7 @@ function OnboardingHost() {
                 );
             case 4:
                 return (
-                    <main className="container">
+                    <main className="page-body">
                         <h2 className="onboardingSectionTitle">{isNew ? 'Let guests know what your space has to offer.' : 'Edit your amenities'}</h2>
                         <p className="onboardingSectionSubtitle">You can add more facilities after publishing your
                             listing</p>
@@ -935,7 +938,7 @@ function OnboardingHost() {
             case 5:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">{isNew ? 'Add photos of your home' : 'Edit photos of your home'}</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? `Add photos of your ${formData.AccommodationType.toLowerCase()}` : `Edit photos of your ${formData.AccommodationType.toLowerCase()}`}</h2>
 
                         <section className="accommodation-photos">
                             {!formData.Images ?
@@ -997,7 +1000,7 @@ function OnboardingHost() {
             case 6:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">{isNew ? 'Name your home' : 'Edit the name of your home'}</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? `Name your ${formData.AccommodationType.toLowerCase()}` : `Edit the name of your ${formData.AccommodationType.toLowerCase()}`}</h2>
                         <p className="onboardingSectionSubtitle">A short title works best. Don't worry, you can always
                             change it later.</p>
 
@@ -1187,14 +1190,15 @@ function OnboardingHost() {
                             <tr>
                                 <td>Date Range:</td>
                                 <td>
-                                    {formData.StartDate && formData.EndDate ? (
-                                        `Available from ${DateFormatterDD_MM_YYYY(formData.StartDate)} to ${DateFormatterDD_MM_YYYY(formData.EndDate)}`
+                                    {formData.DateRanges.length > 0 ? (
+                                        `Available from ${DateFormatterDD_MM_YYYY(formData.DateRanges[0].startDate)} 
+                                        to ${DateFormatterDD_MM_YYYY(formData.DateRanges[formData.DateRanges.length - 1].endDate)}`
                                     ) : "Date range not set"}
                                 </td>
                             </tr>
                             <tr>
                                 <td>Number of Guests:</td>
-                                <td>{formData.Guestamount}</td>
+                                <td>{formData.GuestAmount}</td>
                             </tr>
                             <tr>
                                 <td>Number of Bedrooms:</td>
