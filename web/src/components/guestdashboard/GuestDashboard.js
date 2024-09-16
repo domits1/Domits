@@ -37,14 +37,13 @@ const GuestDashboard = () => {
             try {
                 const result = await confirmEmailChange(verificationCode);
                 if (result.success) {
-                    console.log("Email verification successful");
                     setUser({ ...user, email: tempUser.email });
                     toggleEditState('email');
                 } else {
-                    console.error("Verification failed:", result.error);
+                    alert("Incorrect verification code");
                 }
             } catch (error) {
-                console.error("Error confirming email verification:", error);
+                alert("An error occurred during verification. Please try again.");
             }
             return;
         }
@@ -68,13 +67,18 @@ const GuestDashboard = () => {
             });
 
             const result = await response.json();
-            console.log("Update result:", result);
-            if (response.status === 200) {
+
+            let parsedBody = result.body;
+            if (typeof parsedBody === 'string') {
+                parsedBody = JSON.parse(parsedBody);
+            }
+
+            if (parsedBody.message === "Email update successful, please verify your new email.") {
                 setIsVerifying(true);
-            } else if (response.status === 400 && result.message === "This email address is already in use.") {
-                alert(result.message);
+            } else if (parsedBody.message === "This email address is already in use.") {
+                alert(parsedBody.message);
             } else {
-                console.error("Unexpected error:", result.message);
+                console.error("Unexpected error:", parsedBody.message || "No message provided");
             }
         } catch (error) {
             console.error("Error updating email:", error);
@@ -102,7 +106,6 @@ const GuestDashboard = () => {
             });
 
             const result = await response.json();
-            console.log("Update result:", result);
 
             if (result.statusCode === 200) {
                 setUser({ ...user, name: tempUser.name });
@@ -110,6 +113,18 @@ const GuestDashboard = () => {
             }
         } catch (error) {
             console.error("Error updating username:", error);
+        }
+    };
+
+    const handleKeyPressEmail = (e) => {
+        if (e.key === 'Enter') {
+            saveUserEmail();
+        }
+    };
+
+    const handleKeyPressName = (e) => {
+        if (e.key === 'Enter') {
+            saveUserName();
         }
     };
 
@@ -162,6 +177,7 @@ const GuestDashboard = () => {
                                                 value={tempUser.email}
                                                 onChange={handleInputChange}
                                                 className="guest-edit-input"
+                                                onKeyPress={handleKeyPressEmail}
                                             />
                                             <div onClick={saveUserEmail} className="edit-icon-background">
                                                 <img src={checkIcon} alt="Save Email" className="guest-check-icon" />
@@ -176,6 +192,7 @@ const GuestDashboard = () => {
                                                 onChange={handleVerificationInputChange}
                                                 placeholder="Code sent to your email!"
                                                 className="guest-edit-input"
+                                                onKeyPress={handleKeyPressEmail}
                                             />
                                             <div onClick={saveUserEmail} className="edit-icon-background">
                                                 <img src={checkIcon} alt="Confirm Verification Code" className="guest-check-icon" />
@@ -198,9 +215,10 @@ const GuestDashboard = () => {
                                     <input
                                         type="text"
                                         name="name"
-                                        value={tempUser.name} // Bind the temporary state to input
+                                        value={tempUser.name}
                                         onChange={handleInputChange}
                                         className="guest-edit-input"
+                                        onKeyPress={handleKeyPressName}
                                     />
                                     <div onClick={saveUserName} className="edit-icon-background">
                                         <img src={checkIcon} alt="Save Name" className="guest-check-icon" />
