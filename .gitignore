@@ -22,6 +22,3 @@ amplifytools.xcconfig
 **.sample
 #amplify-do-not-edit-end
 
-# dotenv environment variables file
-.env
-.env.test
