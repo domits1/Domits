@@ -4,19 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import styles from './landing.module.css';
 
 import Register from "../base/Register";
-import rocket from "../../images/icons/rocket-02.png";
-import banknote from "../../images/icons/bank-note-01.png";
-import chat from "../../images/icons/message-chat-circle.png";
-import monitor from "../../images/icons/monitor-01.png";
-import huis from "../../images/icons/house.png";
-import boothuis from "../../images/icons/house-boat.png";
-import appartement from "../../images/icons/flat.png";
-import camper from "../../images/icons/camper-van.png";
-import villa from "../../images/icons/mansion.png";
 import MainTextpicture from "../../images/host-landing-example.png";
 import whyHostpicture from "../../images/host-landing-example2.jpg";
-
-
+import verifiedLogo from "../../images/icons/verify-icon.png";
+import approveLogo from "../../images/icons/approve-accept-icon.png"
+import banknoteLogo from "../../images/icons/banknote-icon.png"
+import supportLogo from "../../images/icons/question-mark-round-icon.png"
+import internationalLogo from "../../images/icons/world-globe-line-icon.png"
+import rulesLogo from "../../images/icons/result-pass-icon.png"
+ 
 function Landing() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [group, setGroup] = useState('');
@@ -101,7 +97,7 @@ function Landing() {
                 )}
             </div>
             
-            <section className={styles.easyHosting}>
+            <div className={styles.easyHosting}>
                 <div className={styles.easyHosting_text}>
                     <h1>Hosting on <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
                     <h3>It only takes 3 steps</h3>
@@ -123,22 +119,84 @@ function Landing() {
                         <p>Welcome your guest with a warm and personal touch</p>
                     </div>
                 </div>
-
-
-            </section>
+            </div>
             
-            <section className={styles.whyHost}>
+            <div className={styles.whyHost}>
                 <div className={styles.SecPicture}>
                     <img src={whyHostpicture} alt="House"/>
                 </div>
                 <div className={styles.whyHostText}>
-                    <h1>Why should i host on <span className={styles.highlightText}>Domits?</span></h1>
-
+                    <h1>Why should i host on <span className={styles.highlightText}>Domits</span>?</h1>
+                    <p>At Domits, we're not just another platform, we're building a future-focused, 
+                    sustainable community with our Travel Innovation Labs. Our innovative approach 
+                    ensures that your property adds meaningful value to both travelers and the 
+                    environment. You'll also enjoy unlimited support and personalized, modern 
+                    dashboards that make managing your listings easier than ever. But what truly 
+                    sets Domits apart is our commitment to you. You're more than just a customer or 
+                    data, we genuinely care about your success, and we're here every step on the way 
+                    to help you thrive. Hosting with Domits means aligning with deeply embedded 
+                    values of health, safety, and sustainability, creating a future-proof path for 
+                    your business.</p>
+                    <button className={styles.nextButtons}></button>
                 </div>
+            </div>
+            
+            <div className={styles.simpleSafe}>
+                <div className={styles.simpleSafeAll}>
+                    <h1>Register your property <span className={styles.highlightText}>simple</span> and <span className={styles.highlightText}>safe</span></h1>
+                    <div className={styles.SimpleSafeAllCards}>
+                        <div className={styles.cardFirstHalf}>
+                            <div className={styles.simpleSafeCards}>
+                                <img src={verifiedLogo} alt="verified logo"></img>
+                                <div className={styles.safeMiniText}>
+                                    <h3>Certified guests</h3>
+                                    <p>We verify guests' email adresses and credit cards for partners using Payments by Stripe.</p>
+                                </div>
+                            </div>
+                            <div className={styles.simpleSafeCards}>
+                                <img src={rulesLogo} alt="houserules logo"></img>
+                                <div className={styles.safeMiniText}>
+                                    <h3>Your own house rules</h3>
+                                    <p>Let your potential house guest know your house rules. The must agree to them in order to book.</p>
+                                </div>
+                            </div>
+                            <div className={styles.simpleSafeCards}>
+                                <img src={approveLogo} alt="approve logo"></img>
+                                <div className={styles.safeMiniText}>
+                                    <h3>Choose how you want to receive your bookings</h3>
+                                    <p>you can allow your guest too book directly, or you can approve a booking request before accepting them</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className={styles.cardSecondHalf}>
+                            <div className={styles.simpleSafeCards}>
+                                <img src={banknoteLogo} alt="banknote"></img>
+                                <div className={styles.safeMiniText}>
+                                    <h3>receive payments regularly and securely</h3>
+                                    <p>You are guaranteed to be paid and can rely on fraud protection with our payments</p>
+                                </div>
+                            </div>
+                            <div className={styles.simpleSafeCards}>
+                                <img src={supportLogo} alt="support logo"></img>
+                                <div className={styles.safeMiniText}>
+                                    <h3>Dedicated support</h3>
+                                    <p>Our rental expert team is available to assist you with any questions or issues, ensures a smooth hassle-free experience</p>
+                                </div>
+                            </div>
+                            <div className={styles.simpleSafeCards}>
+                                <img src={internationalLogo} alt="internnational logo"></img>
+                                <div className={styles.safeMiniText}>
+                                    <h3>International renting</h3>
+                                    <p>You rent out your holiday home on an international market. This makes the chances of renting of out your holiday home even greater</p>
+                                </div>
+                            </div>
 
-            </section>
+                        </div>
 
 
+                    </div>
+                </div>
+            </div>
 {/*             
             <section className={styles.WhyHow}>
                 <div className={styles.WhyHow_text}>

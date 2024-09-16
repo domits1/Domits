@@ -68,6 +68,7 @@ import MenuBar from "./components/base/MenuBar";
 
 import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
+import Hostchatbot from "./components/hostchatbot/hostchatbot";
 
 
 Modal.setAppElement('#root');
@@ -135,6 +136,11 @@ function App() {
 
                             {/* Chatbot */}
                             <Route path="/chatbot" element={<Chatbot />} />
+
+                            {/* Host Chatbot */}
+                            <Route path="/hostchatbot" element={<Hostchatbot />} />
+
+                        
 
                             {/* Review */}
                             <Route path="/review" element={<ReviewPage/>}/>
