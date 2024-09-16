@@ -6,6 +6,7 @@ import three_dots from "../../images/three-dots-grid.svg";
 // import arrow_left from "../../images/arrow-left-icon.svg";
 // import arrow_right from "../../images/arrow-right-icon.svg";
 import {Auth} from "aws-amplify";
+import {formatDate, formatDescription, formatLocation, downloadICal} from "../utils/iCalFormat.js";
 
 function HostDistribution() {
     const [dates, setDates] = useState([]);
@@ -92,12 +93,43 @@ function HostDistribution() {
         asyncGetDates()
     }, []);
 
+    const handleICal = () => {
+        let accomStatus = 'TENTATIVE';
+        if (accommodations && accommodations.length > 0) {
+            if (accommodations[0].Drafted !== true) {
+                accomStatus = 'CONFIRMED';
+            }
+            const sampleEvent = {
+                uid: accommodations[0].ID,
+                stamp: formatDate(new Date()),
+                start: formatDate(accommodations[0].DateRanges[0].startDate),
+                end: formatDate(accommodations[0].DateRanges[0].endDate),
+                summary: accommodations[0].Title,
+                status: accomStatus,
+                description: formatDescription(accommodations[0].Description),
+                checkIn: formatDate(accommodations[0].DateRanges[0].startDate),
+                checkOut: formatDate(accommodations[0].DateRanges[0].endDate),
+                bookingId: accommodations[0].ID,
+                location: formatLocation(accommodations[0])
+            }
+            downloadICal(sampleEvent);
+        }
+    }
+
+    const handleEmptyButton = () => {
+        alert("This button is not functional yet");
+    }
 
     return (
         <div className="container">
             <div className="host-dist-header">
                 <h2 className="connectedChannelTitle">Connected channels</h2>
-                <button className="addChannelButton" onClick={() => setUserId()}>+ Add channel</button>
+                <button className="addChannelButton" onClick={handleICal}>
+                    Temp button to get iCal .isc file
+                </button>
+                <button className="addChannelButton" onClick={handleEmptyButton}>+ Add
+                    channel
+                </button>
             </div>
             <div className="host-dist-content">
                 <Pages/>
@@ -109,8 +141,8 @@ function HostDistribution() {
                                 <p className="channelFont">Airbnb</p>
                                 <p className={`channelStatus ${status === 'Enabled' ? 'Enabled' : 'Disabled'}`}> {status} </p>
                                 <p className="totalMappedRooms">0 Mapped rooms</p>
-                                <button className="channelManageButton" onClick={() => setUserId()}>Manage</button>
-                                <button className="threeDotsButton" onClick={() => setUserId()}>
+                                <button className="channelManageButton" onClick={handleEmptyButton}>Manage</button>
+                                <button className="threeDotsButton" onClick={handleEmptyButton}>
                                     <img src={three_dots} alt="Three Dots"/>
                                 </button>
                             </div>
