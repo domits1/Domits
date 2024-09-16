@@ -1,8 +1,10 @@
 /* containers */
 .main-container {
   display: flex;
-  margin: auto;
-  width: 80%;
+  flex-wrap: wrap;
+  margin: 30px auto;
+  width: 85%;
+  justify-content: space-between;
 }
 
 .left-container {
@@ -10,7 +12,7 @@
   flex-direction: column;
   align-items: left;
   justify-content: center;
-  width: 510px;
+  width: 50%;
 }
 
 .right-container {
@@ -20,71 +22,96 @@
   justify-content: center;
   width: 50%;
 }
-/* containers */
 
-/* advert card */
-.dashboard-cardd {
-  height: 50.89vh;
-  width: 20.4vw;
-  position: relative;
-}
-
-.dashboard-cardd .accommodation-text {
-  padding: 10px 30px;
-  width: 60%;
-  background-color: rgba(0, 0, 0, 0.5);
-  border-radius: 0.5em;
-  text-align: center;
-  position: absolute;
-  top: 60%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.dashboard-cardd .accommodation-title {
-  color: white;
-  margin: 0;
-  font-size: 0.9em;
-}
-
-.dashboard-cardd .accommodation-location {
-  color: white;
-  font-size: 0.6em;
-  margin-top: 1%;
-}
-
-.dashboard-cardd .accommodation-imgg {
-  max-height: 70%;
-  max-width: none;
-  border-radius: 0.5em 0.5em 0.5em 0.5em;
-  padding: 0;
-  align-self: center;
+.bottom-container{
+  display: flex;
+  flex-direction: column;
+  align-items: end;
   width: 100%;
-  height: 70%;
 }
-
-.dashboard-cardd .accommodation-details-title {
-  color: black;
-  margin: 0;
-  font-size: 1em;
-}
-/* advert card */
+/* containers */
 
 /* options */
 .options-container {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
 }
 
-.options-container p,
-h1 {
+.options-container p{
   margin: 2px 0px;
+}
+
+.option-container {
+  display: flex;
+  flex-direction: column;
 }
 
 hr {
   border: none;
-  width: 90%; /* Adjust the width as needed */
-  margin: 20px auto; /* Centers the hr */
+  width: 90%;
+  margin: 20px auto;
   border-top: 1px solid #e1e1e1;
 }
+
+.option-title{
+  font-size: 1.2em;
+  font-weight: 500;
+  color: black;
+}
+
+.option-status {
+  font-weight: 400;
+  color: black;
+}
+
+.publish-btn {
+  background-color: var(--secondary-color);
+  color: white;
+  border: 0px;
+  padding: 7px 40px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 1em;
+}
 /* options */
+
+/* Extra small devices (phones, <576px) */
+@media (max-width: 575.98px) {
+  body{
+    font-size: small;
+  }
+
+  .main-container{
+    width: 100%;
+  }
+
+  .left-container, .right-container, .bottom-container{
+    width: 90%;
+    align-items: center;
+    margin: 20px auto;
+  }
+
+  .publish-btn {
+    font-size: 14px;
+    padding: 14px 28px;
+  }
+}
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) and (max-width: 767.98px) {
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+}
+
+/* Large devices (laptops, 992px and up) */
+@media (min-width: 992px) and (max-width: 1199.98px) {
+
+}
+
+/* Extra large devices (desktops, 1200px and up) */
+@media (min-width: 1200px) {
+}
