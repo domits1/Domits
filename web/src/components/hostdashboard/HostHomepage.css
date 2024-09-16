@@ -72,7 +72,7 @@
   cursor: pointer;
   margin-bottom: 10px;
   align-items: center;
-  width: 200px; /* Fixed width */
+  width: 200px;
   border: 0.5px solid black;
   border-radius: 15px;
   padding: 5px;
@@ -107,7 +107,7 @@
   cursor: pointer;
   margin-bottom: 10px;
   align-items: center;
-  width: 200px; /* Fixed width to match .wijzer */
+  width: 200px;
   border: 0.5px solid black;
   border-radius: 15px;
   padding: 5px;

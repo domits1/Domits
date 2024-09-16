@@ -1,17 +1,15 @@
-import React, {useEffect, useState, useContext} from 'react';
-import './base.css';
-import logo from "../../logo.svg";
+import React, {useState, useEffect, useContext} from 'react';
+import './MenuBar.css';
 import nineDots from '../../images/dots-grid.svg';
 import profile from '../../images/profile-icon.svg';
-import arrowDown from '../../images/arrow-down-icon.svg';
+import arrowUp from '../../images/arrow-up-icon.svg';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
 import FlowContext from '../../FlowContext';
 import {useNavigate, useLocation} from 'react-router-dom';
-import {SearchBar} from './SearchBar';
 import {Auth} from "aws-amplify";
 
-function Header({setSearchResults, setLoading}) {
+function MenuBar() {
     const navigate = useNavigate();
     const location = useLocation();
     const {setFlowState} = useContext(FlowContext);
@@ -20,7 +18,6 @@ function Header({setSearchResults, setLoading}) {
     const [username, setUsername] = useState('');
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [currentView, setCurrentView] = useState('guest'); // 'guest' or 'host'
-    const [isActiveSearchBar, setActiveSearchBar] = useState(false);
 
     useEffect(() => {
         checkAuthentication();
@@ -143,78 +140,52 @@ function Header({setSearchResults, setLoading}) {
         }
     };
 
-    const toggleSearchBar = (status) => {
-        setActiveSearchBar(status);
-        if (status) {
-            document.body.style.overflow = 'hidden';
-        } else {
-            document.body.style.overflow = 'auto';
-        }
-    }
-
     return (
-        <div className="App">
-            <header className="app-header">
-                <nav
-                    className={`header-nav ${isActiveSearchBar ? 'active' : 'inactive'} ${isActiveSearchBar ? 'no-scroll' : ''}`}>
-                    {/*<nav className="header-nav">*/}
-                    {/*<div className={`header-top ${isActiveSearchBar ? 'active' : 'inactive'} ${isActiveSearchBar ? 'no-scroll' : ''}`}>*/}
-                        <div className="logo">
-                            <a href="/">
-                                <img src={logo} width={150} alt="Logo"/>
-                            </a>
-                        </div>
-                        <div className='App'>
-                            <SearchBar setSearchResults={setSearchResults} setLoading={setLoading}
-                                       toggleBar={toggleSearchBar}/>
-                        </div>
-                    {/*</div>*/}
-                    {/*<div className="header-bottom">*/}
-                        <div className='headerRight'>
-                            {!isLoggedIn ? (
-                                <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                                    Become a Host
-                                </button>
-                            ) : group === 'Host' ? (
-                                <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
-                                    {currentView === 'guest' ? 'Switch to Host Dashboard' : 'Switch to Guest Dashboard'}
-                                </button>
-                            ) : (
-                                <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                                    Become a Host
-                                </button>
+        <div className="bottom-menu-bar">
+            <div className="menu">
+                <div className='menuButtons'>
+                    {!isLoggedIn ? (
+                        <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                            Become a Host
+                        </button>
+                    ) : group === 'Host' ? (
+                        <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
+                            {currentView === 'guest' ? 'Switch to Host Dashboard' : 'Switch to Guest Dashboard'}
+                        </button>
+                    ) : (
+                        <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                            Become a Host
+                        </button>
+                    )}
+                    {isLoggedIn && group === 'Traveler' && (
+                        <button className="headerButtons" onClick={navigateToGuestDashboard}>
+                            Go to Dashboard
+                        </button>
+                    )}
+                    <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
+                        <img src={nineDots} alt="Nine Dots"/>
+                    </button>
+                    <div className="bottomPersonalMenuDropdown">
+                        <button className="personalMenu" onClick={toggleDropdown}>
+                            <img src={profile} alt="Profile Icon"/>
+                            <img src={arrowUp} alt="Dropdown Arrow"/>
+                        </button>
+                        <div className={"bottomPersonalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
+                            {isLoggedIn ? renderDropdownMenu() : (
+                                <>
+                                    <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img
+                                        src={loginArrow} alt="Login Arrow"/></button>
+                                    <button onClick={navigateToRegister}
+                                            className="dropdownRegisterButton">Register
+                                    </button>
+                                </>
                             )}
-                            {isLoggedIn && group === 'Traveler' && (
-                                <button className="headerButtons" onClick={navigateToGuestDashboard}>
-                                    Go to Dashboard
-                                </button>
-                            )}
-                            <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
-                                <img src={nineDots} alt="Nine Dots"/>
-                            </button>
-                            <div className="personalMenuDropdown">
-                                <button className="personalMenu" onClick={toggleDropdown}>
-                                    <img src={profile} alt="Profile Icon"/>
-                                    <img src={arrowDown} alt="Dropdown Arrow"/>
-                                </button>
-                                <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
-                                    {isLoggedIn ? renderDropdownMenu() : (
-                                        <>
-                                            <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img
-                                                src={loginArrow} alt="Login Arrow"/></button>
-                                            <button onClick={navigateToRegister}
-                                                    className="dropdownRegisterButton">Register
-                                            </button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        {/*</div>*/}
+                        </div>
                     </div>
-                </nav>
-            </header>
+                </div>
+            </div>
         </div>
     );
 }
 
-export default Header;
+export default MenuBar;

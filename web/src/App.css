@@ -1,8 +1,14 @@
 :root {
     --primary-color: #0D9813;
+    /* --primary-color: red; */
     --secondary-color: #003366;
 }
 
+.page-body {
+  width: 93%;
+  margin: 0 auto;
+  padding: 20px;
+}
 /* Beginning of the accommodation styling */
 
 /* Host dashboard */
@@ -12,33 +18,33 @@
 
 .accommodation-row {
   display: flex;
-  align-items: center; /* Align items vertically in the center */
-  margin: 0.5em 0; /* Adjust the margin between rows */
+  align-items: center;
+  margin: 0.5em 0;
 }
 
 .image-container {
-  margin-right: 12em; /* Add spacing between image and descriptions */
+  margin-right: 12em;
 }
 
 .resizable-image {
-  width: 25em; /* Ensure the image takes the full width of its container */
-  height: auto; /* Maintain the aspect ratio */
-  display: block; /* Remove any default inline styles */
+  width: 25em;
+  height: auto;
+  display: block;
 }
 
 .white-block-container {
   display: flex;
   flex-direction: row;
-  justify-content: space-between; /* Adjust as needed */
+  justify-content: space-between;
 }
 
 .white-block {
   flex: 1;
-  width: 18em; /* Set your desired width */
-  height: 18em; /* Set your desired height */
+  width: 18em;
+  height: 18em;
   background-color: white;
-  border: 1px solid #ccc; /* Optional: Add a border for separation */
-  margin: 5px; /* Optional: Add margin for spacing */
+  border: 1px solid #ccc;
+  margin: 5px;
 }
 
 .descriptions-container {

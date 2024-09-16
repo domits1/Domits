@@ -55,7 +55,7 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
                                 getFeatures(accommodation.Features)) : ('none')}
                             </p>
                             <p>Rent: ${accommodation.Rent}</p>
-                            {accommodation.DateRanges ?
+                            {accommodation.DateRanges.length > 0 ?
                                 (<p>
                                     Available from
                                     {" " + DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + " "}
