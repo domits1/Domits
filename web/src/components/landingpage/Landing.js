@@ -11,6 +11,7 @@ import banknoteLogo from "../../images/icons/banknote-icon.png";
 import supportLogo from "../../images/icons/question-mark-round-icon.png";
 import internationalLogo from "../../images/icons/world-globe-line-icon.png";
 import rulesLogo from "../../images/icons/result-pass-icon.png";
+import PersonalAdvice from "../../images/personal-advice.png";
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
     const answerRef = useRef(null);
@@ -152,7 +153,7 @@ function Landing() {
                     
                     <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
 
-                    <button className={styles.nextButtons}></button>
+                    <button className={styles.nextButtons}>Start hosting</button>
                 </div>
                 
                 <div className={styles.firstPicture}>
@@ -230,7 +231,7 @@ function Landing() {
                     to help you thrive. Hosting with Domits means aligning with deeply embedded 
                     values of health, safety, and sustainability, creating a future-proof path for 
                     your business.</p>
-                    <button className={styles.nextButtons}></button>
+                    <button className={styles.nextButtons}>Start hosting</button>
                 </div>
             </div>
             
@@ -362,6 +363,15 @@ function Landing() {
                         />
                     ))}
                 </div>
+            </div>
+
+            <div className={styles.personal__advice}>
+                <div className={styles.personal__advice__left}>
+                    <h1>Free personal advice from our <span className={styles.highlightText}>rental expert team</span></h1>
+                    <h3>Our expert team is ready for support!</h3>
+                    <button className={styles.nextButtons}>Talk to a specialist</button>
+                </div>
+                <img src={PersonalAdvice} alt='personalAdvice'/>
             </div>
             {/*
             <section className={styles.WhyHow}>

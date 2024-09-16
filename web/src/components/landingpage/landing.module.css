@@ -159,6 +159,9 @@
     margin-left: 7.5%;
     width: 25%;
     margin-top: 10%;
+    button {
+        align-self: start;
+    }
 }
 .MainText h1, .MainText p{
     text-align: left;
@@ -360,6 +363,22 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+    }
+}
+.personal__advice {
+    display: flex;
+    flex-direction: row;
+    margin: 0 5%;
+    justify-content: space-between;
+    .personal__advice__left {
+        margin: 10% 0;
+        text-align: left;
+        h1 {
+            font-size: 3.5rem;
+        }
+        button {
+            width: auto;
+        }
     }
 }
 .cardFirstHalf, .cardSecondHalf {
