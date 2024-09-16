@@ -9,7 +9,7 @@ const GuestProtectedRoute = ({ children }) => {
         return <div>Loading...</div>;
     }
 
-    if (role !== 'Traveler') {
+    if (role !== 'Host' && role !== 'Traveler') {
         return <Navigate to="/" replace />;
     }
 

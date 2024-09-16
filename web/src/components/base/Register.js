@@ -45,8 +45,21 @@ const Register = () => {
             setShouldShake(true);
             return;
         }
-        if (password.length < 7) {
-            setErrorMessage('Password must be at least 7 characters long.');
+        if (password.length < 8) {
+            setErrorMessage('Password must be at least 8 characters long.');
+            setPasswordShake(true);
+            return;
+        }
+
+        if (password.length > 64) {
+            setErrorMessage('Password must be less than 64 characters.');
+            setPasswordShake(true);
+            return;
+        }
+
+        const regex = /^(?=.*[A-Z])(?=.*\d).+$/;
+        if (!regex.test(password)) {
+            setErrorMessage('Password must contain at least one uppercase letter and one number.');
             setPasswordShake(true);
             return;
         }
