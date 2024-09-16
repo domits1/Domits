@@ -1,3 +1,38 @@
+.host-dist-header {
+    display: flex;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    margin-left: 24%;
+    flex-direction: row;
+    width: 100%;
+    padding-bottom: 1%;
+}
+
+.connectedChannelTitle {
+    margin-right: 43%;
+}
+
+.addChannelButton {
+    display: flex;
+    width: 13%;
+    padding: 5px 15px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 0.50px #000000 solid;
+    background: #0fa616;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 16px;
+}
+
+.addChannelButton:hover {
+    opacity: 90%;
+    cursor: pointer;
+}
+
 .host-dist-content {
     display: flex;
     justify-content: flex-start;
@@ -8,18 +43,31 @@
 .contentContainer-channel {
     display: flex;
     flex-direction: column;
-    /*align-items: center;*/
     width: 75%;
     border: #b9b9b9 1px solid;
     border-radius: 2%;
+    height: 71vh;
+    position: sticky;
+    top: 7%;
+    z-index: 1000;
+}
+
+.host-dist-box-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    border-bottom: #b9b9b9 1px solid;
+}
+
+.host-dist-box-container:nth-child(6) {
+    border-bottom: none;
 }
 
 .host-dist-box-row {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
+    justify-content: space-evenly;
     margin: 16px 16px 16px 16px;
-    border-bottom: #b9b9b9 1px solid;
     align-items: center;
 }
 
@@ -31,4 +79,70 @@
 .channelFont {
     font-weight: bold;
     color: black;
+}
+
+.channelStatus {
+    position: relative;
+    padding-left: 20px; /* Adjust as needed */
+}
+
+.channelStatus::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 10px; /* Adjust as needed */
+    height: 10px; /* Adjust as needed */
+    border-radius: 50%;
+}
+
+.channelStatus.Enabled::before {
+    background-color: green;
+}
+
+.channelStatus.Disabled::before {
+    background-color: red;
+}
+
+.totalMappedRooms {
+
+}
+
+.channelManageButton {
+    background: #052C5A;
+    color: white;
+    border-radius: 15px;
+    padding: 5px 15px;
+    width: 15%;
+    height: 75%;
+    font-size: 16px;
+}
+
+.channelManageButton:hover {
+    opacity: 90%;
+    cursor: pointer;
+}
+
+.threeDotsButton {
+    border: none;
+    background: none;
+    box-shadow: none;
+    /*margin-right: 10px;*/
+    /*float: left;*/
+    color: black;
+    text-align: center;
+    padding: 12px;
+    font-size: 18px;
+    border-radius: 10px;
+    /*margin-top: 0;*/
+    display: inline-flex;
+    font-family: Kanit, sans-serif;
+    cursor: pointer;
+    width: auto;
+}
+
+.threeDotsButton:hover {
+    cursor: pointer;
+    box-shadow: 0 0 5px hsl(0 0% 78%);
 }

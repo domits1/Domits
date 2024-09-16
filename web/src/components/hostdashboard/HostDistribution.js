@@ -2,12 +2,16 @@ import React, {useEffect, useState} from 'react';
 import Pages from "./Pages.js";
 import './HostDistribution.css';
 import airbnb_logo from "../../images/icon-airbnb.png";
+import three_dots from "../../images/three-dots-grid.svg";
+// import arrow_left from "../../images/arrow-left-icon.svg";
+// import arrow_right from "../../images/arrow-right-icon.svg";
 import {Auth} from "aws-amplify";
 
 function HostDistribution() {
     const [dates, setDates] = useState([]);
     const [userId, setUserId] = useState(null);
     const [accommodations, setAccommodations] = useState([]);
+    const [status, setStatus] = useState('Disabled');
 
     useEffect(() => {
         const asyncSetUserId = async () => {
@@ -91,16 +95,39 @@ function HostDistribution() {
 
     return (
         <div className="container">
-            <h2>Connected channels</h2>
+            <div className="host-dist-header">
+                <h2 className="connectedChannelTitle">Connected channels</h2>
+                <button className="addChannelButton" onClick={() => setUserId()}>+ Add channel</button>
+            </div>
             <div className="host-dist-content">
                 <Pages/>
                 <div className="contentContainer-channel">
-                    <div className="host-dist-box-row">
-                        <img className="channelLogo" src={airbnb_logo}></img>
-                        <p className="channelFont">Airbnb</p>
-                        <p>Disabled</p>
-                        <button className="" onClick={() => setUserId()}>Manage</button>
-                    </div>
+                    {[...Array(6)].map((_, index) => (
+                        <div className="host-dist-box-container">
+                            <div className="host-dist-box-row" key={index}>
+                                <img className="channelLogo" src={airbnb_logo} alt="Airbnb Logo"/>
+                                <p className="channelFont">Airbnb</p>
+                                <p className={`channelStatus ${status === 'Enabled' ? 'Enabled' : 'Disabled'}`}> {status} </p>
+                                <p className="totalMappedRooms">0 Mapped rooms</p>
+                                <button className="channelManageButton" onClick={() => setUserId()}>Manage</button>
+                                <button className="threeDotsButton" onClick={() => setUserId()}>
+                                    <img src={three_dots} alt="Three Dots"/>
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                    {/*<div className="host-dist-box-container">*/}
+                    {/*/!*    <div className="host-dist-box-row">*!/*/}
+                    {/*/!*    <img className="channelLogo" src={airbnb_logo}></img>*!/*/}
+                    {/*/!*    <p className="channelFont">Airbnb</p>*!/*/}
+                    {/*/!*    <p className="channelStatus">Disabled</p>*!/*/}
+                    {/*/!*    <p className="totalMappedRooms">Mapped rooms</p>*!/*/}
+                    {/*/!*    <button className="channelManageButton" onClick={() => setUserId()}>Manage</button>*!/*/}
+                    {/*/!*    <button className="threeDotsButton" onClick={() => setUserId()}>*!/*/}
+                    {/*/!*        <img src={three_dots} alt="Three Dots"/>*!/*/}
+                    {/*/!*    </button>*!/*/}
+                    {/*/!*</div>*!/*/}
+                    {/*</div>*/}
                 </div>
             </div>
         </div>
