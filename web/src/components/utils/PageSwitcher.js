@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import ImageSlider from "./ImageSlider";
 import './PageSwitcher.css';
+import DateFormatterDD_MM_YYYY from "./DateFormatterDD_MM_YYYY";
 function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onUpdate}) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = amount;
@@ -54,11 +55,12 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
                                 getFeatures(accommodation.Features)) : ('none')}
                             </p>
                             <p>Rent: ${accommodation.Rent}</p>
-                            {accommodation.StartDate && accommodation.EndDate ?
+                            {accommodation.DateRanges.length > 0 ?
                                 (<p>
                                     Available from
-                                    {" " + formatDate(accommodation.StartDate) + " "}
-                                    to {" " + formatDate(accommodation.EndDate) + " "}
+                                    {" " + DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + " "}
+                                    to {" " +
+                                    DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate) + " "}
                                 </p>) :
                                 (<p>Date range not set</p>)
                             }
@@ -73,12 +75,13 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
                             {accommodation.Drafted === true ?
                                 <button className={"listing-button listing-live"}
                                         onClick={() => onUpdate(accommodation.ID, false)}
-                                        disabled={!(hasStripe && (accommodation.StartDate && accommodation.EndDate))}
-                                        style={{backgroundColor: !(hasStripe && (accommodation.StartDate && accommodation.EndDate)) ? 'gray' : '#003366'}}
+                                        disabled={!(hasStripe && accommodation.DateRanges)}
+                                        style={{backgroundColor: !(hasStripe && accommodation.DateRanges) ? 'gray' : '#003366', fontSize: '0.8rem'}}
                                 >Set Live</button>
                                 :
                                 <button className="listing-button listing-draft"
                                         onClick={() => onUpdate(accommodation.ID, true)}
+                                        style={{backgroundColor: '#003366', fontSize: '0.75rem'}}
                                 >Set Draft</button>}
                         </div>
                     </section>

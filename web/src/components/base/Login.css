@@ -47,7 +47,7 @@
     font-weight: 400;
     line-height: 54px;
     word-wrap: break-word;
-    margin-top: 15px;
+    margin-top: 40px;
 }
 
 .loginContainer {
@@ -59,8 +59,8 @@
 }
 
 .loginForm {
-    min-width: 300px;
-    width: 25%;
+    min-width: 373px;
+    width: 100%;
     padding: 15px 30px;
     border-radius: 5px;
     margin-bottom: 50px;
@@ -84,7 +84,14 @@ label {
     align-items: center;
     display: inline-flex;
 }
-
+.emailSection {
+    padding: 6rem;
+    margin-bottom: 15%;
+}
+.forgotPasswordText:hover {
+    color: royalblue;
+    cursor: pointer;
+}
 .noAccountText {
     color: black;
     margin-top: 20px;

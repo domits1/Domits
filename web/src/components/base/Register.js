@@ -13,8 +13,11 @@ const Register = () => {
         email: '',
         password: '',
         repeatPassword: '',
-        username: ''
+        username: '',
+        firstName: '',
+        lastName: '',
     });
+
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
     const [signUpClicked, setSignUpClicked] = useState(false);
@@ -38,15 +41,38 @@ const Register = () => {
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        const { username, email, password, repeatPassword } = formData;
-    
+        const { username, email, password, repeatPassword, firstName, lastName } = formData;
+
         if (username.length < 4) {
             setErrorMessage('Username must be at least 4 characters long.');
             setShouldShake(true);
             return;
         }
-        if (password.length < 7) {
-            setErrorMessage('Password must be at least 7 characters long.');
+
+        if (firstName.length < 1) {
+            setErrorMessage('First name cannot be empty.');
+            return;
+        }
+        if (lastName.length < 1) {
+            setErrorMessage('Last name cannot be empty.');
+            return;
+        }
+
+        if (password.length < 8) {
+            setErrorMessage('Password must be at least 8 characters long.');
+            setPasswordShake(true);
+            return;
+        }
+
+        if (password.length > 64) {
+            setErrorMessage('Password must be less than 64 characters.');
+            setPasswordShake(true);
+            return;
+        }
+
+        const regex = /^(?=.*[A-Z])(?=.*\d).+$/;
+        if (!regex.test(password)) {
+            setErrorMessage('Password must contain at least one uppercase letter and one number.');
             setPasswordShake(true);
             return;
         }
@@ -54,12 +80,12 @@ const Register = () => {
             setErrorMessage('Email can\'t be empty!');
             return;
         }
-    
+
         if (!password || !repeatPassword) {
             setErrorMessage('Password can\'t be empty!');
             return;
         }
-    
+
         if (password !== repeatPassword) {
             setErrorMessage('Passwords do not match!');
             return;
@@ -72,10 +98,11 @@ const Register = () => {
                 password,
                 attributes: {
                     'custom:group': groupName,
-                    'custom:username': username
+                    'custom:username': username,
+                    'given_name': firstName,
+                    'family_name': lastName,
                 },
             });
-    
 
             navigate('/confirm-email', {
                 state: { email, password }
@@ -89,7 +116,8 @@ const Register = () => {
             }
         }
     };
-    
+
+
     const handleSignOut = async () => {
         try {
             await Auth.signOut();
@@ -150,6 +178,24 @@ const Register = () => {
                             onChange={handleChange}
                             style={{ borderColor: errorMessage.includes('Username') ? 'red' : 'var(--secondary-color)' }}
                         />
+                        <label>First Name:</label>
+                        <input
+                            className="registerInput"
+                            type="text"
+                            name="firstName"
+                            value={formData.firstName}
+                            onChange={handleChange}
+                        />
+
+                        <label>Last Name:</label>
+                        <input
+                            className="registerInput"
+                            type="text"
+                            name="lastName"
+                            value={formData.lastName}
+                            onChange={handleChange}
+                        />
+
                         <label>Email:</label>
                         <input
                             className="registerInput"

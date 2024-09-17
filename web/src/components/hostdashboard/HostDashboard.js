@@ -48,7 +48,7 @@ function HostDashboard() {
                 await setUserId(userInfo.attributes.sub);
                 await setUser({
                     email: userInfo.attributes.email,
-                    name: userInfo.attributes['custom:username'],
+                    name: userInfo.attributes['given_name'],
                     address: userInfo.attributes.address,
                     phone: userInfo.attributes.phone_number,
                     family: "2 adults - 2 kids"
@@ -137,7 +137,7 @@ function HostDashboard() {
                                         <p className={accommodation.Drafted ? 'isDrafted' : 'isLive'}
                                         >Status: {accommodation.Drafted ? 'Drafted' : 'Live'}</p>
                                         <p>Listed on: {DateFormatterDD_MM_YYYY(accommodation.createdAt)}</p>
-                                        {accommodation.DateRanges ?
+                                        {accommodation.DateRanges.length > 0 ?
                                             (<p>
                                                 Available from
                                                 {" " + DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + " "}
