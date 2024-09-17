@@ -1,4 +1,4 @@
-.chat-center {
+.cbc-chat-center {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -6,7 +6,7 @@
   background-color: #f1f1f1;
 }
 
-.chat-container {
+.cbc-chat-container {
   width: 100%;
   max-width: 600px;
   background: white;
@@ -15,43 +15,43 @@
   overflow: hidden;
 }
 
-.chat-messages {
+.cbc-chat-messages {
   height: 400px;
   overflow-y: auto;
   padding: 20px;
   border-bottom: 1px solid #ddd;
 }
 
-.message {
+.cbc-message {
   margin-bottom: 10px;
 }
 
-.message.user {
+.cbc-message.user {
   text-align: right;
 }
 
-.message.ai {
+.cbc-message.ai {
   text-align: left;
 }
 
-.sender {
+.cbc-sender {
   font-weight: bold;
   margin-bottom: 5px;
 }
 
-.message-content {
+.cbc-message-content {
   background: #e0e0e0;
   padding: 10px;
   border-radius: 5px;
   display: inline-block;
 }
 
-.typing-indicator {
+.cbc-typing-indicator {
   display: flex;
   align-items: center;
 }
 
-.dot {
+.cbc-dot {
   height: 6px;
   width: 6px;
   background-color: #333;
@@ -66,12 +66,12 @@
   100% { opacity: 0; }
 }
 
-.accommodation-tiles {
+.cbc-accommodation-tiles {
   display: flex;
   flex-wrap: wrap;
 }
 
-.accommodation-tile {
+.cbc-accommodation-tile {
   width: calc(50% - 10px);
   margin: 5px;
   border: 1px solid #ddd;
@@ -80,31 +80,31 @@
   background: #fff;
 }
 
-.accommodation-image {
+.cbc-accommodation-image {
   width: 100%;
   height: 150px;
   object-fit: cover;
 }
 
-.accommodation-details {
+.cbc-accommodation-details {
   padding: 10px;
 }
 
-.chat-input {
+.cbc-chat-input {
   display: flex;
   padding: 10px;
   border-top: 1px solid #ddd;
   background: #f9f9f9;
 }
 
-.chat-input input {
+.cbc-chat-input input {
   flex: 1;
   padding: 10px;
   border: 1px solid #ddd;
   border-radius: 5px;
 }
 
-.chat-input button {
+.cbc-chat-input button {
   padding: 10px 20px;
   border: none;
   border-radius: 5px;
@@ -114,13 +114,13 @@
   margin-left: 10px;
 }
 
-.predefined-messages, .sub-questions, .sub-sub-questions {
+.cbc-predefined-messages, .cbc-sub-questions, .cbc-sub-sub-questions {
   display: flex;
   flex-wrap: wrap;
   padding: 10px;
 }
 
-.predefined-message-button, .sub-question-button, .sub-sub-question-button {
+.cbc-predefined-message-button, .cbc-sub-question-button, .cbc-sub-sub-question-button {
   background: #007bff;
   color: white;
   border: none;
@@ -130,7 +130,7 @@
   cursor: pointer;
 }
 
-.predefined-message-button:disabled, .sub-question-button:disabled, .sub-sub-question-button:disabled {
+.cbc-predefined-message-button:disabled, .cbc-sub-question-button:disabled, .cbc-sub-sub-question-button:disabled {
   background: #ddd;
   cursor: not-allowed;
 }

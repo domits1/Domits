@@ -301,30 +301,30 @@ const Chat = () => {
   }
 
   return (
-    <div className="chat-center">
-      <div className="chat-container">
-        <div className="chat-messages" ref={chatMessagesRef}>
+    <div className="cbc-chat-center">
+      <div className="cbc-chat-container">
+        <div className="cbc-chat-messages" ref={chatMessagesRef}>
           {messages.map((message, index) => (
-            <div key={index} className={`message ${message.sender}`}>
-              <div className="sender">
+            <div key={index} className={`cbc-message cbc-${message.sender}`}>
+              <div className="cbc-sender">
                 {message.sender === 'user' ? 'You' : 'Sophia (AI)'}
               </div>
               {message.sender !== 'typing' ? (
-                <div className="message-content">{message.text}</div>
+                <div className="cbc-message-content">{message.text}</div>
               ) : (
-                <div className="typing-indicator">
+                <div className="cbc-typing-indicator">
                   {message.text}
-                  <span className="dot">.</span>
-                  <span className="dot">.</span>
-                  <span className="dot">.</span>
+                  <span className="cbc-dot">.</span>
+                  <span className="cbc-dot">.</span>
+                  <span className="cbc-dot">.</span>
                 </div>
               )}
               {message.sender === 'ai' && message.accommodations && (
-                <div className="accommodation-tiles">
+                <div className="cbc-accommodation-tiles">
                   {message.accommodations.map(accommodation => (
-                    <div key={accommodation.ID} className="accommodation-tile">
-                      <img src={accommodation.Images.image1} alt="Accommodation" className="accommodation-image" />
-                      <div className="accommodation-details">
+                    <div key={accommodation.ID} className="cbc-accommodation-tile">
+                      <img src={accommodation.Images.image1} alt="Accommodation" className="cbc-accommodation-image" />
+                      <div className="cbc-accommodation-details">
                         <h3>{accommodation.Title}</h3>
                         <p>{accommodation.Description}</p>
                         <p><strong>City:</strong> {accommodation.City}</p>
@@ -340,11 +340,11 @@ const Chat = () => {
         </div>
 
         {predefinedMessagesVisible && currentLayer === 'main' && (
-          <div className="predefined-messages">
+          <div className="cbc-predefined-messages">
             {predefinedMessages.map((message, index) => (
               <button 
                 key={index} 
-                className="predefined-message-button" 
+                className="cbc-predefined-message-button" 
                 onClick={() => sendMessage(message)}
                 disabled={loading}
               >
@@ -355,11 +355,11 @@ const Chat = () => {
         )}
 
         {subQuestions.length > 0 && (
-          <div className="sub-questions">
+          <div className="cbc-sub-questions">
             {subQuestions.map((question, index) => (
               <button 
                 key={index} 
-                className="sub-question-button" 
+                className="cbc-sub-question-button" 
                 onClick={() => sendMessage(question)}
                 disabled={loading}
               >
@@ -370,11 +370,11 @@ const Chat = () => {
         )}
 
         {subSubQuestions.length > 0 && (
-          <div className="sub-sub-questions">
+          <div className="cbc-sub-sub-questions">
             {subSubQuestions.map((question, index) => (
               <button 
                 key={index} 
-                className="sub-sub-question-button" 
+                className="cbc-sub-sub-question-button" 
                 onClick={() => sendMessage(question)}
                 disabled={loading}
               >
@@ -384,7 +384,7 @@ const Chat = () => {
           </div>
         )}
 
-        <div className="chat-input">
+        <div className="cbc-chat-input">
           <input
             type="text"
             value={userInput}

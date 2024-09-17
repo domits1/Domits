@@ -45,6 +45,7 @@ import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat";
 import Chatbot from "./components/chatbot/chatbot";
 import ChatWidget from './components/chatwidget/ChatWidget';
+import EmployeeChat from './components/employee/EmployeeChat';
 import FlowContext from './FlowContext'
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
@@ -128,6 +129,8 @@ function App() {
 
                             {/* Chatbot */}
                             <Route path="/chatbot" element={<Chatbot />} />
+
+                            <Route path="/employeechat" element={<EmployeeChat />} />
 
                             {/* Host Chatbot */}
                             <Route path="/hostchatbot" element={<Hostchatbot />} />
