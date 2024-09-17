@@ -26,3 +26,17 @@ export async function confirmEmailChange(verificationCode) {
     return { success: false, error };
   }
 }
+
+
+export async function confirmUsernameChange(verificationCode) {
+  try {
+    // Call Cognito API to verify the username change using the verification code
+    await Auth.verifyCurrentUserAttributeSubmit('email', verificationCode);
+    return { success: true };
+  } catch (error) {
+    console.error('Error confirming username change:', error);
+    return { success: false, error };
+  }
+}
+
+
