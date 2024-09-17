@@ -37,7 +37,7 @@ function Header({setSearchResults, setLoading}) {
             setIsLoggedIn(true);
             const userAttributes = user.attributes;
             setGroup(userAttributes['custom:group']);
-            setUsername(userAttributes['custom:username']);
+            setUsername(userAttributes['given_name']);
             setCurrentView(userAttributes['custom:group'] === 'Host' ? 'host' : 'guest');
         } catch (error) {
             setIsLoggedIn(false);
