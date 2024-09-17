@@ -196,6 +196,7 @@ function Header({setSearchResults, setLoading}) {
                                 <button className="personalMenu" onClick={toggleDropdown}>
                                     <img src={profile} alt="Profile Icon"/>
                                     <img src={arrowDown} alt="Dropdown Arrow"/>
+                                    test
                                 </button>
                                 <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                     {isLoggedIn ? renderDropdownMenu() : (
