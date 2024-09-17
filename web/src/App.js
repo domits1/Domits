@@ -42,7 +42,7 @@ import GuestBooking from './components/guestdashboard/GuestBooking';
 import GuestPayments from "./components/guestdashboard/GuestPayments";
 import GuestReviews from "./components/guestdashboard/GuestReviews";
 import GuestSettings from "./components/guestdashboard/GuestSettings";
-import Chat from "./components/chat/Chat";
+import Chat from "./components/chat/Chat.js";
 import Chatbot from "./components/chatbot/chatbot";
 import ChatWidget from './components/chatwidget/ChatWidget';
 import FlowContext from './FlowContext'
@@ -59,7 +59,11 @@ import HostMonitoring from "./components/hostdashboard/HostMonitoring";
 import HostScreening from "./components/hostdashboard/HostScreening";
 import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
-import HostVerification from "./components/hostverification/HostVerification";
+import HostVerificationView from "./components/hostverification/HostVerificationView.js";
+import RegistrationNumberCheckView from './components/hostverification/RegistrationNumberCheckView.js';
+import RegistrationNumberView from "./components/hostverification/RegistrationNumberView.js";
+import PhoneNumberView from './components/hostverification/PhoneNumberView.js';
+import PhoneNumberConfirmView from './components/hostverification/PhoneNumberConfirmView.js';
 import { initializeUserAttributes } from './components/utils/userAttributes';
 import PageNotFound from "./components/error/404NotFound";
 import StripeCallback from "./components/stripe/StripeCallback";
@@ -88,14 +92,14 @@ function App() {
     const currentPath = window.location.pathname;
 
     const renderFooter = () => {
-        if (['/admin', '/bookingoverview', '/bookingpayment', '/hostverification'].includes(currentPath)) {
+        if (['/admin', '/bookingoverview', '/bookingpayment'].includes(currentPath) || currentPath.startsWith('/verify')) {
             return null;
         }
         return <Footer />;
     };
     
     const renderChatWidget = () => {
-        if (['/hostverification'].includes(currentPath)) {
+        if (currentPath.startsWith('/verify')) {
             return null;
         }
         return <ChatWidget />;
@@ -167,8 +171,13 @@ function App() {
                             {/* Host Management */}
                             <Route path="/enlist" element={<HostOnboarding />} />
 
-                            {/* Host Verification */}
-                            <Route path="/hostverification" element={<HostVerification />} />
+                            {/* Verification */}
+                            <Route path="/verify" element={<HostVerificationView />} />
+                            <Route path="/verify/registrationnumber" element={<RegistrationNumberView />} />
+                            <Route path="/verify/registrationnumber/check" element={<RegistrationNumberCheckView />} />
+                            <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
+                            <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
+
 
                             <Route path="/hostdashboard" element={
                                     <HostProtectedRoute>
