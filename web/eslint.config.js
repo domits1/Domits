@@ -32,6 +32,10 @@ export default {
     ...pluginJs.configs.recommended.rules,
     ...tseslint.configs.recommended.rules,
     ...pluginReact.configs.recommended.rules,
+    "no-warning-comments": [
+      "error",
+      { "terms": ["TODO", "FIXME", "NOTE", "*", "/"], "location": "anywhere" }
+    ],
   },
   files: ["src/**/*.{js,mjs,cjs,ts,jsx,tsx}"],
 };
