@@ -39,10 +39,10 @@ function OnboardingHost() {
         latitude: 0,
         longitude: 0,
     });
-    let [hasAccoType, setHasAccoType] = useState(false);
-    let [hasGuestAccess, setHasGuestAccess] =useState(false);
-    let [hasAddress, setHasAddress] = useState(false);
-    let [updatedIndex, setUpdatedIndex] = useState([]);
+    const [hasAccoType, setHasAccoType] = useState(false);
+    const [hasGuestAccess, setHasGuestAccess] =useState(false);
+    const [hasAddress, setHasAddress] = useState(false);
+    const [updatedIndex, setUpdatedIndex] = useState([]);
 
     useEffect(() => {
         const fetchAccommodation = async () => {
@@ -253,28 +253,7 @@ function OnboardingHost() {
         Beds: 0,
         GuestAccess: ""
     });
-    const getInitialFormData = (accoType) => {
-        switch (accoType) {
-            case 'Boat':
-                return generateBoatFormData();
-            case 'Camper':
-                return generateCamperFormData();
-            default:
-                return generateNormalAccommodationFormData();
-        }
-    };
-    const [formData, setFormData] = useState(getInitialFormData(selectedAccoType));
-    useEffect(() => {
-        console.log(formData);
-        if (formData.AccommodationType === 'Boat') {
-            console.log(selectedAccoType);
-        }
-    }, [formData]);
-    useEffect(() => {
-        if (formData.AccommodationType) {
-            setSelectedAccoType(formData.AccommodationType);
-        }
-    }, [formData.AccommodationType]);
+    const [formData, setFormData] = useState('');
     const allAmenities = {
         Essentials: [
             'Wi-Fi',
@@ -455,6 +434,33 @@ function OnboardingHost() {
             'Winter tires'
         ],
     };
+    const [typeAmenities, setTypeAmenities] = useState({});
+    useEffect(() => {
+        const getInitialFormData = (accoType) => {
+            switch (accoType) {
+                case 'Boat':
+                    setFormData(generateBoatFormData);
+                    setTypeAmenities(boatAmenities);
+                    return;
+                case 'Camper':
+                   setFormData(generateCamperFormData);
+                    setTypeAmenities(camperAmenities);
+                   return;
+                default:
+                    setFormData(generateNormalAccommodationFormData);
+                    setTypeAmenities(allAmenities);
+                    return;
+            }
+        };
+        console.log(typeAmenities);
+        getInitialFormData(selectedAccoType);
+        console.log(formData);
+    }, [selectedAccoType]);
+    useEffect(() => {
+        if (formData.AccommodationType) {
+            setSelectedAccoType(formData.AccommodationType);
+        }
+    }, [formData.AccommodationType]);
 
     const pageUpdater = (pageNumber) => {
         setPage(pageNumber);
@@ -469,16 +475,15 @@ function OnboardingHost() {
         return true;
     }
     useEffect(() => {
-        if (formData.AccommodationType) {
-            setHasAccoType(true);
-        }
-        if (formData.GuestAccess) {
-            setHasGuestAccess(true);
-        }
-        if (formData.Country && formData.City && formData.Street && formData.PostalCode) {
-            setHasAddress(true);
-        } else {
-            setHasAddress(false);
+        if (formData.AccommodationType) setHasAccoType(true);
+        if (formData.GuestAccess) setHasGuestAccess(true);
+        switch (selectedAccoType) {
+            case ('Boat') :
+                setHasAddress(formData.Country && formData.City && formData.Harbour);
+                return;
+            default :
+                setHasAddress(formData.Country && formData.City && formData.PostalCode && formData.Street);
+                return;
         }
     }, [formData]);
 
@@ -546,8 +551,10 @@ function OnboardingHost() {
     const changeGuestAccess = (access) => {
         setFormData((prevData) => ({
             ...prevData,
+            AccommodationType: selectedAccoType,
             GuestAccess: access
         }));
+        console.log(formData);
     };
 
     const resetCleaningFee = () => {
@@ -605,7 +612,6 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-        console.log(formData);
         if (type === 'checkbox') {
             setFormData((prevData) => ({
                 ...prevData,
@@ -815,7 +821,7 @@ function OnboardingHost() {
                             {accoTypes.map((option, index) => (
                                 <div
                                     key={index}
-                                    className={`option ${formData.AccommodationType === option ? 'selected' : ''}`}
+                                    className={`option ${selectedAccoType === option ? 'selected' : ''}`}
                                     onClick={() => changeAccoType(option)}
                                 >
                                     <img className="accommodation-icon" src={accommodationIcons[option]} alt={option}/>
@@ -836,7 +842,7 @@ function OnboardingHost() {
             case 1:
                 return (
                     <main className='container'>
-                        {formData.AccommodationType === 'Boat' ? (
+                        {selectedAccoType === 'Boat' ? (
                             <div>
                                 <h2 className="onboardingSectionTitle">{isNew ? 'What type of boat do you own?' : 'Change the type of boat that you own'}</h2>
                                 <section className="boat-types">
@@ -852,7 +858,7 @@ function OnboardingHost() {
                                     ))}
                                 </section>
                             </div>
-                        ) : formData.AccommodationType === 'Camper' ? (
+                        ) : selectedAccoType === 'Camper' ? (
                             <div>
                                 <h2 className="onboardingSectionTitle">{isNew ? 'What type of camper do you own?' : 'Change the type of camper that you own'}</h2>
                                 <section className="accommodation-types" style={{padding: "5rem"}}>
@@ -908,7 +914,7 @@ function OnboardingHost() {
                     <main className='page-body'>
                         <h2 className="onboardingSectionTitle">
                             {isNew ? `Where can we find your 
-                            ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}?`
+                            ${selectedAccoType === 'Boat' || 'Camper' ? selectedAccoType.toLowerCase() : 'accommodation'}?`
                                 : `Change the location of your ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}`}</h2>
                         <p className="onboardingSectionSubtitle">We only share your address with guests after they have
                             booked</p>
@@ -938,7 +944,7 @@ function OnboardingHost() {
                                     required={true}
                                 />
                                 {selectedAccoType !== 'Boat' ? (
-                                    <div>
+                                    <>
                                         <label htmlFor="street">Street + house nr.*</label>
                                         <input
                                             className="textInput-field locationText"
@@ -959,9 +965,9 @@ function OnboardingHost() {
                                             placeholder="Enter your postal code"
                                             required={true}
                                         />
-                                    </div>
+                                    </>
                                 ) : (
-                                    <div>
+                                    <>
                                         <label htmlFor="harbour">Harbour*</label>
                                         <input
                                             className="textInput-field locationText"
@@ -972,12 +978,8 @@ function OnboardingHost() {
                                             placeholder="Enter the name of the harbour"
                                             required={true}
                                         />
-                                    </div>
+                                    </>
                                 )}
-                            </section>
-                            <section className="location-right">
-                                <h2 className="onboardingSectionTitle">What we show on Domits</h2>
-                                <MapComponent location={location}/>
                             </section>
                         </section>
                         <section className="listing-info enlist-info">
@@ -1011,16 +1013,40 @@ function OnboardingHost() {
                                     </button>
                                 </div>
                             </div>
-                            <div className="guest-amount-item">
-                                <p>Bedrooms</p>
-                                <div className="amount-btn-box">
-                                    <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
-                                    </button>
-                                    {formData.Bedrooms}
-                                    <button className="round-button" onClick={() => incrementAmount('Bedrooms')}>+
-                                    </button>
+                            {selectedAccoType === 'Boat' ? (
+                                <div className="guest-amount-item">
+                                    <p>Cabins</p>
+                                    <div className="amount-btn-box">
+                                        <button className="round-button" onClick={() => decrementAmount('Cabins')}>-
+                                        </button>
+                                        {formData.Cabins}
+                                        <button className="round-button" onClick={() => incrementAmount('Cabins')}>+
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
+                            ) : selectedAccoType === 'Camper' ? (
+                                <div className="guest-amount-item">
+                                    <p>Bedrooms</p>
+                                    <div className="amount-btn-box">
+                                        <button className="round-button" onClick={() => decrementAmount('Rooms')}>-
+                                        </button>
+                                        {formData.Rooms}
+                                        <button className="round-button" onClick={() => incrementAmount('Rooms')}>+
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="guest-amount-item">
+                                    <p>Bedrooms</p>
+                                    <div className="amount-btn-box">
+                                        <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
+                                        </button>
+                                        {formData.Bedrooms}
+                                        <button className="round-button" onClick={() => incrementAmount('Bedrooms')}>+
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
                             <div className="guest-amount-item">
                                 <p>Bathrooms</p>
                                 <div className="amount-btn-box">
@@ -1058,28 +1084,34 @@ function OnboardingHost() {
                         <p className="onboardingSectionSubtitle">You can add more facilities after publishing your
                             listing</p>
                         <div className="amenity-groups">
-                            {Object.keys(allAmenities).map(category => (
-                                <div key={category} style={{marginBottom: '5%',
-                                    boxShadow: 'inset 0 0 20px 10px #dedede',
-                                    padding: '5%',
-                                    borderRadius: '2rem'}} >
-                                    <h2 className="amenity-header">{category}</h2>
-                                    <section className="check-box">
-                                        {allAmenities[category].map(amenity => (
-                                            <label key={amenity}>
-                                                <input
-                                                    type="checkbox"
-                                                    className="radioInput"
-                                                    name={amenity}
-                                                    onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
-                                                    checked={formData.Features[category].includes(amenity)}
-                                                />
-                                                {amenity}
-                                            </label>
-                                        ))}
-                                    </section>
-                                </div>
-                            ))}
+                            {typeAmenities && formData.Features && Object.keys(typeAmenities).length > 0 && Object.keys(allAmenities).length > 0 && Object.keys(typeAmenities).map((category) => {
+                                const amenities = typeAmenities[category] || [];
+                                const featuresArray = formData.Features[category] || [];
+
+                                return (
+                                    <div key={category} style={{
+                                        marginBottom: '5%',
+                                        boxShadow: 'inset 0 0 20px 10px #dedede',
+                                        padding: '5%',
+                                        borderRadius: '2rem'
+                                    }}>
+                                        <h2 className="amenity-header">{category}</h2>
+                                        <section className="check-box">
+                                            {amenities.map((amenity) => (
+                                                <label key={amenity}>
+                                                    <input
+                                                        type="checkbox"
+                                                        name={amenity}
+                                                        onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
+                                                        checked={featuresArray.includes(amenity)}
+                                                    />
+                                                    {amenity}
+                                                </label>
+                                            ))}
+                                        </section>
+                                    </div>
+                                );
+                            })}
                         </div>
 
                         <nav className="onboarding-button-box">
