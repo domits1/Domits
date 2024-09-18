@@ -114,7 +114,8 @@ function OnboardingHost() {
         "Jet ski": JetSki,
         "Electric boat": ElectricBoat,
         "Boat without license": BoatWithoutLicense
-    }
+    };
+    const [selectedAccoType, setSelectedAccoType] = useState("");
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
@@ -154,19 +155,14 @@ function OnboardingHost() {
     }, [userId]);
 
     const [page, setPage] = useState(0);
-    const [formData, setFormData] = useState({
+    const generateCommonFormData = () => ({
         ID: generateUUID(),
         Title: "",
         Subtitle: "",
         Description: "",
         Rent: 1,
         GuestAmount: 0,
-        Bedrooms: 0,
-        Bathrooms: 0,
-        Beds: 0,
         Country: "",
-        PostalCode: "",
-        Street: "",
         City: "",
         Features: {
             Essentials: [],
@@ -189,17 +185,96 @@ function OnboardingHost() {
             image2: "",
             image3: "",
             image4: "",
-            image5: "",
+            image5: ""
         },
         DateRanges: [],
         Drafted: true,
         AccommodationType: "",
         ServiceFee: 0,
-        GuestAccess: "",
+        CleaningFee: 0,
         OwnerId: "",
-        CleaningFee: 0
     });
-
+    const generateBoatFormData = () => ({
+        ...generateCommonFormData(),
+        Harbour: "",
+        Cabins: 0,
+        Bathrooms: 0,
+        Beds: 0,
+        Manufacturer: "",
+        Model: "",
+        RentedWithSkipper: "",
+        GPI: "",
+        Capacity: "",
+        Length: "",
+        Fuel: "",
+        Speed: "",
+        YOC: "",
+        Renovated: "",
+        Features: {
+            ...generateCommonFormData().Features,
+            NavigationEquipment: [],
+            LeisureActivities: [],
+            WaterSports: []
+        }
+    });
+    const generateCamperFormData = () => ({
+        ...generateCommonFormData(),
+        Rooms: 0,
+        PostalCode: "",
+        Street: "",
+        Bathrooms: 0,
+        Beds: 0,
+        LicensePlate: "",
+        Brand: "",
+        Model: "",
+        Requirement: "",
+        GPI: "",
+        Length: "",
+        Height: "",
+        Transmission: "",
+        Fuel: "",
+        YOC: "",
+        Renovated: "",
+        FWD: "",
+        SelfBuilt: "",
+        Features: {
+            ...generateCommonFormData().Features,
+            NavigationEquipment: [],
+            LeisureActivities: [],
+            WaterSports: []
+        }
+    });
+    const generateNormalAccommodationFormData = () => ({
+        ...generateCommonFormData(),
+        Bedrooms: 0,
+        PostalCode: "",
+        Street: "",
+        Bathrooms: 0,
+        Beds: 0,
+        GuestAccess: ""
+    });
+    const getInitialFormData = (accoType) => {
+        switch (accoType) {
+            case 'Boat':
+                return generateBoatFormData();
+            case 'Camper':
+                return generateCamperFormData();
+            default:
+                return generateNormalAccommodationFormData();
+        }
+    };
+    const [formData, setFormData] = useState(getInitialFormData(selectedAccoType));
+    useEffect(() => {
+        console.log(formData);
+        if (formData.AccommodationType === 'Boat') {
+            console.log(selectedAccoType);
+        }
+    }, [formData]);
+    useEffect(() => {
+        if (formData.AccommodationType) {
+            setSelectedAccoType(formData.AccommodationType);
+        }
+    }, [formData.AccommodationType]);
     const allAmenities = {
         Essentials: [
             'Wi-Fi',
@@ -213,7 +288,7 @@ function OnboardingHost() {
             'Toilet paper',
             'Soap and shampoo'
         ],
-            Kitchen: [
+        Kitchen: [
             'Refrigerator',
             'Microwave',
             'Oven',
@@ -228,50 +303,40 @@ function OnboardingHost() {
             'Blender',
             'Kettle'
         ],
-            Bathroom: [
+        Bathroom: [
             'Hair dryer',
             'Shower gel',
             'Conditioner',
             'Body lotion',
             'First aid kit'
         ],
-            Bedroom: [
+        Bedroom: [
             'Hangers',
             'Iron and ironing board',
             'Closet/drawers',
             'Alarm clock'
         ],
-            LivingArea: [
+        LivingArea: [
             'Sofa',
             'Armchairs',
             'Coffee table',
             'Books and magazines',
             'Board games'
         ],
-            Technology: [
+        Technology: [
             'Smart TV',
             'Streaming services',
             'Bluetooth speaker',
             'Universal chargers',
             'Work desk and chair'
         ],
-            Safety: [
+        Safety: [
             'Smoke detector',
             'Carbon monoxide detector',
             'Fire extinguisher',
             'Lock on bedroom door'
         ],
-            Outdoor: [
-            'Patio or balcony',
-            'Outdoor furniture',
-            'Grill',
-            'Fire pit',
-            'Pool',
-            'Hot tub',
-            'Garden or backyard',
-            'Bicycle'
-        ],
-            FamilyFriendly: [
+        FamilyFriendly: [
             'High chair',
             'Crib',
             'Children’s books and toys',
@@ -279,12 +344,12 @@ function OnboardingHost() {
             'Baby bath',
             'Baby monitor'
         ],
-            Laundry: [
+        Laundry: [
             'Washer and dryer',
             'Laundry detergent',
             'Clothes drying rack'
         ],
-            Convenience: [
+        Convenience: [
             'Keyless entry',
             'Self-check-in',
             'Local maps and guides',
@@ -292,14 +357,14 @@ function OnboardingHost() {
             'Parking space',
             'EV charger'
         ],
-            Accessibility: [
+        Accessibility: [
             'Step-free access',
             'Wide doorways',
             'Accessible-height bed',
             'Accessible-height toilet',
             'Shower chair'
         ],
-            ExtraServices: [
+        ExtraServices: [
             'Cleaning service (add service fee manually)',
             'Concierge service',
             'Housekeeping',
@@ -309,12 +374,86 @@ function OnboardingHost() {
             'Personal trainer',
             'Massage therapist'
         ],
-            EcoFriendly: [
+        EcoFriendly: [
             'Recycling bins',
             'Energy-efficient appliances',
             'Solar panels',
             'Composting bin'
+        ],
+        Outdoor: [
+            'Patio or balcony',
+            'Outdoor furniture',
+            'Grill',
+            'Fire pit',
+            'Pool',
+            'Hot tub',
+            'Garden or backyard',
+            'Bicycle'
         ]
+    };
+    const boatAmenities = {
+        ...allAmenities,
+        Outdoor: [
+            ...allAmenities.Outdoor,
+            'Bimini',
+            'Outdoor shower',
+            'External table',
+            'External speakers',
+            'Teak deck',
+            'Bow sundeck',
+            'Aft sundeck',
+            'Bathing Platform',
+            'Bathing ladder'
+        ],
+        NavigationalEquipment: [
+            'Bow thruster',
+            'Electric windlass',
+            'Autopilot',
+            'GPS',
+            'Depth sounder',
+            'VHF',
+            'Guides & Maps'
+        ],
+        LeisureActivities: [
+            'Snorkeling equipment',
+            'Fishing equipment',
+            'Diving equipment'
+        ],
+        WaterSports: [
+            'Water skis',
+            'Monoski',
+            'Wakeboard',
+            'Towable Tube',
+            'Inflatable banana',
+            'Kneeboard'
+        ]
+    };
+    const camperAmenities = {
+        ...allAmenities,
+        FamilyFriendly: [
+            ...allAmenities.FamilyFriendly,
+            'Baby seat',
+        ],
+        Outdoor: [
+            ...allAmenities.Outdoor,
+            'Outdoor shower',
+            'External table and chairs',
+            'External speakers'
+        ],
+        Vehicle: [
+            'Bicycle carrier',
+            'Reversing camera',
+            'Airbags',
+            'Cruise control',
+            'Imperial',
+            'Navigation',
+            'Awning',
+            'Parking sensors',
+            'Power steering',
+            'Tow bar',
+            'Snow chains',
+            'Winter tires'
+        ],
     };
 
     const pageUpdater = (pageNumber) => {
@@ -776,7 +915,9 @@ function OnboardingHost() {
 
                         <section className="acco-location">
                             <section className="location-left">
-                                <label htmlFor="country">Country*</label>
+                                <label htmlFor="country">
+                                    {`Country${(selectedAccoType === 'Boat' || selectedAccoType === 'Camper') ? ' of registration' : ''}*`}
+                                </label>
                                 <Select
                                     options={options.map(country => ({value: country, label: country}))}
                                     name="Country"
@@ -796,26 +937,43 @@ function OnboardingHost() {
                                     placeholder="Select your city"
                                     required={true}
                                 />
-                                <label htmlFor="street">Street + house nr.*</label>
-                                <input
-                                    className="textInput-field locationText"
-                                    name="Street"
-                                    onChange={handleInputChange}
-                                    value={formData.Street}
-                                    id="street"
-                                    placeholder="Enter your address"
-                                    required={true}
-                                />
-                                <label htmlFor="postal">Postal Code*</label>
-                                <input
-                                    className="textInput-field locationText"
-                                    name="PostalCode"
-                                    onChange={handleInputChange}
-                                    value={formData.PostalCode}
-                                    id="postal"
-                                    placeholder="Enter your postal code"
-                                    required={true}
-                                />
+                                {selectedAccoType !== 'Boat' ? (
+                                    <div>
+                                        <label htmlFor="street">Street + house nr.*</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="Street"
+                                            onChange={handleInputChange}
+                                            value={formData.Street}
+                                            id="street"
+                                            placeholder="Enter your address"
+                                            required={true}
+                                        />
+                                        <label htmlFor="postal">Postal Code*</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="PostalCode"
+                                            onChange={handleInputChange}
+                                            value={formData.PostalCode}
+                                            id="postal"
+                                            placeholder="Enter your postal code"
+                                            required={true}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <label htmlFor="harbour">Harbour*</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="Harbour"
+                                            onChange={handleInputChange}
+                                            value={formData.Harbour}
+                                            id="harbour"
+                                            placeholder="Enter the name of the harbour"
+                                            required={true}
+                                        />
+                                    </div>
+                                )}
                             </section>
                             <section className="location-right">
                                 <h2 className="onboardingSectionTitle">What we show on Domits</h2>
@@ -827,7 +985,8 @@ function OnboardingHost() {
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className={!hasAddress ? 'onboarding-button-disabled' : 'onboarding-button'}
