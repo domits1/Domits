@@ -11,7 +11,7 @@ const Register = () => {
     const generateRandomUsername = () => {
         const chars = String.fromCharCode(...Array(127).keys()).slice(33);
         let result = '';
-        for (let i = 0; i < 20; i++) {  // Generate 20 characters
+        for (let i = 0; i < 10; i++) {  // Generate 20 characters
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return result;
@@ -120,13 +120,16 @@ const Register = () => {
             //     setErrorMessage('Preferred name already exists!');
             //     return;
             // }
+
+            const emailName = email.split('@')[0];
+            console.log(emailName + username);
             const groupName = flowState.isHost ? "Host" : "Traveler";
             await Auth.signUp({
                 username: email,
                 password,
                 attributes: {
                     'custom:group': groupName,
-                    'custom:username': username,
+                    'custom:username': emailName + username,
                     // 'preferred_username': prefferedName, // do not remove this yet it might become usefull later if you have questions: ask Chant
                     'given_name': firstName,
                     'family_name': lastName,
