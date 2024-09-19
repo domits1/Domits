@@ -42,6 +42,7 @@ function OnboardingHost() {
     const [hasAccoType, setHasAccoType] = useState(false);
     const [hasGuestAccess, setHasGuestAccess] =useState(false);
     const [hasAddress, setHasAddress] = useState(false);
+    const [hasSpecs, setHasSpecs] = useState(false);
     const [updatedIndex, setUpdatedIndex] = useState([]);
 
     useEffect(() => {
@@ -200,13 +201,14 @@ function OnboardingHost() {
         Cabins: 0,
         Bathrooms: 0,
         Beds: 0,
+        isPro: false,
         Manufacturer: "",
         Model: "",
-        RentedWithSkipper: "",
+        RentedWithSkipper: false,
         GPI: "",
         Capacity: "",
         Length: "",
-        Fuel: "",
+        FuelTank: "",
         Speed: "",
         YOC: "",
         Renovated: "",
@@ -232,7 +234,7 @@ function OnboardingHost() {
         Length: "",
         Height: "",
         Transmission: "",
-        Fuel: "",
+        FuelTank: "",
         YOC: "",
         Renovated: "",
         FWD: "",
@@ -478,14 +480,30 @@ function OnboardingHost() {
         if (formData.AccommodationType) setHasAccoType(true);
         if (formData.GuestAccess) setHasGuestAccess(true);
         switch (selectedAccoType) {
-            case ('Boat') :
-                setHasAddress(formData.Country && formData.City && formData.Harbour);
-                return;
-            default :
-                setHasAddress(formData.Country && formData.City && formData.PostalCode && formData.Street);
-                return;
+            case 'Boat':
+                setHasAddress(!!(formData.Country && formData.City && formData.Harbour));
+                setHasSpecs(!!(formData.Manufacturer && formData.Model && formData.GPI &&
+                    formData.Capacity && formData.Length && formData.FuelTank && formData.Speed && formData.YOC));
+                break;
+            default:
+                setHasAddress(!!(formData.Country && formData.City && formData.PostalCode && formData.Street));
+                break;
         }
+
     }, [formData]);
+    useEffect(() => {
+        console.log('Updated hasSpecs:', {
+            Manufacturer: formData.Manufacturer,
+            Model: formData.Model,
+            GPI: formData.GPI,
+            Capacity: formData.Capacity,
+            Length: formData.Length,
+            FuelTank: formData.FuelTank,
+            Speed: formData.Speed,
+            YOC: formData.YOC
+        });
+    }, [hasSpecs]);
+
 
     const calculateServiceFee = () => {
         const rent = parseFloat(formData.Rent);
@@ -624,6 +642,11 @@ function OnboardingHost() {
                     [name]: checked,
                 }
             }));
+        } else if (type === 'radio') {
+            setFormData((prevData) => ({
+                ...prevData,
+                [name]: !prevData[name],
+            }));
         } else if (type === 'number' || type === 'range') {
             const newValue = value || '';
             setFormData((prevData) => ({
@@ -644,6 +667,18 @@ function OnboardingHost() {
                 handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
             }
         }
+        console.log(formData);
+        console.log('Specs: ', {
+            hasSpecs: hasSpecs,
+            Manufacturer: formData.Manufacturer,
+            Model: formData.Model,
+            GPI: formData.GPI,
+            Capacity: formData.Capacity,
+            Length: formData.Length,
+            FuelTank: formData.FuelTank,
+            Speed: formData.Speed,
+            YOC: formData.YOC
+        });
     };
 
     const handleCountryChange = (selectedOption) => {
@@ -1253,14 +1288,186 @@ function OnboardingHost() {
                             />
                             <p>{formData.Description.length}/500</p>
                         </section>
+                        {selectedAccoType === 'Boat' ? (
+                            <div className="accommodation-specification">
+                                <h1>General</h1>
+                                <section className="accommodation-general">
+                                    <label>Are you a professional?</label>
+                                    <div className='radioBtn-box'>
+                                        <label>
+                                            <input
+                                                type="radio"
+                                                name='isPro'
+                                                onChange={handleInputChange}
+                                                checked={formData.isPro}
+                                            />
+                                            Yes
+                                        </label>
+                                        <label>
+                                            <input
+                                                type="radio"
+                                                name='isPro'
+                                                onChange={handleInputChange}
+                                                checked={!formData.isPro}
+                                            />
+                                            No
+                                        </label>
+                                    </div>
+                                    <label htmlFor="city">Manufacturer*</label>
+                                    <input
+                                        className="textInput-field locationText"
+                                        name="Manufacturer"
+                                        onChange={handleInputChange}
+                                        value={formData.Manufacturer}
+                                        id="manufacturer"
+                                        placeholder="Enter the manufacturer of your boat"
+                                        required={true}
+                                    />
+                                    <label htmlFor="city">Model*</label>
+                                    <input
+                                        className="textInput-field locationText"
+                                        name="Model"
+                                        onChange={handleInputChange}
+                                        value={formData.Model}
+                                        id="model"
+                                        placeholder="Enter the name of the model"
+                                        required={true}
+                                    />
+                                    <label htmlFor="city">Is your boat rented with a skipper?</label>
+                                    <div className='radioBtn-box'>
+                                        <label>
+                                            <input
+                                                type="radio"
+                                                name='RentedWithSkipper'
+                                                onChange={handleInputChange}
+                                                checked={formData.RentedWithSkipper}
+                                            />
+                                            Yes
+                                        </label>
+                                        <label>
+                                            <input
+                                                type="radio"
+                                                name='RentedWithSkipper'
+                                                onChange={handleInputChange}
+                                                checked={!formData.RentedWithSkipper}
+                                            />
+                                            No
+                                        </label>
+                                    </div>
+                                    <label htmlFor="GPI">General periodic inspection*</label>
+                                    <input
+                                        type='date'
+                                        className="textInput-field locationText"
+                                        name="GPI"
+                                        onChange={handleInputChange}
+                                        value={formData.GPI}
+                                        id="gpi"
+                                        placeholder="DD/MM/YYYY"
+                                        required={true}
+                                    />
+                                </section>
+                                <h1>Technical</h1>
+                                <section className="accommodation-technical">
+                                    <div>
+                                        <label htmlFor="capacity">Capacity (allowed)</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="Capacity"
+                                            onChange={handleInputChange}
+                                            value={formData.Capacity}
+                                            id="capacity"
+                                            required={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="length">Length (m)</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="Length"
+                                            onChange={handleInputChange}
+                                            value={formData.Length}
+                                            id="length"
+                                            required={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="fuel">Fuel (L/h)</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="FuelTank"
+                                            onChange={handleInputChange}
+                                            value={formData.FuelTank}
+                                            id="fueltank"
+                                            required={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="speed">Top speed (Km)</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="Speed"
+                                            onChange={handleInputChange}
+                                            value={formData.Speed}
+                                            id="speed"
+                                            required={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="YOC">Year of construction</label>
+                                        <input
+                                            type="number"
+                                            className="textInput-field locationText"
+                                            name="YOC"
+                                            onChange={handleInputChange}
+                                            value={formData.YOC}
+                                            id="yoc"
+                                            required={true}
+                                            min={1900}
+                                            max={new Date().getFullYear()}
+                                            placeholder="YYYY"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="renovated">Renovated</label>
+                                        <input
+                                            type='number'
+                                            className="textInput-field locationText"
+                                            name="Renovated"
+                                            onChange={handleInputChange}
+                                            value={formData.Renovated}
+                                            id="renovated"
+                                            required={true}
+                                            min={1900}
+                                            max={new Date().getFullYear()}
+                                            placeholder='YYYY'
+                                        />
+                                    </div>
+                                </section>
+                            </div>
+                        ) : selectedAccoType === 'Camper' && (
+                            <section className="accommodation-general">
+                                <h1>General</h1>
+
+                            </section>
+                        )}
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
                                 Go back
                             </button>
-                            <button className={!formData.Description ? 'onboarding-button-disabled' : 'onboarding-button'}
+                            { selectedAccoType === 'Boat' || selectedAccoType === 'Camper' ? (
+                                <button
+                                    className={!(formData.Description && hasSpecs) ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    disabled={!(formData.Description && hasSpecs)} onClick={() => pageUpdater(page + 1)}>
+                                    Confirm and proceed
+                                </button>
+                            ) : (
+                                <button
+                                    className={!formData.Description ? 'onboarding-button-disabled' : 'onboarding-button'}
                                     disabled={!formData.Description} onClick={() => pageUpdater(page + 1)}>
-                                Confirm and proceed
-                            </button>
+                                    Confirm and proceed
+                                </button>
+                            )}
                         </nav>
                     </main>
                 );
@@ -1281,7 +1488,8 @@ function OnboardingHost() {
                                     <label>Cleaning fee</label>
                                     <input className="pricing-input" type="number" name="CleaningFee"
                                            onChange={handleInputChange}
-                                           defaultValue={formData.CleaningFee ? formData.CleaningFee : 1} min={1} step={0.1}
+                                           defaultValue={formData.CleaningFee ? formData.CleaningFee : 1} min={1}
+                                           step={0.1}
                                            required={true}/>
                                 </div>}
                             <div className="pricing-row">
@@ -1375,8 +1583,8 @@ function OnboardingHost() {
                                 <td>{formData.Rent}</td>
                             </tr>
                             <tr>
-                                <td>Room Type:</td>
-                                <td>{formData.AccommodationType}</td>
+                                <td>Accommodation Type:</td>
+                                <td>{selectedAccoType}</td>
                             </tr>
                             <tr>
                                 <td>Date Range:</td>
@@ -1391,10 +1599,22 @@ function OnboardingHost() {
                                 <td>Number of Guests:</td>
                                 <td>{formData.GuestAmount}</td>
                             </tr>
-                            <tr>
-                                <td>Number of Bedrooms:</td>
-                                <td>{formData.Bedrooms}</td>
-                            </tr>
+                            {selectedAccoType === 'Boat' ? (
+                                <tr>
+                                    <td>Number of Cabins:</td>
+                                    <td>{formData.Cabins}</td>
+                                </tr>
+                            ) : selectedAccoType === 'Camper' ? (
+                                <tr>
+                                    <td>Number of Rooms:</td>
+                                    <td>{formData.Rooms}</td>
+                                </tr>
+                            ) : (
+                                <tr>
+                                    <td>Number of Bedrooms:</td>
+                                    <td>{formData.Bedrooms}</td>
+                                </tr>
+                            )}
                             <tr>
                                 <td>Number of Bathrooms:</td>
                                 <td>{formData.Bathrooms}</td>
@@ -1404,17 +1624,32 @@ function OnboardingHost() {
                                 <td>{formData.Beds}</td>
                             </tr>
                             <tr>
-                                <td>Country:</td>
+                                <td>{`Country${(selectedAccoType === 'Boat' || selectedAccoType === 'Camper') ? ' of registration' : ''}:`}</td>
                                 <td>{formData.Country}</td>
                             </tr>
                             <tr>
-                                <td>Postal Code:</td>
-                                <td>{formData.PostalCode}</td>
+                                <td>City:</td>
+                                <td>{formData.City}</td>
                             </tr>
-                            <tr>
-                                <td>Street + House Nr.:</td>
-                                <td>{formData.Street}</td>
-                            </tr>
+                            { selectedAccoType === 'Boat' ? (
+                                <>
+                                    <tr>
+                                        <td>Harbour:</td>
+                                        <td>{formData.Harbour}</td>
+                                    </tr>
+                                </>
+                            ) : (
+                                <>
+                                    <tr>
+                                    <td>Postal Code:</td>
+                                        <td>{formData.PostalCode}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Street + House Nr.:</td>
+                                        <td>{formData.Street}</td>
+                                    </tr>
+                                </>
+                            )}
                             </tbody>
                         </table>
                         <h3>Features:</h3>
@@ -1422,7 +1657,7 @@ function OnboardingHost() {
                             <tbody>
                             {Object.keys(formData.Features).map(category => (
                                 <>
-                                    {formData.Features[category].length > 0 && (
+                                {formData.Features[category].length > 0 && (
                                         <tr key={category}>
                                             <td colSpan={2}
                                                 style={{fontWeight: 'bold', borderBottom: '1px solid #ccc'}}>{category}:

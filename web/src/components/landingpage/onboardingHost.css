@@ -327,8 +327,29 @@
   align-items: center;
 }
 
-.accommodation-title {
+.accommodation-title, .accommodation-specification {
   align-self: center;
+}
+.accommodation-specification {
+  max-width: 50%;
+  .radioBtn-box, input {
+    margin-bottom: 5%;
+  }
+  .accommodation-general {
+    display: flex;
+    flex-direction: column;
+  }
+  .accommodation-technical {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 5%;
+  }
+}
+.radioBtn-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  gap: 5%;
 }
 .textInput-field {
   width: 100%;
