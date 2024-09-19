@@ -122,7 +122,6 @@ const Register = () => {
             // }
 
             const emailName = email.split('@')[0];
-            console.log(emailName + username);
             const groupName = flowState.isHost ? "Host" : "Traveler";
             await Auth.signUp({
                 username: email,
