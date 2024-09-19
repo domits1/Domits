@@ -248,9 +248,9 @@
     flex-direction: column;
     justify-content: space-between;
     width: 30vw;
-  }
-  .location-right {
-    width: 40vw;
+    .locationText {
+      margin-bottom: 10%;
+    }
   }
 }
 
@@ -357,7 +357,7 @@
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 10%;
 }
 .acco-price {
   padding: 5%;

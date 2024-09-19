@@ -476,6 +476,9 @@ function OnboardingHost() {
         }
         return true;
     }
+    const separatePascalCase = (str) => {
+        return str.replace(/([A-Z])/g, ' $1').trim();
+    }
     useEffect(() => {
         if (formData.AccommodationType) setHasAccoType(true);
         if (formData.GuestAccess) setHasGuestAccess(true);
@@ -1061,7 +1064,7 @@ function OnboardingHost() {
                                 </div>
                             ) : selectedAccoType === 'Camper' ? (
                                 <div className="guest-amount-item">
-                                    <p>Bedrooms</p>
+                                    <p>Rooms</p>
                                     <div className="amount-btn-box">
                                         <button className="round-button" onClick={() => decrementAmount('Rooms')}>-
                                         </button>
@@ -1072,11 +1075,11 @@ function OnboardingHost() {
                                 </div>
                             ) : (
                                 <div className="guest-amount-item">
-                                    <p>Bedrooms</p>
+                                    <p>Beds</p>
                                     <div className="amount-btn-box">
                                         <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
                                         </button>
-                                        {formData.Bedrooms}
+                                        {formData.Beds}
                                         <button className="round-button" onClick={() => incrementAmount('Bedrooms')}>+
                                         </button>
                                     </div>
@@ -1130,7 +1133,7 @@ function OnboardingHost() {
                                         padding: '5%',
                                         borderRadius: '2rem'
                                     }}>
-                                        <h2 className="amenity-header">{category}</h2>
+                                        <h2 className="amenity-header">{separatePascalCase(category)}</h2>
                                         <section className="check-box">
                                             {amenities.map((amenity) => (
                                                 <label key={amenity}>
@@ -1140,7 +1143,7 @@ function OnboardingHost() {
                                                         onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
                                                         checked={featuresArray.includes(amenity)}
                                                     />
-                                                    {amenity}
+                                                    {separatePascalCase(amenity)}
                                                 </label>
                                             ))}
                                         </section>
@@ -1164,7 +1167,7 @@ function OnboardingHost() {
             case 5:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">{isNew ? `Add photos of your ${formData.AccommodationType.toLowerCase()}` : `Edit photos of your ${formData.AccommodationType.toLowerCase()}`}</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? `Add photos of your ${selectedAccoType.toLowerCase()}` : `Edit photos of your ${selectedAccoType.toLowerCase()}`}</h2>
 
                         <section className="accommodation-photos">
                             {!formData.Images ?
@@ -1226,7 +1229,7 @@ function OnboardingHost() {
             case 6:
                 return (
                     <main className="container">
-                        <h2 className="onboardingSectionTitle">{isNew ? `Name your ${formData.AccommodationType.toLowerCase()}` : `Edit the name of your ${formData.AccommodationType.toLowerCase()}`}</h2>
+                        <h2 className="onboardingSectionTitle">{isNew ? `Name your ${selectedAccoType.toLowerCase()}` : `Edit the name of your ${selectedAccoType.toLowerCase()}`}</h2>
                         <p className="onboardingSectionSubtitle">A short title works best. Don't worry, you can always
                             change it later.</p>
 
@@ -1653,7 +1656,7 @@ function OnboardingHost() {
                         {
                             selectedAccoType === 'Boat' && (
                                 <>
-                                    <h3>Features:</h3>
+                                    <h3>Specifications:</h3>
                                     <table style={{width: '100%', borderCollapse: 'collapse'}}>
                                         <tbody>
                                         <tr>
