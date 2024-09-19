@@ -126,4 +126,55 @@ describe.skip('Register', () => {
         fireEvent.click(screen.getByText(/Sign Up/i));
         expect(screen.getByText(/Password can't be empty!/i)).toBeInTheDocument();
     });
+
+    it('should display error message when password is empty', () => {
+        render(
+            <FlowContext.Provider value={{ flowState: { isHost: false }, setFlowState: jest.fn() }}>
+                <Register />
+            </FlowContext.Provider>
+        );
+
+        fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
+        fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
+        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
+        fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: '' } });
+        fireEvent.change(screen.getByLabelText(/Repeat Password/i), { target: { value: '' } });
+        fireEvent.click(screen.getByText(/Sign Up/i));
+        expect(screen.getByText(/Password can't be empty!/i)).toBeInTheDocument();
+    });
+
+    it('should generate a random username during form submission', async () => {
+        const mockNavigate = jest.fn();
+        useNavigate.mockReturnValue(mockNavigate);
+
+        // Spy on the generateRandomUsername function
+        const generateRandomUsernameSpy = jest.spyOn(Register.prototype, 'generateRandomUsername');
+
+        Auth.signUp.mockResolvedValue({});
+
+        render(
+            <FlowContext.Provider value={{ flowState: { isHost: false }, setFlowState: jest.fn() }}>
+                <Register />
+            </FlowContext.Provider>
+        );
+
+        fireEvent.change(screen.getByLabelText(/First Name/i), { target: { value: 'John' } });
+        fireEvent.change(screen.getByLabelText(/Last Name/i), { target: { value: 'Doe' } });
+        fireEvent.change(screen.getByLabelText(/Email/i), { target: { value: 'test@example.com' } });
+        fireEvent.change(screen.getByLabelText(/Password/i), { target: { value: 'password123' } });
+        fireEvent.change(screen.getByLabelText(/Repeat Password/i), { target: { value: 'password123' } });
+        fireEvent.click(screen.getByText(/Sign Up/i));
+
+        // Wait for the username generation
+        await waitFor(() => expect(generateRandomUsernameSpy).toHaveBeenCalled());
+
+        expect(Auth.signUp).toHaveBeenCalledWith(expect.objectContaining({
+            username: 'test@example.com',
+            attributes: expect.objectContaining({
+                'custom:username': expect.any(String),
+            }),
+        }));
+
+        generateRandomUsernameSpy.mockRestore();
+    });
 });
