@@ -6,13 +6,16 @@ import three_dots from "../../images/three-dots-grid.svg";
 // import arrow_left from "../../images/arrow-left-icon.svg";
 // import arrow_right from "../../images/arrow-right-icon.svg";
 import {Auth} from "aws-amplify";
-import {formatDate, formatDescription, formatLocation, downloadICal} from "../utils/iCalFormat.js";
+import {formatDate, formatDescription, formatDateTime, formatLocation, downloadICal} from "../utils/iCalFormat.js";
+// import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 
 function HostDistribution() {
-    const [dates, setDates] = useState([]);
     const [userId, setUserId] = useState(null);
     const [accommodations, setAccommodations] = useState([]);
     const [status, setStatus] = useState('Disabled');
+    // const [booking, setBooking] = useState([]);
+    const [iCalData, setICalData] = useState([]);
+
 
     useEffect(() => {
         const asyncSetUserId = async () => {
@@ -64,53 +67,98 @@ function HostDistribution() {
     );
 
     useEffect(() => {
-        const asyncGetDates = async () => {
+        const asyncRetrieveICalData = async () => {
             try {
-                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetDateRangeFromAccomodation', {
-                    method: 'POST',
-                    body: JSON.stringify({OwnerId: accommodations.ID}),
-                    headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch');
-                }
+                const response = await fetch('https://d6ia9ibn4e.execute-api.eu-north-1.amazonaws.com/default/retrieveICalData');
+
                 const data = await response.json();
                 console.log(data);
 
                 if (data.body && typeof data.body === 'string') {
-                    const datesArray = JSON.parse(data.body);
-                    if (Array.isArray(datesArray)) {
-                        setDates(datesArray);
-                    }
+                    const retrievedICalData = data.response.Items;
+                    console.log(retrievedICalData);
+
+                    setICalData(retrievedICalData);
                 }
             } catch (error) {
-                console.error('Failed to fetch dates:', error);
+                console.error('Failed to fetch iCal data:', error);
             }
         };
+        asyncRetrieveICalData();
+    }, [accommodations]);
 
-        asyncGetDates()
-    }, []);
+    // const handleRetrieveICalData = async () => {
+    //     try {
+    //         const response = await fetch('https://d6ia9ibn4e.execute-api.eu-north-1.amazonaws.com/default/retrieveICalData');
+    //
+    //         const data = await response.json();
+    //         console.log(data);
+    //
+    //         if (data.body && typeof data.body === 'string') {
+    //             const retrievedICalData = data.response.Items;
+    //             console.log(retrievedICalData);
+    //
+    //             setICalData(retrievedICalData);
+    //         }
+    //     } catch (error) {
+    //         console.error('Failed to fetch iCal data:', error);
+    //     }
+    // }
 
     const handleICal = () => {
-        let accomStatus = 'TENTATIVE';
-        if (accommodations && accommodations.length > 0) {
-            if (accommodations[0].Drafted !== true) {
-                accomStatus = 'CONFIRMED';
+        // let uid = iCalData[0].id.S;
+        let uid;
+        let newStamp = new Date();
+        let dtStart = new Date(iCalData[0].Dtstart.S).toISOString();
+        let dtEnd = new Date(iCalData[0].Dtend.S).toISOString();
+        let checkIn = new Date(iCalData[0].CheckIn.S).toISOString();
+        let checkOut = new Date(iCalData[0].CheckOut.S).toISOString();
+        let sequence = iCalData[0].Sequence.N;
+        let guestId = iCalData[0].GuestId.S;
+
+        if (uid === undefined || uid === null) {
+            const generateUUID = () => {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                    var r = Math.random() * 16 | 0,
+                        v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
             }
+            uid = generateUUID();
+        }
+
+        if (guestId === undefined || guestId === null) {
+            guestId = userId;
+        }
+
+        if (sequence === undefined || sequence === null) {
+            sequence = 0;
+        }
+
+        if (iCalData[0].Dtstamp.S !== undefined || iCalData[0].Dtstamp.S !== null) {
+            newStamp = new Date(iCalData[0].Dtstamp.S);
+        }
+
+        if (iCalData && iCalData.length > 0) {
+
             const sampleEvent = {
-                uid: accommodations[0].ID,
-                stamp: formatDate(new Date()),
-                start: formatDate(accommodations[0].DateRanges[0].startDate),
-                end: formatDate(accommodations[0].DateRanges[0].endDate),
-                summary: accommodations[0].Title,
-                status: accomStatus,
-                description: formatDescription(accommodations[0].Description),
-                checkIn: formatDate(accommodations[0].DateRanges[0].startDate),
-                checkOut: formatDate(accommodations[0].DateRanges[0].endDate),
-                bookingId: accommodations[0].ID,
-                location: formatLocation(accommodations[0])
+                uid: uid,
+                stamp: formatDate(newStamp),
+                start: formatDate(dtStart),
+                end: formatDate(dtEnd),
+                summary: accommodations[0].Title + ' - ' + iCalData[0].Status.S,
+                status: iCalData[0].Status.S,
+                description: formatDescription(accommodations[0].Description +
+                '\n\n' + 'Check-in: ' + formatDateTime(checkIn) +
+                '\n' + 'Check-out: ' + formatDateTime(checkOut)),
+                checkIn: formatDate(checkIn),
+                checkOut: formatDate(checkOut),
+                bookingId: iCalData[0].BookingId.S,
+                location: formatLocation(iCalData[0].Location.L[0].M),
+                sequence: sequence,
+                accommodationId: accommodations[0].ID,
+                lastModified: formatDate(new Date()),
+                userId: guestId
             }
             downloadICal(sampleEvent);
         }
@@ -135,8 +183,8 @@ function HostDistribution() {
                 <Pages/>
                 <div className="contentContainer-channel">
                     {[...Array(6)].map((_, index) => (
-                        <div className="host-dist-box-container">
-                            <div className="host-dist-box-row" key={index}>
+                        <div className="host-dist-box-container" key={index}>
+                            <div className="host-dist-box-row">
                                 <img className="channelLogo" src={airbnb_logo} alt="Airbnb Logo"/>
                                 <p className="channelFont">Airbnb</p>
                                 <p className={`channelStatus ${status === 'Enabled' ? 'Enabled' : 'Disabled'}`}> {status} </p>
@@ -147,19 +195,7 @@ function HostDistribution() {
                                 </button>
                             </div>
                         </div>
-                    ))}
-                    {/*<div className="host-dist-box-container">*/}
-                    {/*/!*    <div className="host-dist-box-row">*!/*/}
-                    {/*/!*    <img className="channelLogo" src={airbnb_logo}></img>*!/*/}
-                    {/*/!*    <p className="channelFont">Airbnb</p>*!/*/}
-                    {/*/!*    <p className="channelStatus">Disabled</p>*!/*/}
-                    {/*/!*    <p className="totalMappedRooms">Mapped rooms</p>*!/*/}
-                    {/*/!*    <button className="channelManageButton" onClick={() => setUserId()}>Manage</button>*!/*/}
-                    {/*/!*    <button className="threeDotsButton" onClick={() => setUserId()}>*!/*/}
-                    {/*/!*        <img src={three_dots} alt="Three Dots"/>*!/*/}
-                    {/*/!*    </button>*!/*/}
-                    {/*/!*</div>*!/*/}
-                    {/*</div>*/}
+                    ))};
                 </div>
             </div>
         </div>

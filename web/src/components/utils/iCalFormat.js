@@ -1,12 +1,13 @@
 function iCalFormat(event) {
-    const { start, end, summary, description, location, uid, status, stamp, checkIn, checkOut, bookingId } = event;
+    const { start, end, summary, description, location, uid, status, stamp,
+        checkIn, checkOut, bookingId , accommodationId, lastModified, sequence, guestId } = event;
 
     return `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Domits/Domits Calendar//v1.0//EN
 BEGIN:VEVENT
 UID:${uid}
-SEQUENCE:0
+SEQUENCE:${sequence}
 DTSTAMP:${stamp}
 DTSTART:${start}
 DTEND:${end}
@@ -14,16 +15,19 @@ SUMMARY:${summary}
 DESCRIPTION:${description}
 Check-In:${checkIn}
 Check-Out:${checkOut}
-Booking ID:${bookingId}
+Booking-ID:${bookingId}
 LOCATION:${location}
 STATUS:${status}
+ACCOMMODATION-ID:${accommodationId}
+LASTMODIFIED:${lastModified}
+GUESTID:${guestId}
 END:VEVENT
 END:VCALENDAR`;
 }
 
 export function formatDate(dateString) {
     const dt = new Date(dateString);
-    return dt.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    return dt.toISOString().replace(/[-:]/g, '').split('.')[0];
 }
 
 export function formatDescription(description) {
@@ -31,14 +35,20 @@ export function formatDescription(description) {
     return desc;
 }
 
+export function formatDateTime(dateTime) {
+    const dt = new Date(dateTime);
+    return dt.toISOString().replace('T', ' ')
+        .split(':').slice(0, 2).join(':').split('.')[0];
+}
+
 export function formatLocation(accommodation) {
-    if (!accommodation || !accommodation.Street || !accommodation.City || !accommodation.Country) {
+    if (!accommodation || !accommodation.Street.S || !accommodation.City.S || !accommodation.Country.S) {
         return 'Location data is incomplete';
     }
 
-    const formattedLocation = String(accommodation.Street).replace(/,/g, '\\,') + ', ' +
-        String(accommodation.City).replace(/,/g, '\\,') + ', ' +
-        String(accommodation.Country).replace(/,/g, '\\,');
+    const formattedLocation = String(accommodation.Street.S).replace(/,/g, '\\,') + ', ' +
+        String(accommodation.City.S).replace(/,/g, '\\,') + ', ' +
+        String(accommodation.Country.S).replace(/,/g, '\\,');
 
     return formattedLocation;
 }
@@ -72,7 +82,10 @@ const event = {
     checkOut: '',
     bookingId: '0',
     location: 'Placeholder',
-    status: 'TENTATIVE'
+    status: 'TENTATIVE',
+    accommodationId: '0',
+    lastModified: '',
+    guestId: '0'
 };
 
 export default iCalFormat;
