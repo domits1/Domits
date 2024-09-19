@@ -1632,16 +1632,14 @@ function OnboardingHost() {
                                 <td>{formData.City}</td>
                             </tr>
                             { selectedAccoType === 'Boat' ? (
-                                <>
-                                    <tr>
-                                        <td>Harbour:</td>
-                                        <td>{formData.Harbour}</td>
-                                    </tr>
-                                </>
+                                <tr>
+                                    <td>Harbour:</td>
+                                    <td>{formData.Harbour}</td>
+                                </tr>
                             ) : (
                                 <>
                                     <tr>
-                                    <td>Postal Code:</td>
+                                        <td>Postal Code:</td>
                                         <td>{formData.PostalCode}</td>
                                     </tr>
                                     <tr>
@@ -1652,12 +1650,61 @@ function OnboardingHost() {
                             )}
                             </tbody>
                         </table>
+                        {
+                            selectedAccoType === 'Boat' && (
+                                <>
+                                    <h3>Features:</h3>
+                                    <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                                        <tbody>
+                                        <tr>
+                                            <td>Manufacturer:</td>
+                                            <td>{formData.Manufacturer}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Model:</td>
+                                            <td>{formData.Model}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>General periodic inspection:</td>
+                                            <td>{DateFormatterDD_MM_YYYY(formData.GPI)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Maximum capacity:</td>
+                                            <td>{formData.Capacity}{formData.Capacity > 1 ? 'People' : 'Person'}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Length in meters:</td>
+                                            <td>{formData.Length} meter</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Fuel usage:</td>
+                                            <td>{formData.FuelTank} Liter(s) per hour</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Top speed:</td>
+                                            <td>{formData.Speed} Kilometers per hour</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Year of construction:</td>
+                                            <td>{DateFormatterDD_MM_YYYY(formData.YOC)}</td>
+                                        </tr>
+                                        { formData.Renovated && (
+                                            <tr>
+                                                <td>Renovated on:</td>
+                                                <td>{DateFormatterDD_MM_YYYY(formData.Renovated)}</td>
+                                            </tr>
+                                        )}
+                                        </tbody>
+                                    </table>
+                                </>
+                            )
+                        }
                         <h3>Features:</h3>
                         <table style={{width: '100%', borderCollapse: 'collapse'}}>
                             <tbody>
                             {Object.keys(formData.Features).map(category => (
                                 <>
-                                {formData.Features[category].length > 0 && (
+                                    {formData.Features[category].length > 0 && (
                                         <tr key={category}>
                                             <td colSpan={2}
                                                 style={{fontWeight: 'bold', borderBottom: '1px solid #ccc'}}>{category}:
