@@ -196,7 +196,7 @@ function OnboardingHost() {
         AccommodationType: "",
         ServiceFee: 0,
         CleaningFee: 0,
-        OwnerId: "",
+        OwnerId: userId,
     });
     const generateBoatFormData = () => ({
         ...generateCommonFormData(),
@@ -612,10 +612,6 @@ function OnboardingHost() {
     }
 
     const handleAmenities = (category, amenity, checked) => {
-        console.log({
-            category: category,
-            amenity: amenity
-        });
         setFormData(prevFormData => {
             const updatedFeatures = { ...prevFormData.Features };
 
@@ -787,7 +783,6 @@ function OnboardingHost() {
             }
             await setFormData(updatedFormData);
             setImageFiles([]);
-
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
                 method: 'POST',
                 body: JSON.stringify(formData),
