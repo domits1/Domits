@@ -71,6 +71,7 @@ const ListingDetails = () => {
     const [cleaningFee, setCleaningFee] = useState(0);
     const [hostID, setHostID] = useState();
     const [showAll, setShowAll] = useState(false);
+    const [showModal, setShowModal] = useState(false);
     const [userID, setUserID] = useState('');
     const [showTravelerPopup, setShowTravelerPopup] = useState(false);
     const travelerSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
@@ -142,6 +143,40 @@ const ListingDetails = () => {
         setShowTravelerPopup(!showTravelerPopup);
     };
 
+    const toggleModal = () => {
+        setShowModal(!showModal);
+    };
+
+    const FeaturePopup = ({ features, onClose }) => {
+        return (
+            <div className="modal-overlay" onClick={onClose}>
+                <div className="modal-content" onClick={e => e.stopPropagation()}>
+                    <button className="close-button" onClick={onClose}>✖</button>
+                    <h2>Features</h2>
+                    {Object.keys(features).map(category => {
+                        const categoryItems = features[category];
+                        if (categoryItems.length > 0) {
+                            return (
+                                <div key={category} className='features-category'>
+                                    <h3>{category}</h3>
+                                    <ul>
+                                        {categoryItems.map((item, index) => (
+                                            <li key={index} className='category-item'>
+                                                <img src={featureIcons[item]} className='feature-icon' alt={`${item} icon`} />
+                                                <span>{item}</span>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            );
+                        }
+                        return null;
+                    })}
+                </div>
+            </div>
+        );
+    };
+
 
     useEffect(() => {
         const appendUserID = async () => {
@@ -171,6 +206,7 @@ const ListingDetails = () => {
                 }
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
+                console.log(data)
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
@@ -386,9 +422,6 @@ const ListingDetails = () => {
         navigate(`/bookingoverview?${queryString}`);
     };
 
-    const toggleShowAll = () => {
-        setShowAll(!showAll);
-    };
 
     const renderCategories = () => {
         if (accommodation) {
@@ -485,39 +518,46 @@ const ListingDetails = () => {
                         <div>
                             <div>
                                 <Link to="/">
-                                    <button className="backButton">Go Back</button>
+                                    <p className="backButton">Go Back</p>
                                 </Link>
                                 <h1>{accommodation.Title}</h1>
                             </div>
                             <div>
                                 <ImageGallery images={Object.values(accommodation.Images)}/>
                             </div>
-                            <div>
-                                <div className='extraDetails'>
-                                    <p className='details'>{`€ ${accommodation.Rent} per night`}</p>
-                                    <p className='details'>{`${accommodation.GuestAmount} guests`}</p>
-                                    <p className='details'>{`${accommodation.Beds} beds`}</p>
-                                    <p className='details'>{`${accommodation.Bedrooms} bedrooms`}</p>
-                                    <p className='details'>{`${accommodation.Bathrooms} bathrooms`}</p>
-                                </div>
+                            <div className="roomInformation">
+
+                                <p className='details'>
+                                    <p className="placeName">{accommodation.City}, {accommodation.Country} </p>
+                                    {`€ ${accommodation.Rent} per night • ${accommodation.GuestAmount} guests • 
+                                    ${accommodation.Beds} beds • 
+                                    ${accommodation.Bedrooms} bedrooms • ${accommodation.Bathrooms} bathrooms`}
+                                </p>
                             </div>
                             <p className='description'>{accommodation.Description}</p>
                             <div>
+                                <hr className="divider" />
                                 <h3>Calendar overview:</h3>
                                 <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
                             </div>
                             <div>
+                                <hr className="divider" />
                                 <h3>This place offers the following:</h3>
                                 {accommodation ? renderCategories() : ''}
                                 <div>
                                     {Object.keys(accommodation.Features).length > 2 && (
-                                        <button className='backButton' onClick={toggleShowAll}>
-                                            {showAll ? 'Show less' : 'Show more'}
+                                        <button className='showMore' onClick={toggleModal}>
+                                            Show more
                                         </button>
                                     )}
                                 </div>
+
+                                {showModal && (
+                                    <FeaturePopup features={accommodation.Features} onClose={toggleModal} />
+                                )}
                                 <br/>
                                 <section className="listing-reviews">
+                                    <hr className="divider" />
                                     <h2>Reviews</h2>
                                     {reviews.length > 0 ? (
                                         reviews.map((review, index) => (
@@ -575,6 +615,7 @@ const ListingDetails = () => {
                         </div>
                     )}
                 </section>
+
                 {accommodation && (
                     <aside className='detailSummary'>
                         <div className="summary-section">
