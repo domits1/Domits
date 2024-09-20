@@ -65,7 +65,7 @@ const BookingGuestDashboard = () => {
     );
 
     return (
-        <div className="container">
+        <div className="page-body">
             <h2>Booking</h2>
             <div className='dashboards'>
                 <Pages />

@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostOccupancy = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-occupancy' style={{
                 display: "flex",
                 flexDirection: "row"

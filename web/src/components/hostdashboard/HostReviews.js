@@ -4,7 +4,10 @@ import Pages from "./Pages.js";
 import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
 import '../guestdashboard/guestdashboard.css';
+import styles from './HostReviews.module.css';
+import general from './HostDashboard.module.css'
 import { Auth } from "aws-amplify";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 function HostReviews() {
     const [reviews, setReviews] = useState([]);
@@ -146,68 +149,67 @@ function HostReviews() {
         }
     }
     return (
-        <div className="container">
+        <main className="page-body">
             <h2>Reviews</h2>
-            <div className="dashboards">
+            <div className={styles.reviewGrid}>
                 <Pages />
-                <div className="contentContainer">
-                    <div className="reviewColumn">
-                        <div className="reviewBox">
-                            <p className="boxText">My reviews({reviews.length})</p>
+                <div className={styles.contentContainer}>
+                    <div className={styles.reviewColumn}>
+                        <div className={styles.reviewBox}>
+                            <p className={styles.boxText}>My reviews ({reviews.length})</p>
                             {isLoading ? (
-                                    <div>
-                                        <img src={spinner}/>
+                                    <div className={general.loadingContainer}>
+                                        <img className={general.spinner} src={spinner}/>
                                     </div>
                                 ) :
                             reviews.length > 0 ? (
                                 reviews.map((review, index) => (
-                                    <div key={index} className="review-tab">
-                                        <h2 className="review-header">{review.title}</h2>
-                                        <p className="review-content">{review.content}</p>
-                                        <p className="review-date">Written on: {review.date}</p>
+                                    <div key={index} className={styles.reviewTab}>
+                                        <h2 className={styles.reviewHeader}>{review.title}</h2>
+                                        <p className={styles.reviewContent}>{review.content}</p>
+                                        <p className={styles.reviewDate}>Written on: {DateFormatterDD_MM_YYYY(review.date)}</p>
                                         <button
                                             onClick={() => asyncDeleteReview(review)}
-                                            className="review-delete"
+                                            className={styles.reviewDelete}
                                         >
                                             <img src={deleteIcon} className="cross" alt="Delete"></img></button>
                                     </div>
                                 ))
                             ) : (
-                                <p className="review-alert">It appears that you have not written any reviews yet...</p>
+                                <p className={styles.reviewAlert}>It appears that you have not written any reviews yet...</p>
                             )}
                         </div>
-                        <div className="reviewBox">
-                            <p className="boxText">Received reviews({receivedReviews.length})</p>
+                        <div className={styles.reviewBox}>
+                            <p className={styles.boxText}>Received reviews({receivedReviews.length})</p>
                             {isLoading ? (
-                                    <div>
-                                        <img src={spinner}/>
+                                    <div className={general.loadingContainer}>
+                                        <img className={general.spinner} src={spinner}/>
                                     </div>
                                 ) :
-                            receivedReviews.length > 0 ? (
-                                receivedReviews.map((receivedReview, index) => (
-                                    <div key={index} className="review-tab">
-                                        <h2 className="review-header">{receivedReview.title}</h2>
-                                        <p className="review-content">{receivedReview.content}</p>
-                                        <p className="review-date">Written on: {receivedReview.date}</p>
+                                receivedReviews.length > 0 ? (
+                                    receivedReviews.map((receivedReview, index) => (
+                                        <div key={index} className={styles.reviewTab}>
+                                        <h2 className={styles.reviewHeader}>{receivedReview.title}</h2>
+                                        <p className={styles.reviewContent}>{receivedReview.content}</p>
+                                        <p className={styles.reviewDate}>Written on: {DateFormatterDD_MM_YYYY(receivedReview.date)}</p>
                                     </div>
                                 ))
                             ) : (
-                                <p className="review-alert">It appears that you have not received any reviews yet...</p>
+                                <p className={styles.reviewAlert}>It appears that you have not received any reviews yet...</p>
                             )}
                         </div>
                     </div>
-                    <div className="reviewColumn">
-                        <div className="reviewBox">
-                            <p className="boxText">Disputes</p>
+                    <div className={styles.reviewColumn}>
+                        <div className={styles.reviewBox}>
+                            <p className={styles.boxText}>Disputes</p>
                         </div>
-                        <div className="reviewBox">
-                            <p className="boxText">Recent reviews</p>
+                        <div className={styles.reviewBox}>
+                            <p className={styles.boxText}>Recent reviews</p>
                         </div>
-
                     </div>
                 </div>
             </div>
-        </div>
+        </main>
     );
 }
 

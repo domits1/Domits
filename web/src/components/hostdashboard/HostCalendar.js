@@ -4,6 +4,8 @@ import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import CalendarComponent from "./CalendarComponent";
+import styles from "./HostDashboard.module.css";
+import calenderStyles from "./HostCalendar.module.css";
 
 
 function HostCalendar() {
@@ -76,9 +78,8 @@ function HostCalendar() {
         }
     }, [userId]);
     return (
-        <div className="container">
-            <h2>Calendar</h2>
-            <div className="dashboardHost">
+        <div className="page-body">
+            <div className={styles.dashboardHost}>
                 <Pages />
                 {isLoading ? (
                         <div>
@@ -87,39 +88,39 @@ function HostCalendar() {
                     ) : accommodations.length < 1 ? (
                         <p>No accommodations found...</p>
                     ) :
-                <div className="contentContainer-calendar">
-                    <div className="boxColumns fullColumn">
-                        <div className="box locationBox selector">
-                            <select className="locationBox"
-                                    onChange={handleSelectAccommodation}>
-                                <option value="" className="select-option">
-                                    Select your Accommodation
-                                </option>
-                                {accommodations.map(accommodation => (
-                                    <option key={accommodation.ID}
-                                            value={accommodation.ID}>
-                                        {accommodation.Title}
+                    <div className={calenderStyles.contentContainerCalendar}>
+                        <h2>Calendar</h2>
+                        <div className={calenderStyles.calendarDropdown}>
+                            <div>
+                                <select className={calenderStyles.locationBox}
+                                        onChange={handleSelectAccommodation}>
+                                    <option value="" className={calenderStyles.selectOption}>
+                                        Select your Accommodation
                                     </option>
-                                ))}
-                            </select>
-                        </div>
-                        {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
-                        <div className="calendar-box">
-                            <p>Booking availability for
-                                    {" " + selectedAccommodation.Title}
-                            </p>
-                            <div className="locationBox">
-                                <div className="boxColumns locationContent">
-                                    <CalendarComponent passedProp={selectedAccommodation} isNew={false} updateDates={updateDates}/>
-                                </div>
+                                    {accommodations.map(accommodation => (
+                                        <option key={accommodation.ID}
+                                                value={accommodation.ID}>
+                                            {accommodation.Title}
+                                        </option>
+                                    ))}
+                                </select>
                             </div>
-                        </div>
+                            {selectedAccommodation !== null && selectedAccommodation !== undefined ? (
+                                <div>
+                                    <p>Booking availability for
+                                        {" " + selectedAccommodation.Title}
+                                    </p>
+                                    <div className={calenderStyles.locationBox}>
+                                        <CalendarComponent passedProp={selectedAccommodation} isNew={false}
+                                                           updateDates={updateDates}/>
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="alert-message">Please select your Accommodation first</div>
+                                <div className={styles.alertMessage}>Please select your Accommodation first</div>
                             )
-                        }
-                    </div>
-                </div>}
+                            }
+                        </div>
+                    </div>}
             </div>
         </div>
     );
