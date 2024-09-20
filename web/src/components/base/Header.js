@@ -37,7 +37,7 @@ function Header({setSearchResults, setLoading}) {
             setIsLoggedIn(true);
             const userAttributes = user.attributes;
             setGroup(userAttributes['custom:group']);
-            setUsername(userAttributes['custom:username']);
+            setUsername(userAttributes['given_name']);
             setCurrentView(userAttributes['custom:group'] === 'Host' ? 'host' : 'guest');
         } catch (error) {
             setIsLoggedIn(false);
@@ -155,8 +155,10 @@ function Header({setSearchResults, setLoading}) {
     return (
         <div className="App">
             <header className="app-header">
-                <nav className="header-nav">
-                    <div className={`header-top ${isActiveSearchBar ? 'active' : 'inactive'} ${isActiveSearchBar ? 'no-scroll' : ''}`}>
+                <nav
+                    className={`header-nav ${isActiveSearchBar ? 'active' : 'inactive'} ${isActiveSearchBar ? 'no-scroll' : ''}`}>
+                    {/*<nav className="header-nav">*/}
+                    {/*<div className={`header-top ${isActiveSearchBar ? 'active' : 'inactive'} ${isActiveSearchBar ? 'no-scroll' : ''}`}>*/}
                         <div className="logo">
                             <a href="/">
                                 <img src={logo} width={150} alt="Logo"/>
@@ -166,8 +168,8 @@ function Header({setSearchResults, setLoading}) {
                             <SearchBar setSearchResults={setSearchResults} setLoading={setLoading}
                                        toggleBar={toggleSearchBar}/>
                         </div>
-                    </div>
-                    <div className="header-bottom">
+                    {/*</div>*/}
+                    {/*<div className="header-bottom">*/}
                         <div className='headerRight'>
                             {!isLoggedIn ? (
                                 <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
@@ -207,7 +209,7 @@ function Header({setSearchResults, setLoading}) {
                                     )}
                                 </div>
                             </div>
-                        </div>
+                        {/*</div>*/}
                     </div>
                 </nav>
             </header>

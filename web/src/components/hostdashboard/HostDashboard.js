@@ -49,7 +49,7 @@ function HostDashboard() {
                 await setUserId(userInfo.attributes.sub);
                 await setUser({
                     email: userInfo.attributes.email,
-                    name: userInfo.attributes['custom:username'],
+                    name: userInfo.attributes['given_name'],
                     address: userInfo.attributes.address,
                     phone: userInfo.attributes.phone_number,
                     family: "2 adults - 2 kids"

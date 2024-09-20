@@ -20,8 +20,7 @@ const HostSettings = () => {
             // Assuming userInfo has the necessary details, adjust the keys based on your user data structure
             setUser({
                 email: userInfo.attributes.email,
-                // because it is a custom attribute it should be called like this
-                name: userInfo.attributes['custom:username'],
+                name: userInfo.attributes['given_name'],
                 address: userInfo.attributes.address,
                 phone: userInfo.attributes.phone_number,
                 family: "2 adults - 2 kids" // needs to be calculated later on

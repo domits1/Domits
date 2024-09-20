@@ -2,7 +2,7 @@
     display: none;
 }
 
-.headerRight {
+.menuButtons {
     float: right;
     display: flex;
     align-items: center;
@@ -144,7 +144,7 @@
         bottom: 0;
         z-index: 1000;
         background: white;
-        width: 100%;
+        width: 102%;
         box-shadow: 0 0 2px 0 #0d1a2626;
         justify-content: center;
     }
@@ -157,15 +157,16 @@
         margin: -23px 10px 0 20px;
     }
 
-    .headerRight {
+    .menuButtons {
         flex-direction: row;
         justify-content: center;
-        width: 100%;
     }
 
-    .headerRight {
-        width: 69%;
+    .menuButtons {
+        width: 100%;
         margin-top: 20px;
+        align-items: center;
+        margin-right: 15%;
     }
 
     .headerButtons, .personalMenu, .Search-bar {
@@ -180,12 +181,69 @@
         padding: 20px 25px 20px 25px;
         position: absolute;
         background-color: white;
-        width: auto;
+        width: 40%;
         min-width: 240px;
         box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
         z-index: 1;
-        bottom: calc(100% + 5px);
+        bottom: calc(90% + 5px);
         right: 0;
         border-radius: 10px;
+    }
+}
+
+@media screen and (min-width: 651px) and (max-width: 768px) {
+    .bottom-menu-bar {
+        display: flex;
+        position: sticky;
+        bottom: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+        box-shadow: 0 0 2px 0 #0d1a2626;
+        justify-content: center;
+    }
+
+    .menu {
+        display: flex;
+        justify-content: space-evenly;
+        width: 100%;
+        padding: 0 0 0 5px;
+        margin: -23px 10px 5px 20px;
+    }
+
+    .menuButtons {
+        margin: 5% 34% 1% 10%;
+    }
+
+    .bottomPersonalMenuDropdownContent {
+        padding: 20px 25px 20px 25px;
+        position: absolute;
+        background-color: white;
+        width: 40%;
+        min-width: 240px;
+        box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+        z-index: 1;
+        bottom: calc(90% + 5px);
+        right: 6%;
+        border-radius: 10px;
+    }
+
+    .personalMenu {
+        margin-left: 100%;
+    }
+
+    .headerHostButton {
+        margin-right: 15%;
+        margin-left: -15%;
+    }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .personalMenu {
+        width: 85%;
+    }
+    .nineDotsButton {
+        margin-right: 4%;
+        margin-left: -15%;
     }
 }

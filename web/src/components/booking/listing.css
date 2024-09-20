@@ -9,12 +9,188 @@
 }
 
 .detailSummary {
-  width: 50%;
   box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  margin: 146px 0 40px 20px;
-  padding: 20px;
-  border-radius: 10px;
+  margin: 146px 20px 40px 20px;
+  padding: 1.25rem;
+  border-radius: 0.625rem;
+  position: sticky;
+  top: 5%;
+  max-height: 45.313rem;
 }
+.travelers {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+
+
+.popup {
+  position: absolute;
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 0.625rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  border-radius: 8px;
+  width: 15.625rem;
+}
+
+.counter {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.625rem;
+}
+
+.counter span {
+  font-weight: bold;
+}
+
+.counter button {
+  background: #f0f0f0;
+  border: 1px solid #ccc;
+  padding: 0.313rem;
+  cursor: pointer;
+}
+
+
+.closeButtonContainer {
+  margin-top: 0.625rem;
+  border-top: 1px solid #ddd;
+  padding-top: 0.625rem;
+  text-align: right;
+}
+
+.closeButton {
+  border: none;
+  color: black;
+  cursor: pointer;
+
+}
+
+
+.dates {
+  display: flex;
+  justify-content: space-between;
+}
+.dateInput {
+  flex: 1;
+  margin-right: 10px;
+  position: relative;
+}
+
+.dateInput input {
+  padding-right: 30px;
+}
+
+.dateInput .clear-button {
+  position: absolute;
+  right: 0.625rem;
+  top: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+}
+.travelersTitle{
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+/* Dropdown styling */
+.dropdown {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.dropdown-button {
+  cursor: pointer;
+  padding: 0.625rem;
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 5px;
+}
+
+.dropdown-content {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  z-index: 100;
+  background-color: white;
+  border: 1px solid #ddd;
+  padding: 0.625rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  min-width: 200px;
+}
+
+
+
+.counter {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.625rem;
+
+}
+
+.counter span {
+  font-weight: bold;
+}
+
+.counter button {
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 50%;
+  border: 1px solid #003366;
+  background-color: white;
+  color: #003366;
+  text-align: center;
+  line-height: 0.75em;
+  font-size: 1rem;
+  cursor: pointer;
+  outline: none;
+  transition: background-color 0.3s;
+  font-weight: bold;
+}
+
+.counter button:hover {
+  background-color: #e0e0e0;
+}
+
+.closeButtonContainer {
+  margin-top: 0.625rem;
+  border-top: 1px solid #ddd;
+  padding-top: 0.625rem;
+  text-align: right;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  color: blue;
+  cursor: pointer;
+}
+
+.closeButton:hover {
+  text-decoration: underline;
+}
+
+.button__box{
+  align-self: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 1vw;
+  width: 110px;
+}
+
+.amountNights{
+  margin: 0;
+}
+
+
+
 
 .summaryBlock {
   display: flex;
@@ -92,7 +268,7 @@
 
 .extraDetails {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 20px;
   margin-top: 20px;
   margin-bottom: 20px;
@@ -271,7 +447,7 @@
     flex-direction: column;
     align-items: flex-start;
   }
-  
+
   .price-item p, .total p {
     margin: 5px 0;
   }
@@ -287,9 +463,9 @@
   .detailInfo {
     width: 100%;
   }
-  .detailSummary { 
+  .detailSummary {
     width: 90%;
     margin: auto;
-    
+
   }
 }
