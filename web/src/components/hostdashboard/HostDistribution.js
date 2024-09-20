@@ -7,6 +7,7 @@ import three_dots from "../../images/three-dots-grid.svg";
 // import arrow_right from "../../images/arrow-right-icon.svg";
 import {Auth} from "aws-amplify";
 import {formatDate, formatDescription, formatDateTime, formatLocation, downloadICal} from "../utils/iCalFormat.js";
+
 // import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 
 function HostDistribution() {
@@ -105,18 +106,19 @@ function HostDistribution() {
     //     }
     // }
 
-    const handleICal = () => {
-        // let uid = iCalData[0].id.S;
+    const handleICal = async (e) => {
+        e.preventDefault();
+
         let uid;
         let newStamp = new Date();
-        let dtStart = new Date(iCalData[0].Dtstart.S).toISOString();
-        let dtEnd = new Date(iCalData[0].Dtend.S).toISOString();
-        let checkIn = new Date(iCalData[0].CheckIn.S).toISOString();
-        let checkOut = new Date(iCalData[0].CheckOut.S).toISOString();
+        let dtStart = new Date(iCalData[0].Dtstart.S);
+        let dtEnd = new Date(iCalData[0].Dtend.S);
+        let checkIn = new Date(iCalData[0].CheckIn.S);
+        let checkOut = new Date(iCalData[0].CheckOut.S);
         let sequence = iCalData[0].Sequence.N;
         let guestId = iCalData[0].GuestId.S;
 
-        if (uid === undefined || uid === null) {
+        if (uid === undefined || uid === null || uid === '') {
             const generateUUID = () => {
                 return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
                     var r = Math.random() * 16 | 0,
@@ -127,40 +129,85 @@ function HostDistribution() {
             uid = generateUUID();
         }
 
-        if (guestId === undefined || guestId === null) {
+        if (guestId === undefined || guestId === null || guestId === '') {
             guestId = userId;
         }
 
-        if (sequence === undefined || sequence === null) {
+        if (sequence === undefined || sequence === null || sequence === '') {
             sequence = 0;
         }
 
-        if (iCalData[0].Dtstamp.S !== undefined || iCalData[0].Dtstamp.S !== null) {
+        if (iCalData[0].Dtstamp.S !== undefined || iCalData[0].Dtstamp.S !== null || iCalData[0].Dtstamp.S !== '') {
             newStamp = new Date(iCalData[0].Dtstamp.S);
         }
 
         if (iCalData && iCalData.length > 0) {
-
-            const sampleEvent = {
-                uid: uid,
-                stamp: formatDate(newStamp),
-                start: formatDate(dtStart),
-                end: formatDate(dtEnd),
-                summary: accommodations[0].Title + ' - ' + iCalData[0].Status.S,
-                status: iCalData[0].Status.S,
-                description: formatDescription(accommodations[0].Description +
-                '\n\n' + 'Check-in: ' + formatDateTime(checkIn) +
-                '\n' + 'Check-out: ' + formatDateTime(checkOut)),
-                checkIn: formatDate(checkIn),
-                checkOut: formatDate(checkOut),
-                bookingId: iCalData[0].BookingId.S,
-                location: formatLocation(iCalData[0].Location.L[0].M),
-                sequence: sequence,
-                accommodationId: accommodations[0].ID,
-                lastModified: formatDate(new Date()),
-                userId: guestId
+            const params = {
+                id: uid,
+                Dtstamp: formatDate(newStamp),
+                Dtstart: formatDate(dtStart),
+                Dtend: formatDate(dtEnd),
+                Summary: accommodations[0].Title + ' - ' + iCalData[0].Status.S,
+                Status: iCalData[0].Status.S,
+                Description: formatDescription(accommodations[0].Description +
+                    '\n\n' + 'Check-in: ' + formatDateTime(checkIn) +
+                    '\n' + 'Check-out: ' + formatDateTime(checkOut)),
+                CheckIn: formatDate(checkIn),
+                CheckOut: formatDate(checkOut),
+                BookingId: iCalData[0].BookingId.S,
+                Location: {
+                    Street: iCalData[0].Location.L[0].M.Street.S,
+                    City: iCalData[0].Location.L[0].M.City.S,
+                    Country: iCalData[0].Location.L[0].M.Country.S
+                },
+                Sequence: sequence,
+                AccommodationId: accommodations[0].ID,
+                LastModified: formatDate(new Date()),
+                GuestId: guestId
             }
-            downloadICal(sampleEvent);
+
+            console.log(params.Location.Street, " + " , params.Location.City, " + " , params.Location.Country);
+
+            // const sampleEvent = {
+            //     uid: uid,
+            //     stamp: formatDate(newStamp),
+            //     start: formatDate(dtStart),
+            //     end: formatDate(dtEnd),
+            //     summary: accommodations[0].Title + ' - ' + iCalData[0].Status.S,
+            //     status: iCalData[0].Status.S,
+            //     description: formatDescription(accommodations[0].Description +
+            //         '\n\n' + 'Check-in: ' + formatDateTime(checkIn) +
+            //         '\n' + 'Check-out: ' + formatDateTime(checkOut)),
+            //     checkIn: formatDate(checkIn),
+            //     checkOut: formatDate(checkOut),
+            //     bookingId: iCalData[0].BookingId.S,
+            //     location: formatLocation(iCalData[0].Location.L[0].M),
+            //     sequence: sequence,
+            //     accommodationId: accommodations[0].ID,
+            //     lastModified: formatDate(new Date()),
+            //     userId: guestId
+            // }
+
+            try {
+                const response = await fetch('https://d6ia9ibn4e.execute-api.eu-north-1.amazonaws.com/default/iCalGenerator',
+                    {
+                        method: 'POST',
+                        body: JSON.stringify(params),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        }
+                    });
+                console.log(response);
+                const result = await response.json();
+                console.log(result);
+
+                if (result.statusCode === 200) {
+                    alert('iCal data has been successfully POSTed');
+                    downloadICal(params);
+                }
+            } catch (error) {
+                console.error('Failed to POST iCal data:', error);
+            }
         }
     }
 
