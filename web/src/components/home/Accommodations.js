@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import './Accommodations.css';
+import styles from '../utils/PageSwitcher.module.css'
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import CheckoutFrontend from "../checkout/CheckoutFrontEnd";
@@ -101,7 +102,7 @@ const Accommodations = ({ searchResults }) => {
         </div>
       ))}
       {/* Pagination */}
-      <div className="pagination">
+      <div className={styles.pagination}>
         <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
           &lt; Previous
         </button>
@@ -109,7 +110,7 @@ const Accommodations = ({ searchResults }) => {
           <button
             key={i}
             onClick={() => handlePageChange(i + 1)}
-            className={currentPage === i + 1 ? "active" : ""}
+            className={`${(currentPage === i + 1) && styles.active}`}
           >
             {i + 1}
           </button>

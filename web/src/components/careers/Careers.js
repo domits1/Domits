@@ -3,6 +3,8 @@ import Jobs from "./jobs.json";
 import JobDetails from "./jobDetails";
 import { useNavigate, useParams } from 'react-router-dom';
 import "./careers.css";
+import styles from '../utils/PageSwitcher.module.css'
+
 
 function Career() {
     const navigate = useNavigate();
@@ -70,7 +72,7 @@ function Career() {
                 ))}
             </div>
             {/* Pagination */}
-            <div className="pagination">
+            <div className={styles.pagination}>
                 <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
                     &lt; Previous
                 </button>
@@ -78,7 +80,7 @@ function Career() {
                     <button
                         key={i}
                         onClick={() => handlePageChange(i + 1)}
-                        className={currentPage === i + 1 ? "active" : ""}
+                        className={`${(currentPage === i + 1) && styles.active}`}
                     >
                         {i + 1}
                     </button>
