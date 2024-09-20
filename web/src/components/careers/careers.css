@@ -73,16 +73,6 @@
     overflow: hidden;
     transition: max-height 0.4s ease-in-out;
 }
-
-.pagination button {
-    border-radius: 15px;
-}
-
-.pagination button.active {
-    background-color: var(--primary-color);
-    color: white;
-}
-
 .apply-button {
     background-color: var(--primary-color);
     color: white;
