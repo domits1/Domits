@@ -1,37 +1,77 @@
+.accommodationTab {
+    border-radius: 15px;
+    border: 1px solid gray;
+    text-align: left;
+    padding: 1.5em;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 2em;
+    margin: 1em;
+    width: auto;
+}
+.accommodationTab:hover {
+    box-shadow: 4px 4px #003366;
+}
+
+.accommodationImg {
+    padding: 1em;
+    border-radius: 2em;
+    max-height: 15vh;
+    max-width: 25vw;
+    height: auto;
+    transition: opacity 1s ease-in-out;
+    opacity: 0;
+}
+.accommodationTitle {
+    font-size: 1.2em;
+    font-weight: bolder;
+}
+
+.accommodationLeft {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+
+.accommodationRight {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+
 .pagination {
     display: flex;
     justify-content: center;
     align-items: center;
     padding: 10px;
+    button {
+        padding: 5px 10px;
+        margin: 0 5px;
+        border: none;
+        background-color: #f4f4f4;
+        cursor: pointer;
+    }
 }
-
-.pagination button {
-    padding: 5px 10px;
-    margin: 0 5px;
-    border: none;
-    background-color: #f4f4f4;
-    cursor: pointer;
-}
-
-.pagination button:disabled {
+.paginationButton:disabled {
     opacity: 0.5;
     cursor: default;
 }
 
-.pagination button:hover:not(:disabled) {
+.paginationButton:hover:not(:disabled) {
     background-color: #ddd;
 }
 .listing {
     box-shadow: none;
 }
 
-.listing-button-box {
+.listingButtonBox {
     display: flex;
     flex-direction: column;
     gap: 3%;
     padding: 1em;
 }
-.listing-button {
+.listingButton {
     color: white;
     padding: 0.35em 1.2em;
     border: none;
@@ -40,16 +80,16 @@
     transition: all 0.2s;
     max-height: 2em;
 }
-.listing-edit {
+.listingEdit {
     background-color: #0D9813;
 }
-.listing-delete {
+.listingDelete {
     background-color: red;
 }
-.listing-draft {
+.listingDraft {
     background-color: #003366;
 }
-.listing-delete:hover {
+.listingDelete:hover {
     background-color: darkred;
 }
 

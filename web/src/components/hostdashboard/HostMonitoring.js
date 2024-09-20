@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostMonitoring = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-monitoring' style={{
                 display: "flex",
                 flexDirection: "row"

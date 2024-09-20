@@ -60,7 +60,7 @@ const GuestSettings = () => {
     };
 
     return (
-        <div className="container">
+        <div className="page-body">
             <h2>Dashboard</h2>
             <div className="dashboard">
                 <Pages />
