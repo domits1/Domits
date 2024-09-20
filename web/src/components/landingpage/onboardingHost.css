@@ -351,7 +351,22 @@
   justify-content: start;
   gap: 5%;
 }
-
+#summary {
+  h3 {
+    margin-bottom: 2%;
+  }
+  th {
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+  }
+}
+.accommodation-summary {
+  width: 100%;
+  border-collapse: collapse;
+  tr {
+    margin-bottom: 5%;
+  }
+}
 .check-box-vertical {
   display: flex;
   flex-direction: column;

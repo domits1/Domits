@@ -217,9 +217,10 @@ function OnboardingHost() {
         Renovated: "",
         Features: {
             ...generateCommonFormData().Features,
+            Outdoor: [],
             NavigationEquipment: [],
             LeisureActivities: [],
-            WaterSports: []
+            WaterSports: [],
         }
     });
     const generateCamperFormData = () => ({
@@ -245,6 +246,8 @@ function OnboardingHost() {
         SelfBuilt: false,
         Features: {
             ...generateCommonFormData().Features,
+            Vehicle: [],
+            Outdoor: [],
             NavigationEquipment: [],
             LeisureActivities: [],
             WaterSports: []
@@ -609,6 +612,10 @@ function OnboardingHost() {
     }
 
     const handleAmenities = (category, amenity, checked) => {
+        console.log({
+            category: category,
+            amenity: amenity
+        });
         setFormData(prevFormData => {
             const updatedFeatures = { ...prevFormData.Features };
 
@@ -1505,7 +1512,7 @@ function OnboardingHost() {
                                         options={licenseTypes.map(licenseType => ({value: licenseType, label: licenseType}))}
                                         name="Requirement"
                                         className="locationText"
-                                        value={{value: formData.Requirement, label: 'Select the required license type'}}
+                                        value={{value: formData.Requirement, label: `${formData.Requirement ? formData.Requirement : 'Select the required license type'}`}}
                                         onChange={setLicenseRequirement}
                                         id="requirement"
                                         required={true}
@@ -1724,22 +1731,15 @@ function OnboardingHost() {
                 );
             case 10:
                 return (
-                    <div className="container" style={{width: '80%'}}>
+                    <div className="container" id="summary" style={{width: '80%'}}>
                         <h2>Please check if everything is correct</h2>
-                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                        <table className="accommodation-summary">
                             <tbody>
                             <tr>
-                                <th style={{
-                                    textAlign: 'left',
-                                    borderBottom: '1px solid #ccc',
-                                    paddingBottom: '8px'
-                                }}>Property Details
-                                </th>
-                                <th style={{
-                                    textAlign: 'left',
-                                    borderBottom: '1px solid #ccc',
-                                    paddingBottom: '8px'
-                                }}>Value
+                                <th>
+                                    <h3>
+                                        Property Details:
+                                    </h3>
                                 </th>
                             </tr>
                             <tr>
@@ -1823,9 +1823,11 @@ function OnboardingHost() {
                             </tbody>
                         </table>
                         {
-                            selectedAccoType === 'Boat' && (
+                            selectedAccoType === 'Boat' ? (
                                 <>
-                                    <h3>Specifications:</h3>
+                                    <th>
+                                        <h3>Specifications:</h3>
+                                    </th>
                                     <table style={{width: '100%', borderCollapse: 'collapse'}}>
                                         <tbody>
                                         <tr>
@@ -1869,30 +1871,96 @@ function OnboardingHost() {
                                         </tbody>
                                     </table>
                                 </>
+                            ) : selectedAccoType === 'Camper' && (
+                                <>
+                                    <th>
+                                        <h3>Specifications:</h3>
+                                    </th>
+                                    <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                                        <tbody>
+                                        <tr>
+                                            <td>License plate characters:</td>
+                                            <td>{formData.LicensePlate}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Brand:</td>
+                                            <td>{formData.CamperBrand}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Model:</td>
+                                            <td>{formData.Model}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Required type of driver's license:</td>
+                                            <td>{formData.Requirement}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>General periodic inspection:</td>
+                                            <td>{DateFormatterDD_MM_YYYY(formData.GPI)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Height in meters:</td>
+                                            <td>{formData.Height} meter</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Length in meters:</td>
+                                            <td>{formData.Length} meter</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Fuel usage:</td>
+                                            <td>{formData.FuelTank} Liter(s) per hour</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Transmission:</td>
+                                            <td>{formData.Transmission}</td>
+                                        </tr>
+                                        <tr>
+                                            <td>Year of construction:</td>
+                                            <td>{DateFormatterDD_MM_YYYY(formData.YOC)}</td>
+                                        </tr>
+                                        {formData.Renovated && (
+                                            <tr>
+                                                <td>Renovated on:</td>
+                                                <td>{DateFormatterDD_MM_YYYY(formData.Renovated)}</td>
+                                            </tr>
+                                        )}
+                                        </tbody>
+                                    </table>
+                                </>
                             )
                         }
-                        <h3>Features:</h3>
-                        <table style={{width: '100%', borderCollapse: 'collapse'}}>
-                            <tbody>
-                            {Object.keys(formData.Features).map(category => (
-                                <>
-                                    {formData.Features[category].length > 0 && (
-                                        <tr key={category}>
-                                            <td colSpan={2}
-                                                style={{fontWeight: 'bold', borderBottom: '1px solid #ccc'}}>{category}:
-                                            </td>
-                                        </tr>
-                                    )}
-                                    {formData.Features[category].map((amenity, index) => (
-                                        <tr key={`${category}-${index}`}>
-                                            <td style={{borderBottom: '1px solid #ccc'}}>{amenity}</td>
-                                            <td style={{borderBottom: '1px solid #ccc'}}>Yes</td>
-                                        </tr>
+                        { !(Object.values(formData.Features).every(arr => arr.length === 0)) &&
+                            <>
+                                <th>
+                                    <h3>Features:</h3>
+                                </th>
+                                <table style={{width: '100%', borderCollapse: 'collapse'}}>
+                                    <tbody>
+                                    {Object.keys(formData.Features).map(category => (
+                                        <>
+                                            {formData.Features[category].length > 0 && (
+                                                <tr key={category}>
+                                                    <td colSpan={2}
+                                                        style={{
+                                                            fontWeight: 'bold',
+                                                            borderBottom: '1px solid #ccc'
+                                                        }}>{category}:
+                                                    </td>
+                                                </tr>
+                                            )}
+                                            {formData.Features[category].map((amenity, index) => (
+                                                <tr key={`${category}-${index}`}>
+                                                    <td style={{borderBottom: '1px solid #ccc'}}>{amenity}</td>
+                                                    <td style={{borderBottom: '1px solid #ccc'}}>Yes</td>
+                                                </tr>
+                                            ))}
+                                        </>
                                     ))}
-                                </>
-                            ))}
-                            </tbody>
-                        </table>
+                                    </tbody>
+                                </table>
+                            </>
+                        }
+
 
                         <p>Your accommodation ID: {formData.ID}</p>
                         <p>{formData.Drafted ? "Guests cannot book your accommodation before you set it live via Hostdashboard -> Listing"
