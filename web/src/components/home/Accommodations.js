@@ -34,9 +34,9 @@ const Accommodations = ({ searchResults }) => {
       details: item.Description,
       price: `€${item.Rent} per night`,
       id: item.ID,
-      bathrooms: `${item.Bathrooms} Bathrooms`,
-      bedrooms: `${item.Bedrooms} Bedrooms`,
-      persons: `${item.GuestAmount} Persons`,
+      beds: `${item.Beds} Bed(s)`,
+      bedrooms: `${item.AccommodationType === 'Boat' ? item.Cabins : item.Bedrooms} ${item.AccommodationType === 'Boat' ? 'Cabins' : 'Bedrooms'}`,
+      persons: `${item.GuestAmount} ${item.GuestAmount > 1 ? 'People' : 'Person'}`,
     }));
   };
 
@@ -93,8 +93,6 @@ const Accommodations = ({ searchResults }) => {
             <div className="accocard-price">{accommodation.price}</div>
             <div className="accocard-detail">{accommodation.details}</div>
             <div className="accocard-specs">
-              <div className="accocard-size">{accommodation.size}</div>
-              <div className="accocard-size">{accommodation.bathrooms}</div>
               <div className="accocard-size">{accommodation.bedrooms}</div>
               <div className="accocard-size">{accommodation.persons}</div>
             </div>
