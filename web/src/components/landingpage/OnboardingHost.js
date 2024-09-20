@@ -96,6 +96,9 @@ function OnboardingHost() {
     const [accoTypes] = useState(["Apartment", "House", "Villa", "Boat", "Camper", "Cottage"]);
     const [boatTypes] = useState(["Motorboat", "Sailboat", "RIB", "Catamaran", "Yacht", "Barge", "House boat", "Jet ski", "Electric boat", "Boat without license"]);
     const [camperTypes] = useState(["Campervan", "Sprinter-Type", "Cabover Motorhome", "Semi-integrated Motorhome", "Integrated Motorhome", "Roof Tent", "Other"]);
+    const [camperCategories] = useState(["Adventure", "Classic", "Compact", "Family"]);
+    const [licenseTypes] = useState(["B", "C1", "C", "D1", "D"]);
+
     const accommodationIcons = {
         "Apartment": Apartment,
         "House": House,
@@ -227,7 +230,8 @@ function OnboardingHost() {
         Bathrooms: 0,
         Beds: 0,
         LicensePlate: "",
-        Brand: "",
+        Category: "",
+        CamperBrand: "",
         Model: "",
         Requirement: "",
         GPI: "",
@@ -237,8 +241,8 @@ function OnboardingHost() {
         FuelTank: "",
         YOC: "",
         Renovated: "",
-        FWD: "",
-        SelfBuilt: "",
+        FWD: false,
+        SelfBuilt: false,
         Features: {
             ...generateCommonFormData().Features,
             NavigationEquipment: [],
@@ -454,9 +458,7 @@ function OnboardingHost() {
                     return;
             }
         };
-        console.log(typeAmenities);
         getInitialFormData(selectedAccoType);
-        console.log(formData);
     }, [selectedAccoType]);
     useEffect(() => {
         if (formData.AccommodationType) {
@@ -488,25 +490,16 @@ function OnboardingHost() {
                 setHasSpecs(!!(formData.Manufacturer && formData.Model && formData.GPI &&
                     formData.Capacity && formData.Length && formData.FuelTank && formData.Speed && formData.YOC));
                 break;
+            case 'Camper':
+                setHasAddress(!!(formData.Country && formData.City && formData.PostalCode && formData.Street));
+                setHasSpecs(!!(formData.Category && formData.LicensePlate && formData.CamperBrand && formData.Model && formData.Requirement && formData.GPI &&
+                    formData.Height && formData.Length && formData.FuelTank && formData.Transmission && formData.YOC));
             default:
                 setHasAddress(!!(formData.Country && formData.City && formData.PostalCode && formData.Street));
                 break;
         }
 
     }, [formData]);
-    useEffect(() => {
-        console.log('Updated hasSpecs:', {
-            Manufacturer: formData.Manufacturer,
-            Model: formData.Model,
-            GPI: formData.GPI,
-            Capacity: formData.Capacity,
-            Length: formData.Length,
-            FuelTank: formData.FuelTank,
-            Speed: formData.Speed,
-            YOC: formData.YOC
-        });
-    }, [hasSpecs]);
-
 
     const calculateServiceFee = () => {
         const rent = parseFloat(formData.Rent);
@@ -575,7 +568,12 @@ function OnboardingHost() {
             AccommodationType: selectedAccoType,
             GuestAccess: access
         }));
-        console.log(formData);
+    };
+    const changeCamperCategory = (category) => {
+        setFormData((prevData) => ({
+            ...prevData,
+            Category: category
+        }));
     };
 
     const resetCleaningFee = () => {
@@ -629,6 +627,13 @@ function OnboardingHost() {
             };
         });
     };
+    const handleCheckBoxChange = (event) => {
+        const { name, type, checked, value } = event.target;
+        setFormData((prevData) => ({
+            ...prevData,
+            [name]: checked,
+        }));
+    }
 
 
     const handleInputChange = (event) => {
@@ -670,18 +675,6 @@ function OnboardingHost() {
                 handleLocationChange(formData.Country, formData.City, formData.PostalCode, value);
             }
         }
-        console.log(formData);
-        console.log('Specs: ', {
-            hasSpecs: hasSpecs,
-            Manufacturer: formData.Manufacturer,
-            Model: formData.Model,
-            GPI: formData.GPI,
-            Capacity: formData.Capacity,
-            Length: formData.Length,
-            FuelTank: formData.FuelTank,
-            Speed: formData.Speed,
-            YOC: formData.YOC
-        });
     };
 
     const handleCountryChange = (selectedOption) => {
@@ -690,6 +683,13 @@ function OnboardingHost() {
             Country: selectedOption.value
         }));
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
+    };
+
+    const setLicenseRequirement = (selectedOption) => {
+        setFormData(currentFormData => ({
+            ...currentFormData,
+            Requirement: selectedOption.value
+        }));
     };
 
     const constructURL = (userId, accommodationId, index) => {
@@ -1448,20 +1448,189 @@ function OnboardingHost() {
                                 </section>
                             </div>
                         ) : selectedAccoType === 'Camper' && (
-                            <section className="accommodation-general">
+                            <div className="accommodation-specification">
                                 <h1>General</h1>
+                                <section className="accommodation-general">
+                                    <label>Category</label>
+                                    <div className='radioBtn-box'>
+                                        {camperCategories.map((category, index) => (
+                                            <>
+                                                <label key={index}>
+                                                    <input
+                                                        type="radio"
+                                                        name='Category'
+                                                        onChange={() => changeCamperCategory(category)}
+                                                        checked={formData.Category === category}
+                                                    />
+                                                    {category}
+                                                </label>
+                                            </>
+                                        ))}
 
-                            </section>
+                                    </div>
+                                    <label htmlFor="city">License plate*</label>
+                                    <input
+                                        className="textInput-field locationText"
+                                        name="LicensePlate"
+                                        onChange={handleInputChange}
+                                        value={formData.LicensePlate}
+                                        id="licensePlate"
+                                        placeholder="Enter the characters of your license plate"
+                                        required={true}
+                                    />
+                                    <label htmlFor="city">Brand*</label>
+                                    <input
+                                        className="textInput-field locationText"
+                                        name="CamperBrand"
+                                        onChange={handleInputChange}
+                                        value={formData.CamperBrand}
+                                        id="camperbrand"
+                                        placeholder="Enter the brand of your camper"
+                                        required={true}
+                                    />
+                                    <label htmlFor="city">Model*</label>
+                                    <input
+                                        className="textInput-field locationText"
+                                        name="Model"
+                                        onChange={handleInputChange}
+                                        value={formData.Model}
+                                        id="model"
+                                        placeholder="Enter the name of the model"
+                                        required={true}
+                                    />
+                                    <label>
+                                        Required driver’s license
+                                    </label>
+                                    <Select
+                                        options={licenseTypes.map(licenseType => ({value: licenseType, label: licenseType}))}
+                                        name="Requirement"
+                                        className="locationText"
+                                        value={{value: formData.Requirement, label: 'Select the required license type'}}
+                                        onChange={setLicenseRequirement}
+                                        id="requirement"
+                                        required={true}
+                                    />
+                                    <label style={{marginTop: '5%'}} htmlFor="GPI">General periodic inspection*</label>
+                                    <input
+                                        type='date'
+                                        className="textInput-field locationText"
+                                        name="GPI"
+                                        onChange={handleInputChange}
+                                        value={formData.GPI}
+                                        id="gpi"
+                                        placeholder="DD/MM/YYYY"
+                                        required={true}
+                                    />
+                                </section>
+                                <h1>Technical</h1>
+                                <section className="accommodation-technical">
+                                    <div>
+                                        <label htmlFor="length">Length (m)</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="Length"
+                                            onChange={handleInputChange}
+                                            value={formData.Length}
+                                            id="length"
+                                            required={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="length">Height (m)</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="Height"
+                                            onChange={handleInputChange}
+                                            value={formData.Height}
+                                            id="height"
+                                            required={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="fuel">Transmission</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="Transmission"
+                                            onChange={handleInputChange}
+                                            value={formData.Transmission}
+                                            id="transmission"
+                                            required={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="fuel">Fuel (L/h)</label>
+                                        <input
+                                            className="textInput-field locationText"
+                                            name="FuelTank"
+                                            onChange={handleInputChange}
+                                            value={formData.FuelTank}
+                                            id="fueltank"
+                                            required={true}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="YOC">Year of construction</label>
+                                        <input
+                                            type="number"
+                                            className="textInput-field locationText"
+                                            name="YOC"
+                                            onChange={handleInputChange}
+                                            value={formData.YOC}
+                                            id="yoc"
+                                            required={true}
+                                            min={1900}
+                                            max={new Date().getFullYear()}
+                                            placeholder="YYYY"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label htmlFor="renovated">Renovated</label>
+                                        <input
+                                            type='number'
+                                            className="textInput-field locationText"
+                                            name="Renovated"
+                                            onChange={handleInputChange}
+                                            value={formData.Renovated}
+                                            id="renovated"
+                                            required={true}
+                                            min={1900}
+                                            max={new Date().getFullYear()}
+                                            placeholder='YYYY'
+                                        />
+                                    </div>
+                                    <div className="check-box-vertical">
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                name='FWD'
+                                                onChange={handleCheckBoxChange}
+                                                checked={formData.FWD}
+                                            />
+                                            4 x 4 Four-Wheel Drive
+                                        </label>
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                name='SelfBuilt'
+                                                onChange={handleCheckBoxChange}
+                                                checked={formData.SelfBuilt}
+                                            />
+                                            My camper is self-built
+                                        </label>
+                                    </div>
+                                </section>
+                            </div>
                         )}
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
                                 Go back
                             </button>
-                            { selectedAccoType === 'Boat' || selectedAccoType === 'Camper' ? (
+                            {selectedAccoType === 'Boat' || selectedAccoType === 'Camper' ? (
                                 <button
                                     className={!(formData.Description && hasSpecs) ? 'onboarding-button-disabled' : 'onboarding-button'}
-                                    disabled={!(formData.Description && hasSpecs)} onClick={() => pageUpdater(page + 1)}>
+                                    disabled={!(formData.Description && hasSpecs)}
+                                    onClick={() => pageUpdater(page + 1)}>
                                     Confirm and proceed
                                 </button>
                             ) : (

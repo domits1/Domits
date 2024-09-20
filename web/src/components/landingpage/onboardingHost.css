@@ -332,7 +332,7 @@
 }
 .accommodation-specification {
   max-width: 50%;
-  .radioBtn-box, input {
+  .radioBtn-box, .radioBtn-box-vertical, input {
     margin-bottom: 5%;
   }
   .accommodation-general {
@@ -350,6 +350,14 @@
   flex-direction: row;
   justify-content: start;
   gap: 5%;
+}
+
+.check-box-vertical {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  gap: 5%;
+  margin-bottom: 10%;
 }
 .textInput-field {
   width: 100%;
