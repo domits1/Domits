@@ -140,7 +140,7 @@ const HostRevenues = () => {
     }, [stripeAccountId]);
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className="host-revenues">
                 <div className="pages">
                     <Pages />

@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostDistribution = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-dist' style={{
                 display: "flex",
                 flexDirection: "row"

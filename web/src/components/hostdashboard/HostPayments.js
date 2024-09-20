@@ -56,8 +56,7 @@ function HostReports() {
     };
 
     return (
-        <div className="container">
-
+        <main className="page-body">
             <div className="dashboard">
                 <div className="tabsContainer">
                     <Pages />
@@ -161,7 +160,7 @@ function HostReports() {
                     )}
                 </div>
             </div>
-        </div>
+        </main>
     );
 }
 

@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import ImageSlider from "./ImageSlider";
-import './PageSwitcher.css';
+import styles from './PageSwitcher.module.css';
 import DateFormatterDD_MM_YYYY from "./DateFormatterDD_MM_YYYY";
 function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onUpdate}) {
     const [currentPage, setCurrentPage] = useState(1);
@@ -37,18 +37,18 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
     return (
         <main className="page-body">
                 {currentItems.map((accommodation) => (
-                    <section key={accommodation.ID} className="accommodation-tab">
-                        <section className="accommodation-left">
-                            <p className="accommodation-title">{accommodation.Title}</p>
-                            <p className="accommodation-location">{accommodation.Country},
+                    <section key={accommodation.ID} className={styles.accommodationTab}>
+                        <section className={styles.accommodationLeft}>
+                            <p className={styles.accommodationTitle}>{accommodation.Title}</p>
+                            <p className={styles.accommodationLocation}>{accommodation.Country},
                                 {accommodation.City},
                                 {accommodation.Street},
                                 {accommodation.PostalCode}
                             </p>
-                            <ImageSlider images={accommodation.Images} seconds={5}/>
+                            <ImageSlider images={accommodation.Images} seconds={5} page={'listing'}/>
                         </section>
 
-                        <section className="accommodation-right">
+                        <section className={styles.accommodationRight}>
                             <p>Subtitle: {accommodation.Subtitle}</p>
                             <p>Listed on: {formatDate(accommodation.createdAt)}</p>
                             <p>Features: {accommodation.Features.length > 0 ? (
@@ -65,28 +65,28 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
                                 (<p>Date range not set</p>)
                             }
                         </section>
-                        <div className="listing-button-box">
-                            <button className="listing-button listing-edit"
+                        <div className={styles.listingButtonBox}>
+                            <button className={`${styles.listingButton} ${styles.listingEdit}`}
                                     onClick={() => onEdit(accommodation.ID, accommodation.Title)}>Edit
                             </button>
-                            <button className="listing-button listing-delete"
+                            <button className={`${styles.listingButton} ${styles.listingDelete}`}
                                     onClick={() => onDelete(accommodation)}>Remove
                             </button>
                             {accommodation.Drafted === true ?
-                                <button className={"listing-button listing-live"}
+                                <button className={styles.listingButton}
                                         onClick={() => onUpdate(accommodation.ID, false)}
                                         disabled={!(hasStripe && accommodation.DateRanges)}
                                         style={{backgroundColor: !(hasStripe && accommodation.DateRanges) ? 'gray' : '#003366', fontSize: '0.8rem'}}
                                 >Set Live</button>
                                 :
-                                <button className="listing-button listing-draft"
+                                <button className={`${styles.listingButton} ${styles.listingDraft}`}
                                         onClick={() => onUpdate(accommodation.ID, true)}
                                         style={{backgroundColor: '#003366', fontSize: '0.75rem'}}
                                 >Set Draft</button>}
                         </div>
                     </section>
                 ))}
-            <div className="pagination">
+            <div className={styles.pagination}>
                 <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
                     {'<'}
                 </button>

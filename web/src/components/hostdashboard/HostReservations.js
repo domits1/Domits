@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Pages from "./Pages.js";
-import '././HostReservations.css';
+import styles from './HostReservations.module.css';
+import pageSwitcherStyling from "../utils/PageSwitcher.module.css";
 import info from "../../images/icons/info.png";
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
@@ -168,35 +169,35 @@ const HostReservations = () => {
         }
     }, [userId]);
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='body' style={{
                 display: "flex",
                 flexDirection: "row"
             }}>
                 <Pages />
-                <section className="reservation-content">
-                    <h1 className="header">Manage reservations</h1>
-                    <div className="reservation-info">
-                        <img src={info} className="info-icon"/>
-                        <p className="info-msg">You can manage your reservations or booking requests here</p>
+                <section className={styles.reservationContent}>
+                    <h1 className={styles.header}>Manage reservations</h1>
+                    <div className={styles.reservationInfo}>
+                        <img src={info} className={styles.infoIcon}/>
+                        <p>You can manage your reservations or booking requests here</p>
                     </div>
-                    <section className="reservation-selector">
+                    <section className={styles.reservationSelector}>
                         {options.map((option, index) => (
                             <div
                                 key={index}
-                                className={`option ${selectedOption === option ? 'selected' : ''}`}
+                                className={`${styles.option} ${selectedOption === option ? styles.selected : ''}`}
                                 onClick={() => handleOptionClick(option)}
                             >
                                 {option}
                             </div>
                         ))}
                     </section>
-                    <div className="util-box">
+                    <div className={styles.utilBox}>
                         {selectedOption === "Booking requests" &&
-                            <button className="refresh-btn" onClick={() => selectAll()}>Select all</button>}
-                        <button className="refresh-btn" onClick={() => fetchReservations()}>Refresh</button>
+                            <button className={styles.refreshBtn} onClick={() => selectAll()}>Select all</button>}
+                        <button className={styles.refreshBtn} onClick={() => fetchReservations()}>Refresh</button>
                     </div>
-                    <section className="reservation-display">
+                    <section className={styles.reservationDisplay}>
                         {isLoading ? (
                                 <div className="spinner">
                                 <img src={spinner} alt='spinner'/>
@@ -207,12 +208,12 @@ const HostReservations = () => {
                                     <thead>
                                     <tr>
                                         {selectedOption === 'Booking requests' && <th className="reservation-th">Select</th>}
-                                        <th className="reservation-th">Requested on<img src={chevron} className="sort" alt="sort" onClick={()=> sortReservations('createdAt')}/></th>
-                                        <th className="reservation-th">Guest name</th>
-                                        <th className="reservation-th">Title</th>
-                                        <th className="reservation-th">Reservation date</th>
-                                        {selectedOption === 'All' && <th className="reservation-th">Status<img className="sort" src={chevron} onClick={()=> sortReservations('Status')} alt="sort" /></th>}
-                                        <th className="reservation-th">Price<img src={chevron} className="sort" onClick={()=> sortReservations('Price')} alt="sort"/></th>
+                                        <th className={styles.reservationTh}>Requested on<img src={chevron} className={styles.sort} alt="sort" onClick={()=> sortReservations('createdAt')}/></th>
+                                        <th className={styles.reservationTh}>Guest name</th>
+                                        <th className={styles.reservationTh}>Title</th>
+                                        <th className={styles.reservationTh}>Reservation date</th>
+                                        {selectedOption === 'All' && <th className="reservation-th">Status<img className={styles.sort} src={chevron} onClick={()=> sortReservations('Status')} alt="sort" /></th>}
+                                        <th className={styles.reservationTh}>Price<img src={chevron} className={styles.sort} onClick={()=> sortReservations('Price')} alt="sort"/></th>
                                     </tr>
                                     </thead>
                                     <tbody>
@@ -231,7 +232,7 @@ const HostReservations = () => {
                                 <p>You do not have any booking requests at the moment...</p>
                             )}
                     </section>
-                    <section className="pagination">
+                    <section className={pageSwitcherStyling.pagination}>
                         <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1}>
                             {'<'}
                         </button>
@@ -247,13 +248,13 @@ const HostReservations = () => {
                         </button>
                     </section>
                     {selectedOption === "Booking requests" && selectedReservations.length > 0 && (
-                        <div className="btn-box">
-                            <button className="btn-undo" onClick={() => handleUndoSelect()}>Undo select</button>
-                            <p className="selected-text">{selectedReservations.length} items selected</p>
-                            <div className="btn-group">
-                                <button className="btn-deny" onClick={() => asyncUpdateReservation("Cancelled")}>Deny
+                        <div className={styles.btnBox}>
+                            <button className={styles.btnUndo} onClick={() => handleUndoSelect()}>Undo select</button>
+                            <p className={styles.selectedText}>{selectedReservations.length} items selected</p>
+                            <div className={styles.btnGroup}>
+                                <button className={styles.btnDeny} onClick={() => asyncUpdateReservation("Cancelled")}>Deny
                                 </button>
-                                <button className="btn-approve"
+                                <button className={styles.btnApprove}
                                         onClick={() => asyncUpdateReservation("Accepted")}>Approve
                                 </button>
                             </div>
