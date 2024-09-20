@@ -6,60 +6,39 @@
     "location": "Haarlem, NL (Hybrid/Remote)",
     "description": "Currently we are forming the people team and looking for HR - IT Recruiters. We're open for intern and trainee HR - IT Recruiters. Interested? Send a message or read more...",
     "details": {
-      "jobDescription": "This is a remote/hybrid position. Currently we are forming the people team and looking for HR - IT Recruiters. We're open for intern and trainee HR - IT Recruiters. Interested? Send a message or read more...",
-      "responsibilities": "First of all, we will jointly look at how we can set up a win-win situation to become a permanent member of our team. Then we start with a trial period of 1 to 6 months.",
-      "technologies": [
-        "Frontend: React (Native)",
-        "Backend: Node.js",
-        "Client platforms: iOS, Android, Web",
-        "Datastores: DynamoDB",
-        "Monitoring: CloudWatch",
-        "Infra/cloud: AWS, Cloud Agnostic",
-        "Version control: Github",
-        "Tools: Slack, Asana, Stripe, Jira, Confluence"
-      ],
-      "preferredExperience": [
-        "ML, AI, Python, BI",
-        "Quality assurance",
-        "Auto/Manual testing",
-        "Devops, Cloud mgmt",
-        "Infrastr. automation",
-        "Continuous integration & deployment",
-        "Cyber security testing"
-      ],
-      "offerings": [
-        "Fee for trial/intern period. After that a fee possible €XXXX and/or stocks depending on your skills and experience",
-        "Knowledge, tools, community and training to be healthy, safe and future-proof all year round",
-        "An important role within a team of experienced digital thinkers and doers",
-        "A company that helps individuals, organizations and stakeholders grow their business through digital growth expertise",
-        "Fun and informal team members with our team and plenty of development opportunities"
-      ],
+      "jobDescription": "This is a remote or hybrid position. We are in the process of building our People team and are actively looking for HR - IT Recruiters to join us. We're open to both interns and trainee HR - IT Recruiters, providing an excellent opportunity to grow within the role. Interested? Send us a message or read on to learn more about the position.",
+      "responsibilities": "Initially, we will work together to explore how we can create a win-win situation that could lead to you becoming a permanent member of our team. Your journey will begin with a trial period, lasting anywhere from 1 to 6 months, during which we will assess our collaboration and your fit with the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+    "preferredExperience": [
+      "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+      "Quality assurance, both automated and manual testing",
+      "DevOps and cloud management",
+      "Infrastructure automation",
+      "Continuous integration and deployment (CI/CD)",
+      "Cybersecurity testing"
+    ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You'll play a crucial role in a team of experienced digital professionals, working in a company that helps individuals, organizations, and stakeholders drive business growth through digital expertise. Our team is informal and fun, and we offer ample opportunities for professional development.",
       "requirements": [
-        "Pre if you have university working and thinking level",
-        "Pre if you have 1 - 5+ Years experience as a HR - IT recruiter",
-        "Excellent communication skills",
-        "Good knowledge in IT Recruitment",
-        "Experience in hiring web developers and mobile app developers",
-        "Should have strong communication skills and interpersonal skills",
-        "Sourcing the right candidates through Job portals, Advertisements, Headhunting, Networking & Employee referrals, etc.",
-        "To be good at analytics and proficient in hiring through various channels, job portals, free job posting sites, social networking sites, etc.",
-        "Understanding the requirements for sourcing, screening profiles, and shortlisting the candidates for a preliminary interview",
-        "Develop successful sourcing strategies to reach out to passive and active job seekers",
-        "Build good rapport with candidates throughout the interview process to ensure a positive experience",
-        "Regularly update the internal database with new resumes and bring in more innovative recruiting techniques",
-        "Good logical thinking and problem-solving skills",
-        "A good team player",
-        "You are very interested in everything related to the domain",
-        "You are meticulous, loyal, energetic, intelligent, diligent and a problem solver!"
+        "A university-level working and thinking mindset is a plus.",
+        "1-5+ years of experience as an HR - IT recruiter is a strong advantage.",
+        "Excellent communication and interpersonal skills are essential.",
+        "Solid knowledge of IT recruitment, with experience hiring web developers and mobile app developers.",
+        "A talent for sourcing candidates through various channels such as job portals, advertisements, headhunting, networking, and employee referrals.",
+        "Analytical and proficient in utilizing different recruitment channels, job portals, and social networking sites to find talent.",
+        "Ability to understand role requirements, screen profiles effectively, and shortlist candidates for preliminary interviews.",
+        "Skilled in developing successful sourcing strategies to reach both active and passive job seekers.",
+        "Strong ability to build rapport with candidates throughout the interview process, ensuring a positive experience for them.",
+        "Consistently updating the internal database with new resumes and contributing innovative recruitment techniques.",
+        "Logical thinking, problem-solving abilities, and being a strong team player are key qualities we value.",
+        "A strong interest in the domain and a meticulous, loyal, energetic, and diligent approach to your work."
       ],
-      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-      "extraInformation":[
-        "Education: All levels/ University.",
-        "Place: Haarlem - The Netherlands", 
-        "Hybrid or Remote.",
-        "Working hours per week: 10 - 40+.",
-        "Employment: Internship, Traineeship, Freelance & Contract...",
-        "Responsible for: In consultation."
+      "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll be in touch as soon as possible to discuss the next steps.",
+      "extraInformation": [
+        "Education level: All levels/University",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available",
+        "Working hours per week: 10 - 40+",
+        "Employment types: Internship, Traineeship, Freelance, and Contract",
+        "Responsibilities: To be discussed in consultation"
       ]}
   },
   {
