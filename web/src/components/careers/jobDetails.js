@@ -28,17 +28,18 @@ function JobDetails() {
             <p>{job.location}</p><br></br> 
            {/* <p>Description</p><br></br>
             <p>{job.description}</p><br></br>*/}
-            <h3>What are you going to do</h3>
+            <h3>What you'll be doing</h3>
             <p>{job.details.responsibilities}</p><br></br>
 
-            <h3>Technologies</h3>
-              <ul>
+            <h3>Technologies we work with</h3>
+            <p>{job.details.technologies}</p>
+              {/* <ul>
                 {job.details.technologies.map((tech, index) => (
                     <li key={index}>- {tech}</li>
                 ))}
-              </ul>
+              </ul> */}
 
-            <h3>Pre if you have experience with</h3>
+            <h3>Bonus if you have experience with</h3>
             <ul>
                 {job.details.preferredExperience.map((exp, index) => (
                     <li key={index}>- {exp}</li>
@@ -46,11 +47,12 @@ function JobDetails() {
             </ul><br></br>
 
             <h3>What we offer</h3>
-            <ul>
+            <p>{job.details.offerings}</p>
+            {/* <ul>
               {job.details.offerings.map((offering, index) => (
                 <li key={index}>- {offering}</li>
               ))}
-            </ul>
+            </ul> */}
 
             <h3>What we ask</h3>
             <ul>
@@ -59,7 +61,7 @@ function JobDetails() {
                 ))}
             </ul>
             
-            <h3>Apply</h3>
+            <h3>Apply now</h3>
             <p>{job.details.apply}</p><br></br>
             <h3>Extra information</h3>
             <ul>
