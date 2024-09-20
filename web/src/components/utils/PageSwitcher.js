@@ -40,11 +40,18 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
                     <section key={accommodation.ID} className={styles.accommodationTab}>
                         <section className={styles.accommodationLeft}>
                             <p className={styles.accommodationTitle}>{accommodation.Title}</p>
-                            <p className={styles.accommodationLocation}>{accommodation.Country},
-                                {accommodation.City},
-                                {accommodation.Street},
-                                {accommodation.PostalCode}
-                            </p>
+                            {accommodation.AccommodationType === 'Boat' ? (
+                                <p className={styles.accommodationLocation}>{accommodation.Country},
+                                    {accommodation.City},
+                                    {accommodation.Harbour}
+                                </p>
+                            ) : (
+                                <p className={styles.accommodationLocation}>{accommodation.Country},
+                                    {accommodation.City},
+                                    {accommodation.Street},
+                                    {accommodation.PostalCode}
+                                </p>
+                            )}
                             <ImageSlider images={accommodation.Images} seconds={5} page={'listing'}/>
                         </section>
 
@@ -75,7 +82,7 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
                             {accommodation.Drafted === true ?
                                 <button className={styles.listingButton}
                                         onClick={() => onUpdate(accommodation.ID, false)}
-                                        disabled={!(hasStripe && accommodation.DateRanges)}
+                                        disabled={!(hasStripe && Object.keys(accommodation.DateRanges).length > 0)}
                                         style={{backgroundColor: !(hasStripe && accommodation.DateRanges) ? 'gray' : '#003366', fontSize: '0.8rem'}}
                                 >Set Live</button>
                                 :
