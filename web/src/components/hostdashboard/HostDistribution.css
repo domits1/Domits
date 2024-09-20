@@ -1,12 +1,14 @@
+.containerHostDistribution {
+    overflow-x: hidden;
+}
+
 .host-dist-header {
     display: flex;
-    position: sticky;
-    top: 0;
-    z-index: 1000;
     margin-left: 24%;
     flex-direction: row;
     width: 100%;
     padding-bottom: 1%;
+    bottom: 100%;
 }
 
 .connectedChannelTitle {
@@ -40,35 +42,46 @@
     width: 100%;
 }
 
+.channelContents {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 77vh;
+    padding: 1%;
+}
+
 .contentContainer-channel {
     display: flex;
     flex-direction: column;
-    width: 75%;
+    width: 100%;
     border: #b9b9b9 1px solid;
-    border-radius: 2%;
-    height: 71vh;
-    position: sticky;
-    top: 7%;
-    z-index: 1000;
+    border-radius: 15px;
+    height: 79vh;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    top: 7.5rem;
+    flex-wrap: wrap;
 }
 
 .host-dist-box-container {
     display: flex;
     flex-direction: column;
     width: 100%;
+    height: 19.8%;
     border-bottom: #b9b9b9 1px solid;
 }
 
-.host-dist-box-container:nth-child(6) {
+.host-dist-box-container:nth-child(5n) {
     border-bottom: none;
 }
 
 .host-dist-box-row {
     display: flex;
     flex-direction: row;
-    justify-content: space-evenly;
+    justify-content: space-between;
     margin: 16px 16px 16px 16px;
     align-items: center;
+    flex-wrap: wrap;
 }
 
 .channelLogo {
@@ -92,8 +105,8 @@
     left: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 10px; /* Adjust as needed */
-    height: 10px; /* Adjust as needed */
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
 }
 
@@ -128,14 +141,11 @@
     border: none;
     background: none;
     box-shadow: none;
-    /*margin-right: 10px;*/
-    /*float: left;*/
     color: black;
     text-align: center;
     padding: 12px;
     font-size: 18px;
     border-radius: 10px;
-    /*margin-top: 0;*/
     display: inline-flex;
     font-family: Kanit, sans-serif;
     cursor: pointer;
@@ -145,4 +155,39 @@
 .threeDotsButton:hover {
     cursor: pointer;
     box-shadow: 0 0 5px hsl(0 0% 78%);
+}
+
+.channelNavigation {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-inline: auto;
+    padding-top: 2.5%;
+}
+
+.channelNavigation button {
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: none;
+    background-color: #f4f4f4;
+    border-radius: 15px;
+}
+
+.channelNavigation button:hover {
+    cursor: pointer;
+    background-color: #e6e6e6;
+}
+
+.channelNavigation button.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.channelNavigation button:hover:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.channelNavigation button:hover:not(:disabled) {
+    background-color: #ddd;
 }

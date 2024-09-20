@@ -3,19 +3,19 @@ import Pages from "./Pages.js";
 import './HostDistribution.css';
 import airbnb_logo from "../../images/icon-airbnb.png";
 import three_dots from "../../images/three-dots-grid.svg";
-// import arrow_left from "../../images/arrow-left-icon.svg";
-// import arrow_right from "../../images/arrow-right-icon.svg";
 import {Auth} from "aws-amplify";
-import {formatDate, formatDescription, formatDateTime, formatLocation, downloadICal} from "../utils/iCalFormat.js";
-
-// import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
+import {formatDate, formatDescription, formatDateTime, downloadICal} from "../utils/iCalFormat.js";
 
 function HostDistribution() {
     const [userId, setUserId] = useState(null);
     const [accommodations, setAccommodations] = useState([]);
     const [status, setStatus] = useState('Disabled');
-    // const [booking, setBooking] = useState([]);
     const [iCalData, setICalData] = useState([]);
+
+    const [currentPannel, setCurrentPannel] = useState(1);
+    const itemsPerPage = 5;
+    const channelLength = 27;
+    const channelPannel = (pannelNumber)  => setCurrentPannel(pannelNumber);
 
 
     useEffect(() => {
@@ -36,7 +36,6 @@ function HostDistribution() {
                 if (!userId) {
                     return;
                 } else {
-                    console.log("User id:", userId);
                     try {
                         const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
                             method: 'POST',
@@ -49,7 +48,6 @@ function HostDistribution() {
                             throw new Error('Failed to fetch');
                         }
                         const data = await response.json();
-                        console.log(data);
 
                         if (data.body && typeof data.body === 'string') {
                             const accommodationsArray = JSON.parse(data.body);
@@ -73,11 +71,9 @@ function HostDistribution() {
                 const response = await fetch('https://d6ia9ibn4e.execute-api.eu-north-1.amazonaws.com/default/retrieveICalData');
 
                 const data = await response.json();
-                console.log(data);
 
                 if (data.body && typeof data.body === 'string') {
                     const retrievedICalData = data.response.Items;
-                    console.log(retrievedICalData);
 
                     setICalData(retrievedICalData);
                 }
@@ -87,24 +83,6 @@ function HostDistribution() {
         };
         asyncRetrieveICalData();
     }, [accommodations]);
-
-    // const handleRetrieveICalData = async () => {
-    //     try {
-    //         const response = await fetch('https://d6ia9ibn4e.execute-api.eu-north-1.amazonaws.com/default/retrieveICalData');
-    //
-    //         const data = await response.json();
-    //         console.log(data);
-    //
-    //         if (data.body && typeof data.body === 'string') {
-    //             const retrievedICalData = data.response.Items;
-    //             console.log(retrievedICalData);
-    //
-    //             setICalData(retrievedICalData);
-    //         }
-    //     } catch (error) {
-    //         console.error('Failed to fetch iCal data:', error);
-    //     }
-    // }
 
     const handleICal = async (e) => {
         e.preventDefault();
@@ -166,28 +144,6 @@ function HostDistribution() {
                 GuestId: guestId
             }
 
-            console.log(params.Location.Street, " + " , params.Location.City, " + " , params.Location.Country);
-
-            // const sampleEvent = {
-            //     uid: uid,
-            //     stamp: formatDate(newStamp),
-            //     start: formatDate(dtStart),
-            //     end: formatDate(dtEnd),
-            //     summary: accommodations[0].Title + ' - ' + iCalData[0].Status.S,
-            //     status: iCalData[0].Status.S,
-            //     description: formatDescription(accommodations[0].Description +
-            //         '\n\n' + 'Check-in: ' + formatDateTime(checkIn) +
-            //         '\n' + 'Check-out: ' + formatDateTime(checkOut)),
-            //     checkIn: formatDate(checkIn),
-            //     checkOut: formatDate(checkOut),
-            //     bookingId: iCalData[0].BookingId.S,
-            //     location: formatLocation(iCalData[0].Location.L[0].M),
-            //     sequence: sequence,
-            //     accommodationId: accommodations[0].ID,
-            //     lastModified: formatDate(new Date()),
-            //     userId: guestId
-            // }
-
             try {
                 const response = await fetch('https://d6ia9ibn4e.execute-api.eu-north-1.amazonaws.com/default/iCalGenerator',
                     {
@@ -197,9 +153,7 @@ function HostDistribution() {
                             'Content-type': 'application/json; charset=UTF-8',
                         }
                     });
-                console.log(response);
                 const result = await response.json();
-                console.log(result);
 
                 if (result.statusCode === 200) {
                     alert('iCal data has been successfully POSTed');
@@ -215,34 +169,81 @@ function HostDistribution() {
         alert("This button is not functional yet");
     }
 
+    const handlePageRange = () => {
+        const totalPages = Math.ceil(channelLength / itemsPerPage);
+        let startPage = currentPannel - 2;
+
+        if (startPage < 1) {
+            startPage = 1;
+        }
+
+        let endPage = startPage + 4;
+        if (endPage > totalPages) {
+            endPage = totalPages;
+            startPage = Math.max(endPage - 4, 1);
+        }
+
+        return { startPage, endPage };
+    };
+
+
+    const { startPage, endPage } = handlePageRange();
+
     return (
-        <div className="container">
+        <div className="containerHostDistribution">
             <div className="host-dist-header">
                 <h2 className="connectedChannelTitle">Connected channels</h2>
-                <button className="addChannelButton" onClick={handleICal}>
-                    Temp button to get iCal .isc file
-                </button>
+                {/*<button className="addChannelButton" onClick={handleICal}>*/}
+                {/*    Temp button to get iCal .isc file*/}
+                {/*</button>*/}
                 <button className="addChannelButton" onClick={handleEmptyButton}>+ Add
                     channel
                 </button>
             </div>
             <div className="host-dist-content">
                 <Pages/>
-                <div className="contentContainer-channel">
-                    {[...Array(6)].map((_, index) => (
-                        <div className="host-dist-box-container" key={index}>
-                            <div className="host-dist-box-row">
-                                <img className="channelLogo" src={airbnb_logo} alt="Airbnb Logo"/>
-                                <p className="channelFont">Airbnb</p>
-                                <p className={`channelStatus ${status === 'Enabled' ? 'Enabled' : 'Disabled'}`}> {status} </p>
-                                <p className="totalMappedRooms">0 Mapped rooms</p>
-                                <button className="channelManageButton" onClick={handleEmptyButton}>Manage</button>
-                                <button className="threeDotsButton" onClick={handleEmptyButton}>
-                                    <img src={three_dots} alt="Three Dots"/>
+                <div className="channelContents">
+                    <div className="contentContainer-channel">
+                        {[...Array(channelLength)].slice((currentPannel - 1) * itemsPerPage, currentPannel * itemsPerPage)
+                            .map((_, index) => (
+                                <div className="host-dist-box-container" key={index}>
+                                    <div className="host-dist-box-row">
+                                        <img className="channelLogo" src={airbnb_logo} alt="Airbnb Logo"/>
+                                        <p className="channelFont">Airbnb</p>
+                                        <p className={`channelStatus ${status === 'Enabled' ? 'Enabled' : 'Disabled'}`}> {status} </p>
+                                        <p className="totalMappedRooms">0 Mapped rooms</p>
+                                        <button className="channelManageButton" onClick={handleEmptyButton}>Manage
+                                        </button>
+                                        <button className="threeDotsButton" onClick={handleEmptyButton}>
+                                            <img src={three_dots} alt="Three Dots"/>
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                    </div>
+                    <div className="channelNavigation">
+                        <button className="prevChannelButton"
+                                onClick={() => channelPannel(currentPannel > 1 ? currentPannel - 1 : 1)}
+                                disabled={currentPannel === 1}>
+                            Previous
+                        </button>
+                        {[...Array(endPage - startPage + 1)].map((_, index) => {
+                            const pageIndex = startPage + index;
+                            return (
+                                <button key={pageIndex}
+                                        className={`channelPageButton ${currentPannel === pageIndex ? 'active' : ''}`}
+                                        onClick={() => channelPannel(pageIndex)}>
+                                    {pageIndex}
                                 </button>
-                            </div>
-                        </div>
-                    ))};
+                            );
+                        })}
+
+                        <button className="nextChannelButton"
+                                onClick={() => channelPannel(currentPannel < Math.ceil(channelLength / itemsPerPage) ? currentPannel + 1 : currentPannel)}
+                                disabled={currentPannel === Math.ceil(channelLength / itemsPerPage)}>
+                            Next
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
