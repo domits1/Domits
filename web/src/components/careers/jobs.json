@@ -3,7 +3,8 @@
     "title": "HR - IT Recruiter",
     "experience": "Intern",
     "category": "People",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the people team and looking for HR - IT Recruiters. We're open for intern and trainee HR - IT Recruiters. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are in the process of building our People team and are actively looking for HR - IT Recruiters to join us. We're open to both interns and trainee HR - IT Recruiters, providing an excellent opportunity to grow within the role. Interested? Send us a message or read on to learn more about the position.",
@@ -45,7 +46,8 @@
     "title": "Software Engineer (Javascript, AWS, Fullstack)",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for javascript software engineers (fullstack). We're open for intern and trainee software engineers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking JavaScript software engineers (fullstack) to join us. We welcome both interns and trainee software engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -91,7 +93,8 @@
     "title": "Software Tester",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for software testers. We're open for intern and trainee software testers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking software testers to join us. We welcome both interns and trainee software testers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -132,7 +135,8 @@
     "title": "Business Analyst",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for business analysts. We're open for intern and trainee business analysts. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking business analysts to join us. We welcome both interns and trainee business analysts, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -172,7 +176,8 @@
     "title": "iOS/Android Developer",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for iOS/Android developers. We're open for intern and trainee iOS/Android developers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking iOS/Android developers to join us. We welcome both interns and trainee iOS/Android developers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -218,7 +223,8 @@
     "title": "UX/UI Designer",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for UX/UI Designers. We're open for intern and trainee UX/UI Designers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking UX/UI Designers to join us. We welcome both interns and trainee UX/UI Designers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -262,7 +268,8 @@
     "title": "DevOps Engineer",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for DevOps Engineers . We're open for intern and trainee DevOps Engineers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking DevOps Engineers to join us. We welcome both interns and trainee DevOps Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -306,7 +313,8 @@
     "title": "Product Owner",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for Product Owners. We're open for intern and trainee Product Owners. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking Product Owners to join us. We welcome both interns and trainee Product Owners, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -351,7 +359,8 @@
     "title": "Cyber Security Engineer",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for cyber security engineers. We're open for intern and trainee cyber security engineers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking Cyber Security Engineers to join us. We welcome both interns and trainee Cyber Security Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -399,7 +408,8 @@
     "title": "AI Data Engineer",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for AI Data Engineers. We're open for intern and trainee AI Data Engineers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking AI Data Engineers to join us. We welcome both interns and trainee AI Data Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -445,7 +455,8 @@
     "title": "IoT Software Engineer",
     "experience": "Intern",
     "category": "Engineering",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core development team and looking for IoT Software Engineers. We're open for intern and trainee IoT Software Engineers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking IoT Software Engineers to join us. We welcome both interns and trainee IoT Software Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -491,7 +502,8 @@
     "title": "Growth Hacker",
     "experience": "Intern",
     "category": "Growth",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core growth team and looking for Growth Hackers. We're open for intern and trainee Growth Hackers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Growth Hackers to join us. We welcome both interns and trainee Growth Hackers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -532,7 +544,8 @@
     "title": "Business Developer",
     "experience": "Intern",
     "category": "Growth",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core growth team and looking for Business Developer. We're open for intern and trainee Business Developer. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Business Developers to join us. We welcome both interns and trainee Business Developers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -573,7 +586,8 @@
     "title": "B2B Marketing & Sales",
     "experience": "Intern",
     "category": "Growth",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core growth team and looking for B2B Marketing & Sales. We're open for intern and trainee B2B Marketing & Sales. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking B2B Marketing & Sales professionals to join us. We welcome both interns and trainee B2B Marketing & Sales candidates, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -620,7 +634,8 @@
     "title": "Business Developer",
     "experience": "Intern",
     "category": "Growth",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core growth team and looking for Business Developer. We're open for intern and trainee Business Developer. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking AI Data Marketing Analysts to join us. We welcome both interns and trainee AI Data Marketing Analysts, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -661,7 +676,8 @@
     "title": "AI Data Marketing Analyst",
     "experience": "Intern",
     "category": "Growth",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core growth team and looking for AI Data Marketing Analyst. We're open for intern and trainee AI Data Marketing Analyst. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Performance Marketers (SEO, SEA, CRO) to join us. We welcome both interns and trainee Performance Marketers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -702,7 +718,8 @@
     "title": "Performance Marketer (SEO, SEA, CRO)",
     "experience": "Intern",
     "category": "Growth",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core growth team and looking for Performance Marketers (SEO, SEA, CRO). We're open for intern and trainee Performance Marketers. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Marketing Automation & CRM specialists to join us. We welcome both interns and trainee specialists, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
@@ -742,7 +759,8 @@
     "title": "Marketing Automation & CRM",
     "experience": "Intern",
     "category": "Growth",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core growth team and looking for Marketing Automation & CRM specialisten. We're open for intern and trainee Marketing Automation & CRM specialisten. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently seeking a Rental Expert to join our team. We welcome both interns and trainees who are eager to develop into a Rental Expert role. If you're interested, send us a message or read on for more details about the position.",
@@ -773,7 +791,7 @@
     "title": "Rental Expert",
     "experience": "Intern",
     "category": "Growth",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
     "description": "Currently we are looking for a Rental Expert. We're open for intern and trainee who wants to develop to a Rental Expert. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently looking for a Success Specialist to join our team. We welcome both interns and trainees who are eager to develop into a Success Specialist role. If you're interested, send us a message or read on for more details about the position.",
@@ -804,7 +822,8 @@
     "title": "Finance - IT Specialist",
     "experience": "Intern",
     "category": "Finance",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the finance team and looking for a Finance - IT specialist. We're open for intern and trainee Finance - IT specialist. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our finance team and looking for a Finance - IT Specialist. We welcome both interns and trainees who are eager to develop into this role. If you're interested, send us a message or read on for more details about the position.",
@@ -836,7 +855,8 @@
     "title": "Legal - IT Specialist",
     "experience": "Intern",
     "category": "Legal",
-    "location": "Haarlem, NL (Hybrid/Remote)",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are forming the core legal team and looking for a Legal - IT specialist. We're open for intern and trainee Legal - IT specialist. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core legal team and looking for a Legal - IT Specialist. We welcome both interns and trainees who are eager to develop into this role. If you're interested, send us a message or read on for more details about the position.",
