@@ -9,14 +9,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 20px;
+    /* padding: 20px; */
     
 }
 
 .left-container {
     flex: 1;
     padding-right: 20px;
-    max-width: 610px;
+    max-width: 600px;
     margin: 0 auto;
 }
 
