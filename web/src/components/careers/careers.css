@@ -76,8 +76,9 @@
 .apply-button {
     background-color: var(--primary-color);
     color: white;
+    margin: 10px auto;
     border: none;
-    padding: 10px 20px;
+    padding: 10px 50px;
     text-align: center;
     text-decoration: none;
     display: inline-block;
