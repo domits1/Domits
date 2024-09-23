@@ -89,6 +89,7 @@
 .resp-container img {
     width: 50%;
     object-fit: cover;
+    border-radius: 0 50px 0 50px;
 }
 
 .resp-right {
@@ -143,34 +144,44 @@
 }
 
 .exp-container-top, .exp-container-bottom {
-    /* width: 100%; */
     margin: auto;
 }
 
-.exp-container-top, .exp-container-bottom ul li {
+.exp-container-bottom {
+    margin-bottom: 45px;
+}
+
+.exp-container-bottom ul.job-detail-list {
+    max-width: 800px;
+}
+
+.exp-container-top, .exp-container-bottom, .apply .job-detail-list li {
     font-size: 18px;
+    position: relative;
+    padding-left: 25px;
+    line-height: 1.7;
+}
+.job-detail-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    /* top: 0; */
+    transform: translateY(50%);
+    width: 20px;
+    height: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="green"><path d="M12.854 3.646a.5.5 0 00-.708-.708L7 8.086 4.354 5.44a.5.5 0 10-.708.708l3 3a.5.5 0 00.708 0l5-5z"/></svg>');
 }
 
-.exp-container-bottom ul {
+.apply {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
 }
 
-/* end  */
-
-.apply-button {
-    background-color: #0D9813;
-    margin: 20px 0;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
-.apply-button:hover {
-    background-color: #45a049;
+.apply p {
+    max-width: 550px;
+    font-size: 18px;
 }

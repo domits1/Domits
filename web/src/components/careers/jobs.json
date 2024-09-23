@@ -1,5 +1,6 @@
 [
   {
+    "id": 1,
     "title": "HR - IT Recruiter",
     "experience": "Intern",
     "category": "People",
@@ -10,14 +11,14 @@
       "jobDescription": "This is a remote or hybrid position. We are in the process of building our People team and are actively looking for HR - IT Recruiters to join us. We're open to both interns and trainee HR - IT Recruiters, providing an excellent opportunity to grow within the role. Interested? Send us a message or read on to learn more about the position.",
       "responsibilities": "Initially, we will work together to explore how we can create a win-win situation that could lead to you becoming a permanent member of our team. Your journey will begin with a trial period, lasting anywhere from 1 to 6 months, during which we will assess our collaboration and your fit with the team.",
       "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-    "preferredExperience": [
-      "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-      "Quality assurance, both automated and manual testing",
-      "DevOps and cloud management",
-      "Infrastructure automation",
-      "Continuous integration and deployment (CI/CD)",
-      "Cybersecurity testing"
-    ],
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
       "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You'll play a crucial role in a team of experienced digital professionals, working in a company that helps individuals, organizations, and stakeholders drive business growth through digital expertise. Our team is informal and fun, and we offer ample opportunities for professional development.",
       "requirements": [
         "A university-level working and thinking mindset is a plus.",
@@ -40,9 +41,11 @@
         "Working hours per week: 10 - 40+",
         "Employment types: Internship, Traineeship, Freelance, and Contract",
         "Responsibilities: To be discussed in consultation"
-      ]}
+      ]
+    }
   },
   {
+    "id": 2,
     "title": "Software Engineer (Javascript, AWS, Fullstack)",
     "experience": "Intern",
     "category": "Engineering",
@@ -90,6 +93,7 @@
     }    
   },
   {
+    "id": 3,
     "title": "Software Tester",
     "experience": "Intern",
     "category": "Engineering",
@@ -132,6 +136,7 @@
     }
   },
   {
+    "id": 4,
     "title": "Business Analyst",
     "experience": "Intern",
     "category": "Engineering",
@@ -173,6 +178,7 @@
     }    
   },
   {
+    "id": 5,
     "title": "iOS/Android Developer",
     "experience": "Intern",
     "category": "Engineering",
@@ -220,6 +226,7 @@
     }    
   },
   {
+    "id": 6,
     "title": "UX/UI Designer",
     "experience": "Intern",
     "category": "Engineering",
@@ -265,6 +272,7 @@
     }    
   },
   {
+    "id": 7,
     "title": "DevOps Engineer",
     "experience": "Intern",
     "category": "Engineering",
@@ -310,6 +318,7 @@
     }    
   },
   {
+    "id": 8,
     "title": "Product Owner",
     "experience": "Intern",
     "category": "Engineering",
@@ -356,6 +365,7 @@
     }    
   },
   {
+    "id": 9,
     "title": "Cyber Security Engineer",
     "experience": "Intern",
     "category": "Engineering",
@@ -405,6 +415,7 @@
     }    
   },
   {
+    "id": 10,
     "title": "AI Data Engineer",
     "experience": "Intern",
     "category": "Engineering",
@@ -452,6 +463,7 @@
     }    
   },
   {
+    "id": 11,
     "title": "IoT Software Engineer",
     "experience": "Intern",
     "category": "Engineering",
@@ -499,6 +511,7 @@
     }    
   },
   {
+    "id": 12,
     "title": "Growth Hacker",
     "experience": "Intern",
     "category": "Growth",
@@ -541,6 +554,7 @@
     }    
   },
   {
+    "id": 13,
     "title": "Business Developer",
     "experience": "Intern",
     "category": "Growth",
@@ -583,6 +597,7 @@
     }    
   },
   {
+    "id": 14,
     "title": "B2B Marketing & Sales",
     "experience": "Intern",
     "category": "Growth",
@@ -631,6 +646,7 @@
     }    
   },
   {
+    "id": 15,
     "title": "Business Developer",
     "experience": "Intern",
     "category": "Growth",
@@ -673,6 +689,7 @@
     }    
   },
   {
+    "id": 16,
     "title": "AI Data Marketing Analyst",
     "experience": "Intern",
     "category": "Growth",
@@ -715,6 +732,7 @@
     }    
   },
   {
+    "id": 17,
     "title": "Performance Marketer (SEO, SEA, CRO)",
     "experience": "Intern",
     "category": "Growth",
@@ -756,6 +774,7 @@
     }    
   },
   {
+    "id": 18,
     "title": "Marketing Automation & CRM",
     "experience": "Intern",
     "category": "Growth",
@@ -765,6 +784,15 @@
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently seeking a Rental Expert to join our team. We welcome both interns and trainees who are eager to develop into a Rental Expert role. If you're interested, send us a message or read on for more details about the position.",
       "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
       "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
       "requirements": [
         "A university-level working and thinking mindset is a plus.",
@@ -788,14 +816,25 @@
     }    
   },
   {
+    "id": 19,
     "title": "Rental Expert",
     "experience": "Intern",
     "category": "Growth",
     "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
     "description": "Currently we are looking for a Rental Expert. We're open for intern and trainee who wants to develop to a Rental Expert. Interested? Send a message or read more...",
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently looking for a Success Specialist to join our team. We welcome both interns and trainees who are eager to develop into a Success Specialist role. If you're interested, send us a message or read on for more details about the position.",
       "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
       "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
       "requirements": [
         "A university-level working and thinking mindset is a plus.",
@@ -819,6 +858,7 @@
     }    
   },
   {
+    "id": 20,
     "title": "Finance - IT Specialist",
     "experience": "Intern",
     "category": "Finance",
@@ -828,6 +868,15 @@
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our finance team and looking for a Finance - IT Specialist. We welcome both interns and trainees who are eager to develop into this role. If you're interested, send us a message or read on for more details about the position.",
       "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
       "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
       "requirements": [
         "A university-level working and thinking mindset is a plus.",
@@ -852,6 +901,7 @@
     }    
   },
   {
+    "id": 21,
     "title": "Legal - IT Specialist",
     "experience": "Intern",
     "category": "Legal",
@@ -861,6 +911,15 @@
     "details": {
       "jobDescription": "This is a remote or hybrid position. We are currently forming our core legal team and looking for a Legal - IT Specialist. We welcome both interns and trainees who are eager to develop into this role. If you're interested, send us a message or read on for more details about the position.",
       "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
       "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
       "requirements": [
         "A university-level working and thinking mindset is a plus.",
