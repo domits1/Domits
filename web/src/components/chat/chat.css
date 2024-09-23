@@ -51,7 +51,8 @@
     display: flex;
 }
 
-h2{
+/* DONT USE GLOBAL STYLING */
+/* h2{
     font-family: sans-serif;
     font-family: "Kanit";
     src: local("KanitRegular"),
@@ -74,7 +75,7 @@ p{
     src: local("KanitLight"),
      url("../../fonts/kanit/Kanit-Light.ttf") format("truetype");
      color: #707070;
-}
+} */
 
 .chat__topUl{
     width: 100%;

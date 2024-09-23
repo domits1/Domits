@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import './Accommodations.css';
+import styles from '../utils/PageSwitcher.module.css'
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import CheckoutFrontend from "../checkout/CheckoutFrontEnd";
@@ -33,9 +34,9 @@ const Accommodations = ({ searchResults }) => {
       details: item.Description,
       price: `€${item.Rent} per night`,
       id: item.ID,
-      bathrooms: `${item.Bathrooms} Bathrooms`,
-      bedrooms: `${item.Bedrooms} Bedrooms`,
-      persons: `${item.GuestAmount} Persons`,
+      beds: `${item.Beds} Bed(s)`,
+      bedrooms: `${item.AccommodationType === 'Boat' ? item.Cabins : item.Bedrooms} ${item.AccommodationType === 'Boat' ? 'Cabins' : 'Bedrooms'}`,
+      persons: `${item.GuestAmount} ${item.GuestAmount > 1 ? 'People' : 'Person'}`,
     }));
   };
 
@@ -92,8 +93,6 @@ const Accommodations = ({ searchResults }) => {
             <div className="accocard-price">{accommodation.price}</div>
             <div className="accocard-detail">{accommodation.details}</div>
             <div className="accocard-specs">
-              <div className="accocard-size">{accommodation.size}</div>
-              <div className="accocard-size">{accommodation.bathrooms}</div>
               <div className="accocard-size">{accommodation.bedrooms}</div>
               <div className="accocard-size">{accommodation.persons}</div>
             </div>
@@ -101,7 +100,7 @@ const Accommodations = ({ searchResults }) => {
         </div>
       ))}
       {/* Pagination */}
-      <div className="pagination">
+      <div className={styles.pagination}>
         <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
           &lt; Previous
         </button>
@@ -109,7 +108,7 @@ const Accommodations = ({ searchResults }) => {
           <button
             key={i}
             onClick={() => handlePageChange(i + 1)}
-            className={currentPage === i + 1 ? "active" : ""}
+            className={`${(currentPage === i + 1) && styles.active}`}
           >
             {i + 1}
           </button>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Pages from "./Pages";
-import './HostHomepage.css'
+import styles from './HostDashboard.module.css';
 import add from "../../images/icons/host-add.png";
 import {useLocation, useNavigate} from 'react-router-dom';
 import { Auth } from "aws-amplify";
@@ -152,64 +152,65 @@ function HostListings() {
 
 
     return (
-        <div className="container">
+        <div className="page-body">
             <h2>Listings</h2>
-            <div className="dashboardHost">
+            <div className={styles.dashboardHost}>
                 <Pages />
-                <div className="contentContainer-dashboard">
-                    <div className="boxColumns fullColumn">
-                        <div className="wijzer addAcco" onClick={() => navigate("/enlist")} style={{maxWidth: 250,}}>
-                            <img src={add} alt="add"></img>
-                            <p>Add new accommodation</p>
+                <div className={styles.hostListingContainer}>
+                    {isLoading ? (
+                        <div>
+                            <img src={spinner}/>
                         </div>
-                        <div className="box fullBox">
-                            <p className="header">Current listings</p>
-                            <button className="refresh-btn" onClick={fetchAccommodations}>Refresh</button>
-                            {isLoading ? (
-                                <div>
-                                    <img src={spinner}/>
-                                </div>
-                            ) : accommodations.length > 0 ? (
-                                <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === false)}
-                                              amount={3}
-                                              hasStripe={hasStripe}
-                                              onEdit={asyncEditAccommodation}
-                                              onDelete={asyncDeleteAccommodation}
-                                              onUpdate={asyncChangeAccommodationStatus}/>
-                            ) : (
-                                <div className="accommodation-box">
-                                    <p className="accommodation-alert">It appears that you have not listed any accommodations yet...</p>
-                                </div>
-                            )}
+                    ) : (
+                        <div className={styles.listingBody}>
+                            <div className={styles.buttonBox}>
+                                <button className={styles.greenBtn} onClick={() => navigate("/enlist")}>Add new
+                                    accommodation
+                                </button>
+                                <button className={styles.greenBtn} onClick={fetchAccommodations}>Refresh</button>
+                            </div>
+                            <section className={styles.listingsDisplay}>
+                                <p className={styles.header}>Current listings</p>
+                                {accommodations.length > 0 ? (
+                                    <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === false)}
+                                                  amount={3}
+                                                  hasStripe={hasStripe}
+                                                  onEdit={asyncEditAccommodation}
+                                                  onDelete={asyncDeleteAccommodation}
+                                                  onUpdate={asyncChangeAccommodationStatus}/>
+                                ) : (
+                                    <div>
+                                        <p>It appears that you have not listed any accommodations yet...</p>
+                                    </div>
+                                )}
+                            </section>
+                            <section className={styles.listingsDisplay}>
+                                <p className={styles.header}>Drafted listings</p>
+                                {isLoading ? (
+                                    <div className={styles.loadingContainer}>
+                                        <img className={styles.spinner} src={spinner}/>
+                                    </div>
+                                ) : accommodations.length > 0 ? (
+                                    <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === true)}
+                                                  amount={3}
+                                                  hasStripe={hasStripe}
+                                                  onEdit={asyncEditAccommodation}
+                                                  onDelete={asyncDeleteAccommodation}
+                                                  onUpdate={asyncChangeAccommodationStatus}/>
+                                ) : (
+                                    <div>
+                                        <p>It appears that you have not drafted any accommodations yet...</p>
+                                    </div>
+                                )}
+                            </section>
                         </div>
-                        <div className="box fullBox">
-                            <p className="header">Drafted listings</p>
-                            {isLoading ? (
-                                <div>
-                                    <img src={spinner}/>
-                                </div>
-                            ) : accommodations.length > 0 ? (
-                                <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === true)}
-                                              amount={3}
-                                              hasStripe={hasStripe}
-                                              onEdit={asyncEditAccommodation}
-                                              onDelete={asyncDeleteAccommodation}
-                                              onUpdate={asyncChangeAccommodationStatus}/>
-                            ) : (
-                                <div className="accommodation-box">
-                                    <p className="accommodation-alert">It appears that you have not drafted any accommodations yet...</p>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    )}
                 </div>
 
             </div>
         </div>
     );
 }
-
-
 
 
 export default HostListings;
