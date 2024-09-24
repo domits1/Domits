@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Pages from "./Pages.js";
 import './HostHomepage.css';
-import './PagesDropdown.css'
+import './PagesDropdown.css';
+import styles from './HostDashboard.module.css'
 import StripeModal from './StripeModal.js';
 import { Auth } from 'aws-amplify';
 import {useNavigate} from "react-router-dom";
@@ -92,28 +93,31 @@ function HostDashboard() {
         }
     };
     return (
-        <main className="container">
+        <main className="page-body">
             <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)}/>
-            <div className="dashboard-header">
-                <h2>Dashboard</h2>
-                <h3 className="welcome-msg">Welcome {user.name}</h3>
-            </div>
-            <div className="dashboardHost">
+            <div className={styles.dashboardHost}>
                 <Pages/>
                 <div>
-                <div className="contentContainer-dashboard">
-                    <div className="dashboard-1">
-                        <div className="dashboard-head">
+                <div className={styles.dashboardContainer}>
+                    <div className={styles.dashboardLeft}>
+                        <h3 className={styles.welcomeMsg}>Welcome {user.name}</h3>
+                        <div className={styles.dashboardHead}>
+                            <div className={styles.buttonBox}>
+                                <button className={styles.greenBtn} onClick={fetchRecentAccommodations}>Refresh
+                                </button>
+                                <button className={styles.greenBtn}
+                                        onClick={() => navigate("/hostdashboard/listings")}>Go to
+                                    listing
+                                </button>
+                                <button className={styles.greenBtn} onClick={() => navigate("/enlist")}>Add
+                                    accommodation
+                                </button>
+                            </div>
                             <h3>My recent listings:</h3>
-                            <button className="refresh-btn" onClick={fetchRecentAccommodations}>Refresh</button>
-                            <button className="refresh-btn" onClick={() => navigate("/hostdashboard/listings")}>Go to
-                                listing
-                            </button>
-                            <button className="refresh-btn" onClick={() => navigate("/enlist")}>Add accommodation</button>
                         </div>
-                        <div className="listing-info">
-                            <img className="info-icon" src={info}/>
-                            <p className="info-msg">Click on your listed accommodations to see their listing details</p>
+                        <div className={styles.infoBox}>
+                            <img className={styles.infoIcon} src={info}/>
+                            <p>Click on your listed accommodations to see their listing details</p>
                         </div>
                         {isLoading ? (
                             <div>
@@ -121,20 +125,28 @@ function HostDashboard() {
                             </div>
                         ) : accommodations.length > 0 ? (
                             accommodations.map((accommodation, index) => (
-                                <div key={index} className="dashboard-card"
+                                <div key={index} className={styles.dashboardCard}
                                      onClick={() => !accommodation.Drafted ? navigate(`/listingdetails?ID=${accommodation.ID}`) :
                                          alert('This accommodation is drafted and cannot be viewed in listing details!')
-                                }>
-                                    <div className="accommodation-text">
-                                        <p className="accommodation-title">{accommodation.Title}</p>
-                                        <p className="accommodation-location"> {accommodation.City},
-                                            {accommodation.Street},
-                                            {accommodation.PostalCode}
-                                        </p>
+                                     }>
+                                    <div className={styles.accommodationText}>
+                                        <p className={styles.accommodationTitle}>{accommodation.Title}</p>
+                                        {accommodation.AccommodationType === 'Boat' ? (
+                                            <p className={styles.accommodationLocation}>
+                                                {accommodation.City},
+                                                {accommodation.Harbour}
+                                            </p>
+                                        ) : (
+                                            <p className={styles.accommodationLocation}>
+                                                {accommodation.City},
+                                                {accommodation.Street},
+                                                {accommodation.PostalCode}
+                                            </p>
+                                        )}
                                     </div>
-                                    <ImageSlider images={accommodation.Images} seconds={5}/>
-                                    <div className="accommodation-details">
-                                        <p className={accommodation.Drafted ? 'isDrafted' : 'isLive'}
+                                    <ImageSlider images={accommodation.Images} seconds={5} page={'dashboard'}/>
+                                    <div className={styles.accommodationDetails}>
+                                        <p className={`${(accommodation.Drafted) ? styles.isDrafted : styles.isLive}`}
                                         >Status: {accommodation.Drafted ? 'Drafted' : 'Live'}</p>
                                         <p>Listed on: {DateFormatterDD_MM_YYYY(accommodation.createdAt)}</p>
                                         {accommodation.DateRanges.length > 0 ?
@@ -150,24 +162,24 @@ function HostDashboard() {
                                 </div>
                             ))
                         ) : (
-                            <div className="accommodation-box">
-                                <p className="accommodation-alert">It appears that you have not listed any
+                            <div>
+                                <p>It appears that you have not listed any
                                     accommodations recently...</p>
                             </div>
                         )}
                     </div>
-                    <div className="dashboard-2">
-                        <div className="personalInfoContent">
+                    <div className={styles.dashboardRight}>
+                        <div className={styles.personalInfoContent}>
                             <h3>Personal Information</h3>
-                            <div className="infoBox"><img src={editIcon}
+                            <div className={styles.personalInfoBox}><img src={editIcon}
                                                           alt="Email Icon"/><span>Email:</span> {user.email}</div>
-                            <div className="infoBox"><img src={editIcon} alt="Name Icon"/><span>Name:</span> {user.name}
+                            <div className={styles.personalInfoBox}><img src={editIcon} alt="Name Icon"/><span>Name:</span> {user.name}
                             </div>
-                            <div className="infoBox"><img src={editIcon}
+                            <div className={styles.personalInfoBox}><img src={editIcon}
                                                           alt="Address Icon"/><span>Address:</span> {user.address}</div>
-                            <div className="infoBox"><img src={editIcon}
+                            <div className={styles.personalInfoBox}><img src={editIcon}
                                                           alt="Phone Icon"/><span>Phone:</span> {user.phone}</div>
-                            <div className="infoBox"><img src={editIcon}
+                            <div className={styles.personalInfoBox}><img src={editIcon}
                                                           alt="Family Icon"/><span>Family:</span> {user.family}</div>
                         </div>
                     </div>
