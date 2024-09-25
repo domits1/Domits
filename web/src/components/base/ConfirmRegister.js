@@ -13,12 +13,17 @@ function ConfirmEmail() {
     const navigate = useNavigate();
     const { flowState } = useContext(FlowContext);
     const { isHost } = flowState;
+    const [loading, setLoading] = useState(false);
 
     const userEmail = location.state?.email || "";
-    const userPassword = location.state?.password || "";
+    const userPassword = location.state?.password || ""; 
 
     const onSubmit = (e) => {
         e.preventDefault();
+        if (loading) return;
+
+        setLoading(true);
+        setErrorMessage('');
         let code = "";
         inputRef.current.forEach((input) => { code += input.value });
     
@@ -32,10 +37,8 @@ function ConfirmEmail() {
                     navigate("/hostdashboard");
                     window.location.reload();
                 } else {
-                    setTimeout(() => {
-                        navigate('/');
-                        window.location.reload();
-                    }, 3000);
+                    navigate('/');
+                    window.location.reload();
                 }
             })
             .catch(error => {
