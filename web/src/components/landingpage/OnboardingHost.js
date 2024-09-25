@@ -25,6 +25,8 @@ import JetSki from "../../images/boat_types/jetski.png";
 import ElectricBoat from "../../images/boat_types/electric-boat.png";
 import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png";
 import CalendarComponent from "../hostdashboard/CalendarComponent";
+import imageCompression from 'browser-image-compression';
+
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
 function OnboardingHost() {
@@ -699,6 +701,29 @@ function OnboardingHost() {
         return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
     };
 
+    const uploadImagesInDifferentSizes = async (file, userId, accommodationId) => {
+        const sizes = {
+            mobile: { maxWidthOrHeight: 300, maxSizeMB: 0.1 },  // ~100kB
+            homepage: { maxWidthOrHeight: 800, maxSizeMB: 0.2 },  // ~200kB
+            detail: { maxWidthOrHeight: 1200, maxSizeMB: 0.5 }  // ~500kB
+        };
+    
+        for (const [key, sizeOptions] of Object.entries(sizes)) {
+            const compressedFile = await imageCompression(file, sizeOptions);
+            const keyPath = `images/${userId}/${accommodationId}/${key}/Image-${Date.now()}.jpg`;
+    
+            await Storage.put(keyPath, compressedFile, {
+                bucket: S3_BUCKET_NAME,
+                region: region,
+                contentType: 'image/jpeg',
+                level: null,
+                customPrefix: { public: '' }
+            });
+        }
+    };
+    
+    
+
     const uploadImageToS3 = async (userId, accommodationId, image, index) => {
         const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
 
@@ -718,20 +743,28 @@ function OnboardingHost() {
     }
 
     const removeImageFromS3 = async (userId, accommodationId, index) => {
-        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
-
-        try {
-            await Storage.remove(key, {
-                bucket: S3_BUCKET_NAME,
-                region: region,
-                level: null,
-                customPrefix: { public: '' }
-            });
-        } catch (err) {
-            console.error("Failed to remove file:", err);
-            throw err;
+        const folders = ['', 'mobile', 'homepage', 'detail']; // Voeg een lege string toe voor de hoofdmap
+    
+        for (const folder of folders) {
+            const key = folder 
+                ? `images/${userId}/${accommodationId}/${folder}/Image-${index + 1}.jpg` 
+                : `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+    
+            try {
+                await Storage.remove(key, {
+                    bucket: S3_BUCKET_NAME,
+                    region: region,
+                    level: null,
+                    customPrefix: { public: '' }
+                });
+                console.log(`Deleted ${key} successfully`);
+            } catch (err) {
+                console.error(`Failed to remove ${key}:`, err);
+                throw err;
+            }
         }
-    }
+    };
+    
     const handleUpdate = async () => {
         try {
             setIsLoading(true);
@@ -804,33 +837,49 @@ function OnboardingHost() {
 
     const [imageFiles, setImageFiles] = useState(Array.from({ length: 5 }, () => null));
 
-    const handleFileChange = (file, index) => {
-        const newImageFiles = [...imageFiles];
-        newImageFiles[index] = file;
-        setImageFiles(newImageFiles);
-
-        const updatedFormData = { ...formData };
+    const handleFileChange = async (file, index) => {
         if (file) {
-            const key = `image${index + 1}`;
-            updatedFormData.Images[key] = URL.createObjectURL(file);
+            // Verwijder het originele bestand uit de state
+            const newImageFiles = [...imageFiles];
+            newImageFiles[index] = file;
+            setImageFiles(newImageFiles);
+        
+            // Compress and upload images in different sizes
+            await uploadImagesInDifferentSizes(file, userId, formData.ID);
+        
+            // Update formData to reflect the new image URLs (optional, based on your use case)
+            const updatedFormData = { ...formData };
+            updatedFormData.Images[`image${index + 1}`] = URL.createObjectURL(file);
+            setFormData(updatedFormData);
         }
-        setFormData(updatedFormData);
     };
+    
+    
 
-    const handleDelete = (index) => {
+
+    const handleDelete = async (index) => {
         const newImageFiles = [...imageFiles];
         newImageFiles[index] = null;
         setImageFiles(newImageFiles);
-
+    
         const updatedFormData = { ...formData };
         const key = `image${index + 1}`;
         updatedFormData.Images[key] = "";
         setFormData(updatedFormData);
-
+    
         if (!updatedIndex.includes(index)) {
             setUpdatedIndex(prevUpdatedIndex => [...prevUpdatedIndex, index]);
         }
+    
+        try {
+            // Verwijder de afbeelding ook uit S3
+            await removeImageFromS3(userId, formData.ID, index);
+            console.log(`Image ${index + 1} successfully deleted from S3`);
+        } catch (error) {
+            console.error(`Failed to delete image ${index + 1} from S3:`, error);
+        }
     };
+    
 
     const updateDates = (dateRanges) => {
         if (dateRanges !== formData.DateRanges) {
