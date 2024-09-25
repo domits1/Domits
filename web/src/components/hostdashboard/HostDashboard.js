@@ -131,10 +131,18 @@ function HostDashboard() {
                                      }>
                                     <div className={styles.accommodationText}>
                                         <p className={styles.accommodationTitle}>{accommodation.Title}</p>
-                                        <p className={styles.accommodationLocation}> {accommodation.City},
-                                            {accommodation.Street},
-                                            {accommodation.PostalCode}
-                                        </p>
+                                        {accommodation.AccommodationType === 'Boat' ? (
+                                            <p className={styles.accommodationLocation}>
+                                                {accommodation.City},
+                                                {accommodation.Harbour}
+                                            </p>
+                                        ) : (
+                                            <p className={styles.accommodationLocation}>
+                                                {accommodation.City},
+                                                {accommodation.Street},
+                                                {accommodation.PostalCode}
+                                            </p>
+                                        )}
                                     </div>
                                     <ImageSlider images={accommodation.Images} seconds={5} page={'dashboard'}/>
                                     <div className={styles.accommodationDetails}>

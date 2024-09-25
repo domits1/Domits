@@ -51,6 +51,11 @@
         border: none;
         background-color: #f4f4f4;
         cursor: pointer;
+        border-radius: 15px;
+    }
+    .active {
+        background-color: var(--primary-color);
+        color: #fff;
     }
 }
 .paginationButton:disabled {

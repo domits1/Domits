@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Faq.css';
 import Helpdesk from '../about/Helpdesk';
+import { useNavigate } from 'react-router-dom';
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
   const answerRef = useRef(null);
@@ -533,13 +534,25 @@ Object.keys(faqs).forEach((subcategory) => {
   }
 });
 
+    const navigate = useNavigate();
+
+    const handleNavigation = (category) => {
+      if (category === 'host') {
+        setCategory('host');
+        navigate('/helpdesk-host');
+      } else if (category === 'guest') {
+        setCategory('guest');
+        navigate('/helpdesk-guest');
+      }
+    };
+
   return (
     <div className="faq-container">
       <h3 className="faqHeader3">FAQ - Frequently Asked Questions</h3>
   
       <div className="faq-button-container">
-        <button className="faqButton" onClick={() => setCategory('host')}>Host</button>
-        <button className="faqButton" onClick={() => setCategory('guest')}>Guest</button>
+        <button className="faqButton" onClick={() => handleNavigation('host')}>Host</button>
+        <button className="faqButton" onClick={() => handleNavigation('guest')}>Guest</button>
       </div>
 
       {searchQuery && (
