@@ -303,6 +303,118 @@
     width: 75%;
    
 }
+.clientRevieuw {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    text-align: left;
+    margin: 2rem auto;
+    width: 95%;
+    gap: 2rem;
+
+    h1 {
+        font-size: 2.5rem;
+        width: 100%;
+        text-align: center;
+        span {
+            color: #003366;
+        }
+    }
+
+    .client_text {
+        border-style: solid;
+        border-color: #003366; 
+        padding: 2rem;
+        margin-bottom: auto;
+        width: 27%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        border-collapse: collapse;
+        
+        .client_content {
+            display: flex;
+            align-items: center;
+            margin-top: 1rem;
+        }
+
+        img {
+            border-radius: 50%;
+            width: 70px;
+            height: 70px;
+            margin-right: 1rem; 
+        }
+
+        .client_details {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .highlightText {
+            color: #003366;
+            font-size: 5rem;
+        }
+
+        p {
+            font-size: 1rem;
+            color: #333;
+            margin: 0.5rem 0;
+        }
+
+        h2 {
+            align-self: flex-start;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+    }
+}
+
+@media (max-width: 768px) {
+    .clientRevieuw {
+        flex-direction: column;
+        width: 80%;
+        .client_text {
+            width: 100%;
+            margin: 1rem 0;
+        }
+    }
+        h1 {
+            font-size: 2rem;
+        }
+        .client_text {
+            padding: 1.25rem;
+            p {
+                font-size: 1rem;
+            }
+            h2 {
+                font-size: 1.2rem;
+          }
+    }
+}
+
+@media (max-width: 480px) {
+    .clientRevieuw {
+        flex-direction: column;
+        width: 80%;
+        .client_text {
+            width: 80%;
+        }
+    }
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .client_text {
+        padding: 1rem;
+        p {
+            font-size: 0.9rem;
+        }
+        h2 {
+            font-size: 1rem;
+        }
+    }
+}
+
 .checkList {
     margin: 5% 0 5% 0;
     display: flex;
