@@ -82,7 +82,8 @@
     height: auto;
 }
 
-.card:hover, .selectedCard {
+.card:hover,
+.selectedCard {
     border-radius: 10px;
     box-shadow: 0 0 5px #003366;
     cursor: pointer;
@@ -159,21 +160,27 @@
     margin-left: 7.5%;
     width: 25%;
     margin-top: 10%;
+
     button {
         align-self: start;
     }
+
     h1 {
         font-size: 2.5rem;
     }
+
     p {
         color: black;
         font-size: 1.5rem;
     }
 }
-.MainText h1, .MainText p{
+
+.MainText h1,
+.MainText p {
     text-align: left;
 }
-.highlightText{
+
+.highlightText {
     color: #003366;
 }
 
@@ -184,58 +191,73 @@
     align-items: center;
     padding-bottom: 5%;
 }
+
 .easyHosting {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     padding-bottom: 5%;
-    background-color: #f9f9f9;   
+    background-color: #f9f9f9;
 }
-.easyHosting_text{
+
+.easyHosting_text {
     font-size: 25px;
 }
-.threeSteps{
+
+.threeSteps {
     display: flex;
     justify-content: space-between;
     padding-bottom: 4%;
 }
-.steps{
+
+.steps {
     display: flex;
     flex-direction: column;
-    width: 27%;  
-    
+    width: 27%;
+
 }
-.steps h1{
+
+.steps h1 {
     font-size: 100px;
-    
+
 }
-.steps h2{
+
+.steps h2 {
     font-weight: bold;
 }
-.steps h1, .steps h2, .steps p {
+
+.steps h1,
+.steps h2,
+.steps p {
     margin-bottom: 0px;
     margin-top: 0px;
-}  
-.whyHostText{
+}
+
+.whyHostText {
     width: 50%;
     margin-left: 10%;
     text-align: left;
+
     h1 {
         font-size: 2rem;
     }
+
     p {
         color: black;
     }
 }
-.whyHostText p{
+
+.whyHostText p {
     width: 85%;
 
 }
-.simpleSafe{
+
+.simpleSafe {
     background-color: #f9f9f9;
     padding: 5% 0;
 }
+
 .Cards {
     display: flex;
     justify-content: space-between;
@@ -249,34 +271,41 @@
     padding-top: 1%;
     background-color: #f9f9f9;
 }
-.firstSection{
-    display: flex;    
+
+.firstSection {
+    display: flex;
     justify-content: space-between;
 }
-.firstPicture{
+
+.firstPicture {
     width: 50%;
 }
-.firstPicture img{
-    border-bottom-left-radius: 80% 100%; 
-    border-top-left-radius: 80% 100%; 
+
+.firstPicture img {
+    border-bottom-left-radius: 80% 100%;
+    border-top-left-radius: 80% 100%;
     height: 100%;
     width: 100%;
     object-fit: cover;
 }
-.whyHost{
+
+.whyHost {
     display: flex;
     padding-top: 5%;
     padding-bottom: 5%;
 }
-.SecPicture{
+
+.SecPicture {
     width: 45%;
     height: 60%;
 }
-.SecPicture img{
+
+.SecPicture img {
     width: 100%;
     height: 100%;
 }
-.simpleSafeCards{
+
+.simpleSafeCards {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -284,52 +313,63 @@
     width: 90%;
     text-align: left;
 }
-.simpleSafeCards img{
-    max-width:3vw;
-    
+
+.simpleSafeCards img {
+    max-width: 3vw;
+
 }
-.simpleSafeAll{
+
+.simpleSafeAll {
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
+
     p {
         color: black;
     }
 }
-.SimpleSafeAllCards{
+
+.SimpleSafeAllCards {
     display: flex;
     align-items: center;
     width: 75%;
-   
+
 }
+
 .checkList {
     margin: 5% 0 5% 0;
     display: flex;
     flex-direction: column;
+
     h1 {
         font-size: 4rem;
         margin: 0;
         padding: 0;
     }
+
     .subText {
         font-size: 1.5rem;
         margin-top: 0;
     }
+
     .checkListItems {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         margin: 0 20% 0 20%;
+
         .checkListItem {
             display: flex;
             flex-direction: column;
             text-align: left;
+
             span {
                 max-width: 15vw;
             }
         }
     }
 }
+
 .faq {
     .landing__faq {
         width: 50%;
@@ -340,68 +380,83 @@
         cursor: pointer;
         transition: max-height 0.4s ease;
         overflow: hidden;
+
         .landing__faq__body {
             display: flex;
             flex-direction: row;
             justify-content: space-between;
+
             p {
                 color: black;
             }
         }
+
         .landing__faq__question {
             font-weight: bold;
         }
+
         .landing__faq__answer {
             text-align: left;
         }
     }
+
     background-color: #f9f9f9;
     margin: 5% 0 5% 0;
     padding: 2rem;
+
     .faq__header {
         display: flex;
         flex-direction: row;
         justify-content: center;
+
         img {
             max-width: 3vw;
             max-height: 3vh;
             align-self: center;
 
         }
+
         h1 {
             margin: 0;
         }
     }
+
     .faq__list {
         display: flex;
         flex-direction: column;
         align-items: center;
     }
 }
+
 .personal__advice {
     display: flex;
     flex-direction: row;
     margin: 0 5%;
     justify-content: space-between;
+
     .personal__advice__left {
         margin: 10% 0;
         text-align: left;
+
         h1 {
             font-size: 3.5rem;
         }
+
         button {
             width: auto;
         }
     }
+
     img {
         width: auto;
         height: auto;
         object-fit: cover;
     }
 }
-.cardFirstHalf, .cardSecondHalf {
 
-}
+.cardFirstHalf,
+.cardSecondHalf {}
+
 /* .First_Icons {
     display: flex;
     flex-direction: row;
@@ -418,6 +473,7 @@
 .WhyHow_text {
     padding-bottom: 5%;
 }
+
 /* 
 .infoCard p {
     max-width: 10vw;
@@ -431,6 +487,66 @@
     padding-top: 4%;
 }
 
+@media (max-width: 880px) {
+
+    .personal__advice {
+        display: flex;
+        flex-direction: column;
+        margin: 0 5%;
+        justify-content: space-between;
+
+        .personal__advice__left {
+            display: flex;
+            flex-direction: column;
+
+            margin: 10% 0;
+            text-align: center;
+            align-items: center;
+
+            h1 {
+                font-size: 3.5rem;
+            }
+
+            button {
+                width: auto;
+            }
+        }
+
+        img {}
+    }
+
+    .whyHost {
+        align-items: center;
+        flex-direction: column;
+
+        .SecPicture {
+            width: 25em;
+        }
+
+        .SecPicture img {
+            border-radius: 0;
+            width: 25em;
+            margin: 0;
+            object-fit: contain;
+        }
+
+        .whyHostText {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: auto;
+            text-align: center;
+            margin: 0;
+
+            h1 {}
+
+            p {
+                width: 80vw;
+            }
+        }
+    }
+}
+
 @media (max-width: 768px) {
     .container {
         width: 90%;
@@ -438,15 +554,17 @@
         margin-bottom: 0.625rem;
     }
 
-    .MainText h1, .WhyHow_text h1 {
+    .MainText h1,
+    .WhyHow_text h1 {
         font-size: 1.6rem;
     }
 
-    .SecPicture{
+    .SecPicture {
         width: 45%;
         height: 60%;
-        
+
     }
+
     /* .infoCard img {
         width: auto;
         height: auto;
@@ -486,6 +604,7 @@
     .firstSection {
         display: flex;
         flex-direction: column-reverse;
+
         .MainText {
             width: 80vw;
             margin: 0;
@@ -493,48 +612,69 @@
             backdrop-filter: blur(0.25rem);
             border-radius: 1.5rem;
             background: rgba(0, 0, 0, 0.383);
+
             h1 {
                 font-size: 1.5rem;
                 margin: 0;
                 padding: 0;
                 color: white;
             }
+
             p {
                 font-size: 1rem;
                 color: white;
 
             }
+
             position: absolute;
             left: 50%;
             transform: translateX(-50%);
         }
+
         .firstPicture img {
             border-radius: 0;
             width: 100vw;
             object-fit: contain;
         }
     }
+
     .easyHosting {
         .easyHosting_text {
             h1 {
                 font-size: 1.5rem;
             }
         }
+
         .threeSteps {
             flex-direction: column;
+
             .steps {
                 width: auto;
                 margin: 0 5%;
             }
         }
     }
+
     .whyHost {
         flex-direction: column;
+        align-items: normal;
+
+        .SecPicture {
+            width: 45%;
+            height: 60%;
+        }
+
+        .SecPicture img {
+            width: 100%;
+            height: 100%;
+        }
+
         .SecPicture img {
             border-radius: 0;
             width: 100vw;
             object-fit: contain;
         }
+
         .whyHostText {
             h1 {
                 width: 80vw;
@@ -545,11 +685,14 @@
             }
         }
     }
+
     .simpleSafe {
         .SimpleSafeAllCards {
             flex-direction: column;
+
             .simpleSafeCards {
                 margin-bottom: 2%;
+
                 img {
                     width: 10vw;
                     height: auto;
@@ -557,6 +700,7 @@
                     align-self: start;
                 }
             }
+
             .safeMiniText {
                 h3 {
                     margin: 0;
@@ -564,42 +708,52 @@
             }
         }
     }
+
     .checkList {
         h1 {
             font-size: 1.5rem;
         }
+
         .subText {
             font-size: 0.8rem;
         }
+
         .checkListItems {
             display: flex;
             flex-direction: column;
             margin: 0 5%;
+
             .checkListItem {
                 width: 80vw;
+
                 .checkListItem__text {
                     max-width: none;
                 }
             }
         }
     }
+
     .faq {
         .faq__header {
             img {
                 max-width: none;
                 width: auto;
             }
+
             h1 {
                 font-size: 1.5rem;
             }
         }
+
         .landing__faq {
             width: 80vw;
         }
     }
+
     .personal__advice {
         display: flex;
         flex-direction: column;
+
         .personal__advice__left {
             position: absolute;
             padding: 0.5rem;
@@ -612,15 +766,18 @@
             margin: 0;
             border-radius: 0 0 2rem 2rem;
             color: white;
+
             h1 {
                 font-size: 1.75rem;
             }
+
             h3 {
                 font-size: 0.75rem;
             }
         }
-        img {
 
+        img {
+            width: auto;
         }
     }
 
