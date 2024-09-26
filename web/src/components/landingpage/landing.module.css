@@ -1,5 +1,4 @@
 .container {
-    width: 100%;
     margin: auto;
     margin-bottom: 30px;
     display: flex;
@@ -156,6 +155,7 @@
     justify-content: center;
     align-items: center;
     padding-bottom: 4%;
+    /* position: relative; */
     margin-left: 7.5%;
     width: 25%;
     margin-top: 10%;
@@ -169,6 +169,34 @@
         color: black;
         font-size: 1.5rem;
     }
+    .highlightTextAnimation1{
+        position: relative;
+        animation-name: upToDown;
+        animation-duration: 4s;
+        animation-delay: -2s;
+        color: #003366;
+      }
+      .highlightTextAnimation2{
+        position: relative;
+        animation-name: downToUp;
+        animation-duration: 4s;
+        animation-delay: -2s;
+        color: #003366;
+      }
+    }
+
+@keyframes upToDown {
+    75% {bottom: 100px; 
+        opacity: 0; 
+      }
+      100% {bottom:0px;} 
+}
+
+@keyframes downToUp {
+    75%  {top:100px;
+    opacity: 0;
+    }
+    100% {top:0px;}
 }
 .MainText h1, .MainText p{
     text-align: left;
@@ -230,7 +258,6 @@
 }
 .whyHostText p{
     width: 85%;
-
 }
 .simpleSafe{
     background-color: #f9f9f9;
@@ -276,6 +303,9 @@
     width: 100%;
     height: 100%;
 }
+
+
+
 .simpleSafeCards{
     display: flex;
     flex-direction: row;
@@ -468,8 +498,8 @@
         }
     }
     background-color: #f9f9f9;
-    margin: 5% 0 5% 0;
-    padding: 2rem;
+    /* margin: 5% 0 5% 0;
+    padding: 2rem; */
     .faq__header {
         display: flex;
         flex-direction: row;
@@ -478,7 +508,6 @@
             max-width: 3vw;
             max-height: 3vh;
             align-self: center;
-
         }
         h1 {
             margin: 0;
@@ -511,29 +540,10 @@
         object-fit: cover;
     }
 }
-.cardFirstHalf, .cardSecondHalf {
-
-}
-/* .First_Icons {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-evenly;
-    gap: 2%;
-    padding-bottom: 3%;
-}
-
-.First_Icons img {
-    max-width: 7vw;
-} */
 
 .WhyHow_text {
     padding-bottom: 5%;
 }
-/* 
-.infoCard p {
-    max-width: 10vw;
-} */
 
 .updateGroupButtonDiv {
     display: flex;
@@ -545,7 +555,7 @@
 
 @media (max-width: 768px) {
     .container {
-        width: 90%;
+        width: auto;
         margin-top: 0.625rem;
         margin-bottom: 0.625rem;
     }
@@ -554,45 +564,25 @@
         font-size: 1.6rem;
     }
 
+
     .SecPicture{
         width: 45%;
         height: 60%;
         
     }
-    /* .infoCard img {
-        width: auto;
-        height: auto;
-        object-fit: contain;
-    }
 
-    .infoCard {
-        padding: none;
+    .personal__advice {
+        img {
+            width: 50%;
+            height: auto;
+            object-fit: cover;
+        }
     }
-
-    .infoCard, .card {
-        width: 100%;
-        padding: 0.938rem;
-        margin-bottom: 0.938rem;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-    }
-
-    .First_Icons {
-        display: flex;
-        justify-content: space-evenly;
-    }
-
-    .infoCard p {
-        font-size: 1rem !important;
-        max-width: none !important;
-    } */
 }
 
 @media (max-width: 480px) {
     .container {
-        width: 100%;
+        width: auto;
     }
 
     .firstSection {
@@ -622,7 +612,7 @@
         }
         .firstPicture img {
             border-radius: 0;
-            width: 100vw;
+            width: 95vw;
             object-fit: contain;
         }
     }
@@ -644,7 +634,7 @@
         flex-direction: column;
         .SecPicture img {
             border-radius: 0;
-            width: 100vw;
+            width: 94vw;
             object-fit: contain;
         }
         .whyHostText {
@@ -732,16 +722,10 @@
             }
         }
         img {
-
+            width: auto;
+            height: auto;
+            object-fit: cover;
         }
+        
     }
-
-    /* .infoCard img {
-        width: 50px;
-        height: 50px;
-    }
-
-    .infoCard p, .Cards p {
-        font-size: 0.75rem;
-    } */
 }

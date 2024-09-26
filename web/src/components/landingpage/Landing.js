@@ -149,10 +149,10 @@ function Landing() {
         <main className={styles.container}>
             <div className={styles.firstSection}>
                 <div className={styles.MainText}>
-                    <h1>List your <span className={styles.highlightText}>House</span> for free on Domits</h1>
-                    
+                    <h1>List your <span className={styles.highlightTextAnimation1}>House</span>, 
+                    <span className={styles.highlightTextAnimation1}>   Camper</span> and  
+                    <span className={styles.highlightTextAnimation2 }> Boat </span> for free on Domits</h1>
                     <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
-
                     <button className={styles.nextButtons}>Start hosting</button>
                 </div>
                 
