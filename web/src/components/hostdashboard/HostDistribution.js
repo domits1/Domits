@@ -9,13 +9,14 @@ import {formatDate, formatDescription, formatDateTime, downloadICal} from "../ut
 function HostDistribution() {
     const [userId, setUserId] = useState(null);
     const [accommodations, setAccommodations] = useState([]);
+    const [bookings, setBookings] = useState([]);
     const [status, setStatus] = useState('Disabled');
     const [iCalData, setICalData] = useState([]);
 
     const [currentPannel, setCurrentPannel] = useState(1);
     const itemsPerPage = 5;
     const channelLength = 27;
-    const channelPannel = (pannelNumber)  => setCurrentPannel(pannelNumber);
+    const channelPannel = (pannelNumber) => setCurrentPannel(pannelNumber);
 
 
     useEffect(() => {
@@ -32,14 +33,56 @@ function HostDistribution() {
     }, []);
 
     useEffect(() => {
+        if (!userId) return;
+            const asyncRetrieveBookingData = async () => {
+                try {
+                    const response = await fetch('https://fqujcw5loe.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingsDataByUserId', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            GuestID: userId,
+                            Status: 'Accepted'
+                        }),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch');
+                    }
+                    const data = await response.json();
+
+                    if (data.body && typeof data.body === 'string') {
+                        const retrievedBookingDataArray = JSON.parse(data.body);
+
+                        if (Array.isArray(retrievedBookingDataArray)) {
+                            setBookings(retrievedBookingDataArray);
+                        } else {
+                            console.error('Retrieved data is not an array:', retrievedBookingDataArray);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch booking data:', error);
+                }
+            }
+            asyncRetrieveBookingData();
+        }, [userId]
+    );
+
+    useEffect(() => {
+        console.log('Bookings:', bookings);
+    }, [bookings]);
+
+    useEffect(() => {
             const handleGetAccomodations = async () => {
-                if (!userId) {
-                    return;
-                } else {
+                if (bookings.length === 0) return;
+
+                else {
+                    const accoIds = bookings.map(booking => booking.AccoID);
+
                     try {
-                        const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
+                        const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/getAccommodationByBooking', {
                             method: 'POST',
-                            body: JSON.stringify({OwnerId: userId}),
+                            body: JSON.stringify({id: accoIds}),
                             headers: {
                                 'Content-type': 'application/json; charset=UTF-8',
                             }
@@ -62,106 +105,161 @@ function HostDistribution() {
             };
 
             handleGetAccomodations();
-        }, [userId]
+        }, [bookings]
     );
 
     useEffect(() => {
+        console.log('Accommodations:', accommodations);
+    }, [accommodations]);
+
+    useEffect(() => {
+        if (!userId) return;
         const asyncRetrieveICalData = async () => {
+            console.log('User ID:', userId);
             try {
-                const response = await fetch('https://d6ia9ibn4e.execute-api.eu-north-1.amazonaws.com/default/retrieveICalData');
+                const response = await fetch('https://qtyvlto1ei.execute-api.eu-north-1.amazonaws.com/default/RetrieveICalDataByUser', {
+                    method: 'POST',
+                    body: JSON.stringify({GuestId: userId}),
+                    headers:
+                        {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        }
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to fetch');
+                }
 
                 const data = await response.json();
+                console.log('Data:', data);
 
                 if (data.body && typeof data.body === 'string') {
-                    const retrievedICalData = data.response.Items;
-
-                    setICalData(retrievedICalData);
+                    const retrievedICalData = data.body;
+                    const parsedICalData = JSON.parse(retrievedICalData);
+                    setICalData(parsedICalData);
                 }
             } catch (error) {
                 console.error('Failed to fetch iCal data:', error);
             }
         };
-        asyncRetrieveICalData();
-    }, [accommodations]);
+        asyncRetrieveICalData()
+    }, [userId]);
+
+    useEffect(() => {
+        console.log('iCal Data:', iCalData);
+    }, [iCalData]);
+
+    const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
 
     const handleICal = async (e) => {
+        console.log('iCal data:', iCalData);
         e.preventDefault();
 
         let uid;
-        let newStamp = new Date();
-        let dtStart = new Date(iCalData[0].Dtstart.S);
-        let dtEnd = new Date(iCalData[0].Dtend.S);
-        let checkIn = new Date(iCalData[0].CheckIn.S);
-        let checkOut = new Date(iCalData[0].CheckOut.S);
-        let sequence = iCalData[0].Sequence.N;
-        let guestId = iCalData[0].GuestId.S;
+        let newStamp;
+        let dtStart;
+        let dtEnd;
+        let checkIn;
+        let checkOut;
+        let sequence;
+        let guestId;
+        let accommodationId;
+        let bookingId;
+        let street;
+        let city;
+        let country;
+        let status;
+        let summary;
+        let description;
 
-        if (uid === undefined || uid === null || uid === '') {
-            const generateUUID = () => {
-                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-                    var r = Math.random() * 16 | 0,
-                        v = c == 'x' ? r : (r & 0x3 | 0x8);
-                    return v.toString(16);
-                });
-            }
-            uid = generateUUID();
-        }
-
-        if (guestId === undefined || guestId === null || guestId === '') {
-            guestId = userId;
-        }
-
-        if (sequence === undefined || sequence === null || sequence === '') {
-            sequence = 0;
-        }
-
-        if (iCalData[0].Dtstamp.S !== undefined || iCalData[0].Dtstamp.S !== null || iCalData[0].Dtstamp.S !== '') {
+        if (iCalData !== undefined && iCalData.length > 0) {
+            uid = iCalData[0].id.S;
             newStamp = new Date(iCalData[0].Dtstamp.S);
+            dtStart = formatDate(new Date(bookings[0].StartDate.S));
+            dtEnd = formatDate(new Date(bookings[0].EndDate.S));
+            checkIn = formatDate(new Date(bookings[0].StartDate.S));
+            checkOut = formatDate(new Date(bookings[0].EndDate.S));
+            sequence = parseInt(iCalData[0].Sequence.N) + 1;
+            guestId = iCalData[0].GuestId.S;
+            accommodationId = iCalData[0].AccommodationId.S;
+            bookingId = iCalData[0].BookingId.S;
+            street = iCalData[0].Location.M.Street.S;
+            city = iCalData[0].Location.M.City.S;
+            country = iCalData[0].Location.M.Country.S;
+            status = iCalData[0].Status.S;
+            summary = iCalData[0].Summary.S;
+            description = formatDescription(accommodations[0].Description.S +
+                '\n\n' + 'Check-in: ' + formatDateTime(checkIn) +
+                '\n' + 'Check-out: ' + formatDateTime(checkOut));
+        } else {
+            uid = generateUUID();
+            guestId = userId;
+            sequence = 0;
+            newStamp = formatDate(new Date());
+            dtStart = formatDate(new Date(bookings[0].StartDate.S));
+            dtEnd = formatDate(new Date(bookings[0].EndDate.S));
+            checkIn = formatDate(new Date(bookings[0].StartDate.S));
+            checkOut = formatDate(new Date(bookings[0].EndDate.S));
+            accommodationId = accommodations[0].ID.S;
+            bookingId = bookings[0].ID.S;
+            street = accommodations[0].Street.S;
+            city = accommodations[0].City.S;
+            country = accommodations[0].Country.S;
+            if (bookings[0].Status.S === 'Accepted') {
+                status = 'CONFIRMED';
+            } else if (bookings[0].Status.S === 'FAILED') {
+                status = 'TENTATIVE';
+            }
+            summary = accommodations[0].Title.S + ' - ' + status;
+            description = formatDescription(accommodations[0].Description.S +
+                '\n\n' + 'Check-in: ' + checkIn +
+                '\n' + 'Check-out: ' + checkOut);
         }
 
-        if (iCalData && iCalData.length > 0) {
-            const params = {
-                id: uid,
-                Dtstamp: formatDate(newStamp),
-                Dtstart: formatDate(dtStart),
-                Dtend: formatDate(dtEnd),
-                Summary: accommodations[0].Title + ' - ' + iCalData[0].Status.S,
-                Status: iCalData[0].Status.S,
-                Description: formatDescription(accommodations[0].Description +
-                    '\n\n' + 'Check-in: ' + formatDateTime(checkIn) +
-                    '\n' + 'Check-out: ' + formatDateTime(checkOut)),
-                CheckIn: formatDate(checkIn),
-                CheckOut: formatDate(checkOut),
-                BookingId: iCalData[0].BookingId.S,
-                Location: {
-                    Street: iCalData[0].Location.L[0].M.Street.S,
-                    City: iCalData[0].Location.L[0].M.City.S,
-                    Country: iCalData[0].Location.L[0].M.Country.S
-                },
-                Sequence: sequence,
-                AccommodationId: accommodations[0].ID,
-                LastModified: formatDate(new Date()),
-                GuestId: guestId
-            }
+        const params = {
+            id: uid,
+            Dtstamp: newStamp,
+            Dtstart: dtStart,
+            Dtend: dtEnd,
+            Summary: summary,
+            Status: status,
+            Description: description,
+            CheckIn: checkIn,
+            CheckOut: checkOut,
+            BookingId: bookingId,
+            Location: {
+                Street: street,
+                City: city,
+                Country: country
+            },
+            Sequence: sequence,
+            AccommodationId: accommodationId,
+            LastModified: formatDate(new Date()),
+            GuestId: guestId
+        }
 
-            try {
-                const response = await fetch('https://d6ia9ibn4e.execute-api.eu-north-1.amazonaws.com/default/iCalGenerator',
-                    {
-                        method: 'POST',
-                        body: JSON.stringify(params),
-                        headers: {
-                            'Content-type': 'application/json; charset=UTF-8',
-                        }
-                    });
-                const result = await response.json();
+        try {
+            const response = await fetch('https://qtyvlto1ei.execute-api.eu-north-1.amazonaws.com/default/iCalGenerator',
+                {
+                    method: 'POST',
+                    body: JSON.stringify(params),
+                    headers: {
+                        'Content-type': 'application/json; charset=UTF-8',
+                    }
+                });
+            const result = await response.json();
 
-                if (result.statusCode === 200) {
-                    alert('iCal data has been successfully POSTed');
-                    downloadICal(params);
-                }
-            } catch (error) {
-                console.error('Failed to POST iCal data:', error);
+            if (result.statusCode === 200) {
+                alert('iCal data has been successfully POSTed');
+                downloadICal(params);
             }
+        } catch (error) {
+            console.error('Failed to POST iCal data:', error);
         }
     }
 
@@ -183,19 +281,19 @@ function HostDistribution() {
             startPage = Math.max(endPage - 4, 1);
         }
 
-        return { startPage, endPage };
+        return {startPage, endPage};
     };
 
 
-    const { startPage, endPage } = handlePageRange();
+    const {startPage, endPage} = handlePageRange();
 
     return (
         <div className="containerHostDistribution">
             <div className="host-dist-header">
                 <h2 className="connectedChannelTitle">Connected channels</h2>
-                {/*<button className="addChannelButton" onClick={handleICal}>*/}
-                {/*    Temp button to get iCal .isc file*/}
-                {/*</button>*/}
+                <button className="addChannelButton" onClick={handleICal}>
+                    Temp button to get iCal .isc file
+                </button>
                 <button className="addChannelButton" onClick={handleEmptyButton}>+ Add
                     channel
                 </button>

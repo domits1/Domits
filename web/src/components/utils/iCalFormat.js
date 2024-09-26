@@ -42,6 +42,8 @@ export function formatDescription(description) {
 
 export function formatDateTime(dateTime) {
     const dt = new Date(dateTime);
+    const offset = dt.getTimezoneOffset(); // Get timezone offset in minutes
+    dt.setMinutes(dt.getMinutes() - offset); // Adjust to local time
     return dt.toISOString().replace('T', ' ')
         .split(':').slice(0, 2).join(':').split('.')[0];
 }
@@ -67,8 +69,16 @@ function formatICalDateTime(dateTime) {
 
     const dt = new Date(dateTime);
 
-    const formattedDate = dt.toISOString().split('T')[0].replace(/-/g, '');
-    const formattedTime = dt.toISOString().split('T')[1].split('.')[0].replace(/:/g, '');
+    // Format the date and time components manually to preserve local time
+    const year = dt.getFullYear();
+    const month = String(dt.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(dt.getDate()).padStart(2, '0');
+    const hours = String(dt.getHours()).padStart(2, '0');
+    const minutes = String(dt.getMinutes()).padStart(2, '0');
+    const seconds = String(dt.getSeconds()).padStart(2, '0');
+
+    const formattedDate = `${year}${month}${day}`;
+    const formattedTime = `${hours}${minutes}${seconds}`;
 
     return formattedDate + 'T' + formattedTime;
 }
