@@ -12,13 +12,17 @@ function Career() {
         navigate('/contact');
     };
 
-    const navigateToJobDetails = (index) => {
-        navigate(`/job/${index}`);
+    // const navigateToJobDetails = (index) => {
+    //     navigate(`/job/${index}`);
+    // };
+    const navigateToJobDetails = (id) => {
+        navigate(`/job/${id}`);
     };
+    
 
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedCategory, setSelectedCategory] = useState("All");
-    const itemsPerPage = 9;
+    const itemsPerPage = 8;
 
 
     const handleCategoryChange = (category) => {
@@ -54,7 +58,8 @@ function Career() {
             </div>
             <div className="container job-list">
                 {displayedJobs.map((job, index) => (
-                    <div className="job-box" key={index} onClick={() => navigateToJobDetails(startIndex + index)}>
+                    // <div className="job-box" key={index} onClick={() => navigateToJobDetails(startIndex + index)}>
+                    <div className="job-box" key={job.id} onClick={() => navigateToJobDetails(job.id)}>
                         <div className="job-info">
                             <div className="job-title">{job.title}</div>
                             <div className="experience-level">{job.experience}</div>
