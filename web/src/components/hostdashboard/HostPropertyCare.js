@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostPropertyCare = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-pc' style={{
                 display: "flex",
                 flexDirection: "row"

@@ -3,6 +3,8 @@ import Jobs from "./jobs.json";
 import JobDetails from "./jobDetails";
 import { useNavigate, useParams } from 'react-router-dom';
 import "./careers.css";
+import styles from '../utils/PageSwitcher.module.css'
+
 
 function Career() {
     const navigate = useNavigate();
@@ -10,13 +12,17 @@ function Career() {
         navigate('/contact');
     };
 
-    const navigateToJobDetails = (index) => {
-        navigate(`/job/${index}`);
+    // const navigateToJobDetails = (index) => {
+    //     navigate(`/job/${index}`);
+    // };
+    const navigateToJobDetails = (id) => {
+        navigate(`/job/${id}`);
     };
+    
 
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedCategory, setSelectedCategory] = useState("All");
-    const itemsPerPage = 9;
+    const itemsPerPage = 8;
 
 
     const handleCategoryChange = (category) => {
@@ -52,7 +58,8 @@ function Career() {
             </div>
             <div className="container job-list">
                 {displayedJobs.map((job, index) => (
-                    <div className="job-box" key={index} onClick={() => navigateToJobDetails(startIndex + index)}>
+                    // <div className="job-box" key={index} onClick={() => navigateToJobDetails(startIndex + index)}>
+                    <div className="job-box" key={job.id} onClick={() => navigateToJobDetails(job.id)}>
                         <div className="job-info">
                             <div className="job-title">{job.title}</div>
                             <div className="experience-level">{job.experience}</div>
@@ -70,7 +77,7 @@ function Career() {
                 ))}
             </div>
             {/* Pagination */}
-            <div className="pagination">
+            <div className={styles.pagination}>
                 <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
                     &lt; Previous
                 </button>
@@ -78,7 +85,7 @@ function Career() {
                     <button
                         key={i}
                         onClick={() => handlePageChange(i + 1)}
-                        className={currentPage === i + 1 ? "active" : ""}
+                        className={`${(currentPage === i + 1) && styles.active}`}
                     >
                         {i + 1}
                     </button>

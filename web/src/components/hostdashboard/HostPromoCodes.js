@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostPromoCodes = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-promo-codes' style={{
                 display: "flex",
                 flexDirection: "row"
