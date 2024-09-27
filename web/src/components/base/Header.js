@@ -49,6 +49,8 @@ function Header({setSearchResults, setLoading}) {
         try {
             await Auth.signOut();
             setIsLoggedIn(false);
+            sessionStorage.removeItem('chatOpened');
+            window.location.reload();
             console.log('User logged out successfully');
         } catch (error) {
             console.error('Error logging out:', error);

@@ -205,7 +205,9 @@ function App() {
                         </Routes>
                         {renderFooter()}
                         {currentPath !== '/admin' && <MenuBar />}
+                        <Hostchatbot /> 
                         <ChatWidget />
+
                     </div>
                     </UserProvider>
                 </AuthProvider>
