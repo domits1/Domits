@@ -1077,7 +1077,7 @@ function OnboardingHost() {
                                 </div>
                             ) : (
                                 <div className="guest-amount-item">
-                                    <p>Beds</p>
+                                    <p>Bedrooms</p>
                                     <div className="amount-btn-box">
                                         <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
                                         </button>
