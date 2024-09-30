@@ -7,7 +7,9 @@ import { useUser } from '../../UserContext';
 import { useLocation } from 'react-router-dom';
 
 const HostChatbot = () => {
-  const [messages, setMessages] = useState([{ text: 'Hello! How can I assist you today?', sender: 'bot' }]);
+  const [messages, setMessages] = useState([
+    { text: 'Hello! How can I assist you today?', sender: 'bot', contentType: 'text' },
+  ]);
   const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [accolist, setAccolist] = useState([]);
@@ -20,20 +22,22 @@ const HostChatbot = () => {
 
   const location = useLocation();
 
+  // Fetch user ID on component mount
   useEffect(() => {
     const setUserIdAsync = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
         setUserId(userInfo.attributes.sub);
-        console.log("User ID set:", userInfo.attributes.sub);
+        console.log('User ID set:', userInfo.attributes.sub);
       } catch (error) {
-        console.error("Error setting user id:", error);
+        console.error('Error setting user id:', error);
       }
     };
 
     setUserIdAsync();
   }, []);
 
+  // Open chat on first visit to host dashboard
   useEffect(() => {
     const chatOpened = sessionStorage.getItem('chatOpened');
     if (!isLoading && role === 'Host' && !chatOpened && location.pathname === '/hostdashboard') {
@@ -42,13 +46,41 @@ const HostChatbot = () => {
     }
   }, [isLoading, role, location]);
 
+  // Fetch data when userId is available
   useEffect(() => {
     if (userId) {
       fetchAccommodations();
     }
     fetchAllAccommodations();
     fetchFAQ();
+    fetchRegistrationNumbers(); // Call the function here
   }, [userId]);
+
+ // Function to fetch registration numbers using POST request
+const fetchRegistrationNumbers = async () => {
+  try {
+    const response = await fetch(
+      'https://xvol2vwxgi.execute-api.eu-north-1.amazonaws.com/default/fetchRegistrationNumbers',
+      {
+        method: 'POST', // Change the method to POST
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message: 'Requesting registration numbers' }), // Send a body if needed
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to fetch registration numbers');
+    }
+
+    const data = await response.json();
+    console.log('Registration numbers:', data);
+  } catch (error) {
+    console.error('Error fetching registration numbers:', error);
+  }
+};
+
 
   const handleUserInput = (e) => setUserInput(e.target.value);
 
@@ -56,7 +88,10 @@ const HostChatbot = () => {
     e.preventDefault();
 
     if (userInput.trim()) {
-      const newMessages = [...messages, { text: userInput, sender: 'user' }];
+      const newMessages = [
+        ...messages,
+        { text: userInput, sender: 'user', contentType: 'text' },
+      ];
       setMessages(newMessages);
       setUserInput('');
 
@@ -126,8 +161,12 @@ const HostChatbot = () => {
 
       setMessages([
         ...newMessages,
-        { text: faqAnswer, sender: 'bot' },
-        { text: 'Is this the answer you were looking for? (yes/no)', sender: 'bot' }
+        { text: faqAnswer, sender: 'bot', contentType: 'text' },
+        {
+          text: 'Is this the answer you were looking for? (yes/no)',
+          sender: 'bot',
+          contentType: 'text',
+        },
       ]);
       setAwaitingFeedback(true);
     } else if (isAccommodationQuery(userMessage)) {
@@ -143,42 +182,75 @@ const HostChatbot = () => {
   };
 
   const handleAccommodationQuery = (userMessage, newMessages) => {
-    const accommodation = accolist.find((acco) =>
-      userMessage.includes(acco.Title.toLowerCase()) || userMessage.includes(acco.City.toLowerCase())
+    const accommodation = accolist.find(
+      (acco) =>
+        userMessage.includes(acco.Title.toLowerCase()) ||
+        userMessage.includes(acco.City.toLowerCase())
     );
 
     if (accommodation) {
       setMessages([
         ...newMessages,
-        {
-          text: `Here are the details for "${accommodation.Title}":\n` +
-                `City: ${accommodation.City}\nDescription: ${accommodation.Description}\n` +
-                `Bathrooms: ${accommodation.Bathrooms}\nGuests: ${accommodation.GuestAmount}`,
-          sender: 'bot'
-        }
+        { text: formatAccommodationResponse(accommodation), sender: 'bot', contentType: 'jsx' },
       ]);
     } else {
       setMessages([
         ...newMessages,
-        { text: 'Sorry, I could not find that accommodation in your list.', sender: 'bot' }
+        {
+          text: 'Sorry, I could not find that accommodation in your list.',
+          sender: 'bot',
+          contentType: 'text',
+        },
       ]);
     }
+  };
+
+  const formatAccommodationResponse = (accommodation) => {
+    const { Title, City, Description, Bathrooms, GuestAmount, Images } = accommodation;
+
+    // Extract the first image (you can adjust this to include more images if needed)
+    const imageUrl = Images?.image1 || 'default-placeholder.jpg';
+
+    return (
+      <div className="accommodation-card">
+        <h3>{Title}</h3>
+        <img src={imageUrl} alt={Title} className="accommodation-image" />
+        <p>
+          <strong>City:</strong> {City}
+        </p>
+        <p>
+          <strong>Description:</strong> {Description}
+        </p>
+        <p>
+          <strong>Bathrooms:</strong> {Bathrooms}
+        </p>
+        <p>
+          <strong>Guests:</strong> {GuestAmount}
+        </p>
+      </div>
+    );
   };
 
   const fetchBotReply = async (newMessages) => {
     setLoading(true);
 
-    const formattedFaqs = faqList.map((faq) => `Question: ${faq.question}, Answer: ${faq.answer}`).join('\n');
-    
+    const formattedFaqs = faqList
+      .map((faq) => `Question: ${faq.question}, Answer: ${faq.answer}`)
+      .join('\n');
+
     const formattedAccommodations = accolist
       .map((acco) => {
-        return `Title: ${acco.Title}, City: ${acco.City}, Description: ${acco.Description}, Bathrooms: ${acco.Bathrooms}, Guests: ${acco.GuestAmount}`;
+        return `Title: ${acco.Title}, City: ${acco.City}, Description: ${acco.Description}, Bathrooms: ${acco.Bathrooms}, Guests: ${acco.GuestAmount}, ImageUrl: ${
+          acco.Images?.image1 || ''
+        }`;
       })
       .join('\n');
 
     const formattedAllAccommodations = allAccommodations
       .map((acco) => {
-        return `Title: ${acco.Title}, City: ${acco.City}, Description: ${acco.Description}, Bathrooms: ${acco.Bathrooms}, Guests: ${acco.GuestAmount}`;
+        return `Title: ${acco.Title}, City: ${acco.City}, Description: ${acco.Description}, Bathrooms: ${acco.Bathrooms}, Guests: ${acco.GuestAmount}, ImageUrl: ${
+          acco.Images?.image1 || ''
+        }`;
       })
       .join('\n');
 
@@ -213,13 +285,17 @@ const HostChatbot = () => {
       );
 
       const botReply = response.data.choices[0].message.content;
-      setMessages([...newMessages, { text: botReply, sender: 'bot' }]);
+      setMessages([...newMessages, { text: botReply, sender: 'bot', contentType: 'text' }]);
     } catch (error) {
       console.error('Error fetching response from OpenAI:', error);
       setMessages([
         ...newMessages,
-        { text: 'Sorry, something went wrong.', sender: 'bot' },
-        { text: 'Do you want to chat with a customer support employee?', sender: 'bot' }
+        { text: 'Sorry, something went wrong.', sender: 'bot', contentType: 'text' },
+        {
+          text: 'Do you want to chat with a customer support employee?',
+          sender: 'bot',
+          contentType: 'text',
+        },
       ]);
     } finally {
       setLoading(false);
@@ -229,31 +305,34 @@ const HostChatbot = () => {
   const fetchAccommodations = async () => {
     setLoading(true);
     if (!userId) {
-      console.log("No user id");
+      console.log('No user id');
       return;
     } else {
       try {
-        const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
-          method: 'POST',
-          body: JSON.stringify({ OwnerId: userId }),
-          headers: { 'Content-type': 'application/json; charset=UTF-8' }
-        });
+        const response = await fetch(
+          'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
+          {
+            method: 'POST',
+            body: JSON.stringify({ OwnerId: userId }),
+            headers: { 'Content-type': 'application/json; charset=UTF-8' },
+          }
+        );
         if (!response.ok) {
           throw new Error('Failed to fetch');
         }
         const data = await response.json();
-        console.log("Data:", data);
+        console.log('Data:', data);
         if (data.body && typeof data.body === 'string') {
           const accommodationsArray = JSON.parse(data.body);
           if (Array.isArray(accommodationsArray)) {
             setAccolist(accommodationsArray);
           } else {
-            console.error("Parsed data is not an array:", accommodationsArray);
+            console.error('Parsed data is not an array:', accommodationsArray);
             setAccolist([]);
           }
         }
       } catch (error) {
-        console.error("Unexpected error:", error);
+        console.error('Unexpected error:', error);
       } finally {
         setLoading(false);
       }
@@ -262,22 +341,28 @@ const HostChatbot = () => {
 
   const handleUserFeedback = async (feedback, newMessages) => {
     if (feedback === 'no') {
-      setMessages([...newMessages, { text: 'Okay, let me try again.', sender: 'bot' }]);
+      setMessages([
+        ...newMessages,
+        { text: 'Okay, let me try again.', sender: 'bot', contentType: 'text' },
+      ]);
       setAwaitingFeedback(false);
       await fetchBotReply(newMessages);
     } else if (feedback === 'yes') {
-      setMessages([...newMessages, { text: 'Great! Let me know if you have more questions.', sender: 'bot' }]);
+      setMessages([
+        ...newMessages,
+        { text: 'Great! Let me know if you have more questions.', sender: 'bot', contentType: 'text' },
+      ]);
       setAwaitingFeedback(false);
     } else {
       setAwaitingFeedback(false);
     }
   };
 
-  const toggleChat = () => setIsChatOpen(!isChatOpen); 
+  const toggleChat = () => setIsChatOpen(!isChatOpen);
 
   if (isLoading) return <div>Loading...</div>;
 
-  if (role !== 'Host') return null; 
+  if (role !== 'Host') return null;
 
   return (
     <>
@@ -285,32 +370,38 @@ const HostChatbot = () => {
         💬 Chat
       </button>
 
-      {isChatOpen && (
-        <div className="chatbot-container">
-          <div className="chatbot-header">
-            <span>Chat with us</span>
-            <button className="close-button" onClick={toggleChat}>✖</button>
-          </div>
-          <div className="chat-window">
-            {messages.map((message, index) => (
-              <div key={index} className={`message ${message.sender}`}>
-                {message.text}
-              </div>
-            ))}
-            {loading && <div className="message bot">AI is typing...</div>}
-          </div>
-          <form onSubmit={handleSubmit} className="chat-input">
-            <input
-              type="text"
-              value={userInput}
-              onChange={handleUserInput}
-              placeholder="Type a message..."
-              disabled={loading}
-            />
-            <button type="submit" disabled={loading}>Send</button>
-          </form>
+      <div className={`chatbot-container ${isChatOpen ? 'open' : ''}`}>
+        <div className="chatbot-header">
+          <span>Chat with us</span>
+          <button className="close-button" onClick={toggleChat}>
+            ✖
+          </button>
         </div>
-      )}
+        <div className="chat-window">
+          {messages.map((message, index) => (
+            <div key={index} className={`message ${message.sender}`}>
+              {message.contentType === 'jsx' ? (
+                message.text
+              ) : (
+                <p>{message.text}</p>
+              )}
+            </div>
+          ))}
+          {loading && <div className="message bot">AI is typing...</div>}
+        </div>
+        <form onSubmit={handleSubmit} className="chat-input">
+          <input
+            type="text"
+            value={userInput}
+            onChange={handleUserInput}
+            placeholder="Type a message..."
+            disabled={loading}
+          />
+          <button type="submit" disabled={loading}>
+            Send
+          </button>
+        </form>
+      </div>
     </>
   );
 };

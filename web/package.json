@@ -98,6 +98,7 @@
     "react-country-flag": "^3.1.0",
     "react-date-range": "^2.0.0-alpha.4",
     "react-load-script": "^0.0.6",
+    "react-markdown": "^9.0.1",
     "react-resizable": "^3.0.5",
     "string-similarity": "^4.0.4"
   },
