@@ -57,7 +57,7 @@ const Accommodations = ({ searchResults }) => {
     };
     if (searchResults && searchResults.length > 0) {
       setAccolist(formatData(searchResults));
-      setCurrentPage(1); 
+      setCurrentPage(1);
     } else {
       fetchData();
     }
