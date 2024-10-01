@@ -2,8 +2,6 @@ function iCalFormat(event) {
     const { Dtstart, Dtend, Summary, Description, Location, id, Status, Dtstamp,
         CheckIn, CheckOut, BookingId , AccommodationId, LastModified, Sequence, GuestId } = event;
 
-    console.log(formatICalDateTime(Dtstamp));
-
     return `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Domits/Domits Calendar//v1.0//EN
@@ -119,5 +117,3 @@ const event = {
 };
 
 export default iCalFormat;
-
-console.log(iCalFormat(event));
