@@ -154,39 +154,46 @@
     flex-direction: column;
     padding-bottom: 4%;
     margin-left: 7.5%;
-    width: 25%;
+    width: 35%;
     margin-top: 10%;
-    button {
-        align-self: start;
-    }
-    h1 {
-        font-size: 2.5rem;
-    }
-    p {
-        color: black;
-        font-size: 1.5rem;
-    }
-    }
-    
-    .textContainer {
-        position: relative;
-        height: 50px;
-        overflow: hidden;
+    text-align: left;
+}
 
-        .textAnimated {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            animation: slide 8s infinite;
-        }
+.MainText h1 {
+    font-size: 2.5rem;
+    line-height: 1.2em;
+    display: inline-block;
+    white-space: nowrap; 
 
-      .textAnimated span {
-        display: block; 
-        font-size: 2.5rem;
-        line-height: 50px;
-        color: #003366;
-        
-    }
+}  button {
+    align-self: start;
+}
+
+.MainText p{
+    color: black;
+    font-size: 1.5rem;
+}
+
+.textContainer {
+    display: inline-block; 
+    position: relative;
+    height: 40px;
+    overflow: hidden;
+    margin-left: 5px; 
+}
+
+.textAnimated {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    animation: slide 8s infinite;
+}
+
+.textAnimated span {
+    display: block;
+    font-size: 2.5rem;
+    line-height: 42px;
+    color: #003366;
 }
 
 @keyframes slide {
@@ -195,9 +202,6 @@
     66.66% { transform: translateY(-200%); }
     100% { transform: translateY(0); }
 }
-
-
-
 
 .MainText h1, .MainText p{
     text-align: left;
@@ -340,8 +344,8 @@
     justify-content: space-between;
     text-align: left;
     margin: 2rem auto;
-    width: 95%;
-    gap: 2rem;
+    width: 99%;
+    gap: 1.7rem;
 
     h1 {
         font-size: 2.5rem;
@@ -498,9 +502,7 @@
             text-align: left;
         }
     }
-    background-color: #f9f9f9;
-    /* margin: 5% 0 5% 0;
-    padding: 2rem; */
+
     .faq__header {
         display: flex;
         flex-direction: row;
