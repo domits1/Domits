@@ -16,6 +16,7 @@ function PhoneNumberConfirmView() {
     <p>Enter the 4-digit code that Domits just sent to +31 6 12345678:</p>
       <input type="text"></input>
       <button className={styles["publish-btn"]}>Continue</button>
+      <p>Didn't receive the code? <span>Resend code</span></p>
     </div>
     <hr></hr>
     <div className={styles["bottom-container"]}></div>
