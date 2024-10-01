@@ -10,6 +10,7 @@ const EmployeeChat = () => {
   const [isConnected, setIsConnected] = useState(false); // WebSocket connection status
   const [socket, setSocket] = useState(null); // WebSocket instance
   const { role, isLoading } = useUser();
+  const [connectionId, setConnectionId] = useState(''); // Store connectionId
 
   // Prompt employee to go online
   const [wantsToConnect, setWantsToConnect] = useState(false);
@@ -23,21 +24,60 @@ const EmployeeChat = () => {
     }
   }, [wantsToConnect]);
 
+  // Function to fetch connectionId from the backend using eChatGetConnectionId Lambda function
+  const fetchConnectionId = async (userId) => {
+    try {
+      const response = await fetch('https://s5telb0icl.execute-api.eu-north-1.amazonaws.com/default/eChatGetConnectionId', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        // Parse the 'body' field of the response, which is a JSON string
+        const parsedBody = JSON.parse(data.body);
+
+        console.log(parsedBody); // This should now contain the connectionId
+        return parsedBody.connectionId;
+      } else {
+        console.error('Error fetching connectionId:', data.message);
+        return null;
+      }
+
+    } catch (error) {
+      console.error('Failed to fetch connectionId:', error);
+      return null;
+    }
+  };
+
   // Function to establish WebSocket connection
   const connectWebSocket = async () => {
     const userInfo = await Auth.currentUserInfo();
+
     const ws = new WebSocket(
       `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${userInfo.attributes.sub}&userName=${userInfo.attributes['given_name']}`
     );
 
-    ws.onopen = () => {
+    ws.onopen = async () => {
       console.log('WebSocket connection opened');
       setIsConnected(true);
+
+      // Fetch the connectionId using the new Lambda function
+      const fetchedConnectionId = await fetchConnectionId(userInfo.attributes.sub);
+      console.log(fetchedConnectionId)
+      if (fetchedConnectionId) {
+        setConnectionId(fetchedConnectionId);
+        await setEmployeeAvailability(true, userInfo.attributes.sub, fetchedConnectionId);
+      }
     };
 
     ws.onmessage = (event) => {
       const incomingMessage = JSON.parse(event.data);
 
+      // Handle normal chat messages
       if (incomingMessage.senderId && incomingMessage.message) {
         const senderId = incomingMessage.senderId;
         const message = { role: 'user', content: incomingMessage.message };
@@ -66,10 +106,12 @@ const EmployeeChat = () => {
       console.error('WebSocket error observed:', error);
     };
 
-    ws.onclose = (event) => {
+    ws.onclose = async (event) => {
       console.log('WebSocket connection closed:', event);
       setIsConnected(false);
       setSocket(null);
+      // Set employee availability to false on disconnect
+      await setEmployeeAvailability(false, userInfo.attributes.sub, connectionId || '');
     };
 
     setSocket(ws);
@@ -86,10 +128,37 @@ const EmployeeChat = () => {
     }
   };
 
+  // Set employee availability in the database
+  const setEmployeeAvailability = async (isAvailable, employeeId, connectionId) => {
+    const payload = {
+      employeeId,
+      connectionId: connectionId || '', // Set to empty string if connectionId is not present
+      isAvailable,
+    };
+
+    try {
+      const response = await fetch('https://nw6g99dmhe.execute-api.eu-north-1.amazonaws.com/default/eChatSetEmployeeAvailability', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to set employee availability');
+      }
+
+      const data = await response.json();
+      console.log(data.message);
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
   // Handle the selection of a chat
   const selectChat = (chatID) => {
     setActiveChat(chatID);
-    // The messages are automatically loaded from chatMessages based on activeChat
   };
 
   // Handle sending a message
@@ -147,49 +216,55 @@ const EmployeeChat = () => {
       </div>
 
       <div className="ec-chat-box">
-        <div className="ec-chat-list">
-          <h3>Open Chats</h3>
-          <ul>
-            {chats.map((chat) => (
-              <li key={chat.chatID} onClick={() => selectChat(chat.chatID)}>
-                Chat with {chat.userName}
-              </li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="ec-chat-window">
-          {activeChat ? (
-            <>
-              <div className="ec-chat-messages">
-                {(chatMessages[activeChat] || []).map((message, index) => (
-                  <div key={index} className={`ec-message-wrapper ${message.role}`}>
-                    <span className="ec-sender-label">
-                      {message.role === 'employee' ? 'You' : 'User'}
-                    </span>
-                    <div className={`ec-message ${message.role}`}>
-                      <div className={`ec-bubble ${message.role}`}>
-                        <p>{message.content}</p>
-                      </div>
-                    </div>
-                  </div>
+        {isConnected ? (
+          <>
+            <div className="ec-chat-list">
+              <h3>Open Chats</h3>
+              <ul>
+                {chats.map((chat) => (
+                  <li key={chat.chatID} onClick={() => selectChat(chat.chatID)}>
+                    Chat with {chat.userName}
+                  </li>
                 ))}
-              </div>
+              </ul>
+            </div>
 
-              <div className="ec-chat-input">
-                <input
-                  type="text"
-                  value={employeeMessage}
-                  onChange={(e) => setEmployeeMessage(e.target.value)}
-                  placeholder="Type a message..."
-                />
-                <button onClick={sendMessage}>Send</button>
-              </div>
-            </>
-          ) : (
-            <div className="ec-no-chat-selected">Select a chat to start messaging</div>
-          )}
-        </div>
+            <div className="ec-chat-window">
+              {activeChat ? (
+                <>
+                  <div className="ec-chat-messages">
+                    {(chatMessages[activeChat] || []).map((message, index) => (
+                      <div key={index} className={`ec-message-wrapper ${message.role}`}>
+                        <span className="ec-sender-label">
+                          {message.role === 'employee' ? 'You' : 'User'}
+                        </span>
+                        <div className={`ec-message ${message.role}`}>
+                          <div className={`ec-bubble ${message.role}`}>
+                            <p>{message.content}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="ec-chat-input">
+                    <input
+                      type="text"
+                      value={employeeMessage}
+                      onChange={(e) => setEmployeeMessage(e.target.value)}
+                      placeholder="Type a message..."
+                    />
+                    <button onClick={sendMessage}>Send</button>
+                  </div>
+                </>
+              ) : (
+                <div className="ec-no-chat-selected">Select a chat to start messaging</div>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="ec-no-chat-connection">Please connect to start messaging</div>
+        )}
       </div>
     </div>
   );
