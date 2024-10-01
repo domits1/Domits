@@ -1,55 +1,151 @@
 import React, { useState, useEffect } from 'react';
 import './EmployeeChat.css';
+import { useUser } from '../../UserContext';
+import { Auth } from 'aws-amplify';
 
 const EmployeeChat = () => {
   const [chats, setChats] = useState([]); // Stores open chats
   const [activeChat, setActiveChat] = useState(null); // Tracks the active chat
-  const [messages, setMessages] = useState([]); // Messages in the active chat
   const [employeeMessage, setEmployeeMessage] = useState(''); // Message typed by employee
+  const [isConnected, setIsConnected] = useState(false); // WebSocket connection status
+  const [socket, setSocket] = useState(null); // WebSocket instance
+  const { role, isLoading } = useUser();
 
-  // Dummy chat data for testing
-  const dummyChats = [
-    { chatID: 'chat1', userName: 'John Doe' },
-    { chatID: 'chat2', userName: 'Jane Smith' },
-    { chatID: 'chat3', userName: 'Alice Johnson' },
-  ];
+  // Prompt employee to go online
+  const [wantsToConnect, setWantsToConnect] = useState(false);
 
-  const dummyMessages = {
-    chat1: [
-      { role: 'user', content: 'Hi, I need help with my booking.' },
-      { role: 'employee', content: 'Sure, I can help you with that.' },
-    ],
-    chat2: [
-      { role: 'user', content: 'What is the refund policy?' },
-      { role: 'employee', content: 'You can get a refund within 30 days.' },
-    ],
-    chat3: [
-      { role: 'user', content: 'I’m having trouble accessing my account.' },
-      { role: 'employee', content: 'Please reset your password.' },
-    ],
+  // Store chat messages by chat ID
+  const [chatMessages, setChatMessages] = useState({}); // { chatID: [messages] }
+
+  useEffect(() => {
+    if (wantsToConnect && !socket) {
+      connectWebSocket();
+    }
+  }, [wantsToConnect]);
+
+  // Function to establish WebSocket connection
+  const connectWebSocket = async () => {
+    const userInfo = await Auth.currentUserInfo();
+    const ws = new WebSocket(
+      `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${userInfo.attributes.sub}&userName=${userInfo.attributes['given_name']}`
+    );
+
+    ws.onopen = () => {
+      console.log('WebSocket connection opened');
+      setIsConnected(true);
+    };
+
+    ws.onmessage = (event) => {
+      const incomingMessage = JSON.parse(event.data);
+
+      if (incomingMessage.senderId && incomingMessage.message) {
+        const senderId = incomingMessage.senderId;
+        const message = { role: 'user', content: incomingMessage.message };
+
+        // Add the message to the appropriate chat
+        setChatMessages((prevChatMessages) => {
+          const prevMessages = prevChatMessages[senderId] || [];
+          return { ...prevChatMessages, [senderId]: [...prevMessages, message] };
+        });
+
+        // If a new message comes in, either add to an existing chat or create a new one
+        setChats((prevChats) => {
+          const existingChat = prevChats.find((chat) => chat.chatID === senderId);
+
+          // Create new chat if it doesn't exist
+          if (!existingChat) {
+            return [...prevChats, { chatID: senderId, userName: 'User' }];
+          }
+
+          return prevChats;
+        });
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error observed:', error);
+    };
+
+    ws.onclose = (event) => {
+      console.log('WebSocket connection closed:', event);
+      setIsConnected(false);
+      setSocket(null);
+    };
+
+    setSocket(ws);
   };
 
-  // Fetch open chats when the component loads (use dummy data for now)
-  useEffect(() => {
-    setChats(dummyChats);
-  }, []);
+  // Function to close WebSocket connection and go offline
+  const disconnectWebSocket = () => {
+    if (socket) {
+      socket.close();
+      setWantsToConnect(false);
+      setIsConnected(false);
+      setSocket(null);
+      console.log('WebSocket connection closed by user');
+    }
+  };
 
-  // Load messages when a chat is selected (use dummy data for now)
+  // Handle the selection of a chat
   const selectChat = (chatID) => {
     setActiveChat(chatID);
-    setMessages(dummyMessages[chatID] || []); // Load dummy messages
+    // The messages are automatically loaded from chatMessages based on activeChat
   };
 
-  // Send a message to the user (for testing purposes only)
+  // Handle sending a message
   const sendMessage = () => {
-    if (employeeMessage.trim() === '') return;
+    if (employeeMessage.trim() === '' || !activeChat || !socket) return;
 
-    setMessages((prevMessages) => [...prevMessages, { role: 'employee', content: employeeMessage }]);
+    const payload = {
+      action: 'sendMessage',
+      recipientConnectionId: activeChat,
+      message: employeeMessage,
+    };
+
+    socket.send(JSON.stringify(payload));
+
+    // Append sent message to the chat
+    const newMessage = { role: 'employee', content: employeeMessage };
+    setChatMessages((prevChatMessages) => ({
+      ...prevChatMessages,
+      [activeChat]: [...(prevChatMessages[activeChat] || []), newMessage],
+    }));
+
     setEmployeeMessage(''); // Clear the input field
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (role !== 'Employee') {
+    return null;
+  }
+
   return (
     <div className="ec-employee-chat-container">
+      <div className="ec-status-bar">
+        {isConnected ? (
+          <div className="ec-online-status">
+            <span className="ec-status-indicator online"></span> Online
+          </div>
+        ) : (
+          <div className="ec-online-status">
+            <span className="ec-status-indicator offline"></span> Offline
+          </div>
+        )}
+        {!wantsToConnect && !isConnected && (
+          <button className="ec-go-online" onClick={() => setWantsToConnect(true)}>
+            Go Online
+          </button>
+        )}
+        {isConnected && (
+          <button className="ec-go-offline" onClick={disconnectWebSocket}>
+            Go Offline
+          </button>
+        )}
+      </div>
+
       <div className="ec-chat-box">
         <div className="ec-chat-list">
           <h3>Open Chats</h3>
@@ -66,10 +162,10 @@ const EmployeeChat = () => {
           {activeChat ? (
             <>
               <div className="ec-chat-messages">
-                {messages.map((message, index) => (
+                {(chatMessages[activeChat] || []).map((message, index) => (
                   <div key={index} className={`ec-message-wrapper ${message.role}`}>
                     <span className="ec-sender-label">
-                      {message.role === 'employee' ? 'You' : dummyChats.find((chat) => chat.chatID === activeChat).userName}
+                      {message.role === 'employee' ? 'You' : 'User'}
                     </span>
                     <div className={`ec-message ${message.role}`}>
                       <div className={`ec-bubble ${message.role}`}>
