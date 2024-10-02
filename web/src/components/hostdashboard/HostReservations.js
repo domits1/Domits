@@ -10,8 +10,8 @@ import chevron from "../../images/icons/sort-solid.svg";
 
 const HostReservations = () => {
     const [userId, setUserId] = useState({});
-    const [options] = useState(["Booking requests", "Accepted", "Reserved", "Cancelled", "All"]);
-    const [selectedOption, setSelectedOption] = useState("Booking requests");
+    const [options] = useState(["All", "Booking requests", "Accepted", "Reserved", "Cancelled"]);
+    const [selectedOption, setSelectedOption] = useState("All");
     const [reservations, setReservations] = useState([]);
     const [pendingReservations, setPendingReservations] = useState([]);
     const [acceptedReservations, setAcceptedReservations] = useState([]);
