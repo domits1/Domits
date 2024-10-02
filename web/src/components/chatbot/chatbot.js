@@ -64,7 +64,7 @@ const Chat = () => {
         scrollToBottom();
       }
     } catch (error) {
-      console.error('Error loading chat history:', error);
+      //console.error('Error loading chat history:', error);
     }
   };
 
@@ -145,7 +145,7 @@ const Chat = () => {
         setShowHumanDecision(true); // Show the decision prompt
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      //console.error('Error sending message:', error);
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
       scrollToBottom();
     } finally {
@@ -192,7 +192,7 @@ const Chat = () => {
         try {
           userInfo = await Auth.currentUserInfo();
         } catch (error) {
-          console.error('Error getting user info:', error);
+          //console.error('Error getting user info:', error);
         }
 
         let userId, userName;
@@ -209,7 +209,7 @@ const Chat = () => {
         );
 
         ws.onopen = () => {
-          console.log('WebSocket connection opened');
+          //console.log('WebSocket connection opened');
           setMessages((prevMessages) => [...prevMessages, { text: 'Connection successful. You can now chat with the employee', sender: 'system' }]);
           setIsConnected(true);
           setSocket(ws);
@@ -224,11 +224,11 @@ const Chat = () => {
         };
 
         ws.onerror = (error) => {
-          console.error('WebSocket error:', error);
+          //console.error('WebSocket error:', error);
         };
 
         ws.onclose = () => {
-          console.log('WebSocket connection closed');
+          //console.log('WebSocket connection closed');
           setIsConnected(false);
           setMessageCount(0);
         };
@@ -242,7 +242,7 @@ const Chat = () => {
       }
 
     } catch (err) {
-      console.error('Failed to connect to employee:', err);
+      //console.error('Failed to connect to employee:', err);
       setMessages((prevMessages) => [
         ...prevMessages,
         { text: 'Failed to connect to an agent. Please continue with the AI.', sender: 'system' }
