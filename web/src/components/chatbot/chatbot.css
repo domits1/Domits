@@ -165,3 +165,29 @@
   background: #ddd;
   cursor: not-allowed;
 }
+
+.cbc-chat-status {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+  position: relative;
+}
+
+.cbc-close-chat-button {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.cbc-close-chat-button:hover {
+  background-color: #c82333;
+}

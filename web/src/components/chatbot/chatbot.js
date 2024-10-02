@@ -143,6 +143,7 @@ const Chat = () => {
 
   const handleUserDecision = (decision) => {
     setShowHumanDecision(false); // Hide the decision prompt
+    setMessageCount(0);
 
     if (decision === 'human') {
       setMessages((prevMessages) => [...prevMessages, { text: 'We can connect you to a human. Messages sent to the employee can be saved for training purposes. Do you agree?', sender: 'system' }]);
@@ -166,7 +167,6 @@ const Chat = () => {
 
   const connectToEmployee = async () => {
     try {
-      // Step 1: Fetch available employee connectionId from Lambda function
       const response = await fetch('https://1qvev42qe9.execute-api.eu-north-1.amazonaws.com/default/eChatFindEmployee');
       const responseData = await response.json();
       const data = JSON.parse(responseData.body);
@@ -176,26 +176,22 @@ const Chat = () => {
         setIsAIChat(false); // Switch to Employee chat
         setMessages((prevMessages) => [...prevMessages, { text: 'Connecting you to an agent...', sender: 'system' }]);
 
-        // Step 2: Check if the user is logged in
         let userInfo;
         try {
-          userInfo = await Auth.currentUserInfo(); // Check if user is logged in
+          userInfo = await Auth.currentUserInfo();
         } catch (error) {
           console.error('Error getting user info:', error);
         }
 
-        // Step 3: Handle anonymous user if not logged in
         let userId, userName;
         if (userInfo) {
           userId = userInfo.attributes.sub;
           userName = userInfo.attributes['given_name'] || 'Anonymous';
         } else {
-          // Generate anonymous user details
-          userId = `anon-${Math.random().toString(36).substring(2, 15)}`; // Random anonymous user ID
+          userId = `anon-${Math.random().toString(36).substring(2, 15)}`;
           userName = 'Anonymous';
         }
 
-        // Step 4: Establish WebSocket connection
         const ws = new WebSocket(
           `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${userId}&userName=${userName}`
         );
@@ -222,6 +218,7 @@ const Chat = () => {
         ws.onclose = () => {
           console.log('WebSocket connection closed');
           setIsConnected(false);
+          setMessageCount(0);
         };
 
       } else {
@@ -229,7 +226,7 @@ const Chat = () => {
           ...prevMessages,
           { text: 'No agents are available right now. Please continue with the AI.', sender: 'system' }
         ]);
-        setIsAIChat(true); // Continue with AI if no agents are available
+        setIsAIChat(true);
       }
 
     } catch (err) {
@@ -249,19 +246,36 @@ const Chat = () => {
         recipientConnectionId: employeeConnectionId,
         message: message,
       };
-      socket.send(JSON.stringify(payload)); // Send only through WebSocket
+      socket.send(JSON.stringify(payload));
     }
 
     setMessages((prevMessages) => [...prevMessages, { text: message, sender: 'user' }]);
+  };
+
+  const closeEmployeeChat = () => {
+    if (socket) {
+      socket.close(); // Close the WebSocket connection
+    }
+    setIsConnected(false);
+    setIsAIChat(true); // Switch back to AI chat
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { text: 'Employee has left the chat. Switching back to Sophia (AI).', sender: 'system' }
+    ]);
   };
 
   return (
     <div className="cbc-chat-center">
       <div className="cbc-chat-container">
         
-        {/* Text field for showing chat status */}
+        {/* Text field for showing chat status and Close Chat button */}
         <div className="cbc-chat-status">
           <p>Currently chatting with: {isAIChat ? 'Sophia (AI)' : 'Employee'}</p>
+          {!isAIChat && (
+            <button className="cbc-close-chat-button" onClick={closeEmployeeChat}>
+              Close Chat
+            </button>
+          )}
         </div>
 
         <div className="cbc-chat-messages" ref={chatMessagesRef}>
