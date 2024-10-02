@@ -22,6 +22,7 @@ const Chat = () => {
   const [isConsentGiven, setIsConsentGiven] = useState(false); // Track user consent
   const [showHumanDecision, setShowHumanDecision] = useState(false); // Show AI/Human decision prompt
   const [showConsentDecision, setShowConsentDecision] = useState(false); // Show consent decision prompt
+  const [welcomeMessageSent, setWelcomeMessageSent] = useState(false); // Track if welcome message has been sent
   const chatMessagesRef = useRef(null);
 
   const predefinedMessages = [
@@ -40,7 +41,10 @@ const Chat = () => {
     if (!isLoading && (chatID || user)) {
       loadChatHistory();
     }
-  }, [isLoading, chatID, user]);
+    else if(!isLoading){
+      sendWelcomeMessage();
+    }
+  }, [isLoading, chatID, user, welcomeMessageSent]);
 
   const scrollToBottom = () => {
     const chatMessages = chatMessagesRef.current;
@@ -62,6 +66,14 @@ const Chat = () => {
     } catch (error) {
       console.error('Error loading chat history:', error);
     }
+  };
+
+  const sendWelcomeMessage = () => {
+    const welcomeMessage = "Hi! I am Sophia, your AI assistant. I'm here to help you as best as I can. How can I assist you today?";
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { text: welcomeMessage, sender: 'ai' }
+    ]);
   };
 
   const sendMessage = async (message = userInput) => {
