@@ -202,6 +202,7 @@ const Chat = () => {
 
         ws.onopen = () => {
           console.log('WebSocket connection opened');
+          setMessages((prevMessages) => [...prevMessages, { text: 'Connection successful. You can now chat with the employee', sender: 'system' }]);
           setIsConnected(true);
           setSocket(ws);
         };
@@ -265,11 +266,13 @@ const Chat = () => {
 
         <div className="cbc-chat-messages" ref={chatMessagesRef}>
           {messages.map((message, index) => (
-            <div key={index} className={`cbc-message cbc-${message.sender}`}>
+            <div key={index} className={`cbc-message-wrapper cbc-${message.sender}`}>
               <div className="cbc-sender">
                 {message.sender === 'user' ? 'You' : message.sender === 'ai' ? 'Sophia (AI)' : message.sender === 'employee' ? 'Employee' : 'System'}
               </div>
-              <div className="cbc-message-content">{message.text}</div>
+              <div className={`cbc-bubble ${message.sender}`}>
+                <p>{message.text}</p>
+              </div>
 
               {/* Accommodation tiles rendering */}
               {message.sender === 'ai' && message.accommodations && (
