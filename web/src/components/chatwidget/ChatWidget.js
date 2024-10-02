@@ -39,7 +39,7 @@ const ChatWidget = () => {
         scrollToBottom();
       }
     } catch (error) {
-      console.error('Error loading chat history:', error);
+      //console.error('Error loading chat history:', error);
     }
   };
 
@@ -86,7 +86,7 @@ const ChatWidget = () => {
       ]);
       scrollToBottom();
     } catch (error) {
-      console.error('Error sending message:', error);
+      //console.error('Error sending message:', error);
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
       setMessages((prevMessages) => [
         ...prevMessages,

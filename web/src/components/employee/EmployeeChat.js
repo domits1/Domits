@@ -40,15 +40,15 @@ const EmployeeChat = () => {
         // Parse the 'body' field of the response, which is a JSON string
         const parsedBody = JSON.parse(data.body);
 
-        console.log(parsedBody); // This should now contain the connectionId
+        //console.log(parsedBody); // This should now contain the connectionId
         return parsedBody.connectionId;
       } else {
-        console.error('Error fetching connectionId:', data.message);
+        //console.error('Error fetching connectionId:', data.message);
         return null;
       }
 
     } catch (error) {
-      console.error('Failed to fetch connectionId:', error);
+      //console.error('Failed to fetch connectionId:', error);
       return null;
     }
   };
@@ -62,12 +62,12 @@ const EmployeeChat = () => {
     );
 
     ws.onopen = async () => {
-      console.log('WebSocket connection opened');
+      //console.log('WebSocket connection opened');
       setIsConnected(true);
 
       // Fetch the connectionId using the new Lambda function
       const fetchedConnectionId = await fetchConnectionId(userInfo.attributes.sub);
-      console.log(fetchedConnectionId)
+      //console.log(fetchedConnectionId)
       if (fetchedConnectionId) {
         setConnectionId(fetchedConnectionId);
         await setEmployeeAvailability(true, userInfo.attributes.sub, fetchedConnectionId);
@@ -103,11 +103,11 @@ const EmployeeChat = () => {
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error observed:', error);
+      //console.error('WebSocket error observed:', error);
     };
 
     ws.onclose = async (event) => {
-      console.log('WebSocket connection closed:', event);
+      //console.log('WebSocket connection closed:', event);
       setIsConnected(false);
       setSocket(null);
       // Set employee availability to false on disconnect
@@ -124,7 +124,7 @@ const EmployeeChat = () => {
       setWantsToConnect(false);
       setIsConnected(false);
       setSocket(null);
-      console.log('WebSocket connection closed by user');
+      //console.log('WebSocket connection closed by user');
     }
   };
 
@@ -150,9 +150,9 @@ const EmployeeChat = () => {
       }
 
       const data = await response.json();
-      console.log(data.message);
+      //console.log(data.message);
     } catch (error) {
-      console.error(error.message);
+      //console.error(error.message);
     }
   };
 
