@@ -15,6 +15,14 @@
   overflow: hidden;
 }
 
+.cbc-chat-status {
+  background-color: #007bff;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-weight: bold;
+}
+
 .cbc-chat-messages {
   height: 400px;
   overflow-y: auto;
@@ -30,20 +38,21 @@
   text-align: right;
 }
 
-.cbc-message.ai {
-  text-align: left;
-}
-
-.cbc-sender {
-  font-weight: bold;
-  margin-bottom: 5px;
-}
-
 .cbc-message-content {
   background: #e0e0e0;
   padding: 10px;
   border-radius: 5px;
   display: inline-block;
+}
+
+.cbc-message.user .cbc-message-content {
+  background: #007bff;
+  color: white;
+}
+
+.cbc-sender {
+  font-weight: bold;
+  margin-bottom: 5px;
 }
 
 .cbc-typing-indicator {
@@ -112,6 +121,27 @@
   color: white;
   cursor: pointer;
   margin-left: 10px;
+}
+
+.cbc-decision-box {
+  padding: 10px;
+  background-color: #f1f1f1;
+  border-top: 1px solid #ddd;
+  text-align: center;
+}
+
+.cbc-decision-box p {
+  margin-bottom: 10px;
+}
+
+.cbc-decision-box button {
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 15px;
+  margin: 5px;
+  cursor: pointer;
 }
 
 .cbc-predefined-messages, .cbc-sub-questions, .cbc-sub-sub-questions {
