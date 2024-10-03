@@ -19,7 +19,7 @@ function About() {
     return (
         <div className="about">
             <div className="about__title-container">
-                <h2 className="about__title">About Domits</h2>
+                <h2 className="about__title"><span className="highlightH2">About Domits</span></h2>
             </div>
             <div className="about__subtitle-container">
                 <h3 className="about__subtitle">Tailor made partnership</h3>
@@ -27,7 +27,7 @@ function About() {
 
             <div className="about__text-container">
                 <p className="about__text">
-                    Domits is a platform to list, search and book holiday accommodations.
+                <span className="highlightText">Domits</span> is a platform to list, search and book holiday accommodations.
                 </p>
                 <p className="about__text">
                     We build cool stuff in our travel innovation labs for People, Growth, Cloud IT and AI Data.
@@ -38,11 +38,11 @@ function About() {
                 </p>
                 <p className="about__text about__text--margintop">
                     We strive to support tenants and landlords in every step of the process.
-                    Domits acts as the intermediary in this process.
+                    <span className="highlightText"> Domits</span> acts as the intermediary in this process.
                 </p>
                 <p className="about__text">
                     You enter into a rental agreement directly with the landlord and/or owner of the accommodation.
-                    Through Domits, you have the opportunity to inquire about options without any obligation.
+                    Through <span className="highlightText">Domits</span>, you have the opportunity to inquire about options without any obligation.
                 </p>
                 <p className="about__text about__text--margintop">
                     By charging one-time service fees, we can keep our platform running and provide services such as support.

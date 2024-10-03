@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Storage } from 'aws-amplify';
 import './Accommodations.css';
+import styles from '../utils/PageSwitcher.module.css'
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,9 +36,9 @@ const Accommodations = ({ searchResults }) => {
       details: item.Description,
       price: `€${item.Rent} per night`,
       id: item.ID,
-      bathrooms: `${item.Bathrooms} Bathrooms`,
-      bedrooms: `${item.Bedrooms} Bedrooms`,
-      persons: `${item.GuestAmount} Persons`,
+      beds: `${item.Beds} Bed(s)`,
+      bedrooms: `${item.AccommodationType === 'Boat' ? item.Cabins : item.Bedrooms} ${item.AccommodationType === 'Boat' ? 'Cabins' : 'Bedrooms'}`,
+      persons: `${item.GuestAmount} ${item.GuestAmount > 1 ? 'People' : 'Person'}`,
     }));
   };
 
@@ -100,42 +101,40 @@ const Accommodations = ({ searchResults }) => {
   };
 
   return (
-      <div id="card-visibility">
-        {displayedAccolist.map((accommodation) => (
-            <div className="accocard" key={accommodation.id} onClick={() => handleClick(accommodation.id)}>
-              <img src={accommodation.image} alt={accommodation.title} />
-              <div className="accocard-content">
-                <div className="accocard-title">{accommodation.city}, {accommodation.country}</div>
-                <div className="accocard-price">{accommodation.price}</div>
-                <div className="accocard-detail">{accommodation.details}</div>
-                <div className="accocard-specs">
-                  <div className="accocard-size">{accommodation.size}</div>
-                  <div className="accocard-size">{accommodation.bathrooms}</div>
-                  <div className="accocard-size">{accommodation.bedrooms}</div>
-                  <div className="accocard-size">{accommodation.persons}</div>
-                </div>
-              </div>
+    <div id="card-visibility">
+      {displayedAccolist.map((accommodation) => (
+        <div className="accocard" key={accommodation.id} onClick={() => handleClick(accommodation.id)}>
+          <img src={accommodation.image} alt={accommodation.title} />
+          <div className="accocard-content">
+            <div className="accocard-title">{accommodation.city}, {accommodation.country}</div>
+            <div className="accocard-price">{accommodation.price}</div>
+            <div className="accocard-detail">{accommodation.details}</div>
+            <div className="accocard-specs">
+              <div className="accocard-size">{accommodation.bedrooms}</div>
+              <div className="accocard-size">{accommodation.persons}</div>
             </div>
-        ))}
-        {/* Pagination */}
-        <div className="pagination">
-          <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-            &lt; Previous
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => (
-              <button
-                  key={i}
-                  onClick={() => handlePageChange(i + 1)}
-                  className={currentPage === i + 1 ? "active" : ""}
-              >
-                {i + 1}
-              </button>
-          ))}
-          <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-            Next &gt;
-          </button>
+          </div>
         </div>
+      ))}
+      {/* Pagination */}
+      <div className={styles.pagination}>
+        <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+          &lt; Previous
+        </button>
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i}
+            onClick={() => handlePageChange(i + 1)}
+            className={`${(currentPage === i + 1) && styles.active}`}
+          >
+            {i + 1}
+          </button>
+        ))}
+        <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+          Next &gt;
+        </button>
       </div>
+    </div>
   );
 };
 

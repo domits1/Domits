@@ -158,7 +158,7 @@ const GuestDashboard = () => {
     };
 
     return (
-        <div className="container">
+        <div className="page-body">
             <h2>Dashboard</h2>
             <div className="dashboards">
                 <Pages />
@@ -232,29 +232,29 @@ const GuestDashboard = () => {
                             </div>
                         </div>
 
-                        <div className="infoBox">
-                            <span>Address:</span>
-                            <p>{user.address}</p>
-                            <div className="edit-icon-background">
-                                <img src={editIcon} alt="Edit Address" className="guest-edit-icon" />
-                            </div>
-                        </div>
+                        {/*<div className="infoBox">*/}
+                        {/*    <span>Address:</span>*/}
+                        {/*    <p>{user.address}</p>*/}
+                        {/*    <div className="edit-icon-background">*/}
+                        {/*        <img src={editIcon} alt="Edit Address" className="guest-edit-icon" />*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
 
-                        <div className="infoBox">
-                            <span>Phone:</span>
-                            <p>{user.phone}</p>
-                            <div className="edit-icon-background">
-                                <img src={editIcon} alt="Edit Phone" className="guest-edit-icon" />
-                            </div>
-                        </div>
+                        {/*<div className="infoBox">*/}
+                        {/*    <span>Phone:</span>*/}
+                        {/*    <p>{user.phone}</p>*/}
+                        {/*    <div className="edit-icon-background">*/}
+                        {/*        <img src={editIcon} alt="Edit Phone" className="guest-edit-icon" />*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
 
-                        <div className="infoBox">
-                            <span>Family:</span>
-                            <p>{user.family}</p>
-                            <div className="edit-icon-background">
-                                <img src={editIcon} alt="Edit Family" className="guest-edit-icon" />
-                            </div>
-                        </div>
+                        {/*<div className="infoBox">*/}
+                        {/*    <span>Family:</span>*/}
+                        {/*    <p>{user.family}</p>*/}
+                        {/*    <div className="edit-icon-background">*/}
+                        {/*        <img src={editIcon} alt="Edit Family" className="guest-edit-icon" />*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
 
                     </div>
                 </div>

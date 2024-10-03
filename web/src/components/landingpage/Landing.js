@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useContext, useRef} from 'react';
+import React, { useState, useEffect, useContext, useRef } from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import styles from './landing.module.css';
@@ -36,7 +36,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
             </div>
             <div
                 className={styles.landing__faq__answer}
-                style={{maxHeight: isOpen ? `${height}px` : '0', overflow: 'hidden' }}
+                style={{ maxHeight: isOpen ? `${height}px` : '0', overflow: 'hidden' }}
                 ref={answerRef}
             >
                 {answer}
@@ -141,7 +141,12 @@ function Landing() {
                 console.error("Failed to update user group");
             }
         } catch (error) {
-            console.error('Error updating user group:', error);
+            if (error === 'The user is not authenticated') {
+                console.error('User is not logged in. Redirecting to login page.');
+                navigate('/login');
+            } else {
+                console.error('Error updating user group:', error);
+            }
         }
     };
 
@@ -149,35 +154,18 @@ function Landing() {
         <main className={styles.container}>
             <div className={styles.firstSection}>
                 <div className={styles.MainText}>
-                    <h1>List your <span className={styles.highlightText}>House</span> for free on Domits</h1>
-                    
-                    <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
-
-                    <button className={styles.nextButtons}>Start hosting</button>
-                </div>
                 
-                <div className={styles.firstPicture}>
-                    <img src={MainTextpicture} alt="House"/>
+                    <h1>List your <span className={styles.highlightTextAnimation1}>House</span>, 
+                    <span className={styles.highlightTextAnimation1}>   Camper</span> and  
+                    <span className={styles.highlightTextAnimation2 }> Boat </span> for free on Domits</h1>
+                    <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
+                    <button className={styles.nextButtons}>Start hosting</button>
+
                 </div>
 
-                {/* <div className={styles.First_Icons}>
-                    <div className={styles.infoCard}>
-                        <img src={appartement} alt="Flat" />
-                        <p>Apartment</p>
-                    </div>
-                    <div className={styles.infoCard}>
-                        <img src={camper} alt="Camper" />
-                        <p>Camper</p>
-                    </div>
-                    <div className={styles.infoCard}>
-                        <img src={boothuis} alt="Boat" />
-                        <p>Boat</p>
-                    </div>
-                    <div className={styles.infoCard}>
-                        <img src={villa} alt="Villa" />
-                        <p>Villa</p>
-                    </div>
-                </div> */}
+                <div className={styles.firstPicture}>
+                    <img src={MainTextpicture} alt="House" />
+                </div>
             </div>
             <div className={styles.RegisterBlock}>
                 {isAuthenticated && group !== 'Host' ? (
@@ -190,7 +178,7 @@ function Landing() {
                     <Register />
                 )}
             </div>
-            
+
             <div className={styles.easyHosting}>
                 <div className={styles.easyHosting_text}>
                     <h1>Hosting on <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
@@ -214,27 +202,27 @@ function Landing() {
                     </div>
                 </div>
             </div>
-            
+
             <div className={styles.whyHost}>
                 <div className={styles.SecPicture}>
-                    <img src={whyHostpicture} alt="House"/>
+                    <img src={whyHostpicture} alt="House" />
                 </div>
                 <div className={styles.whyHostText}>
                     <h1>Why should i host on <span className={styles.highlightText}>Domits</span>?</h1>
-                    <p>At Domits, we're not just another platform, we're building a future-focused, 
-                    sustainable community with our Travel Innovation Labs. Our innovative approach 
-                    ensures that your property adds meaningful value to both travelers and the 
-                    environment. You'll also enjoy unlimited support and personalized, modern 
-                    dashboards that make managing your listings easier than ever. But what truly 
-                    sets Domits apart is our commitment to you. You're more than just a customer or 
-                    data, we genuinely care about your success, and we're here every step on the way 
-                    to help you thrive. Hosting with Domits means aligning with deeply embedded 
-                    values of health, safety, and sustainability, creating a future-proof path for 
-                    your business.</p>
-                    <button className={styles.nextButtons}>Start hosting</button>
+                    <p>At Domits, we're not just another platform, we're building a future-focused,
+                        sustainable community with our Travel Innovation Labs. Our innovative approach
+                        ensures that your property adds meaningful value to both travelers and the
+                        environment. You'll also enjoy unlimited support and personalized, modern
+                        dashboards that make managing your listings easier than ever. But what truly
+                        sets Domits apart is our commitment to you. You're more than just a customer or
+                        data, we genuinely care about your success, and we're here every step on the way
+                        to help you thrive. Hosting with Domits means aligning with deeply embedded
+                        values of health, safety, and sustainability, creating a future-proof path for
+                        your business.</p>
+                    <button onClick={updateUserGroup} className={styles.nextButtons}>Start hosting</button>
                 </div>
             </div>
-            
+
             <div className={styles.simpleSafe}>
                 <div className={styles.simpleSafeAll}>
                     <h1>Register your property <span className={styles.highlightText}>simple</span> and <span className={styles.highlightText}>safe</span></h1>
@@ -284,10 +272,128 @@ function Landing() {
                                     <p>You rent out your holiday home on an international market. This makes the chances of renting of out your holiday home even greater</p>
                                 </div>
                             </div>
-
                         </div>
+                    </div>
+                </div>
+            </div>
 
 
+
+            <div className={styles.clientRevieuw}>
+                <h1> What others say about <span className={styles.highlightText}>Domits</span></h1>
+
+                <div className={styles.client_text}>
+                    <span className={styles.highlightText}>"</span>
+                    <p className={styles.clientText}>
+                    Renting out my home through this website has been a wonderful experience.
+                    The user-friendly interface and the reliable platform make it easy for me to list my property.
+                    The booking system works flawlessly, and I always receive timely notifications when a reservation is made.
+                    Communication with guests is smooth, allowing me to offer a personal and hassle-free service.
+                    Thanks to this website, I am confident that my home is in good hands, 
+                    and the positive feedback from my guests reaffirms this every time!
+                    </p>
+                    <span className={styles.highlightText}>"</span>
+                    <div className={styles.client_content}>
+                        <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Rick Terp" />
+                        <div className={styles.client_details}>
+                            <h2>Rick Terp</h2>
+                            <p>Host from the Netherlands</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.client_text}>
+                    <span className={styles.highlightText}>"</span>
+                    <p className={styles.clientText}>
+                    Renting out my boat through this platform was a fantastic experience.  
+                    Everything went smoothly and professionally, from the booking to the communication with renters.  
+                    Perfect for boat owners!
+                    </p>
+                    <span className={styles.highlightText}>"</span>
+                    <div className={styles.client_content}>
+                        <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Melissa Steenberk" />
+                        <div className={styles.client_details}>
+                            <h2>Melissa Steenberk</h2>
+                            <p>Host from the Netherlands</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.client_text}>
+                    <span className={styles.highlightText}>"</span>
+                    <p className={styles.clientText}>
+                    As the owner of a luxury yacht company, this platform offers us the perfect opportunity to rent out our fleet easily and efficiently.
+                    From the user-friendly system to the excellent customer support, everything is flawlessly organized.
+                    Our clients appreciate the quality and luxury of our yachts, and thanks to the platform, we can provide them with a hassle-free booking experience.
+                    The team behind the platform ensures that our yachts receive optimal visibility for potential renters, resulting in frequent and reliable bookings.
+                    A valuable asset for our business!
+                    </p>
+                    <span className={styles.highlightText}>"</span>
+                    <div className={styles.client_content}>
+                        <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="James Heck" />
+                        <div className={styles.client_details}>
+                            <h2>James Heck</h2>
+                            <p>Owner of a luxury yacht company</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.client_text}>
+                    <span className={styles.highlightText}>"</span>
+                    <p className={styles.clientText}>
+                    I recently hosted my website with Domits in the UK, and the experience has been exceptional. The platform is user-friendly,
+                    allowing for quick setup and seamless integration. Speed and reliability are top-notch, with minimal downtime, ensuring my site is always accessible.
+                    The customer support team is also extremely helpful, addressing any issues promptly and professionally.
+                    If you're looking for a solid hosting solution in the UK, this service offers great performance, security,
+                    and value for money. Highly recommended for anyone serious about a stable online presence!
+                    </p>
+                    <span className={styles.highlightText}>"</span>
+                    <div className={styles.client_content}>
+                        <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Melissa Steenberk" />
+                        <div className={styles.client_details}>
+                            <h2>Jaimee Becker</h2>
+                            <p>Host from UK</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.client_text}>
+                    <span className={styles.highlightText}>"</span>
+                    <p className={styles.clientText}>
+                    Reliable and Efficient Hosting from Germany I recently switched to a hosting provider based in Germany, 
+                    and it’s been an excellent decision. The platform is fast and stable, offering great performance with little to no downtime. 
+                    The setup process was straightforward, and the service provides excellent security features, 
+                    which is especially important for websites dealing with sensitive data. 
+                    The German-based servers have shown impressive speed for both local and international visitors, 
+                    making it a fantastic choice for businesses or personal websites looking for reliability and performance. 
+                    Highly recommended for those seeking a strong hosting solution from Germany!
+                    </p>
+                    <span className={styles.highlightText}>"</span>
+                    <div className={styles.client_content}>
+                        <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Melissa Steenberk" />
+                        <div className={styles.client_details}>
+                            <h2>Maurice von Dorn</h2>
+                            <p>Host from Germany</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className={styles.client_text}>
+                    <span className={styles.highlightText}>"</span>
+                    <p className={styles.clientText}>
+                    As the owner of Amode, I’ve had the opportunity to host several websites on various platforms, and the service we provide has consistently exceeded expectations. 
+                    Our hosting solutions are designed to offer a seamless, high-performance experience with reliable uptime, top-notch security features, and a user-friendly interface. 
+                    Whether you're running a small business or a larger operation, our infrastructure is built to scale efficiently and ensure your site is always performing at its best. At Amode, 
+                    we prioritize customer satisfaction, and our support team is available around the clock to help with any issues that may arise. 
+                    We take pride in offering hosting that’s as robust as it is reliable, making us a trusted choice for clients worldwide.
+                    </p>
+                    <span className={styles.highlightText}>"</span>
+                    <div className={styles.client_content}>
+                        <img src="https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096" alt="Melissa Steenberk" />
+                        <div className={styles.client_details}>
+                            <h2>Laisa Feldt</h2>
+                            <p>Owner at Amode</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -349,7 +455,7 @@ function Landing() {
 
             <div className={styles.faq}>
                 <div className={styles.faq__header}>
-                    <img src={supportLogo} alt='support'/>
+                    <img src={supportLogo} alt='support' />
                     <h1>Answers to <span className={styles.highlightText}>your</span> questions</h1>
                 </div>
                 <div className={styles.faq__list}>
@@ -371,62 +477,8 @@ function Landing() {
                     <h3>Our expert team is ready for support!</h3>
                     <button className={styles.nextButtons}>Talk to a specialist</button>
                 </div>
-                <img src={PersonalAdvice} alt='personalAdvice'/>
+                <img src={PersonalAdvice} alt='personalAdvice' />
             </div>
-            {/*
-            <section className={styles.WhyHow}>
-                <div className={styles.WhyHow_text}>
-                    <h1>Why should i host on Domits?</h1>
-                </div>
-                <div className={styles.proHosting}>
-                    <div className={styles.Cards}>
-                        <div className={styles.infoCard}>
-                            <img src={rocket} alt="Rocket Icon" />
-                            <h4>vs Airbnb & Booking</h4>
-                            <p>Domits creates cool new sustainable value with Travel Innovations Labs!</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={chat} alt="Chat Icon" />
-                            <h4>Customer Experience</h4>
-                            <p>Unlimited support and personalized modern dashboards</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={banknote} alt="Banknote Icon" />
-                            <h4>Winning together</h4>
-                            <p>You're more than just a customer or data to us. We truly care about you and your success. You'll feel it.</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={monitor} alt="Monitor Icon" />
-                            <h4>Improving 1% daily</h4>
-                            <p>Healthy, safe and future-proof are deeply embedded values.</p>
-                        </div>
-                    </div>
-                </div>
-            </section> */}
-            {/* <section className={styles.WhyHow}>
-                <div className={styles.WhyHow_text}>
-                    <h1>How to host on Domits?</h1>
-                </div>
-                <div className={styles.proHosting}>
-                    <div className={styles.Cards}>
-                        <div className={styles.infoCard}>
-                            <img src={rocket} alt="Rocket Icon" />
-                            <h4>List your property</h4>
-                            <p>List your property free of charge within minutes</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={banknote} alt="Banknote Icon" />
-                            <h4>Get paid</h4>
-                            <p>Easy, fast and safe payments</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={chat} alt="Chat Icon" />
-                            <h4>Receive guests</h4>
-                            <p>Give guests a warmhearted welcome</p>
-                        </div>
-                    </div>
-                </div>
-            </section> */}
         </main>
     );
 }

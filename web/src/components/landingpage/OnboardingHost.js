@@ -329,7 +329,7 @@ function OnboardingHost() {
         FamilyFriendly: [
             'High chair',
             'Crib',
-            'Childrens books and toys',
+            'Children’s books and toys',
             'Baby safety gates',
             'Baby bath',
             'Baby monitor'
@@ -454,9 +454,9 @@ function OnboardingHost() {
                     setTypeAmenities(boatAmenities);
                     return;
                 case 'Camper':
-                    setFormData(generateCamperFormData);
+                   setFormData(generateCamperFormData);
                     setTypeAmenities(camperAmenities);
-                    return;
+                   return;
                 default:
                     setFormData(generateNormalAccommodationFormData);
                     setTypeAmenities(allAmenities);
@@ -823,7 +823,6 @@ function OnboardingHost() {
             // Sla de bijgewerkte formData op in de state
             await setFormData(updatedFormData);
             setImageFiles([]);
-
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
                 method: 'POST',
                 body: JSON.stringify(formData),
@@ -1137,7 +1136,7 @@ function OnboardingHost() {
                                 </div>
                             ) : (
                                 <div className="guest-amount-item">
-                                    <p>Beds</p>
+                                    <p>Bedrooms</p>
                                     <div className="amount-btn-box">
                                         <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
                                         </button>
@@ -1561,7 +1560,7 @@ function OnboardingHost() {
                                         required={true}
                                     />
                                     <label>
-                                        Required driver's license
+                                        Required driver’s license
                                     </label>
                                     <Select
                                         options={licenseTypes.map(licenseType => ({value: licenseType, label: licenseType}))}
