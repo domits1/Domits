@@ -219,8 +219,7 @@ const ListingDetails = () => {
                     throw new Error('Failed to fetch accommodation data');
                 }
                 const responseData = await response.json();
-                const data = JSON.parse(responseData.body);
-                console.log(data)
+                const data = JSON.parse(responseData.body);               
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
