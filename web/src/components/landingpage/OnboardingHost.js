@@ -716,12 +716,12 @@ function OnboardingHost() {
                 const compressedFile = await imageCompression(file, sizeOptions);
                 const keyPath = `images/${userId}/${accommodationId}/${key}/Image-${index + 1}.jpg`;
 
-                // Upload alleen de gecomprimeerde versie naar S3
+                //upload  gecomprimeerde naar S3
                 await Storage.put(keyPath, compressedFile, {
                     bucket: S3_BUCKET_NAME,
                     region: region,
                     contentType: 'image/jpeg',
-                    level: 'public', // Maak de afbeelding publiekelijk toegankelijk
+                    level: 'public',
                     customPrefix: { public: '' }
                 });
             } catch (error) {
@@ -729,24 +729,6 @@ function OnboardingHost() {
             }
         }
     };
-
-    const uploadImageToS3 = async (userId, accommodationId, image, index) => {
-        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
-
-        try {
-            await Storage.put(key, image, {
-                bucket: S3_BUCKET_NAME,
-                region: region,
-                contentType: image.type,
-                level: null,
-                customPrefix: { public: '' }
-            });
-            return constructURL(userId, accommodationId, index);
-        } catch (err) {
-            console.error("Failed to upload file:", err);
-            throw err;
-        }
-    }
 
     const removeImageFromS3 = async (userId, accommodationId, index) => {
         const folders = ['', 'mobile', 'homepage', 'detail']; // Voeg een lege string toe voor de hoofdmap
@@ -760,7 +742,7 @@ function OnboardingHost() {
                 await Storage.remove(key, {
                     bucket: S3_BUCKET_NAME,
                     region: region,
-                    level: 'public', // Zorg ervoor dat de verwijdering op het juiste toegangsniveau gebeurt
+                    level: 'public',
                     customPrefix: { public: '' }
                 });
                 console.log(`Deleted ${key} successfully`);
