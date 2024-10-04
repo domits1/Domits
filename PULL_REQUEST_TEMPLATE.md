@@ -4,6 +4,12 @@
 ## Related Issue
 `Related Issue: #[issue number]`
 
+## Proposed Changes
+`Description: [Please add detailed description of the changes here]`
+
+## Branch management
+- [ ] Merging into acceptance (not main)
+
 ## Change size
 - [ ] Big change (300+)
 - [ ] Small change (less than 300)
@@ -12,15 +18,13 @@
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Optimalization
+- [ ] Documentation update
 
 ## Npm packages 
 - [ ] NPM Packages installed
 - [ ] NPM Packages removed
 - [ ] NPM Packages updated
 - [ ] Did you check for vulnerabilities using "npm audit"?
-
-## Proposed Changes
-`Description: [Please add detailed description of the changes here]`
 
 ## Checklist
 - [ ] Console.logs are deleted
