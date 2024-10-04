@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import './HostRevenueStyle.css';
 import Pages from "./Pages.js";
-import RevenueOverview from './HostDashboardCards/RevenueOverview.jsx';
-import MonthlyComparison from './HostDashboardCards/MonthlyComparison.jsx';
-import OccupancyRateCard from './HostDashboardCards/OccupancyRate.jsx';
-import RevPARCard from './HostDashboardCards/RevPAR.jsx';
+import RevenueOverview from './HostRevenueCards/RevenueOverview.jsx';
+import MonthlyComparison from './HostRevenueCards/MonthlyComparison.jsx';
+import OccupancyRateCard from './HostRevenueCards/OccupancyRate.jsx';
+import RevPARCard from './HostRevenueCards/RevPAR.jsx';
 import { gql, useQuery } from '@apollo/client';
 
 // Define the GraphQL query
