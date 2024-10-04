@@ -61,8 +61,6 @@ describe("Test: Boat 'what type of boat do yo own?'", () => {
             });
 
         cy.get('#root > div > main > nav > button:nth-child(2)').click();//next page
-
-
     });
 });
 
@@ -172,10 +170,6 @@ describe("Test: 'How many people can stay here?' form", () => {
         cy.get('#root > div > main > section > div:nth-child(4) > div > button:nth-child(1)').click()
         cy.wait(1000)
         cy.get('#root > div > main > section > div:nth-child(4) > div').contains(0);
-
-
-
-
     });
 });
 
@@ -268,15 +262,15 @@ describe("Test: Add photos of your boat", () => {
         cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
 
         cy.get('#root > div > main > section > section > section:nth-child(1) > img') // Target the image 
-            .should('have.attr', 'alt', 'Image 1');
+            .should('have.attr', 'alt', 'Image-1');
         cy.get('#root > div > main > section > section > section:nth-child(2) > img')
-            .should('have.attr', 'alt', 'Image 2');
+            .should('have.attr', 'alt', 'Image-2');
         cy.get('#root > div > main > section > section > section:nth-child(3) > img')
-            .should('have.attr', 'alt', 'Image 3');
+            .should('have.attr', 'alt', 'Image-3');
         cy.get('#root > div > main > section > section > section:nth-child(4) > img')
-            .should('have.attr', 'alt', 'Image 4');
+            .should('have.attr', 'alt', 'Image-4');
         cy.get('#root > div > main > section > section > section:nth-child(5) > img')
-            .should('have.attr', 'alt', 'Image 5'); // checking if all image-containers contain an image
+            .should('have.attr', 'alt', 'Image-5'); // checking if all image-containers contain an image
 
         cy.get('#root > div > main > section > section > section:nth-child(1) > button').click();
         cy.get('#root > div > main > section > section > section:nth-child(2) > button').click();
@@ -324,7 +318,7 @@ describe("Test: title and subtitle functionality ", () => {
         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
         cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
         cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-
+        cy.wait(500)
 
         cy.get('#root > div > main > nav > button:nth-child(2)').click();
         //Title
@@ -430,8 +424,6 @@ describe("Test: Description functionality", () => {
 
 describe("Test: Set rate", () => {
     it("should contain the right values", () => {
-
-
         cy.loginAsGuest();
         cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
         cy.wait(500)
@@ -526,8 +518,6 @@ describe("Test: Set rate", () => {
 
 describe("Test: Calendar functionality", () => {
     it("should check the functionality of the calendar", () => {
-
-
         cy.loginAsGuest();
         cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
         cy.wait(500)
@@ -630,7 +620,6 @@ describe("Test: Calendar functionality", () => {
 
 describe("Test: All", () => {
     it("should check if everything is correct", () => {
-
         cy.loginAsGuest();
         cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
         cy.wait(500)

@@ -229,6 +229,7 @@ describe("Test: camper 'Add and delete image test'", () => {
         cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked'); // checking cleaning service option
         cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
 
+        // Image test
         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
         cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
@@ -264,9 +265,6 @@ describe("Test: camper 'Add and delete image test'", () => {
 
         cy.get('#root > div > main > nav > button.onboarding-button-disabled').should('be.visible'); // check if the disabled button is visible so that it cant go to he next page without adding photos
         // cy.get('#root > div > main > nav > button:nth-child(2)').should('not.be.visible');
-
-
-
     });
 });
 describe("Test: camper 'Title and subtitle'", () => {
@@ -312,10 +310,7 @@ describe("Test: camper 'Title and subtitle'", () => {
          //Subtitle
          cy.get('#Subtitle').type(camperSubtitleNot128)
          .should('have.value', camperSubtitleNot128.substring(0, 128)); // Typing  more than 128 characters
-
          cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled'); // button check
-
-
     });
 });
 
@@ -509,8 +504,8 @@ describe("Test: camper Set rate", () => {
     });
 });
 
-describe("Test: camper Set rate", () => {
-    it("should contain the right values", () => {
+describe("Test: camper Calender", () => {
+    it("should check if the calender works", () => {
         cy.loginAsGuest();
         cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
         cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
@@ -607,8 +602,8 @@ describe("Test: camper Set rate", () => {
     });
 });
 
-describe("Test: camper Set rate", () => {
-    it("should contain the right values", () => {
+describe("Test: camper description", () => {
+    it("should contain the right information", () => {
         cy.loginAsGuest();
         cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
         cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
@@ -685,7 +680,25 @@ describe("Test: camper Set rate", () => {
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(6)').click();
         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-
+        // correct info
+        cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(2) > td:nth-child(2)').should('have.text', camperTitle);
+        cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(3) > td:nth-child(2)').should('have.text', shareSpecial);
+        cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(4) > td:nth-child(2)').should('have.text', '100');
+        cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(11) > td:nth-child(2)').should('have.text', countryToSelect);
+        cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(12) > td:nth-child(2)').should('have.text', validCity);
+        cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(13) > td:nth-child(2)').should('have.text', validPostal);
+        cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(14) > td:nth-child(2)').should('have.text', validStreet);
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', camperInputs.licensePlate)
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(2) > td:nth-child(2)').should('have.text', camperInputs.brand)
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(3) > td:nth-child(2)').should('have.text', camperInputs.model)
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(4) > td:nth-child(2)').should('have.text', camperInputs.requirement)
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(5) > td:nth-child(2)').should('have.text', '15/08/2024')
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(6) > td:nth-child(2)').should('have.text', `${camperInputs.height} meter`)
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(7) > td:nth-child(2)').should('have.text', `${camperInputs.length} meter`)
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(8) > td:nth-child(2)').should('have.text', `${camperInputs.fuel} Liter(s) per hour`)
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(9) > td:nth-child(2)').should('have.text', camperInputs.transmission)
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(10) > td:nth-child(2)').should('have.text', '01/01/2020')
+        cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(11) > td:nth-child(2)').should('have.text', '01/01/2023')
 
     });
 });
