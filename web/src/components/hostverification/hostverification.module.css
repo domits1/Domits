@@ -136,6 +136,16 @@ hr {
   cursor: pointer;
   font-size: 1em;
 }
+
+.disabled-btn {
+  background-color: #e1e1e1;
+  color: white;
+  border: 0px;
+  padding: 7px 40px;
+  border-radius: 5px;
+  cursor: not-allowed;
+  font-size: 1em;
+}
 /* options */
 
 /* registration number input */
@@ -281,17 +291,8 @@ hr {
   gap: 25px;
 }
 .code-input-container p{
-  font-size: 1.1em;
+  font-size: 1em;
   color: black;
-}
-
-.code-input-container input{
-  width: 15%;
-  padding: 10px 0;
-  border: 1px solid #e1e1e1;
-  border-radius: 10px;
-  font-size: 1.5em;
-  text-align: center;
 }
 
 .code-input-container button{
@@ -325,13 +326,14 @@ hr {
     height: calc(100vh - 146.66px);
   }
 
+  .Toast{
+    top: 146.66px;
+    width: 75%;
+  }
+
   .registrationnumber-container svg{
     width: 15px;
     height: 20px;
-  }
-
-  .code-input-container input{
-    width: 25%;
   }
   
   .code-input-container button{
@@ -342,6 +344,10 @@ hr {
 
 /* Small devices (landscape phones, 576px and up) */
 @media (min-width: 576px) and (max-width: 767.98px) {
+  .verification-container {
+    width: 70%;
+    height: calc(100vh - 151.76px);
+  }
 }
 
 /* Medium devices (tablets, 768px and up) */
@@ -350,8 +356,10 @@ hr {
     width: 70%;
     height: calc(100vh - 151.76px);
   }
-  .code-input-container input{
-    width: 25%;
+
+  .Toast{
+    top: 151.76px;
+    width: 70%;
   }
   
   .code-input-container button{
