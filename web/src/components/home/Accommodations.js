@@ -1,10 +1,13 @@
 import React, { useState, useEffect } from "react";
+import { Storage } from 'aws-amplify';
 import './Accommodations.css';
+import styles from '../utils/PageSwitcher.module.css'
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
-import CheckoutFrontend from "../checkout/CheckoutFrontEnd";
 
 const Accommodations = ({ searchResults }) => {
+  const S3_BUCKET_NAME = 'accommodation';
+  const region = 'eu-north-1';
   const [accolist, setAccolist] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -26,17 +29,31 @@ const Accommodations = ({ searchResults }) => {
 
   const formatData = (items) => {
     return items.map((item) => ({
-      image: item.Images.image1,
+      image: item.image ||item.Images['homepage'] || item.Images['image1'],
       title: item.Title,
       city: item.City,
       country: item.Country,
       details: item.Description,
       price: `€${item.Rent} per night`,
       id: item.ID,
-      bathrooms: `${item.Bathrooms} Bathrooms`,
-      bedrooms: `${item.Bedrooms} Bedrooms`,
-      persons: `${item.GuestAmount} Persons`,
+      beds: `${item.Beds} Bed(s)`,
+      bedrooms: `${item.AccommodationType === 'Boat' ? item.Cabins : item.Bedrooms} ${item.AccommodationType === 'Boat' ? 'Cabins' : 'Bedrooms'}`,
+      persons: `${item.GuestAmount} ${item.GuestAmount > 1 ? 'People' : 'Person'}`,
     }));
+  };
+
+
+  const populateAccoListWithImages = async (data) => {
+    const formattedData = await Promise.all(
+        data.map(async (item) => {
+          const homepageImageURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.jpg`
+          return {
+            ...item,
+            image: homepageImageURL || item.Images['image1'] // Eerst homepage URL, dan fallback naar een andere URL
+          };
+        })
+    );
+    setAccolist(formatData(formattedData));
   };
 
   useEffect(() => {
@@ -48,7 +65,9 @@ const Accommodations = ({ searchResults }) => {
         }
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
-        setAccolist(formatData(data));
+
+        // Vul de data met de juiste homepage-afbeeldingen
+        await populateAccoListWithImages(data);
       } catch (error) {
         console.error('Error fetching or processing data:', error);
       } finally {
@@ -57,24 +76,23 @@ const Accommodations = ({ searchResults }) => {
     };
     if (searchResults && searchResults.length > 0) {
       setAccolist(formatData(searchResults));
-      setCurrentPage(1); 
+      setCurrentPage(1);
     } else {
       fetchData();
     }
   }, [searchResults]);
 
-//optioneel
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
   if (loading) {
     return (
-      <div className="full-visibility">
-        {Array(8).fill().map((_, index) => (
-          <SkeletonLoader key={index} />
-        ))}
-      </div>
+        <div className="full-visibility">
+          {Array(8).fill().map((_, index) => (
+              <SkeletonLoader key={index} />
+          ))}
+        </div>
     );
   }
 
@@ -92,8 +110,6 @@ const Accommodations = ({ searchResults }) => {
             <div className="accocard-price">{accommodation.price}</div>
             <div className="accocard-detail">{accommodation.details}</div>
             <div className="accocard-specs">
-              <div className="accocard-size">{accommodation.size}</div>
-              <div className="accocard-size">{accommodation.bathrooms}</div>
               <div className="accocard-size">{accommodation.bedrooms}</div>
               <div className="accocard-size">{accommodation.persons}</div>
             </div>
@@ -101,7 +117,7 @@ const Accommodations = ({ searchResults }) => {
         </div>
       ))}
       {/* Pagination */}
-      <div className="pagination">
+      <div className={styles.pagination}>
         <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
           &lt; Previous
         </button>
@@ -109,7 +125,7 @@ const Accommodations = ({ searchResults }) => {
           <button
             key={i}
             onClick={() => handlePageChange(i + 1)}
-            className={currentPage === i + 1 ? "active" : ""}
+            className={`${(currentPage === i + 1) && styles.active}`}
           >
             {i + 1}
           </button>

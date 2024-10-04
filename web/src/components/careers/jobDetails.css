@@ -1,38 +1,187 @@
 .job-detail-container{
-    max-width: 1200px;
+    max-width: 100%;
     margin: 0 auto;
-    padding: 20px;
+    /* padding: 20px; */
     font-family: Arial, sans-serif;
-    text-align: left;
 }
 
-.job-detail-container ul {
-    list-style-type: none;
-    padding: 0;
+.hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    /* padding: 20px; */
+    
 }
 
-.job-detail-container ul li {
-    margin: 5px 0;
-    font-size: 14px;
-    font-weight:normal;
-    color: #667;
+.left-container {
+    flex: 1;
+    padding-right: 20px;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
-.apply-button {
-    background-color: #0D9813;
-    margin: 20px 0;
-    color: white;
-    border: none;
+.left-container h1 {
+    font-size: 48px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.company-name {
+    color: var(--primary-color);
+    font-size: 45px;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 20px;
+}
+
+.left-container p {
+    font-size: 18px;
+    color: #252525;
+    margin-bottom: 20px;
+}
+
+.job-tags {
+    display: flex;
+    gap: 15px;
+}
+
+.tag {
     padding: 10px 20px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
+    font-size: 1em;
+    color: white;
+    background-color: var(--primary-color);
     border-radius: 5px;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
 }
 
-.apply-button:hover {
-    background-color: #45a049;
+.right-container {
+    flex: 1;
+    max-width: 50%;
+    position: relative;
+    overflow: hidden;
+}
+
+.right-container img {
+    width: 100%;
+    height: 100%;
+    -webkit-border-top-left-radius: 300px;
+    -webkit-border-bottom-left-radius: 300px;
+    -moz-border-radius-topleft: 300px;
+    -moz-border-radius-bottomleft: 300px;
+    border-top-left-radius: 300px;
+    border-bottom-left-radius: 300px;
+}
+
+.responsibilities {
+    display: flex;
+    align-items: center;
+    width: 95%;
+    margin: 0 auto;
+    padding: 50px 0;
+}
+
+.resp-container {
+    display: flex;
+    max-width: 1200px;
+    align-items: center;
+    gap: 30px;
+}
+
+.resp-container img {
+    width: 50%;
+    object-fit: cover;
+    border-radius: 0 50px 0 50px;
+}
+
+.resp-right {
+    flex: 1;
+    padding: 20px;
+}
+
+.resp-heading {
+    font-size: 48px;
+    color: var(--primary-color);
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+
+.resp-right p {
+    font-size: 20px;
+    line-height: 1.5;
+    color: #252525;
+}
+
+.technologies {
+    background-color: var(--primary-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 25px 0 50px 0;
+    width: 100vw;
+}
+
+.technologies p {
+    color: white;
+    max-width: 650px;
+    font-size: 20px;
+}
+
+.tech-heading {
+    font-size: 48px;
+    color: white;
+
+}
+
+.experience {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.exp-heading {
+    color: var(--primary-color);
+    font-size: 48px;
+    font-weight: 600;
+}
+
+.exp-container-top, .exp-container-bottom {
+    margin: auto;
+}
+
+.exp-container-bottom {
+    margin-bottom: 45px;
+}
+
+.exp-container-bottom ul.job-detail-list {
+    max-width: 800px;
+}
+
+.exp-container-top, .exp-container-bottom, .apply .job-detail-list li {
+    font-size: 18px;
+    position: relative;
+    padding-left: 25px;
+    line-height: 1.7;
+}
+.job-detail-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    /* top: 0; */
+    transform: translateY(50%);
+    width: 20px;
+    height: 20px;
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="green"><path d="M12.854 3.646a.5.5 0 00-.708-.708L7 8.086 4.354 5.44a.5.5 0 10-.708.708l3 3a.5.5 0 00.708 0l5-5z"/></svg>');
+}
+
+.apply {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+.apply p {
+    max-width: 550px;
+    font-size: 18px;
 }

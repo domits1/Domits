@@ -8,18 +8,18 @@ function Whydomits() {
   return (
     <section className="why-domits">
       <article className="why-domits__title-text-container">
-        <h3 className="why-domits__h3">Why Domits & how we win together</h3>
+        <h3 className="why-domits__h3">Why <span className="highlightText">Domits</span> & how we win together</h3>
         <h4 className="why-domits__h4">
           One of the fastest improving travel platforms.
         </h4>
         <p className="why-domits__p">
           Besides our resourceful traveltech network and talents, we are one of
           the fastest improving travel platforms. Although we only launched
-          Domits in late 2023, we have been supporting travel companies to grow
-          since 2015.
+          <span className="highlightText"> Domits</span> in late 2023, 
+          we have been supporting travel companies to grow since 2015.
         </p>
         <p className="why-domits__p">
-          Start your journey as a Guest or host within minutes. List, search and
+          Start your journey as a Guest or <span className="highlightText">Host</span> within minutes. List, search and
           book holiday accommodations, campers and boats. Save cost with our
           small system charges. There are no hidden costs or percentage cuts.
           Save administrative time. Make use of our global payment methods.

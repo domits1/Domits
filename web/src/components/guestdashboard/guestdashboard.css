@@ -118,16 +118,13 @@
   border: none;
   background-color: white;
 }
-
-.review-alert {
-  margin: 10%;
-}
-
 .review-delete:hover {
   cursor: pointer;
   transform: scale(1.2);
 }
-
+.review-alert {
+  margin: 10%;
+}
 .cross {
   width: 30px;
   height: 30px;
@@ -239,6 +236,13 @@
 
 .infoBox span {
   margin-right: auto;
+  font-size: 1.3rem;
+  font-weight: 400;
+}
+
+.infoBox p {
+  font-size: 1.3rem;
+  font-weight: 300;
 }
 
 .button.last-button {
@@ -256,7 +260,47 @@
   border-radius: 12px;
   background-color: #f9f9f9;
 }
+.edit-icon-background {
+  background-color: #0D9813;
+  border: 1px solid #0D9813;
+  border-radius: 15px;
+  padding: 0.4rem;
+  margin-left: 2%;
+  width: 2rem;
+  height: 2rem;
+  position: relative;
+  text-align: center;
+    cursor: pointer;
+}
+.edit-icon-background:hover{
+  background-color: #6CD46F ;
+}
 
+.guest-edit-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1.6rem;
+  height: 1.6rem;
+  object-fit: contain;
+}
+
+.guest-check-icon{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 2.5rem;
+  height: 2.5rem;
+  object-fit: contain;
+}
+
+.guest-edit-input{
+    font-size: 1.3rem;
+    font-weight: 300;
+    margin-left: -2%;
+}
 @media (max-width: 480px) {
   .reviewColumn {
       width: 100%;

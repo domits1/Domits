@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostSetup = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-setup' style={{
                 display: "flex",
                 flexDirection: "row"

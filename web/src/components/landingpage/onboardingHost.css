@@ -144,8 +144,17 @@
   justify-items: center;
   align-items: center;
 }
+.boat-types {
+  padding: 5%;
+  margin-bottom: 10%;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-gap: 5%;
+  justify-items: center;
+  align-items: center;
+}
 
-.accommodation-types .option {
+.option {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -155,7 +164,7 @@
   transition: border-color 0.3s;
 }
 
-.accommodation-types .option.selected {
+.option.selected {
   border-color: #003366;
 }
 
@@ -239,9 +248,9 @@
     flex-direction: column;
     justify-content: space-between;
     width: 30vw;
-  }
-  .location-right {
-    width: 40vw;
+    .locationText {
+      margin-bottom: 10%;
+    }
   }
 }
 
@@ -318,8 +327,52 @@
   align-items: center;
 }
 
-.accommodation-title {
+.accommodation-title, .accommodation-specification {
   align-self: center;
+}
+.accommodation-specification {
+  max-width: 50%;
+  .radioBtn-box, .radioBtn-box-vertical, input {
+    margin-bottom: 5%;
+  }
+  .accommodation-general {
+    display: flex;
+    flex-direction: column;
+  }
+  .accommodation-technical {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    grid-gap: 5%;
+  }
+}
+.radioBtn-box {
+  display: flex;
+  flex-direction: row;
+  justify-content: start;
+  gap: 5%;
+}
+#summary {
+  h3 {
+    margin-bottom: 2%;
+  }
+  th {
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+  }
+}
+.accommodation-summary {
+  width: 100%;
+  border-collapse: collapse;
+  tr {
+    margin-bottom: 5%;
+  }
+}
+.check-box-vertical {
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+  gap: 5%;
+  margin-bottom: 10%;
 }
 .textInput-field {
   width: 100%;
@@ -327,7 +380,7 @@
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 5px;
-  margin-bottom: 20px;
+  margin-bottom: 10%;
 }
 .acco-price {
   padding: 5%;

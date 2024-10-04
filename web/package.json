@@ -57,6 +57,7 @@
     "babel-jest": "^29.7.0",
     "babel-preset-react-app": "^10.0.1",
     "cypress": "^13.7.2",
+    "dotenv-webpack": "^8.1.0",
     "eslint": "^8.57.0",
     "eslint-plugin-react": "^7.35.2",
     "globals": "^15.9.0",
@@ -85,6 +86,7 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@hassanmojab/react-modern-calendar-datepicker": "^3.1.7",
     "axios": "^1.7.2",
+    "browser-image-compression": "^2.0.2",
     "chart.js": "^4.4.3",
     "country-data": "^0.0.31",
     "date-fns": "^3.6.0",
@@ -97,7 +99,8 @@
     "react-country-flag": "^3.1.0",
     "react-date-range": "^2.0.0-alpha.4",
     "react-load-script": "^0.0.6",
-    "react-resizable": "^3.0.5"
+    "react-resizable": "^3.0.5",
+    "string-similarity": "^4.0.4"
   },
   "jest": {
     "moduleNameMapper": {

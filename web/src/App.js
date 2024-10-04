@@ -45,12 +45,12 @@ import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat";
 import Chatbot from "./components/chatbot/chatbot";
 import ChatWidget from './components/chatwidget/ChatWidget';
+import EmployeeChat from './components/employee/EmployeeChat';
 import FlowContext from './FlowContext'
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./components/hostdashboard/HostReservations";
 import HostRevenues from "./components/hostdashboard/HostRevenues";
-import HostOccupancy from "./components/hostdashboard/HostOccupancy";
 import HostPropertyCare from "./components/hostdashboard/HostPropertyCare";
 import HostIoTHub from "./components/hostdashboard/HostIoTHub";
 import HostPricing from "./components/hostdashboard/HostPricing";
@@ -63,9 +63,11 @@ import { initializeUserAttributes } from './components/utils/userAttributes';
 import PageNotFound from "./components/error/404NotFound";
 import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
+import MenuBar from "./components/base/MenuBar";
 
 import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
+import Hostchatbot from "./components/hostchatbot/hostchatbot";
 
 
 Modal.setAppElement('#root');
@@ -127,6 +129,13 @@ function App() {
                             {/* Chatbot */}
                             <Route path="/chatbot" element={<Chatbot />} />
 
+                            <Route path="/employeechat" element={<EmployeeChat />} />
+
+                            {/* Host Chatbot */}
+                            <Route path="/hostchatbot" element={<Hostchatbot />} />
+
+                        
+
                             {/* Review */}
                             <Route path="/review" element={<ReviewPage/>}/>
 
@@ -171,7 +180,6 @@ function App() {
                                             <Route path="chat" element={<Hostchat />} />
                                             <Route path="reservations" element={<HostReservations />} />
                                             <Route path="revenues" element={<HostRevenues />} />
-                                            <Route path="occupancy" element={<HostOccupancy />} />
                                             <Route path="property-care" element={<HostPropertyCare />} />
                                             <Route path="iot-hub" element={<HostIoTHub />} />
                                             <Route path="pricing" element={<HostPricing />} />
@@ -197,7 +205,10 @@ function App() {
                             <Route path="/*" element={<PageNotFound />} />
                         </Routes>
                         {renderFooter()}
+                        {currentPath !== '/admin' && <MenuBar />}
+                        <Hostchatbot /> 
                         <ChatWidget />
+
                     </div>
                     </UserProvider>
                 </AuthProvider>

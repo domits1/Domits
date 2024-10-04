@@ -1,9 +1,8 @@
 .chat{
     height: 80vh;
-    width: 65vw;
+    width: 100vw;
     background: white;
     display: flex;
-    justify-content: space-evenly;
     gap: 5%;
     align-items: center;
 }
@@ -52,7 +51,8 @@
     display: flex;
 }
 
-h2{
+/* DONT USE GLOBAL STYLING */
+/* h2{
     font-family: sans-serif;
     font-family: "Kanit";
     src: local("KanitRegular"),
@@ -75,7 +75,7 @@ p{
     src: local("KanitLight"),
      url("../../fonts/kanit/Kanit-Light.ttf") format("truetype");
      color: #707070;
-}
+} */
 
 .chat__topUl{
     width: 100%;
@@ -240,7 +240,7 @@ p{
 }
 
 .chat__figure{
-    width: 100%;
+    width: 60%;
     height: 85%;
     background: white;
     display: flex;
@@ -248,9 +248,7 @@ p{
     align-items: flex-start;
     flex-direction: column;
     border-top-left-radius: 1.5rem;
-    border-top-right-radius: 1.5rem;
     border-bottom-left-radius: 1.5rem;
-    border-bottom-right-radius: 1.5rem;
     padding-left: 25px;
     padding-right: 25px;
     border: 1.5px solid #eee;
@@ -606,15 +604,6 @@ a{
         flex-direction: row;
         align-items: center;
     }
-
-    .chat__user{
-        
-    }
-
-    .chat__people{
-      
-    }
-
 
     .chat__people.active {
         width: 100%;
