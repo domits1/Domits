@@ -14,8 +14,8 @@ const countryToSelect = 'Netherlands';
 const validCity = 'Amsterdam';
 const validStreet = 'Camperstreet 11';
 const validPostal = '9029IO';
-const camperTitleNot128 = `Explore the Open Road with a Campervan: Your Home on Wheels, Perfect for Adventure and Creating Unforgettable Memories. and more words`;
-const camperSubtitleNot128 = `From coastlines to mountain escapes, your campervan lets you travel freely, bringing comfort, convenience, and adventure. and more words`;
+const camperTitleMoreThan128 = `Explore the Open Road with a Campervan: Your Home on Wheels, Perfect for Adventure and Creating Unforgettable Memories. and more words`;
+const camperSubtitleMoreThan128 = `From coastlines to mountain escapes, your campervan lets you travel freely, bringing comfort, convenience, and adventure. and more words`;
 const camperTitle = `Explore the Open Road with a Campervan: Your Home on Wheels, Perfect for Adventure and Creating Unforgettable Memories.`;
 const camperSubtitle = `From coastlines to mountain escapes, your campervan lets you travel freely, bringing comfort, convenience, and adventure.`;
 const shareSpecial505 = `
@@ -49,199 +49,167 @@ const camperInputs = {
 describe("Test: camper 'what type of camper do you own?'", () => {
     it("should test if all camper options are available and clickable", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.wait(500)
-        cy.get('#root > div > main > nav > button.onboarding-button').click(); // It should go back to dashboard
-        cy.wait(500);
         cy.get('.wijzer.addAcco').click();
-
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > nav > button.onboarding-button').click();
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
         // To test if all camper options are available and clickable
         cy.get('#root > div > main > div > section')
             .find('div')
-            .should('have.length', 7) // Ensure that all the options are available
+            .should('have.length', 7)
             .each(($el) => {
-                const optionText = $el.text().trim(); // Get the text of each element and trim any whitespace
-                expect(camperTypes).to.include(optionText); // Assert that the option is included in expectedOptions
+                const optionText = $el.text().trim();
+                expect(camperTypes).to.include(optionText);
             })
             .each(($el) => {
-                cy.wrap($el).click() // Simulate a click on the camper option
-                    .should('have.class', 'selected'); // Assert that the clicked option has the 'selected' class
-
+                cy.wrap($el).click()
+                    .should('have.class', 'selected');
             });
-
     });
 });
 
 describe("Test: camper 'where can we find your camper?'", () => {
     it("should check functionality of  'where can we find your camper?'", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+
         // Where can we find your camper 
         cy.get('#country > div').click(); // Click to open the dropdown
         cy.get('#country > div.css-1nmdiq5-menu').should('be.visible'); //dropdown options should be visible
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#country > div').should('contain', countryToSelect); // Assert that the selected country is shown in the dropdown 
+        cy.contains(countryToSelect).click();
+        cy.get('#country > div').should('contain', countryToSelect);
         cy.get('#city').should('be.visible');
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
         cy.get('#street').should('be.visible');
-        cy.get('#street').type(validStreet, {force: true}).should('have.value', validStreet); // check if it contains Camperstreet 11
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
         cy.get('#postal').should('be.visible');
-        cy.get('#postal').type(validPostal, {force: true}).should('have.value', validPostal);  // check if it contains 9029IO
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
 
     });
 });
 
-describe("Test: camper 'Let your guest know''", () => {
-    it("should check functionality of  'checkboxes'", () => {
+describe("Test: how many people can stay here", () => {
+    it("should check functionality of buttons", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Where can we find your camper 
-        cy.get('#country > div').click(); // Click to open the dropdown
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
-        cy.get('#street').type(validStreet, {force: true}).should('have.value', validStreet); // check if it contains Camperstreet 11
-        cy.get('#postal').type(validPostal, {force: true}).should('have.value', validPostal);  // check if it contains 9029IO
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // how many people can stay here form
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // Defauolt value equals 0
-        cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click() // + test
-        cy.wait(1000)
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(1); // x test: should have 1
-        cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(1)').click() // - test 
-        cy.wait(1000)
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // - test: should have 0
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#country > div').click();
+        cy.contains(countryToSelect).click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+
+        // Test: how many people can stay here
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click()
-        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled'); // check if confirm and proceed button is enabled
-
-        //there is no limit 
-        for (let i = 0; i < 25; i++) {
-            cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
-        }
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(26);// Check if it can be set to the limit
-
-        // rooms
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(1);
+        cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(1)').click()
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
+        cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click()
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled');
+        
         cy.get('#root > div > main > section > div:nth-child(2) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(2) > div > button:nth-child(2)').click()
-        cy.wait(1000)
         cy.get('#root > div > main > section > div:nth-child(2) > div').contains(1);
         cy.get('#root > div > main > section > div:nth-child(2) > div > button:nth-child(1)').click()
-        cy.wait(1000)
         cy.get('#root > div > main > section > div:nth-child(3) > div').contains(0);
-
-        // Bathrooms
+        
         cy.get('#root > div > main > section > div:nth-child(3) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(3) > div > button:nth-child(2)').click()
-        cy.wait(1000)
         cy.get('#root > div > main > section > div:nth-child(3) > div').contains(1);
         cy.get('#root > div > main > section > div:nth-child(3) > div > button:nth-child(1)').click()
-        cy.wait(1000)
         cy.get('#root > div > main > section > div:nth-child(3) > div').contains(0);
-
-        // Beds
-
+        
         cy.get('#root > div > main > section > div:nth-child(4) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(4) > div > button:nth-child(2)').click()
-        cy.wait(1000)
         cy.get('#root > div > main > section > div:nth-child(4) > div').contains(1);
         cy.get('#root > div > main > section > div:nth-child(4) > div > button:nth-child(1)').click()
-        cy.wait(1000)
         cy.get('#root > div > main > section > div:nth-child(4) > div').contains(0);
 
-
+        // simulating 100 clicks to check limit 
+        for (let i = 1; i <= 4; i++) {
+            cy.get(`#root > div > main > section > div:nth-child(${i}) > div > button:nth-child(2)`).then($button => {
+                for (let j = 0; j < 100; j++) {
+                    cy.wrap($button, { log: false }).click({ log: false });
+                }
+            });
+        }
     });
 });
 describe("Test: camper 'How many people can stay here?' form'", () => {
     it("should check functionality of  'How many people can stay here'", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Where can we find your camper 
-        cy.get('#country > div').click(); // Click to open the dropdown
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
-        cy.get('#street').type(validStreet, {force: true}).should('have.value', validStreet); // check if it contains Camperstreet 11
-        cy.get('#postal').type(validPostal, {force: true}).should('have.value', validPostal);  // check if it contains 9029IO
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // how many people can stay here form
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // Defauolt value equals 0
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#country > div').click();
+        cy.contains(countryToSelect).click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-        // Let guests know what your space has to offer.
-        //checking and unchecking first and last
-        cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').check(); // checking first option
-        cy.wait(500);
+        
+        // Test: Checkboxes
+        cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').check();
         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').should('be.checked');
-        cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').uncheck(); // unchecking first option
-        cy.wait(500);
+        cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').uncheck();
         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').should('not.be.checked');
 
-        cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').check();  // checking last option
-        cy.wait(500);
+        cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').check();
         cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').should('be.checked');
-        cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').uncheck(); // unchecking last option
-        cy.wait(500);
+        cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').uncheck();
         cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').should('not.be.checked');
 
-        // checking and unchecking everything
-        cy.get('input[type=checkbox]').check().should('be.checked');// should check all checkboxes
-        cy.get('input[type=checkbox]').uncheck().should('not.be.checked');// should uncheck all checkboxes
-
-
-
+        // Checking and unchecking everything
+        cy.get('input[type=checkbox]').check().should('be.checked');
+        cy.get('input[type=checkbox]').uncheck().should('not.be.checked');
     });
 });
 
 describe("Test: camper 'Add and delete image test'", () => {
     it("should be able to add and delete images and not got to the next page when there are no images", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Where can we find your camper 
-        cy.get('#country > div').click(); // Click to open the dropdown
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
-        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet); // check if it contains Camperstreet 11
-        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);  // check if it contains 9029IO
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // how many people can stay here form
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // Defauolt value equals 0
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#country > div').click();
+        cy.contains(countryToSelect).click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Let guests know what your space has to offer.
-        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked'); // checking cleaning service option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-        // Image test
+        // Test: Add & Remove images
         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-        cy.wait(5000);
-
-        cy.get('#root > div > main > section > section > section:nth-child(1) > img') // Target the image 
+        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg');
+        cy.wait(1000);
+        cy.get('#root > div > main > section > section > section:nth-child(1) > img')
             .should('have.attr', 'alt', 'Image-1');
         cy.get('#root > div > main > section > section > section:nth-child(2) > img')
             .should('have.attr', 'alt', 'Image-2');
@@ -250,169 +218,133 @@ describe("Test: camper 'Add and delete image test'", () => {
         cy.get('#root > div > main > section > section > section:nth-child(4) > img')
             .should('have.attr', 'alt', 'Image-4');
         cy.get('#root > div > main > section > section > section:nth-child(5) > img')
-            .should('have.attr', 'alt', 'Image-5'); // checking if all image-containers contain an image
+            .should('have.attr', 'alt', 'Image-5');
 
-        cy.wait(5000);
         cy.get('#root > div > main > section > section > section:nth-child(1) > button').click();
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(2) > button').click();
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(3) > button').click();
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(4) > button').click();
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(5) > button').click(); // delete all images 
-
-        cy.get('#root > div > main > nav > button.onboarding-button-disabled').should('be.visible'); // check if the disabled button is visible so that it cant go to he next page without adding photos
-        // cy.get('#root > div > main > nav > button:nth-child(2)').should('not.be.visible');
+        cy.get('#root > div > main > section > section > section:nth-child(5) > button').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
     });
 });
 describe("Test: camper 'Title and subtitle'", () => {
     it("should check that if you type more than 128 characters it still is 128", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Where can we find your camper 
-        cy.get('#country > div').click(); // Click to open the dropdown
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
-        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet); // check if it contains Camperstreet 11
-        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);  // check if it contains 9029IO
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // how many people can stay here form
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // Defauolt value equals 0
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#country > div').click();
+        cy.contains(countryToSelect).click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Let guests know what your space has to offer.
-        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked'); // checking cleaning service option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-        cy.wait(5000);
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg');
+        cy.wait(1000);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-         //Title
-         cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled'); // button check
-         cy.get('#title').type(camperTitleNot128)
-         .should('have.value', camperTitleNot128.substring(0, 128)); // Typing  more than 128 characters
-         cy.wait(1000);
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
+        cy.get('#title').type(camperTitleMoreThan128)
+            .should('have.value', camperTitleMoreThan128.substring(0, 128));
 
-         //Subtitle
-         cy.get('#Subtitle').type(camperSubtitleNot128)
-         .should('have.value', camperSubtitleNot128.substring(0, 128)); // Typing  more than 128 characters
-         cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled'); // button check
+        cy.get('#Subtitle').type(camperSubtitleMoreThan128)
+            .should('have.value', camperSubtitleMoreThan128.substring(0, 128));
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled');
     });
 });
 
 describe("Test: camper 'Description' form'", () => {
     it("should check functionality of  'all inputs of Description '", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Where can we find your camper 
-        cy.get('#country > div').click(); // Click to open the dropdown
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
-        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet); // check if it contains Camperstreet 11
-        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);  // check if it contains 9029IO
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // how many people can stay here form
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // Defauolt value equals 0
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#country > div').click();
+        cy.contains(countryToSelect).click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Let guests know what your space has to offer.
-        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked'); // checking cleaning service option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-        cy.wait(5000);
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        //Title
-        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled'); // button check
-        cy.get('#title').type(camperTitle); // Typing  more than 128 characters
+        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg');
         cy.wait(1000);
-        //Subtitle
-        cy.get('#Subtitle').type(camperSubtitle); // Typing  more than 128 characters
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#title').type(camperTitle);
+        cy.get('#Subtitle').type(camperSubtitle);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-        // Description
+        // Test: Description
         cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
-        cy.get('#description').type(shareSpecial505).should('have.value', shareSpecial505.substring(0, 500)); //type 505 characters and check if it has 500
-
+        cy.get('#description').type(shareSpecial505).should('have.value', shareSpecial505.substring(0, 500));
         // Iterate over each radio button and test selection
         radioButtons.forEach((radio, index) => {
-            cy.get(radio).check(); // Check the current radio button
-            // Verify that the radio button is checked
+            cy.get(radio).check();
             cy.get(radio).should('be.checked');
-
-            // Verify that all other radio buttons are unchecked
             radioButtons.forEach((otherRadio, otherIndex) => {
                 if (otherIndex !== index) {
                     cy.get(otherRadio).should('not.be.checked');
                 }
             });
         });
-
-        // License plate
         cy.get('#licensePlate').type(camperInputs.licensePlate);
         cy.get('#licensePlate').should('have.value', camperInputs.licensePlate);
-        // Brand
         cy.get('#camperbrand').type(camperInputs.brand);
         cy.get('#camperbrand').should('have.value', camperInputs.brand);
-        // Model
+
         cy.get('#model').type(camperInputs.model);
         cy.get('#model').should('have.value', camperInputs.model);
-        // Required Driver’s License 
         cy.get('#requirement').type(camperInputs.requirement + '{enter}');
-        cy.get('#requirement > div > div.css-hlgwow > div.css-1dimb5e-singleValue').should('have.text', camperInputs.requirement); // Check value after typing
-        // General Periodic Inspection
+        cy.get('#requirement > div > div.css-hlgwow > div.css-1dimb5e-singleValue').should('have.text', camperInputs.requirement);
+
         cy.get('#gpi').type(camperInputs.gpi);
         cy.get('#gpi').should('have.value', camperInputs.gpi);
-        // Length
         cy.get('#length').type(camperInputs.length);
         cy.get('#length').should('have.value', camperInputs.length);
-        // Height
+
         cy.get('#height').type(camperInputs.height);
         cy.get('#height').should('have.value', camperInputs.height);
-        // Transmission
         cy.get('#transmission').type(camperInputs.transmission);
         cy.get('#transmission').should('have.value', camperInputs.transmission);
-        // Fuel Tank Capacity
+
         cy.get('#fueltank').type(camperInputs.fuel);
         cy.get('#fueltank').should('have.value', camperInputs.fuel);
-        // Year of Construction
         cy.get('#yoc').type(camperInputs.yearConstruction);
         cy.get('#yoc').should('have.value', camperInputs.yearConstruction);
-        // Year of Renovation
+
         cy.get('#renovated').type(camperInputs.renovated);
         cy.get('#renovated').should('have.value', camperInputs.renovated);
 
-        //checkboxes
-        cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(1) > input[type=checkbox]').should('not.be.checked');
-        cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(1) > input[type=checkbox]').check().should('be.checked').uncheck().should('not.be.checked');
-        cy.wait(500)
-        cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(2) > input[type=checkbox]').should('not.be.checked');
-        cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(2) > input[type=checkbox]').check().should('be.checked').uncheck().should('not.be.checked');
+        cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(1) > input[type=checkbox]')
+            .should('not.be.checked');
+        cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(1) > input[type=checkbox]')
+            .check().should('be.checked').uncheck().should('not.be.checked');
+
+        cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(2) > input[type=checkbox]')
+            .should('not.be.checked');
+        cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(2) > input[type=checkbox]')
+            .check().should('be.checked').uncheck().should('not.be.checked');
 
 
     });
@@ -421,82 +353,56 @@ describe("Test: camper 'Description' form'", () => {
 describe("Test: camper Set rate", () => {
     it("should contain the right values", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Where can we find your camper 
-        cy.get('#country > div').click(); // Click to open the dropdown
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
-        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet); // check if it contains Camperstreet 11
-        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);  // check if it contains 9029IO
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // how many people can stay here form
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // Defauolt value equals 0
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#country > div').click();
+        cy.contains(countryToSelect).click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Let guests know what your space has to offer.
-        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked'); // checking cleaning service option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-        cy.wait(5000);
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        //Title
-        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled'); // button check
-        cy.get('#title').type(camperTitle); // Typing  more than 128 characters
+        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg');
         cy.wait(1000);
-        //Subtitle
-        cy.get('#Subtitle').type(camperSubtitle); // Typing  more than 128 characters
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-
-        // Description
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
         cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
-        cy.get('#description').type(shareSpecial); //type 505 characters and check if it has 500
+        cy.get('#title').type(camperTitle);
+        cy.get('#Subtitle').type(camperSubtitle);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
+        cy.get('#description').type(shareSpecial);
         cy.get(radioButtons[1]).check();
-        // License plate
         cy.get('#licensePlate').type(camperInputs.licensePlate);
-        // Brand
         cy.get('#camperbrand').type(camperInputs.brand);
-        // Model
         cy.get('#model').type(camperInputs.model);
-        // Required Driver’s License 
         cy.get('#requirement').type(camperInputs.requirement + '{enter}');
-        // General Periodic Inspection
         cy.get('#gpi').type(camperInputs.gpi);
-        // Length
         cy.get('#length').type(camperInputs.length);
-        // Height
         cy.get('#height').type(camperInputs.height);
-        // Transmission
         cy.get('#transmission').type(camperInputs.transmission);
-        // Fuel Tank Capacity
         cy.get('#fueltank').type(camperInputs.fuel);
-        // Year of Construction
         cy.get('#yoc').type(camperInputs.yearConstruction);
-        // Year of Renovation
         cy.get('#renovated').type(camperInputs.renovated);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-
-        cy.get('#root > div > main > section:nth-child(3) > div:nth-child(1) > input').clear().type('100', {force: true} ); // Base rate
-        cy.wait(1000);
+        // Test: rent
+        cy.get('#root > div > main > section:nth-child(3) > div:nth-child(1) > input').clear().type('100', { force: true }); // Base rate
         cy.get('#root > div > main > section:nth-child(3) > div:nth-child(3) > p').should('have.text', '€15.00'); // 15% of 100 is 15
         cy.get('#root > div > main > section:nth-child(3) > div:nth-child(5) > p').should('have.text', '€115.00'); // 100 + 15 = 1150
         cy.get('#root > div > main > section:nth-child(4) > div > p').should('have.text', '€100.00');
 
-        // Service fees
-        cy.get('#root > div > main > section:nth-child(3) > div:nth-child(2) > input').clear().type('10', {force: true});
-        cy.wait(1000);
+        cy.get('#root > div > main > section:nth-child(3) > div:nth-child(2) > input').clear().type('10', { force: true });
         cy.get('#root > div > main > section:nth-child(3) > div:nth-child(3) > p').should('have.text', '€15.00'); // 15% of 100 is 15
         cy.get('#root > div > main > section:nth-child(3) > div:nth-child(5) > p').should('have.text', '€125.00'); // 100 + 15 = 1150
         cy.get('#root > div > main > section:nth-child(4) > div > p').should('have.text', '€110.00');
@@ -507,180 +413,127 @@ describe("Test: camper Set rate", () => {
 describe("Test: camper Calender", () => {
     it("should check if the calender works", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Where can we find your camper 
-        cy.get('#country > div').click(); // Click to open the dropdown
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
-        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet); // check if it contains Camperstreet 11
-        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);  // check if it contains 9029IO
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // how many people can stay here form
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // Defauolt value equals 0
-        cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Let guests know what your space has to offer.
-        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked'); // checking cleaning service option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-        cy.wait(5000);
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        //Title
-        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled'); // button check
-        cy.get('#title').type(camperTitle); // Typing  more than 128 characters
-        cy.wait(1000);
-        //Subtitle
-        cy.get('#Subtitle').type(camperSubtitle); // Typing  more than 128 characters
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-
-        // Description
-        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
-        cy.get('#description').type(shareSpecial); //type 505 characters and check if it has 500
-        cy.get(radioButtons[1]).check();
-        // License plate
-        cy.get('#licensePlate').type(camperInputs.licensePlate);
-        // Brand
-        cy.get('#camperbrand').type(camperInputs.brand);
-        // Model
-        cy.get('#model').type(camperInputs.model);
-        // Required Driver’s License 
-        cy.get('#requirement').type(camperInputs.requirement + '{enter}');
-        // General Periodic Inspection
-        cy.get('#gpi').type(camperInputs.gpi);
-        // Length
-        cy.get('#length').type(camperInputs.length);
-        // Height
-        cy.get('#height').type(camperInputs.height);
-        // Transmission
-        cy.get('#transmission').type(camperInputs.transmission);
-        // Fuel Tank Capacity
-        cy.get('#fueltank').type(camperInputs.fuel);
-        // Year of Construction
-        cy.get('#yoc').type(camperInputs.yearConstruction);
-        // Year of Renovation
-        cy.get('#renovated').type(camperInputs.renovated);
-
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-
-        cy.get('#root > div > main > section:nth-child(3) > div:nth-child(1) > input').clear().type('100', { force: true }); // Base rate
-        // Service fees
-        cy.get('#root > div > main > section:nth-child(3) > div:nth-child(2) > input').clear().type('10', { force: true });
-
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
         cy.get('#root > div > main > nav > button:nth-child(2)').click();
-        // Calender
-        cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_next__jcEfE').click();// next month
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#country > div').click();
+        cy.contains(countryToSelect).click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
+        cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
+        cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
+        cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
+        cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
+        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg');
+        cy.wait(1000);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
+        cy.get('#title').type(camperTitle);
+        cy.get('#Subtitle').type(camperSubtitle);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
+        cy.get('#description').type(shareSpecial);
+        cy.get(radioButtons[1]).check();
+        cy.get('#licensePlate').type(camperInputs.licensePlate);
+        cy.get('#camperbrand').type(camperInputs.brand);
+        cy.get('#model').type(camperInputs.model);
+        cy.get('#requirement').type(camperInputs.requirement + '{enter}');
+        cy.get('#gpi').type(camperInputs.gpi);
+        cy.get('#length').type(camperInputs.length);
+        cy.get('#height').type(camperInputs.height);
+        cy.get('#transmission').type(camperInputs.transmission);
+        cy.get('#fueltank').type(camperInputs.fuel);
+        cy.get('#yoc').type(camperInputs.yearConstruction);
+        cy.get('#renovated').type(camperInputs.renovated);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section:nth-child(3) > div:nth-child(1) > input').clear().type('100', { force: true });
+        cy.get('#root > div > main > section:nth-child(3) > div:nth-child(2) > input').clear().type('10', { force: true });
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+
+        // Test: Calender
+        cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_next__jcEfE').click(); // Next month
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(6)').click();
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(6)').click();
-        cy.get('#root > div > main > section > main > section > div.Calendar_dateRanges__IGJzK > section > div').should('have.text', '01/11/2024 - 01/11/2024x'); // one day
+        cy.get('#root > div > main > section > main > section > div.Calendar_dateRanges__IGJzK > section > div').should('have.text', '01/11/2024 - 01/11/2024x');
 
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(15)').click();
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_next__jcEfE').click();
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(23)').click()
-        cy.get('#root > div > main > section > main > section > div.Calendar_dateRanges__IGJzK > section > div:nth-child(2)').should('have.text', '10/11/2024 - 23/12/2024x');// To see if theres a second one and check if u can select differnt months
+        cy.get('#root > div > main > section > main > section > div.Calendar_dateRanges__IGJzK > section > div:nth-child(2)').should('have.text', '10/11/2024 - 23/12/2024x');
 
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_prev__wq3JJ').click();
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_prev__wq3JJ').click();
-        cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_prev__wq3JJ').click();// month before current month
+        cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_prev__wq3JJ').click();
 
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(1)').click();
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(1)').click();
-        cy.get('#root > div > main > section > main > section > div.Calendar_dateRanges__IGJzK > section > div:nth-child(3)').should('not.exist');// To see if theres a second one and check if u can select differnt months
-
-
+        cy.get('#root > div > main > section > main > section > div.Calendar_dateRanges__IGJzK > section > div:nth-child(3)').should('not.exist');
     });
 });
 
 describe("Test: camper description", () => {
     it("should contain the right information", () => {
         cy.loginAsGuest();
-        cy.get('.wijzer.addAcco').click(); // first Add accommodation button 
-        cy.get('img.accommodation-icon').eq(4).click(); // Click the camper option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        cy.get('#root > div > main > div > section > div:nth-child(5)').click(); // should click Integrated Motorhome
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Where can we find your camper 
-        cy.get('#country > div').click(); // Click to open the dropdown
-        cy.contains(countryToSelect).click(); // Click on the country
-        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity); // Check if it contains Amsterdam in info
-        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet); // check if it contains Camperstreet 11
-        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);  // check if it contains 9029IO
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // how many people can stay here form
-        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0); // Defauolt value equals 0
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(4).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#country > div').click();
+        cy.contains(countryToSelect).click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+        cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Let guests know what your space has to offer.
-        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked'); // checking cleaning service option
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
-        cy.wait(500);
         cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
-        cy.wait(500);
-        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-        cy.wait(5000);
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        //Title
-        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled'); // button check
-        cy.get('#title').type(camperTitle); // Typing  more than 128 characters
+        cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg');
         cy.wait(1000);
-        //Subtitle
-        cy.get('#Subtitle').type(camperSubtitle); // Typing  more than 128 characters
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Description
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
         cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
-        cy.get('#description').type(shareSpecial); //type 505 characters and check if it has 500
+        cy.get('#title').type(camperTitle);
+        cy.get('#Subtitle').type(camperSubtitle);
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.disabled');
+        cy.get('#description').type(shareSpecial);
         cy.get(radioButtons[1]).check();
-        // License plate
         cy.get('#licensePlate').type(camperInputs.licensePlate);
-        // Brand
         cy.get('#camperbrand').type(camperInputs.brand);
-        // Model
         cy.get('#model').type(camperInputs.model);
-        // Required Driver’s License 
         cy.get('#requirement').type(camperInputs.requirement + '{enter}');
-        // General Periodic Inspection
         cy.get('#gpi').type(camperInputs.gpi);
-        // Length
         cy.get('#length').type(camperInputs.length);
-        // Height
         cy.get('#height').type(camperInputs.height);
-        // Transmission
         cy.get('#transmission').type(camperInputs.transmission);
-        // Fuel Tank Capacity
         cy.get('#fueltank').type(camperInputs.fuel);
-        // Year of Construction
         cy.get('#yoc').type(camperInputs.yearConstruction);
-        // Year of Renovation
         cy.get('#renovated').type(camperInputs.renovated);
-        cy.get('#root > div > main > nav > button:nth-child(2)').click(); //next page
-        // Base rate and fees page
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
         cy.get('#root > div > main > section:nth-child(3) > div:nth-child(1) > input').clear().type('100', { force: true }); // Base rate
-        // Service fees
         cy.get('#root > div > main > section:nth-child(3) > div:nth-child(2) > input').clear().type('10', { force: true });
         cy.get('#root > div > main > nav > button:nth-child(2)').click();
-        // Calender
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_next__jcEfE').click();// next month
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(6)').click();
         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(6)').click();
         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-        // correct info
+        // Test: Correct info
         cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(2) > td:nth-child(2)').should('have.text', camperTitle);
         cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(3) > td:nth-child(2)').should('have.text', shareSpecial);
         cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(4) > td:nth-child(2)').should('have.text', '100');
