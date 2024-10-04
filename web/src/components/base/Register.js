@@ -1,5 +1,5 @@
 // Register.js
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import FlowContext from '../../FlowContext'; // Import FlowContext
@@ -20,6 +20,17 @@ const Register = () => {
     const [signUpClicked, setSignUpClicked] = useState(false);
     const [shouldShake, setShouldShake] = useState(false);
     const [passwordShake, setPasswordShake] = useState(false);
+    const [requirements, setRequirements] = useState({
+        length: false,
+        uppercase: false,
+        number: false,
+        specialChar: false,
+    });
+    const [isPasswordStrong, setIsPasswordStrong] = useState(false);
+    const passwordRef = useRef(null);
+    const strengthBarRef = useRef(null);
+    const strengthTextRef = useRef(null);
+    const strengthContainerRef = useRef(null); // Declare the strengthContainerRef
 
     const handleHostChange = (e) => {
         setFlowState(prevState => ({
@@ -34,17 +45,80 @@ const Register = () => {
             ...prevState,
             [name]: value,
         }));
+        if (name === 'password') {
+            checkPasswordStrength(value);
+        }
+    };
+
+    const checkPasswordStrength = (password) => {
+        let strength = 0;
+
+        const newRequirements = {
+            length: password.length >= 8,
+            uppercase: /[A-Z]/.test(password),
+            number: /[0-9]/.test(password),
+            specialChar: /[^A-Za-z0-9]/.test(password),
+        };
+
+        setRequirements(newRequirements);
+
+        for (const key in newRequirements) {
+            if (newRequirements[key]) strength++;
+        }
+
+        const strengthBar = strengthBarRef.current;
+        const strengthText = strengthTextRef.current;
+
+        if (strengthBar) {
+            const strengthPercentage = (strength / 4) * 100; // Calculate percentage based on 4 criteria
+            strengthBar.style.width = strengthPercentage + '%';
+
+            // Update password strength based on the number of requirements met
+            if (strength < 2) {
+                setColorAndText('red', 'Bad');
+                setIsPasswordStrong(false);
+            } else if (strength === 2) {
+                setColorAndText('orange', 'Weak');
+                setIsPasswordStrong(false);
+            } else if (strength === 3) {
+                setColorAndText('#088f08', 'Strong');
+                setIsPasswordStrong(true);
+            } else if (strength === 4) {
+                setColorAndText('green', 'Very Strong');
+                setIsPasswordStrong(true);
+            }
+        }
+
+        // Show the strength container when typing the password
+        if (strengthContainerRef.current) {
+            strengthContainerRef.current.style.display = 'block';
+        }
+    };
+
+    const setColorAndText = (color, text) => {
+        const strengthBar = strengthBarRef.current;
+        const strengthText = strengthTextRef.current;
+
+        if (strengthBar) {
+            strengthBar.style.backgroundColor = color;
+        }
+        if (strengthText) {
+            strengthText.textContent = text;
+            strengthText.style.color = color;
+        }
     };
 
     const onSubmit = async (e) => {
         e.preventDefault();
         const { username, email, password, repeatPassword } = formData;
     
-        if (username.length < 4) {
-            setErrorMessage('Username must be at least 4 characters long.');
-            setShouldShake(true);
+        if (!isPasswordStrong) {
+            setErrorMessage("Password must be strong (at least 'Strong' level) to submit.");
+            setPasswordShake(true);
             return;
         }
+
+
         if (password.length < 8) {
             setErrorMessage('Password must be at least 8 characters long.');
             setPasswordShake(true);
@@ -57,12 +131,15 @@ const Register = () => {
             return;
         }
 
-        const regex = /^(?=.*[A-Z])(?=.*\d).+$/;
-        if (!regex.test(password)) {
-            setErrorMessage('Password must contain at least one uppercase letter and one number.');
+        const hasUppercase = /[A-Z]/.test(password);
+        const hasNumber = /[0-9]/.test(password);
+    
+        if (!hasUppercase && !hasNumber) {
+            setErrorMessage('Password must contain at least one uppercase letter or one number.');
             setPasswordShake(true);
             return;
         }
+        
         if (!email) {
             setErrorMessage('Email can\'t be empty!');
             return;
@@ -172,14 +249,45 @@ const Register = () => {
                             onChange={handleChange}
                         />
                         <label>Password:</label>
-                        <input
-                            className={`registerInput ${errorMessage.includes('Password') ? 'inputError' : ''} ${passwordShake ? 'inputShake' : ''}`}
-                            type="password"
-                            name="password"
-                            value={formData.password}
-                            onChange={handleChange}
-                            style={{ borderColor: errorMessage.includes('Password') ? 'red' : 'var(--secondary-color)' }}
-                        />
+                        <div className="passwordContainer">
+                            <input
+                                id="password"
+                                ref={passwordRef}
+                                className={`registerInput ${errorMessage.includes('Password') ? 'inputError' : ''} ${passwordShake ? 'inputShake' : ''}`}
+                                type="password"
+                                name="password"
+                                value={formData.password}
+                                onChange={handleChange}
+                                onFocus={() => {
+                                    if (strengthContainerRef.current) {
+                                        strengthContainerRef.current.style.display = 'block'; // Show on focus
+                                    }
+                                }}
+                                style={{ borderColor: errorMessage.includes('Password') ? 'red' : 'var(--secondary-color)' }}
+                            />
+                        </div>
+                        <div ref={strengthContainerRef} className="strength-container" style={{ display: 'none' }}>
+                            <div id="strength-bar" ref={strengthBarRef}></div>
+                            <div className="strength-text" ref={strengthTextRef}></div>
+                            <div className="requirements">
+                                <label>
+                                    <input type="checkbox" checked={requirements.length} readOnly />
+                                    At least 8 characters
+                                </label>
+                                <label>
+                                    <input type="checkbox" checked={requirements.uppercase} readOnly />
+                                    At least 1 uppercase letter
+                                </label>
+                                <label>
+                                    <input type="checkbox" checked={requirements.number} readOnly />
+                                    At least 1 number
+                                </label>
+                                <label>
+                                    <input type="checkbox" checked={requirements.specialChar} readOnly />
+                                    At least 1 special character
+                                </label>
+                            </div>
+                        </div>
                         <label>Repeat Password:</label>
                         <input
                             className="registerInput"
@@ -206,5 +314,6 @@ const Register = () => {
         </>
     );
 };
+
 
 export default Register;

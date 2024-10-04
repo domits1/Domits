@@ -126,3 +126,57 @@ label {
     padding-bottom: 4%;
     padding-top: 4%;
 }
+/* Password Strength Indicator Styles */
+.strength-container {
+    display: none; /* Initially hidden, will be shown on focus */
+    margin-top: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+}
+
+#strength-bar {
+    height: 10px; /* Height of the strength bar */
+    border-radius: 5px; /* Rounded corners for the bar */
+    transition: width 0.3s ease; /* Smooth transition for width changes */
+}
+
+.strength-text {
+    margin-top: 5px; /* Space above the text */
+    font-size: 10px; /* Reduced font size for strength text */
+    color: #333; /* Text color */
+}
+
+/* Requirements Styles */
+.requirements {
+    margin-top: 5px; /* Space above the requirements section */
+}
+
+.requirements label {
+    display: flex; /* Use flexbox for better alignment */
+    align-items: center; /* Center align items vertically */
+    margin: 3px 0; /* Reduced spacing */
+    font-size: 10px; /* Reduced font size for requirement labels */
+}
+
+/* Strength Levels */
+.bad {
+    width: 10%;
+    background-color: red;
+}
+
+.weak {
+    width: 33%;
+    background-color: red;
+}
+
+.medium {
+    width: 66%;
+    background-color: orange;
+}
+
+.strong {
+    width: 100%;
+    background-color: green;
+}
