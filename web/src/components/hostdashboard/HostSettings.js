@@ -1,131 +1,266 @@
 import React, { useEffect, useState } from "react";
 import editIcon from "../../images/icons/edit-05.png";
-import { useNavigate } from 'react-router-dom';
-import { Auth } from "aws-amplify";
+import checkIcon from "../../images/icons/checkPng.png";
+import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
+import { confirmEmailChange } from "../guestdashboard/emailSettings";
 
 
 const HostSettings = () => {
+    const [tempUser, setTempUser] = useState({ email: '', name: '' });
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
+    const [editState, setEditState] = useState({ email: false, name: false });
+    const [verificationCode, setVerificationCode] = useState('');
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
+
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setTempUser({ ...tempUser, [name]: value });
+    };
+
+    const handleVerificationInputChange = (e) => {
+        setVerificationCode(e.target.value);
+    };
+
+    const toggleEditState = (field) => {
+        setEditState((prevState) => ({ ...prevState, [field]: !prevState[field] }));
+        setIsVerifying(false);
+        setIsVerifyingUsername(false);
+        if (!editState[field]) {
+            setTempUser({ ...tempUser, [field]: user[field] });
+        }
+    };
+
+    const saveUserEmail = async () => {
+        if (isVerifying) {
+            try {
+                const result = await confirmEmailChange(verificationCode);
+                if (result.success) {
+                    setUser({ ...user, email: tempUser.email });
+                    toggleEditState('email');
+                } else {
+                    alert("Incorrect verification code");
+                }
+            } catch (error) {
+                alert("An error occurred during verification. Please try again.");
+            }
+            return;
+        }
+
+        try {
+            const userInfo = await Auth.currentAuthenticatedUser();
+            const userId = userInfo.username;
+            const newEmail = tempUser.email;
+
+            const params = {
+                userId,
+                newEmail,
+            };
+
+            const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/UpdateUserEmail', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            });
+
+            const result = await response.json();
+
+            let parsedBody = result.body;
+            if (typeof parsedBody === 'string') {
+                parsedBody = JSON.parse(parsedBody);
+            }
+
+            if (parsedBody.message === "Email update successful, please verify your new email.") {
+                setIsVerifying(true);
+            } else if (parsedBody.message === "This email address is already in use.") {
+                alert(parsedBody.message);
+            } else {
+                console.error("Unexpected error:", parsedBody.message || "No message provided");
+            }
+        } catch (error) {
+            console.error("Error updating email:", error);
+        }
+    };
+
+
+    const saveUserName = async () => {
+        try {
+            const userInfo = await Auth.currentAuthenticatedUser();
+            const userId = userInfo.username;
+            const newName = tempUser.name;
+
+            const params = {
+                userId,
+                newName
+            };
+
+            const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/UpdateUserName', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
+            });
+
+            const result = await response.json();
+
+            if (result.statusCode === 200) {
+                setUser({ ...user, name: tempUser.name });
+                toggleEditState('name');
+            }
+        } catch (error) {
+            console.error("Error updating username:", error);
+        }
+    };
+
+    const handleKeyPressEmail = (e) => {
+        if (e.key === 'Enter') {
+            saveUserEmail();
+        }
+    };
+
+    const handleKeyPressName = (e) => {
+        if (e.key === 'Enter') {
+            saveUserName();
+        }
+    };
 
     useEffect(() => {
+        fetchAccommodations();
         fetchUserData();
     }, []);
 
     const fetchUserData = async () => {
         try {
             const userInfo = await Auth.currentUserInfo();
-            console.log(userInfo); // This should show the entire userInfo object
-            console.log(userInfo.attributes); // This specifically shows the attributes
-            // Assuming userInfo has the necessary details, adjust the keys based on your user data structure
             setUser({
                 email: userInfo.attributes.email,
                 name: userInfo.attributes['given_name'],
                 address: userInfo.attributes.address,
                 phone: userInfo.attributes.phone_number,
-                family: "2 adults - 2 kids" // needs to be calculated later on
+                family: "2 adults - 2 kids"
             });
         } catch (error) {
             console.error("Error fetching user data:", error);
         }
     };
 
-    const navigate = useNavigate();
+    const fetchAccommodations = async () => {
+        try {
+            const response = await API.graphql(graphqlOperation(listAccommodationsQuery));
+            console.log("Accommodations:", response.data.listAccommodations.items);
+        } catch (error) {
+            console.error("Error listing accommodations:", error);
+        }
+    };
 
     return (
-        <main className="page-body">
-            <div className="dashboard">
+        <div className="page-body">
+            <h2>Dashboard</h2>
+            <div className="dashboards">
                 <Pages />
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
-                        <div className="infoBox"><img src={editIcon} alt="Email Icon" /><span>Email:</span> {user.email}</div>
-                        {/*custom attributes need to be called slightly different */}
-                        <div className="infoBox"><img src={editIcon} alt="Name Icon" /><span>Name:</span> {user.name}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Address Icon" /><span>Address:</span> {user.address}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Phone Icon" /><span>Phone:</span> {user.phone}</div>
-                        <div className="infoBox"><img src={editIcon} alt="Family Icon" /><span>Family:</span> {user.family}</div>
+                        <div className="infoBox">
+                            <span>Email:</span>
+                            {editState.email ? (
+                                <div style={{ display: 'flex' }}>
+                                    {!isVerifying ? (
+                                        <>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={tempUser.email}
+                                                onChange={handleInputChange}
+                                                className="guest-edit-input"
+                                                onKeyPress={handleKeyPressEmail}
+                                            />
+                                            <div onClick={saveUserEmail} className="edit-icon-background">
+                                                <img src={checkIcon} alt="Save Email" className="guest-check-icon" />
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <>
+                                            <input
+                                                type="text"
+                                                name="verificationCode"
+                                                value={verificationCode}
+                                                onChange={handleVerificationInputChange}
+                                                placeholder="Code sent to your email!"
+                                                className="guest-edit-input"
+                                                onKeyPress={handleKeyPressEmail}
+                                            />
+                                            <div onClick={saveUserEmail} className="edit-icon-background">
+                                                <img src={checkIcon} alt="Confirm Verification Code" className="guest-check-icon" />
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            ) : (
+                                <p>{user.email}</p>
+                            )}
+                            <div onClick={() => toggleEditState('email')} className="edit-icon-background">
+                                <img src={editIcon} alt="Edit Email" className="guest-edit-icon" />
+                            </div>
+                        </div>
+
+                        <div className="infoBox">
+                            <span>Name:</span>
+                            {editState.name ? (
+                                <div style={{ display: 'flex' }}>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={tempUser.name}
+                                        onChange={handleInputChange}
+                                        className="guest-edit-input"
+                                        onKeyPress={handleKeyPressName}
+                                    />
+                                    <div onClick={saveUserName} className="edit-icon-background">
+                                        <img src={checkIcon} alt="Save Name" className="guest-check-icon" />
+                                    </div>
+                                </div>
+                            ) : (
+                                <p>{user.name}</p>
+                            )}
+                            <div onClick={() => toggleEditState('name')} className="edit-icon-background">
+                                <img src={editIcon} alt="Edit Name" className="guest-edit-icon" />
+                            </div>
+                        </div>
+                        {/* Voorlopig gecommend samen met Stefan aangezien we nu nog geen need hebben (misschien later) */}
+                        {/*<div className="infoBox">*/}
+                        {/*    <span>Address:</span>*/}
+                        {/*    <p>{user.address}</p>*/}
+                        {/*    <div className="edit-icon-background">*/}
+                        {/*        <img src={editIcon} alt="Edit Address" className="guest-edit-icon" />*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
+
+                        {/*<div className="infoBox">*/}
+                        {/*    <span>Phone:</span>*/}
+                        {/*    <p>{user.phone}</p>*/}
+                        {/*    <div className="edit-icon-background">*/}
+                        {/*        <img src={editIcon} alt="Edit Phone" className="guest-edit-icon" />*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
+
+                        {/*<div className="infoBox">*/}
+                        {/*    <span>Family:</span>*/}
+                        {/*    <p>{user.family}</p>*/}
+                        {/*    <div className="edit-icon-background">*/}
+                        {/*        <img src={editIcon} alt="Edit Family" className="guest-edit-icon" />*/}
+                        {/*    </div>*/}
+                        {/*</div>*/}
+
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
     );
 }
 
 export default HostSettings;
-
-// import React from 'react';
-// import './settingshostdashboard.css';
-// import Pages from "./Pages";
-// import './HostHomepage.css'
-
-// import { useNavigate } from 'react-router-dom';
-// import faceHappyIcon from "../../images/icons/face-happy.png";
-// import settingsIcon from "../../images/icons/settings-04.png";
-
-
-// const HostSettings = () => {
-//     const navigate = useNavigate();
-
-//     return (
-//         <div className="container">
-//             <h2>Huub's Settings</h2>
-//             <div className='dashboards'>
-//                 <Pages />
-//                 <div className="content">
-//                     <div className="settingsContent">
-//                         <div className="settingsOptions">
-//                             <div className="settingsOption" onClick={() => { /* Implement logic */ }}>
-//                                 <img src={settingsIcon} alt="Settings Icon" className="icon" />
-//                                 Change mail settings and frequency
-//                             </div>
-//                             <div className="settingsOption" onClick={() => { /* Implement logic */ }}>
-//                                 <img src={settingsIcon} alt="Globe Icon" className="icon" />
-//                                 Change region and language
-//                             </div>
-//                             <div className="horizontalOptions">
-//                                 <div className="settingsOption" onClick={() => { /* Implement logic */ }}>
-//                                     <img src={settingsIcon} alt="Currency Icon" className="icon" />
-//                                     Change global currency
-//                                 </div>
-//                                 <div className="settingsOption" onClick={() => { /* Implement logic */ }}>
-//                                     <img src={settingsIcon} alt="Profile Private Icon" className="icon" />
-//                                     Set profile to private
-//                                 </div>
-//                             </div>
-//                             <div className="settingsOption" onClick={() => { /* Implement logic */ }}>
-//                                 <img src={settingsIcon} alt="Helpdesk Icon" className="icon" />
-//                                 Q&A Helpdesk
-//                             </div>
-//                         </div>
-//                         <div className="dataRemovalSection">
-//                             <h2>Remove your data</h2>
-//                             <div className="dataRemovalOption" onClick={() => { /* Implement logic */ }}>
-//                                 <img src={settingsIcon} alt="Remove Reviews Icon" className="icon" />
-//                                 Remove your reviews
-//                             </div>
-//                             <div className="dataRemovalOption" onClick={() => { /* Implement logic */ }}>
-//                                 <img src={settingsIcon} alt="Remove Search Icon" className="icon" />
-//                                 Remove your search history
-//                             </div>
-//                             <div className="dataRemovalOption" onClick={() => { /* Implement logic */ }}>
-//                                 <img src={settingsIcon} alt="Delete Account Icon" className="icon" />
-//                                 Request account deletion
-//                             </div>
-//                         </div>
-//                     </div>
-//                     <div className="publicProfileContent">
-//                         <h2>Public profile</h2>
-//                         <div className="profileField">
-//                         </div>
-//                         <div className="profilePicture">
-//                             <img src={faceHappyIcon} alt="Profile" className="icon" />
-//                         </div>
-//                     </div>
-//                 </div>
-//             </div>
-//         </div>
-//     );
-// };
-
-// export default HostSettings;

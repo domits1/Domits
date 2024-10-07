@@ -11,7 +11,7 @@ const Register = () => {
     const generateRandomUsername = () => {
         const chars = String.fromCharCode(...Array(127).keys()).slice(33);
         let result = '';
-        for (let i = 0; i < 10; i++) {  // Generate 20 characters
+        for (let i = 0; i < 15; i++) {
             result += chars.charAt(Math.floor(Math.random() * chars.length));
         }
         return result;
@@ -136,8 +136,8 @@ const Register = () => {
 
     const onSubmit = async (e) => {
         e.preventDefault();
-        const { username, email, password, repeatPassword, firstName, lastName } = formData;
-    
+        const { username, email, password, firstName, lastName } = formData;
+
         if (!isPasswordStrong) {
             setErrorMessage("Password must be strong to submit.");
             setPasswordShake(true);
@@ -164,25 +164,20 @@ const Register = () => {
 
         const hasUppercase = /[A-Z]/.test(password);
         const hasNumber = /[0-9]/.test(password);
-    
+
         if (!hasUppercase && !hasNumber) {
             setErrorMessage('Password must contain at least one uppercase letter or one number.');
             setPasswordShake(true);
             return;
         }
-        
+
         if (!email) {
             setErrorMessage('Email can\'t be empty!');
             return;
         }
 
-        if (!password || !repeatPassword) {
+        if (!password) {
             setErrorMessage('Password can\'t be empty!');
-            return;
-        }
-
-        if (password !== repeatPassword) {
-            setErrorMessage('Passwords do not match!');
             return;
         }
         try {
@@ -355,14 +350,6 @@ const Register = () => {
                                 </label>
                             </div>
                         </div>
-                        <label>Repeat Password:</label>
-                        <input
-                            className="registerInput"
-                            type="password"
-                            name="repeatPassword"
-                            value={formData.repeatPassword}
-                            onChange={handleChange}
-                        />
                         <label className="hostCheckbox">
                             <input
                                 type="checkbox"
