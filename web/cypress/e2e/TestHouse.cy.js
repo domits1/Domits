@@ -76,7 +76,7 @@ describe('House accomadation test', () => {
         cy.get(' #root > div > main > div > div:nth-child(14) > section > label:nth-child(8) >').click();
         cy.get('#root > div > main > nav > button:nth-child(2)').click();
         cy.wait(500);
-  
+   
 
                 // add image test
                 cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
