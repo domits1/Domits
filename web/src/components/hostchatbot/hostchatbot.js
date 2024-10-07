@@ -16,6 +16,7 @@ const HostChatbot = () => {
   const [allAccommodations, setAllAccommodations] = useState([]);
   const [faqList, setFaqList] = useState([]);
   const [awaitingFeedback, setAwaitingFeedback] = useState(false);
+  const [awaitingCityConfirmation, setAwaitingCityConfirmation] = useState(null);
   const [userId, setUserId] = useState(null);
   const { role, isLoading } = useUser();
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -53,34 +54,7 @@ const HostChatbot = () => {
     }
     fetchAllAccommodations();
     fetchFAQ();
-    fetchRegistrationNumbers(); // Call the function here
   }, [userId]);
-
- // Function to fetch registration numbers using POST request
-const fetchRegistrationNumbers = async () => {
-  try {
-    const response = await fetch(
-      'https://xvol2vwxgi.execute-api.eu-north-1.amazonaws.com/default/fetchRegistrationNumbers',
-      {
-        method: 'POST', // Change the method to POST
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ message: 'Requesting registration numbers' }), // Send a body if needed
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error('Failed to fetch registration numbers');
-    }
-
-    const data = await response.json();
-    console.log('Registration numbers:', data);
-  } catch (error) {
-    console.error('Error fetching registration numbers:', error);
-  }
-};
-
 
   const handleUserInput = (e) => setUserInput(e.target.value);
 
@@ -95,12 +69,161 @@ const fetchRegistrationNumbers = async () => {
       setMessages(newMessages);
       setUserInput('');
 
-      if (awaitingFeedback) {
+      if (awaitingCityConfirmation) {
+        await handleCityConfirmation(userInput.toLowerCase(), newMessages);
+      } else if (awaitingFeedback) {
         await handleUserFeedback(userInput.toLowerCase(), newMessages);
       } else {
         await processUserMessage(newMessages);
       }
     }
+  };
+
+  // Define function schemas for OpenAI function calling
+  const functionSchemas = [
+    {
+      name: "getAccommodations",
+      description: "Retrieve accommodations based on specified filters",
+      parameters: {
+        type: "object",
+        properties: {
+          Bathrooms: { type: "integer", description: "Number of bathrooms" },
+          Country: { type: "string", description: "Country name" },
+          GuestAmount: { type: "integer", description: "Number of guests" }
+        },
+        required: []
+      }
+    },
+    {
+      name: "getFAQ",
+      description: "Retrieve a list of FAQs",
+      parameters: {
+        type: "object",
+        properties: {}
+      }
+    }
+  ];
+
+  // Function to check if the user message is asking an FAQ-related question
+  const findFAQMatch = (userMessage) => {
+    let matchedFAQ = null;
+    const threshold = 0.5; // Similarity threshold
+
+    faqList.forEach((faq) => {
+      const similarity = stringSimilarity.compareTwoStrings(userMessage, faq.question.toLowerCase());
+      if (similarity > threshold) {
+        matchedFAQ = faq;
+      }
+    });
+
+    return matchedFAQ;
+  };
+
+  // Updated processUserMessage to prioritize local data and fallback to OpenAI if necessary
+  const processUserMessage = async (newMessages) => {
+    const userMessage = newMessages[newMessages.length - 1].text.toLowerCase();
+
+    // Check if the user is asking for an FAQ match
+    const matchedFAQ = findFAQMatch(userMessage);
+
+    if (matchedFAQ) {
+      const faqResponse = `Q: ${matchedFAQ.question}\nA: ${matchedFAQ.answer}`;
+      setMessages([...newMessages, { text: faqResponse, sender: 'bot', contentType: 'text' }]);
+      return; // Early return, don't go to OpenAI
+    }
+
+    // Check if the user is asking to show accommodations
+    if (userMessage.includes('show my accommodation') || userMessage.includes('list my accommodation')) {
+      if (accolist && accolist.length > 0) {
+        const formattedResponse = formatAccommodationsResponse(accolist);
+        setMessages([...newMessages, { text: formattedResponse, sender: 'bot', contentType: 'text' }]);
+        return; // Early return, don't go to OpenAI
+      } else {
+        setMessages([...newMessages, { text: "You don't have any accommodations listed.", sender: 'bot', contentType: 'text' }]);
+        return; // Early return, don't go to OpenAI
+      }
+    }
+
+    // If no local data handles the query, fallback to OpenAI
+    fallbackToOpenAI(newMessages);
+  };
+
+  // Fallback to OpenAI only if no local data matches the query, using function calling
+  const fallbackToOpenAI = async (newMessages) => {
+    const userMessage = newMessages[newMessages.length - 1].text.toLowerCase();
+
+    // Call OpenAI API with function calling enabled
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4-0613', // Ensure you're using the correct model for function calling
+        messages: [
+          { role: 'system', content: 'You are a helpful assistant for finding accommodations and FAQs.' },
+          { role: 'user', content: userMessage }
+        ],
+        functions: functionSchemas, // Include the function schemas for OpenAI
+        function_call: 'auto' // Allow OpenAI to decide if and when to call a function
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.REACT_APP_OPENAI_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const responseMessage = response.data.choices[0].message;
+
+    if (responseMessage.function_call) {
+      const functionName = responseMessage.function_call.name;
+      const functionArgs = JSON.parse(responseMessage.function_call.arguments);
+
+      // Handle function calling for "getAccommodations"
+      if (functionName === "getAccommodations") {
+        const accommodations = await getAccommodations(functionArgs);
+
+        if (accommodations && accommodations.length > 0) {
+          const formattedResponse = formatAccommodationsResponse(accommodations);
+          setMessages([...newMessages, { text: formattedResponse, sender: 'bot', contentType: 'text' }]);
+        } else {
+          setMessages([...newMessages, { text: 'Sorry, no accommodations matched your query.', sender: 'bot', contentType: 'text' }]);
+        }
+      }
+      // Handle function calling for "getFAQ"
+      else if (functionName === "getFAQ") {
+        const faqResponse = faqList.map((faq, index) => `Q${index + 1}: ${faq.question}\nA${index + 1}: ${faq.answer}`).join('\n\n');
+        setMessages([...newMessages, { text: faqResponse, sender: 'bot', contentType: 'text' }]);
+      }
+    } else {
+      setMessages([...newMessages, { text: responseMessage.content, sender: 'bot', contentType: 'text' }]);
+    }
+  };
+
+  // Fetch accommodations from backend
+  const getAccommodations = async (filters) => {
+    try {
+      const response = await fetch(
+        'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(filters)
+        }
+      );
+
+      const data = await response.json();
+      return data.body ? JSON.parse(data.body) : [];
+    } catch (error) {
+      console.error('Error fetching accommodations:', error);
+      return [];
+    }
+  };
+
+  // Format accommodations response
+  const formatAccommodationsResponse = (accommodations) => {
+    return accommodations.map(acc => (
+      `Accommodation in ${acc.City} with ${acc.Bathrooms} bathrooms, suitable for ${acc.GuestAmount} guests.`
+    )).join('\n');
   };
 
   const fetchFAQ = async () => {
@@ -119,6 +242,7 @@ const fetchRegistrationNumbers = async () => {
 
       const responseData = await response.json();
       const faqData = JSON.parse(responseData.body);
+      console.log('FAQ data:', faqData);
 
       setFaqList(faqData);
     } catch (error) {
@@ -143,169 +267,9 @@ const fetchRegistrationNumbers = async () => {
     }
   };
 
-  const processUserMessage = async (newMessages) => {
-    const userMessage = newMessages[newMessages.length - 1].text.toLowerCase();
-
-    if (faqList.length === 0) {
-      console.log('No FAQ data available.');
-      await fetchBotReply(newMessages);
-      return;
-    }
-
-    const faqQuestions = faqList.map((faq) => faq.question.toLowerCase());
-    const bestMatch = stringSimilarity.findBestMatch(userMessage, faqQuestions);
-
-    if (bestMatch.bestMatch.rating > 0.7) {
-      const matchedFAQ = faqList[bestMatch.bestMatchIndex];
-      const faqAnswer = matchedFAQ.answer;
-
-      setMessages([
-        ...newMessages,
-        { text: faqAnswer, sender: 'bot', contentType: 'text' },
-        {
-          text: 'Is this the answer you were looking for? (yes/no)',
-          sender: 'bot',
-          contentType: 'text',
-        },
-      ]);
-      setAwaitingFeedback(true);
-    } else if (isAccommodationQuery(userMessage)) {
-      handleAccommodationQuery(userMessage, newMessages);
-    } else {
-      await fetchBotReply(newMessages);
-    }
-  };
-
-  const isAccommodationQuery = (userMessage) => {
-    const accommodationKeywords = ['accommodation', 'room', 'guest', 'city', 'bathrooms'];
-    return accommodationKeywords.some((keyword) => userMessage.includes(keyword));
-  };
-
-  const handleAccommodationQuery = (userMessage, newMessages) => {
-    const accommodation = accolist.find(
-      (acco) =>
-        userMessage.includes(acco.Title.toLowerCase()) ||
-        userMessage.includes(acco.City.toLowerCase())
-    );
-
-    if (accommodation) {
-      setMessages([
-        ...newMessages,
-        { text: formatAccommodationResponse(accommodation), sender: 'bot', contentType: 'jsx' },
-      ]);
-    } else {
-      setMessages([
-        ...newMessages,
-        {
-          text: 'Sorry, I could not find that accommodation in your list.',
-          sender: 'bot',
-          contentType: 'text',
-        },
-      ]);
-    }
-  };
-
-  const formatAccommodationResponse = (accommodation) => {
-    const { Title, City, Description, Bathrooms, GuestAmount, Images } = accommodation;
-
-    // Extract the first image (you can adjust this to include more images if needed)
-    const imageUrl = Images?.image1 || 'default-placeholder.jpg';
-
-    return (
-      <div className="accommodation-card">
-        <h3>{Title}</h3>
-        <img src={imageUrl} alt={Title} className="accommodation-image" />
-        <p>
-          <strong>City:</strong> {City}
-        </p>
-        <p>
-          <strong>Description:</strong> {Description}
-        </p>
-        <p>
-          <strong>Bathrooms:</strong> {Bathrooms}
-        </p>
-        <p>
-          <strong>Guests:</strong> {GuestAmount}
-        </p>
-      </div>
-    );
-  };
-
-  const fetchBotReply = async (newMessages) => {
-    setLoading(true);
-
-    const formattedFaqs = faqList
-      .map((faq) => `Question: ${faq.question}, Answer: ${faq.answer}`)
-      .join('\n');
-
-    const formattedAccommodations = accolist
-      .map((acco) => {
-        return `Title: ${acco.Title}, City: ${acco.City}, Description: ${acco.Description}, Bathrooms: ${acco.Bathrooms}, Guests: ${acco.GuestAmount}, ImageUrl: ${
-          acco.Images?.image1 || ''
-        }`;
-      })
-      .join('\n');
-
-    const formattedAllAccommodations = allAccommodations
-      .map((acco) => {
-        return `Title: ${acco.Title}, City: ${acco.City}, Description: ${acco.Description}, Bathrooms: ${acco.Bathrooms}, Guests: ${acco.GuestAmount}, ImageUrl: ${
-          acco.Images?.image1 || ''
-        }`;
-      })
-      .join('\n');
-
-    const botContext = `
-      The following accommodations belong to the current logged-in host:\n${formattedAccommodations}
-      
-      Here are all the available accommodations (general):\n${formattedAllAccommodations}
-      
-      The following is general FAQ data:\n${formattedFaqs}
-    `;
-
-    try {
-      const response = await axios.post(
-        'https://api.openai.com/v1/chat/completions',
-        {
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              name: 'WebBot',
-              content: `You are WebBot. You have access to the following data:\n${botContext}`,
-            },
-            { role: 'user', content: newMessages[newMessages.length - 1].text },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.REACT_APP_OPENAI_KEY}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      const botReply = response.data.choices[0].message.content;
-      setMessages([...newMessages, { text: botReply, sender: 'bot', contentType: 'text' }]);
-    } catch (error) {
-      console.error('Error fetching response from OpenAI:', error);
-      setMessages([
-        ...newMessages,
-        { text: 'Sorry, something went wrong.', sender: 'bot', contentType: 'text' },
-        {
-          text: 'Do you want to chat with a customer support employee?',
-          sender: 'bot',
-          contentType: 'text',
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const fetchAccommodations = async () => {
     setLoading(true);
     if (!userId) {
-      console.log('No user id');
       return;
     } else {
       try {
@@ -321,13 +285,11 @@ const fetchRegistrationNumbers = async () => {
           throw new Error('Failed to fetch');
         }
         const data = await response.json();
-        console.log('Data:', data);
         if (data.body && typeof data.body === 'string') {
           const accommodationsArray = JSON.parse(data.body);
           if (Array.isArray(accommodationsArray)) {
             setAccolist(accommodationsArray);
           } else {
-            console.error('Parsed data is not an array:', accommodationsArray);
             setAccolist([]);
           }
         }
@@ -336,25 +298,6 @@ const fetchRegistrationNumbers = async () => {
       } finally {
         setLoading(false);
       }
-    }
-  };
-
-  const handleUserFeedback = async (feedback, newMessages) => {
-    if (feedback === 'no') {
-      setMessages([
-        ...newMessages,
-        { text: 'Okay, let me try again.', sender: 'bot', contentType: 'text' },
-      ]);
-      setAwaitingFeedback(false);
-      await fetchBotReply(newMessages);
-    } else if (feedback === 'yes') {
-      setMessages([
-        ...newMessages,
-        { text: 'Great! Let me know if you have more questions.', sender: 'bot', contentType: 'text' },
-      ]);
-      setAwaitingFeedback(false);
-    } else {
-      setAwaitingFeedback(false);
     }
   };
 
