@@ -102,5 +102,7 @@
 //                 cy.get('#root > div > main > section > section > section:nth-child(5) > button').click(); // delete all images 
         
 //                 cy.get('#root > div > main > nav > button.onboarding-button-disabled').should('be.visible'); 
-//     });
+//     }); 
 // });
+
+
