@@ -166,25 +166,6 @@ function Landing() {
                     <img src={MainTextpicture} alt="House"/>
                 </div>
 
-
-                {/* <div className={styles.First_Icons}>
-                    <div className={styles.infoCard}>
-                        <img src={appartement} alt="Flat" />
-                        <p>Apartment</p>
-                    </div>
-                    <div className={styles.infoCard}>
-                        <img src={camper} alt="Camper" />
-                        <p>Camper</p>
-                    </div>
-                    <div className={styles.infoCard}>
-                        <img src={boothuis} alt="Boat" />
-                        <p>Boat</p>
-                    </div>
-                    <div className={styles.infoCard}>
-                        <img src={villa} alt="Villa" />
-                        <p>Villa</p>
-                    </div>
-                </div> */}
             </div>
             <div className={styles.RegisterBlock}>
                 {isAuthenticated && group !== 'Host' ? (
@@ -238,7 +219,7 @@ function Landing() {
                     to help you thrive. Hosting with Domits means aligning with deeply embedded 
                     values of health, safety, and sustainability, creating a future-proof path for 
                     your business.</p>
-                    <button className={styles.nextButtons}>Start hosting</button>
+                    <button onClick={updateUserGroup} className={styles.nextButtons}>Start hosting</button>
                 </div>
             </div>
             
@@ -498,60 +479,6 @@ function Landing() {
                 </div>
                 <img src={PersonalAdvice} alt='personalAdvice'/>
             </div>
-            {/*
-            <section className={styles.WhyHow}>
-                <div className={styles.WhyHow_text}>
-                    <h1>Why should i host on Domits?</h1>
-                </div>
-                <div className={styles.proHosting}>
-                    <div className={styles.Cards}>
-                        <div className={styles.infoCard}>
-                            <img src={rocket} alt="Rocket Icon" />
-                            <h4>vs Airbnb & Booking</h4>
-                            <p>Domits creates cool new sustainable value with Travel Innovations Labs!</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={chat} alt="Chat Icon" />
-                            <h4>Customer Experience</h4>
-                            <p>Unlimited support and personalized modern dashboards</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={banknote} alt="Banknote Icon" />
-                            <h4>Winning together</h4>
-                            <p>You're more than just a customer or data to us. We truly care about you and your success. You'll feel it.</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={monitor} alt="Monitor Icon" />
-                            <h4>Improving 1% daily</h4>
-                            <p>Healthy, safe and future-proof are deeply embedded values.</p>
-                        </div>
-                    </div>
-                </div>
-            </section> */}
-            {/* <section className={styles.WhyHow}>
-                <div className={styles.WhyHow_text}>
-                    <h1>How to host on Domits?</h1>
-                </div>
-                <div className={styles.proHosting}>
-                    <div className={styles.Cards}>
-                        <div className={styles.infoCard}>
-                            <img src={rocket} alt="Rocket Icon" />
-                            <h4>List your property</h4>
-                            <p>List your property free of charge within minutes</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={banknote} alt="Banknote Icon" />
-                            <h4>Get paid</h4>
-                            <p>Easy, fast and safe payments</p>
-                        </div>
-                        <div className={styles.infoCard}>
-                            <img src={chat} alt="Chat Icon" />
-                            <h4>Receive guests</h4>
-                            <p>Give guests a warmhearted welcome</p>
-                        </div>
-                    </div>
-                </div>
-            </section> */}
         </main>
     );
 }
