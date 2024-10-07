@@ -1107,7 +1107,7 @@ function OnboardingHost() {
                                 </div>
                             ) : (
                                 <div className="guest-amount-item">
-                                    <p>Beds</p>
+                                    <p>Bedrooms</p>
                                     <div className="amount-btn-box">
                                         <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
                                         </button>
@@ -1931,6 +1931,32 @@ function OnboardingHost() {
                                         <td>Street + House Nr.:</td>
                                         <td>{formData.Street}</td>
                                     </tr>
+
+                                    
+                            <tr>
+                                <td>Smoking:</td>
+                                <td>{formData.AllowSmoking ? 'Yes' : 'No'}</td>
+                            </tr>
+
+                            <tr>
+                                <td>Pets:</td>
+                                <td>{formData.AllowPets ? 'Yes' : 'No'}</td>
+                            </tr>
+
+                            <tr>
+                                <td>Parties/events:</td>
+                                <td>{formData.AllowParties ? 'Yes' : 'No'}</td>
+                            </tr>
+
+                            <tr>
+                                <td>Checkin:</td>
+                                <td>From: {formData.CheckIn.From} Til: {formData.CheckIn.Til}</td>
+                            </tr>
+
+                            <tr>
+                                <td>Checkout:</td>
+                                <td>From: {formData.CheckOut.From} Til: {formData.CheckOut.Til}</td>
+                            </tr>
                                 </>
                             )}
                             </tbody>
@@ -2073,8 +2099,6 @@ function OnboardingHost() {
                                 </table>
                             </>
                         }
-
-
                         <p>Your accommodation ID: {formData.ID}</p>
                         <p>{formData.Drafted ? "Guests cannot book your accommodation before you set it live via Hostdashboard -> Listing"
                             : "Guests can book your accommodation anytime now!"}
@@ -2145,3 +2169,56 @@ function OnboardingHost() {
 }
 
 export default OnboardingHost;
+
+
+
+
+
+// return (
+//     <main className="page-body">
+//         <h2 className="onboardingSectionTitle">House rules</h2>
+//         <div className="houseRulesContainer">
+//         <div className="toggle-container">
+//         <label className="toggle">
+//             <span className="toggle-label">Allow smoking</span>
+//             <input
+//                 className="toggle-checkbox"
+//                 type="checkbox"
+//                 checked={formData.AllowSmoking}
+//                 onChange={(e) => handleHouseRulesChange('AllowSmoking', e.target.checked)}
+//             />
+//             <div className="toggle-switch"></div>
+//         </label>
+
+//         <label className="toggle">
+//             <span className="toggle-label">Allow pets</span>
+//             <input
+//                 className="toggle-checkbox"
+//                 type="checkbox"
+//                 checked={formData.AllowPets}
+//                 onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
+//             />
+//             <div className="toggle-switch"></div>
+//         </label>
+
+//         <label className="toggle">
+//             <span className="toggle-label">Allow parties/events</span>
+//             <input
+//                 className="toggle-checkbox"
+//                 type="checkbox"
+//                 checked={formData.AllowParties}
+//                 onChange={(e) => handleHouseRulesChange('AllowParties', e.target.checked)}       onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
+//             />
+//             <div className="toggle-switch"></div>
+//         </label>
+//     </div>
+// <hr/>
+//     <label className="Check">
+//     <div className="Check-label">Check-in</div>
+//     <span>From</span>
+//     <input
+//         className="Check-checkbox"
+//         type="time"
+//         value={formData.CheckIn.From}
+//         onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
+//     />
