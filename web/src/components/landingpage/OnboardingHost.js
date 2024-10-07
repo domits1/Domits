@@ -1930,9 +1930,7 @@ function OnboardingHost() {
                                     <tr>
                                         <td>Street + House Nr.:</td>
                                         <td>{formData.Street}</td>
-                                    </tr>
-
-                                    
+                                    </tr>     
                             <tr>
                                 <td>Smoking:</td>
                                 <td>{formData.AllowSmoking ? 'Yes' : 'No'}</td>
@@ -2169,56 +2167,3 @@ function OnboardingHost() {
 }
 
 export default OnboardingHost;
-
-
-
-
-
-// return (
-//     <main className="page-body">
-//         <h2 className="onboardingSectionTitle">House rules</h2>
-//         <div className="houseRulesContainer">
-//         <div className="toggle-container">
-//         <label className="toggle">
-//             <span className="toggle-label">Allow smoking</span>
-//             <input
-//                 className="toggle-checkbox"
-//                 type="checkbox"
-//                 checked={formData.AllowSmoking}
-//                 onChange={(e) => handleHouseRulesChange('AllowSmoking', e.target.checked)}
-//             />
-//             <div className="toggle-switch"></div>
-//         </label>
-
-//         <label className="toggle">
-//             <span className="toggle-label">Allow pets</span>
-//             <input
-//                 className="toggle-checkbox"
-//                 type="checkbox"
-//                 checked={formData.AllowPets}
-//                 onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
-//             />
-//             <div className="toggle-switch"></div>
-//         </label>
-
-//         <label className="toggle">
-//             <span className="toggle-label">Allow parties/events</span>
-//             <input
-//                 className="toggle-checkbox"
-//                 type="checkbox"
-//                 checked={formData.AllowParties}
-//                 onChange={(e) => handleHouseRulesChange('AllowParties', e.target.checked)}       onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
-//             />
-//             <div className="toggle-switch"></div>
-//         </label>
-//     </div>
-// <hr/>
-//     <label className="Check">
-//     <div className="Check-label">Check-in</div>
-//     <span>From</span>
-//     <input
-//         className="Check-checkbox"
-//         type="time"
-//         value={formData.CheckIn.From}
-//         onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
-//     />
