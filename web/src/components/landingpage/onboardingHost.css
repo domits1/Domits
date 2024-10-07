@@ -500,6 +500,7 @@ h2{
 
 .houseRulesContainer {
   background-color: #ededed68;
+  border-radius: 10px;
   max-width: 600px; 
   height: auto; 
   padding: 20px;

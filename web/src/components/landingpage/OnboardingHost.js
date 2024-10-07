@@ -1270,7 +1270,7 @@ function OnboardingHost() {
                             value={formData.CheckOut.Til}
                             onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'Til')}
                         />
-                    </label>
+                    </label>    
                             </div>
                             <nav className="onboarding-button-box">
                                 <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
