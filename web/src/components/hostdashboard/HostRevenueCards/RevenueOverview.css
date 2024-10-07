@@ -1,0 +1,65 @@
+/* General Card Styling */
+.revenue-card {
+    background-color: white;
+    padding: 5px; /* Reduced padding */
+    border-radius: 10px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    flex: 1 1 45%; /* Each card takes 45% of the width of the container */
+    min-width: 50px; /* Reduced the minimum width */
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.revenue-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.2);
+}
+.revenue-overview h3 { /* Adjust this based on your actual HTML tag */
+    font-size: 0.8em; /* Reduce font size to make it smaller */
+    padding: 10px;
+    text-align: center;
+    color: #333; /* Optional: adjust the color */
+    font-weight: normal ;
+}
+.revenue-card h4 {
+    margin-bottom: 4px; /* Reduced margin */
+    font-size: 0.5em; /* Reduced title font */
+    color: #000000;
+    font-weight: normal;
+}
+
+.revenue-card p {
+    font-size: 1.0em; /* Reduced font size for the value */
+    color: #003366;
+    font-weight: normal;
+}
+
+/* Container for Cards and Dashboard */
+.dashboard-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px; /* Reduced gap */
+    padding: 10px; /* Reduced padding */
+    width: 50%; /* Reduced width */
+}
+
+.card-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px; /* Reduced gap */
+    justify-content: center;
+    width: 100%;
+}
+
+/* Overview Section */
+.revenue-overview {
+    background-color: #f6f6f7;
+    padding: 5px; /* Reduced padding */
+    border-radius: 10px;
+    box-shadow: 0px 2px 6px rgba(0, 0, 0, 0.1);
+    width: 15%; /* Halved width */
+    margin: 0; /* Center it horizontally */
+}
+
+/* Responsive Design */
+@media (max-width < 768px) {}

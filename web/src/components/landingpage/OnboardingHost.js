@@ -25,6 +25,8 @@ import JetSki from "../../images/boat_types/jetski.png";
 import ElectricBoat from "../../images/boat_types/electric-boat.png";
 import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png";
 import CalendarComponent from "../hostdashboard/CalendarComponent";
+import imageCompression from 'browser-image-compression';
+
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
 function OnboardingHost() {
@@ -695,64 +697,91 @@ function OnboardingHost() {
         }));
     };
 
-    const constructURL = (userId, accommodationId, index) => {
-        return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+    const constructURL = (userId, accommodationId, index, size = '') => {
+        const folder = size ? `${size}/` : '';
+        return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/${folder}Image-${index + 1}.jpg`;
     };
 
-    const uploadImageToS3 = async (userId, accommodationId, image, index) => {
-        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
 
-        try {
-            await Storage.put(key, image, {
-                bucket: S3_BUCKET_NAME,
-                region: region,
-                contentType: image.type,
-                level: null,
-                customPrefix: { public: '' }
-            });
-            return constructURL(userId, accommodationId, index);
-        } catch (err) {
-            console.error("Failed to upload file:", err);
-            throw err;
+    const uploadImagesInDifferentSizes = async (file, userId, accommodationId, index) => {
+        const sizes = {
+            mobile: { maxWidthOrHeight: 300, maxSizeMB: 0.1 },  // ~100kB
+            homepage: { maxWidthOrHeight: 800, maxSizeMB: 0.2 },  // ~200kB
+            detail: { maxWidthOrHeight: 1200, maxSizeMB: 0.5 }  // ~500kB
+        };
+
+        for (const [key, sizeOptions] of Object.entries(sizes)) {
+            try {
+                console.log(`Uploading image for size: ${key}, index: ${index}`);
+                const compressedFile = await imageCompression(file, sizeOptions);
+                const keyPath = `images/${userId}/${accommodationId}/${key}/Image-${index + 1}.jpg`;
+
+                //upload  gecomprimeerde naar S3
+                await Storage.put(keyPath, compressedFile, {
+                    bucket: S3_BUCKET_NAME,
+                    region: region,
+                    contentType: 'image/jpeg',
+                    level: 'public',
+                    customPrefix: { public: '' }
+                });
+            } catch (error) {
+                console.error(`Error uploading ${key} image:`, error);
+            }
         }
-    }
+    };
 
     const removeImageFromS3 = async (userId, accommodationId, index) => {
-        const key = `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+        const folders = ['', 'mobile', 'homepage', 'detail']; // Voeg een lege string toe voor de hoofdmap
 
-        try {
-            await Storage.remove(key, {
-                bucket: S3_BUCKET_NAME,
-                region: region,
-                level: null,
-                customPrefix: { public: '' }
-            });
-        } catch (err) {
-            console.error("Failed to remove file:", err);
-            throw err;
+        for (const folder of folders) {
+            const key = folder
+                ? `images/${userId}/${accommodationId}/${folder}/Image-${index + 1}.jpg`
+                : `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+
+            try {
+                await Storage.remove(key, {
+                    bucket: S3_BUCKET_NAME,
+                    region: region,
+                    level: 'public',
+                    customPrefix: { public: '' }
+                });
+                console.log(`Deleted ${key} successfully`);
+            } catch (err) {
+                console.error(`Failed to remove ${key}:`, err);
+            }
         }
-    }
+    };
     const handleUpdate = async () => {
         try {
             setIsLoading(true);
             const AccoID = formData.ID;
             const updatedFormData = { ...formData };
+
+            // Verwijder eerst alle bestaande afbeeldingen van de accommodatie
             for (let i = 0; i < updatedIndex.length; i++) {
                 const index = updatedIndex[i];
                 await removeImageFromS3(userId, AccoID, index);
             }
+
+            // Upload nieuwe gecomprimeerde afbeeldingen
             for (let i = 0; i < updatedIndex.length; i++) {
                 const index = updatedIndex[i];
                 const file = imageFiles[index];
-                const location =  await uploadImageToS3(userId, AccoID, file, index);
-                updatedFormData.Images[`image${i + 1}`] = location;
+                if (file) {
+                    await uploadImagesInDifferentSizes(file, userId, AccoID, index);
+                    // Update de formData met de gecomprimeerde URL's van de verschillende formaten
+                    updatedFormData.Images[`image${index + 1}`] = constructURL(userId, AccoID, index, 'mobile');
+                    updatedFormData.Images[`image${index + 1}`] = constructURL(userId, AccoID, index, 'homepage');
+                    updatedFormData.Images[`image${index + 1}`] = constructURL(userId, AccoID, index, 'detail');
+                }
             }
+
             await setFormData(updatedFormData);
             setImageFiles([]);
 
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
                 method: 'PUT',
-                body: JSON.stringify(formData),
+                body: JSON.stringify(updatedFormData),
                 headers: {
                     'Content-Type': 'application/json',
                 }
@@ -776,11 +805,22 @@ function OnboardingHost() {
             setIsLoading(true);
             const AccoID = formData.ID;
             const updatedFormData = { ...formData };
+
+            // Loop door de afbeelding bestanden en upload ze in verschillende maten
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
-                const location =  await uploadImageToS3(userId, AccoID, file, i);
-                updatedFormData.Images[`image${i + 1}`] = location;
+                if (file) {
+                    // Upload en comprimeer de afbeelding in verschillende maten
+                    await uploadImagesInDifferentSizes(file, userId, AccoID, i);
+
+                    // Constructeer URL's voor alle gecomprimeerde versies en sla ze op in het formulier
+                    updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'mobile');
+                    updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'homepage');
+                    updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'detail');
+                }
             }
+
+            // Sla de bijgewerkte formData op in de state
             await setFormData(updatedFormData);
             setImageFiles([]);
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
@@ -790,6 +830,7 @@ function OnboardingHost() {
                     'Content-Type': 'application/json',
                 }
             });
+
             if (response.ok) {
                 console.log('Form data saved successfully');
             } else {
@@ -804,33 +845,51 @@ function OnboardingHost() {
 
     const [imageFiles, setImageFiles] = useState(Array.from({ length: 5 }, () => null));
 
-    const handleFileChange = (file, index) => {
-        const newImageFiles = [...imageFiles];
-        newImageFiles[index] = file;
-        setImageFiles(newImageFiles);
-
-        const updatedFormData = { ...formData };
+    const handleFileChange = async (file, index) => {
         if (file) {
-            const key = `image${index + 1}`;
-            updatedFormData.Images[key] = URL.createObjectURL(file);
+            // Verwijder het originele bestand uit de state
+            const newImageFiles = [...imageFiles];
+            newImageFiles[index] = file;
+            setImageFiles(newImageFiles);
+
+            // Compress and upload images in different sizes
+            await uploadImagesInDifferentSizes(file, userId, formData.ID, index);
+
+            // Update formData to reflect the new image URLs (optional, based on your use case)
+            const updatedFormData = { ...formData };
+            updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'mobile');
+            updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'homepage');
+            updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'detail');
+            setFormData(updatedFormData);
         }
-        setFormData(updatedFormData);
     };
 
-    const handleDelete = (index) => {
+
+
+
+    const handleDelete = async (index) => {
         const newImageFiles = [...imageFiles];
         newImageFiles[index] = null;
         setImageFiles(newImageFiles);
 
         const updatedFormData = { ...formData };
-        const key = `image${index + 1}`;
+        const key = `Image-${index + 1}`;
         updatedFormData.Images[key] = "";
         setFormData(updatedFormData);
 
         if (!updatedIndex.includes(index)) {
             setUpdatedIndex(prevUpdatedIndex => [...prevUpdatedIndex, index]);
         }
+
+        try {
+            // Verwijder de afbeelding ook uit S3
+            await removeImageFromS3(userId, formData.ID, index);
+            console.log(`Image ${index + 1} successfully deleted from S3`);
+        } catch (error) {
+            console.error(`Failed to delete image ${index + 1} from S3:`, error);
+        }
     };
+
 
     const updateDates = (dateRanges) => {
         if (dateRanges !== formData.DateRanges) {
@@ -854,31 +913,31 @@ function OnboardingHost() {
                         </main>
                     );
                 } else
-                return (
-                    <main className="page-body">
-                        <h2 className="onboardingSectionTitle">{isNew ? 'What best describes your accommodation?' : 'Edit your accommodation type'}</h2>
-                        <section className="accommodation-types">
-                            {accoTypes.map((option, index) => (
-                                <div
-                                    key={index}
-                                    className={`option ${selectedAccoType === option ? 'selected' : ''}`}
-                                    onClick={() => changeAccoType(option)}
-                                >
-                                    <img className="accommodation-icon" src={accommodationIcons[option]} alt={option}/>
-                                    {option}
-                                </div>
-                            ))}
-                        </section>
-                        <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => navigate("/hostdashboard")} style={{opacity: "75%"}}>
-                                Go to dashboard
-                            </button>
-                            <button className={!hasAccoType ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
-                                Confirm and proceed
-                            </button>
-                        </nav>
-                    </main>
-                );
+                    return (
+                        <main className="page-body">
+                            <h2 className="onboardingSectionTitle">{isNew ? 'What best describes your accommodation?' : 'Edit your accommodation type'}</h2>
+                            <section className="accommodation-types">
+                                {accoTypes.map((option, index) => (
+                                    <div
+                                        key={index}
+                                        className={`option ${selectedAccoType === option ? 'selected' : ''}`}
+                                        onClick={() => changeAccoType(option)}
+                                    >
+                                        <img className="accommodation-icon" src={accommodationIcons[option]} alt={option}/>
+                                        {option}
+                                    </div>
+                                ))}
+                            </section>
+                            <nav className="onboarding-button-box">
+                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard")} style={{opacity: "75%"}}>
+                                    Go to dashboard
+                                </button>
+                                <button className={!hasAccoType ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
+                                    Confirm and proceed
+                                </button>
+                            </nav>
+                        </main>
+                    );
             case 1:
                 return (
                     <main className='container'>
@@ -1077,7 +1136,7 @@ function OnboardingHost() {
                                 </div>
                             ) : (
                                 <div className="guest-amount-item">
-                                    <p>Beds</p>
+                                    <p>Bedrooms</p>
                                     <div className="amount-btn-box">
                                         <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
                                         </button>
@@ -1199,7 +1258,7 @@ function OnboardingHost() {
                                                 <>
                                                     <img
                                                         src={formData.Images[`image${index + 1}`]}
-                                                        alt={`Image ${index + 1}`}
+                                                        alt={`Image-${index + 1}`}
                                                         className={index === 0 ? "accommodation-thumbnail" : "file-image"}
                                                     />
                                                     <button className="delete-button"
@@ -2007,7 +2066,7 @@ function OnboardingHost() {
                             <p className="onboardingSectionSubtitle">It may take a while before your accommodation is
                                 verified</p>
                             <div className='button-box-last'>
-                            <button className='onboarding-button' onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
+                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
                                 </button>
                                 <button className='onboarding-button' onClick={() => navigate("/hostdashboard")}>Go to
                                     dashboard
