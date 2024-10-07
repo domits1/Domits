@@ -103,6 +103,7 @@
     "react-draggable": "^4.4.6",
     "react-gauge-chart": "^0.5.1",
     "react-load-script": "^0.0.6",
+    "react-markdown": "^9.0.1",
     "react-resizable": "^3.0.5",
     "recharts": "^2.12.7",
     "string-similarity": "^4.0.4"
