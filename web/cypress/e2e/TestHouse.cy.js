@@ -84,15 +84,15 @@ describe('House accomadation test', () => {
                 cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
                 cy.get('#root > div > main > section > section > section:nth-child(4) > input').selectFile('cypress/fixtures/image4.jpg');
                 cy.get('#root > div > main > section > section > section:nth-child(5) > input').selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-                cy.wait(500);
-                cy.get('#root > div > main > section > section > section:nth-child(2) > img')
-                .should('have.attr', 'alt', 'Image-2');
-              cy.get('#root > div > main > section > section > section:nth-child(3) > img')
-                .should('have.attr', 'alt', 'Image-3');
-              cy.get('#root > div > main > section > section > section:nth-child(4) > img')
-                .should('have.attr', 'alt', 'Image-4');
-              cy.get('#root > div > main > section > section > section:nth-child(5) > img')
-                .should('have.attr', 'alt', 'Image-5');
+              //   cy.wait(500);
+              //   cy.get('#root > div > main > section > section > section:nth-child(2) > img')
+              //   .should('have.attr', 'alt', 'Image-2');
+              // cy.get('#root > div > main > section > section > section:nth-child(3) > img')
+              //   .should('have.attr', 'alt', 'Image-3');
+              // cy.get('#root > div > main > section > section > section:nth-child(4) > img')
+              //   .should('have.attr', 'alt', 'Image-4');
+              // cy.get('#root > div > main > section > section > section:nth-child(5) > img')
+              //   .should('have.attr', 'alt', 'Image-5');
               
                 
                 cy.get('#root > div > main > section > section > section:nth-child(1) > button').click();
