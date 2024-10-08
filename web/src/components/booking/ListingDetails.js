@@ -138,6 +138,18 @@ const ListingDetails = () => {
         };
     }, [showTravelerPopup]);
 
+    useEffect(() => {
+        if (showModal) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+
+        return () => {
+            document.body.style.overflow = 'auto';
+        };
+    }, [showModal]);
+
     const toggleDropdown = (e) => {
         e.stopPropagation();
         setShowTravelerPopup(!showTravelerPopup);
@@ -151,14 +163,16 @@ const ListingDetails = () => {
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-content" onClick={e => e.stopPropagation()}>
+
                     <button className="close-button" onClick={onClose}>✖</button>
-                    <h2>Features</h2>
+                    <h2>What does this place have to offer?</h2>
                     {Object.keys(features).map(category => {
                         const categoryItems = features[category];
                         if (categoryItems.length > 0) {
                             return (
                                 <div key={category} className='features-category'>
                                     <h3>{category}</h3>
+                                    <hr className="pageDividerr"/>
                                     <ul>
                                         {categoryItems.map((item, index) => (
                                             <li key={index} className='category-item'>
@@ -423,13 +437,13 @@ const ListingDetails = () => {
 
 
     const renderCategories = () => {
-        if (accommodation) {
+        if (accommodation && accommodation.Features) {
             const items = accommodation.Features;
             const categoriesToShow = showAll ? Object.keys(items) : Object.keys(items).slice(0, 2);
 
             return categoriesToShow.map(category => {
                 const item = items[category];
-                if (item.length > 0) {
+                if (item && item.length > 0) {
                     return (
                         <div key={category} className='features-category'>
                             <h3>{category}</h3>
@@ -535,12 +549,12 @@ const ListingDetails = () => {
                             </div>
                             <p className='description'>{accommodation.Description}</p>
                             <div>
-                                <hr className="divider" />
+                                <hr className="pageDividerr" />
                                 <h3>Calendar overview:</h3>
                                 <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
                             </div>
                             <div>
-                                <hr className="divider" />
+                                <hr className="pageDividerr" />
                                 <h3>This place offers the following:</h3>
                                 {accommodation ? renderCategories() : ''}
                                 <div>
@@ -556,7 +570,7 @@ const ListingDetails = () => {
                                 )}
                                 <br/>
                                 <section className="listing-reviews">
-                                    <hr className="divider" />
+                                    <hr className="pageDividerr" />
                                     <h2>Reviews</h2>
                                     {reviews.length > 0 ? (
                                         reviews.map((review, index) => (
