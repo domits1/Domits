@@ -45,7 +45,10 @@ function MenuBar() {
     const handleLogout = async () => {
         try {
             await Auth.signOut();
+            sessionStorage.removeItem('chatOpened'); 
+
             setIsLoggedIn(false);
+            window.location.reload(); 
             console.log('User logged out successfully');
         } catch (error) {
             console.error('Error logging out:', error);

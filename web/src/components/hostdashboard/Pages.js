@@ -71,6 +71,7 @@ function Pages() {
           throw new Error(`HTTP error! Status: ${result.status}`);
         }
         const data = await result.json();
+
         window.location.replace(data.url);
       } catch (error) {
         console.log(error);
@@ -169,20 +170,21 @@ function Pages() {
           <img src={message} alt="Messages"></img>
           <p>Messages</p>
         </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/revenues")}
-        >
-          <img src={dashboard} alt="Dashboard" />
-          <p>Revenues</p>
-        </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/reporting" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/reporting")}
-        >
-          <img src={payment} alt="Payments"></img>
-          <p>Reporting</p>
-        </div>
+        {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/revenues")}*/}
+        {/*>*/}
+        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <p>Revenues</p>*/}
+        {/*</div>*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/reporting" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/reporting")}*/}
+        {/*>*/}
+        {/*  <img src={payment} alt="Payments"></img>*/}
+        {/*  <p>Reporting</p>*/}
+        {/*</div>*/}
         <div
           className={`wijzer ${activeTab === "/hostdashboard/reviews" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/reviews")}
@@ -197,41 +199,42 @@ function Pages() {
           <img src={dashboard} alt="Dashboard" />
           <p>Property care</p>
         </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/iot-hub" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/iot-hub")}
-        >
-          <img src={dashboard} alt="Dashboard" />
-          <p>IoT Hub</p>
-        </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/pricing")}
-        >
-          <img src={dashboard} alt="Dashboard" />
-          <p>Pricing</p>
-        </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/distribution" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/distribution")}
-        >
-          <img src={dashboard} alt="Dashboard" />
-          <p>Distribution</p>
-        </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/monitoring" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/monitoring")}
-        >
-          <img src={dashboard} alt="Dashboard" />
-          <p>Monitoring</p>
-        </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/screening" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/screening")}
-        >
-          <img src={dashboard} alt="Dashboard" />
-          <p>Screening</p>
-        </div>
+        {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/iot-hub" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/iot-hub")}*/}
+        {/*>*/}
+        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <p>IoT Hub</p>*/}
+        {/*</div>*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/pricing")}*/}
+        {/*>*/}
+        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <p>Pricing</p>*/}
+        {/*</div>*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/distribution" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/distribution")}*/}
+        {/*>*/}
+        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <p>Distribution</p>*/}
+        {/*</div>*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/monitoring" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/monitoring")}*/}
+        {/*>*/}
+        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <p>Monitoring</p>*/}
+        {/*</div>*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/screening" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/screening")}*/}
+        {/*>*/}
+        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <p>Screening</p>*/}
+        {/*</div>*/}
         <br />
         <div
           className={`wijzer ${activeTab === "/hostdashboard/listings" ? "active" : ""}`}
@@ -247,20 +250,21 @@ function Pages() {
           <img src={settings} alt="Settings"></img>
           <p>Settings</p>
         </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/setup" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/setup")}
-        >
-          <img src={dashboard} alt="Dashboard" />
-          <p>Setup</p>
-        </div>
-        <div
-          className={`wijzer ${activeTab === "/hostdashboard/promo-codes" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/promo-codes")}
-        >
-          <img src={dashboard} alt="Dashboard" />
-          <p>Promo codes</p>
-        </div>
+        {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/setup" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/setup")}*/}
+        {/*>*/}
+        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <p>Setup</p>*/}
+        {/*</div>*/}
+        {/*<div*/}
+        {/*  className={`wijzer ${activeTab === "/hostdashboard/promo-codes" ? "active" : ""}`}*/}
+        {/*  onClick={() => handleNavigation("/hostdashboard/promo-codes")}*/}
+        {/*>*/}
+        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <p>Promo codes</p>*/}
+        {/*</div>*/}
         {loading ? (
           <div className="spinnerdiv">
             <img className="spinner" src={spinner} alt="Loading" />

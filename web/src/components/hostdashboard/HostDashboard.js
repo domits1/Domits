@@ -175,18 +175,12 @@ function HostDashboard() {
                                                           alt="Email Icon"/><span>Email:</span> {user.email}</div>
                             <div className={styles.personalInfoBox}><img src={editIcon} alt="Name Icon"/><span>Name:</span> {user.name}
                             </div>
-                            <div className={styles.personalInfoBox}><img src={editIcon}
-                                                          alt="Address Icon"/><span>Address:</span> {user.address}</div>
-                            <div className={styles.personalInfoBox}><img src={editIcon}
-                                                          alt="Phone Icon"/><span>Phone:</span> {user.phone}</div>
-                            <div className={styles.personalInfoBox}><img src={editIcon}
-                                                          alt="Family Icon"/><span>Family:</span> {user.family}</div>
                         </div>
                     </div>
                 </div>
             </div>
             </div>
-            
+
         </main>
     );
 }

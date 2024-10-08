@@ -112,3 +112,53 @@ h1 {
     color: #ffffff;
     cursor: pointer;
 }
+
+/* Button positioning inside content */
+.content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;  /* Align content to the top */
+    align-items: flex-start;      /* Align items to the start of the container */
+}
+
+button {
+    margin-top: 20px; /* Add some space between the button and other elements */
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.content {
+    display: flex;
+    gap: 20px; /* Space between the sections */
+}
+
+.revenue-overview {
+    flex: 1;
+    min-width: 300px; /* Ensure it doesn't shrink too much */
+}
+
+.monthly-comparison {
+    flex: 2; /* This will make it take more space if needed */
+}
+.cards {
+    display: flex;
+    gap: 20px;  /* Space between the two cards */
+    margin: 20px 0;  /* Space around the cards */
+}
+
+.occupancy-rate-card, .revpar-card {
+    flex: 1;
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}

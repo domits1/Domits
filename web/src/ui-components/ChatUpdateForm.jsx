@@ -31,6 +31,8 @@ export default function ChatUpdateForm(props) {
     ...rest
   } = props;
   const initialValues = {
+    userId: "",
+    recipientId: "",
     text: "",
     email: "",
     recipientEmail: "",
@@ -39,6 +41,10 @@ export default function ChatUpdateForm(props) {
     createdAt: "",
     channelID: "",
   };
+  const [userId, setUserId] = React.useState(initialValues.userId);
+  const [recipientId, setRecipientId] = React.useState(
+    initialValues.recipientId
+  );
   const [text, setText] = React.useState(initialValues.text);
   const [email, setEmail] = React.useState(initialValues.email);
   const [recipientEmail, setRecipientEmail] = React.useState(
@@ -53,6 +59,8 @@ export default function ChatUpdateForm(props) {
     const cleanValues = chatRecord
       ? { ...initialValues, ...chatRecord }
       : initialValues;
+    setUserId(cleanValues.userId);
+    setRecipientId(cleanValues.recipientId);
     setText(cleanValues.text);
     setEmail(cleanValues.email);
     setRecipientEmail(cleanValues.recipientEmail);
@@ -79,6 +87,8 @@ export default function ChatUpdateForm(props) {
   }, [idProp, chatModelProp]);
   React.useEffect(resetStateValues, [chatRecord]);
   const validations = {
+    userId: [],
+    recipientId: [],
     text: [{ type: "Required" }],
     email: [],
     recipientEmail: [],
@@ -113,6 +123,8 @@ export default function ChatUpdateForm(props) {
       onSubmit={async (event) => {
         event.preventDefault();
         let modelFields = {
+          userId: userId ?? null,
+          recipientId: recipientId ?? null,
           text,
           email: email ?? null,
           recipientEmail: recipientEmail ?? null,
@@ -172,6 +184,70 @@ export default function ChatUpdateForm(props) {
       {...rest}
     >
       <TextField
+        label="User id"
+        isRequired={false}
+        isReadOnly={false}
+        value={userId}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              userId: value,
+              recipientId,
+              text,
+              email,
+              recipientEmail,
+              isRead,
+              sortKey,
+              createdAt,
+              channelID,
+            };
+            const result = onChange(modelFields);
+            value = result?.userId ?? value;
+          }
+          if (errors.userId?.hasError) {
+            runValidationTasks("userId", value);
+          }
+          setUserId(value);
+        }}
+        onBlur={() => runValidationTasks("userId", userId)}
+        errorMessage={errors.userId?.errorMessage}
+        hasError={errors.userId?.hasError}
+        {...getOverrideProps(overrides, "userId")}
+      ></TextField>
+      <TextField
+        label="Recipient id"
+        isRequired={false}
+        isReadOnly={false}
+        value={recipientId}
+        onChange={(e) => {
+          let { value } = e.target;
+          if (onChange) {
+            const modelFields = {
+              userId,
+              recipientId: value,
+              text,
+              email,
+              recipientEmail,
+              isRead,
+              sortKey,
+              createdAt,
+              channelID,
+            };
+            const result = onChange(modelFields);
+            value = result?.recipientId ?? value;
+          }
+          if (errors.recipientId?.hasError) {
+            runValidationTasks("recipientId", value);
+          }
+          setRecipientId(value);
+        }}
+        onBlur={() => runValidationTasks("recipientId", recipientId)}
+        errorMessage={errors.recipientId?.errorMessage}
+        hasError={errors.recipientId?.hasError}
+        {...getOverrideProps(overrides, "recipientId")}
+      ></TextField>
+      <TextField
         label="Text"
         isRequired={true}
         isReadOnly={false}
@@ -180,6 +256,8 @@ export default function ChatUpdateForm(props) {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
+              userId,
+              recipientId,
               text: value,
               email,
               recipientEmail,
@@ -210,6 +288,8 @@ export default function ChatUpdateForm(props) {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
+              userId,
+              recipientId,
               text,
               email: value,
               recipientEmail,
@@ -240,6 +320,8 @@ export default function ChatUpdateForm(props) {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
+              userId,
+              recipientId,
               text,
               email,
               recipientEmail: value,
@@ -270,6 +352,8 @@ export default function ChatUpdateForm(props) {
           let value = e.target.checked;
           if (onChange) {
             const modelFields = {
+              userId,
+              recipientId,
               text,
               email,
               recipientEmail,
@@ -300,6 +384,8 @@ export default function ChatUpdateForm(props) {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
+              userId,
+              recipientId,
               text,
               email,
               recipientEmail,
@@ -330,6 +416,8 @@ export default function ChatUpdateForm(props) {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
+              userId,
+              recipientId,
               text,
               email,
               recipientEmail,
@@ -360,6 +448,8 @@ export default function ChatUpdateForm(props) {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
+              userId,
+              recipientId,
               text,
               email,
               recipientEmail,

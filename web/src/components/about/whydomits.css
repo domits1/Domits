@@ -7,14 +7,18 @@
     padding-bottom: 1rem;
 }
 
+.highlightText {
+    color: #003366;
+}
+
 .why-domits__h3 {
-    font-size: 2.25rem;
+    font-size: 2.5rem;
     margin: 0;
     font-weight: 400;
 }
 
 .why-domits__h4 {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 400;
     margin-top: 1.6rem;
     margin-bottom: 3rem;
@@ -30,7 +34,7 @@
 
 .why-domits__cards-container {
     min-height: 20rem;
-    width: 100%;
+    width: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -63,11 +67,11 @@
     }
 
     .why-domits__h3 {
-        font-size: 2rem;
+        font-size: 2.25rem;
     }
 
     .why-domits__h4 {
-        font-size: 1.75rem;
+        font-size: 1.50rem;
     }
 
     .why-domits__p {
@@ -79,6 +83,35 @@
     }
 }
 
+@media (max-width: 955px) {
+    .why-domits__cards-container {
+        min-height: 20rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 5rem;
+    }
+
+    .why-domits__card {
+        width: 70%;
+    }
+
+    .why-domits__h3 {
+        text-align: center;
+    }
+
+    .why-domits__h4 {
+        text-align: center;
+    }
+
+    .why-domits__p {
+        text-align: center;
+    }
+
+}
+
 @media (max-width: 768px) {
     .why-domits__title-text-container {
         padding: 4rem;
@@ -86,14 +119,17 @@
 
     .why-domits__h3 {
         font-size: 1.75rem;
+        text-align: center;
     }
 
     .why-domits__h4 {
-        font-size: 1.5rem;
+        font-size: 1.30rem;
+        text-align: center;
     }
 
     .why-domits__p {
-        font-size: 1rem;
+        font-size: 0.90rem;
+        text-align: center;
     }
 
     .why-domits__card {
@@ -103,6 +139,10 @@
 
     .why-domits__card-p {
         font-size: 1rem;
+    }
+
+    .highlightText {
+        font-weight: 500;
     }
 }
 
