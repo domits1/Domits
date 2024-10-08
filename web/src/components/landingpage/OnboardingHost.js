@@ -1587,7 +1587,7 @@ function OnboardingHost() {
                                             value={formData.Capacity}
                                             id="capacity"
                                             required={true}
-                                            placeholder="500 kg"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1599,7 +1599,7 @@ function OnboardingHost() {
                                             value={formData.Length}
                                             id="length"
                                             required={true}
-                                            placeholder="10 m"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1611,7 +1611,7 @@ function OnboardingHost() {
                                             value={formData.FuelTank}
                                             id="fueltank"
                                             required={true}
-                                            placeholder="150"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1623,7 +1623,7 @@ function OnboardingHost() {
                                             value={formData.Speed}
                                             id="speed"
                                             required={true}
-                                            placeholder="50 km"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1744,7 +1744,7 @@ function OnboardingHost() {
                                             value={formData.Length}
                                             id="length"
                                             required={true}
-                                            placeholder="7 m"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1756,7 +1756,7 @@ function OnboardingHost() {
                                             value={formData.Height}
                                             id="height"
                                             required={true}
-                                            placeholder="20 m"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1780,7 +1780,7 @@ function OnboardingHost() {
                                             value={formData.FuelTank}
                                             id="fueltank"
                                             required={true}
-                                            placeholder="12"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -2146,6 +2146,17 @@ function OnboardingHost() {
                                             <td>Transmission:</td>
                                             <td>{formData.Transmission}</td>
                                         </tr>
+
+                                        <tr>
+                                            <td>4 x 4 Four-Wheel Drive:</td>
+                                            <td>{formData.FWD ? 'Yes' : 'No'}</td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <td>SelfBuilt:</td>
+                                            <td>{formData.SelfBuilt ? 'Yes' : 'No'}</td>
+                                        </tr>
+
                                         <tr>
                                             <td>Year of construction:</td>
                                             <td>{DateFormatterDD_MM_YYYY(formData.YOC)}</td>
