@@ -3,13 +3,20 @@ import Option from "./components/Option";
 import Listing from "./components/Listing";
 import { useNavigate, useLocation } from 'react-router-dom';
 import useOptionVisibility from "./hooks/useOptionVisibility";
+import useFetchAccommodation from "./hooks/useFetchAccomodation";
 import Loading from "./components/Loading";
+import { useEffect } from "react";
 
 const HostVerificationView = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const id = "e0707e21-a0e4-4a4f-a2b8-0b67135dd17f";
+  const { data, fetchAccommodationPreviewDetails } = useFetchAccommodation();
   const { registrationNumber } = location.state || {};
+
+  // useEffect(() => {
+  //   fetchAccommodationPreviewDetails(id);
+  // }, [id]);
 
   const { isRegistrationNumberRequired, loading, error } =
     useOptionVisibility(id);
@@ -49,7 +56,7 @@ const HostVerificationView = () => {
         />
       </div>
       <div className={styles["right-container"]}>
-        <Listing />
+        {/* <Listing data={data}/> */}
       </div>
       <div className={styles["bottom-container"]}>
         <hr></hr>

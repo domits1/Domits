@@ -20,7 +20,7 @@ function PhoneNumberView() {
               <option value="United Kingdom(+44)">United Kingdom(+44)</option>
               <option value="Nederland(+31)">Nederland(+31)</option>
             </select>
-            <label for="country-select" className={styles['floating-label']}>Country/region</label>
+            <label htmlFor="country-select" className={styles['floating-label']}>Country/region</label>
             <div className={styles['country-select-arrow']}>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -31,10 +31,10 @@ function PhoneNumberView() {
                 <path
                   d="M7 10l5 5 5-5"
                   stroke="#000"
-                  stroke-width="2"
+                  strokeWidth="2"
                   fill="none"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
               </svg>
             </div>
@@ -55,10 +55,10 @@ function PhoneNumberView() {
         <path
           d="M15 6l-6 6 6 6"
           stroke="#000"
-          stroke-width="2"
+          strokeWidth="2"
           fill="none"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </svg>
       <p>Back</p>

@@ -1,10 +1,11 @@
 import { useState } from "react";
 
 function useAddRegistrationNumber() {
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const addRegistrationNumber = async (id, registrationNumber) => {
+    setLoading(true);
     const url = `https://3wkzdeapea.execute-api.eu-north-1.amazonaws.com/default/addRegistrationNumber/${id}`;
 
     try {

@@ -30,10 +30,10 @@ function PhoneNumberConfirmView() {
       <path
         d="M15 6l-6 6 6 6"
         stroke="#000"
-        stroke-width="2"
+        strokeWidth="2"
         fill="none"
-        stroke-linecap="round"
-        stroke-linejoin="round"
+        strokeLinecap="round"
+        strokeLinejoin="round"
       />
     </svg>
     <p>Back</p>
