@@ -240,7 +240,7 @@ function OnboardingHost() {
     });
     const generateCamperFormData = () => ({
         ...generateCommonFormData(),
-        Rooms: 0,
+        Bedrooms: 0,
         PostalCode: "",
         Street: "",
         Bathrooms: 0,
@@ -1165,16 +1165,16 @@ function OnboardingHost() {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="guest-amount-item">
-                                    <p>Bedrooms</p>
-                                    <div className="amount-btn-box">
-                                        <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
-                                        </button>
-                                        {formData.Beds}
-                                        <button className="round-button" onClick={() => incrementAmount('Bedrooms')}>+
-                                        </button>
-                                    </div>
+                            <div className="guest-amount-item">
+                                <p>Bedrooms</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
+                                    </button>
+                                    {formData.Bedrooms}
+                                    <button className="round-button" onClick={() => incrementAmount('Bedrooms')}>+
+                                    </button>
                                 </div>
+                            </div>
                             )}
                             <div className="guest-amount-item">
                                 <p>Bathrooms</p>
