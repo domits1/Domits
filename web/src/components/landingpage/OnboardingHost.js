@@ -1057,6 +1057,7 @@ function OnboardingHost() {
                                 <label htmlFor="country">
                                     {`Country${(selectedAccoType === 'Boat' || selectedAccoType === 'Camper') ? ' of registration' : ''}*`}
                                 </label>
+                                
                                 <Select
                                     options={options.map(country => ({value: country, label: country}))}
                                     name="Country"
@@ -1066,6 +1067,7 @@ function OnboardingHost() {
                                     id="country"
                                     required={true}
                                 />
+
                                 <label htmlFor="city">City*</label>
                                 <input
                                     className="textInput-field locationText"
@@ -1097,6 +1099,9 @@ function OnboardingHost() {
                                             id="postal"
                                             placeholder="Enter your postal code"
                                             required={true}
+                                            minLength={4}
+                                            maxLength={7}
+                                            pattern="[A-Za-z\s,]+" 
                                         />
                                     </>
                                 ) : (
