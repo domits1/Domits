@@ -173,7 +173,7 @@ function App() {
 
                             {/* Verification */}
                             <Route path="/verify" element={<HostVerificationView />} />
-                            <Route path="/verify/registrationnumber" element={<RegistrationNumberView />} />
+                            <Route path="/verify/registrationnumber/:id" element={<RegistrationNumberView />} />
                             <Route path="/verify/registrationnumber/check" element={<RegistrationNumberCheckView />} />
                             <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                             <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />

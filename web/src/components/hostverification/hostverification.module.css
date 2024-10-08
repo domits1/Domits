@@ -136,6 +136,16 @@ hr {
   cursor: pointer;
   font-size: 1em;
 }
+
+.disabled-btn {
+  background-color: #e1e1e1;
+  color: white;
+  border: 0px;
+  padding: 7px 40px;
+  border-radius: 5px;
+  cursor: not-allowed;
+  font-size: 1em;
+}
 /* options */
 
 /* registration number input */

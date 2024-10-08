@@ -1,14 +1,14 @@
 import React from "react";
 import styles from "../hostverification.module.css";
+import { sub } from "date-fns";
 
-function Option({option}) {
+function Option({option, onClick, subtext}) {
   return (
-    <div className={styles["options-container"]}>
+    <div className={styles["options-container"]} onClick={onClick}>
       <div className={styles["option-container"]}>
         <p className={styles["option-title"]}>{option}</p>
         <p className={styles["option-text"]}>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-          eiusmod.
+          {subtext}
         </p>
         <p className={styles["option-status"]}>Required</p>
       </div>
@@ -21,10 +21,10 @@ function Option({option}) {
         <path
           d="M9 18l6-6-6-6"
           stroke="#000"
-          stroke-width="2"
+          strokeWidth="2"
           fill="none"
-          stroke-linecap="round"
-          stroke-linejoin="round"
+          strokeLinecap="round"
+          strokeLinejoin="round"
         />
       </svg>
     </div>

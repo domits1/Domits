@@ -39,6 +39,7 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
     const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100
+    console.log(id)
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 

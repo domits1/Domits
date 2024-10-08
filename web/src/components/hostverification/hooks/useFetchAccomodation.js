@@ -1,21 +1,20 @@
 import { useState, useEffect } from 'react';
 
-const useOptionVisibility = (id) => {
-  const [isRegistrationNumberRequired, setIsRegistrationNumberRequired] = useState(false);
+function useFetchAccommodation(id) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [data, setData] = useState(null);
+  const fields = 'Street,PostalCode,Country,City';
 
-  const fetchRegistrationNumberRequired = async (id) => {
-    const url = `https://236k9o88ek.execute-api.eu-north-1.amazonaws.com/default/registationnumberRequired/${id}`;
+  const fetchAccommodationDetails = async (id) => {
+    const url = `https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation/${id}?fields=${encodeURIComponent(fields)}`;
     try {
       const response = await fetch(url);
-      
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-
       const data = await response.json();
-      setIsRegistrationNumberRequired(data.success);
+      setData(data);
     } catch (error) {
       console.error('Error fetching data:', error);
       setError(error);
@@ -23,14 +22,13 @@ const useOptionVisibility = (id) => {
       setLoading(false);
     }
   };
-
   useEffect(() => {
     if (id) {
-      fetchRegistrationNumberRequired(id);
+      fetchAccommodationDetails(id);
     }
   }, [id]);
 
-  return { isRegistrationNumberRequired, loading, error };
-};
+  return { loading, error, data };
+}
 
-export default useOptionVisibility;
+export default useFetchAccommodation;

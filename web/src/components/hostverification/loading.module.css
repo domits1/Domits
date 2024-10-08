@@ -1,0 +1,39 @@
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.loading-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Full viewport height */
+  background-color: #f0f0f0; /* Optional background color */
+}
+
+.dot {
+  background-color: #333;
+  border-radius: 50%;
+  margin: 0 8px;
+  animation: pulse 1.5s infinite;
+}
+
+.dot.big {
+  width: 24px;
+  height: 24px;
+}
+
+.dot.medium {
+  width: 16px;
+  height: 16px;
+}
+
+.dot.small {
+  width: 8px;
+  height: 8px;
+}
