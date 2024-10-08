@@ -634,12 +634,16 @@ function OnboardingHost() {
             if (amenity === 'Cleaning service (add service fee manually)') {
                 resetCleaningFee();
             }
+    
+            if (!Array.isArray(updatedFeatures[category])) {
+                updatedFeatures[category] = [];
+            }
             if (checked) {
                 updatedFeatures[category] = [...updatedFeatures[category], amenity];
             } else {
                 updatedFeatures[category] = updatedFeatures[category].filter(item => item !== amenity);
             }
-
+    
             return {
                 ...prevFormData,
                 Features: updatedFeatures
@@ -1132,16 +1136,19 @@ function OnboardingHost() {
                     <main className="container">
                         <h2 className="onboardingSectionTitle">{isNew ? 'How many people can stay here?' : 'Adjust the maximum amount of guests'}</h2>
                         <section className="guest-amount">
-                            <div className="guest-amount-item">
-                                <p>Guests</p>
-                                <div className="amount-btn-box">
-                                    <button className="round-button" onClick={() => decrementAmount('GuestAmount')}>-
-                                    </button>
-                                    {formData.GuestAmount}
-                                    <button className="round-button" onClick={() => incrementAmount('GuestAmount')}>+
-                                    </button>
-                                </div>
-                            </div>
+                        <div className="guest-amount-item">
+                        <p>Guests</p>
+                        <div className="amount-btn-box">
+                            <button className="round-button" onClick={() => decrementAmount('GuestAmount')}>-</button>
+                            {formData.GuestAmount}
+                            <button
+                                className="round-button"
+                                onClick={() => incrementAmount('GuestAmount')}
+                                disabled={formData.GuestAmount >= 10} 
+                            >+</button>
+                        </div>
+                    </div>
+
                             {selectedAccoType === 'Boat' ? (
                                 <div className="guest-amount-item">
                                     <p>Cabins</p>
@@ -1149,19 +1156,25 @@ function OnboardingHost() {
                                         <button className="round-button" onClick={() => decrementAmount('Cabins')}>-
                                         </button>
                                         {formData.Cabins}
-                                        <button className="round-button" onClick={() => incrementAmount('Cabins')}>+
-                                        </button>
+                                        <button
+                                        className="round-button"
+                                        onClick={() => incrementAmount('Cabins')}
+                                        disabled={formData.Cabins >= 10} 
+                                        >+</button>
                                     </div>
                                 </div>
                             ) : selectedAccoType === 'Camper' ? (
                                 <div className="guest-amount-item">
-                                    <p>Rooms</p>
+                                    <p>Bedrooms</p>
                                     <div className="amount-btn-box">
-                                        <button className="round-button" onClick={() => decrementAmount('Rooms')}>-
+                                        <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
                                         </button>
-                                        {formData.Rooms}
-                                        <button className="round-button" onClick={() => incrementAmount('Rooms')}>+
-                                        </button>
+                                        {formData.Bedrooms}
+                                        <button
+                                        className="round-button"
+                                        onClick={() => incrementAmount('Bedrooms')}
+                                        disabled={formData.Bedrooms >= 10} 
+                                        >+</button>
                                     </div>
                                 </div>
                             ) : (
@@ -1171,8 +1184,11 @@ function OnboardingHost() {
                                     <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
                                     </button>
                                     {formData.Bedrooms}
-                                    <button className="round-button" onClick={() => incrementAmount('Bedrooms')}>+
-                                    </button>
+                                    <button
+                                    className="round-button"
+                                    onClick={() => incrementAmount('Bedrooms')}
+                                    disabled={formData.Bedrooms >= 20} 
+                                    >+</button>
                                 </div>
                             </div>
                             )}
@@ -1182,8 +1198,11 @@ function OnboardingHost() {
                                     <button className="round-button" onClick={() => decrementAmount('Bathrooms')}>-
                                     </button>
                                     {formData.Bathrooms}
-                                    <button className="round-button" onClick={() => incrementAmount('Bathrooms')}>+
-                                    </button>
+                                    <button
+                                    className="round-button"
+                                    onClick={() => incrementAmount('Bathrooms')}
+                                    disabled={formData.Bathrooms >= 10} 
+                                    >+</button>
                                 </div>
                             </div>
                             <div className="guest-amount-item">
@@ -1191,7 +1210,11 @@ function OnboardingHost() {
                                 <div className="amount-btn-box">
                                     <button className="round-button" onClick={() => decrementAmount('Beds')}>-</button>
                                     {formData.Beds}
-                                    <button className="round-button" onClick={() => incrementAmount('Beds')}>+</button>
+                                    <button
+                                    className="round-button"
+                                    onClick={() => incrementAmount('Beds')}
+                                    disabled={formData.Beds >= 10} 
+                                    >+</button>
                                 </div>
                             </div>
                         </section>
@@ -1559,6 +1582,7 @@ function OnboardingHost() {
                                             value={formData.Capacity}
                                             id="capacity"
                                             required={true}
+                                            placeholder="500 kg"
                                         />
                                     </div>
                                     <div>
@@ -1570,6 +1594,7 @@ function OnboardingHost() {
                                             value={formData.Length}
                                             id="length"
                                             required={true}
+                                            placeholder="10 m"
                                         />
                                     </div>
                                     <div>
@@ -1581,6 +1606,7 @@ function OnboardingHost() {
                                             value={formData.FuelTank}
                                             id="fueltank"
                                             required={true}
+                                            placeholder="150"
                                         />
                                     </div>
                                     <div>
@@ -1592,6 +1618,7 @@ function OnboardingHost() {
                                             value={formData.Speed}
                                             id="speed"
                                             required={true}
+                                            placeholder="50 km"
                                         />
                                     </div>
                                     <div>
@@ -1712,6 +1739,7 @@ function OnboardingHost() {
                                             value={formData.Length}
                                             id="length"
                                             required={true}
+                                            placeholder="7 m"
                                         />
                                     </div>
                                     <div>
@@ -1723,6 +1751,7 @@ function OnboardingHost() {
                                             value={formData.Height}
                                             id="height"
                                             required={true}
+                                            placeholder="20 m"
                                         />
                                     </div>
                                     <div>
@@ -1734,6 +1763,7 @@ function OnboardingHost() {
                                             value={formData.Transmission}
                                             id="transmission"
                                             required={true}
+                                            placeholder="Manual or Automatic"
                                         />
                                     </div>
                                     <div>
@@ -1745,6 +1775,7 @@ function OnboardingHost() {
                                             value={formData.FuelTank}
                                             id="fueltank"
                                             required={true}
+                                            placeholder="12"
                                         />
                                     </div>
                                     <div>
