@@ -6,21 +6,35 @@
     display: flex;
     margin-left: 24%;
     flex-direction: row;
-    width: 100%;
+    width: 75%;
     padding-bottom: 1%;
     bottom: 100%;
 }
-
+/*Begin AddChannel*/
 .connectedChannelTitle {
     margin-right: 43%;
 }
 
+.syncChannelButton {
+    background: #052C5A;
+    color: white;
+    border-radius: 15px;
+    padding: 5px 15px;
+    width: 15%;
+    height: 75%;
+    font-size: 16px;
+    margin-top: 7%;
+}
+
+.syncChannelButton:hover {
+    opacity: 90%;
+    cursor: pointer;
+}
+
 .addChannelButton {
     display: flex;
-    width: 13%;
     padding: 5px 15px;
     border-radius: 15px;
-    overflow: hidden;
     border: 0.50px #000000 solid;
     background: #0fa616;
     justify-content: center;
@@ -28,11 +42,143 @@
     gap: 10px;
     color: white;
     font-size: 16px;
+    width: 100%;
+    margin-top: 57%;
 }
 
 .addChannelButton:hover {
     opacity: 90%;
     cursor: pointer;
+}
+
+.addChannelButtonMenu {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+}
+
+.addChannelButtonMenu.visible {
+    display: block;
+}
+
+.addChannelButtonMenuContent {
+    padding: 20px 25px 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: auto;
+    min-width: 240px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    /*z-index: 10;*/
+    top: calc(100% + 5px);
+    right: 0;
+    border-radius: 10px;
+}
+
+.addChannelInputFields {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 1%;
+    margin-top: 10px;
+}
+
+.channels {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    padding: 1%;
+}
+
+.channelAPIKey {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    width: 97%;
+    padding: 1%;
+}
+
+.addCancelButtonContainer {
+    display: flex;
+    justify-content: flex-end;
+    width: 100%;
+    padding: 1%;
+    flex-wrap: nowrap;
+    margin-top: 10%;
+}
+
+.addChannelButtonMenuButton.Cancel {
+    background: #DADADA;
+}
+
+.addChannelButtonMenuButton.Cancel:hover {
+    opacity: 90%;
+    cursor: pointer;
+}
+
+.addChannelButtonMenuButton.Add {
+    background: #052C5A;
+}
+
+.addChannelButtonMenuButton.Add:hover {
+    opacity: 90%;
+    cursor: pointer;
+}
+
+.addChannelButtonMenuButton {
+    padding: 8px 15px;
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
+    width: 35%;
+    color: white;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+    margin: 10px 0 0 10px;
+}
+/*End AddChannel*/
+.channelManageButtonContainer {
+    display: flex;
+    width: 100%;
+    padding: 1%;
+    flex-direction: column;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+}
+
+.channelManageMenuButton {
+    display: flex;
+    padding: 5px 15px;
+    border-radius: 15px;
+    border: 0.50px #000000 solid;
+    background: #052C5A;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    color: white;
+    font-size: 16px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.channelManageMenuButton:hover {
+    opacity: 90%;
+    cursor: pointer;
+}
+
+.channelManageMenuButton.enabled {
+    background: green;
+}
+
+.channelManageMenuButton.disabled {
+    background: red;
 }
 
 .host-dist-content {
@@ -118,7 +264,7 @@
     background-color: red;
 }
 
-.totalMappedRooms {
+.totalListedAccommodations {
 
 }
 
@@ -137,6 +283,190 @@
     cursor: pointer;
 }
 
+.channelManageMenuContainer {
+    display: none;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+}
+
+.channelManageContainer.visible {
+    display: block;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+}
+
+.channelManageMenuContent {
+    padding: 20px 25px 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: auto;
+    min-width: 240px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+    top: calc(100% + 30px);
+    left: 49vw;
+    border-radius: 10px;
+}
+
+.addAccommodationsViewContainer {
+    display: none;
+}
+
+.addAccommodationsViewContainer.visible {
+    display: block;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    right: 20%;
+    bottom: 0;
+    width: 65vw;
+}
+
+.closeAddAccommodationsContent {
+
+}
+
+.closeAddViewButton {
+    border-radius: 50%;
+    position: absolute;
+    right: 1%;
+    top: 2.5%;
+}
+
+.closeAddViewButton:hover {
+    opacity: 70%;
+    cursor: pointer;
+}
+
+.addAccommodatonsViewContent {
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 15px;
+}
+
+.addAccommodatonsViewContent table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.addAccommodatonsViewContent th, .addAccommodatonsViewContent td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.addAccommodatonsViewContent th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.addAccommodatonsViewContent tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.addAccommodatonsViewContent tr:hover {
+    background-color: #f1f1f1;
+}
+
+.addAccommodatonsViewContent td button {
+    padding: 6px 12px;
+    background-color: #052C5A;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.addAccommodatonsViewContent td button:hover {
+    background-color: #0056b3;
+}
+
+.removeAccommodationsViewContainer {
+    display: none;
+}
+
+.removeAccommodationsViewContainer.visible {
+    display: block;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+    right: 20%;
+    bottom: 0;
+    width: 65vw;
+}
+
+.closeRemoveAccommodationsContent {
+
+}
+
+.closeRemoveViewButton {
+    border-radius: 50%;
+    position: absolute;
+    right: 1%;
+    top: 2.5%;
+}
+
+.closeRemoveViewButton:hover {
+    opacity: 70%;
+    cursor: pointer;
+}
+
+.removeAccommodationsViewContent {
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 15px;
+}
+
+.removeAccommodationsViewContent table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.removeAccommodationsViewContent th, .removeAccommodationsViewContent td {
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.removeAccommodationsViewContent th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.removeAccommodationsViewContent tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.removeAccommodationsViewContent tr:hover {
+    background-color: #f1f1f1;
+}
+
+.removeAccommodationsViewContent td button {
+    padding: 6px 12px;
+    background-color: #052C5A;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.removeAccommodationsViewContent td button:hover {
+    background-color: #0056b3;
+}
+
+/*Begin threeDotsButton*/
 .threeDotsButton {
     border: none;
     background: none;
@@ -157,6 +487,54 @@
     box-shadow: 0 0 5px hsl(0 0% 78%);
 }
 
+.threeDotsContainer {
+    display: none;
+}
+
+.threeDotsContainer.visible {
+    display: block;
+    position: absolute;
+    background-color: #f9f9f9;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    border-radius: 15px;
+}
+
+.threeDotsMenuContent {
+    padding: 20px 25px 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: auto;
+    max-width: 120px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 5;
+    top: calc(100% + 35px);
+    left: 70vw;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.threeDotsButtonMenu {
+    background: #052C5A;
+    color: white;
+    border-radius: 15px;
+    padding: 5px 15px;
+    width: 100%;
+    height: 75%;
+    font-size: 16px;
+    margin-top: 7%;
+}
+
+.threeDotsButtonMenu:hover {
+    opacity: 90%;
+    cursor: pointer;
+}
+
+.threeDotsButtonMenu.delete {
+    background: red;
+}
+/*End threeDotsButton*/
 .channelNavigation {
     display: flex;
     justify-content: center;
