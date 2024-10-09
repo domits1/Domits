@@ -6,6 +6,11 @@
   min-width: 45%;
 }
 
+h2{
+  text-align: center;
+  flex-wrap: wrap;
+}
+
 .textInput {
   width: 30vw;
   height: 30vh;
@@ -35,8 +40,15 @@
 .amenity-groups {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  grid-gap: 1rem;
+  grid-gap: 2rem;
 }
+
+@media (max-width: 768px) {
+  .amenity-groups {
+    grid-template-columns: 1fr;
+  }
+}
+
 .check-box {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -44,10 +56,23 @@
   justify-content: start;
   flex-wrap: wrap;
 }
+
+@media (max-width: 400px) {
+  .check-box {
+    grid-template-columns: 1fr; 
+  }
+  
+  .check-box label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+}
+
 .delete-button {
   position: absolute;
   top: 5px;
   right: 5px;
+  color: black;
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 50%;
@@ -154,6 +179,11 @@
   align-items: center;
 }
 
+@media (max-width: 768px) {
+  .boat-types {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
 .option {
   display: flex;
   flex-direction: column;
@@ -256,7 +286,9 @@
 
 .round-button {
   width: 1.5em;
-  height: 1.5em;
+  /* height: 1.5em; */
+  margin-top: 0px;
+  padding: 0px;
   border-radius: 50%;
   border: 1px solid #003366;
   background-color: white;
@@ -468,3 +500,105 @@
     width: 75%;
   }
 }
+
+.houseRulesContainer {
+  background-color: #ededed68;
+  border-radius: 10px;
+  max-width: 600px; 
+  height: auto; 
+  padding: 20px;
+  margin: auto; 
+}
+
+.toggle-container {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.toggle-label {
+  margin-right: 10px;
+  font-size: 16px;
+}
+
+.toggle-switch {
+  display: inline-block;
+  background: #8b8b8b;
+  border-radius: 16px;
+  width: 58px;
+  height: 32px;
+  position: relative;
+  transition: background 0.25s;
+}
+
+.toggle-switch:before {
+  display: block;
+  background: linear-gradient(to bottom, #fff 0%, #eee 100%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+  width: 24px;
+  height: 24px;
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  transition: left 0.25s;
+}
+
+.toggle-checkbox:checked + .toggle-switch {
+  background: #003366;
+}
+
+
+.toggle-checkbox:checked + .toggle-switch:before {
+  left: 30px;
+}
+
+.toggle-checkbox {
+  position: absolute;
+  visibility: hidden;
+}
+
+
+.toggle-switch:before, .toggle-switch:after {
+  content: "";
+}
+
+
+.Check {
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 30px;
+  
+}
+
+input[type="time"] {
+  border: none;
+  color: #2a2c2d;
+  font-size: 14px;
+  width: 120px;
+  padding: 10px;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.onboarding-button-box {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+
+
+
+
+
+
