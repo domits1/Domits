@@ -487,6 +487,10 @@ function OnboardingHost() {
 
     const pageUpdater = (pageNumber) => {
         setPage(pageNumber);
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth', 
+        });
     };
 
     const hasImages = () => {
