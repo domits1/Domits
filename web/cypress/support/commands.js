@@ -26,27 +26,27 @@
 
 
 Cypress.Commands.add('loginAsGuest', () => {
-    cy.visit('https://acceptance.domits.com/');
+    cy.visit('http://localhost:3000/');
     cy.wait(500);
     cy.get('.personalMenuDropdown').click();
     cy.contains('button', 'Login').click();
-    cy.get('input[name="email"]').type('kacperfl29@gmail.com');
-    cy.get('input[name="password"]').type('Kacper2911');
+    cy.get('input[name="email"]').type('siu7279@gmail.com');
+    cy.get('input[name="password"]').type('Test123400');
     cy.get('button[type="submit"]').click();
     cy.wait(1000);
-    cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard');
+    cy.url().should('eq', 'http://localhost:3000/hostdashboard');
     cy.reload();
   });
 
-  Cypress.Commands.add('loginAsHost', () => {
-    cy.visit('https://acceptance.domits.com/');
-    cy.wait(500);
-    cy.get('.personalMenuDropdown').click();
-    cy.contains('button', 'Login').click();
-    cy.get('input[name="email"]').type('kacperfl29@gmail.com');
-    cy.get('input[name="password"]').type('Kacper2911');
-    cy.get('button[type="submit"]').click();
-    cy.wait(1000);
-    cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard');
-    cy.reload();
-  });
+  // Cypress.Commands.add('loginAsHost', () => {
+  //   cy.visit('https://acceptance.domits.com/');
+  //   cy.wait(500);
+  //   cy.get('.personalMenuDropdown').click();
+  //   cy.contains('button', 'Login').click();
+  //   cy.get('input[name="email"]').type('kacperfl29@gmail.com');
+  //   cy.get('input[name="password"]').type('Kacper2911');
+  //   cy.get('button[type="submit"]').click();
+  //   cy.wait(1000);
+  //   cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard');
+  //   cy.reload();
+  // });
