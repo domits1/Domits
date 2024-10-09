@@ -43,6 +43,8 @@ function OnboardingHost() {
     });
     const [hasAccoType, setHasAccoType] = useState(false);
     const [hasGuestAccess, setHasGuestAccess] =useState(false);
+    const [isDeclarationChecked, setDeclarationChecked] = useState(false);
+    const [isTermsChecked, setTermsChecked] = useState(false);
     const [hasAddress, setHasAddress] = useState(false);
     const [hasSpecs, setHasSpecs] = useState(false);
     const [updatedIndex, setUpdatedIndex] = useState([]);
@@ -1368,9 +1370,18 @@ function OnboardingHost() {
                                         style={{opacity: "75%"}}>
                                     Go back
                                 </button>
-                                <button className="onboarding-button"
-                                        onClick={() => pageUpdater(page + 1)}>
-                                    Confirm and proceed
+                                <button
+                                className={
+                                    formData.CheckIn?.From && formData.CheckIn?.Til && formData.CheckOut?.From && formData.CheckOut?.Til
+                                    ? 'onboarding-button'
+                                    : 'onboarding-button-disabled'
+                                }
+                                disabled={
+                                    !(formData.CheckIn?.From && formData.CheckIn?.Til && formData.CheckOut?.From && formData.CheckOut?.Til)
+                                }
+                                onClick={() => pageUpdater(page + 1)}
+                                >
+                                Confirm and proceed
                                 </button>
                             </nav>
                         </main>
@@ -1990,8 +2001,8 @@ function OnboardingHost() {
                                 </tr>
                             ) : selectedAccoType === 'Camper' ? (
                                 <tr>
-                                    <td>Number of Rooms:</td>
-                                    <td>{formData.Rooms}</td>
+                                    <td>Number of Bedrooms:</td>
+                                    <td>{formData.Bedrooms}</td>
                                 </tr>
                             ) : (
                                 <tr>
@@ -2222,12 +2233,30 @@ function OnboardingHost() {
                             />
                             Mark as draft (Stripe account and date range is required)
                         </label>
+                        <div className="verifyCheck">
+                        <label>
+                            <input 
+                                type="checkbox"
+                                onChange={(e) => setDeclarationChecked(e.target.checked)} 
+                            />
+                            I declare that this property is legitimate, complete with required licenses and permits, 
+                            which can be displayed upon request. Domits B.V. reserves the right to verify and investigate your registration information.
+                        </label>
+
+                        <label>
+                            <input 
+                                type="checkbox"
+                                onChange={(e) => setTermsChecked(e.target.checked)} 
+                            />
+                            I confirm that I have read and accept the <a className ="termsCondition" href="/terms">General Terms and Conditions</a>.
+                        </label>
+                            </div>
                         <div className='onboarding-button-box'>
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
                                 Go back to change
                             </button>
-                            <button className='onboarding-button' onClick={
+                            <button className={!(isDeclarationChecked && isTermsChecked) ? 'onboarding-button-disabled' : 'onboarding-button'} onClick={
                                 isNew ? () => {
                                     handleSubmit();
                                     pageUpdater(page + 1)
@@ -2235,7 +2264,8 @@ function OnboardingHost() {
                                     handleUpdate();
                                     pageUpdater(page + 1)
                                 }
-                            }>{isNew ? 'Confirm' : 'Confirm and update'}
+                            }disabled={!(isDeclarationChecked && isTermsChecked)}
+                            >{isNew ? 'Confirm' : 'Confirm and update'}
                             </button>
                         </div>
                     </div>

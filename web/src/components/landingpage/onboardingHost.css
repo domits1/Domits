@@ -596,6 +596,15 @@ input[type="time"] {
   margin-top: 20px;
 }
 
+.verifyCheck{
+  width: 60vw;
+  line-height: normal;
+}
+
+.termsCondition{
+  text-decoration:underline;
+  
+}
 
 
 
