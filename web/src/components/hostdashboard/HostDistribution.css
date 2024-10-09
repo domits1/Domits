@@ -303,6 +303,8 @@
     width: 15%;
     height: 75%;
     font-size: 16px;
+    margin-top: 10px;
+    margin-bottom: auto;
 }
 
 .channelManageButton:hover {
@@ -508,6 +510,8 @@
     font-family: Kanit, sans-serif;
     cursor: pointer;
     width: auto;
+    margin-top: 10px;
+    margin-bottom: auto;
 }
 
 .threeDotsButton:hover {
