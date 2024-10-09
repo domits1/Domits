@@ -13,7 +13,7 @@ const Accommodations = ({ searchResults }) => {
   const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 12;
+  const itemsPerPage = 14;
   const totalPages = Math.ceil(accolist.length / itemsPerPage);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
