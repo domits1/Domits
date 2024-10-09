@@ -43,6 +43,8 @@ function OnboardingHost() {
     });
     const [hasAccoType, setHasAccoType] = useState(false);
     const [hasGuestAccess, setHasGuestAccess] =useState(false);
+    const [isDeclarationChecked, setDeclarationChecked] = useState(false);
+    const [isTermsChecked, setTermsChecked] = useState(false);
     const [hasAddress, setHasAddress] = useState(false);
     const [hasSpecs, setHasSpecs] = useState(false);
     const [updatedIndex, setUpdatedIndex] = useState([]);
@@ -487,6 +489,10 @@ function OnboardingHost() {
 
     const pageUpdater = (pageNumber) => {
         setPage(pageNumber);
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth', 
+        });
     };
 
     const hasImages = () => {
@@ -1364,9 +1370,18 @@ function OnboardingHost() {
                                         style={{opacity: "75%"}}>
                                     Go back
                                 </button>
-                                <button className="onboarding-button"
-                                        onClick={() => pageUpdater(page + 1)}>
-                                    Confirm and proceed
+                                <button
+                                className={
+                                    formData.CheckIn?.From && formData.CheckIn?.Til && formData.CheckOut?.From && formData.CheckOut?.Til
+                                    ? 'onboarding-button'
+                                    : 'onboarding-button-disabled'
+                                }
+                                disabled={
+                                    !(formData.CheckIn?.From && formData.CheckIn?.Til && formData.CheckOut?.From && formData.CheckOut?.Til)
+                                }
+                                onClick={() => pageUpdater(page + 1)}
+                                >
+                                Confirm and proceed
                                 </button>
                             </nav>
                         </main>
@@ -1587,7 +1602,7 @@ function OnboardingHost() {
                                             value={formData.Capacity}
                                             id="capacity"
                                             required={true}
-                                            placeholder="500 kg"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1599,7 +1614,7 @@ function OnboardingHost() {
                                             value={formData.Length}
                                             id="length"
                                             required={true}
-                                            placeholder="10 m"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1611,7 +1626,7 @@ function OnboardingHost() {
                                             value={formData.FuelTank}
                                             id="fueltank"
                                             required={true}
-                                            placeholder="150"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1623,7 +1638,7 @@ function OnboardingHost() {
                                             value={formData.Speed}
                                             id="speed"
                                             required={true}
-                                            placeholder="50 km"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1744,7 +1759,7 @@ function OnboardingHost() {
                                             value={formData.Length}
                                             id="length"
                                             required={true}
-                                            placeholder="7 m"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1756,7 +1771,7 @@ function OnboardingHost() {
                                             value={formData.Height}
                                             id="height"
                                             required={true}
-                                            placeholder="20 m"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1780,7 +1795,7 @@ function OnboardingHost() {
                                             value={formData.FuelTank}
                                             id="fueltank"
                                             required={true}
-                                            placeholder="12"
+                                            placeholder="0"
                                         />
                                     </div>
                                     <div>
@@ -1986,8 +2001,8 @@ function OnboardingHost() {
                                 </tr>
                             ) : selectedAccoType === 'Camper' ? (
                                 <tr>
-                                    <td>Number of Rooms:</td>
-                                    <td>{formData.Rooms}</td>
+                                    <td>Number of Bedrooms:</td>
+                                    <td>{formData.Bedrooms}</td>
                                 </tr>
                             ) : (
                                 <tr>
@@ -2146,6 +2161,17 @@ function OnboardingHost() {
                                             <td>Transmission:</td>
                                             <td>{formData.Transmission}</td>
                                         </tr>
+
+                                        <tr>
+                                            <td>4 x 4 Four-Wheel Drive:</td>
+                                            <td>{formData.FWD ? 'Yes' : 'No'}</td>
+                                        </tr>
+                                        
+                                        <tr>
+                                            <td>SelfBuilt:</td>
+                                            <td>{formData.SelfBuilt ? 'Yes' : 'No'}</td>
+                                        </tr>
+
                                         <tr>
                                             <td>Year of construction:</td>
                                             <td>{DateFormatterDD_MM_YYYY(formData.YOC)}</td>
@@ -2207,12 +2233,30 @@ function OnboardingHost() {
                             />
                             Mark as draft (Stripe account and date range is required)
                         </label>
+                        <div className="verifyCheck">
+                        <label>
+                            <input 
+                                type="checkbox"
+                                onChange={(e) => setDeclarationChecked(e.target.checked)} 
+                            />
+                            I declare that this property is legitimate, complete with required licenses and permits, 
+                            which can be displayed upon request. Domits B.V. reserves the right to verify and investigate your registration information.
+                        </label>
+
+                        <label>
+                            <input 
+                                type="checkbox"
+                                onChange={(e) => setTermsChecked(e.target.checked)} 
+                            />
+                            I confirm that I have read and accept the <a className ="termsCondition" href="/terms">General Terms and Conditions</a>.
+                        </label>
+                            </div>
                         <div className='onboarding-button-box'>
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
                                 Go back to change
                             </button>
-                            <button className='onboarding-button' onClick={
+                            <button className={!(isDeclarationChecked && isTermsChecked) ? 'onboarding-button-disabled' : 'onboarding-button'} onClick={
                                 isNew ? () => {
                                     handleSubmit();
                                     pageUpdater(page + 1)
@@ -2220,7 +2264,8 @@ function OnboardingHost() {
                                     handleUpdate();
                                     pageUpdater(page + 1)
                                 }
-                            }>{isNew ? 'Confirm' : 'Confirm and update'}
+                            }disabled={!(isDeclarationChecked && isTermsChecked)}
+                            >{isNew ? 'Confirm' : 'Confirm and update'}
                             </button>
                         </div>
                     </div>
