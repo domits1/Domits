@@ -225,50 +225,77 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    margin: 16px 16px 16px 16px;
+    margin: 4px 16px 16px 16px;
     align-items: center;
     flex-wrap: wrap;
 }
 
 .channelLogo {
-    max-width: 5em;
-    max-height: 5em;
+    flex-shrink: 0;
+    width: 80px;
+    height: 80px;
 }
 
 .channelFont {
     font-weight: bold;
     color: black;
+    flex-basis: 20%;
+    text-align: center;
 }
 
-.channelStatus {
+.toggle-status-switch {
+    flex-shrink: 0;
     position: relative;
-    padding-left: 20px; /* Adjust as needed */
+    display: inline-block;
+    width: 58px;
+    height: 32px;
 }
 
-.channelStatus::before {
-    content: '';
+.toggle-status-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-status-switch .slider {
     position: absolute;
+    cursor: pointer;
+    top: 0;
     left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 10px;
-    height: 10px;
+    right: 0;
+    bottom: 0;
+    background-color: red;
+    transition: 0.4s;
+    border-radius: 16px;
+}
+
+.toggle-status-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 24px;
+    width: 24px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: 0.4s;
     border-radius: 50%;
 }
 
-.channelStatus.Enabled::before {
+.toggle-status-switch input:checked + .slider {
     background-color: green;
 }
 
-.channelStatus.Disabled::before {
-    background-color: red;
+.toggle-status-switch input:checked + .slider:before {
+    transform: translateX(26px);
 }
 
 .totalListedAccommodations {
-
+    flex-basis: 15%;
+    text-align: center;
 }
 
 .channelManageButton {
+    flex-basis: 15%;
     background: #052C5A;
     color: white;
     border-radius: 15px;
@@ -468,6 +495,7 @@
 
 /*Begin threeDotsButton*/
 .threeDotsButton {
+    flex-shrink: 0;
     border: none;
     background: none;
     box-shadow: none;

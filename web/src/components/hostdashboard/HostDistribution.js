@@ -2,6 +2,11 @@ import React, {useEffect, useState} from 'react';
 import Pages from "./Pages.js";
 import './HostDistribution.css';
 import airbnb_logo from "../../images/icon-airbnb.png";
+import booking_logo from "../../images/icon-booking.png";
+import expedia_logo from "../../images/icon-expedia.png";
+import homeaway_logo from "../../images/icon-homeaway.png";
+import tripadvisor_logo from "../../images/icon-tripadvisor.png";
+import vrbo_logo from "../../images/icon-vrbo.png";
 import three_dots from "../../images/three-dots-grid.svg";
 import {Auth} from "aws-amplify";
 import {formatDate, uploadICalToS3} from "../utils/iCalFormatHost.js";
@@ -146,6 +151,25 @@ function HostDistribution() {
         asyncRetrieveChannelData();
     }, [userId]);
 
+    const getChannelLogo = (channelName) => {
+        switch (channelName) {
+            case 'Airbnb':
+                return airbnb_logo;
+            case 'Booking.com':
+                return booking_logo;
+            case 'Expedia':
+                return expedia_logo;
+            case 'HomeAway':
+                return homeaway_logo;
+            case 'TripAdvisor':
+                return tripadvisor_logo;
+            case 'Vrbo':
+                return vrbo_logo;
+            default:
+                return '';
+        }
+    };
+
     const generateUUID = () => {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -227,10 +251,6 @@ function HostDistribution() {
         }
     }
 
-    const handleEmptyButton = () => {
-        alert("This button is not functional yet");
-    }
-
     const handlePageRange = () => {
         const totalPages = Math.ceil(channelLength / itemsPerPage);
         let startPage = currentPannel - 2;
@@ -282,7 +302,7 @@ function HostDistribution() {
         let APIKey = apiKey;
         let UserId = userId;
         let ListedAccommodations = [];
-        let Status = 'Disabled';
+        let Status = false;
 
         if (selectedChannel === "Select Channel" && apiKey === "" || selectedChannel === "Select Channel" || apiKey === "") {
             alert('Please fill in all fields');
@@ -361,15 +381,15 @@ function HostDistribution() {
         );
     };
 
-    const toggleChannelManageMenu = (index) => {
-        if (activeManageDropdown === index) {
+    const toggleChannelManageMenu = (channelId) => {
+        if (activeManageDropdown === channelId) {
             setActiveManageDropdown(null);
             setDropdownAddChannelsVisible(false);
             setActiveThreeDotsDropdown(null);
             setActiveAddAccommodationsView(null);
             setActiveRemoveAccommodationsView(null);
         } else {
-            setActiveManageDropdown(index);
+            setActiveManageDropdown(channelId);
             setDropdownAddChannelsVisible(false);
             setActiveThreeDotsDropdown(null);
             setActiveAddAccommodationsView(null);
@@ -377,38 +397,54 @@ function HostDistribution() {
         }
     }
 
-    const handleEnableButton = (index) => {
+    const handleEnableButton = (channelId) => {
         setChannelData(prevState => {
+            const channelIndex = prevState.findIndex(channel => channel.id.S === channelId);
+
+            if (channelIndex === -1) {
+                console.error(`Channel with ID ${channelId} not found`);
+                return prevState;
+            }
+
             const updatedChannels = [...prevState];
-            updatedChannels[index].Status.S = 'Enabled'; // Assuming Status is in this structure
+            updatedChannels[channelIndex].Status.BOOL = true;
+
             return updatedChannels;
         });
-    }
+    };
 
-    const handleDisableButton = (index) => {
+    const handleDisableButton = (channelId) => {
         setChannelData(prevState => {
+            const channelIndex = prevState.findIndex(channel => channel.id.S === channelId);
+
+            if (channelIndex === -1) {
+                console.error(`Channel with ID ${channelId} not found`);
+                return prevState;
+            }
+
             const updatedChannels = [...prevState];
-            updatedChannels[index].Status.S = 'Disabled'; // Assuming Status is in this structure
+            updatedChannels[channelIndex].Status.BOOL = false;
+
             return updatedChannels;
         });
-    }
+    };
 
-    const handleViewAddAccommodationsButton = (index) => {
-        if (activeAddAccommodationsView === index) {
+    const handleViewAddAccommodationsButton = (channelId) => {
+        if (activeAddAccommodationsView === channelId) {
             setActiveAddAccommodationsView(null);
             setActiveRemoveAccommodationsView(null);
         } else {
-            setActiveAddAccommodationsView(index);
+            setActiveAddAccommodationsView(channelId);
             setActiveRemoveAccommodationsView(null);
         }
     };
 
-    const handleViewRemoveAccommodationsButton = (index) => {
-        if (activeRemoveAccommodationsView === index) {
+    const handleViewRemoveAccommodationsButton = (channelId) => {
+        if (activeRemoveAccommodationsView === channelId) {
             setActiveRemoveAccommodationsView(null);
             setActiveAddAccommodationsView(null)
         } else {
-            setActiveRemoveAccommodationsView(index);
+            setActiveRemoveAccommodationsView(channelId);
             setActiveAddAccommodationsView(null)
         }
     };
@@ -469,12 +505,10 @@ function HostDistribution() {
         });
     };
 
+    const renderAddAccommodationsView = (id) => {
+        const channelId = id;
 
-
-    const renderAddAccommodationsView = (channelIndex) => {
-        const channelId = channelData[channelIndex].id.S;
-
-        const listedAccommodations = channelData[channelIndex].ListedAccommodations.L || [];
+        const listedAccommodations = channelData.find(channel => channel.id.S === channelId)?.ListedAccommodations.L || [];
         const tempAccommodations = tempListedAccommodations[channelId] || [];
 
         const listedAccommodationIds = [
@@ -486,7 +520,7 @@ function HostDistribution() {
             <div className="addAccommodatonsViewContent">
                 <div className='closeAddViewContent'>
                     <button className='closeAddViewButton'
-                            onClick={() => handleViewAddAccommodationsButton(channelIndex)}>
+                            onClick={() => handleViewAddAccommodationsButton(channelId)}>
                         X
                     </button>
                 </div>
@@ -521,10 +555,10 @@ function HostDistribution() {
         );
     };
 
-    const renderRemoveAccommodationsView = (channelIndex) => {
-        const channelId = channelData[channelIndex].id.S;
+    const renderRemoveAccommodationsView = (id) => {
+        const channelId = id;
 
-        const listedAccommodations = channelData[channelIndex].ListedAccommodations.L || [];
+        const listedAccommodations = channelData.find(channel => channel.id.S === channelId)?.ListedAccommodations.L || [];
         const tempAccommodations = tempListedAccommodations[channelId] || [];
 
         const combinedAccommodations = [
@@ -536,7 +570,7 @@ function HostDistribution() {
             <div className="removeAccommodationsViewContent">
                 <div className='closeRemoveViewContent'>
                     <button className='closeRemoveViewButton'
-                            onClick={() => handleViewRemoveAccommodationsButton(channelIndex)}>
+                            onClick={() => handleViewRemoveAccommodationsButton(channelId)}>
                         X
                     </button>
                 </div>
@@ -570,31 +604,30 @@ function HostDistribution() {
         );
     };
 
-
-    const renderChannelManageMenu = (index) => {
+    const renderChannelManageMenu = (channelId) => {
         return (
             <div className="channelManageMenuContent">
                 <div className="channelManageButtonContainer">
                     <button className="channelManageMenuButton"
-                            onClick={() => handleViewAddAccommodationsButton(index)}>
+                            onClick={() => handleViewAddAccommodationsButton(channelId)}>
                         + Add Accommodations
                     </button>
                     <div
-                        className={`addAccommodationsViewContainer ${activeAddAccommodationsView === index ? 'visible' : ''}`}>
-                        {activeAddAccommodationsView === index && renderAddAccommodationsView(index)}
+                        className={`addAccommodationsViewContainer ${activeAddAccommodationsView === channelId ? 'visible' : ''}`}>
+                        {activeAddAccommodationsView === channelId && renderAddAccommodationsView(channelId)}
                     </div>
                     <button className="channelManageMenuButton"
-                            onClick={() => handleViewRemoveAccommodationsButton(index)}>
+                            onClick={() => handleViewRemoveAccommodationsButton(channelId)}>
                         - Remove Accommodations
                     </button>
                     <div
-                        className={`removeAccommodationsViewContainer ${activeRemoveAccommodationsView === index ? 'visible' : ''}`}>
-                        {activeRemoveAccommodationsView === index && renderRemoveAccommodationsView(index)}
+                        className={`removeAccommodationsViewContainer ${activeRemoveAccommodationsView === channelId ? 'visible' : ''}`}>
+                        {activeRemoveAccommodationsView === channelId && renderRemoveAccommodationsView(channelId)}
                     </div>
-                    <button className="channelManageMenuButton enabled" onClick={() => handleEnableButton(index)}>
+                    <button className="channelManageMenuButton enabled" onClick={() => handleEnableButton(channelId)}>
                         Enable channel
                     </button>
-                    <button className="channelManageMenuButton disabled" onClick={() => handleDisableButton(index)}>
+                    <button className="channelManageMenuButton disabled" onClick={() => handleDisableButton(channelId)}>
                         Disable channel
                     </button>
                 </div>
@@ -602,8 +635,14 @@ function HostDistribution() {
         );
     };
 
-    const handelSingleAccommodationSync = async (index) => {
-        const channelId = channelData[index].id.S;
+    const handelSingleChannelSync = async (channelId) => {
+        const channel = channelData.find(channel => channel.id.S === channelId);
+
+        if (!channel) {
+            console.error(`Channel with ID ${channelId} not found`);
+            return;
+        }
+
         const accommodationsToSync = tempListedAccommodations[channelId] || [];
 
         if (accommodationsToSync.length === 0) {
@@ -612,11 +651,11 @@ function HostDistribution() {
                     method: 'POST',
                     body: JSON.stringify({
                         id: channelId,
-                        APIKey: channelData[index].APIKey.S,
-                        ChannelName: channelData[index].ChannelName.S,
-                        ListedAccommodations: channelData[index].ListedAccommodations || {L: []}, // Default to empty array if undefined
-                        Status: channelData[index].Status.S,
-                        UserId: channelData[index].UserId.S
+                        APIKey: channel.APIKey.S,
+                        ChannelName: channel.ChannelName.S,
+                        ListedAccommodations: channel.ListedAccommodations || { L: [] },
+                        Status: channel.Status.BOOL,
+                        UserId: channel.UserId.S
                     }),
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8'
@@ -633,21 +672,20 @@ function HostDistribution() {
             } catch (error) {
                 console.error('Error syncing the channel without changes:', error);
             }
-
-            return; // Exit function early as there's nothing else to sync
+            setActiveThreeDotsDropdown(null);
+            return;
         }
 
-        // If there are new accommodations to sync, proceed with updating them
-        const currentListedAccommodations = channelData[index].ListedAccommodations?.L || []; // Default to empty array if undefined
+        const currentListedAccommodations = channel.ListedAccommodations?.L || [];
         const updatedListedAccommodations = [
             ...currentListedAccommodations,
             ...accommodationsToSync.map(acc => ({
                 M: {
-                    AccommodationId: {S: acc.AccommodationId.S},
-                    Title: {S: acc.Title.S},
-                    GuestAmount: {N: acc.GuestAmount.N},
-                    Rent: {S: acc.Rent.S},
-                    Availability: {S: acc.Availability.S}
+                    AccommodationId: { S: acc.AccommodationId.S },
+                    Title: { S: acc.Title.S },
+                    GuestAmount: { N: acc.GuestAmount.N },
+                    Rent: { S: acc.Rent.S },
+                    Availability: { S: acc.Availability.S }
                 }
             }))
         ];
@@ -657,11 +695,11 @@ function HostDistribution() {
                 method: 'POST',
                 body: JSON.stringify({
                     id: channelId,
-                    APIKey: channelData[index].APIKey.S,
-                    ChannelName: channelData[index].ChannelName.S,
-                    ListedAccommodations: {L: updatedListedAccommodations},
-                    Status: channelData[index].Status.S,
-                    UserId: channelData[index].UserId.S
+                    APIKey: channel.APIKey.S,
+                    ChannelName: channel.ChannelName.S,
+                    ListedAccommodations: { L: updatedListedAccommodations },
+                    Status: channel.Status.BOOL,
+                    UserId: channel.UserId.S
                 }),
                 headers: {
                     'Content-type': 'application/json; charset=UTF-8'
@@ -674,14 +712,18 @@ function HostDistribution() {
                 alert('Accommodations synced successfully!');
 
                 setTempListedAccommodations(prevState => {
-                    const newState = {...prevState};
+                    const newState = { ...prevState };
                     delete newState[channelId];
                     return newState;
                 });
 
                 setChannelData(prevState => {
                     const updatedChannels = [...prevState];
-                    updatedChannels[index].ListedAccommodations.L = updatedListedAccommodations;
+                    const channelIndex = updatedChannels.findIndex(ch => ch.id.S === channelId);
+                    if (channelIndex !== -1) {
+                        updatedChannels[channelIndex].ListedAccommodations.L = updatedListedAccommodations;
+                    }
+                    setActiveThreeDotsDropdown(null);
                     return updatedChannels;
                 });
             } else {
@@ -692,29 +734,27 @@ function HostDistribution() {
         }
     };
 
-
-    const toggleThreeDotsMenu = (index) => {
-        if (activeThreeDotsDropdown === index) {
+    const toggleThreeDotsMenu = (channelId) => {
+        if (activeThreeDotsDropdown === channelId) {
             setActiveThreeDotsDropdown(null);
             setDropdownAddChannelsVisible(false);
             setActiveManageDropdown(null);
             setActiveAddAccommodationsView(null);
         } else {
-            setActiveThreeDotsDropdown(index);
+            setActiveThreeDotsDropdown(channelId);
             setDropdownAddChannelsVisible(false);
             setActiveManageDropdown(null);
         }
     }
 
-    const handleDeleteChannel = async (index) => {
-        const id = channelData[index].id.S;
-
+    const handleDeleteChannel = async (channelId) => {
         if (!window.confirm('Are you sure you want to delete this channel?')) return;
+
         try {
             const response = await fetch('https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel', {
                 method: 'DELETE',
                 body: JSON.stringify({
-                    id: id
+                    id: channelId
                 }),
                 headers: {
                     'Content-type': 'application/json; charset=UTF-8',
@@ -725,26 +765,26 @@ function HostDistribution() {
 
             if (data.statusCode === 200) {
                 alert('Channel deleted successfully');
-                setActiveThreeDotsDropdown(null);
+                setChannelData(prevData => prevData.filter(channel => channel.id.S !== channelId));
                 setCurrentPannel(1);
-                return await asyncRetrieveChannelData();
+                setActiveThreeDotsDropdown(null);
             } else {
                 alert('Failed to delete channel');
             }
         } catch (error) {
             console.error('Failed to delete channel:', error);
         }
-    }
+    };
 
-    const renderThreeDotsMenu = (index) => {
+    const renderThreeDotsMenu = (channelId) => {
         return (
             <div className="threeDotsMenuContent">
                 <button className="threeDotsButtonMenu delete"
-                        onClick={() => handleDeleteChannel(index)}>
+                        onClick={() => handleDeleteChannel(channelId)}>
                     Delete
                 </button>
                 <button className="threeDotsButtonMenu"
-                        onClick={() => handelSingleAccommodationSync(index)}>
+                        onClick={() => handelSingleChannelSync(channelId)}>
                     Sync
                 </button>
             </div>
@@ -756,7 +796,7 @@ function HostDistribution() {
             <div className="host-dist-header">
                 <h2 className="connectedChannelTitle">Connected channels</h2>
                 <button className="syncChannelButton" onClick={handleICal}>
-                    Sync All
+                    Export to calender
                 </button>
                 <div className="addChannelButtonMenuContainer">
                     <button className="addChannelButton" onClick={toggleAddChannelButtonMenu}>
@@ -771,7 +811,7 @@ function HostDistribution() {
                 <Pages/>
                 <div className="channelContents">
                     <div className="contentContainer-channel">
-                        {channelData.slice((currentPannel - 1) * itemsPerPage, currentPannel * itemsPerPage)
+                        {channelData
                             .sort((a, b) => {
                                 const nameA = a.ChannelName.S.toLowerCase();
                                 const nameB = b.ChannelName.S.toLowerCase();
@@ -779,33 +819,44 @@ function HostDistribution() {
                                 if (nameA > nameB) return 1;
                                 return 0;
                             })
-                            .map((channel, index) => (
-                                <div className="host-dist-box-container" key={index}>
+                            .slice((currentPannel - 1) * itemsPerPage, currentPannel * itemsPerPage)
+                            .map((channel) => (
+                                <div className="host-dist-box-container" key={channel.id.S}>
                                     <div className="host-dist-box-row">
                                         <img className="channelLogo"
-                                             src={channel.ChannelName.S === 'Airbnb' ? airbnb_logo : ''}
-                                             alt={channel.ChannelName.S === 'Airbnb' ? "Airbnb Logo" : "No Logo"}/>
+                                             src={getChannelLogo(channel.ChannelName.S)}
+                                             alt={`${channel.ChannelName.S} Logo`}
+                                        />
                                         <p className="channelFont">{channel.ChannelName.S || 'Channel'}</p>
-                                        <p className={`channelStatus ${channel.Status.S === 'Enabled' ? 'Enabled' : 'Disabled'}`}>
-                                            {channel.Status.S}
+                                        <p>
+                                            <label className="toggle-status-switch">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={channel.Status.BOOL === true}
+                                                    onChange={() => channel.Status.BOOL ? handleDisableButton(channel.id.S) : handleEnableButton(channel.id.S)}
+                                                />
+                                                <span className="slider"></span>
+                                            </label>
                                         </p>
                                         <p className="totalListedAccommodations">{channel.ListedAccommodations.L.length || '0'} Listed
-                                            Accommodations</p>
+                                            Accommodations
+                                        </p>
                                         <button className="channelManageButton"
-                                                onClick={() => toggleChannelManageMenu(index)}>
+                                                onClick={() => toggleChannelManageMenu(channel.id.S)}>
                                             Manage
                                         </button>
-                                        {activeManageDropdown === index && (
+                                        {activeManageDropdown === channel.id.S && (
                                             <div className="channelManageContainer visible">
-                                                {renderChannelManageMenu(index)}
+                                                {renderChannelManageMenu(channel.id.S)}
                                             </div>
                                         )}
-                                        <button className="threeDotsButton" onClick={() => toggleThreeDotsMenu(index)}>
+                                        <button className="threeDotsButton"
+                                                onClick={() => toggleThreeDotsMenu(channel.id.S)}>
                                             <img src={three_dots} alt="Three Dots"/>
                                         </button>
-                                        {activeThreeDotsDropdown === index && (
+                                        {activeThreeDotsDropdown === channel.id.S && (
                                             <div className="threeDotsContainer visible">
-                                                {renderThreeDotsMenu(index)}
+                                                {renderThreeDotsMenu(channel.id.S)}
                                             </div>
                                         )}
                                     </div>
@@ -828,7 +879,6 @@ function HostDistribution() {
                                 </button>
                             );
                         })}
-
                         <button className="nextChannelButton"
                                 onClick={() => channelPannel(currentPannel < Math.ceil(channelLength / itemsPerPage) ? currentPannel + 1 : currentPannel)}
                                 disabled={currentPannel === Math.ceil(channelLength / itemsPerPage)}>
