@@ -7,7 +7,7 @@
 }
 
 .accocard {
-  width: 23%;
+  width: 18%;
   margin: 1%;
   margin-top: 10px;
   background-color: #fff;
@@ -107,15 +107,13 @@
   .accocard {
     width: 48%;
   }
-
   .accocard-specs {
     display: flex;
     flex-direction: row;
     justify-content: space-around;
     align-items: center;
     text-align: center;
-}
-
+  }
 }
 
 @media (max-width: 480px) {
@@ -132,6 +130,5 @@
     justify-content: space-around;
     align-items: center;
     text-align: center;
-}
-
+  }
 }
