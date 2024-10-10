@@ -34,6 +34,16 @@ const ChatWidget = () => {
     }
   }, [messages, isOpen]);
 
+  useEffect(() => {
+    console.log('Current Messages:', messages);
+  }, [messages]);
+
+  useEffect(() => {
+    if (user && typeof user.id !== 'string') {
+      console.warn('User ID is not a string:', user.id);
+    }
+  }, [user]);
+
   const loadChatHistory = async () => {
     try {
       const params = user ? { userID: user.id } : { chatID };
@@ -55,11 +65,14 @@ const ChatWidget = () => {
     setMessages(prevMessages => [...prevMessages, { text: welcomeMessage, sender: 'ai' }]);
   };
 
-  const sendMessage = async (message = userInput) => {
+  const sendMessage = async () => {
+    let message = userInput;
+
     if (typeof message !== 'string') {
-      message = String(message);  // Ensure message is a string
+      console.warn('sendMessage received a non-string input:', message);
+      message = String(message);  // Convert to string if not already
     }
-    
+
     if (message.trim() === '') return;
 
     if (isAIChat) {
@@ -98,7 +111,15 @@ const ChatWidget = () => {
       }
 
       setMessages(prevMessages => prevMessages.filter(message => message.sender !== 'typing'));
-      const { message: aiMessage, accommodations } = response.data;
+
+      let { message: aiMessage, accommodations } = response.data;
+
+      // Ensure aiMessage is a string
+      if (typeof aiMessage !== 'string') {
+        console.warn('AI response message is not a string:', aiMessage);
+        aiMessage = JSON.stringify(aiMessage);
+      }
+
       setMessages(prevMessages => [
         ...prevMessages,
         { text: aiMessage, sender: 'ai', accommodations }
@@ -223,14 +244,14 @@ const ChatWidget = () => {
           <div className="chatwidget-container">
             <div className="chatwidget-messages" ref={chatMessagesRef}>
               {messages.map((message, index) => (
-                <div className={`chatwidget-message ${message.sender}`}>
+                <div className={`chatwidget-message ${message.sender}`} key={index}>
                   <div className="chatwidget-sender">
                     {message.sender === 'user' ? 'You' : message.sender === 'ai' ? 'Sophia (AI)' : 'System'}
-                    {console.log(message.text)}
                   </div>
                   <div className={`chatwidget-message-content ${message.sender}`}>
-                    {typeof message.text === 'object' ? JSON.stringify(message.text) : message.text || 'Error: Invalid message format'}
-                    {console.log}
+                    {typeof message.text === 'object'
+                      ? JSON.stringify(message.text)
+                      : message.text || 'Error: Invalid message format'}
                   </div>
                   {message.sender === 'ai' && message.accommodations && (
                     <div className="chatwidget-accommodation-tiles">
@@ -252,7 +273,6 @@ const ChatWidget = () => {
               ))}
             </div>
 
-            
             {showHumanDecision && (
               <div className="chatwidget-decision-box">
                 <p>Continue with AI or connect to a human?</p>
