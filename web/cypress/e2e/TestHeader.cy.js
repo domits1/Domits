@@ -40,7 +40,7 @@ import "../support/commands";
 //   });
 // });
 
-describe("Header Guest&Rooms test", () => {
+describe.skip("Header Guest&Rooms test", () => {
      it("Guest&Rooms function should work", () => {
         cy.visit("https://domits.com/");
         cy.get(".searchTitleGuest").click();

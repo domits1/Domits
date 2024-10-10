@@ -229,7 +229,7 @@ const ReviewPage = () => {
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
-                setUsername(user.attributes['custom:username']);
+                setUsername(user.attributes['given_name']);
                 setUserId(user.attributes.sub);
             } else {
                 navigate('/login');

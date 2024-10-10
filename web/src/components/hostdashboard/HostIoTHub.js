@@ -4,7 +4,7 @@ import Pages from "./Pages.js";
 const HostIoTHub = () => {
 
     return (
-        <main className="container">
+        <main className="page-body">
             <section className='host-iot' style={{
                 display: "flex",
                 flexDirection: "row"

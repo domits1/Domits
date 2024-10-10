@@ -37,7 +37,7 @@ function Header({setSearchResults, setLoading}) {
             setIsLoggedIn(true);
             const userAttributes = user.attributes;
             setGroup(userAttributes['custom:group']);
-            setUsername(userAttributes['custom:username']);
+            setUsername(userAttributes['given_name']);
             setCurrentView(userAttributes['custom:group'] === 'Host' ? 'host' : 'guest');
         } catch (error) {
             setIsLoggedIn(false);
@@ -49,6 +49,8 @@ function Header({setSearchResults, setLoading}) {
         try {
             await Auth.signOut();
             setIsLoggedIn(false);
+            sessionStorage.removeItem('chatOpened');
+            window.location.reload();
             console.log('User logged out successfully');
         } catch (error) {
             console.error('Error logging out:', error);

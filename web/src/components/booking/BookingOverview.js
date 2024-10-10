@@ -218,7 +218,7 @@ const BookingOverview = () => {
     };
 
     return (
-        <main className="container Bookingcontainer" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
+        <main className="page-body Bookingcontainer" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
             <div className="main-content">
                 <h1>{accommodation.Title}</h1>
                 <p>{accommodation.Description}</p>

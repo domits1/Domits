@@ -34,7 +34,7 @@ function MenuBar() {
             setIsLoggedIn(true);
             const userAttributes = user.attributes;
             setGroup(userAttributes['custom:group']);
-            setUsername(userAttributes['custom:username']);
+            setUsername(userAttributes['given_name']);
             setCurrentView(userAttributes['custom:group'] === 'Host' ? 'host' : 'guest');
         } catch (error) {
             setIsLoggedIn(false);
@@ -45,7 +45,10 @@ function MenuBar() {
     const handleLogout = async () => {
         try {
             await Auth.signOut();
+            sessionStorage.removeItem('chatOpened'); 
+
             setIsLoggedIn(false);
+            window.location.reload(); 
             console.log('User logged out successfully');
         } catch (error) {
             console.error('Error logging out:', error);

@@ -1,251 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="AutoImportSettings">
-    <option name="autoReloadType" value="NONE" />
+    <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="SafeAreaView toegepast in hostDashboard">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.vscode/settings.json" beforeDir="false" afterPath="$PROJECT_DIR$/.vscode/settings.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/amplify-meta.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/api/domits/build/cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/api/domits/build/schema.graphql" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/auth/domits7b73f586/build/auth-trigger-cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/#current-cloud-backend/awscloudformation/build/api/domits/build/cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/amplify-meta.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/build/cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/api/domits/build/parameters.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/auth/domits7b73f586/build/auth-trigger-cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/amplify/backend/awscloudformation/build/api/domits/build/cloudformation-template.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/amplify/backend/api/domits/schema.graphql" beforeDir="false" afterPath="$PROJECT_DIR$/web/amplify/backend/api/domits/schema.graphql" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/chat/Chatprototype.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/chat/Chatprototype.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/listingdetails/ListingDetails.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/listingdetails/ListingDetails.js" afterDir="false" />
+    <list default="true" id="8a792168-a166-4f7b-a951-43743e50630d" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/OnboardingHost.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/OnboardingHost.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/onboardingHost.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/onboardingHost.css" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ClangdSettings">
-    <option name="formatViaClangd" value="false" />
-  </component>
-  <component name="FileTemplateManagerImpl">
-    <option name="RECENT_TEMPLATES">
-      <list>
-        <option value="JavaScript File" />
-      </list>
-    </option>
-  </component>
   <component name="Git.Settings">
-    <option name="RECENT_BRANCH_BY_REPOSITORY">
-      <map>
-        <entry key="$PROJECT_DIR$" value="chat" />
-      </map>
-    </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
-  </component>
-  <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/app/Domits/App.js" root0="FORCE_HIGHLIGHTING" />
-  </component>
-  <component name="MarkdownSettingsMigration">
-    <option name="stateVersion" value="1" />
-  </component>
-  <component name="ProjectColorInfo">{
-  &quot;associatedIndex&quot;: 1
-}</component>
-  <component name="ProjectId" id="2c2oNNmoxvvszmjcyuNYFsp66CD" />
-  <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
-  <component name="ProjectViewState">
-    <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "WebServerToolWindowFactoryState": "false",
-    "cf.first.check.clang-format": "false",
-    "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "app-login",
-    "kotlin-language-version-configured": "true",
-    "last_opened_file_path": "C:/Users/Nabil/Documents/FS/Domits1/Domits",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "project.structure.last.edited": "Project",
-    "project.structure.proportion": "0.0",
-    "project.structure.side.proportion": "0.0",
-    "settings.editor.selected.configurable": "AndroidSdkUpdater",
-    "ts.external.directory.path": "C:\\Users\\chaos\\Documents\\Projects\\Domits\\app\\Domits\\node_modules\\typescript\\lib",
-    "vue.rearranger.settings.migration": "true"
+    "ts.external.directory.path": "C:\\Users\\chaos\\Documents\\Projects\\Domits\\app\\Domits\\node_modules\\typescript\\lib"
   }
-}</component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="C:\Users\giann\projects\Domits" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="C:\Users\hamza\IdeaProjects\Domits2\app\Domits\src\screens\bookingprocess" />
-      <recent name="C:\Users\hamza\IdeaProjects\Domits2\app\Domits\src\screens\guestdashboard" />
-    </key>
-  </component>
-  <component name="RunManager">
-    <configuration name="index.html" type="JavascriptDebugType" temporary="true" nameIsGenerated="true" uri="http://localhost:63342/Domits/web/build/index.html" useBuiltInWebServerPort="true">
-      <method v="2" />
-    </configuration>
-  </component>
-  <component name="SharedIndexes">
-    <attachedChunks>
-      <set>
-        <option value="jdk-19.0.2-corretto-19.0.2-4caba194b151-be841094" />
-      </set>
-    </attachedChunks>
-  </component>
-  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+}]]></component>
   <component name="TaskManager">
-    <task active="true" id="Default" summary="Default task">
-      <changelist id="8309c1a9-4139-4784-afd9-5140cd3c704d" name="Changes" comment="" />
-      <created>1707318993853</created>
-      <option name="number" value="Default" />
-      <option name="presentableId" value="Default" />
-      <updated>1707318993853</updated>
-      <workItem from="1707318994853" duration="2051000" />
-      <workItem from="1707383078027" duration="648000" />
-      <workItem from="1707389480427" duration="25000" />
-      <workItem from="1707390289133" duration="464000" />
-      <workItem from="1707396896239" duration="411000" />
-      <workItem from="1707404314200" duration="1591000" />
-      <workItem from="1707490148094" duration="813000" />
-      <workItem from="1707514890836" duration="628000" />
-      <workItem from="1707729934111" duration="6000" />
-      <workItem from="1707752074726" duration="2000" />
-      <workItem from="1707812241050" duration="201000" />
-      <workItem from="1709124129771" duration="3626000" />
-      <workItem from="1709132432561" duration="4321000" />
-      <workItem from="1709203654689" duration="3464000" />
-      <workItem from="1709814757651" duration="4117000" />
-      <workItem from="1710343601278" duration="2775000" />
-      <workItem from="1710363931664" duration="641000" />
-      <workItem from="1710430451764" duration="619000" />
-      <workItem from="1710500736510" duration="11345000" />
-      <workItem from="1710592498079" duration="11000" />
-      <workItem from="1710761764892" duration="2751000" />
-      <workItem from="1710842102273" duration="6001000" />
-      <workItem from="1710858244143" duration="1721000" />
-      <workItem from="1713363852908" duration="1543000" />
-      <workItem from="1713779598996" duration="2493000" />
-    </task>
-    <task id="LOCAL-00001" summary="android app development">
-      <created>1709138237032</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1709138237032</updated>
-    </task>
-    <task id="LOCAL-00002" summary="Merge conflict and navigation for guest dashboard">
-      <created>1709821476937</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1709821476937</updated>
-    </task>
-    <task id="LOCAL-00003" summary="Issue #235">
-      <created>1710173328712</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1710173328712</updated>
-    </task>
-    <task id="LOCAL-00004" summary="personalDetailsForm.js">
-      <created>1710345085443</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1710345085443</updated>
-    </task>
-    <task id="LOCAL-00005" summary="bookingProcess is done, last page is still getting updated.">
-      <created>1710514988552</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1710514988552</updated>
-    </task>
-    <task id="LOCAL-00006" summary="build.gradle has correct build and safeareaview implemented in guesttdashboard">
-      <created>1710853475056</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1710853475056</updated>
-    </task>
-    <task id="LOCAL-00007" summary="SafeAreaView toegepast in hostDashboard">
-      <created>1710858328718</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1710858328718</updated>
-    </task>
-    <task id="LOCAL-00008" summary="Ik heb Chahid gecarried">
-      <option name="closed" value="true" />
-      <created>1713264562583</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1713264562583</updated>
-    </task>
-    <task id="LOCAL-00009" summary="App werkend door build.gradle aan te passen">
-      <option name="closed" value="true" />
-      <created>1713797462689</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1713797462689</updated>
-    </task>
-    <task id="LOCAL-00010" summary="App werkend door build.gradle aan te passen">
-      <option name="closed" value="true" />
-      <created>1713855581326</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1713855581326</updated>
-    </task>
-    <option name="localTasksCounter" value="11" />
     <servers />
-  </component>
-  <component name="TypeScriptGeneratedFilesManager">
-    <option name="version" value="3" />
-    <option name="exactExcludedFiles">
-      <list>
-        <option value="$PROJECT_DIR$/app/Domits/App.js" />
-      </list>
-    </option>
-  </component>
-  <component name="Vcs.Log.Tabs.Properties">
-    <option name="TAB_STATES">
-      <map>
-        <entry key="MAIN">
-          <value>
-            <State />
-          </value>
-        </entry>
-      </map>
-    </option>
-  </component>
-  <component name="VcsManagerConfiguration">
-    <MESSAGE value="android app development" />
-    <MESSAGE value="Merge conflict and navigation for guest dashboard" />
-    <MESSAGE value="Issue #235" />
-    <MESSAGE value="personalDetailsForm.js" />
-    <MESSAGE value="bookingProcess is done, last page is still getting updated." />
-    <MESSAGE value="build.gradle has correct build and safeareaview implemented in guesttdashboard" />
-    <MESSAGE value="SafeAreaView toegepast in hostDashboard" />
-    <MESSAGE value="Ik heb Chahid gecarried" />
-    <MESSAGE value="App werkend door build.gradle aan te passen" />
-    <option name="LAST_COMMIT_MESSAGE" value="App werkend door build.gradle aan te passen" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
