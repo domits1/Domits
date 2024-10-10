@@ -28,8 +28,8 @@
 Cypress.Commands.add('loginAsGuest', () => {
     cy.visit('https://acceptance.domits.com/');
     cy.wait(500);
-    cy.get('.personalMenu').click();
-    cy.get('.dropdownLoginButton').click();
+    cy.get('.personalMenuDropdown').click();
+    cy.contains('button', 'Login').click();
     cy.get('input[name="email"]').type('kacperfl29@gmail.com');
     cy.get('input[name="password"]').type('Kacper2911');
     cy.get('button[type="submit"]').click();
@@ -41,8 +41,8 @@ Cypress.Commands.add('loginAsGuest', () => {
   Cypress.Commands.add('loginAsHost', () => {
     cy.visit('https://acceptance.domits.com/');
     cy.wait(500);
-    cy.get('.personalMenu').click();
-    cy.get('.dropdownLoginButton').click();
+    cy.get('.personalMenuDropdown').click();
+    cy.contains('button', 'Login').click();
     cy.get('input[name="email"]').type('kacperfl29@gmail.com');
     cy.get('input[name="password"]').type('Kacper2911');
     cy.get('button[type="submit"]').click();

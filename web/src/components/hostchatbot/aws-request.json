@@ -1,0 +1,134 @@
+{
+  "Registrations_Numbers_Countries_City": [
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "2" },
+          "City": {
+            "L": [
+              { "S": "Rotterdam" }
+            ]
+          },
+          "Country": { "S": "Netherlands" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "3" },
+          "City": {
+            "L": [
+              { "S": "Amsterdam" }
+            ]
+          },
+          "Country": { "S": "Netherlands" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "4" },
+          "City": {
+            "L": [
+              { "S": "Berlin" }
+            ]
+          },
+          "Country": { "S": "Germany" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "5" },
+          "City": {
+            "L": [
+              { "S": "Paris" }
+            ]
+          },
+          "Country": { "S": "France" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "6" },
+          "City": {
+            "L": [
+              { "S": "Vienna" }
+            ]
+          },
+          "Country": { "S": "Austria" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "7" },
+          "City": {
+            "L": [
+              { "S": "Rome" }
+            ]
+          },
+          "Country": { "S": "Italy" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "8" },
+          "City": {
+            "L": [
+              { "S": "London" }
+            ]
+          },
+          "Country": { "S": "United Kingdom" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "9" },
+          "City": {
+            "L": [
+              { "S": "New York" }
+            ]
+          },
+          "Country": { "S": "United States" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "10" },
+          "City": {
+            "L": [
+              { "S": "San Francisco" }
+            ]
+          },
+          "Country": { "S": "United States" }
+        }
+      }
+    },
+    {
+      "PutRequest": {
+        "Item": {
+          "id": { "S": "11" },
+          "City": {
+            "L": [
+              { "S": "Barcelona" }
+            ]
+          },
+          "Country": { "S": "Spain" }
+        }
+      }
+    }
+  ]
+}

@@ -46,7 +46,7 @@ import Chat from "./components/chat/Chat";
 import Chatbot from "./components/chatbot/chatbot";
 import ChatWidget from './components/chatwidget/ChatWidget';
 import EmployeeChat from './components/employee/EmployeeChat';
-import FlowContext from './FlowContext'
+import FlowContext from './FlowContext';
 import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./components/hostdashboard/HostReservations";
@@ -65,9 +65,11 @@ import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 
+
 import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
 import Hostchatbot from "./components/hostchatbot/hostchatbot";
+import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 
 
 Modal.setAppElement('#root');
@@ -75,8 +77,17 @@ Modal.setAppElement('#root');
 function App() {
     const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    // Apollo Client
+    const client = new ApolloClient({
+        uri: 'https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql',  //
+        cache: new InMemoryCache(),
+        headers: {
+            "x-api-key": "da2-bkwzuzxyubfw5aadbb3ahtuwja",  // Replace with your AppSync API key
+        },
+    });
+
     useEffect(() => {
-        // console.log('Updated searchResults:', searchResults);
         document.title = 'Domits';
     }, [searchResults]);
 
@@ -95,125 +106,123 @@ function App() {
 
     const [flowState, setFlowState] = useState({ isHost: false });
 
+
     return (
-        <FlowContext.Provider value={{ flowState, setFlowState }}>
-            <Router>
-                <ScrollToTop />
-                <AuthProvider>
-                <UserProvider>
-                    <div className="App">
-                    {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
-                        <Routes>
-                            <Route path="/" element={<Home searchResults={searchResults} />} />
-                            <Route path="/about" element={<About />} />
-                            <Route path="/release" element={<Release />} />
-                            <Route path="/releaseTwo" element={<ReleaseTwo />} />
-                            <Route path="/data-safety" element={<Datasafety />} />
-                            <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
-                            <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
-                            <Route path="/how-it-works" element={<Howitworks />} />
-                            <Route path="/why-domits" element={<Whydomits />} />
-                            <Route path="/contact" element={<Contact />} />
-                            <Route path="/travelinnovation" element={<Travelinnovation />} />
-                            <Route path="/landing" element={<Landing />} />
-                            <Route path="/login" element={<Login />} />
-                            <Route path="/register" element={<Register />} />
-                            <Route path="/confirm-email" element={<ConfirmRegister />} />
-                            <Route path="/listingdetails" element={<ListingDetails />} />
-                            <Route path="/bookingoverview" element={<BookingOverview />} />
-                            <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
+        <ApolloProvider client={client}> {/* ApolloProvider */}
+            <FlowContext.Provider value={{ flowState, setFlowState }}>
+                <Router>
+                    <ScrollToTop />
+                    <AuthProvider>
+                        <UserProvider>
+                            <div className="App">
+                                {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
 
-                            {/* Chat */}
-                            <Route path="/chat" element={<Chat />} />
+                                <Routes>
+                                    <Route path="/" element={<Home searchResults={searchResults} />} />
+                                    <Route path="/about" element={<About />} />
+                                    <Route path="/release" element={<Release />} />
+                                    <Route path="/releaseTwo" element={<ReleaseTwo />} />
+                                    <Route path="/data-safety" element={<Datasafety />} />
+                                    <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
+                                    <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
+                                    <Route path="/how-it-works" element={<Howitworks />} />
+                                    <Route path="/why-domits" element={<Whydomits />} />
+                                    <Route path="/contact" element={<Contact />} />
+                                    <Route path="/travelinnovation" element={<Travelinnovation />} />
+                                    <Route path="/landing" element={<Landing />} />
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/register" element={<Register />} />
+                                    <Route path="/confirm-email" element={<ConfirmRegister />} />
+                                    <Route path="/listingdetails" element={<ListingDetails />} />
+                                    <Route path="/bookingoverview" element={<BookingOverview />} />
+                                    <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
 
-                            {/* Chatbot */}
-                            <Route path="/chatbot" element={<Chatbot />} />
+                                    {/* Chat */}
+                                    <Route path="/chat" element={<Chat />} />
+                                    <Route path="/employeechat" element={<EmployeeChat />} />
+                                    <Route path="/chatbot" element={<Chatbot />} />
 
-                            <Route path="/employeechat" element={<EmployeeChat />} />
+                                    {/* Host Chatbot */}
+                                    <Route path="/hostchatbot" element={<Hostchatbot />} />
 
-                            {/* Host Chatbot */}
-                            <Route path="/hostchatbot" element={<Hostchatbot />} />
+                                    {/* Review */}
+                                    <Route path="/review" element={<ReviewPage />} />
 
-                        
+                                    {/* Guest Dashboard */}
+                                    <Route
+                                        path="/guestdashboard/*"
+                                        element={
+                                            <GuestProtectedRoute>
+                                                <Routes>
+                                                    <Route path="/" element={<GuestDashboard />} />
+                                                    <Route path="messages" element={<ListingDetails />} />
+                                                    <Route path="payments" element={<GuestPayments />} />
+                                                    <Route path="reviews" element={<GuestReviews />} />
+                                                    <Route path="bookings" element={<GuestBooking />} />
+                                                    <Route path="settings" element={<GuestSettings />} />
+                                                    <Route path="chat" element={<Chat />} />
+                                                </Routes>
+                                            </GuestProtectedRoute>
+                                        }
+                                    />
 
-                            {/* Review */}
-                            <Route path="/review" element={<ReviewPage/>}/>
+                                    {/* Host Management */}
+                                    <Route path="/enlist" element={<HostOnboarding />} />
 
-                            {/* Guest Dashboard */}
-                            <Route
-                                path="/guestdashboard/*"
-                                element={
-                                    <GuestProtectedRoute>
-                                        <Routes>
-                                            <Route path="/" element={<GuestDashboard />} />
-                                            <Route path="messages" element={<ListingDetails />} />
-                                            <Route path="payments" element={<GuestPayments />} />
-                                            <Route path="reviews" element={<GuestReviews />} />
-                                            <Route path="bookings" element={<GuestBooking />} />
-                                            <Route path="settings" element={<GuestSettings />} />
-                                            <Route path="chat" element={<Chat />} />
-                                        </Routes>
-                                    </GuestProtectedRoute>
-                                }
-                            />
-                            {/*<Route path="/profilepictures" element={<UserProfile/>}/>*/}
+                                    <Route path="/hostdashboard" element={
+                                        <HostProtectedRoute>
+                                            <HostDashboard />
+                                        </HostProtectedRoute>
+                                    } />
+                                    <Route
+                                        path="/hostdashboard/*"
+                                        element={
+                                            <HostProtectedRoute>
+                                                <Routes>
+                                                    <Route path="listings" element={<HostListings />} />
+                                                    <Route path="calendar" element={<HostCalendar />} />
+                                                    <Route path="messages" element={<HostMessages />} />
+                                                    <Route path="reporting" element={<HostPayments />} />
+                                                    <Route path="settings" element={<HostSettings />} />
+                                                    <Route path="reviews" element={<HostReviews />} />
+                                                    <Route path="chat" element={<Hostchat />} />
+                                                    <Route path="reservations" element={<HostReservations />} />
+                                                    <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
+                                                    <Route path="property-care" element={<HostPropertyCare />} />
+                                                    <Route path="iot-hub" element={<HostIoTHub />} />
+                                                    <Route path="pricing" element={<HostPricing />} />
+                                                    <Route path="distribution" element={<HostDistribution />} />
+                                                    <Route path="monitoring" element={<HostMonitoring />} />
+                                                    <Route path="screening" element={<HostScreening />} />
+                                                    <Route path="setup" element={<HostSetup />} />
+                                                    <Route path="promo-codes" element={<HostPromoCodes />} />
+                                                </Routes>
+                                            </HostProtectedRoute>
+                                        }
+                                    />
+                                    <Route path="/stripe/callback" element={<StripeCallback />} />
 
-                            {/* Host Management */}
-                            <Route path="/enlist" element={<HostOnboarding />} />
+                                    {/* Career, Policies, and Terms */}
+                                    <Route path="/career" element={<Careers />} />
+                                    <Route path ="/job/:id" element={<JobDetails />} />
+                                    <Route path="/policy" element={<Policy />} />
+                                    <Route path="/terms" element={<Terms />} />
+                                    <Route path="/disclaimers" element={<Disclaimers />} />
 
-                            <Route path="/hostdashboard" element={
-                                    <HostProtectedRoute>
-                                        <HostDashboard />
-                                    </HostProtectedRoute>
-                                } />
-                            <Route
-                                path="/hostdashboard/*"
-                                element={
-                                    <HostProtectedRoute>
-                                        <Routes>
-                                            <Route path="listings" element={<HostListings />} />
-                                            <Route path="calendar" element={<HostCalendar />} />
-                                            <Route path="messages" element={<HostMessages />} />
-                                            <Route path="reporting" element={<HostPayments />} />
-                                            <Route path="settings" element={<HostSettings />} />
-                                            <Route path="reviews" element={<HostReviews />} />
-                                            <Route path="chat" element={<Hostchat />} />
-                                            <Route path="reservations" element={<HostReservations />} />
-                                            <Route path="revenues" element={<HostRevenues />} />
-                                            <Route path="property-care" element={<HostPropertyCare />} />
-                                            <Route path="iot-hub" element={<HostIoTHub />} />
-                                            <Route path="pricing" element={<HostPricing />} />
-                                            <Route path="distribution" element={<HostDistribution />} />
-                                            <Route path="monitoring" element={<HostMonitoring />} />
-                                            <Route path="screening" element={<HostScreening />} />
-                                            <Route path="setup" element={<HostSetup />} />
-                                            <Route path="promo-codes" element={<HostPromoCodes />} />
-                                        </Routes>
-                                    </HostProtectedRoute>
-                                }
-                            />
-                            <Route path="/stripe/callback" element={<StripeCallback />} />
+                                    {/* Error*/}
+                                    <Route path="/*" element={<PageNotFound />} />
+                                </Routes>
+                                {renderFooter()}
+                                {currentPath !== '/admin' && <MenuBar />}
+                                <Hostchatbot />
+                                <ChatWidget />
 
-                            {/* Career, Policies, and Terms */}
-                            <Route path="/career" element={<Careers />} />
-                            <Route path ="/job/:id" element={<JobDetails />} />
-                            <Route path="/policy" element={<Policy />} />
-                            <Route path="/terms" element={<Terms />} />
-                            <Route path="/disclaimers" element={<Disclaimers />} />
-
-                            {/* Error*/}
-                            <Route path="/*" element={<PageNotFound />} />
-                        </Routes>
-                        {renderFooter()}
-                        {currentPath !== '/admin' && <MenuBar />}
-                        <Hostchatbot /> 
-                        <ChatWidget />
-
-                    </div>
-                    </UserProvider>
-                </AuthProvider>
-            </Router>
-        </FlowContext.Provider>
+                            </div>
+                        </UserProvider>
+                    </AuthProvider>
+                </Router>
+            </FlowContext.Provider>
+        </ApolloProvider>
     );
 }
 export default App;

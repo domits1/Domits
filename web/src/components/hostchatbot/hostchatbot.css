@@ -3,13 +3,13 @@
   position: fixed;
   bottom: 20px;
   right: 20px;
-  z-index: 1000;
+  z-index: 2000; /* Increased z-index to ensure it's always clickable */
   background-color: #007bff;
   color: white;
   border: none;
   border-radius: 50%;
-  width: 100px;  /* Adjust size */
-  height: 100px; /* Adjust size */
+  width: 70px;  /* Adjusted size */
+  height: 70px; /* Adjusted size */
   font-size: 24px; /* Icon size */
   cursor: pointer;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -21,9 +21,9 @@
 /* Chatbot window container */
 .chatbot-container {
   position: fixed;
-  bottom: 80px; /* Positioned above the toggle button */
+  bottom: 100px; /* Positioned above the toggle button */
   right: 20px;
-  z-index: 1000;
+  z-index: 1000; /* Lower than the button to ensure it's not overlapping */
   width: 350px; /* Width of the chat window */
   height: 500px; /* Height of the chat window */
   background-color: white;
@@ -33,6 +33,15 @@
   flex-direction: column;
   justify-content: space-between;
   overflow: hidden; /* Ensure content doesn't overflow */
+  opacity: 0; /* Initially hidden */
+  visibility: hidden; /* Initially hidden */
+  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+}
+
+/* Show chat window when open */
+.chatbot-container.open {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Chatbot header */
@@ -116,4 +125,20 @@
 .chat-input button:disabled {
   background-color: #ccc;
   cursor: not-allowed;
+}
+
+/* Accommodation card */
+.accommodation-card {
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.accommodation-image {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  margin-bottom: 10px;
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
+import React, {useState, useEffect, useContext, useRef} from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import styles from './landing.module.css';
@@ -36,7 +36,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
             </div>
             <div
                 className={styles.landing__faq__answer}
-                style={{ maxHeight: isOpen ? `${height}px` : '0', overflow: 'hidden' }}
+                style={{maxHeight: isOpen ? `${height}px` : '0', overflow: 'hidden' }}
                 ref={answerRef}
             >
                 {answer}
@@ -141,12 +141,7 @@ function Landing() {
                 console.error("Failed to update user group");
             }
         } catch (error) {
-            if (error === 'The user is not authenticated') {
-                console.error('User is not logged in. Redirecting to login page.');
-                navigate('/login');
-            } else {
-                console.error('Error updating user group:', error);
-            }
+            console.error('Error updating user group:', error);
         }
     };
 
@@ -154,18 +149,23 @@ function Landing() {
         <main className={styles.container}>
             <div className={styles.firstSection}>
                 <div className={styles.MainText}>
-                
-                    <h1>List your <span className={styles.highlightTextAnimation1}>House</span>, 
-                    <span className={styles.highlightTextAnimation1}>   Camper</span> and  
-                    <span className={styles.highlightTextAnimation2 }> Boat </span> for free on Domits</h1>
+                    <h1>List your <span className={styles.textContainer}>
+                    <div className={styles.textAnimated}>
+                            <span>House</span> 
+                            <span>Camper</span> 
+                            <span>Boat</span> 
+                        </div> 
+                    </span>
+                    <br/>for free on Domits
+                </h1>
                     <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
                     <button className={styles.nextButtons}>Start hosting</button>
-
                 </div>
-
+                
                 <div className={styles.firstPicture}>
-                    <img src={MainTextpicture} alt="House" />
+                    <img src={MainTextpicture} alt="House"/>
                 </div>
+
             </div>
             <div className={styles.RegisterBlock}>
                 {isAuthenticated && group !== 'Host' ? (
@@ -178,7 +178,7 @@ function Landing() {
                     <Register />
                 )}
             </div>
-
+            
             <div className={styles.easyHosting}>
                 <div className={styles.easyHosting_text}>
                     <h1>Hosting on <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
@@ -202,27 +202,27 @@ function Landing() {
                     </div>
                 </div>
             </div>
-
+            
             <div className={styles.whyHost}>
                 <div className={styles.SecPicture}>
-                    <img src={whyHostpicture} alt="House" />
+                    <img src={whyHostpicture} alt="House"/>
                 </div>
                 <div className={styles.whyHostText}>
                     <h1>Why should i host on <span className={styles.highlightText}>Domits</span>?</h1>
-                    <p>At Domits, we're not just another platform, we're building a future-focused,
-                        sustainable community with our Travel Innovation Labs. Our innovative approach
-                        ensures that your property adds meaningful value to both travelers and the
-                        environment. You'll also enjoy unlimited support and personalized, modern
-                        dashboards that make managing your listings easier than ever. But what truly
-                        sets Domits apart is our commitment to you. You're more than just a customer or
-                        data, we genuinely care about your success, and we're here every step on the way
-                        to help you thrive. Hosting with Domits means aligning with deeply embedded
-                        values of health, safety, and sustainability, creating a future-proof path for
-                        your business.</p>
+                    <p>At Domits, we're not just another platform, we're building a future-focused, 
+                    sustainable community with our Travel Innovation Labs. Our innovative approach 
+                    ensures that your property adds meaningful value to both travelers and the 
+                    environment. You'll also enjoy unlimited support and personalized, modern 
+                    dashboards that make managing your listings easier than ever. But what truly 
+                    sets Domits apart is our commitment to you. You're more than just a customer or 
+                    data, we genuinely care about your success, and we're here every step on the way 
+                    to help you thrive. Hosting with Domits means aligning with deeply embedded 
+                    values of health, safety, and sustainability, creating a future-proof path for 
+                    your business.</p>
                     <button onClick={updateUserGroup} className={styles.nextButtons}>Start hosting</button>
                 </div>
             </div>
-
+            
             <div className={styles.simpleSafe}>
                 <div className={styles.simpleSafeAll}>
                     <h1>Register your property <span className={styles.highlightText}>simple</span> and <span className={styles.highlightText}>safe</span></h1>
@@ -455,7 +455,7 @@ function Landing() {
 
             <div className={styles.faq}>
                 <div className={styles.faq__header}>
-                    <img src={supportLogo} alt='support' />
+                    <img src={supportLogo} alt='support'/>
                     <h1>Answers to <span className={styles.highlightText}>your</span> questions</h1>
                 </div>
                 <div className={styles.faq__list}>
@@ -477,7 +477,7 @@ function Landing() {
                     <h3>Our expert team is ready for support!</h3>
                     <button className={styles.nextButtons}>Talk to a specialist</button>
                 </div>
-                <img src={PersonalAdvice} alt='personalAdvice' />
+                <img src={PersonalAdvice} alt='personalAdvice'/>
             </div>
         </main>
     );
