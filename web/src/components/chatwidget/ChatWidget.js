@@ -5,7 +5,7 @@ import './ChatWidget.css'; // Ensure you have the CSS file
 import { useUser } from '../../UserContext'; // Make sure this path is correct
 
 const ChatWidget = () => {
-  const { user, isLoading } = useUser();
+  const { user, isLoading, role } = useUser();
   const [userInput, setUserInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +39,7 @@ const ChatWidget = () => {
         scrollToBottom();
       }
     } catch (error) {
-      console.error('Error loading chat history:', error);
+      //console.error('Error loading chat history:', error);
     }
   };
 
@@ -86,7 +86,7 @@ const ChatWidget = () => {
       ]);
       scrollToBottom();
     } catch (error) {
-      console.error('Error sending message:', error);
+      //console.error('Error sending message:', error);
       setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -100,6 +100,10 @@ const ChatWidget = () => {
 
   if (isLoading) {
     return <div>Loading...</div>;
+  }
+
+  if (role === 'Host') {
+    return null;
   }
 
   return (

@@ -22,6 +22,8 @@ export declare type ValidationResponse = {
 };
 export declare type ValidationFunction<T> = (value: T, validationResponse: ValidationResponse) => ValidationResponse | Promise<ValidationResponse>;
 export declare type ChatUpdateFormInputValues = {
+    userId?: string;
+    recipientId?: string;
     text?: string;
     email?: string;
     recipientEmail?: string;
@@ -31,6 +33,8 @@ export declare type ChatUpdateFormInputValues = {
     channelID?: string;
 };
 export declare type ChatUpdateFormValidationValues = {
+    userId?: ValidationFunction<string>;
+    recipientId?: ValidationFunction<string>;
     text?: ValidationFunction<string>;
     email?: ValidationFunction<string>;
     recipientEmail?: ValidationFunction<string>;
@@ -42,6 +46,8 @@ export declare type ChatUpdateFormValidationValues = {
 export declare type PrimitiveOverrideProps<T> = Partial<T> & React.DOMAttributes<HTMLDivElement>;
 export declare type ChatUpdateFormOverridesProps = {
     ChatUpdateFormGrid?: PrimitiveOverrideProps<GridProps>;
+    userId?: PrimitiveOverrideProps<TextFieldProps>;
+    recipientId?: PrimitiveOverrideProps<TextFieldProps>;
     text?: PrimitiveOverrideProps<TextFieldProps>;
     email?: PrimitiveOverrideProps<TextFieldProps>;
     recipientEmail?: PrimitiveOverrideProps<TextFieldProps>;
