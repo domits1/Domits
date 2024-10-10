@@ -34,16 +34,6 @@ const ChatWidget = () => {
     }
   }, [messages, isOpen]);
 
-  useEffect(() => {
-    console.log('Current Messages:', messages);
-  }, [messages]);
-
-  useEffect(() => {
-    if (user && typeof user.id !== 'string') {
-      console.warn('User ID is not a string:', user.id);
-    }
-  }, [user]);
-
   const loadChatHistory = async () => {
     try {
       const params = user ? { userID: user.id } : { chatID };
@@ -56,7 +46,7 @@ const ChatWidget = () => {
         })));
       }
     } catch (error) {
-      console.error('Error loading chat history:', error);
+      //console.error('Error loading chat history:', error);
     }
   };
 
@@ -69,8 +59,8 @@ const ChatWidget = () => {
     let message = userInput;
 
     if (typeof message !== 'string') {
-      console.warn('sendMessage received a non-string input:', message);
-      message = String(message);  // Convert to string if not already
+      //console.warn('sendMessage received a non-string input:', message);
+      message = String(message);  
     }
 
     if (message.trim() === '') return;
@@ -116,7 +106,7 @@ const ChatWidget = () => {
 
       // Ensure aiMessage is a string
       if (typeof aiMessage !== 'string') {
-        console.warn('AI response message is not a string:', aiMessage);
+        //console.warn('AI response message is not a string:', aiMessage);
         aiMessage = JSON.stringify(aiMessage);
       }
 
@@ -129,7 +119,7 @@ const ChatWidget = () => {
         setShowHumanDecision(true);
       }
     } catch (error) {
-      console.error('Error sending message:', error);
+      //console.error('Error sending message:', error);
       setMessages(prevMessages => prevMessages.filter(message => message.sender !== 'typing'));
     } finally {
       setLoading(false);
@@ -171,7 +161,7 @@ const ChatWidget = () => {
         setMessages(prevMessages => [...prevMessages, { text: 'Connecting you to an agent...', sender: 'system' }]);
 
         const ws = new WebSocket(
-          `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${user?.id || 'anon'}` // simplified user ID handling
+          `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${user?.id || 'anon'}` 
         );
 
         ws.onopen = () => {
@@ -179,11 +169,13 @@ const ChatWidget = () => {
           setSocket(ws);
         };
 
+        
         ws.onmessage = (event) => {
           const incomingMessage = JSON.parse(event.data);
+
           setMessages(prevMessages => [
             ...prevMessages,
-            { text: incomingMessage.message, sender: 'employee' }
+            { text: incomingMessage.message, sender: 'employee' } 
           ]);
         };
 
@@ -200,7 +192,7 @@ const ChatWidget = () => {
       }
 
     } catch (err) {
-      console.error('Failed to connect to employee:', err);
+      //console.error('Failed to connect to employee:', err);
       setMessages(prevMessages => [
         ...prevMessages,
         { text: 'Failed to connect to an agent. Please continue with the AI.', sender: 'system' }
@@ -246,7 +238,13 @@ const ChatWidget = () => {
               {messages.map((message, index) => (
                 <div className={`chatwidget-message ${message.sender}`} key={index}>
                   <div className="chatwidget-sender">
-                    {message.sender === 'user' ? 'You' : message.sender === 'ai' ? 'Sophia (AI)' : 'System'}
+                    {message.sender === 'user'
+                      ? 'You'
+                      : message.sender === 'ai'
+                      ? 'Sophia (AI)'
+                      : message.sender === 'employee'
+                      ? 'Employee'
+                      : 'System'}
                   </div>
                   <div className={`chatwidget-message-content ${message.sender}`}>
                     {typeof message.text === 'object'
