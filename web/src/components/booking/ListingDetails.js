@@ -219,7 +219,7 @@ const ListingDetails = () => {
                     throw new Error('Failed to fetch accommodation data');
                 }
                 const responseData = await response.json();
-                const data = JSON.parse(responseData.body);               
+                const data = JSON.parse(responseData.body);
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
                 fetchHostInfo(data.OwnerId);
@@ -273,9 +273,18 @@ const ListingDetails = () => {
             const responseData = await response.json();
             const hostData = JSON.parse(responseData.body)[0];
             setHost(hostData);
+
         } catch (error) {
             console.error('Error fetching host info:', error);
         }
+    };
+
+    const getHostName = (host) => {
+        return host?.Attributes?.find(attr => attr.Name === 'given_name')?.Value || 'Unknown Host';
+    };
+
+    const getHostEmail = (host) => {
+        return host?.Attributes?.find(attr => attr.Name === 'email')?.Value || 'Email not available';
     };
 
     useEffect(() => {
@@ -498,7 +507,7 @@ const ListingDetails = () => {
 
     const filterDisabledDays = (date) => {
         for (let i = 0; i < accommodation.DateRanges.length; i++) {
-            let index = accommodation.DateRanges[i];
+            let index = acccommodation.DateRanges[i];
             if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
                 return true;
             }
@@ -612,11 +621,11 @@ const ListingDetails = () => {
                                     {host && (
                                         <div className="host-card">
                                             <section className="card-top">
-                                                <h3>{host.Attributes[2].Value}</h3>
+                                                <h3>{getHostName(host)}</h3>
                                                 <p>Joined on: {dateFormatterDD_MM_YYYY(host.UserCreateDate)}</p>
                                             </section>
                                             <section className="card-bottom">
-                                                <p>E-Mail: {host.Attributes[4].Value}</p>
+                                                <p>E-Mail: {getHostEmail(host)}</p>
                                                 <div>
                                                     <button className='button'>Contact host</button>
                                                 </div>
