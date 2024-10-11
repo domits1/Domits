@@ -151,6 +151,7 @@ describe('House accomadation test', () => {
 
               cy.get('.verifyCheck > :nth-child(1) > input').click();
               cy.get(':nth-child(2) > input').click();
+              // deze test bevat nog paar error voordat ik ze uncomment
               //   cy.get('#root > div > main > section > section > section:nth-child(1) > button').click();
               //   cy.get('#root > div > main > section > section > section:nth-child(2) > button').click();
               //   cy.get('#root > div > main > section > section > section:nth-child(3) > button').click();
