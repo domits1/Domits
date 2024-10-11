@@ -219,6 +219,9 @@ const GuestDashboard = () => {
                                         onChange={handleInputChange}
                                         className="guest-edit-input"
                                         onKeyPress={handleKeyPressName}
+                                        minLength={1}
+                                        maxLength={35}
+                                        pattern="[A-Za-z\s]+"
                                     />
                                     <div onClick={saveUserName} className="edit-icon-background">
                                         <img src={checkIcon} alt="Save Name" className="guest-check-icon" />
