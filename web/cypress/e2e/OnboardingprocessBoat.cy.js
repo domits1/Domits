@@ -46,52 +46,52 @@ const checks = [
     '09:00'
 ]
 
-// describe("Test: Boat 'what type of boat do yo own?'", () => {
-//     it("should test if all boat options are available and clickable", () => {
-//         cy.loginAsGuest();
-//         cy.get('.wijzer.addAcco').click();
-//         cy.get('#root > div > main > nav > button.onboarding-button').click();
-//         cy.get('.wijzer.addAcco').click();
-//         cy.get('img.accommodation-icon').eq(3).click();
-//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+describe("Test: Boat 'what type of boat do yo own?'", () => {
+    it("should test if all boat options are available and clickable", () => {
+        cy.loginAsGuest();
+        cy.get('.wijzer.addAcco').click();
+        cy.get('#root > div > main > nav > button.onboarding-button').click();
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(3).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-//         // Test: boat options
-//         cy.get('#root > div > main > div > section')
-//             .find('div')
-//             .should('have.length', 10)
-//             .each(($el) => {
-//                 const optionText = $el.text().trim();
-//                 expect(expectedOptions).to.include(optionText);
-//             })
-//             .each(($el) => {
-//                 cy.wrap($el).click()
-//                     .should('have.class', 'selected');
-//             });
-//     });
-// });
+        // Test: boat options
+        cy.get('#root > div > main > div > section')
+            .find('div')
+            .should('have.length', 10)
+            .each(($el) => {
+                const optionText = $el.text().trim();
+                expect(expectedOptions).to.include(optionText);
+            })
+            .each(($el) => {
+                cy.wrap($el).click()
+                    .should('have.class', 'selected');
+            });
+    });
+});
 
-// describe("Test: 'Where can we find your boat?' form", () => {
-//     it("Form functionality", () => {
-//         cy.loginAsGuest();
-//         cy.get('.wijzer.addAcco').click();
-//         cy.get('img.accommodation-icon').eq(3).click();
-//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
-//         cy.get('#root > div > main > div > section').contains(expectedOptions[6]).click();
-//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
-//         cy.get('#root > div > main > nav > button.onboarding-button-disabled').should('be.disabled');
+describe("Test: 'Where can we find your boat?' form", () => {
+    it("Form functionality", () => {
+        cy.loginAsGuest();
+        cy.get('.wijzer.addAcco').click();
+        cy.get('img.accommodation-icon').eq(3).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > div > section').contains(expectedOptions[6]).click();
+        cy.get('#root > div > main > nav > button:nth-child(2)').click();
+        cy.get('#root > div > main > nav > button.onboarding-button-disabled').should('be.disabled');
 
-//         // Test: where can we find your boats?
-//         cy.get('#country > div').click(); // Click to open the dropdown
-//         cy.get('#country > div.css-1nmdiq5-menu').should('be.visible'); //dropdown options should be visible
-//         cy.contains(countryToSelect).click();
-//         cy.get('#country > div').should('contain', countryToSelect);
-//         cy.get('#city').should('be.visible').click();
-//         cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
-//         cy.get('#harbour').should('be.visible').click();
-//         cy.get('#harbour').type(validHarbour, { force: true }).should('have.value', validHarbour);
-//         cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled');
-//     });
-// });
+        // Test: where can we find your boats?
+        cy.get('#country > div').click(); // Click to open the dropdown
+        cy.get('#country > div.css-1nmdiq5-menu').should('be.visible'); //dropdown options should be visible
+        cy.contains(countryToSelect).click();
+        cy.get('#country > div').should('contain', countryToSelect);
+        cy.get('#city').should('be.visible').click();
+        cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+        cy.get('#harbour').should('be.visible').click();
+        cy.get('#harbour').type(validHarbour, { force: true }).should('have.value', validHarbour);
+        cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled');
+    });
+});
 
 describe("Test: 'How many people can stay here?' form", () => {
     it("Amount test", () => {
