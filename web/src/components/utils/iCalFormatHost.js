@@ -66,22 +66,6 @@ function foldICalLine(inputString) {
     return foldedString;
 }
 
-// export function downloadICal(event) {
-//     const icsContent = iCalFormat(event);
-//
-//     const blob = new Blob([icsContent], { type: 'text/calendar' });
-//
-//     const link = document.createElement('a');
-//     link.href = URL.createObjectURL(blob);
-//     link.download = `${event.Summary}.ics`; // The name of the .ics file
-//
-//     document.body.appendChild(link);
-//
-//     link.click();
-//
-//     document.body.removeChild(link);
-// }
-
 export async function uploadICalToS3(events, userId) {
     const icsContent = iCalFormat(events);
 
