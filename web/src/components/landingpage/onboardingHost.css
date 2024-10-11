@@ -72,6 +72,7 @@ h2{
   position: absolute;
   top: 5px;
   right: 5px;
+  color: black;
   background-color: #fff;
   border: 1px solid #ccc;
   border-radius: 50%;
@@ -285,7 +286,9 @@ h2{
 
 .round-button {
   width: 1.5em;
-  height: 1.5em;
+  /* height: 1.5em; */
+  margin-top: 0px;
+  padding: 0px;
   border-radius: 50%;
   border: 1px solid #003366;
   background-color: white;
@@ -552,6 +555,7 @@ h2{
   background: #003366;
 }
 
+
 .toggle-checkbox:checked + .toggle-switch:before {
   left: 30px;
 }
@@ -592,6 +596,15 @@ input[type="time"] {
   margin-top: 20px;
 }
 
+.verifyCheck{
+  width: 60vw;
+  line-height: normal;
+}
+
+.termsCondition{
+  text-decoration:underline;
+  
+}
 
 
 
