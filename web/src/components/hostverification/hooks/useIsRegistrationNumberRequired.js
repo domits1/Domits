@@ -27,7 +27,6 @@ const useIsRegistrationNumberRequired = (Address) => {
       const data = await response.json();
       setIsRegistrationNumberRequired(data.match);
     } catch (error) {
-      console.error('Error fetching data:', error);
       setError(error);
     } finally {
       setLoading(false);

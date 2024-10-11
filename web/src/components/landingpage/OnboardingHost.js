@@ -1969,7 +1969,6 @@ function OnboardingHost() {
                                 RegistrationNumber={formData.RegistrationNumber}
                                 />);    
             case 12:
-                console.log(formData.RegistrationNumber);
                 return (
                     <div className="container" id="summary" style={{width: '80%'}}>
                         <h2>Please check if everything is correct</h2>
