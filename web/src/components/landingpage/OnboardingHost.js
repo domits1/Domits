@@ -1883,7 +1883,10 @@ function OnboardingHost() {
                                 <label>Base rate</label>
                                 <input className="pricing-input" type="number" name="Rent" onChange={handleInputChange}
                                        defaultValue={formData.Rent} min={1} step={0.1}
-                                       required={true}/>
+                                       required={true}
+                                       maxLength={4}
+                                       />
+
                             </div>
                             {formData.Features.ExtraServices.includes('Cleaning service (add service fee manually)') &&
                                 <div className="pricing-row">
