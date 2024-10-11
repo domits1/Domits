@@ -635,7 +635,7 @@ function HostDistribution() {
         );
     };
 
-    const handelSingleChannelSync = async (channelId) => {
+    const handelSingleChannelSave = async (channelId) => {
         const channel = channelData.find(channel => channel.id.S === channelId);
 
         if (!channel) {
@@ -648,7 +648,7 @@ function HostDistribution() {
         if (accommodationsToSync.length === 0) {
             try {
                 const response = await fetch('https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/EditSingleChannel', {
-                    method: 'POST',
+                    method: 'PUT',
                     body: JSON.stringify({
                         id: channelId,
                         APIKey: channel.APIKey.S,
@@ -692,7 +692,7 @@ function HostDistribution() {
 
         try {
             const response = await fetch('https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/EditSingleChannel', {
-                method: 'POST',
+                method: 'PUT',
                 body: JSON.stringify({
                     id: channelId,
                     APIKey: channel.APIKey.S,
@@ -784,8 +784,8 @@ function HostDistribution() {
                     Delete
                 </button>
                 <button className="threeDotsButtonMenu"
-                        onClick={() => handelSingleChannelSync(channelId)}>
-                    Sync
+                        onClick={() => handelSingleChannelSave(channelId)}>
+                    Save
                 </button>
             </div>
         );
@@ -795,7 +795,7 @@ function HostDistribution() {
         <div className="containerHostDistribution">
             <div className="host-dist-header">
                 <h2 className="connectedChannelTitle">Connected channels</h2>
-                <button className="syncChannelButton" onClick={handleICal}>
+                <button className="exportICalButton" onClick={handleICal}>
                     Export to calender
                 </button>
                 <div className="addChannelButtonMenuContainer">

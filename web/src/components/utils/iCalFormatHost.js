@@ -14,8 +14,8 @@ function iCalFormat(events) {
         icsContent += `DTSTAMP:${formatICalDateTime(Dtstamp)}\r\n`
         icsContent += `DTSTART:${formatICalDateTime(Dtstart)}\r\n`
         icsContent += `DTEND:${formatICalDateTime(Dtend)}\r\n`
-        icsContent += `SUMMARY:${Summary}\r\n`
-        icsContent += `LOCATION:${Location}\r\n`
+        icsContent += `SUMMARY:${foldICalLine(Summary)}\r\n`
+        icsContent += `LOCATION:${foldICalLine(Location)}\r\n`
         icsContent += `ACCOMMODATION-ID:${AccommodationId}\r\n`
         icsContent += `END:VEVENT`;
     });
@@ -53,6 +53,17 @@ function formatICalDateTime(dateTime) {
     const formattedTime = `${hours}${minutes}${seconds}`;
 
     return formattedDate + 'T' + formattedTime;
+}
+
+function foldICalLine(inputString) {
+    const maxLineLength = 60;
+    let foldedString = '';
+
+    for (let i = 0; i < inputString.length; i += maxLineLength) {
+        foldedString += inputString.substring(i, i + maxLineLength) + (i + maxLineLength < inputString.length ? '\r\n ' : '');
+    }
+
+    return foldedString;
 }
 
 // export function downloadICal(event) {

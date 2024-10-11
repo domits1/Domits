@@ -15,7 +15,7 @@
     margin-right: 43%;
 }
 
-.syncChannelButton {
+.exportICalButton {
     background: #052C5A;
     color: white;
     border-radius: 15px;
@@ -26,7 +26,7 @@
     margin-top: 7%;
 }
 
-.syncChannelButton:hover {
+.exportICalButton:hover {
     opacity: 90%;
     cursor: pointer;
 }
