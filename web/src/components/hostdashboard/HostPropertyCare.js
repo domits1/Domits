@@ -1,8 +1,14 @@
 import React from 'react';
 import Pages from "./Pages.js";
+import { useNavigate } from 'react-router-dom';
 
 const HostPropertyCare = () => {
+    const navigate = useNavigate();
 
+
+    const handleContactNavigation = () => {
+        navigate('/contact');  // Navigate to the contact page
+    };
     return (
         <main className="page-body">
             <section className='host-pc' style={{
@@ -10,8 +16,16 @@ const HostPropertyCare = () => {
                 flexDirection: "row"
             }}>
                 <Pages />
-                <div className="content">
-                    <h1>Coming soon...</h1>
+                <div className="content" style={{alignItems:'center'}}>
+                    <h1>Property Care</h1>
+                    <h3>
+                        Are you looking for a cleaner, housekeeper or maintenance handyman? Our partner Mostpros
+                        has a network of home service professionals ready to support you.
+                        <span
+                            onClick={handleContactNavigation}
+                            style={{ color: 'blue', textDecoration: 'underline', cursor: 'pointer' }}> Send us a message here
+                        </span> and we connect you with them.
+                    </h3>
                 </div>
             </section>
         </main>
