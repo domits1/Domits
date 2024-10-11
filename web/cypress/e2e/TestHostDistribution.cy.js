@@ -444,44 +444,27 @@ describe('Host Distribution - Creating a iCal link', () => {
     it('should upload iCal to S3, copy URL to clipboard, and check if it is valid', () => {
         let userId;
         let icalUrl;
-
-        // Step 1: Get userId from localStorage
         cy.window().then((win) => {
             const data = JSON.parse(win.localStorage.getItem('CognitoIdentityServiceProvider.78jfrfhpded6meevllpfmo73mo.17143a37-934d-4bc6-9777-1395041fe876.userData'));
             userId = data.Username;
             expect(userId).to.exist;
             expect(userId).to.be.a('string');
         });
-
-        // Step 2: Intercept PUT request for iCal upload to S3
         cy.intercept('PUT', '**/hosts/*/*.ics', {}).as('uploadICalToS3');
         cy.get('.exportICalButton').click();
-
-        // Step 3: Verify the PUT request URL and headers, and get the URL
         cy.wait('@uploadICalToS3').then((interception) => {
             expect(interception.request.url).to.include(`/hosts/${userId}/${userId}.ics`);
             expect(interception.request.headers['content-type']).to.equal('text/calendar');
-
-            // Set the icalUrl for later use
             icalUrl = interception.request.url;
         });
-
-        // Step 4: Verify clipboard copy
         cy.window().then((win) => {
             cy.stub(win.navigator.clipboard, 'writeText').as('copyToClipboard');
         });
         cy.get('@copyToClipboard').should('have.been.calledOnce');
-
-        // Step 5: Validate that the .ics file is valid (make sure this happens after icalUrl is set)
         cy.then(() => {
-            // Ensure the icalUrl is defined before making the request
             expect(icalUrl).to.exist;
-
-            // Make the request to the .ics file URL
             cy.request(icalUrl).then((response) => {
-                expect(response.status).to.equal(200); // Ensure file was successfully fetched
-
-                // Validate the iCal content
+                expect(response.status).to.equal(200);
                 const icalContent = response.body;
                 expect(icalContent).to.include('BEGIN:VCALENDAR');
                 expect(icalContent).to.include('END:VCALENDAR');
