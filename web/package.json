@@ -89,6 +89,7 @@
     "axios": "^1.7.2",
     "browser-image-compression": "^2.0.2",
     "chart.js": "^4.4.3",
+    "compromise": "^14.14.2",
     "country-data": "^0.0.31",
     "date-fns": "^3.6.0",
     "dotenv": "^16.4.5",
