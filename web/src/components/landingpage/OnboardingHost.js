@@ -26,6 +26,7 @@ import ElectricBoat from "../../images/boat_types/electric-boat.png";
 import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png";
 import CalendarComponent from "../hostdashboard/CalendarComponent";
 import imageCompression from 'browser-image-compression';
+import RegistrationNumber from "../hostverification/RegistrationNumberView";
 
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
@@ -944,6 +945,7 @@ function OnboardingHost() {
 
     const renderPageContent = (page) => {
         switch (page) {
+            // case 0: return ( <RegistrationNumber /> );
             case 0:
                 if (isLoading) {
                     return (
@@ -1289,7 +1291,7 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
-                case 5:
+            case 5:
                     return (
                         <main className="page-body">
                             <h2 className="onboardingSectionTitle">House rules</h2>
@@ -1953,6 +1955,21 @@ function OnboardingHost() {
                     </main>
                 );
             case 11:
+                    const address = {
+                        Country: formData.Country,
+                        City: formData.City,
+                        PostalCode: formData.PostalCode,
+                        Street: formData.Street,
+                    }
+                    return ( <RegistrationNumber 
+                                Address={address} 
+                                Next={() => pageUpdater(page + 1)} 
+                                Previous={() => pageUpdater(page - 1)}
+                                setFormData={setFormData}
+                                RegistrationNumber={formData.RegistrationNumber}
+                                />);    
+            case 12:
+                console.log(formData.RegistrationNumber);
                 return (
                     <div className="container" id="summary" style={{width: '80%'}}>
                         <h2>Please check if everything is correct</h2>
@@ -2270,7 +2287,7 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
-            case 12:
+            case 13:
                 if (isLoading) {
                     return (
                         <main className="loading">

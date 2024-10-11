@@ -2,7 +2,7 @@ import styles from "./hostverification.module.css";
 import Option from "./components/Option";
 import Listing from "./components/Listing";
 import { useNavigate, useLocation } from 'react-router-dom';
-import useOptionVisibility from "./hooks/useOptionVisibility";
+import useOptionVisibility from "./hooks/useIsRegistrationNumberRequired";
 import useFetchAccommodation from "./hooks/useFetchAccomodation";
 import Loading from "./components/Loading";
 import { useEffect } from "react";
