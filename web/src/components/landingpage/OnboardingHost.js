@@ -707,8 +707,8 @@ function OnboardingHost() {
             let newValue = parseFloat(value);
     
             if (name === 'Rent') {
-                if (newValue > 100000) {
-                    newValue = 100000;
+                if (newValue > 150000) {
+                    newValue = 150000;
                 } else if (newValue < 1) {
                     newValue = 1;
                 }
