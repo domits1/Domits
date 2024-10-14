@@ -5,6 +5,20 @@ import styles from '../utils/PageSwitcher.module.css'
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 
+const getItemsPerPage = () => {
+  if (window.matchMedia("(max-width: 480px)").matches) {
+    return 8;
+  } else if (window.matchMedia("(max-width: 856px)").matches) {
+    return 12;
+  } else if (window.matchMedia("(max-width: 1292px").matches) {
+    return 16;
+  }
+  else {
+    return 15;
+  }
+};
+
+
 const Accommodations = ({ searchResults }) => {
   const S3_BUCKET_NAME = 'accommodation';
   const region = 'eu-north-1';
@@ -13,7 +27,8 @@ const Accommodations = ({ searchResults }) => {
   const navigate = useNavigate();
 
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 14;
+  const [itemsPerPage, setItemsPerPage] = useState(getItemsPerPage());
+
   const totalPages = Math.ceil(accolist.length / itemsPerPage);
 
   const startIndex = (currentPage - 1) * itemsPerPage;
@@ -27,9 +42,23 @@ const Accommodations = ({ searchResults }) => {
     }
   };
 
+  // Update itemsPerPage wanneer het scherm verandert
+  useEffect(() => {
+    const handleResize = () => {
+      setItemsPerPage(getItemsPerPage());
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // Zorg ervoor dat de event listener wordt verwijderd als de component unmount
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
+
   const formatData = (items) => {
     return items.map((item) => ({
-      image: item.image ||item.Images['homepage'] || item.Images['image1'],
+      image: item.image || item.Images['homepage'] || item.Images['image1'],
       title: item.Title,
       city: item.City,
       country: item.Country,
@@ -42,16 +71,15 @@ const Accommodations = ({ searchResults }) => {
     }));
   };
 
-
   const populateAccoListWithImages = async (data) => {
     const formattedData = await Promise.all(
-        data.map(async (item) => {
-          const homepageImageURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.jpg`
-          return {
-            ...item,
-            image: homepageImageURL || item.Images['image1'] // Eerst homepage URL, dan fallback naar een andere URL
-          };
-        })
+      data.map(async (item) => {
+        const homepageImageURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.jpg`;
+        return {
+          ...item,
+          image: homepageImageURL || item.Images['image1'], // Eerst homepage URL, dan fallback naar een andere URL
+        };
+      })
     );
     setAccolist(formatData(formattedData));
   };
@@ -88,11 +116,11 @@ const Accommodations = ({ searchResults }) => {
 
   if (loading) {
     return (
-        <div className="full-visibility">
-          {Array(8).fill().map((_, index) => (
-              <SkeletonLoader key={index} />
-          ))}
-        </div>
+      <div className="full-visibility">
+        {Array(8).fill().map((_, index) => (
+          <SkeletonLoader key={index} />
+        ))}
+      </div>
     );
   }
 
