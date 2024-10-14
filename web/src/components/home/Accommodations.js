@@ -18,7 +18,6 @@ const getItemsPerPage = () => {
   }
 };
 
-
 const Accommodations = ({ searchResults }) => {
   const S3_BUCKET_NAME = 'accommodation';
   const region = 'eu-north-1';
@@ -42,7 +41,6 @@ const Accommodations = ({ searchResults }) => {
     }
   };
 
-  // Update itemsPerPage wanneer het scherm verandert
   useEffect(() => {
     const handleResize = () => {
       setItemsPerPage(getItemsPerPage());
@@ -50,7 +48,6 @@ const Accommodations = ({ searchResults }) => {
 
     window.addEventListener("resize", handleResize);
 
-    // Zorg ervoor dat de event listener wordt verwijderd als de component unmount
     return () => {
       window.removeEventListener("resize", handleResize);
     };
