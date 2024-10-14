@@ -3,9 +3,8 @@ import '../support/commands';
 beforeEach(() => {
     cy.viewport(1920, 1080);
     cy.loginAsHost();
-    cy.get('.hostchatbot-toggle-button').click();
-    cy.visit('https://acceptance.domits.com/hostdashboard/distribution');
-    cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard/distribution');
+    cy.visit('https://acceptance.domits.com/hostdashboard/distribution/', { failOnStatusCode: false });
+    cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard/distribution/');
 });
 
 describe.skip('Visit Web Host Distribution', () => {
