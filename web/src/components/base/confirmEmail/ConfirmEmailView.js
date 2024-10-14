@@ -62,7 +62,7 @@ function ConfirmEmailView() {
         </p>
       </div>
       <hr></hr>
-      <div className={styles["bottom-container"]}></div>
+      <div className={styles["bottom-container"]}>
       <div className={styles["back-btn"]}>
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -80,6 +80,7 @@ function ConfirmEmailView() {
           />
         </svg>
         <p>Back</p>
+      </div>
       </div>
     </main>
   );
