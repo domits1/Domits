@@ -134,7 +134,11 @@ const HostChatbot = () => {
     if (faqMatch) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: `Q: ${faqMatch.question}\nA: ${faqMatch.answer}`, sender: 'bot', contentType: 'text' }
+        {
+          text: `Q: ${faqMatch.question}\nA: ${faqMatch.answer}`,
+          sender: 'bot',
+          contentType: 'faq' // Mark content type for FAQ
+        }
       ]);
     } else {
       setMessages((prevMessages) => [
@@ -170,7 +174,11 @@ const HostChatbot = () => {
       if (currentOption === '1') {
         setMessages((prevMessages) => [
           ...prevMessages,
-          { text: formatAccommodationsResponse(accommodationsArray), sender: 'bot', contentType: 'text' }
+          {
+            text: formatAccommodationsResponse(accommodationsArray),
+            sender: 'bot',
+            contentType: 'accommodation' // Mark content type for accommodation
+          }
         ]);
       }
     } catch (error) {
@@ -188,7 +196,11 @@ const HostChatbot = () => {
       if (currentOption === '1') {
         setMessages((prevMessages) => [
           ...prevMessages,
-          { text: formatAccommodationsResponse(data), sender: 'bot', contentType: 'text' }
+          {
+            text: formatAccommodationsResponse(data),
+            sender: 'bot',
+            contentType: 'accommodation'
+          }
         ]);
       }
     } catch (error) {
@@ -235,7 +247,16 @@ const HostChatbot = () => {
           </div>
           <div className="hostchatbot-window">
             {messages.map((message, index) => (
-                <div key={index} className={`hostchatbot-message ${message.sender}`}>
+                <div
+                    key={index}
+                    className={`hostchatbot-message ${
+                        message.contentType === 'accommodation'
+                            ? 'accommodation-layout'
+                            : message.contentType === 'faq'
+                                ? 'faq-layout'
+                                : message.sender
+                    }`}
+                >
                   <p>{message.text}</p>
                 </div>
             ))}
