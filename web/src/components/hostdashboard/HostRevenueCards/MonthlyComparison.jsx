@@ -4,10 +4,9 @@ import './MonthlyComparison.css';
 
 function MonthlyComparison({ data }) {
     return (
-        <div className="comparison-card">
-            <div className="card-header">
+        <div className="mc-comparison-card">
+            <div className="mc-card-header">
                 <span>Monthly Comparison</span>
-
             </div>
             <BarChart
                 width={800}
@@ -20,8 +19,9 @@ function MonthlyComparison({ data }) {
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="thisWeek" fill="#2E4960" name="This Week" />
-                <Bar dataKey="lastWeek" fill="#DDDBDB" name="Last Week" />
+                {/* Updating to show thisYearRevenue and lastYearRevenue */}
+                <Bar dataKey="thisYearRevenue" fill="#2E4960" name="This Year" />
+                <Bar dataKey="lastYearRevenue" fill="#DDDBDB" name="Last Year" />
             </BarChart>
         </div>
     );
