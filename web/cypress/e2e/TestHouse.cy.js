@@ -36,15 +36,6 @@ const labelsToClick = [
   '#root > div > main > div > div:nth-child(14) > section > label:nth-child(8)'
 ];
 
-const images = [
-  'image1.jpg',
-  'image2.jpg',
-  'image3.jpg',
-  'image4.jpg',
-  'image5.jpg'
-];
-
-
 describe('House accomadation test', () => {
     it('should be able to add a listing', () => {
         cy.loginAsHost();
@@ -110,32 +101,14 @@ describe('House accomadation test', () => {
 
         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-
-        // // Upload each image
-        //   images.forEach((image, index) => {
-        //     cy.get('input[type="file"]').eq(index).selectFile(`cypress/fixtures/${image}`);
-        //   });
-
-          // // Assert that the images were uploaded correctly based on `alt` attribute
-          // images.forEach((image, index) => {
-          //   cy.get(`section > section > section:nth-child(${index + 2}) > img`)
-          //     .should('have.attr', 'alt', `Image-${index + 1}`);
-          // });
-   
-
                 cy.get('input[type="file"]').eq(0).selectFile('cypress/fixtures/image1.jpg');
                 cy.get('input[type="file"]').eq(1).selectFile('cypress/fixtures/image2.jpg');
                 cy.get('input[type="file"]').eq(2).selectFile('cypress/fixtures/image3.jpg');
                 cy.get('input[type="file"]').eq(3).selectFile('cypress/fixtures/image4.jpg');
                 cy.get('input[type="file"]').eq(4).selectFile('cypress/fixtures/image5.jpg'); // adding 5 images
-             
-                // cy.get(':nth-child(1) > .file-input').should('have.attr', 'alt', 'Image1');
-                // cy.get(':nth-child(2) > .file-input').should('have.attr', 'alt', 'Image2');
-                // cy.get(':nth-child(3) > .file-input').should('have.attr', 'alt', 'Image3');
-                // cy.get(':nth-child(4) > .file-input').should('have.attr', 'alt', 'Image4');  
-                // cy.get(':nth-child(5) > .file-input').should('have.attr', 'alt', 'Image5');  
 
-                
+                cy.wait(15000);
+             
               cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
               cy.get('#title').type('a ');
@@ -147,14 +120,9 @@ describe('House accomadation test', () => {
               cy.get('#root > div > main > nav > button:nth-child(2)').click();
               
 
-              cy.get(':nth-child(3) > :nth-child(1) > .pricing-input').type('10000');
-              // cy.get(':nth-child(2) > .pricing-input').type('100000000000');
-              cy.get(':nth-child(2) > .pricing-input').type('1000')
+              cy.get(':nth-child(3) > :nth-child(1) > .pricing-input').type('10000100001000010000');
+              cy.get(':nth-child(2) > .pricing-input').type('10000100001000010000100001000010000')
               cy.get('#root > div > main > nav > button:nth-child(2)').click();
-
-              // cy.get(':nth-child(2) > input').click();
-              // cy.get(':nth-child(10) > input').click();
-              // cy.get('.dates').click(); 
 
               cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > header > nav > button.Calendar_next__jcEfE').click();// next month
               cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(6)').click();
@@ -178,14 +146,6 @@ describe('House accomadation test', () => {
 
               cy.get('.verifyCheck > :nth-child(1) > input').click();
               cy.get(':nth-child(2) > input').click();
-              // deze test bevat nog paar error voordat ik ze uncomment
-              //   cy.get('#root > div > main > section > section > section:nth-child(1) > button').click();
-              //   cy.get('#root > div > main > section > section > section:nth-child(2) > button').click();
-              //   cy.get('#root > div > main > section > section > section:nth-child(3) > button').click();
-              //   cy.get('#root > div > main > section > section > section:nth-child(4) > button').click();
-              //   cy.get('#root > div > main > section > section > section:nth-child(5) > button').click(); // delete all images 
-        
-              //   cy.get('#root > div > main > nav > button.onboarding-button-disabled').should('be.visible'); 
     }); 
 });
 
