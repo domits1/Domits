@@ -5,7 +5,7 @@ beforeEach(() => {
     cy.loginAsHost();
 
     cy.get('.HostDashboard_dashboardHost__Y2joW').should('be.visible');
-    cy.get('.chatbot-toggle-button').click();
+    cy.get('.hostchatbot-toggle-button').click();
 
     cy.visit('http://localhost:3000/hostdashboard/distribution');
     cy.url().should('eq', 'http://localhost:3000/hostdashboard/distribution');
@@ -25,6 +25,8 @@ describe('Host Distribution - Add Channel Button', () => {
     it('should add a new channel', () => {
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
+        cy.intercept('DELETE', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel')
+            .as('deleteChannel');
         cy.get('.addChannelButton').click();
         cy.get('.addChannelButtonMenuContent').should('be.visible');
         cy.get('.channels').select('Airbnb');
@@ -32,13 +34,16 @@ describe('Host Distribution - Add Channel Button', () => {
         cy.get('#root > div > div.containerHostDistribution > div.host-dist-header > div > div > div > div.addCancelButtonContainer > button.addChannelButtonMenuButton.Add').click();
         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
+        cy.get(':nth-child(1) > .host-dist-box-row > .threeDotsButton').should('be.visible').click();
+        cy.get('.threeDotsMenuContent').should('be.visible');
+        cy.get('.delete').click();
+        cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
     });
 
     it('should close and cancel adding a new channel', () => {
         cy.get('.addChannelButton').click();
         cy.get('.addChannelButtonMenuContent').should('be.visible');
         cy.get('#root > div > div.containerHostDistribution > div.host-dist-header > div > div > div > div.addCancelButtonContainer > button.addChannelButtonMenuButton.Cancel').click();
-
         cy.get('.addChannelButtonMenuContent').should('not.be.visible');
     });
 
@@ -47,7 +52,6 @@ describe('Host Distribution - Add Channel Button', () => {
 describe('Host Distribution - Three dots Button', () => {
     it('should be able to delete an channel', () => {
         let initialRowCount;
-        let newRowCount;
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
         cy.intercept('DELETE', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel')
@@ -71,21 +75,10 @@ describe('Host Distribution - Three dots Button', () => {
         cy.get('.threeDotsMenuContent').should('be.visible');
         cy.get('.delete').click();
         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
-        if (cy.get('.host-dist-box-container').should('exist')) {
-            cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
-                newRowCount = $rows.length;
-                if (newRowCount < initialRowCount) {
-                    cy.log('Channel was deleted successfully');
-                } else {
-                    cy.log('No channel was deleted');
-                }
-            });
-        }
     });
 
     it('should be able to save changes', () => {
         let initialRowCount;
-        let newRowCount;
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
         cy.intercept('PUT', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/EditSingleChannel')
@@ -122,24 +115,12 @@ describe('Host Distribution - Three dots Button', () => {
             cy.get('.threeDotsMenuContent').should('be.visible');
             cy.get('.delete').click();
             cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
-            if (cy.get('.host-dist-box-container').should('exist')) {
-                cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
-                    newRowCount = $rows.length;
-                    if (newRowCount < initialRowCount) {
-                        cy.log('Channel was deleted successfully');
-                    } else {
-                        cy.log('No channel was deleted');
-                    }
-                });
-            }
         });
     });
 });
 
 describe('Host Distribution - Manage Channel Button', () => {
     it('should add an item to the list and close the menu', () => {
-        let initialRowCount;
-        let newRowCount;
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
         cy.intercept('DELETE', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel')
@@ -187,16 +168,6 @@ describe('Host Distribution - Manage Channel Button', () => {
         cy.get('.threeDotsMenuContent').should('be.visible');
         cy.get('.delete').click();
         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
-        if (cy.get('.host-dist-box-container')) {
-            cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
-                newRowCount = $rows.length;
-                if (newRowCount < initialRowCount) {
-                    cy.log('Channel was deleted successfully');
-                } else {
-                    cy.log('No channel was deleted');
-                }
-            });
-        }
     });
 
     it('should remove an item from the list and close the menu', () => {
@@ -204,7 +175,6 @@ describe('Host Distribution - Manage Channel Button', () => {
         let newAddRowCount = 0;
         let initialRemoveRowCount = 0;
         let newRemoveRowCount = 0;
-        let newRowCount = 0;
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
         cy.intercept('DELETE', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel')
@@ -274,21 +244,10 @@ describe('Host Distribution - Manage Channel Button', () => {
         cy.get('.threeDotsMenuContent').should('be.visible');
         cy.get('.delete').click();
         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
-        if (cy.get('.host-dist-box-container').should('exist')) {
-            cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
-                newRowCount = $rows.length;
-                if (newRowCount < initialRowCount) {
-                    cy.log('Channel was deleted successfully');
-                } else {
-                    cy.log('No channel was deleted');
-                }
-            });
-        }
     });
 
     it('should be able to enable channel through the manage channel menu', () => {
         let initialRowCount;
-        let newRowCount;
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
         cy.intercept('DELETE', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel')
@@ -317,22 +276,11 @@ describe('Host Distribution - Manage Channel Button', () => {
             cy.get('.threeDotsMenuContent').should('be.visible');
             cy.get('.delete').click();
             cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
-            if (cy.get('.host-dist-box-container').should('exist')) {
-                cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
-                    newRowCount = $rows.length;
-                    if (newRowCount < initialRowCount) {
-                        cy.log('Channel was deleted successfully');
-                    } else {
-                        cy.log('No channel was deleted');
-                    }
-                });
-            }
         });
     });
 
     it('should be able to disable channel through the manage channel menu', () => {
         let initialRowCount;
-        let newRowCount;
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
         cy.intercept('DELETE', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel')
@@ -364,24 +312,12 @@ describe('Host Distribution - Manage Channel Button', () => {
             cy.get('.threeDotsMenuContent').should('be.visible');
             cy.get('.delete').click();
             cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
-            if (cy.get('.host-dist-box-container').should('exist')) {
-                cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
-                    newRowCount = $rows.length;
-                    if (newRowCount < initialRowCount) {
-                        cy.log('Channel was deleted successfully');
-                    } else {
-                        cy.log('No channel was deleted');
-                    }
-                });
-            }
         });
     });
 });
 
 describe('Host Distribution - Slider', () => {
     it('should be able to enable an channel through the slider', () => {
-        let initialRowCount;
-        let newRowCount;
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
         cy.intercept('DELETE', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel')
@@ -396,30 +332,18 @@ describe('Host Distribution - Slider', () => {
         cy.get('.host-dist-box-container').should('be.visible');
 
         cy.get('#root > div > div.containerHostDistribution > div.host-dist-content > div > div.contentContainer-channel > div:nth-child(1) > div > p:nth-child(3) > label > input[type=checkbox]')
-            .should('not.be.checked', false);
+            .should('not.be.checked');
         cy.get(':nth-child(1) > .host-dist-box-row > :nth-child(3) > .toggle-status-switch > .slider').click();
         cy.get('#root > div > div.containerHostDistribution > div.host-dist-content > div > div.contentContainer-channel > div:nth-child(1) > div > p:nth-child(3) > label > input[type=checkbox]')
-            .should('be.checked', true);
+            .should('be.checked');
 
         cy.get(':nth-child(1) > .host-dist-box-row > .threeDotsButton').should('be.visible').click();
         cy.get('.threeDotsMenuContent').should('be.visible');
         cy.get('.delete').click();
         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
-        if (cy.get('.host-dist-box-container').should('exist')) {
-            cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
-                newRowCount = $rows.length;
-                if (newRowCount < initialRowCount) {
-                    cy.log('Channel was deleted successfully');
-                } else {
-                    cy.log('No channel was deleted');
-                }
-            });
-        }
     });
 
     it('should be able to disable an channel through the slider', () => {
-        let initialRowCount;
-        let newRowCount;
         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
             .as('createChannel');
         cy.intercept('DELETE', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel')
@@ -444,16 +368,6 @@ describe('Host Distribution - Slider', () => {
         cy.get('.threeDotsMenuContent').should('be.visible');
         cy.get('.delete').click();
         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
-        if (cy.get('.host-dist-box-container').should('exist')) {
-            cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
-                newRowCount = $rows.length;
-                if (newRowCount < initialRowCount) {
-                    cy.log('Channel was deleted successfully');
-                } else {
-                    cy.log('No channel was deleted');
-                }
-            });
-        }
     });
 });
 
