@@ -317,8 +317,8 @@ hr {
   gap: 25px;
 }
 .code-input-container p{
-  font-size: 1.1em;
-  color: black;
+  font-size: 1em;
+  color: #484848;
 }
 
 .code-input-container button{
