@@ -1,16 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import nlp from 'compromise';
 import './hostchatbot.css';
 import { Auth } from 'aws-amplify';
 import { useLocation } from 'react-router-dom';
+import { useUser } from '../../UserContext';
 
 const HostChatbot = () => {
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [accolist, setAccolist] = useState([]);
-  const [faqList, setFaqList] = useState([]);
   const [awaitingUserChoice, setAwaitingUserChoice] = useState(true);
   const [currentOption, setCurrentOption] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
@@ -19,12 +17,12 @@ const HostChatbot = () => {
   const [username, setUserName] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const { role, isLoading: userLoading } = useUser();
   const location = useLocation();
 
   useEffect(() => {
     const setUserDetails = async () => {
       try {
-        setIsLoading(true);
         const userInfo = await Auth.currentUserInfo();
         setUserId(userInfo.attributes.sub);
         const name = userInfo.attributes['custom:username'] || 'Host';
@@ -32,7 +30,7 @@ const HostChatbot = () => {
         setMessages([{ text: `Hello, ${name}! Please choose an option:`, sender: 'bot', contentType: 'text' }]);
         setAwaitingUserChoice(true);
       } catch (error) {
-        console.error('Error setting user details:', error);
+        // Handle error
       } finally {
         setIsLoading(false);
       }
@@ -40,6 +38,16 @@ const HostChatbot = () => {
 
     setUserDetails();
   }, []);
+
+  useEffect(() => {
+    if (!userLoading && role === 'Host') {
+      const chatOpened = sessionStorage.getItem('chatOpened');
+      if (!chatOpened && location.pathname === '/hostdashboard') {
+        setIsChatOpen(true);
+        sessionStorage.setItem('chatOpened', 'true');
+      }
+    }
+  }, [userLoading, role, location]);
 
   const goBackToOptions = () => {
     setAwaitingUserChoice(true);
@@ -76,16 +84,10 @@ const HostChatbot = () => {
     }
 
     setMessages((prevMessages) => [
-      ...prevMessages,
+      ...prevMessages.filter(message => message.text !== `Hello again, ${username}! Please choose an option:`),
       { text: newMessage, sender: 'bot', contentType: 'text' }
     ]);
   };
-
-  useEffect(() => {
-    if (userId) {
-      fetchFAQ();
-    }
-  }, [userId]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -137,7 +139,7 @@ const HostChatbot = () => {
         {
           text: `Q: ${faqMatch.question}\nA: ${faqMatch.answer}`,
           sender: 'bot',
-          contentType: 'faq' // Mark content type for FAQ
+          contentType: 'faq'
         }
       ]);
     } else {
@@ -177,12 +179,12 @@ const HostChatbot = () => {
           {
             text: formatAccommodationsResponse(accommodationsArray),
             sender: 'bot',
-            contentType: 'accommodation' // Mark content type for accommodation
+            contentType: 'accommodation'
           }
         ]);
       }
     } catch (error) {
-      console.error('Error fetching accommodations:', error);
+      // Handle error
     } finally {
       setLoading(false);
     }
@@ -204,7 +206,7 @@ const HostChatbot = () => {
         ]);
       }
     } catch (error) {
-      console.error('Error fetching or processing data:', error);
+      // Handle error
     }
   };
 
@@ -218,7 +220,7 @@ const HostChatbot = () => {
       const faqData = JSON.parse(responseData.body);
       setFaqList(faqData);
     } catch (error) {
-      console.error('Error fetching FAQ data:', error);
+      // Handle error
     }
   };
 
@@ -230,7 +232,7 @@ const HostChatbot = () => {
 
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
-  if (isLoading) return <div>Loading...</div>;
+  if (isLoading || userLoading || role !== 'Host') return null;
 
   return (
       <>
