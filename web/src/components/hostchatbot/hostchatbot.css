@@ -215,3 +215,29 @@
   color: #666;
   margin-top: 6px;
 }
+
+/* Go back button */
+.hostchatbot-go-back-button {
+  background-color: #0078D7; /* Primary button color */
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  margin-top: 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  text-align: center;
+  width: 100%;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for a modern effect */
+}
+
+.hostchatbot-go-back-button:hover {
+  background-color: #005bb5; /* Darker blue on hover */
+  transform: translateY(-2px); /* Slight lift on hover */
+}
+
+.hostchatbot-go-back-button:active {
+  background-color: #004494; /* Even darker blue on click */
+  transform: translateY(0); /* Reset lift effect on click */
+}
