@@ -99,7 +99,7 @@
 
 @media (max-width: 1292px) {
   .accocard {
-    width: 31%;
+    width: 23%;
   }
 }
 
@@ -117,8 +117,13 @@
 }
 
 @media (max-width: 480px) {
+  .accocard {
+    width: 90%;
+    margin: 0 auto;
+    display: block;
+  }
   .accocard-detail {
-    width: 180px;
+    width: 100%;
   }
   .accocard-size {
     font-size: 12px;

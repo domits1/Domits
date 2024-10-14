@@ -1,34 +1,42 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { ResizableBox } from 'react-resizable';
-import './ChatWidget.css'; // Ensure you have the CSS file
-import { useUser } from '../../UserContext'; // Make sure this path is correct
+import './ChatWidget.css';
+import { useUser } from '../../UserContext';
 
 const ChatWidget = () => {
-  const { user, isLoading, role } = useUser();
+  const { user, isLoading } = useUser();
   const [userInput, setUserInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [chatID, setChatID] = useState(localStorage.getItem('chatID') || null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isAIChat, setIsAIChat] = useState(true);
+  const [employeeConnectionId, setEmployeeConnectionId] = useState(null);
+  const [socket, setSocket] = useState(null);
+  const [isConnected, setIsConnected] = useState(false);
+  const [messageCount, setMessageCount] = useState(0);
+  const [showHumanDecision, setShowHumanDecision] = useState(false);
+  const [showConsentDecision, setShowConsentDecision] = useState(false);
   const chatMessagesRef = useRef(null);
 
   useEffect(() => {
-    if (!isLoading) {
-      if (chatID || user) {
-        loadChatHistory();
-      }
+    if (!isLoading && (chatID || user)) {
+      loadChatHistory();
+    } else if (!isLoading) {
+      sendWelcomeMessage();
     }
   }, [isLoading, chatID, user]);
 
-  const scrollToBottom = () => {
-    const chatMessages = chatMessagesRef.current;
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  };
+  useEffect(() => {
+    if (chatMessagesRef.current) {
+      chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
+    }
+  }, [messages, isOpen]);
 
   const loadChatHistory = async () => {
     try {
-      const params = user ? { userID: user.attributes.sub } : { chatID };
+      const params = user ? { userID: user.id } : { chatID };
       const response = await axios.get('https://djs95w5kug.execute-api.eu-north-1.amazonaws.com/default/chatWidgetHistory', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
@@ -36,40 +44,54 @@ const ChatWidget = () => {
           sender: msg.role === 'user' ? 'user' : 'ai',
           accommodations: msg.accommodations || null
         })));
-        scrollToBottom();
       }
     } catch (error) {
       //console.error('Error loading chat history:', error);
     }
   };
 
+  const sendWelcomeMessage = () => {
+    const welcomeMessage = "Hi! I am Sophia, your AI assistant. I'm here to help you as best as I can. How can I assist you today?";
+    setMessages(prevMessages => [...prevMessages, { text: welcomeMessage, sender: 'ai' }]);
+  };
+
   const sendMessage = async () => {
-    if (userInput.trim() === '') return;
+    let message = userInput;
 
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { text: userInput, sender: 'user' }
-    ]);
-    scrollToBottom();
+    if (typeof message !== 'string') {
+      //console.warn('sendMessage received a non-string input:', message);
+      message = String(message);  
+    }
 
-    const tempUserInput = userInput;
+    if (message.trim() === '') return;
+
+    if (isAIChat) {
+      setMessages(prevMessages => [...prevMessages, { text: message, sender: 'user' }]);
+    }
+
     setUserInput('');
+    setMessageCount(prevCount => prevCount + 1);
     setLoading(true);
 
-    const typingMessage = { text: 'Sophia (AI) is typing', sender: 'typing' };
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      typingMessage
-    ]);
-    scrollToBottom();
+    if (isAIChat) {
+      handleAIResponse(message);
+    } else if (employeeConnectionId) {
+      sendMessageToEmployee(message);
+    }
+  };
+
+  const handleAIResponse = async (message) => {
+    setLoading(true);
+
+    const tempUserInput = message;
+
+    const typingMessage = { text: 'Sophia (AI) is typing...', sender: 'typing' };
+    setMessages(prevMessages => [...prevMessages, typingMessage]);
 
     try {
       const payload = { query: tempUserInput };
-      if (user) {
-        payload.userID = user.attributes.sub;
-      } else if (chatID) {
-        payload.chatID = chatID;
-      }
+      if (chatID) payload.chatID = chatID;
+      if (user) payload.userID = user.id;
 
       const response = await axios.post('https://eja46okj64.execute-api.eu-north-1.amazonaws.com/default/chatWidgetQuery', payload);
 
@@ -78,49 +100,134 @@ const ChatWidget = () => {
         localStorage.setItem('chatID', response.data.chatID);
       }
 
-      setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
-      const { message, accommodations } = response.data;
-      setMessages((prevMessages) => [
+      setMessages(prevMessages => prevMessages.filter(message => message.sender !== 'typing'));
+
+      let { message: aiMessage, accommodations } = response.data;
+
+      // Ensure aiMessage is a string
+      if (typeof aiMessage !== 'string') {
+        //console.warn('AI response message is not a string:', aiMessage);
+        aiMessage = JSON.stringify(aiMessage);
+      }
+
+      setMessages(prevMessages => [
         ...prevMessages,
-        { text: message, sender: 'ai', accommodations: accommodations }
+        { text: aiMessage, sender: 'ai', accommodations }
       ]);
-      scrollToBottom();
+
+      if (messageCount + 1 >= 5) {
+        setShowHumanDecision(true);
+      }
     } catch (error) {
       //console.error('Error sending message:', error);
-      setMessages((prevMessages) => prevMessages.filter(message => message.sender !== 'typing'));
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { text: 'Chatbot is currently unavailable. Please try again later.', sender: 'ai' }
-      ]);
-      scrollToBottom();
+      setMessages(prevMessages => prevMessages.filter(message => message.sender !== 'typing'));
     } finally {
       setLoading(false);
     }
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
+  const handleUserDecision = (decision) => {
+    setShowHumanDecision(false);
+    setMessageCount(0);
 
-  if (role === 'Host') {
-    return null;
-  }
+    if (decision === 'human') {
+      setMessages(prevMessages => [...prevMessages, { text: 'Connecting to a human...', sender: 'system' }]);
+      setShowConsentDecision(true);
+    } else {
+      setMessages(prevMessages => [...prevMessages, { text: 'Continuing with Sophia (AI).', sender: 'system' }]);
+    }
+  };
+
+  const handleConsentDecision = async (consent) => {
+    setShowConsentDecision(false);
+
+    if (consent === 'yes') {
+      await connectToEmployee();
+    } else {
+      setMessages(prevMessages => [...prevMessages, { text: "You chose not to connect to a human. Please continue with the AI.", sender: "system" }]);
+      setIsAIChat(true);
+    }
+  };
+
+  const connectToEmployee = async () => {
+    try {
+      const response = await fetch('https://1qvev42qe9.execute-api.eu-north-1.amazonaws.com/default/eChatFindEmployee');
+      const responseData = await response.json();
+      const data = JSON.parse(responseData.body);
+
+      if (data.connectionId) {
+        setEmployeeConnectionId(data.connectionId);
+        setIsAIChat(false);
+        setMessages(prevMessages => [...prevMessages, { text: 'Connecting you to an agent...', sender: 'system' }]);
+
+        const ws = new WebSocket(
+          `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${user?.id || 'anon'}` 
+        );
+
+        ws.onopen = () => {
+          setIsConnected(true);
+          setSocket(ws);
+        };
+
+        
+        ws.onmessage = (event) => {
+          const incomingMessage = JSON.parse(event.data);
+
+          setMessages(prevMessages => [
+            ...prevMessages,
+            { text: incomingMessage.message, sender: 'employee' } 
+          ]);
+        };
+
+        ws.onclose = () => {
+          setIsConnected(false);
+          setMessageCount(0);
+        };
+      } else {
+        setMessages(prevMessages => [
+          ...prevMessages,
+          { text: 'No agents are available right now. Please continue with the AI.', sender: 'system' }
+        ]);
+        setIsAIChat(true);
+      }
+
+    } catch (err) {
+      //console.error('Failed to connect to employee:', err);
+      setMessages(prevMessages => [
+        ...prevMessages,
+        { text: 'Failed to connect to an agent. Please continue with the AI.', sender: 'system' }
+      ]);
+      setIsAIChat(true);
+    }
+  };
+
+  const sendMessageToEmployee = (message) => {
+    if (socket && isConnected) {
+      const payload = {
+        action: 'sendMessage',
+        recipientConnectionId: employeeConnectionId,
+        message: message,
+      };
+      socket.send(JSON.stringify(payload));
+    }
+
+    setMessages(prevMessages => [...prevMessages, { text: message, sender: 'user' }]);
+  };
 
   return (
     <div className={`chatwidget-widget ${isOpen ? 'open' : ''}`}>
       {!isOpen && (
         <button className="chatwidget-toggle" onClick={() => setIsOpen(true)}>
-          &#128172; {/* Unicode character for a chat bubble */}
+          &#128172;
         </button>
       )}
       {isOpen && (
         <ResizableBox
-          width={500}
+          width={400}
           height={600}
           minConstraints={[200, 200]}
-          maxConstraints={[600, 600]}
+          maxConstraints={[500, 600]}
           className="chatwidget-resizable"
-          handle={<span className="chatwidget-resize-handle" />}
         >
           <div className="chatwidget-header">
             <span className="chatwidget-title">Chat</span>
@@ -129,24 +236,25 @@ const ChatWidget = () => {
           <div className="chatwidget-container">
             <div className="chatwidget-messages" ref={chatMessagesRef}>
               {messages.map((message, index) => (
-                <div key={index} className={`chatwidget-message ${message.sender}`}>
+                <div className={`chatwidget-message ${message.sender}`} key={index}>
                   <div className="chatwidget-sender">
-                    {message.sender === 'user' ? 'You' : 'Sophia (AI)'}
+                    {message.sender === 'user'
+                      ? 'You'
+                      : message.sender === 'ai'
+                      ? 'Sophia (AI)'
+                      : message.sender === 'employee'
+                      ? 'Employee'
+                      : 'System'}
                   </div>
-                  {message.sender !== 'typing' ? (
-                    <div className="chatwidget-message-content">{message.text}</div>
-                  ) : (
-                    <div className="chatwidget-typing-indicator">
-                      {message.text}
-                      <span className="chatwidget-dot">.</span>
-                      <span className="chatwidget-dot">.</span>
-                      <span className="chatwidget-dot">.</span>
-                    </div>
-                  )}
+                  <div className={`chatwidget-message-content ${message.sender}`}>
+                    {typeof message.text === 'object'
+                      ? JSON.stringify(message.text)
+                      : message.text || 'Error: Invalid message format'}
+                  </div>
                   {message.sender === 'ai' && message.accommodations && (
                     <div className="chatwidget-accommodation-tiles">
-                      {message.accommodations.map(accommodation => (
-                        <div key={accommodation.ID} className="chatwidget-accommodation-tile">
+                      {message.accommodations.map((accommodation, idx) => (
+                        <div key={idx} className="chatwidget-accommodation-tile">
                           <img src={accommodation.Images.image1} alt="Accommodation" className="chatwidget-accommodation-image" />
                           <div className="chatwidget-accommodation-details">
                             <h3>{accommodation.Title}</h3>
@@ -162,6 +270,23 @@ const ChatWidget = () => {
                 </div>
               ))}
             </div>
+
+            {showHumanDecision && (
+              <div className="chatwidget-decision-box">
+                <p>Continue with AI or connect to a human?</p>
+                <button onClick={() => handleUserDecision('human')}>Talk to Human</button>
+                <button onClick={() => handleUserDecision('ai')}>Continue with AI</button>
+              </div>
+            )}
+
+            {showConsentDecision && (
+              <div className="chatwidget-decision-box">
+                <p>Do you consent to saving messages for training purposes?</p>
+                <button onClick={() => handleConsentDecision('yes')}>Yes</button>
+                <button onClick={() => handleConsentDecision('no')}>No</button>
+              </div>
+            )}
+
             <div className="chatwidget-input">
               <input
                 type="text"

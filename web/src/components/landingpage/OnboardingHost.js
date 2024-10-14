@@ -26,6 +26,7 @@ import ElectricBoat from "../../images/boat_types/electric-boat.png";
 import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png";
 import CalendarComponent from "../hostdashboard/CalendarComponent";
 import imageCompression from 'browser-image-compression';
+import RegistrationNumber from "../hostverification/RegistrationNumberView";
 
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
@@ -683,6 +684,7 @@ function OnboardingHost() {
     
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
+    
         if (type === 'checkbox') {
             setFormData((prevData) => ({
                 ...prevData,
@@ -691,27 +693,39 @@ function OnboardingHost() {
                     [name]: checked,
                 },
                 SystemConfiguration: {
-                    ...prevData.Features,
+                    ...prevData.SystemConfiguration,
                     [name]: checked,
                 }
             }));
-        } else if (type === 'radio') {
+        } 
+        else if (type === 'radio') {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: !prevData[name],
             }));
-        } else if (type === 'number' || type === 'range') {
-            const newValue = value || '';
+        } 
+        else if (type === 'number' || type === 'range') {
+            let newValue = parseFloat(value);
+    
+            if (name === 'Rent') {
+                if (newValue > 150000) {
+                    newValue = 150000;
+                } else if (newValue < 1) {
+                    newValue = 1;
+                }
+            }
+    
             setFormData((prevData) => ({
                 ...prevData,
-                [name]: newValue
+                [name]: newValue || ''
             }));
-        } else {
+        } 
+        else {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: value
             }));
-
+    
             if (name === 'City') {
                 handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
             } else if (name === 'PostalCode') {
@@ -721,6 +735,20 @@ function OnboardingHost() {
             }
         }
     };
+
+    const handleInputRestrictions = (event) => {
+        const input = event.target;
+
+        if (input.value.length > 6) {
+            input.value = input.value.slice(0, 6);
+        }
+
+        if (parseFloat(input.value) > 100000) {
+            input.value = 100000;
+        }
+    };
+    
+    
 
     const handleCountryChange = (selectedOption) => {
         setFormData(currentFormData => ({
@@ -1289,7 +1317,7 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
-                case 5:
+            case 5:
                     return (
                         <main className="page-body">
                             <h2 className="onboardingSectionTitle">House rules</h2>
@@ -1881,15 +1909,21 @@ function OnboardingHost() {
                         <section className="accommodation-pricing">
                             <div className="pricing-row">
                                 <label>Base rate</label>
-                                <input className="pricing-input" type="number" name="Rent" onChange={handleInputChange}
-                                       defaultValue={formData.Rent} min={1} step={0.1}
-                                       required={true}/>
+                                <input className="pricing-input" type="number" name="Rent" 
+                                        onChange={handleInputChange}
+                                        onInput={handleInputRestrictions} 
+                                        value={formData.Rent}
+                                        min={1}
+                                        step={0.1}
+                                        required={true}/>
+
                             </div>
                             {formData.Features.ExtraServices.includes('Cleaning service (add service fee manually)') &&
                                 <div className="pricing-row">
                                     <label>Cleaning fee</label>
                                     <input className="pricing-input" type="number" name="CleaningFee"
                                            onChange={handleInputChange}
+                                           onInput={handleInputRestrictions}
                                            defaultValue={formData.CleaningFee ? formData.CleaningFee : 1} min={1}
                                            step={0.1}
                                            required={true}/>
@@ -1953,6 +1987,20 @@ function OnboardingHost() {
                     </main>
                 );
             case 11:
+                    const address = {
+                        Country: formData.Country,
+                        City: formData.City,
+                        PostalCode: formData.PostalCode,
+                        Street: formData.Street,
+                    }
+                    return ( <RegistrationNumber 
+                                Address={address} 
+                                Next={() => pageUpdater(page + 1)} 
+                                Previous={() => pageUpdater(page - 1)}
+                                setFormData={setFormData}
+                                RegistrationNumber={formData.RegistrationNumber}
+                                />);    
+            case 12:
                 return (
                     <div className="container" id="summary" style={{width: '80%'}}>
                         <h2>Please check if everything is correct</h2>
@@ -1976,6 +2024,11 @@ function OnboardingHost() {
                             <tr>
                                 <td>Rent:</td>
                                 <td>{formData.Rent}</td>
+                            </tr>
+
+                            <tr>
+                                <td>Cleaning fee:</td>
+                                <td>{formData.CleaningFee}</td>
                             </tr>
                             <tr>
                                 <td>Accommodation Type:</td>
@@ -2270,7 +2323,7 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
-            case 12:
+            case 13:
                 if (isLoading) {
                     return (
                         <main className="loading">

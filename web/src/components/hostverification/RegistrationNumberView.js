@@ -1,103 +1,88 @@
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import styles from "./hostverification.module.css";
-import useFetchAccommodation from "./hooks/useFetchAccomodation";
 import { useState, useEffect } from "react";
 import Loading from "./components/Loading";
+import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired";
 
-const RegistrationNumber = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
-  const { loading, error, data, fetchAccommodationAddressDetails } = useFetchAccommodation();
+const RegistrationNumber = ({ Address, Next, Previous, setFormData }) => {
+  const { isRegistrationNumberRequired, loading, error } =
+    useIsRegistrationNumberRequired(Address);
 
-  useEffect(() => {
-    fetchAccommodationAddressDetails(id);
-  }, [id]);
-
-  const [registrationNumber, setRegistrationNumber] = useState("");
+  const [localRegistrationNumber, setLocalRegistrationNumber] = useState("");
   const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
+  const isButtonDisabled = isRegistrationNumberRequired && !isCheckboxChecked;
 
-  const isRegistrationNumberValid = () => {
-    const trimmedInput = registrationNumber.trim();
-    const regex = /^[a-zA-Z0-9]+$/;
-    return trimmedInput.length === 20 && regex.test(trimmedInput);
-  };
+  const handleContinue = () => {
+    setFormData((prevData) => ({
+      ...prevData,
+      RegistrationNumber: localRegistrationNumber,
+    }));
 
-  const isButtonDisabled = !isRegistrationNumberValid() || !isCheckboxChecked;
-
-  const handleClick = () => {
-    navigate(`/verify/registrationnumber/check`, {
-      state: {
-        registrationNumber: registrationNumber,
-        accommodationData: data,
-      },
-    });
+    Next();
   };
 
   if (loading) {
     return <Loading />;
   }
+  if (error) {
+    return <p>Something went wrong {error.message}</p>;
+  }
   return (
     <main className={styles["verification-container"]}>
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="8 6 12 10"
-        width="14"
-        height="22"
-      >
-        <path
-          d="M15 6l-6 6 6 6"
-          stroke="#000"
-          strokeWidth="2"
-          fill="none"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </svg>
       <div className={styles["headertext-container"]}>
         <h1>Add your registration number</h1>
         <p>
           Your registration number will appear on your listing page, so that
-          guests know that your accommodation is registered in {data.City}.
+          guests know that your accommodation is registered in {Address.City}.
         </p>
       </div>
       <hr></hr>
       <div className={styles["registrationnumber-container"]}>
         <div className={styles["registrationnumber-inputfield"]}>
-          <h2>Registration number</h2>
+          {isRegistrationNumberRequired ? (
+            <h2>Registration number *</h2>
+          ) : (
+            <h2>Registration number (optional)</h2>
+          )}
           <input
             type="text"
             placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
-            value={registrationNumber}
-            onChange={(e) => setRegistrationNumber(e.target.value)}
+            value={localRegistrationNumber}
+            onChange={(e) => setLocalRegistrationNumber(e.target.value)}
           ></input>
         </div>
         <div className={styles["registrationnumber-address"]}>
           <h2>Listing address</h2>
           <p>
-            {data.Street}, {data.City}, {data.PostalCode}, {data.Country}
+            {Address.Street}, {Address.City}, {Address.PostalCode},{" "}
+            {Address.Country}
           </p>
         </div>
-        <div className={styles["registrationnumber-legal"]}>
-          <input
-            type="checkbox"
-            name="example"
-            id="exampleCheckbox"
-            checked={isCheckboxChecked}
-            onChange={(e) => setIsCheckboxChecked(e.target.checked)}
-          ></input>
-          <p>
-            I declare that the data I have entered is complete and correct. I
-            also agree that this data may be shared with local authorities to
-            confirm that the information is accurate and meets legal
-            requirements.
-          </p>
-        </div>
+        {isRegistrationNumberRequired && (
+          <div className={styles["registrationnumber-legal"]}>
+            <input
+              type="checkbox"
+              name="example"
+              id="exampleCheckbox"
+              checked={isCheckboxChecked}
+              onChange={(e) => setIsCheckboxChecked(e.target.checked)}
+            />
+            <p>
+              I declare that the data I have entered is complete and correct. I
+              also agree that this data may be shared with local authorities to
+              confirm that the information is accurate and meets legal
+              requirements.
+            </p>
+          </div>
+        )}
       </div>
       <hr></hr>
       <div className={styles["bottom-container"]}>
+        <button onClick={Previous} className={styles["publish-btn"]}>
+          Previous
+        </button>
         <button
-          onClick={handleClick}
+          onClick={handleContinue}
           className={
             isButtonDisabled ? styles["disabled-btn"] : styles["publish-btn"]
           }
