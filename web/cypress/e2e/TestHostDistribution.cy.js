@@ -7,8 +7,8 @@ beforeEach(() => {
     cy.get('.HostDashboard_dashboardHost__Y2joW').should('be.visible');
     cy.get('.hostchatbot-toggle-button').click();
 
-    cy.visit('http://localhost:3000/hostdashboard/distribution');
-    cy.url().should('eq', 'http://localhost:3000/hostdashboard/distribution');
+    cy.visit('https://acceptance.Domits.com/hostdashboard/distribution');
+    cy.url().should('eq', 'https://acceptance.Domits.com/hostdashboard/distribution');
 
 });
 
