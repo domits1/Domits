@@ -945,7 +945,6 @@ function OnboardingHost() {
 
     const renderPageContent = (page) => {
         switch (page) {
-            // case 0: return ( <RegistrationNumber /> );
             case 0:
                 if (isLoading) {
                     return (
