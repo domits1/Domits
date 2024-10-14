@@ -5,15 +5,15 @@ import { FaHome, FaBullseye } from 'react-icons/fa';
 
 const OccupancyRateCard = () => {
     return (
-        <div className="occupancy-rate-card">
+        <div className="or-occupancy-rate-card">
             <h4>Occupancy Rate</h4>
-            <div className="date-picker">01 May ~ 31 May</div>
+            <div className="or-date-picker">01 May ~ 31 May</div>
 
-            <div className="occupancy-rate-details">
-                <p><FaHome className="icon" /> Number of Properties: <strong>12</strong></p>
-                <p><FaBullseye className="icon" /> vs. Last Month: <strong className="down">15% ↓</strong></p>
+            <div className="or-occupancy-rate-details">
+                <p><FaHome className="or-icon" /> Number of Properties: <strong>12</strong></p>
+                <p><FaBullseye className="or-icon" /> vs. Last Month: <strong className="or-down">15% ↓</strong></p>
 
-                <div className="gauge-wrapper">
+                <div className="or-gauge-wrapper">
                     <GaugeChart
                         id="gauge-chart1"
                         nrOfLevels={100}
@@ -24,7 +24,7 @@ const OccupancyRateCard = () => {
                         cornerRadius={0}
                         needleColor="#2C3E50"
                     />
-                    <div className="gauge-labels">
+                    <div className="or-gauge-labels">
                         <span>%0</span>
                         <span>%100</span>
                     </div>

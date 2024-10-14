@@ -45,6 +45,12 @@
 //     yearConstruction: '2020',
 //     renovated: '2023'
 // };
+// const checks = [
+//     '12:00',
+//     '13:00',
+//     '08:00',
+//     '09:00'
+// ]
 
 // describe("Test: camper 'what type of camper do you own?'", () => {
 //     it("should test if all camper options are available and clickable", () => {
@@ -136,14 +142,12 @@
 //         cy.get('#root > div > main > section > div:nth-child(4) > div > button:nth-child(1)').click()
 //         cy.get('#root > div > main > section > div:nth-child(4) > div').contains(0);
 
-//         // simulating 100 clicks to check limit 
-//         for (let i = 1; i <= 4; i++) {
-//             cy.get(`#root > div > main > section > div:nth-child(${i}) > div > button:nth-child(2)`).then($button => {
-//                 for (let j = 0; j < 100; j++) {
-//                     cy.wrap($button, { log: false }).click({ log: false });
-//                 }
-//             });
+//         for (let i = 0; i < 9; i++) {
+//             cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
 //         }
+
+//         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').should('be.disabled')
+//         cy.get('#root > div > main > section > div:nth-child(1) > div').contains(10);
 //     });
 // });
 // describe("Test: camper 'How many people can stay here?' form'", () => {
@@ -181,6 +185,56 @@
 //         cy.get('input[type=checkbox]').uncheck().should('not.be.checked');
 //     });
 // });
+// describe("Test: 'House rules'", () => {
+//     it("should Fill in the House rules", () => {
+//         cy.loginAsGuest();
+//         cy.get('.wijzer.addAcco').click();
+//         cy.get('img.accommodation-icon').eq(4).click();
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#root > div > main > div > section > div:nth-child(5)').click();
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#country > div').click();
+//         cy.contains(countryToSelect).click();
+//         cy.get('#city').type(validCity, { force: true }).should('have.value', validCity);
+//         cy.get('#street').type(validStreet, { force: true }).should('have.value', validStreet);
+//         cy.get('#postal').type(validPostal, { force: true }).should('have.value', validPostal);
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
+//         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+
+        
+//         // Test: Checkboxes
+//         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').check();
+//         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').should('be.checked');
+//         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').uncheck();
+//         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').should('not.be.checked');
+
+//         cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').check();
+//         cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').should('be.checked');
+//         cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').uncheck();
+//         cy.get('#root > div > main > div > div:nth-child(15) > section > label:nth-child(12) > input[type=checkbox]').should('not.be.checked');
+
+//         // Checking and unchecking everything
+//         cy.get('input[type=checkbox]').check().should('be.checked');
+//         cy.get('input[type=checkbox]').uncheck().should('not.be.checked');
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+
+
+//         // Test: House rules
+//         cy.get('#root > div > main > div > div > label > div').click({ multiple: true });
+//         cy.get('#root > div > main > div > div > label > input').should('be.checked');
+//         cy.get('#root > div > main > div > div > label > div').click({ multiple: true });
+//         cy.get('#root > div > main > div > div > label > input').should('not.be.checked');
+
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(3)').type(checks[0]).should('contain.value', checks[0]);
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(5)').type(checks[1]).should('contain.value', checks[1]);
+
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(3)').type(checks[2]).should('contain.value', checks[2]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(5)').type(checks[3]).should('contain.value', checks[3]);
+
+//     });
+// });
 
 // describe("Test: camper 'Add and delete image test'", () => {
 //     it("should be able to add and delete images and not got to the next page when there are no images", () => {
@@ -200,6 +254,11 @@
 //         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(3)').type(checks[0]);
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(5)').type(checks[1]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(3)').type(checks[2]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(5)').type(checks[3]);
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
 //         // Test: Add & Remove images
@@ -247,6 +306,11 @@
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(3)').type(checks[0]);
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(5)').type(checks[1]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(3)').type(checks[2]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(5)').type(checks[3]);
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
 //         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
 //         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
@@ -283,6 +347,11 @@
 //         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(3)').type(checks[0]);
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(5)').type(checks[1]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(3)').type(checks[2]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(5)').type(checks[3]);
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
 //         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
@@ -369,6 +438,11 @@
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(3)').type(checks[0]);
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(5)').type(checks[1]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(3)').type(checks[2]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(5)').type(checks[3]);
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
 //         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
 //         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
@@ -428,6 +502,11 @@
 //         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(3)').type(checks[0]);
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(5)').type(checks[1]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(3)').type(checks[2]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(5)').type(checks[3]);
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
 //         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
@@ -499,6 +578,11 @@
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > div > div:nth-child(12) > section > label:nth-child(1) > input[type=checkbox]').check().should('be.checked');
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(3)').type(checks[0]);
+//         cy.get('#root > div > main > div > label:nth-child(3) > input:nth-child(5)').type(checks[1]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(3)').type(checks[2]);
+//         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(5)').type(checks[3]);
+//         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 //         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
 //         cy.get('#root > div > main > section > section > section:nth-child(2) > input').selectFile('cypress/fixtures/image2.jpg');
 //         cy.get('#root > div > main > section > section > section:nth-child(3) > input').selectFile('cypress/fixtures/image3.jpg');
@@ -541,17 +625,14 @@
 //         cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(12) > td:nth-child(2)').should('have.text', validCity);
 //         cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(13) > td:nth-child(2)').should('have.text', validPostal);
 //         cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(14) > td:nth-child(2)').should('have.text', validStreet);
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', camperInputs.licensePlate)
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(2) > td:nth-child(2)').should('have.text', camperInputs.brand)
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(3) > td:nth-child(2)').should('have.text', camperInputs.model)
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(4) > td:nth-child(2)').should('have.text', camperInputs.requirement)
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(5) > td:nth-child(2)').should('have.text', '15/08/2024')
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(6) > td:nth-child(2)').should('have.text', `${camperInputs.height} meter`)
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(7) > td:nth-child(2)').should('have.text', `${camperInputs.length} meter`)
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(8) > td:nth-child(2)').should('have.text', `${camperInputs.fuel} Liter(s) per hour`)
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(9) > td:nth-child(2)').should('have.text', camperInputs.transmission)
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(10) > td:nth-child(2)').should('have.text', '01/01/2020')
-//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(11) > td:nth-child(2)').should('have.text', '01/01/2023')
-
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(1) > td:nth-child(2)').should('have.text', camperInputs.licensePlate);
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(2) > td:nth-child(2)').should('have.text', camperInputs.brand);
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(3) > td:nth-child(2)').should('have.text', camperInputs.model);
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(4) > td:nth-child(2)').should('have.text', camperInputs.requirement);
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(5) > td:nth-child(2)').should('have.text', '15/08/2024');
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(6) > td:nth-child(2)').should('have.text', `${camperInputs.height} meter`);
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(7) > td:nth-child(2)').should('have.text', `${camperInputs.length} meter`);
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(8) > td:nth-child(2)').should('have.text', `${camperInputs.fuel} Liter(s) per hour`);
+//         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(9) > td:nth-child(2)').should('have.text', camperInputs.transmission);
 //     });
 // });

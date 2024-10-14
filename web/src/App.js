@@ -88,7 +88,7 @@ function App() {
         uri: 'https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql',  //
         cache: new InMemoryCache(),
         headers: {
-            "x-api-key": "da2-bkwzuzxyubfw5aadbb3ahtuwja",  // Replace with your AppSync API key
+            "x-api-key": "da2-awj2qrpdfnhjbhrhpewcpit32m",  // Replace with your AppSync API key
         },
     });
 
@@ -183,7 +183,7 @@ function App() {
 
                             {/* Verification */}
                             <Route path="/verify" element={<HostVerificationView />} />
-                            <Route path="/verify/registrationnumber" element={<RegistrationNumberView />} />
+                            <Route path="/verify/registrationnumber/:id" element={<RegistrationNumberView />} />
                             <Route path="/verify/registrationnumber/check" element={<RegistrationNumberCheckView />} />
                             <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                             <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
