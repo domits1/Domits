@@ -332,7 +332,7 @@ function HostDistribution() {
                 // Reset state to default values
                 setSelectedChannel("Select Channel");
                 setApiKey("");
-                setDropdownAddChannelsVisible(!dropdownAddChannelsVisible);
+                setDropdownAddChannelsVisible(false);
 
                 await asyncRetrieveChannelData();
             } else {
