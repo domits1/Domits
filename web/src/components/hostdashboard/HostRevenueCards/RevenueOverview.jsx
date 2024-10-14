@@ -3,7 +3,7 @@ import './RevenueOverview.css';
 
 const RevenueOverview = ({ title, value }) => {
     return (
-        <div className="revenue-card">
+        <div className="ro-revenue-card">
             <h4>{title}</h4>
             <p>{value}</p>
         </div>

@@ -1,4 +1,4 @@
-.revpar-card {
+.rp-revpar-card {
     padding: 20px;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
@@ -7,17 +7,17 @@
     max-width: 300px;
 }
 
-.revpar-card h4 {
+.rp-revpar-card h4 {
     margin-bottom: 10px;
     font-weight: bold;
 }
 
-.revpar-details p {
+.rp-revpar-details p {
     margin: 5px 0;
     font-size: 14px;
 }
 
-.revenue-amount {
+.rp-revenue-amount {
     font-size: 24px;
     font-weight: bold;
     color: #000;

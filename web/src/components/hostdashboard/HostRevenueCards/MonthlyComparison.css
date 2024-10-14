@@ -1,4 +1,4 @@
-.dashboard-container {
+.mc-dashboard-container {
     display: flex;
     justify-content: space-between;
     gap: 20px; /* Add some space between the two cards */
@@ -7,7 +7,7 @@
 }
 
 /* Style for Monthly Comparison card */
-.comparison-card {
+.mc-comparison-card {
     padding: 20px;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
@@ -15,13 +15,13 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     margin: 0 auto; /* Center the box horizontally */
 }
-.comparison-card canvas { /* If you're using a canvas chart */
+.mc-comparison-card canvas { /* If you're using a canvas chart */
     max-width: 100%; /* Ensure the chart doesn't overflow the container */
     height: auto; /* Maintain aspect ratio */
 }
 
 /* Header styling */
-.card-header {
+.mc-card-header {
     font-size: 1.2em;
     font-weight: normal;
     color: #333;
@@ -29,7 +29,7 @@
 }
 
 /* Chart area */
-.chart-container {
+.mc-chart-container {
     background-color: #aaa4a4; /* White background for the chart area */
     padding: 20px; /* Padding inside the white box */
     border-radius: 10px; /* Rounded corners for the white box */
