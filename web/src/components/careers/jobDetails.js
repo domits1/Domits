@@ -49,7 +49,7 @@ function JobDetails() {
 
             <section className="technologies">
                 <h2 className="tech-heading">Technologies we work with</h2>
-                <p>{job.details?.responsibilities || "Technologies not specified"}</p>
+                <p>{job.details?.technologies || "Technologies not specified"}</p>
             </section>
 
             <section className="experience">
