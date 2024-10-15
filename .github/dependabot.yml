@@ -4,4 +4,4 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
-    target-branch: "Dependabot-update"
+    target-branch: "Acceptance"
