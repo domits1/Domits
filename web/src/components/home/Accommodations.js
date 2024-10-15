@@ -164,6 +164,11 @@ const Accommodations = ({ searchResults }) => {
           Next &gt;
         </button>
       </div>
+      <div className="why-domits-button">
+        <a href="/why-domits" className="why-domits-link">
+          Why Domits?
+        </a>
+      </div>
     </div>
   );
 };

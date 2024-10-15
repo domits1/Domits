@@ -96,6 +96,35 @@
   margin: 0 3% 0 0;
 }
 
+.why-domits-button {
+  position: fixed;
+  right: 0;
+  bottom: 50%;
+  transform: translateY(50%);
+  z-index: 1000;
+}
+
+.why-domits-link {
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 10px;
+  text-decoration: none;
+  border-radius: 0 5px 5px 0;
+  font-size: 12px;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  text-align: center;
+}
+
+.why-domits-link:hover {
+  opacity: 90%;
+  text-decoration: none;
+}
+
+
 
 @media (max-width: 1292px) {
   .accocard {
