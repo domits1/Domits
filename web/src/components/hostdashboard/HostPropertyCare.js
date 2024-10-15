@@ -8,7 +8,7 @@ const HostPropertyCare = () => {
 
 
     const handleContactNavigation = () => {
-        navigate('/contact');  // Navigate to the contact page
+        navigate('/contact');  
     };
     return (
         <main className="page-body">
