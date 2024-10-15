@@ -1,5 +1,6 @@
 import React from 'react';
 import Pages from "./Pages.js";
+import './HostPropertyCare.css';
 import { useNavigate } from 'react-router-dom';
 
 const HostPropertyCare = () => {
@@ -7,7 +8,7 @@ const HostPropertyCare = () => {
 
 
     const handleContactNavigation = () => {
-        navigate('/contact');
+        navigate('/contact');  // Navigate to the contact page
     };
     return (
         <main className="page-body">
@@ -21,9 +22,9 @@ const HostPropertyCare = () => {
                     <h3 style={{width:'60%'}}>
                         Are you looking for a cleaner, housekeeper or maintenance handyman? Our partner Mostpros
                         has a network of home service professionals ready to support you.
-                        <span className="property-span"
+                        <span className="propert-span"
                             onClick={handleContactNavigation}
-                                > Send us a message here
+                            > Send us a message here
                         </span> and we connect you with them.
                     </h3>
                     </div>
