@@ -1,9 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import './hostchatbot.css';
 import { Auth } from 'aws-amplify';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
+import stringSimilarity from 'string-similarity'; // Import the string-similarity library
+
+// Component for rendering accommodation tiles with images
+const AccommodationTile = ({ accommodation }) => {
+  const firstImage = Object.values(accommodation.images)[0]; // Extract the first image
+
+  return (
+      <div className="hostchatbot-accommodation-tile">
+        <img
+            src={firstImage || 'default-image.jpg'} // Use fallback if image isn't available
+            alt="Accommodation"
+            className="hostchatbot-accommodation-image"
+            onError={(e) => (e.target.src = 'default-image.jpg')} // Handle broken images
+        />
+        <div className="hostchatbot-accommodation-details">
+          <h3>{accommodation.title || 'Accommodation'}</h3>
+          <p><strong>City:</strong> {accommodation.city}</p>
+          <p><strong>Bathrooms:</strong> {accommodation.bathrooms > 0 ? accommodation.bathrooms : 'No bathrooms available'}</p>
+          <p><strong>Guest Amount:</strong> {accommodation.guestAmount > 0 ? accommodation.guestAmount : 'No guests allowed'}</p>
+        </div>
+      </div>
+  );
+};
 
 const HostChatbot = () => {
   const [messages, setMessages] = useState([]);
@@ -15,11 +37,14 @@ const HostChatbot = () => {
   const [userId, setUserId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [username, setUserName] = useState(null);
+  const [accommodations, setAccommodations] = useState([]); // State for storing fetched accommodations
+  const [faqList, setFaqList] = useState([]); // State for storing FAQs
   const [isLoading, setIsLoading] = useState(true);
 
   const { role, isLoading: userLoading } = useUser();
   const location = useLocation();
 
+  // Fetch user details on component mount
   useEffect(() => {
     const setUserDetails = async () => {
       try {
@@ -30,7 +55,7 @@ const HostChatbot = () => {
         setMessages([{ text: `Hello, ${name}! Please choose an option:`, sender: 'bot', contentType: 'text' }]);
         setAwaitingUserChoice(true);
       } catch (error) {
-        // Handle error
+        console.error('Error fetching user details:', error);
       } finally {
         setIsLoading(false);
       }
@@ -39,6 +64,7 @@ const HostChatbot = () => {
     setUserDetails();
   }, []);
 
+  // Automatically open the chat for the first login (only for Hosts)
   useEffect(() => {
     if (!userLoading && role === 'Host') {
       const chatOpened = sessionStorage.getItem('chatOpened');
@@ -53,6 +79,7 @@ const HostChatbot = () => {
     setAwaitingUserChoice(true);
     setSuggestions([]);
     setCurrentOption(null);
+    setAccommodations([]);  // Clear the accommodations state to hide tiles
     setMessages([{ text: `Hello again, ${username}! Please choose an option:`, sender: 'bot', contentType: 'text' }]);
   };
 
@@ -103,7 +130,7 @@ const HostChatbot = () => {
       if (currentOption === '1') {
         handleAccommodationQuery(userInput);
       } else if (currentOption === '2') {
-        handleFAQQuery(userInput);
+        handleFAQQuery(userInput);  // Fuzzy matching in FAQ
       } else {
         handleExpertContact();
       }
@@ -131,13 +158,25 @@ const HostChatbot = () => {
     }
   };
 
+  // Use fuzzy matching for FAQ queries
   const handleFAQQuery = (userInput) => {
-    const faqMatch = faqList.find((faq) => faq.question.toLowerCase().includes(userInput.toLowerCase()));
-    if (faqMatch) {
+    if (faqList.length === 0) {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: "Sorry, I don't have any FAQs available at the moment.", sender: 'bot', contentType: 'text' }
+      ]);
+      return;
+    }
+
+    const faqQuestions = faqList.map((faq) => faq.question.toLowerCase());
+    const bestMatch = stringSimilarity.findBestMatch(userInput.toLowerCase(), faqQuestions);
+
+    if (bestMatch.bestMatch.rating > 0.5) {
+      const matchedFAQ = faqList[bestMatch.bestMatchIndex]; // Get the matching FAQ
       setMessages((prevMessages) => [
         ...prevMessages,
         {
-          text: `Q: ${faqMatch.question}\nA: ${faqMatch.answer}`,
+          text: `Q: ${matchedFAQ.question}\nA: ${matchedFAQ.answer}`,
           sender: 'bot',
           contentType: 'faq'
         }
@@ -157,6 +196,7 @@ const HostChatbot = () => {
     ]);
   };
 
+  // Fetch accommodations from backend
   const fetchAccommodations = async () => {
     if (!userId) return;
 
@@ -172,19 +212,24 @@ const HostChatbot = () => {
       );
       const data = await response.json();
       const accommodationsArray = data.body ? JSON.parse(data.body) : [];
-      setAccolist(accommodationsArray);
+
+      const formattedAccommodations = accommodationsArray.map(acc => ({
+        title: acc.Title || 'Accommodation',
+        city: acc.City,
+        bathrooms: acc.Bathrooms,
+        guestAmount: acc.GuestAmount,
+        images: acc.Images || {} // Use Images object
+      }));
+
+      setAccommodations(formattedAccommodations);
       if (currentOption === '1') {
         setMessages((prevMessages) => [
           ...prevMessages,
-          {
-            text: formatAccommodationsResponse(accommodationsArray),
-            sender: 'bot',
-            contentType: 'accommodation'
-          }
+          { text: 'Here are your accommodations:', sender: 'bot', contentType: 'accommodation' }
         ]);
       }
     } catch (error) {
-      // Handle error
+      console.error('Error fetching accommodations:', error);
     } finally {
       setLoading(false);
     }
@@ -195,21 +240,28 @@ const HostChatbot = () => {
       const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation');
       const responseData = await response.json();
       const data = JSON.parse(responseData.body);
+
+      const formattedAccommodations = data.map(acc => ({
+        title: acc.Title || 'Accommodation',
+        city: acc.City,
+        bathrooms: acc.Bathrooms,
+        guestAmount: acc.GuestAmount,
+        images: acc.Images || {} // Use Images object
+      }));
+
+      setAccommodations(formattedAccommodations);
       if (currentOption === '1') {
         setMessages((prevMessages) => [
           ...prevMessages,
-          {
-            text: formatAccommodationsResponse(data),
-            sender: 'bot',
-            contentType: 'accommodation'
-          }
+          { text: 'Here is all available accommodation data:', sender: 'bot', contentType: 'accommodation' }
         ]);
       }
     } catch (error) {
-      // Handle error
+      console.error('Error fetching all accommodations:', error);
     }
   };
 
+  // Fetch FAQ from backend
   const fetchFAQ = async () => {
     try {
       const response = await fetch(
@@ -218,17 +270,16 @@ const HostChatbot = () => {
       );
       const responseData = await response.json();
       const faqData = JSON.parse(responseData.body);
-      setFaqList(faqData);
+      setFaqList(faqData); // Store FAQs in faqList
     } catch (error) {
-      // Handle error
+      console.error('Error fetching FAQ data:', error);
     }
   };
 
-  const formatAccommodationsResponse = (accommodations) => {
-    return accommodations
-        .map((acc) => `Accommodation in ${acc.City} with ${acc.Bathrooms} bathrooms, suitable for ${acc.GuestAmount} guests.`)
-        .join('\n');
-  };
+  // Fetch FAQs when component mounts
+  useEffect(() => {
+    fetchFAQ();
+  }, []);
 
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
@@ -262,6 +313,14 @@ const HostChatbot = () => {
                   <p>{message.text}</p>
                 </div>
             ))}
+            {/* Render accommodation tiles if accommodation data is available */}
+            {accommodations.length > 0 && (
+                <div className="hostchatbot-accommodations">
+                  {accommodations.map((accommodation, index) => (
+                      <AccommodationTile key={index} accommodation={accommodation} />
+                  ))}
+                </div>
+            )}
             {awaitingUserChoice && (
                 <div className="hostchatbot-option-buttons">
                   <button onClick={() => handleButtonClick('1')}>1. I have a question regarding accommodations</button>

@@ -4,7 +4,7 @@
   bottom: 20px;
   right: 20px;
   z-index: 3000;
-  background-color: #0078D7; /* Modern blue color */
+  background-color: #0078D7;
   color: white;
   border: none;
   border-radius: 50%;
@@ -12,7 +12,7 @@
   height: 60px;
   font-size: 24px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Soft shadow for a modern effect */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -20,7 +20,7 @@
 }
 
 .hostchatbot-toggle-button:hover {
-  background-color: #005bb5; /* Darker blue on hover */
+  background-color: #005bb5;
 }
 
 /* Chatbot window container */
@@ -29,11 +29,11 @@
   bottom: 100px;
   right: 20px;
   z-index: 2000;
-  width: 380px; /* Slightly larger for a more modern feel */
-  height: 550px; /* Adjusted height */
+  width: 380px;
+  height: 550px;
   background: white;
-  border-radius: 16px; /* Softer, rounder corners */
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); /* Stronger shadow for depth */
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -51,7 +51,7 @@
 
 /* Chatbot header */
 .hostchatbot-header {
-  background: linear-gradient(45deg, #0078D7, #00A8E8); /* Gradient for modern look */
+  background: linear-gradient(45deg, #0078D7, #00A8E8);
   color: white;
   padding: 12px 20px;
   border-top-left-radius: 16px;
@@ -76,7 +76,7 @@
 }
 
 .hostchatbot-header .hostchatbot-close-button:hover {
-  color: #FFD700; /* Gold color on hover */
+  color: #FFD700;
 }
 
 /* Chat window messages */
@@ -174,6 +174,33 @@
   cursor: not-allowed;
 }
 
+/* Accommodation tile styling */
+.hostchatbot-accommodation-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  width: 100%;
+}
+
+/* Image styling inside the accommodation tile */
+.hostchatbot-accommodation-image {
+  max-width: 100%;
+  max-height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+/* Accommodation details styling */
+.hostchatbot-accommodation-details {
+  text-align: center;
+}
+
 /* Modern styling for accommodation layout */
 .hostchatbot-accommodation {
   background-color: #fafafa;
@@ -216,28 +243,21 @@
   margin-top: 6px;
 }
 
-/* Go back button */
+/* Go back button styling */
 .hostchatbot-go-back-button {
-  background-color: #0078D7; /* Primary button color */
+  background-color: #0078D7;
   color: white;
   border: none;
   padding: 10px 16px;
-  margin-top: 12px;
   border-radius: 8px;
   cursor: pointer;
+  margin: 10px auto;
+  width: 100px;
   font-size: 14px;
   text-align: center;
-  width: 100%;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for a modern effect */
+  transition: background-color 0.3s ease;
 }
 
 .hostchatbot-go-back-button:hover {
-  background-color: #005bb5; /* Darker blue on hover */
-  transform: translateY(-2px); /* Slight lift on hover */
-}
-
-.hostchatbot-go-back-button:active {
-  background-color: #004494; /* Even darker blue on click */
-  transform: translateY(0); /* Reset lift effect on click */
+  background-color: #005bb5;
 }
