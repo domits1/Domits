@@ -106,11 +106,6 @@ html, body {
   margin: 2px 0px;
 }
 
-.option-container {
-  display: flex;
-  flex-direction: column;
-}
-
 hr {
   border: none;
   width: 98%;
