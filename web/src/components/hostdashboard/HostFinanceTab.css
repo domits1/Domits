@@ -1,0 +1,11 @@
+.finance-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%
+}
+.finance-span{
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
