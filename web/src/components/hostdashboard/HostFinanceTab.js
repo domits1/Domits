@@ -15,6 +15,13 @@ const HostFinanceTab = () => {
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('/hostdashboard');
 
+    const handleEnlistNavigation = () => {
+        navigate('/enlist');
+    };
+    const handleNavigation = (value) => {
+        navigate(value);
+    };
+
     useEffect(() => {
         const setUserEmailAsync = async () => {
             try {
@@ -75,13 +82,6 @@ const HostFinanceTab = () => {
         }
     }
 
-    const handleEnlistNavigation = () => {
-        navigate('/enlist');
-    };
-    const handleListingNavigation = () => {
-        navigate('/listings');
-    }
-
     return (
         <main className="page-body">
             <section className='host-pc' style={{
@@ -104,7 +104,7 @@ const HostFinanceTab = () => {
                                     </>
                                 }
                             </li>
-                            <li>3. Set your accommodation live at <span onClick={handleListingNavigation} className="finance-span">listings! </span></li>
+                            <li>3. Set your accommodation live at <span onClick={() => handleNavigation("/hostdashboard/listings")} className="finance-span">listings! </span></li>
                         </ul>
                         {loading && (
                             <div className="spinnerdiv">
