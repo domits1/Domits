@@ -4,6 +4,7 @@ import { ResizableBox } from 'react-resizable';
 import './ChatWidget.css';
 import { useUser } from '../../UserContext';
 import Slider from 'react-slick';
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const ChatWidget = () => {
   const { user, isLoading } = useUser();
@@ -34,6 +35,7 @@ const ChatWidget = () => {
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
+  
 
   const loadChatHistory = async () => {
     try {
@@ -49,6 +51,11 @@ const ChatWidget = () => {
     } catch (error) {
       //console.error('Error loading chat history:', error);
     }
+  };
+
+  const handleTileClick = (id) => {
+    const url = `${window.location.origin}/listingdetails?ID=${id}`;
+    window.location.href = url;  // Redirect to the listing details page
   };
 
   const sendWelcomeMessage = () => {
@@ -253,35 +260,41 @@ const ChatWidget = () => {
                       : message.text || 'Error: Invalid message format'}
                   </div>
                   {message.sender === 'ai' && message.accommodations && (
-                  <div className="chatwidget-accommodation-tiles">
-                    {message.accommodations.map((accommodation, idx) => (
-                      <div key={idx} className="chatwidget-accommodation-tile">
-                        <Slider
-                          dots={true}
-                          infinite={false}
-                          speed={500}
-                          slidesToShow={1}
-                          slidesToScroll={1}
-                          arrows={true} // Enable left and right arrows
-                          className="chatwidget-slider"
+                    <div className="chatwidget-accommodation-tiles">
+                      {message.accommodations.map((accommodation, idx) => (
+                        <div
+                          key={idx}
+                          className="chatwidget-accommodation-tile"
                         >
-                          {Object.keys(accommodation.Images).map((key, index) => (
-                            <div key={index}>
-                              <img src={accommodation.Images[key]} alt={`Slide ${index + 1}`} className="chatwidget-accommodation-image" />
-                            </div>
-                          ))}
-                        </Slider>
-                        <div className="chatwidget-accommodation-details">
-                          <h3>{accommodation.Title}</h3>
-                          <p>{accommodation.Description}</p>
-                          <p><strong>City:</strong> {accommodation.City}</p>
-                          <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
-                          <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
+                          <Slider
+                            dots={true}
+                            infinite={false}
+                            speed={500}
+                            slidesToShow={1}
+                            slidesToScroll={1}
+                            arrows={true}
+                            className="chatwidget-slider"
+                          >
+                            {Object.keys(accommodation.Images).map((key, index) => (
+                              <div key={index}>
+                                <img src={accommodation.Images[key]} alt={`Slide ${index + 1}`} className="chatwidget-accommodation-image" />
+                              </div>
+                            ))}
+                          </Slider>
+                          <div className="chatwidget-accommodation-details"
+                          onClick={() => handleTileClick(accommodation.ID)}  // Click event for redirection
+                          style={{ cursor: 'pointer' }}  // Add pointer to indicate clickability
+                          >
+                            <h3>{accommodation.Title}</h3>
+                            <p>{accommodation.Description}</p>
+                            <p><strong>City:</strong> {accommodation.City}</p>
+                            <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
+                            <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
