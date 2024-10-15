@@ -49,6 +49,7 @@ function OnboardingHost() {
     const [hasSpecs, setHasSpecs] = useState(false);
     const [updatedIndex, setUpdatedIndex] = useState([]);
 
+
     useEffect(() => {
         const fetchAccommodation = async () => {
             setIsLoading(true);
@@ -58,7 +59,7 @@ function OnboardingHost() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ ID: oldAccoID }),
+                    body: JSON.stringify({ ID: accommodationID }),
                 });
 
                 if (!response.ok) {
@@ -73,6 +74,7 @@ function OnboardingHost() {
                 }
 
                 setFormData(data);
+                console.log("HIER" + JSON.stringify(data))
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             } finally {
@@ -81,12 +83,12 @@ function OnboardingHost() {
         };
 
 
-        if (!isNew && oldAccoID) {
+        if (!isNew && accommodationID) {
             fetchAccommodation();
         } else {
             setIsLoading(false)
         }
-    }, [isNew, oldAccoID]);
+    }, [isNew, accommodationID]);
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -163,16 +165,15 @@ function OnboardingHost() {
     }, [userId]);
 
     const [page, setPage] = useState(0);
-    const generateCommonFormData = () => ({
-        ID: generateUUID(),
-        Title: "",
-        Subtitle: "",
-        Description: "",
-        Rent: 1,
-        GuestAmount: 0,
-        Country: "",
-        City: "",
-        Features: {
+    const generateCommonFormData = (existingData = {}, isNew = true) => ({
+        ID: isNew ? generateUUID() : existingData.ID,
+        Title: existingData.Title || "",
+        Subtitle: existingData.Subtitle || "",
+        Description: existingData.Description || "",
+        Rent: existingData.Rent || 1,
+        Country: existingData.Country || "",
+        City: existingData.City || "",
+        Features: existingData.Features || {
             Essentials: [],
             Kitchen: [],
             Bathroom: [],
@@ -188,99 +189,106 @@ function OnboardingHost() {
             ExtraServices: [],
             EcoFriendly: []
         },
-        HouseRules: {
+        HouseRules: existingData.HouseRules || {
             AllowSmoking: false,
             AllowPets: false,
             AllowParties: false,
         },
-        CheckIn: {
+        CheckIn: existingData.CheckIn || {
             From: "",
             Til: "",
         },
-        CheckOut: {
+        CheckOut: existingData.CheckOut || {
             From: "",
             Til: "",
         },
-        Images: {
+        Images: existingData.Images || {
             image1: "",
             image2: "",
             image3: "",
             image4: "",
             image5: ""
         },
-        DateRanges: [],
-        Drafted: true,
-        AccommodationType: "",
-        ServiceFee: 0,
-        CleaningFee: 0,
-        OwnerId: userId,
+        DateRanges: existingData.DateRanges || [],
+        Drafted: existingData.Drafted || true,
+        AccommodationType: existingData.AccommodationType || "",
+        ServiceFee: existingData.ServiceFee || 0,
+        CleaningFee: existingData.CleaningFee || 0,
+        OwnerId: existingData.OwnerId || userId,
     });
-    const generateBoatFormData = () => ({
-        ...generateCommonFormData(),
-        Harbour: "",
-        Cabins: 0,
-        Bathrooms: 0,
-        Beds: 0,
-        isPro: false,
-        Manufacturer: "",
-        Model: "",
-        RentedWithSkipper: false,
-        GPI: "",
-        Capacity: "",
-        Length: "",
-        FuelTank: "",
-        Speed: "",
-        YOC: "",
-        Renovated: "",
+
+    const generateBoatFormData = (existingData = {}, isNew = true) => ({
+        ...generateCommonFormData(existingData, isNew),
+        Harbour: existingData.Harbour || "",
+        Cabins: isNew ? 0 : existingData.Cabins,
+        Bathrooms: isNew ? 0 : existingData.Bathrooms,
+        Beds: isNew ? 0 : existingData.Beds,
+        isPro: existingData.isPro || false,
+        Manufacturer: existingData.Manufacturer || "",
+        Model: existingData.Model || "",
+        RentedWithSkipper: existingData.RentedWithSkipper || false,
+        HasLicense: existingData.HasLicense || false,
+        GPI: existingData.GPI || "",
+        Capacity: existingData.Capacity || "",
+        Length: existingData.Length || "",
+        FuelTank: existingData.FuelTank || "",
+        Speed: existingData.Speed || "",
+        YOC: existingData.YOC || "",
+        Renovated: existingData.Renovated || "",
         Features: {
-            ...generateCommonFormData().Features,
-            Outdoor: [],
-            NavigationEquipment: [],
-            LeisureActivities: [],
-            WaterSports: [],
+            ...generateCommonFormData(existingData, isNew).Features,
+            Outdoor: existingData.Features?.Outdoor || [],
+            NavigationEquipment: existingData.Features?.NavigationEquipment || [],
+            LeisureActivities: existingData.Features?.LeisureActivities || [],
+            WaterSports: existingData.Features?.WaterSports || [],
         }
     });
-    const generateCamperFormData = () => ({
-        ...generateCommonFormData(),
-        Bedrooms: 0,
-        PostalCode: "",
-        Street: "",
-        Bathrooms: 0,
-        Beds: 0,
-        LicensePlate: "",
-        Category: "",
-        CamperBrand: "",
-        Model: "",
-        Requirement: "",
-        GPI: "",
-        Length: "",
-        Height: "",
-        Transmission: "",
-        FuelTank: "",
-        YOC: "",
-        Renovated: "",
-        FWD: false,
-        SelfBuilt: false,
+
+    const generateCamperFormData = (existingData = {}, isNew = true) => ({
+        ...generateCommonFormData(existingData, isNew),
+        Bedrooms: isNew ? 0 : existingData.Bedrooms,
+        PostalCode: existingData.PostalCode || "",
+        Street: existingData.Street || "",
+        Bathrooms: isNew ? 0 : existingData.Bathrooms,
+        Beds: isNew ? 0 : existingData.Beds,
+        LicensePlate: existingData.LicensePlate || "",
+        Category: existingData.Category || "",
+        CamperBrand: existingData.CamperBrand || "",
+        Model: existingData.Model || "",
+        Requirement: existingData.Requirement || "",
+        GPI: existingData.GPI || "",
+        Length: existingData.Length || "",
+        Height: existingData.Height || "",
+        Transmission: existingData.Transmission || "",
+        FuelTank: existingData.FuelTank || "",
+        YOC: existingData.YOC || "",
+        Renovated: existingData.Renovated || "",
+        FWD: existingData.FWD || false,
+        SelfBuilt: existingData.SelfBuilt || false,
         Features: {
-            ...generateCommonFormData().Features,
-            Vehicle: [],
-            Outdoor: [],
-            NavigationEquipment: [],
-            LeisureActivities: [],
-            WaterSports: []
+            ...generateCommonFormData(existingData, isNew).Features,
+            Vehicle: existingData.Features?.Vehicle || [],
+            Outdoor: existingData.Features?.Outdoor || [],
+            NavigationEquipment: existingData.Features?.NavigationEquipment || [],
+            LeisureActivities: existingData.Features?.LeisureActivities || [],
+            WaterSports: existingData.Features?.WaterSports || [],
         }
     });
-    const generateNormalAccommodationFormData = () => ({
-        ...generateCommonFormData(),
-        Bedrooms: 0,
-        PostalCode: "",
-        Street: "",
-        Bathrooms: 0,
-        Beds: 0,
-        GuestAccess: ""
+
+    const generateNormalAccommodationFormData = (existingData = {}, isNew = true) => ({
+        ...generateCommonFormData(existingData, isNew),
+        Bedrooms: isNew ? 0 : existingData.Bedrooms,
+        PostalCode: isNew ? "" : existingData.PostalCode,
+        Street: isNew ? "" : existingData.Street,
+        Bathrooms: isNew ? 0 : existingData.Bathrooms,
+        Beds: isNew ? 0 : existingData.Beds,
+        GuestAccess: isNew ? "" : existingData.GuestAccess,
+        GuestAmount: isNew ? 0 : existingData.GuestAmount
     });
-    
-    const [formData, setFormData] = useState('');
+
+    const [formData, setFormData] = useState({
+
+    });
     const allAmenities = {
         Essentials: [
             'Wi-Fi',
@@ -491,7 +499,7 @@ function OnboardingHost() {
         setPage(pageNumber);
         window.scrollTo({
             top: 0,
-            behavior: 'smooth', 
+            behavior: 'smooth',
         });
     };
 
@@ -640,7 +648,7 @@ function OnboardingHost() {
             if (amenity === 'Cleaning service (add service fee manually)') {
                 resetCleaningFee();
             }
-    
+
             if (!Array.isArray(updatedFeatures[category])) {
                 updatedFeatures[category] = [];
             }
@@ -649,7 +657,7 @@ function OnboardingHost() {
             } else {
                 updatedFeatures[category] = updatedFeatures[category].filter(item => item !== amenity);
             }
-    
+
             return {
                 ...prevFormData,
                 Features: updatedFeatures
@@ -680,7 +688,7 @@ function OnboardingHost() {
             }));
         }
     };
-    
+
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
         if (type === 'checkbox') {
@@ -756,7 +764,6 @@ function OnboardingHost() {
                 const compressedFile = await imageCompression(file, sizeOptions);
                 const keyPath = `images/${userId}/${accommodationId}/${key}/Image-${index + 1}.jpg`;
 
-                //upload  gecomprimeerde naar S3
                 await Storage.put(keyPath, compressedFile, {
                     bucket: S3_BUCKET_NAME,
                     region: region,
@@ -771,7 +778,7 @@ function OnboardingHost() {
     };
 
     const removeImageFromS3 = async (userId, accommodationId, index) => {
-        const folders = ['', 'mobile', 'homepage', 'detail']; // Voeg een lege string toe voor de hoofdmap
+        const folders = ['', 'mobile', 'homepage', 'detail'];
 
         for (const folder of folders) {
             const key = folder
@@ -797,27 +804,21 @@ function OnboardingHost() {
             const AccoID = formData.ID;
             const updatedFormData = { ...formData };
 
-            // Verwijder eerst alle bestaande afbeeldingen van de accommodatie
             for (let i = 0; i < updatedIndex.length; i++) {
                 const index = updatedIndex[i];
                 await removeImageFromS3(userId, AccoID, index);
             }
 
-            // Upload nieuwe gecomprimeerde afbeeldingen
             for (let i = 0; i < updatedIndex.length; i++) {
                 const index = updatedIndex[i];
                 const file = imageFiles[index];
                 if (file) {
                     await uploadImagesInDifferentSizes(file, userId, AccoID, index);
-                    // Update de formData met de gecomprimeerde URL's van de verschillende formaten
                     updatedFormData.Images[`image${index + 1}`] = constructURL(userId, AccoID, index, 'mobile');
                     updatedFormData.Images[`image${index + 1}`] = constructURL(userId, AccoID, index, 'homepage');
                     updatedFormData.Images[`image${index + 1}`] = constructURL(userId, AccoID, index, 'detail');
                 }
             }
-
-            await setFormData(updatedFormData);
-            setImageFiles([]);
 
             const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
                 method: 'PUT',
@@ -840,39 +841,41 @@ function OnboardingHost() {
     };
 
 
+
     const handleSubmit = async () => {
         try {
             setIsLoading(true);
             const AccoID = formData.ID;
             const updatedFormData = { ...formData };
 
-            // Loop door de afbeelding bestanden en upload ze in verschillende maten
+            // Upload images and generate URLs
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
                 if (file) {
-                    // Upload en comprimeer de afbeelding in verschillende maten
                     await uploadImagesInDifferentSizes(file, userId, AccoID, i);
-
-                    // Constructeer URL's voor alle gecomprimeerde versies en sla ze op in het formulier
                     updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'mobile');
                     updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'homepage');
                     updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'detail');
                 }
             }
 
-            // Sla de bijgewerkte formData op in de state
             await setFormData(updatedFormData);
             setImageFiles([]);
-            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation', {
-                method: 'POST',
-                body: JSON.stringify(formData),
+
+
+            const endpoint = isNew ? 'CreateAccommodation' : 'EditAccommodation';
+            const method = isNew ? 'POST' : 'PUT';
+
+            const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`, {
+                method: method,
+                body: JSON.stringify(updatedFormData),
                 headers: {
                     'Content-Type': 'application/json',
                 }
             });
 
             if (response.ok) {
-                console.log('Form data saved successfully');
+                console.log(isNew ? 'Accommodation created successfully' : 'Accommodation updated successfully');
             } else {
                 console.error('Error saving form data');
             }
@@ -883,19 +886,17 @@ function OnboardingHost() {
         }
     };
 
+
     const [imageFiles, setImageFiles] = useState(Array.from({ length: 5 }, () => null));
 
     const handleFileChange = async (file, index) => {
         if (file) {
-            // Verwijder het originele bestand uit de state
             const newImageFiles = [...imageFiles];
             newImageFiles[index] = file;
             setImageFiles(newImageFiles);
 
-            // Compress and upload images in different sizes
             await uploadImagesInDifferentSizes(file, userId, formData.ID, index);
 
-            // Update formData to reflect the new image URLs (optional, based on your use case)
             const updatedFormData = { ...formData };
             updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'mobile');
             updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'homepage');
@@ -1015,7 +1016,9 @@ function OnboardingHost() {
                             </div>
                         ) : (
                             <section className="guest-access">
-                                <h2 className="onboardingSectionTitle">{isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}</h2>
+                                <h2 className="onboardingSectionTitle">
+                                    {isNew ? 'What kind of space do your guests have access to?' : 'Change the type of access your guests can have'}
+                                </h2>
                                 <div
                                     className={formData.GuestAccess === 'Entire house' ? 'guest-access-item-selected' : 'guest-access-item'}
                                     onClick={() => changeGuestAccess("Entire house")}>
@@ -1052,23 +1055,22 @@ function OnboardingHost() {
                 return (
                     <main className='page-body'>
                         <h2 className="onboardingSectionTitle">
-                            {isNew ? `Where can we find your 
-                            ${selectedAccoType === 'Boat' || 'Camper' ? selectedAccoType.toLowerCase() : 'accommodation'}?`
-                                : `Change the location of your ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}`}</h2>
-                        <p className="onboardingSectionSubtitle">We only share your address with guests after they have
-                            booked</p>
+                            {isNew ? `Where can we find your ${selectedAccoType === 'Boat' || selectedAccoType === 'Camper' ? selectedAccoType.toLowerCase() : 'accommodation'}?`
+                                : `Change the location of your ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}`}
+                        </h2>
+                        <p className="onboardingSectionSubtitle">We only share your address with guests after they have booked</p>
 
                         <section className="acco-location">
                             <section className="location-left">
                                 <label htmlFor="country">
                                     {`Country${(selectedAccoType === 'Boat' || selectedAccoType === 'Camper') ? ' of registration' : ''}*`}
                                 </label>
-                                
+
                                 <Select
-                                    options={options.map(country => ({value: country, label: country}))}
+                                    options={options.map(country => ({ value: country, label: country }))}
                                     name="Country"
                                     className="locationText"
-                                    value={{value: formData.Country, label: formData.Country}}
+                                    value={{ value: formData.Country, label: formData.Country || ''}}
                                     onChange={handleCountryChange}
                                     id="country"
                                     required={true}
@@ -1079,35 +1081,37 @@ function OnboardingHost() {
                                     className="textInput-field locationText"
                                     name="City"
                                     onChange={handleInputChange}
-                                    value={formData.City}
+                                    value={formData.City || ''}
                                     id="city"
                                     placeholder="Select your city"
                                     required={true}
                                 />
+
                                 {selectedAccoType !== 'Boat' ? (
                                     <>
                                         <label htmlFor="street">Street + house nr.*</label>
                                         <input
                                             className="textInput-field locationText"
                                             name="Street"
+                                            value={formData.Street || ''}
                                             onChange={handleInputChange}
-                                            value={formData.Street}
                                             id="street"
                                             placeholder="Enter your address"
                                             required={true}
                                         />
+
                                         <label htmlFor="postal">Postal Code*</label>
                                         <input
                                             className="textInput-field locationText"
                                             name="PostalCode"
                                             onChange={handleInputChange}
-                                            value={formData.PostalCode}
+                                            value={formData.PostalCode || ''}
                                             id="postal"
                                             placeholder="Enter your postal code"
                                             required={true}
                                             minLength={4}
                                             maxLength={7}
-                                            pattern="[A-Za-z\s,]+" 
+                                            pattern="[A-Za-z\s,]+"
                                         />
                                     </>
                                 ) : (
@@ -1117,7 +1121,7 @@ function OnboardingHost() {
                                             className="textInput-field locationText"
                                             name="Harbour"
                                             onChange={handleInputChange}
-                                            value={formData.Harbour}
+                                            value={formData.Harbour || ''}
                                             id="harbour"
                                             placeholder="Enter the name of the harbour"
                                             required={true}
@@ -1126,13 +1130,14 @@ function OnboardingHost() {
                                 )}
                             </section>
                         </section>
+
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon"/>
+                            <img src={info} className="info-icon" alt="info icon" />
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
+
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
-                                    style={{opacity: "75%"}}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{ opacity: "75%" }}>
                                 Go back
                             </button>
                             <button className={!hasAddress ? 'onboarding-button-disabled' : 'onboarding-button'}
@@ -1141,6 +1146,7 @@ function OnboardingHost() {
                             </button>
                         </nav>
                     </main>
+
                 );
             case 3:
                 return (
@@ -1155,7 +1161,7 @@ function OnboardingHost() {
                             <button
                                 className="round-button"
                                 onClick={() => incrementAmount('GuestAmount')}
-                                disabled={formData.GuestAmount >= 10} 
+                                disabled={formData.GuestAmount >= 10}
                             >+</button>
                         </div>
                     </div>
@@ -1170,7 +1176,7 @@ function OnboardingHost() {
                                         <button
                                         className="round-button"
                                         onClick={() => incrementAmount('Cabins')}
-                                        disabled={formData.Cabins >= 10} 
+                                        disabled={formData.Cabins >= 10}
                                         >+</button>
                                     </div>
                                 </div>
@@ -1184,7 +1190,7 @@ function OnboardingHost() {
                                         <button
                                         className="round-button"
                                         onClick={() => incrementAmount('Bedrooms')}
-                                        disabled={formData.Bedrooms >= 10} 
+                                        disabled={formData.Bedrooms >= 10}
                                         >+</button>
                                     </div>
                                 </div>
@@ -1198,7 +1204,7 @@ function OnboardingHost() {
                                     <button
                                     className="round-button"
                                     onClick={() => incrementAmount('Bedrooms')}
-                                    disabled={formData.Bedrooms >= 20} 
+                                    disabled={formData.Bedrooms >= 20}
                                     >+</button>
                                 </div>
                             </div>
@@ -1212,7 +1218,7 @@ function OnboardingHost() {
                                     <button
                                     className="round-button"
                                     onClick={() => incrementAmount('Bathrooms')}
-                                    disabled={formData.Bathrooms >= 10} 
+                                    disabled={formData.Bathrooms >= 10}
                                     >+</button>
                                 </div>
                             </div>
@@ -1224,7 +1230,7 @@ function OnboardingHost() {
                                     <button
                                     className="round-button"
                                     onClick={() => incrementAmount('Beds')}
-                                    disabled={formData.Beds >= 10} 
+                                    disabled={formData.Beds >= 10}
                                     >+</button>
                                 </div>
                             </div>
@@ -1275,7 +1281,7 @@ function OnboardingHost() {
                                     </div>
                                 );
                             })}
-                        </div>  
+                        </div>
 
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
@@ -1363,7 +1369,7 @@ function OnboardingHost() {
                             value={formData.CheckOut.Til}
                             onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'Til')}
                         />
-                    </label>    
+                    </label>
                             </div>
                             <nav className="onboarding-button-box">
                                 <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
@@ -1498,7 +1504,7 @@ function OnboardingHost() {
                 return (
                     <main className="container">
                         <h2 className="onboardingSectionTitle">{isNew ? 'Provide a description' : 'Edit your description'}</h2>
-                        <p className="onboardingSectionSubtitle">Share what makes your space special.</p>
+                        <p className="onboardingSectionSubtitle">Share what makes your boat special.</p>
 
                         <section className="accommodation-title">
                             <textarea
@@ -1575,6 +1581,27 @@ function OnboardingHost() {
                                                 name='RentedWithSkipper'
                                                 onChange={handleInputChange}
                                                 checked={!formData.RentedWithSkipper}
+                                            />
+                                            No
+                                        </label>
+                                    </div>
+                                    <label htmlFor="city">Does your boat need a boating license?</label>
+                                    <div className='radioBtn-box'>
+                                        <label>
+                                            <input
+                                                type="radio"
+                                                name='HasLicense'
+                                                onChange={handleInputChange}
+                                                checked={formData.HasLicense}
+                                            />
+                                            Yes
+                                        </label>
+                                        <label>
+                                            <input
+                                                type="radio"
+                                                name='HasLicense'
+                                                onChange={handleInputChange}
+                                                checked={!formData.HasLicense}
                                             />
                                             No
                                         </label>
@@ -2043,7 +2070,7 @@ function OnboardingHost() {
                                     <tr>
                                         <td>Street + House Nr.:</td>
                                         <td>{formData.Street}</td>
-                                    </tr>     
+                                    </tr>
                             <tr>
                                 <td>Smoking:</td>
                                 <td>{formData.AllowSmoking ? 'Yes' : 'No'}</td>
@@ -2169,7 +2196,7 @@ function OnboardingHost() {
                                             <td>4 x 4 Four-Wheel Drive:</td>
                                             <td>{formData.FWD ? 'Yes' : 'No'}</td>
                                         </tr>
-                                        
+
                                         <tr>
                                             <td>SelfBuilt:</td>
                                             <td>{formData.SelfBuilt ? 'Yes' : 'No'}</td>
@@ -2238,18 +2265,18 @@ function OnboardingHost() {
                         </label>
                         <div className="verifyCheck">
                         <label>
-                            <input 
+                            <input
                                 type="checkbox"
-                                onChange={(e) => setDeclarationChecked(e.target.checked)} 
+                                onChange={(e) => setDeclarationChecked(e.target.checked)}
                             />
-                            I declare that this property is legitimate, complete with required licenses and permits, 
+                            I declare that this property is legitimate, complete with required licenses and permits,
                             which can be displayed upon request. Domits B.V. reserves the right to verify and investigate your registration information.
                         </label>
 
                         <label>
-                            <input 
+                            <input
                                 type="checkbox"
-                                onChange={(e) => setTermsChecked(e.target.checked)} 
+                                onChange={(e) => setTermsChecked(e.target.checked)}
                             />
                             I confirm that I have read and accept the <a className ="termsCondition" href="/terms">General Terms and Conditions</a>.
                         </label>

@@ -507,7 +507,7 @@ const ListingDetails = () => {
 
     const filterDisabledDays = (date) => {
         for (let i = 0; i < accommodation.DateRanges.length; i++) {
-            let index = acccommodation.DateRanges[i];
+            let index = accommodation.DateRanges[i];
             if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
                 return true;
             }
