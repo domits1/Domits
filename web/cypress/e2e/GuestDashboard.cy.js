@@ -7,7 +7,7 @@ describe('Landing Page Tests', () => {
   
     it('Should display the landing page and load key sections', () => {
         cy.loginAsGuest();
-        cy.get('.headerRight > .headerHostButton').click();
+        cy.get('.header-links > .headerHostButton').click();
         cy.get(':nth-child(2) > .edit-icon-background').click();
         cy.get('.guest-edit-input').should('be.visible').clear().type('ffkdjrvrrrrv grrrrrrrbfdkg fdkgdb@gmail.com');
         
@@ -39,7 +39,7 @@ describe('Landing Page Tests', () => {
                     },
                 },
             });
-            cy.get('.headerRight > .headerHostButton').click();
+            cy.get('.header-links > .headerHostButton').click();
 
             cy.contains('Email:').next().should('contain', 'kacperfl29@gmail.com');
             cy.contains('Name:').next().should('contain', 'adaswrrwdadadsa');
@@ -49,7 +49,7 @@ describe('Landing Page Tests', () => {
     describe('Edit Button Toggle', () => {
         it('should toggle edit mode for email and name', () => {
             cy.loginAsGuest();
-            cy.get('.headerRight > .headerHostButton').click();
+            cy.get('.header-links > .headerHostButton').click();
             cy.wait(500);
             cy.get(':nth-child(2) > .edit-icon-background').click();
       
