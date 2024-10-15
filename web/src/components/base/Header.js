@@ -168,7 +168,6 @@ function Header({ setSearchResults, setLoading }) {
                             <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>
-                    <button onClick={navigateToWhyDomits}className='headerButtons headerHostButton'>Why Domits</button>
                     <div className='App'>
                         <SearchBar setSearchResults={setSearchResults} setLoading={setLoading}
                             toggleBar={toggleSearchBar} />
@@ -197,7 +196,7 @@ function Header({ setSearchResults, setLoading }) {
                                 <img src={nineDots} alt="Nine Dots" />
                             </button>
 
-                            
+
                         </ul>
                         <div className="personalMenuDropdown">
                             <button className="personalMenu" onClick={toggleDropdown}>

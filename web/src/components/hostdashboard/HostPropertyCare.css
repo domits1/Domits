@@ -1,0 +1,11 @@
+.property-content{
+    display: flex;
+    flex-direction: column;
+    align-items:center;
+}
+
+.property-span{
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}
