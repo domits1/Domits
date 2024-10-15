@@ -44,6 +44,7 @@ import AntiqueBalcony from "../../images/antique-balcony.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
 import { FaTimes } from 'react-icons/fa';
+import DemoValidator from './DemoValidator';
 
 
 const ListingDetails = () => {
@@ -232,6 +233,8 @@ const ListingDetails = () => {
 
         fetchAccommodation();
     }, [id]);
+
+    const {isDemo} = DemoValidator(hostID);
 
     const fetchReviewsByAccommodation = async (accoId) => {
         try {
@@ -507,7 +510,7 @@ const ListingDetails = () => {
 
     const filterDisabledDays = (date) => {
         for (let i = 0; i < accommodation.DateRanges.length; i++) {
-            let index = acccommodation.DateRanges[i];
+            let index = accommodation.DateRanges[i];
             if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
                 return true;
             }
@@ -542,7 +545,9 @@ const ListingDetails = () => {
                                 <Link to="/">
                                     <p className="backButton">Go Back</p>
                                 </Link>
-                                <h1>{accommodation.Title}</h1>
+                                <h1>
+                                {accommodation.Title} {isDemo && "(DEMO)"}
+                                </h1>
                             </div>
                             <div>
                                 <ImageGallery images={Object.values(accommodation.Images)}/>
@@ -755,15 +760,19 @@ const ListingDetails = () => {
 
                             {/* Price and Reserve Section */}
                             <button className="reserve-button" onClick={handleBooking}
-                                    disabled={!isFormValid}
+                                    disabled={!isFormValid || isDemo}
                                     style={{
                                         backgroundColor: isFormValid ? 'green' : 'green',
-                                        cursor: isFormValid ? 'pointer' : 'not-allowed',
-                                        opacity: isFormValid ? 1 : 0.5
+                                        cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
+                                        opacity: isFormValid && !isDemo ? 1 : 0.5
                                     }}>
                                 Reserve
                             </button>
-                            <p className="disclaimer">*You won't be charged yet</p>
+                            {isDemo ? (
+                                <p className="disclaimer">*This is a demo post and not bookable</p>
+                            ) : (
+                                <p className="disclaimer">*You won't be charged yet</p>
+                            )}
                             {(checkIn && checkOut) ? (
                                 <div className="price-details">
                                     <div className="price-item">
