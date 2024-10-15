@@ -35,7 +35,7 @@ import Policy from "./components/disclaimers/Policy";
 import Terms from "./components/disclaimers/Terms";
 import Login from "./components/base/Login";
 import Register from "./components/base/Register";
-import ConfirmRegister from "./components/base/ConfirmRegister";
+import ConfirmRegister from "./components/base/confirmEmail/ConfirmEmailView.js";
 import { AuthProvider } from './components/base/AuthContext';
 import GuestDashboard from './components/guestdashboard/GuestDashboard';
 import GuestBooking from './components/guestdashboard/GuestBooking';

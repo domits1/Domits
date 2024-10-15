@@ -317,20 +317,12 @@ hr {
   gap: 25px;
 }
 .code-input-container p{
-  font-size: 1.1em;
-  color: black;
-}
-
-.code-input-container input{
-  width: 15%;
-  padding: 10px 0;
-  border: 1px solid #e1e1e1;
-  border-radius: 10px;
-  font-size: 1.5em;
-  text-align: center;
+  font-size: 1em;
+  color: #484848;
 }
 
 .code-input-container button{
+  align-self: center !important;
   width: 15%;
   padding: 10px 0;
 }
@@ -365,10 +357,6 @@ hr {
     width: 15px;
     height: 20px;
   }
-
-  .code-input-container input{
-    width: 25%;
-  }
   
   .code-input-container button{
     width: 25%;
@@ -378,6 +366,10 @@ hr {
 
 /* Small devices (landscape phones, 576px and up) */
 @media (min-width: 576px) and (max-width: 767.98px) {
+  .verification-container {
+    width: 80%;
+    height: calc(100vh - 151.76px);
+  }
 }
 
 /* Medium devices (tablets, 768px and up) */
@@ -385,9 +377,6 @@ hr {
   .verification-container {
     width: 70%;
     height: calc(100vh - 151.76px);
-  }
-  .code-input-container input{
-    width: 25%;
   }
   
   .code-input-container button{
