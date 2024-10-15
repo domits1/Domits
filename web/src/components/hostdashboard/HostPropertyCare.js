@@ -22,7 +22,7 @@ const HostPropertyCare = () => {
                     <h3 style={{width:'60%'}}>
                         Are you looking for a cleaner, housekeeper or maintenance handyman? Our partner Mostpros
                         has a network of home service professionals ready to support you.
-                        <span className="propert-span"
+                        <span className="property-span"
                             onClick={handleContactNavigation}
                             > Send us a message here
                         </span> and we connect you with them.
