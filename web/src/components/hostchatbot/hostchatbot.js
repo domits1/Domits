@@ -4,7 +4,7 @@ import { Auth } from 'aws-amplify';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
 import stringSimilarity from 'string-similarity';
-import AccommodationTile from './AccommodationTile';
+import AccommodationTile from '../hostchatbot/AccommodationTile';
 
 const HostChatbot = () => {
   const [messages, setMessages] = useState([]);
