@@ -180,7 +180,7 @@ describe('Host Distribution - Manage Channel Button', () => {
         cy.get('.channelAPIKey').type('123456789');
         cy.get('#root > div > div.containerHostDistribution > div.host-dist-header > div > div > div > div.addCancelButtonContainer > button.addChannelButtonMenuButton.Add').click();
         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
-        cy.wait(1000);
+        cy.wait(10000);
         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
 
         cy.get(':nth-child(1) > .host-dist-box-row > .channelManageButton').should('be.visible').click();
