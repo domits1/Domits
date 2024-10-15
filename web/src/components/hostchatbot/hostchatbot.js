@@ -4,19 +4,36 @@ import { Auth } from 'aws-amplify';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
 import stringSimilarity from 'string-similarity'; // Import the string-similarity library
+import Slider from 'react-slick'; // Import react-slick
 
-// Component for rendering accommodation tiles with images
+// Component for rendering accommodation tiles with image slider
 const AccommodationTile = ({ accommodation }) => {
-  const firstImage = Object.values(accommodation.images)[0]; // Extract the first image
+  const images = Object.values(accommodation.images); // Extract all images
+
+  // Slider settings for slick
+  const sliderSettings = {
+    dots: true, // Enable dots for navigation
+    infinite: true, // Infinite loop
+    speed: 500, // Transition speed
+    slidesToShow: 1, // Show one slide at a time
+    slidesToScroll: 1, // Scroll one slide at a time
+    arrows: true, // Show arrows for navigation
+  };
 
   return (
       <div className="hostchatbot-accommodation-tile">
-        <img
-            src={firstImage || 'default-image.jpg'} // Use fallback if image isn't available
-            alt="Accommodation"
-            className="hostchatbot-accommodation-image"
-            onError={(e) => (e.target.src = 'default-image.jpg')} // Handle broken images
-        />
+        <Slider {...sliderSettings}>
+          {images.map((image, index) => (
+              <div key={index}>
+                <img
+                    src={image || 'default-image.jpg'} // Use fallback if image isn't available
+                    alt={`Accommodation ${index + 1}`}
+                    className="hostchatbot-accommodation-image"
+                    onError={(e) => (e.target.src = 'default-image.jpg')} // Handle broken images
+                />
+              </div>
+          ))}
+        </Slider>
         <div className="hostchatbot-accommodation-details">
           <h3>{accommodation.title || 'Accommodation'}</h3>
           <p><strong>City:</strong> {accommodation.city}</p>
@@ -176,7 +193,12 @@ const HostChatbot = () => {
       setMessages((prevMessages) => [
         ...prevMessages,
         {
-          text: `Q: ${matchedFAQ.question}\nA: ${matchedFAQ.answer}`,
+          text: (
+              <div className="faq-layout">
+                <p className="faq-question">Q: {matchedFAQ.question}</p>
+                <p className="faq-answer">A: {matchedFAQ.answer}</p>
+              </div>
+          ),
           sender: 'bot',
           contentType: 'faq'
         }
