@@ -3,46 +3,8 @@ import './hostchatbot.css';
 import { Auth } from 'aws-amplify';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
-import stringSimilarity from 'string-similarity'; // Import the string-similarity library
-import Slider from 'react-slick'; // Import react-slick
-
-// Component for rendering accommodation tiles with image slider
-const AccommodationTile = ({ accommodation }) => {
-  const images = Object.values(accommodation.images); // Extract all images
-
-  // Slider settings for slick
-  const sliderSettings = {
-    dots: true, // Enable dots for navigation
-    infinite: true, // Infinite loop
-    speed: 500, // Transition speed
-    slidesToShow: 1, // Show one slide at a time
-    slidesToScroll: 1, // Scroll one slide at a time
-    arrows: true, // Show arrows for navigation
-  };
-
-  return (
-      <div className="hostchatbot-accommodation-tile">
-        <Slider {...sliderSettings}>
-          {images.map((image, index) => (
-              <div key={index}>
-                <img
-                    src={image || 'default-image.jpg'} // Use fallback if image isn't available
-                    alt={`Accommodation ${index + 1}`}
-                    className="hostchatbot-accommodation-image"
-                    onError={(e) => (e.target.src = 'default-image.jpg')} // Handle broken images
-                />
-              </div>
-          ))}
-        </Slider>
-        <div className="hostchatbot-accommodation-details">
-          <h3>{accommodation.title || 'Accommodation'}</h3>
-          <p><strong>City:</strong> {accommodation.city}</p>
-          <p><strong>Bathrooms:</strong> {accommodation.bathrooms > 0 ? accommodation.bathrooms : 'No bathrooms available'}</p>
-          <p><strong>Guest Amount:</strong> {accommodation.guestAmount > 0 ? accommodation.guestAmount : 'No guests allowed'}</p>
-        </div>
-      </div>
-  );
-};
+import stringSimilarity from 'string-similarity';
+import AccommodationTile from './AccommodationTile';
 
 const HostChatbot = () => {
   const [messages, setMessages] = useState([]);
@@ -54,14 +16,13 @@ const HostChatbot = () => {
   const [userId, setUserId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [username, setUserName] = useState(null);
-  const [accommodations, setAccommodations] = useState([]); // State for storing fetched accommodations
-  const [faqList, setFaqList] = useState([]); // State for storing FAQs
+  const [accommodations, setAccommodations] = useState([]);
+  const [faqList, setFaqList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const { role, isLoading: userLoading } = useUser();
   const location = useLocation();
 
-  // Fetch user details on component mount
   useEffect(() => {
     const setUserDetails = async () => {
       try {
@@ -81,7 +42,6 @@ const HostChatbot = () => {
     setUserDetails();
   }, []);
 
-  // Automatically open the chat for the first login (only for Hosts)
   useEffect(() => {
     if (!userLoading && role === 'Host') {
       const chatOpened = sessionStorage.getItem('chatOpened');
@@ -96,7 +56,7 @@ const HostChatbot = () => {
     setAwaitingUserChoice(true);
     setSuggestions([]);
     setCurrentOption(null);
-    setAccommodations([]);  // Clear the accommodations state to hide tiles
+    setAccommodations([]);
     setMessages([{ text: `Hello again, ${username}! Please choose an option:`, sender: 'bot', contentType: 'text' }]);
   };
 
@@ -128,8 +88,8 @@ const HostChatbot = () => {
     }
 
     setMessages((prevMessages) => [
-      ...prevMessages.filter(message => message.text !== `Hello again, ${username}! Please choose an option:`),
-      { text: newMessage, sender: 'bot', contentType: 'text' }
+      ...prevMessages.filter((message) => message.text !== `Hello again, ${username}! Please choose an option:`),
+      { text: newMessage, sender: 'bot', contentType: 'text' },
     ]);
   };
 
@@ -137,17 +97,14 @@ const HostChatbot = () => {
     e.preventDefault();
 
     if (userInput.trim()) {
-      const newMessages = [
-        ...messages,
-        { text: userInput, sender: 'user', contentType: 'text' }
-      ];
+      const newMessages = [...messages, { text: userInput, sender: 'user', contentType: 'text' }];
       setMessages(newMessages);
       setUserInput('');
 
       if (currentOption === '1') {
         handleAccommodationQuery(userInput);
       } else if (currentOption === '2') {
-        handleFAQQuery(userInput);  // Fuzzy matching in FAQ
+        handleFAQQuery(userInput);
       } else {
         handleExpertContact();
       }
@@ -158,29 +115,28 @@ const HostChatbot = () => {
     if (userInput.toLowerCase().includes('list')) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: 'Here is the list of your accommodations.', sender: 'bot', contentType: 'text' }
+        { text: 'Here is the list of your accommodations.', sender: 'bot', contentType: 'text' },
       ]);
       fetchAccommodations();
     } else if (userInput.toLowerCase().includes('show')) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: 'Here is all available accommodation data.', sender: 'bot', contentType: 'text' }
+        { text: 'Here is all available accommodation data.', sender: 'bot', contentType: 'text' },
       ]);
       fetchAllAccommodations();
     } else {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, I didn't understand your question about accommodations.", sender: 'bot', contentType: 'text' }
+        { text: "Sorry, I didn't understand your question about accommodations.", sender: 'bot', contentType: 'text' },
       ]);
     }
   };
 
-  // Use fuzzy matching for FAQ queries
   const handleFAQQuery = (userInput) => {
     if (faqList.length === 0) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, I don't have any FAQs available at the moment.", sender: 'bot', contentType: 'text' }
+        { text: "Sorry, I don't have any FAQs available at the moment.", sender: 'bot', contentType: 'text' },
       ]);
       return;
     }
@@ -189,7 +145,7 @@ const HostChatbot = () => {
     const bestMatch = stringSimilarity.findBestMatch(userInput.toLowerCase(), faqQuestions);
 
     if (bestMatch.bestMatch.rating > 0.5) {
-      const matchedFAQ = faqList[bestMatch.bestMatchIndex]; // Get the matching FAQ
+      const matchedFAQ = faqList[bestMatch.bestMatchIndex];
       setMessages((prevMessages) => [
         ...prevMessages,
         {
@@ -200,13 +156,13 @@ const HostChatbot = () => {
               </div>
           ),
           sender: 'bot',
-          contentType: 'faq'
-        }
+          contentType: 'faq',
+        },
       ]);
     } else {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, I couldn't find an answer to your question.", sender: 'bot', contentType: 'text' }
+        { text: "Sorry, I couldn't find an answer to your question.", sender: 'bot', contentType: 'text' },
       ]);
     }
   };
@@ -214,11 +170,10 @@ const HostChatbot = () => {
   const handleExpertContact = () => {
     setMessages((prevMessages) => [
       ...prevMessages,
-      { text: 'You can contact an expert at support@domits.com or call +123456789.', sender: 'bot', contentType: 'text' }
+      { text: 'You can contact an expert at support@domits.com or call +123456789.', sender: 'bot', contentType: 'text' },
     ]);
   };
 
-  // Fetch accommodations from backend
   const fetchAccommodations = async () => {
     if (!userId) return;
 
@@ -229,25 +184,26 @@ const HostChatbot = () => {
           {
             method: 'POST',
             body: JSON.stringify({ OwnerId: userId }),
-            headers: { 'Content-type': 'application/json; charset=UTF-8' }
+            headers: { 'Content-type': 'application/json; charset=UTF-8' },
           }
       );
       const data = await response.json();
       const accommodationsArray = data.body ? JSON.parse(data.body) : [];
 
-      const formattedAccommodations = accommodationsArray.map(acc => ({
+      const formattedAccommodations = accommodationsArray.map((acc) => ({
+        id: acc.ID,
         title: acc.Title || 'Accommodation',
         city: acc.City,
         bathrooms: acc.Bathrooms,
         guestAmount: acc.GuestAmount,
-        images: acc.Images || {} // Use Images object
+        images: acc.Images || {},
       }));
 
       setAccommodations(formattedAccommodations);
       if (currentOption === '1') {
         setMessages((prevMessages) => [
           ...prevMessages,
-          { text: 'Here are your accommodations:', sender: 'bot', contentType: 'accommodation' }
+          { text: 'Here are your accommodations:', sender: 'bot', contentType: 'accommodation' },
         ]);
       }
     } catch (error) {
@@ -263,19 +219,20 @@ const HostChatbot = () => {
       const responseData = await response.json();
       const data = JSON.parse(responseData.body);
 
-      const formattedAccommodations = data.map(acc => ({
+      const formattedAccommodations = data.map((acc) => ({
+        id: acc.ID,
         title: acc.Title || 'Accommodation',
         city: acc.City,
         bathrooms: acc.Bathrooms,
         guestAmount: acc.GuestAmount,
-        images: acc.Images || {} // Use Images object
+        images: acc.Images || {},
       }));
 
       setAccommodations(formattedAccommodations);
       if (currentOption === '1') {
         setMessages((prevMessages) => [
           ...prevMessages,
-          { text: 'Here is all available accommodation data:', sender: 'bot', contentType: 'accommodation' }
+          { text: 'Here is all available accommodation data:', sender: 'bot', contentType: 'accommodation' },
         ]);
       }
     } catch (error) {
@@ -283,22 +240,20 @@ const HostChatbot = () => {
     }
   };
 
-  // Fetch FAQ from backend
   const fetchFAQ = async () => {
     try {
-      const response = await fetch(
-          'https://vs3lm9q7e9.execute-api.eu-north-1.amazonaws.com/default/readFAQ',
-          { method: 'GET', headers: { 'Content-Type': 'application/json' } }
-      );
+      const response = await fetch('https://vs3lm9q7e9.execute-api.eu-north-1.amazonaws.com/default/readFAQ', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
       const responseData = await response.json();
       const faqData = JSON.parse(responseData.body);
-      setFaqList(faqData); // Store FAQs in faqList
+      setFaqList(faqData);
     } catch (error) {
       console.error('Error fetching FAQ data:', error);
     }
   };
 
-  // Fetch FAQs when component mounts
   useEffect(() => {
     fetchFAQ();
   }, []);
@@ -335,7 +290,6 @@ const HostChatbot = () => {
                   <p>{message.text}</p>
                 </div>
             ))}
-            {/* Render accommodation tiles if accommodation data is available */}
             {accommodations.length > 0 && (
                 <div className="hostchatbot-accommodations">
                   {accommodations.map((accommodation, index) => (
@@ -354,7 +308,9 @@ const HostChatbot = () => {
                 <div className="hostchatbot-suggestions">
                   <p>Suggestions:</p>
                   {suggestions.map((suggestion, index) => (
-                      <p key={index} className="hostchatbot-suggestion">{suggestion}</p>
+                      <p key={index} className="hostchatbot-suggestion">
+                        {suggestion}
+                      </p>
                   ))}
                 </div>
             )}
