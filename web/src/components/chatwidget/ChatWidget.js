@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ResizableBox } from 'react-resizable';
 import './ChatWidget.css';
 import { useUser } from '../../UserContext';
+import Slider from 'react-slick';
 
 const ChatWidget = () => {
   const { user, isLoading } = useUser();
@@ -252,21 +253,35 @@ const ChatWidget = () => {
                       : message.text || 'Error: Invalid message format'}
                   </div>
                   {message.sender === 'ai' && message.accommodations && (
-                    <div className="chatwidget-accommodation-tiles">
-                      {message.accommodations.map((accommodation, idx) => (
-                        <div key={idx} className="chatwidget-accommodation-tile">
-                          <img src={accommodation.Images.image1} alt="Accommodation" className="chatwidget-accommodation-image" />
-                          <div className="chatwidget-accommodation-details">
-                            <h3>{accommodation.Title}</h3>
-                            <p>{accommodation.Description}</p>
-                            <p><strong>City:</strong> {accommodation.City}</p>
-                            <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
-                            <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
-                          </div>
+                  <div className="chatwidget-accommodation-tiles">
+                    {message.accommodations.map((accommodation, idx) => (
+                      <div key={idx} className="chatwidget-accommodation-tile">
+                        <Slider
+                          dots={true}
+                          infinite={false}
+                          speed={500}
+                          slidesToShow={1}
+                          slidesToScroll={1}
+                          arrows={true} // Enable left and right arrows
+                          className="chatwidget-slider"
+                        >
+                          {Object.keys(accommodation.Images).map((key, index) => (
+                            <div key={index}>
+                              <img src={accommodation.Images[key]} alt={`Slide ${index + 1}`} className="chatwidget-accommodation-image" />
+                            </div>
+                          ))}
+                        </Slider>
+                        <div className="chatwidget-accommodation-details">
+                          <h3>{accommodation.Title}</h3>
+                          <p>{accommodation.Description}</p>
+                          <p><strong>City:</strong> {accommodation.City}</p>
+                          <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
+                          <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
                         </div>
-                      ))}
-                    </div>
-                  )}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 </div>
               ))}
             </div>
