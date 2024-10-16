@@ -10,13 +10,13 @@ import { gql, useQuery } from '@apollo/client';
 
 // Define the GraphQL query
 const GET_REVENUE = gql`
-  query GetRevenue {
-    getRevenue {
-      totalRevenue
-      totalRevenueThisMonth
-      yearToDateRevenue
+    query GetRevenue {
+        getRevenue {
+            totalRevenue
+            totalRevenueThisMonth
+            yearToDateRevenue
+        }
     }
-  }
 `;
 
 const HostRevenues = () => {
@@ -55,27 +55,27 @@ const HostRevenues = () => {
     ];
 
     return (
-        <main className="page-body container">
-            <section className="host-revenues">
-                <div className="pages">
+        <main className="hr-page-body hr-container">
+            <section className="hr-host-revenues">
+                <div className="hr-pages">
                     <Pages /> {/* Sidebar dashboard */}
                 </div>
-                <div className="content">
-                    <div className="revenue-overview">
+                <div className="hr-content">
+                    <div className="hr-revenue-overview">
                         <h3>Revenue Overview</h3>
-                        <div className="card-grid">
+                        <div className="hr-card-grid">
                             {revenueData.map((item, index) => (
                                 <RevenueOverview key={index} title={item.title} value={item.value} />
                             ))}
                         </div>
                     </div>
 
-                    <div className="cards">
+                    <div className="hr-cards">
                         <OccupancyRateCard />
                         <RevPARCard />
                     </div>
 
-                    <div className="monthly-comparison">
+                    <div className="hr-monthly-comparison">
                         <MonthlyComparison data={chartData} />
                     </div>
                 </div>

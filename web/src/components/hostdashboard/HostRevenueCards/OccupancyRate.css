@@ -1,4 +1,4 @@
-.occupancy-rate-card {
+.or-occupancy-rate-card {
     padding: 15px;
     border: 1px solid #e0e0e0;
     border-radius: 8px;
@@ -8,13 +8,13 @@
     height: auto;
 }
 
-.occupancy-rate-card h4 {
+.or-occupancy-rate-card h4 {
     font-weight: bold;
     margin-bottom: 10px;
     color: #3a3a3a;
 }
 
-.date-picker {
+.or-date-picker {
     background-color: #ffffff;
     padding: 8px;
     border-radius: 6px;
@@ -22,13 +22,13 @@
     text-align: center;
 }
 
-.occupancy-rate-details {
+.or-occupancy-rate-details {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
 
-.occupancy-rate-details p {
+.or-occupancy-rate-details p {
     display: flex;
     align-items: center;
     gap: 5px;
@@ -37,31 +37,31 @@
     margin: 0;
 }
 
-.occupancy-rate-details strong {
+.or-occupancy-rate-details strong {
     color: #000;
 }
 
-.icon {
+.or-icon {
     color: #8c8c8c;
     font-size: 18px;
 }
 
-.down {
+.or-down {
     color: red;
 }
 
-.gauge-wrapper {
+.or-gauge-wrapper {
     position: relative;
     margin-top: 10px;
     padding: 20px;
 }
 
-.gauge-chart {
+.or-gauge-chart {
     height: 90px; /* Adjusted to make the gauge smaller */
     width: 90px; /* Keep it proportional */
 }
 
-.gauge-labels {
+.or-gauge-labels {
     display: flex;
     justify-content: space-between;
     font-size: 12px;
