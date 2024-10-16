@@ -74,7 +74,6 @@ function OnboardingHost() {
                 }
 
                 setFormData(data);
-                console.log("HIER" + JSON.stringify(data))
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             } finally {
@@ -165,6 +164,20 @@ function OnboardingHost() {
     }, [userId]);
 
     const [page, setPage] = useState(0);
+    const [formData, setFormData] = useState({
+    });
+    const generateNormalAccommodationFormData = () => ({
+        ...generateCommonFormData(formData, isNew),
+        Bedrooms: isNew ? 0 : formData.Bedrooms,
+        PostalCode: isNew ? "" : formData.PostalCode,
+        Street: isNew ? "" : formData.Street,
+        Bathrooms: isNew ? 0 : formData.Bathrooms,
+        Beds: isNew ? 0 : formData.Beds,
+        GuestAccess: isNew ? "" : formData.GuestAccess,
+        GuestAmount: isNew ? 0 : formData.GuestAmount
+    });
+
+
     const generateCommonFormData = (existingData = {}, isNew = true) => ({
         ID: isNew ? generateUUID() : existingData.ID,
         Title: existingData.Title || "",
@@ -217,78 +230,63 @@ function OnboardingHost() {
         OwnerId: existingData.OwnerId || userId,
     });
 
-    const generateBoatFormData = (existingData = {}, isNew = true) => ({
-        ...generateCommonFormData(existingData, isNew),
-        Harbour: existingData.Harbour || "",
-        Cabins: isNew ? 0 : existingData.Cabins,
-        Bathrooms: isNew ? 0 : existingData.Bathrooms,
-        Beds: isNew ? 0 : existingData.Beds,
-        isPro: existingData.isPro || false,
-        Manufacturer: existingData.Manufacturer || "",
-        Model: existingData.Model || "",
-        RentedWithSkipper: existingData.RentedWithSkipper || false,
-        HasLicense: existingData.HasLicense || false,
-        GPI: existingData.GPI || "",
-        Capacity: existingData.Capacity || "",
-        Length: existingData.Length || "",
-        FuelTank: existingData.FuelTank || "",
-        Speed: existingData.Speed || "",
-        YOC: existingData.YOC || "",
-        Renovated: existingData.Renovated || "",
+    const generateBoatFormData = () => ({
+        ...generateCommonFormData(),
+        Harbour: "",
+        Cabins: 0,
+        Bathrooms: 0,
+        Beds: 0,
+        isPro: false,
+        Manufacturer: "",
+        Model: "",
+        RentedWithSkipper: false,
+        HasLicense: false,
+        GPI: "",
+        Capacity: "",
+        Length: "",
+        FuelTank: "",
+        Speed: "",
+        YOC: "",
+        Renovated: "",
         Features: {
-            ...generateCommonFormData(existingData, isNew).Features,
-            Outdoor: existingData.Features?.Outdoor || [],
-            NavigationEquipment: existingData.Features?.NavigationEquipment || [],
-            LeisureActivities: existingData.Features?.LeisureActivities || [],
-            WaterSports: existingData.Features?.WaterSports || [],
+            ...generateCommonFormData().Features,
+            Outdoor: [],
+            NavigationEquipment: [],
+            LeisureActivities: [],
+            WaterSports: [],
+        }
+    });
+    const generateCamperFormData = () => ({
+        ...generateCommonFormData(),
+        Bedrooms: 0,
+        PostalCode: "",
+        Street: "",
+        Bathrooms: 0,
+        Beds: 0,
+        LicensePlate: "",
+        Category: "",
+        CamperBrand: "",
+        Model: "",
+        Requirement: "",
+        GPI: "",
+        Length: "",
+        Height: "",
+        Transmission: "",
+        FuelTank: "",
+        YOC: "",
+        Renovated: "",
+        FWD: false,
+        SelfBuilt: false,
+        Features: {
+            ...generateCommonFormData().Features,
+            Vehicle: [],
+            Outdoor: [],
+            NavigationEquipment: [],
+            LeisureActivities: [],
+            WaterSports: []
         }
     });
 
-    const generateCamperFormData = (existingData = {}, isNew = true) => ({
-        ...generateCommonFormData(existingData, isNew),
-        Bedrooms: isNew ? 0 : existingData.Bedrooms,
-        PostalCode: existingData.PostalCode || "",
-        Street: existingData.Street || "",
-        Bathrooms: isNew ? 0 : existingData.Bathrooms,
-        Beds: isNew ? 0 : existingData.Beds,
-        LicensePlate: existingData.LicensePlate || "",
-        Category: existingData.Category || "",
-        CamperBrand: existingData.CamperBrand || "",
-        Model: existingData.Model || "",
-        Requirement: existingData.Requirement || "",
-        GPI: existingData.GPI || "",
-        Length: existingData.Length || "",
-        Height: existingData.Height || "",
-        Transmission: existingData.Transmission || "",
-        FuelTank: existingData.FuelTank || "",
-        YOC: existingData.YOC || "",
-        Renovated: existingData.Renovated || "",
-        FWD: existingData.FWD || false,
-        SelfBuilt: existingData.SelfBuilt || false,
-        Features: {
-            ...generateCommonFormData(existingData, isNew).Features,
-            Vehicle: existingData.Features?.Vehicle || [],
-            Outdoor: existingData.Features?.Outdoor || [],
-            NavigationEquipment: existingData.Features?.NavigationEquipment || [],
-            LeisureActivities: existingData.Features?.LeisureActivities || [],
-            WaterSports: existingData.Features?.WaterSports || [],
-        }
-    });
-
-    const generateNormalAccommodationFormData = (existingData = {}, isNew = true) => ({
-        ...generateCommonFormData(existingData, isNew),
-        Bedrooms: isNew ? 0 : existingData.Bedrooms,
-        PostalCode: isNew ? "" : existingData.PostalCode,
-        Street: isNew ? "" : existingData.Street,
-        Bathrooms: isNew ? 0 : existingData.Bathrooms,
-        Beds: isNew ? 0 : existingData.Beds,
-        GuestAccess: isNew ? "" : existingData.GuestAccess,
-        GuestAmount: isNew ? 0 : existingData.GuestAmount
-    });
-
-    const [formData, setFormData] = useState({
-
-    });
     const allAmenities = {
         Essentials: [
             'Wi-Fi',
@@ -863,7 +861,7 @@ function OnboardingHost() {
             setImageFiles([]);
 
 
-            const endpoint = isNew ? 'CreateAccommodation' : 'EditAccommodation';
+            const endpoint = isNew ? 'CreateAccomodation' : 'EditAccommodation';
             const method = isNew ? 'POST' : 'PUT';
 
             const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`, {
@@ -2272,7 +2270,7 @@ function OnboardingHost() {
                             I declare that this property is legitimate, complete with required licenses and permits,
                             which can be displayed upon request. Domits B.V. reserves the right to verify and investigate your registration information.
                         </label>
-
+                        <div>
                         <label>
                             <input
                                 type="checkbox"
@@ -2280,6 +2278,7 @@ function OnboardingHost() {
                             />
                             I confirm that I have read and accept the <a className ="termsCondition" href="/terms">General Terms and Conditions</a>.
                         </label>
+                        </div>
                             </div>
                         <div className='onboarding-button-box'>
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
