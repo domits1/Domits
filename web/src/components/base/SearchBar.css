@@ -648,7 +648,7 @@
 @media screen and (max-width: 768px) {
   .mobile-search-button {
     display: block;
-    width: 75vw;
+    width: 90vw;
     padding: 0.8rem;
     background-color: #ffffff;
     border: 1px solid #e2e2e4;
