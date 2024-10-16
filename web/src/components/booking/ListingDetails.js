@@ -286,10 +286,6 @@ const ListingDetails = () => {
         return host?.Attributes?.find(attr => attr.Name === 'given_name')?.Value || 'Unknown Host';
     };
 
-    const getHostEmail = (host) => {
-        return host?.Attributes?.find(attr => attr.Name === 'email')?.Value || 'Email not available';
-    };
-
     useEffect(() => {
         checkFormValidity();
     }, [checkIn, checkOut, adults, children]);
@@ -630,7 +626,6 @@ const ListingDetails = () => {
                                                 <p>Joined on: {dateFormatterDD_MM_YYYY(host.UserCreateDate)}</p>
                                             </section>
                                             <section className="card-bottom">
-                                                <p>E-Mail: {getHostEmail(host)}</p>
                                                 <div>
                                                     <button className='button'>Contact host</button>
                                                 </div>

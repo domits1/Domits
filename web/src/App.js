@@ -69,12 +69,15 @@ import PageNotFound from "./components/error/404NotFound";
 import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
+import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
+
 
 
 import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
 import Hostchatbot from "./components/hostchatbot/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
+
 
 
 Modal.setAppElement('#root');
@@ -108,7 +111,7 @@ function App() {
         }
         return <Footer />;
     };
-    
+
     const renderChatWidget = () => {
         if (currentPath.startsWith('/verify')) {
             return null;
@@ -216,6 +219,7 @@ function App() {
                                                     <Route path="screening" element={<HostScreening />} />
                                                     <Route path="setup" element={<HostSetup />} />
                                                     <Route path="promo-codes" element={<HostPromoCodes />} />
+                                                    <Route path="finance" element={<HostFinanceTab />} />
                                                 </Routes>
                                             </HostProtectedRoute>
                                         }
