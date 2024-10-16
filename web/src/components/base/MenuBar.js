@@ -1,8 +1,6 @@
 import React, {useState, useEffect, useContext} from 'react';
 import './MenuBar.css';
-import nineDots from '../../images/dots-grid.svg';
-import profile from '../../images/profile-icon.svg';
-import arrowUp from '../../images/arrow-up-icon.svg';
+import { HouseOutlined as HouseOutlinedIcon, ForumOutlined as ForumOutlinedIcon, AccountCircleOutlined as AccountCircleOutlinedIcon} from '@mui/icons-material';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
 import FlowContext from '../../FlowContext';
@@ -96,6 +94,10 @@ function MenuBar() {
         navigate('/guestdashboard/settings');
     };
 
+    const Home = () => {
+        navigate('/');
+    };
+
     const navigateToDashboard = () => {
         if (!isLoggedIn) {
             setFlowState({isHost: true});
@@ -121,8 +123,28 @@ function MenuBar() {
                     <button onClick={() => navigate('/hostdashboard/reservations')}
                             className="dropdownLoginButton">Reservations
                     </button>
-                    <button onClick={() => navigate('/hostdashboard/chat')} className="dropdownLoginButton">Messages
-                    </button>
+
+
+                    {!isLoggedIn ? (
+                        <button className="dropdownLogoutButton headerHostButton" onClick={navigateToLanding}>
+                            Become a Host
+                        </button>
+                    ) : group === 'Host' ? (
+                        <button className="dropdownLogoutButton headerHostButton" onClick={navigateToDashboard}>
+                            {currentView === 'guest' ? 'Switch to Host Dashboard' : 'Switch to Guest Dashboard'}
+                        </button>
+                    ) : (
+                        <button className="dropdownLogoutButton headerHostButton" onClick={navigateToLanding}>
+                            Become a Host
+                        </button>
+                    )}
+                    {isLoggedIn && group === 'Traveler' && (
+                        <button className="dropdownLogoutButton" onClick={navigateToGuestDashboard}>
+                            Go to Dashboard
+                        </button>
+                    )}
+            
+
                     <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
                         src={logoutArrow} alt="Logout Arrow"/></button>
                 </>
@@ -147,48 +169,28 @@ function MenuBar() {
         <div className="bottom-menu-bar">
             <div className="menu">
                 <div className='menuButtons'>
-                    {!isLoggedIn ? (
-                        <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                            Become a Host
-                        </button>
-                    ) : group === 'Host' ? (
-                        <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
-                            {currentView === 'guest' ? 'Switch to Host Dashboard' : 'Switch to Guest Dashboard'}
-                        </button>
-                    ) : (
-                        <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
-                            Become a Host
-                        </button>
-                    )}
-                    {isLoggedIn && group === 'Traveler' && (
-                        <button className="headerButtons" onClick={navigateToGuestDashboard}>
-                            Go to Dashboard
-                        </button>
-                    )}
-                    <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
-                        <img src={nineDots} alt="Nine Dots"/>
-                    </button>
-                    <div className="bottomPersonalMenuDropdown">
-                        <button className="personalMenu" onClick={toggleDropdown}>
-                            <img src={profile} alt="Profile Icon"/>
-                            <img src={arrowUp} alt="Dropdown Arrow"/>
-                        </button>
-                        <div className={"bottomPersonalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
-                            {isLoggedIn ? renderDropdownMenu() : (
-                                <>
-                                    <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img
-                                        src={loginArrow} alt="Login Arrow"/></button>
-                                    <button onClick={navigateToRegister}
-                                            className="dropdownRegisterButton">Register
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            </div>
+                    <button className='headerButtons' onClick={Home}><HouseOutlinedIcon/>Home</button>
+                    <button className='headerButtons' onClick={navigateToMessages}><ForumOutlinedIcon/>Message</button>
+
+                   
+                    <button className="headerButtons" onClick={toggleDropdown}>
+          <AccountCircleOutlinedIcon/>Profile
+        </button>
+
+        <div className={"bottomPersonalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
+          {isLoggedIn ? renderDropdownMenu() : (
+            <>
+              <button onClick={navigateToLogin} className="dropdownLoginButton">
+                Login<img src={loginArrow} alt="Login Arrow"/>
+              </button>
+              <button onClick={navigateToRegister} className="dropdownRegisterButton">Register</button>
+            </>
+          )}
         </div>
-    );
+      </div>
+    </div>
+  </div>
+);
 }
 
 export default MenuBar;
