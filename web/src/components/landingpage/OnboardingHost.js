@@ -125,7 +125,24 @@ function OnboardingHost() {
         "Electric boat": ElectricBoat,
         "Boat without license": BoatWithoutLicense
     };
+    const [formData, setFormData] = useState({
+    });
     const [selectedAccoType, setSelectedAccoType] = useState("");
+    const [selectedBoatType, setSelectedBoatType] = useState("");
+    const [selectedCamperType, setSelectedCamperType] = useState("");
+
+    useEffect(() => {
+        if (formData.GuestAccess) {
+            setSelectedBoatType(formData.GuestAccess);
+        }
+    }, [formData.GuestAccess]);
+
+    useEffect(() => {
+        if (formData.GuestAccess) {
+            setSelectedCamperType(formData.GuestAccess);
+        }
+    }, [formData.GuestAccess]);
+
     useEffect(() => {
         Auth.currentUserInfo().then(user => {
             if (user) {
@@ -165,8 +182,7 @@ function OnboardingHost() {
     }, [userId]);
 
     const [page, setPage] = useState(0);
-    const [formData, setFormData] = useState({
-    });
+
     const generateNormalAccommodationFormData = () => ({
         ...generateCommonFormData(formData, isNew),
         Bedrooms: isNew ? 0 : formData.Bedrooms,
@@ -229,62 +245,63 @@ function OnboardingHost() {
         ServiceFee: existingData.ServiceFee || 0,
         CleaningFee: existingData.CleaningFee || 0,
         OwnerId: existingData.OwnerId || userId,
+        GuestAmount: isNew ? 0 : formData.GuestAmount,
     });
 
     const generateBoatFormData = () => ({
-        ...generateCommonFormData(),
-        Harbour: "",
-        Cabins: 0,
-        Bathrooms: 0,
-        Beds: 0,
-        isPro: false,
-        Manufacturer: "",
-        Model: "",
-        RentedWithSkipper: false,
-        HasLicense: false,
-        GPI: "",
-        Capacity: "",
-        Length: "",
-        FuelTank: "",
-        Speed: "",
-        YOC: "",
-        Renovated: "",
+        ...generateCommonFormData(formData, isNew),
+        Harbour: isNew ? "" : formData.Harbour,
+        Cabins: isNew ? 0 : formData.Cabins,
+        Bathrooms: isNew ? 0 : formData.Bathrooms,
+        Beds: isNew ? 0 : formData.Beds,
+        isPro: isNew ? false : formData.isPro,
+        Manufacturer: isNew ? "" : formData.Manufacturer,
+        Model: isNew ? "" : formData.Model,
+        RentedWithSkipper: isNew ? false : formData.RentedWithSkipper,
+        HasLicense: isNew ? false : formData.HasLicense,
+        GPI: isNew ? "" : formData.GPI,
+        Capacity: isNew ? "" : formData.Capacity,
+        Length: isNew ? "" : formData.Length,
+        FuelTank: isNew ? "" : formData.FuelTank,
+        Speed: isNew ? "" : formData.Speed,
+        YOC: isNew ? "" : formData.YOC,
+        Renovated: isNew ? "" : formData.Renovated,
         Features: {
             ...generateCommonFormData().Features,
-            Outdoor: [],
-            NavigationEquipment: [],
-            LeisureActivities: [],
-            WaterSports: [],
+            Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
+            NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
+            LeisureActivities: isNew ? [] : formData.Features?.LeisureActivities || [],
+            WaterSports: isNew ? [] : formData.Features?.WaterSports || [],
         }
     });
     const generateCamperFormData = () => ({
-        ...generateCommonFormData(),
-        Bedrooms: 0,
-        PostalCode: "",
-        Street: "",
-        Bathrooms: 0,
-        Beds: 0,
-        LicensePlate: "",
-        Category: "",
-        CamperBrand: "",
-        Model: "",
-        Requirement: "",
-        GPI: "",
-        Length: "",
-        Height: "",
-        Transmission: "",
-        FuelTank: "",
-        YOC: "",
-        Renovated: "",
-        FWD: false,
-        SelfBuilt: false,
+        ...generateCommonFormData(formData, isNew),
+        Bedrooms: isNew ? 0 : formData.Bedrooms,
+        PostalCode: isNew ? "" : formData.PostalCode,
+        Street: isNew ? "" : formData.Street,
+        Bathrooms: isNew ? 0 : formData.Bathrooms,
+        Beds: isNew ? 0 : formData.Beds,
+        LicensePlate: isNew ? "" : formData.LicensePlate,
+        Category: isNew ? "" : formData.Category,
+        CamperBrand: isNew ? "" : formData.CamperBrand,
+        Model: isNew ? "" : formData.Model,
+        Requirement: isNew ? "" : formData.Requirement,
+        GPI: isNew ? "" : formData.GPI,
+        Length: isNew ? "" : formData.Length,
+        Height: isNew ? "" : formData.Height,
+        Transmission: isNew ? "" : formData.Transmission,
+        FuelTank: isNew ? "" : formData.FuelTank,
+        YOC: isNew ? "" : formData.YOC,
+        Renovated: isNew ? "" : formData.Renovated,
+        FWD: isNew ? false : formData.FWD,
+        SelfBuilt: isNew ? false : formData.SelfBuilt,
         Features: {
             ...generateCommonFormData().Features,
-            Vehicle: [],
-            Outdoor: [],
-            NavigationEquipment: [],
-            LeisureActivities: [],
-            WaterSports: []
+            Vehicle: isNew ? [] : formData.Features?.Vehicle || [],
+            Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
+            NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
+            LeisureActivities: isNew ? [] : formData.Features?.LeisureActivities || [],
+            WaterSports: isNew ? [] : formData.Features?.WaterSports || [],
         }
     });
 
@@ -690,7 +707,7 @@ function OnboardingHost() {
 
     const handleInputChange = (event) => {
         const { name, type, checked, value } = event.target;
-    
+
         if (type === 'checkbox') {
             setFormData((prevData) => ({
                 ...prevData,
@@ -703,16 +720,16 @@ function OnboardingHost() {
                     [name]: checked,
                 }
             }));
-        } 
+        }
         else if (type === 'radio') {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: !prevData[name],
             }));
-        } 
+        }
         else if (type === 'number' || type === 'range') {
             let newValue = parseFloat(value);
-    
+
             if (name === 'Rent') {
                 if (newValue > 150000) {
                     newValue = 150000;
@@ -720,18 +737,18 @@ function OnboardingHost() {
                     newValue = 1;
                 }
             }
-    
+
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: newValue || ''
             }));
-        } 
+        }
         else {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: value
             }));
-    
+
             if (name === 'City') {
                 handleLocationChange(formData.Country, value, formData.PostalCode, formData.Street);
             } else if (name === 'PostalCode') {
@@ -753,8 +770,8 @@ function OnboardingHost() {
             input.value = 100000;
         }
     };
-    
-    
+
+
 
     const handleCountryChange = (selectedOption) => {
         setFormData(currentFormData => ({
@@ -1015,7 +1032,7 @@ function OnboardingHost() {
                                     {boatTypes.map((option, index) => (
                                         <div
                                             key={index}
-                                            className={`option ${formData.GuestAccess === option ? 'selected' : ''}`}
+                                            className={`option ${selectedBoatType === option ? 'selected' : ''}`}
                                             onClick={() => changeGuestAccess(option)}
                                         >
                                             <img className="accommodation-icon" src={boatIcons[option]} alt={option}/>
@@ -1031,7 +1048,7 @@ function OnboardingHost() {
                                     {camperTypes.map((option, index) => (
                                         <div
                                             key={index}
-                                            className={`option ${formData.GuestAccess === option ? 'selected' : ''}`}
+                                            className={`option ${selectedCamperType === option ? 'selected' : ''}`}
                                             onClick={() => changeGuestAccess(option)}
                                         >
                                             <img className="accommodation-icon" src={Camper} alt={option}/>
@@ -1934,9 +1951,9 @@ function OnboardingHost() {
                         <section className="accommodation-pricing">
                             <div className="pricing-row">
                                 <label>Base rate</label>
-                                <input className="pricing-input" type="number" name="Rent" 
+                                <input className="pricing-input" type="number" name="Rent"
                                         onChange={handleInputChange}
-                                        onInput={handleInputRestrictions} 
+                                        onInput={handleInputRestrictions}
                                         value={formData.Rent}
                                         min={1}
                                         step={0.1}
@@ -2018,13 +2035,13 @@ function OnboardingHost() {
                         PostalCode: formData.PostalCode,
                         Street: formData.Street,
                     }
-                    return ( <RegistrationNumber 
-                                Address={address} 
-                                Next={() => pageUpdater(page + 1)} 
+                    return ( <RegistrationNumber
+                                Address={address}
+                                Next={() => pageUpdater(page + 1)}
                                 Previous={() => pageUpdater(page - 1)}
                                 setFormData={setFormData}
                                 RegistrationNumber={formData.RegistrationNumber}
-                                />);    
+                                />);
             case 12:
                 return (
                     <div className="container" id="summary" style={{width: '80%'}}>
