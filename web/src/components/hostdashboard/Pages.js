@@ -273,6 +273,7 @@ function Pages() {
         {/*  <img src={dashboard} alt="Dashboard" />*/}
         {/*  <p>Promo codes</p>*/}
         {/*</div>*/}
+        {/*commented for now and transfered it to finance tab*/}
         {/*{loading ? (*/}
         {/*  <div className="spinnerdiv">*/}
         {/*    <img className="spinner" src={spinner} alt="Loading" />*/}
