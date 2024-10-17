@@ -1,51 +1,101 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {Link, useLocation, useNavigate} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import Washingmashine from "../../images/icons/Washingmachine.png";
-import Television from "../../images/icons/Television.png";
-import Smokedetector from "../../images/icons/Smokedetector.png";
-import Wifi from "../../images/icons/Wifi.png";
-import Homeoffice from "../../images/icons/Homeoffice.png";
-import Fireextinguisher from "../../images/icons/Fireextinguisher.png";
-import Airconditioning from "../../images/icons/Airconditioning.png";
-import FirstAidKit from "../../images/icons/FirstAidKit.png";
-import Kitchen from "../../images/icons/Kitchen.png";
-import Onsiteparking from "../../images/icons/Onsiteparking.png";
 import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
-import Armchair from "../../images/armchair.png";
-import BabyMonitor from "../../images/baby-monitor.png";
-import Baby from "../../images/baby.png";
-import Backyard from "../../images/backyard.png";
-import Blender from "../../images/blender.png";
-import BoardGame from "../../images/board-game.png";
-import Bus from "../../images/bus.png";
-import Car from "../../images/car.png";
-import ChargingStation from "../../images/charging-station.png";
-import CheckIn from "../../images/check-in.png";
-import Cleaner from "../../images/cleaner.png";
-import Clothes from "../../images/clothes.png";
-import CoffeeTable from "../../images/coffee-table.png";
-import Crib from "../../images/crib.png";
-import Dishwasher from "../../images/dishwasher.png";
-import Food from "../../images/food.png";
-import Gate from "../../images/gate.png";
-import GraphicDesign from "../../images/graphic-design.png";
-import Grill from "../../images/grill.png";
 import HighChair from "../../images/high-chair.png";
-import HotTub from "../../images/hot-tub.png";
-import CoffeeMachine from "../../images/coffee-machine.png";
-import AlarmClock from "../../images/alarm-clock.png";
-import AntiqueBalcony from "../../images/antique-balcony.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
-import {FaTimes} from 'react-icons/fa';
+import { FaTimes } from 'react-icons/fa';
 import DemoValidator from './DemoValidator';
-
+import ChairIcon from '@mui/icons-material/Chair';
+import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService';
+import TvIcon from '@mui/icons-material/Tv';
+import RadarIcon from '@mui/icons-material/Radar';
+import WifiIcon from '@mui/icons-material/Wifi';
+import LocalParkingIcon from '@mui/icons-material/LocalParking';
+import DeskIcon from '@mui/icons-material/Desk';
+import FireExtinguisherIcon from '@mui/icons-material/FireExtinguisher';
+import AcUnitIcon from '@mui/icons-material/AcUnit';
+import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
+import KitchenIcon from '@mui/icons-material/Kitchen';
+import ChildFriendlyIcon from '@mui/icons-material/ChildFriendly';
+import ChildCareIcon from '@mui/icons-material/ChildCare';
+import GrassIcon from '@mui/icons-material/Grass';
+import BlenderIcon from '@mui/icons-material/Blender';
+import ExtensionIcon from '@mui/icons-material/Extension';
+import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
+import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
+import ChargingStationIcon from '@mui/icons-material/ChargingStation';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
+import CheckroomIcon from '@mui/icons-material/Checkroom';
+import TableBarIcon from '@mui/icons-material/TableBar';
+import CribIcon from '@mui/icons-material/Crib';
+import HvacIcon from '@mui/icons-material/Hvac';
+import FastfoodIcon from '@mui/icons-material/Fastfood';
+import FenceIcon from '@mui/icons-material/Fence';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import BedIcon from '@mui/icons-material/Bed';
+import WcIcon from '@mui/icons-material/Wc';
+import SoapIcon from '@mui/icons-material/Soap';
+import MicrowaveIcon from '@mui/icons-material/Microwave';
+import BreakfastDiningIcon from '@mui/icons-material/BreakfastDining';
+import FlatwareIcon from '@mui/icons-material/Flatware';
+import FreeBreakfastIcon from '@mui/icons-material/FreeBreakfast';
+import FoodBankIcon from '@mui/icons-material/FoodBank';
+import EmojiFoodBeverageIcon from '@mui/icons-material/EmojiFoodBeverage';
+import AirIcon from '@mui/icons-material/Air';
+import IronIcon from '@mui/icons-material/Iron';
+import WeekendIcon from '@mui/icons-material/Weekend';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import CastIcon from '@mui/icons-material/Cast';
+import BluetoothIcon from '@mui/icons-material/Bluetooth';
+import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
+import SmokeFreeIcon from '@mui/icons-material/SmokeFree';
+import LockPersonIcon from '@mui/icons-material/LockPerson';
+import ToysIcon from '@mui/icons-material/Toys';
+import BathtubIcon from '@mui/icons-material/Bathtub';
+import LiveTvIcon from '@mui/icons-material/LiveTv';
+import MapIcon from '@mui/icons-material/Map';
+import OutdoorGrillIcon from '@mui/icons-material/OutdoorGrill';
+import LuggageIcon from '@mui/icons-material/Luggage';
+import HotTubIcon from '@mui/icons-material/HotTub';
+import CoffeeMakerIcon from '@mui/icons-material/CoffeeMaker';
+import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
+import BalconyIcon from '@mui/icons-material/Balcony';
+import EvStationIcon from '@mui/icons-material/EvStation';
+import AccessibleIcon from '@mui/icons-material/Accessible';
+import DoorSlidingIcon from '@mui/icons-material/DoorSliding';
+import AirportShuttleIcon from '@mui/icons-material/AirportShuttle';
+import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
+import RamenDiningIcon from '@mui/icons-material/RamenDining';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import SpaIcon from '@mui/icons-material/Spa';
+import RecyclingIcon from '@mui/icons-material/Recycling';
+import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
+import SolarPowerIcon from '@mui/icons-material/SolarPower';
+import DeleteIcon from '@mui/icons-material/Delete';
+import FireplaceIcon from '@mui/icons-material/Fireplace';
+import PoolIcon from '@mui/icons-material/Pool';
+import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
+import ShowerIcon from '@mui/icons-material/Shower';
+import TableRestaurantIcon from '@mui/icons-material/TableRestaurant';
+import SpeakerIcon from '@mui/icons-material/Speaker';
+import DeckIcon from '@mui/icons-material/Deck';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ScubaDivingIcon from '@mui/icons-material/ScubaDiving';
+import PhishingIcon from '@mui/icons-material/Phishing';
+import DownhillSkiingIcon from '@mui/icons-material/DownhillSkiing';
+import PedalBikeIcon from '@mui/icons-material/PedalBike';
+import ControlCameraIcon from '@mui/icons-material/ControlCamera';
+import NavigationIcon from '@mui/icons-material/Navigation';
+import SevereColdIcon from '@mui/icons-material/SevereCold';
+import ChairAltIcon from '@mui/icons-material/ChairAlt';
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -88,40 +138,167 @@ const ListingDetails = () => {
     }
 
     const featureIcons = {
-        'Washer and dryer': Washingmashine,
-        'Smart TV': Television,
-        'Smoke detector': Smokedetector,
-        'Wi-Fi': Wifi,
-        Onsiteparking: Onsiteparking,
-        'Work desk and chair': Homeoffice,
-        'Fire extinguisher': Fireextinguisher,
-        'Air conditioning': Airconditioning,
-        'First aid kit': FirstAidKit,
-        Kitchen: Kitchen,
-        Armchairs: Armchair,
-        'Baby monitor': BabyMonitor,
-        Baby: Baby,
-        Backyard: Backyard,
-        Blender: Blender,
-        'Board games': BoardGame,
-        Bus: Bus,
-        Car: Car,
-        ChargingStation: ChargingStation,
-        'Self-check-in': CheckIn,
-        'Concierge service': Cleaner,
-        Clothes: Clothes,
-        CoffeeTable: CoffeeTable,
-        Crib: Crib,
-        Dishwasher: Dishwasher,
-        Food: Food,
-        Gate: Gate,
-        GraphicDesign: GraphicDesign,
-        Grill: Grill,
-        'High chair': HighChair,
-        'Hot tub': HotTub,
-        'Coffee maker': CoffeeMachine,
-        'Alarm clock': AlarmClock,
-        AntiqueBalcony: AntiqueBalcony,
+        // Essentials
+        'Wi-Fi': <WifiIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Air conditioning': <AcUnitIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Heating': <HvacIcon sx={{ color: 'var(--primary-color)' }} />, // Gebruik AC-icoon voor verwarming
+        'TV with cable/satellite': <TvIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Hot water': <WhatshotIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder voor Hot water
+        'Towels': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bed linens': <BedIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Extra pillows and blankets': <BedIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Toilet paper': <WcIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Soap and shampoo': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Kitchen
+        'Refrigerator': <KitchenIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Microwave': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Oven': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Stove': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Dishwasher': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Coffee maker': <CoffeeMakerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Toaster': <BreakfastDiningIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Basic cooking essentials': <FlatwareIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Dishes and silverware': <FlatwareIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Glasses and mugs': <FreeBreakfastIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Cutting board and knives': <FoodBankIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Blender': <BlenderIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Kettle': <EmojiFoodBeverageIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Bathroom
+        'Hair dryer': <AirIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Shower gel': <SoapIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Conditioner': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Body lotion': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'First aid kit': <MedicalServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Bedroom
+        'Hangers': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Iron and ironing board': <IronIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Closet/drawers': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Alarm clock': <AccessAlarmIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // LivingArea
+        'Sofa': <WeekendIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Armchairs': <ChairIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Coffee table': <TableBarIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Books and magazines': <LibraryBooksIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder voor boeken
+        'Board games': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Technology
+        'Smart TV': <TvIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Streaming services': <CastIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bluetooth speaker': <BluetoothIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Universal chargers': <ElectricalServicesIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Work desk and chair': <DeskIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Safety
+        'Smoke detector': <SmokeFreeIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Carbon monoxide detector': <RadarIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Fire extinguisher': <FireExtinguisherIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Lock on bedroom door': <LockPersonIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+
+        // FamilyFriendly
+        'High chair': <ChairAltIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Crib': <CribIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Children’s books and toys': <ToysIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Baby safety gates': <FenceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Baby bath': <BathtubIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Baby monitor': <LiveTvIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Laundry
+        'Washer and dryer': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Laundry detergent': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Clothes drying rack': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Convenience
+        'Keyless entry': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Self-check-in': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Local maps and guides': <MapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Luggage drop-off allowed': <LuggageIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Parking space': <LocalParkingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'EV charger': <EvStationIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Accessibility
+        'Step-free access': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Wide doorways': <DoorSlidingIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Accessible-height bed': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Accessible-height toilet': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Shower chair': <BathtubIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+
+        // ExtraServices
+        'Cleaning service (add service fee manually)': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Concierge service': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Housekeeping': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Grocery delivery': <LocalGroceryStoreIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Airport shuttle': <AirportShuttleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Private chef': <RamenDiningIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Personal trainer': <DirectionsRunIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Massage therapist': <SpaIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+
+        // EcoFriendly
+        'Recycling bins': <RecyclingIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Energy-efficient appliances': <EnergySavingsLeafIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Solar panels': <SolarPowerIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Composting bin': <DeleteIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+
+        // Outdoor
+        'Patio or balcony': <BalconyIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Outdoor furniture': <OutdoorGrillIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Grill': <OutdoorGrillIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Fire pit': <FireplaceIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Pool': <PoolIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Hot tub': <HotTubIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Garden or backyard': <GrassIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bicycle': <DirectionsBikeIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+
+        // Boat-specific
+        'Bimini': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Outdoor shower': <ShowerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'External table': <TableRestaurantIcon sx={{ color: 'var(--primary-color)' }} />,
+        'External speakers': <SpeakerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Teak deck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bow sundeck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Aft sundeck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bathing Platform': <ShowerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bathing ladder': <PoolIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // NavigationalEquipment
+        'Bow thruster': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Electric windlass': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Autopilot': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'GPS': <LocationOnIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Depth sounder': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'VHF': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Guides & Maps': <MapIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // LeisureActivities
+        'Snorkeling equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Fishing equipment': <PhishingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Diving equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // WaterSports
+        'Water skis': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Monoski': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Wakeboard': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Towable Tube': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Inflatable banana': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Kneeboard': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+
+        // Camper-specific
+        'Baby seat': <ChildCareIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bicycle carrier': <PedalBikeIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Reversing camera': <ControlCameraIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Airbags': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Cruise control': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Imperial': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Navigation': <NavigationIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Awning': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Parking sensors': <ControlCameraIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Power steering': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Tow bar': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Snow chains': <SevereColdIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Winter tires': <SevereColdIcon sx={{ color: 'var(--primary-color)' }} />,
     };
 
     useEffect(() => {
@@ -161,11 +338,10 @@ const ListingDetails = () => {
         setShowModal(!showModal);
     };
 
-    const FeaturePopup = ({features, onClose}) => {
+    const FeaturePopup = ({ features, onClose }) => {
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-content" onClick={e => e.stopPropagation()}>
-
                     <button className="close-button" onClick={onClose}>✖</button>
                     <h2>What does this place have to offer?</h2>
                     {Object.keys(features).map(category => {
@@ -178,8 +354,15 @@ const ListingDetails = () => {
                                     <ul>
                                         {categoryItems.map((item, index) => (
                                             <li key={index} className='category-item'>
-                                                <img src={featureIcons[item]} className='feature-icon'
-                                                     alt={`${item} icon`}/>
+                                                {typeof featureIcons[item] === 'string' ? (
+                                                    <img src={featureIcons[item]} className='feature-icon' alt={`${item} icon`} />
+                                                ) : (
+                                                    featureIcons[item] && React.isValidElement(featureIcons[item]) ? (
+                                                        <span className='feature-icon'>{featureIcons[item]}</span>
+                                                    ) : (
+                                                        <span>{item}</span>
+                                                    )
+                                                )}
                                                 <span>{item}</span>
                                             </li>
                                         ))}
@@ -193,7 +376,6 @@ const ListingDetails = () => {
             </div>
         );
     };
-
 
     useEffect(() => {
         const appendUserID = async () => {
@@ -489,16 +671,25 @@ const ListingDetails = () => {
             const categoriesToShow = showAll ? Object.keys(items) : Object.keys(items).slice(0, 2);
 
             return categoriesToShow.map(category => {
-                const item = items[category];
-                if (item && item.length > 0) {
+                const uniqueItems = [...new Set(items[category])]; // Zorg dat items uniek zijn
+                if (uniqueItems.length > 0) {
                     return (
                         <div key={category} className='features-category'>
                             <h3>{category}</h3>
                             <ul>
-                                {item.map((item, index) => (
+                                {uniqueItems.map((feature, index) => (
                                     <li key={index} className='category-item'>
-                                        <img src={featureIcons[item]} className='feature-icon' alt={`${item} icon`}/>
-                                        <span>{item === 'Cleaning service (add service fee manually)' ? 'Cleaning service' : item}</span>
+
+                                        {typeof featureIcons[feature] === 'string' ? (
+                                            <img src={featureIcons[feature]} className='feature-icon' alt={`${feature} icon`} />
+                                        ) : (
+                                            featureIcons[feature] && React.isValidElement(featureIcons[feature]) ? (
+                                                <span className='feature-icon'>{featureIcons[feature]}</span>
+                                            ) : (
+                                                <span>{feature}</span>
+                                            )
+                                        )}
+                                        <span>{feature}</span>
                                     </li>
                                 ))}
                             </ul>
@@ -510,6 +701,7 @@ const ListingDetails = () => {
         }
         return null;
     };
+
     const isDateBooked = (date) => {
         const selectedDate = new Date(date);
         return bookedDates.some(bookedRange => {
@@ -547,20 +739,16 @@ const ListingDetails = () => {
         });
     };
 
-
     const filterDisabledDays = (date) => {
         const selectedDate = new Date(date);
 
-        // Check if the date is outside of accommodation date ranges
         return accommodation.DateRanges.every(range => {
             const start = new Date(range.startDate);
             const end = new Date(range.endDate);
 
-            // Disable the date if it's outside the range
             return !(selectedDate >= start && selectedDate <= end);
         });
     };
-
 
     const renderStars = (review) => {
         if (review.rating) {
@@ -633,45 +821,45 @@ const ListingDetails = () => {
                                 {showModal && (
                                     <FeaturePopup features={accommodation.Features} onClose={toggleModal}/>
                                 )}
-                                <br/>
-                                <section className="listing-reviews">
-                                    <hr className="pageDividerr"/>
-                                    <h2>Reviews</h2>
-                                    {reviews.length > 0 ? (
-                                        reviews.map((review, index) => (
-                                            <div key={index} className="review-card">
-                                                <div className="stars-div">
-                                                    {renderStars(review)}
-                                                </div>
-                                                <h2 className="review-header">{review.title}</h2>
-                                                <p className="review-content">{review.content}</p>
-                                                <p className="review-date">Written
-                                                    on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>
-                                            </div>
-                                        ))
-                                    ) : (
-                                        <p className="review-alert">This accommodation does not have any reviews
-                                            yet...</p>
-                                    )}
-                                    <div style={{
-                                        display: 'flex',
-                                        flexDirection: 'row',
-                                        justifyContent: 'flex-start',
-                                        gap: '2rem'
-                                    }}>
-                                        <button className='backButton'>Show more</button>
-                                        <button className='backButton'
-                                                onClick={addUserToContactList}
-                                                style={{
-                                                    backgroundColor: !userID ? 'gray' : '',
-                                                    cursor: !userID ? 'not-allowed' : 'pointer'
-                                                }}
-                                                disabled={!userID}
-                                        >Add to contact list
-                                        </button>
-                                    </div>
-                                </section>
-                                <br/>
+
+                                {/*<section className="listing-reviews">*/}
+                                {/*    <hr className="pageDividerr" />*/}
+                                {/*    <h2>Reviews</h2>*/}
+                                {/*    {reviews.length > 0 ? (*/}
+                                {/*        reviews.map((review, index) => (*/}
+                                {/*            <div key={index} className="review-card">*/}
+                                {/*                <div className="stars-div">*/}
+                                {/*                    {renderStars(review)}*/}
+                                {/*                </div>*/}
+                                {/*                <h2 className="review-header">{review.title}</h2>*/}
+                                {/*                <p className="review-content">{review.content}</p>*/}
+                                {/*                <p className="review-date">Written*/}
+                                {/*                    on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>*/}
+                                {/*            </div>*/}
+                                {/*        ))*/}
+                                {/*    ) : (*/}
+                                {/*        <p className="review-alert">This accommodation does not have any reviews*/}
+                                {/*            yet...</p>*/}
+                                {/*    )}*/}
+                                {/*    <div style={{*/}
+                                {/*        display: 'flex',*/}
+                                {/*        flexDirection: 'row',*/}
+                                {/*        justifyContent: 'flex-start',*/}
+                                {/*        gap: '2rem'*/}
+                                {/*    }}>*/}
+                                {/*        <button className='backButton'>Show more</button>*/}
+                                {/*        <button className='backButton'*/}
+                                {/*                onClick={addUserToContactList}*/}
+                                {/*                style={{*/}
+                                {/*                    backgroundColor: !userID ? 'gray' : '',*/}
+                                {/*                    cursor: !userID ? 'not-allowed' : 'pointer'*/}
+                                {/*                }}*/}
+                                {/*                disabled={!userID}*/}
+                                {/*        >Add to contact list*/}
+                                {/*        </button>*/}
+                                {/*    </div>*/}
+                                {/*</section>*/}
+
                                 <section className="listing-host-info">
                                     <h2>Host profile</h2>
                                     {host && (
@@ -784,24 +972,22 @@ const ListingDetails = () => {
                                             </div>
                                             <div className="counter">
                                                 <span>Children</span>
-                                                <div className="button__box">
-                                                    <button onClick={() => setChildren(Math.max(children - 1, 0))}>-
-                                                    </button>
-                                                    {children}
-                                                    <button onClick={() => setChildren(children + 1)}>+</button>
+                                                <div className= "button__box">
+                                                <button onClick={() => setChildren(Math.max(children - 1, 0))}>-</button>
+                                                {children}
+                                                <button onClick={() => setChildren(children + 1)}>+</button>
                                                 </div>
                                             </div>
                                             <div className="counter">
                                                 <span>Pets</span>
-                                                <div className="button__box">
-                                                    <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
-                                                    {pets}
-                                                    <button onClick={() => setPets(pets + 1)}>+</button>
+                                                <div className= "button__box">
+                                                <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
+                                                {pets}
+                                                <button onClick={() => setPets(pets + 1)}>+</button>
                                                 </div>
                                             </div>
                                             <div className="closeButtonContainer">
-                                                <p onClick={() => setShowTravelerPopup(false)}
-                                                   className="closeButton">Close</p>
+                                                <p onClick={() => setShowTravelerPopup(false)} className="closeButton">Close</p>
                                             </div>
                                         </div>
                                     )}
@@ -814,8 +1000,8 @@ const ListingDetails = () => {
                             <button className="reserve-button" onClick={handleBooking}
                                     disabled={
                                         !isFormValid
-                                        ||
-                                        accommodation.Drafted === true
+                                        // ||
+                                        // accommodation.Drafted === true
                                         // ||
                                         // isDemo
                                     }
