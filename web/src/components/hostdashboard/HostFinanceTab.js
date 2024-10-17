@@ -11,7 +11,7 @@ const HostFinanceTab = () => {
     const [userEmail, setUserEmail] = useState(null);
     const [cognitoUserId, setCognitoUserId] = useState(null);
     const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
-    const [bankDetailsProvided, setBankDetailsProvided] = useState(null); // New state variable
+    const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('/hostdashboard');
 
@@ -39,7 +39,7 @@ const HostFinanceTab = () => {
                 const data = await response.json();
                 if (data.hasStripeAccount) {
                     setStripeLoginUrl(data.loginLinkUrl);
-                    setBankDetailsProvided(data.bankDetailsProvided); // Set whether bank details are provided
+                    setBankDetailsProvided(data.bankDetailsProvided);
                 }
             } catch (error) {
                 console.error("Error fetching user data or Stripe status:", error);
@@ -76,7 +76,7 @@ const HostFinanceTab = () => {
                 const data = await result.json();
                 window.location.replace(data.url);
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         } else {
             console.error('User email or cognitoUserId is not defined.');
