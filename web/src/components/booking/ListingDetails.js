@@ -127,6 +127,7 @@ const ListingDetails = () => {
     const [showTravelerPopup, setShowTravelerPopup] = useState(false);
     const travelerSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
     const popupRef = useRef(null);
+    const [bookings, setBookings] = useState([]);
 
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -140,9 +141,9 @@ const ListingDetails = () => {
         // Essentials
         'Wi-Fi': <WifiIcon sx={{ color: 'var(--primary-color)' }} />,
         'Air conditioning': <AcUnitIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Heating': <HvacIcon sx={{ color: 'var(--primary-color)' }} />, // Gebruik AC-icoon voor verwarming
+        'Heating': <HvacIcon sx={{ color: 'var(--primary-color)' }} />,
         'TV with cable/satellite': <TvIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Hot water': <WhatshotIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder voor Hot water
+        'Hot water': <WhatshotIcon sx={{ color: 'var(--primary-color)' }} />,
         'Towels': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
         'Bed linens': <BedIcon sx={{ color: 'var(--primary-color)' }} />,
         'Extra pillows and blankets': <BedIcon sx={{ color: 'var(--primary-color)' }} />,
@@ -165,8 +166,8 @@ const ListingDetails = () => {
         'Kettle': <EmojiFoodBeverageIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Bathroom
-        'Hair dryer': <AirIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Shower gel': <SoapIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Hair dryer': <AirIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Shower gel': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
         'Conditioner': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
         'Body lotion': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
         'First aid kit': <MedicalServicesIcon sx={{ color: 'var(--primary-color)' }} />,
@@ -178,24 +179,24 @@ const ListingDetails = () => {
         'Alarm clock': <AccessAlarmIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // LivingArea
-        'Sofa': <WeekendIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Sofa': <WeekendIcon sx={{ color: 'var(--primary-color)' }} />,
         'Armchairs': <ChairIcon sx={{ color: 'var(--primary-color)' }} />,
         'Coffee table': <TableBarIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Books and magazines': <LibraryBooksIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder voor boeken
+        'Books and magazines': <LibraryBooksIcon sx={{ color: 'var(--primary-color)' }} />,
         'Board games': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Technology
         'Smart TV': <TvIcon sx={{ color: 'var(--primary-color)' }} />,
         'Streaming services': <CastIcon sx={{ color: 'var(--primary-color)' }} />,
         'Bluetooth speaker': <BluetoothIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Universal chargers': <ElectricalServicesIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Universal chargers': <ElectricalServicesIcon sx={{ color: 'var(--primary-color)' }} />,
         'Work desk and chair': <DeskIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Safety
         'Smoke detector': <SmokeFreeIcon sx={{ color: 'var(--primary-color)' }} />,
         'Carbon monoxide detector': <RadarIcon sx={{ color: 'var(--primary-color)' }} />,
         'Fire extinguisher': <FireExtinguisherIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Lock on bedroom door': <LockPersonIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Lock on bedroom door': <LockPersonIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // FamilyFriendly
         'High chair': <ChairAltIcon sx={{ color: 'var(--primary-color)' }} />,
@@ -219,40 +220,40 @@ const ListingDetails = () => {
         'EV charger': <EvStationIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Accessibility
-        'Step-free access': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Wide doorways': <DoorSlidingIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Accessible-height bed': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Accessible-height toilet': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Shower chair': <BathtubIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Step-free access': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Wide doorways': <DoorSlidingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Accessible-height bed': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Accessible-height toilet': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Shower chair': <BathtubIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // ExtraServices
         'Cleaning service (add service fee manually)': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
         'Concierge service': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
         'Housekeeping': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Grocery delivery': <LocalGroceryStoreIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Grocery delivery': <LocalGroceryStoreIcon sx={{ color: 'var(--primary-color)' }} />,
         'Airport shuttle': <AirportShuttleIcon sx={{ color: 'var(--primary-color)' }} />,
         'Private chef': <RamenDiningIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Personal trainer': <DirectionsRunIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Massage therapist': <SpaIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Personal trainer': <DirectionsRunIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Massage therapist': <SpaIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // EcoFriendly
-        'Recycling bins': <RecyclingIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Energy-efficient appliances': <EnergySavingsLeafIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Solar panels': <SolarPowerIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
-        'Composting bin': <DeleteIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Recycling bins': <RecyclingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Energy-efficient appliances': <EnergySavingsLeafIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Solar panels': <SolarPowerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Composting bin': <DeleteIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Outdoor
         'Patio or balcony': <BalconyIcon sx={{ color: 'var(--primary-color)' }} />,
         'Outdoor furniture': <OutdoorGrillIcon sx={{ color: 'var(--primary-color)' }} />,
         'Grill': <OutdoorGrillIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Fire pit': <FireplaceIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Fire pit': <FireplaceIcon sx={{ color: 'var(--primary-color)' }} />,
         'Pool': <PoolIcon sx={{ color: 'var(--primary-color)' }} />,
         'Hot tub': <HotTubIcon sx={{ color: 'var(--primary-color)' }} />,
         'Garden or backyard': <GrassIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bicycle': <DirectionsBikeIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Bicycle': <DirectionsBikeIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Boat-specific
-        'Bimini': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Bimini': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
         'Outdoor shower': <ShowerIcon sx={{ color: 'var(--primary-color)' }} />,
         'External table': <TableRestaurantIcon sx={{ color: 'var(--primary-color)' }} />,
         'External speakers': <SpeakerIcon sx={{ color: 'var(--primary-color)' }} />,
@@ -263,7 +264,7 @@ const ListingDetails = () => {
         'Bathing ladder': <PoolIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // NavigationalEquipment
-        'Bow thruster': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Bow thruster': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
         'Electric windlass': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
         'Autopilot': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
         'GPS': <LocationOnIcon sx={{ color: 'var(--primary-color)' }} />,
@@ -272,12 +273,12 @@ const ListingDetails = () => {
         'Guides & Maps': <MapIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // LeisureActivities
-        'Snorkeling equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Snorkeling equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />,
         'Fishing equipment': <PhishingIcon sx={{ color: 'var(--primary-color)' }} />,
         'Diving equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // WaterSports
-        'Water skis': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Water skis': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />,
         'Monoski': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />,
         'Wakeboard': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
         'Towable Tube': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
@@ -286,11 +287,11 @@ const ListingDetails = () => {
 
         // Camper-specific
         'Baby seat': <ChildCareIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bicycle carrier': <PedalBikeIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Bicycle carrier': <PedalBikeIcon sx={{ color: 'var(--primary-color)' }} />,
         'Reversing camera': <ControlCameraIcon sx={{ color: 'var(--primary-color)' }} />,
         'Airbags': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
         'Cruise control': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Imperial': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />, // Placeholder
+        'Imperial': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
         'Navigation': <NavigationIcon sx={{ color: 'var(--primary-color)' }} />,
         'Awning': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
         'Parking sensors': <ControlCameraIcon sx={{ color: 'var(--primary-color)' }} />,
@@ -299,7 +300,6 @@ const ListingDetails = () => {
         'Snow chains': <SevereColdIcon sx={{ color: 'var(--primary-color)' }} />,
         'Winter tires': <SevereColdIcon sx={{ color: 'var(--primary-color)' }} />,
     };
-
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -406,7 +406,7 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
+                setDates(data.StartDate, data.EndDate, data.BookedDates || []);
                 fetchHostInfo(data.OwnerId);
                 setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
@@ -417,6 +417,43 @@ const ListingDetails = () => {
 
         fetchAccommodation();
     }, [id]);
+
+    useEffect(() => {
+            if (!accommodation) return;
+            const fetchBookings = async () => {
+                try {
+                    const response = await fetch('https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            AccoID: accommodation.ID,
+                            Status: 'Accepted'
+                        }),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch');
+                    }
+                    const data = await response.json();
+
+                    if (data.body && typeof data.body === 'string') {
+                        const retrievedBookingDataArray = JSON.parse(data.body);
+
+                        if (Array.isArray(retrievedBookingDataArray)) {
+                            setBookings(retrievedBookingDataArray);
+                            setBookedDates(retrievedBookingDataArray.map(booking => [booking.StartDate, booking.EndDate]));
+                        } else {
+                            console.error('Retrieved data is not an array:', retrievedBookingDataArray);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch booking data:', error);
+                }
+            }
+            fetchBookings();
+        }, [accommodation]
+    );
 
     const {isDemo} = DemoValidator(hostID);
 
@@ -634,7 +671,7 @@ const ListingDetails = () => {
             const categoriesToShow = showAll ? Object.keys(items) : Object.keys(items).slice(0, 2);
 
             return categoriesToShow.map(category => {
-                const uniqueItems = [...new Set(items[category])]; // Zorg dat items uniek zijn
+                const uniqueItems = [...new Set(items[category])];
                 if (uniqueItems.length > 0) {
                     return (
                         <div key={category} className='features-category'>
@@ -666,10 +703,10 @@ const ListingDetails = () => {
     };
 
     const isDateBooked = (date) => {
+        const selectedDate = new Date(date);
         return bookedDates.some(bookedRange => {
-            const start = new Date(bookedRange[0]);
-            const end = new Date(bookedRange[1]);
-            const selectedDate = new Date(date);
+            const start = new Date(bookedRange[0].S);
+            const end = new Date(bookedRange[1].S);
             return selectedDate >= start && selectedDate <= end;
         });
     };
@@ -678,13 +715,10 @@ const ListingDetails = () => {
         const selectedDate = new Date(date);
         if (!checkIn) return false;
 
-        for (let bookedRange of bookedDates) {
-            const start = new Date(bookedRange[0]);
-            if (checkIn <= start && selectedDate >= start) {
-                return true;
-            }
-        }
-        return false;
+        return bookedDates.some(bookedRange => {
+            const start = new Date(bookedRange[0].S);
+            return selectedDate >= start && selectedDate >= checkIn;
+        });
     };
 
     const isDateInRange = (date, startDate, endDate) => {
@@ -695,17 +729,25 @@ const ListingDetails = () => {
     };
 
     const filterBookedDates = (date) => {
-        return !isDateBooked(date) && !isDateAfterBookedNight(date);
+        const selectedDate = new Date(date);
+
+        return bookedDates.some(bookedRange => {
+            const start = new Date(bookedRange[0].S);
+            const end = new Date(bookedRange[1].S);
+
+            return selectedDate >= start && selectedDate <= end;
+        });
     };
 
     const filterDisabledDays = (date) => {
-        for (let i = 0; i < accommodation.DateRanges.length; i++) {
-            let index = accommodation.DateRanges[i];
-            if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
-                return true;
-            }
-        }
-        return false;
+        const selectedDate = new Date(date);
+
+        return accommodation.DateRanges.every(range => {
+            const start = new Date(range.startDate);
+            const end = new Date(range.endDate);
+
+            return !(selectedDate >= start && selectedDate <= end);
+        });
     };
 
     const renderStars = (review) => {
@@ -724,6 +766,18 @@ const ListingDetails = () => {
         }
     };
 
+    const combinedDateFilter = (date) => {
+        const selectedDate = new Date(date);
+        const today = new Date();
+
+        const isInThePast = selectedDate < today;
+
+        const isOutsideAvailableRange = filterDisabledDays(date);
+        const isBooked = filterBookedDates(date);
+
+        return !(isOutsideAvailableRange || isBooked || isInThePast);
+    };
+
 
     return (
         <main className="container">
@@ -736,7 +790,7 @@ const ListingDetails = () => {
                                     <p className="backButton">Go Back</p>
                                 </Link>
                                 <h1>
-                                {accommodation.Title} {isDemo && "(DEMO)"}
+                                    {accommodation.Title} {isDemo && "(DEMO)"}
                                 </h1>
                             </div>
                             <div>
@@ -753,12 +807,12 @@ const ListingDetails = () => {
                             </div>
                             <p className='description'>{accommodation.Description}</p>
                             <div>
-                                <hr className="pageDividerr" />
+                                <hr className="pageDividerr"/>
                                 <h3>Calendar overview:</h3>
                                 <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
                             </div>
                             <div>
-                                <hr className="pageDividerr" />
+                                <hr className="pageDividerr"/>
                                 <h3>This place offers the following:</h3>
                                 {accommodation ? renderCategories() : ''}
                                 <div>
@@ -770,7 +824,7 @@ const ListingDetails = () => {
                                 </div>
 
                                 {showModal && (
-                                    <FeaturePopup features={accommodation.Features} onClose={toggleModal} />
+                                    <FeaturePopup features={accommodation.Features} onClose={toggleModal}/>
                                 )}
 
                                 {/*<section className="listing-reviews">*/}
@@ -835,11 +889,11 @@ const ListingDetails = () => {
                 {accommodation && (
                     <aside className='detailSummary'>
                         <div className="summary-section">
-                                {checkIn && checkOut && (
-                                    <div className="nights">
-                                        <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
-                                    </div>
-                                )}
+                            {checkIn && checkOut && (
+                                <div className="nights">
+                                    <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
+                                </div>
+                            )}
                             <h2>Booking details</h2>
                             <p>Available from {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
                                 to {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
@@ -854,7 +908,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={minStart && new Date(minStart)}
                                         maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={filterDisabledDays || filterBookedDates}
+                                        filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
@@ -874,7 +928,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckOut(date)}
                                         minDate={minEnd && new Date(minEnd)}
                                         maxDate={maxEnd && new Date(maxEnd)}
-                                        filterDate={filterDisabledDays || filterBookedDates}
+                                        filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
@@ -949,7 +1003,9 @@ const ListingDetails = () => {
 
                             {/* Price and Reserve Section */}
                             <button className="reserve-button" onClick={handleBooking}
-                                    disabled={!isFormValid || isDemo}
+                                    disabled={
+                                        !isFormValid || accommodation.Drafted === true || isDemo
+                                    }
                                     style={{
                                         backgroundColor: isFormValid ? 'green' : 'green',
                                         cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
@@ -993,4 +1049,4 @@ const ListingDetails = () => {
     );
 }
 
-    export default ListingDetails;
+export default ListingDetails;
