@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {Link, useLocation, useNavigate} from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
@@ -43,7 +43,7 @@ import AlarmClock from "../../images/alarm-clock.png";
 import AntiqueBalcony from "../../images/antique-balcony.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
-import { FaTimes } from 'react-icons/fa';
+import {FaTimes} from 'react-icons/fa';
 import DemoValidator from './DemoValidator';
 
 
@@ -77,6 +77,7 @@ const ListingDetails = () => {
     const [showTravelerPopup, setShowTravelerPopup] = useState(false);
     const travelerSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
     const popupRef = useRef(null);
+    const [bookings, setBookings] = useState([]);
 
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -160,7 +161,7 @@ const ListingDetails = () => {
         setShowModal(!showModal);
     };
 
-    const FeaturePopup = ({ features, onClose }) => {
+    const FeaturePopup = ({features, onClose}) => {
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -177,7 +178,8 @@ const ListingDetails = () => {
                                     <ul>
                                         {categoryItems.map((item, index) => (
                                             <li key={index} className='category-item'>
-                                                <img src={featureIcons[item]} className='feature-icon' alt={`${item} icon`} />
+                                                <img src={featureIcons[item]} className='feature-icon'
+                                                     alt={`${item} icon`}/>
                                                 <span>{item}</span>
                                             </li>
                                         ))}
@@ -233,6 +235,43 @@ const ListingDetails = () => {
 
         fetchAccommodation();
     }, [id]);
+
+    useEffect(() => {
+            if (!accommodation) return;
+            const fetchBookings = async () => {
+                try {
+                    const response = await fetch('https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            AccoID: accommodation.ID,
+                            Status: 'Accepted'
+                        }),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch');
+                    }
+                    const data = await response.json();
+
+                    if (data.body && typeof data.body === 'string') {
+                        const retrievedBookingDataArray = JSON.parse(data.body);
+
+                        if (Array.isArray(retrievedBookingDataArray)) {
+                            setBookings(retrievedBookingDataArray);
+                            setBookedDates(retrievedBookingDataArray.map(booking => [booking.StartDate, booking.EndDate]));
+                        } else {
+                            console.error('Retrieved data is not an array:', retrievedBookingDataArray);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch booking data:', error);
+                }
+            }
+            fetchBookings();
+        }, [accommodation]
+    );
 
     const {isDemo} = DemoValidator(hostID);
 
@@ -472,10 +511,10 @@ const ListingDetails = () => {
         return null;
     };
     const isDateBooked = (date) => {
+        const selectedDate = new Date(date);
         return bookedDates.some(bookedRange => {
-            const start = new Date(bookedRange[0]);
-            const end = new Date(bookedRange[1]);
-            const selectedDate = new Date(date);
+            const start = new Date(bookedRange[0].S);
+            const end = new Date(bookedRange[1].S);
             return selectedDate >= start && selectedDate <= end;
         });
     };
@@ -484,13 +523,10 @@ const ListingDetails = () => {
         const selectedDate = new Date(date);
         if (!checkIn) return false;
 
-        for (let bookedRange of bookedDates) {
-            const start = new Date(bookedRange[0]);
-            if (checkIn <= start && selectedDate >= start) {
-                return true;
-            }
-        }
-        return false;
+        return bookedDates.some(bookedRange => {
+            const start = new Date(bookedRange[0].S);
+            return selectedDate >= start && selectedDate >= checkIn;
+        });
     };
 
     const isDateInRange = (date, startDate, endDate) => {
@@ -501,18 +537,30 @@ const ListingDetails = () => {
     };
 
     const filterBookedDates = (date) => {
-        return !isDateBooked(date) && !isDateAfterBookedNight(date);
+        const selectedDate = new Date(date);
+
+        return bookedDates.some(bookedRange => {
+            const start = new Date(bookedRange[0].S);
+            const end = new Date(bookedRange[1].S);
+
+            return selectedDate >= start && selectedDate <= end;
+        });
     };
 
+
     const filterDisabledDays = (date) => {
-        for (let i = 0; i < accommodation.DateRanges.length; i++) {
-            let index = accommodation.DateRanges[i];
-            if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
-                return true;
-            }
-        }
-        return false;
+        const selectedDate = new Date(date);
+
+        // Check if the date is outside of accommodation date ranges
+        return accommodation.DateRanges.every(range => {
+            const start = new Date(range.startDate);
+            const end = new Date(range.endDate);
+
+            // Disable the date if it's outside the range
+            return !(selectedDate >= start && selectedDate <= end);
+        });
     };
+
 
     const renderStars = (review) => {
         if (review.rating) {
@@ -530,6 +578,13 @@ const ListingDetails = () => {
         }
     };
 
+    const combinedDateFilter = (date) => {
+        const isOutsideAvailableRange = filterDisabledDays(date);
+        const isBooked = filterBookedDates(date);
+
+        return !(isOutsideAvailableRange || isBooked);
+    };
+
 
     return (
         <main className="container">
@@ -542,7 +597,7 @@ const ListingDetails = () => {
                                     <p className="backButton">Go Back</p>
                                 </Link>
                                 <h1>
-                                {accommodation.Title} {isDemo && "(DEMO)"}
+                                    {accommodation.Title} {isDemo && "(DEMO)"}
                                 </h1>
                             </div>
                             <div>
@@ -559,12 +614,12 @@ const ListingDetails = () => {
                             </div>
                             <p className='description'>{accommodation.Description}</p>
                             <div>
-                                <hr className="pageDividerr" />
+                                <hr className="pageDividerr"/>
                                 <h3>Calendar overview:</h3>
                                 <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
                             </div>
                             <div>
-                                <hr className="pageDividerr" />
+                                <hr className="pageDividerr"/>
                                 <h3>This place offers the following:</h3>
                                 {accommodation ? renderCategories() : ''}
                                 <div>
@@ -576,11 +631,11 @@ const ListingDetails = () => {
                                 </div>
 
                                 {showModal && (
-                                    <FeaturePopup features={accommodation.Features} onClose={toggleModal} />
+                                    <FeaturePopup features={accommodation.Features} onClose={toggleModal}/>
                                 )}
                                 <br/>
                                 <section className="listing-reviews">
-                                    <hr className="pageDividerr" />
+                                    <hr className="pageDividerr"/>
                                     <h2>Reviews</h2>
                                     {reviews.length > 0 ? (
                                         reviews.map((review, index) => (
@@ -641,11 +696,11 @@ const ListingDetails = () => {
                 {accommodation && (
                     <aside className='detailSummary'>
                         <div className="summary-section">
-                                {checkIn && checkOut && (
-                                    <div className="nights">
-                                        <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
-                                    </div>
-                                )}
+                            {checkIn && checkOut && (
+                                <div className="nights">
+                                    <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
+                                </div>
+                            )}
                             <h2>Booking details</h2>
                             <p>Available from {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
                                 to {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
@@ -660,7 +715,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={minStart && new Date(minStart)}
                                         maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={filterDisabledDays || filterBookedDates}
+                                        filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
@@ -680,7 +735,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckOut(date)}
                                         minDate={minEnd && new Date(minEnd)}
                                         maxDate={maxEnd && new Date(maxEnd)}
-                                        filterDate={filterDisabledDays || filterBookedDates}
+                                        filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
@@ -729,22 +784,24 @@ const ListingDetails = () => {
                                             </div>
                                             <div className="counter">
                                                 <span>Children</span>
-                                                <div className= "button__box">
-                                                <button onClick={() => setChildren(Math.max(children - 1, 0))}>-</button>
-                                                {children}
-                                                <button onClick={() => setChildren(children + 1)}>+</button>
+                                                <div className="button__box">
+                                                    <button onClick={() => setChildren(Math.max(children - 1, 0))}>-
+                                                    </button>
+                                                    {children}
+                                                    <button onClick={() => setChildren(children + 1)}>+</button>
                                                 </div>
                                             </div>
                                             <div className="counter">
                                                 <span>Pets</span>
-                                                <div className= "button__box">
-                                                <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
-                                                {pets}
-                                                <button onClick={() => setPets(pets + 1)}>+</button>
+                                                <div className="button__box">
+                                                    <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
+                                                    {pets}
+                                                    <button onClick={() => setPets(pets + 1)}>+</button>
                                                 </div>
                                             </div>
                                             <div className="closeButtonContainer">
-                                                <p onClick={() => setShowTravelerPopup(false)} className="closeButton">Close</p>
+                                                <p onClick={() => setShowTravelerPopup(false)}
+                                                   className="closeButton">Close</p>
                                             </div>
                                         </div>
                                     )}
@@ -755,7 +812,13 @@ const ListingDetails = () => {
 
                             {/* Price and Reserve Section */}
                             <button className="reserve-button" onClick={handleBooking}
-                                    disabled={!isFormValid || isDemo}
+                                    disabled={
+                                        !isFormValid
+                                        ||
+                                        accommodation.Drafted === true
+                                        // ||
+                                        // isDemo
+                                    }
                                     style={{
                                         backgroundColor: isFormValid ? 'green' : 'green',
                                         cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
@@ -799,4 +862,4 @@ const ListingDetails = () => {
     );
 }
 
-    export default ListingDetails;
+export default ListingDetails;
