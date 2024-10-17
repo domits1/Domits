@@ -767,10 +767,15 @@ const ListingDetails = () => {
     };
 
     const combinedDateFilter = (date) => {
+        const selectedDate = new Date(date);
+        const today = new Date();
+
+        const isInThePast = selectedDate < today;
+
         const isOutsideAvailableRange = filterDisabledDays(date);
         const isBooked = filterBookedDates(date);
 
-        return !(isOutsideAvailableRange || isBooked);
+        return !(isOutsideAvailableRange || isBooked || isInThePast);
     };
 
 
