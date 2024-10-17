@@ -168,7 +168,6 @@
         bottom: 0;
         z-index: 1000;
         background: white;
-        width: 102%;
         box-shadow: 0 0 2px 0 #0d1a2626;
         justify-content: center;
     }

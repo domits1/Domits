@@ -308,4 +308,11 @@
           font-size: 1.5em;
       }
   }
-}
+    .infoBox {
+        padding: 10px;
+        font-size: 0.8em;
+        width: 90%;
+        flex-wrap: wrap;
+    }
+  }
+  

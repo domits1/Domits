@@ -4,6 +4,8 @@ import checkIcon from "../../images/icons/checkPng.png";
 import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
 import { confirmEmailChange } from "../guestdashboard/emailSettings";
+import './settingshostdashboard.css';
+
 
 
 const HostSettings = () => {
@@ -165,7 +167,7 @@ const HostSettings = () => {
                 <div className="content">
                     <div className="personalInfoContent">
                         <h3>Personal Information</h3>
-                        <div className="infoBox">
+                        <div className="InfoBox">
                             <span>Email:</span>
                             {editState.email ? (
                                 <div style={{ display: 'flex' }}>
@@ -208,7 +210,7 @@ const HostSettings = () => {
                             </div>
                         </div>
 
-                        <div className="infoBox">
+                        <div className="InfoBox">
                             <span>Name:</span>
                             {editState.name ? (
                                 <div style={{ display: 'flex' }}>
@@ -232,7 +234,7 @@ const HostSettings = () => {
                             </div>
                         </div>
                         {/* Voorlopig gecommend samen met Stefan aangezien we nu nog geen need hebben (misschien later) */}
-                        {/*<div className="infoBox">*/}
+                        {/*<div className="InfoBox">*/}
                         {/*    <span>Address:</span>*/}
                         {/*    <p>{user.address}</p>*/}
                         {/*    <div className="edit-icon-background">*/}
@@ -240,7 +242,7 @@ const HostSettings = () => {
                         {/*    </div>*/}
                         {/*</div>*/}
 
-                        {/*<div className="infoBox">*/}
+                        {/*<div className="InfoBox">*/}
                         {/*    <span>Phone:</span>*/}
                         {/*    <p>{user.phone}</p>*/}
                         {/*    <div className="edit-icon-background">*/}
@@ -248,7 +250,7 @@ const HostSettings = () => {
                         {/*    </div>*/}
                         {/*</div>*/}
 
-                        {/*<div className="infoBox">*/}
+                        {/*<div className="InfoBox">*/}
                         {/*    <span>Family:</span>*/}
                         {/*    <p>{user.family}</p>*/}
                         {/*    <div className="edit-icon-background">*/}
