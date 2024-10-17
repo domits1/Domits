@@ -11,12 +11,14 @@ const HostFinanceTab = () => {
     const [userEmail, setUserEmail] = useState(null);
     const [cognitoUserId, setCognitoUserId] = useState(null);
     const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
+    const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('/hostdashboard');
 
     const handleEnlistNavigation = () => {
         navigate('/enlist');
     };
+
     const handleNavigation = (value) => {
         navigate(value);
     };
@@ -37,6 +39,7 @@ const HostFinanceTab = () => {
                 const data = await response.json();
                 if (data.hasStripeAccount) {
                     setStripeLoginUrl(data.loginLinkUrl);
+                    setBankDetailsProvided(data.bankDetailsProvided);
                 }
             } catch (error) {
                 console.error("Error fetching user data or Stripe status:", error);
@@ -71,10 +74,9 @@ const HostFinanceTab = () => {
                     throw new Error(`HTTP error! Status: ${result.status}`);
                 }
                 const data = await result.json();
-
                 window.location.replace(data.url);
             } catch (error) {
-                console.log(error);
+                console.error(error);
             }
         } else {
             console.error('User email or cognitoUserId is not defined.');
@@ -98,33 +100,41 @@ const HostFinanceTab = () => {
                             </li>
                             <br></br>
                             <br></br>
-                            <li style={{display: 'flex', gap: '0.5rem', flexWrap: 'wrap'}}>
+                            <li className="finance-li">
                                 {stripeLoginUrl ? (
                                     <>
-                                        2. You are connected to Stripe! (make sure your bank details are provided in
-                                        your Stripe account.)
-                                        <div className="stripe-btn-wrapper">
-                                            {loading ? (
-                                                <div className="spinnerdiv">
-                                                    <img className="spinner" src={spinner} alt="Loading"/>
+                                        {bankDetailsProvided ? (
+                                            <>
+                                                2. You are connected to Stripe!
+                                            </>
+                                        ) : (
+                                            <>
+                                                2. Your payment details are not provided yet, make sure the Stripe onboarding is completed before you proceed.
+                                                <div className="stripe-btn-wrapper" style={{height:'1rem'}}>
+                                                    {loading ? (
+                                                        <div className="spinnerdiv">
+                                                            <img className="spinner" src={spinner} alt="Loading"/>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="wijzer-grn" onClick={handleStripeAction}>
+                                                            <div className="stripe-icon-div">
+                                                                <img src={stripeIcon} className="stripe-icon" alt="Stripe"/>
+                                                            </div>
+                                                            <p className="stripe-btn">Go to Stripe Dashboard</p>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                            ) : (
-                                                <div className="wijzer-grn" onClick={handleStripeAction}>
-                                                    <div className="stripe-icon-div">
-                                                        <img src={stripeIcon} className="stripe-icon" alt="Stripe"/>
-                                                    </div>
-                                                    <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>
-                                                </div>
-                                            )}
-                                        </div>
+                                            </>
+                                        )}
                                     </>
                                 ) : (
                                     <>
-                                        <span>2. Once your accommodation is created, you can create a stripe account to receive payments: </span>
+                                        <span>2. Once your accommodation is created, you can create a Stripe account to receive payments: </span>
                                         <span className="finance-span" onClick={handleStripeAction}>Domits Stripe</span>
                                     </>
                                 )}
                             </li>
+                            <br></br>
                             <br></br>
                             <li>3. Set your accommodation live at <span
                                 onClick={() => handleNavigation("/hostdashboard/listings")}
