@@ -10,3 +10,8 @@
     text-decoration: underline;
     cursor: pointer;
 }
+.finance-li{
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
