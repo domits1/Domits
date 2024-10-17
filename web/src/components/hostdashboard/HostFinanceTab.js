@@ -109,21 +109,15 @@ const HostFinanceTab = () => {
                                             </>
                                         ) : (
                                             <>
-                                                2. Your payment details are not provided yet, make sure the Stripe onboarding is completed before you proceed.
-                                                <div className="stripe-btn-wrapper" style={{height:'1rem'}}>
-                                                    {loading ? (
-                                                        <div className="spinnerdiv">
-                                                            <img className="spinner" src={spinner} alt="Loading"/>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="wijzer-grn" onClick={handleStripeAction}>
-                                                            <div className="stripe-icon-div">
-                                                                <img src={stripeIcon} className="stripe-icon" alt="Stripe"/>
-                                                            </div>
-                                                            <p className="stripe-btn">Go to Stripe Dashboard</p>
-                                                        </div>
-                                                    )}
-                                                </div>
+                                                2. Your payment details are not provided yet, make sure to{" "}
+                                                <span
+                                                    className="finance-span"
+                                                    onClick={handleStripeAction}
+                                                    style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
+                                                >
+                                                    finish your Stripe onboarding
+                                                </span>
+                                                {" "}before you proceed.
                                             </>
                                         )}
                                     </>
