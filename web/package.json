@@ -83,9 +83,13 @@
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",
+    "@emotion/react": "^11.13.3",
+    "@emotion/styled": "^11.13.0",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@hassanmojab/react-modern-calendar-datepicker": "^3.1.7",
+    "@mui/icons-material": "^6.1.4",
+    "@mui/material": "^6.1.4",
     "axios": "^1.7.2",
     "browser-image-compression": "^2.0.2",
     "chart.js": "^4.4.3",

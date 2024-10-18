@@ -1,19 +1,11 @@
 :root {
     --primary-color: #0D9813;
-    /* --primary-color: red; */
     --secondary-color: #003366;
 }
 
 .page-body {
   width: 93%;
   margin: 0 auto;
-  padding: 20px;
-}
-/* Beginning of the accommodation styling */
-
-/* Host dashboard */
-.accommodation {
-  /* Add styles for the accommodation container if needed */
 }
 
 .accommodation-row {
@@ -56,7 +48,6 @@
   margin-right: 3em;
 }
 
-/* Sidebar */
 .sidebar {
   width: 200px;
   height: 100%;
@@ -98,11 +89,6 @@ li a {
   padding: 10px;
 }
 
-.sidebar-link:hover {
-  /* Add styles for hover state if needed */
-}
-
-/* Code for the alignments of the cards */
 .array {
   margin: 20px;
   display: flex;
@@ -112,7 +98,6 @@ li a {
   gap: 50px;
 }
 
-/* Code for the style of the cards */
 .item-preview {
   width: 360px;
 }
@@ -156,7 +141,7 @@ li a {
   cursor: pointer;
 }
 
-/* Alles voor de searchbar en filter */
+/* Evreything for searchbar en filter */
 
 .assortment {
   display: flex;
@@ -182,7 +167,7 @@ li a {
   border: none;
   border-bottom: 2px solid #0A760F;
   padding: 1em 0.3em;
-  outline: none; /* Remove default focus outline */
+  outline: none; 
 }
 
 .midtext {
@@ -255,7 +240,7 @@ li a {
   cursor: pointer;
 }
 
-/* Alles voor de detailpage */
+/* Evreything for the detailpage */
 
 .detailpage {
   padding-left: 60px;

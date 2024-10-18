@@ -21,6 +21,31 @@
   transition: background-color 0.3s ease;
 }
 
+
+
+@media screen and (max-width: 650px) {
+  .hostchatbot-toggle-button { 
+      position: fixed;
+      bottom: 100px;
+      right: 20px;
+      z-index: 3000;
+      background-color: #0078D7; 
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 60px;
+      height: 60px;
+      font-size: 24px;
+      cursor: pointer;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.3s ease;
+  }
+}
+
+
 .hostchatbot-toggle-button:hover {
   background-color: #005bb5;
 }

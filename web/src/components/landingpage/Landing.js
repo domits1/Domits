@@ -28,6 +28,14 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
         }
     }, [isOpen]);
 
+    const navigateToMessages = () => {
+        if (currentView === 'host') {
+            navigate('/hostdashboard/chat');
+        } else {
+            navigate('/guestdashboard/chat');
+        }
+    };
+
     return (
         <div className={styles.landing__faq} onClick={toggleOpen}>
             <div className={styles.landing__faq__body}>
@@ -72,7 +80,11 @@ function Landing() {
             question: "How do I create and manage my host account?",
             answer: (
                 <>
-                    ...
+                    Creating a Host account is easy. Click the 'Become a Host' button at the top right and follow the instructions. 
+                    Once your account is set up, switch to the Host Dashboard from the menu. Here, 
+                    you can add your property by providing details like type, location, and amenities. After submitting, your listing will be verified.
+                    Once approved, set your availability, pricing, and upload photos. To go live, create a Stripe account for payments. 
+                    You can manage everything—availability, pricing, and details—directly from the Host Dashboard.
                 </>
             ),
             isOpen: false
@@ -81,7 +93,8 @@ function Landing() {
             question: "How reservations work",
             answer: (
                 <>
-                    ...
+                    Log in to your account, navigate to 'Bookings', and select the reservation you want to view, change, or cancel.
+                    Make sure to confirm any changes to keep your records updated.
                 </>
             ),
             isOpen: false
@@ -90,7 +103,8 @@ function Landing() {
             question: "How payouts and taxes work",
             answer: (
                 <>
-                    ...
+                    To receive payments, you need to create a Stripe Connect account and link it to Domits via the button in your dashboard. 
+                    All payments are processed through Stripe, where the necessary fees are automatically deducted.
                 </>
             ),
             isOpen: false
@@ -99,7 +113,7 @@ function Landing() {
             question: "How to manage your calendar and bookings",
             answer: (
                 <>
-                    ...
+                    An upcoming feature will allow you to manage your bookings more efficiently directly through the dashboard. Stay tuned for updates.
                 </>
             ),
             isOpen: false
@@ -475,7 +489,7 @@ function Landing() {
                 <div className={styles.personal__advice__left}>
                     <h1>Free personal advice from our <span className={styles.highlightText}>rental expert team</span></h1>
                     <h3>Our expert team is ready for support!</h3>
-                    <button className={styles.nextButtons}>Talk to a specialist</button>
+                    <button className={styles.nextButtons}> <a href='/hostdashboard/chat'>Talk to a specialist</a></button>
                 </div>
                 <img src={PersonalAdvice} alt='personalAdvice'/>
             </div>

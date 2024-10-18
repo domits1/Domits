@@ -143,6 +143,9 @@
     align-items: center;
     text-align: center;
   }
+  .why-domits-button {
+    display: none;
+  }
 }
 
 @media (max-width: 480px) {
