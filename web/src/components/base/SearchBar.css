@@ -141,7 +141,7 @@
   color: black;
   font-size: large;
   filter: grayscale(100%);
-  
+
 }
 
 .searchBar_inputfield:focus {
@@ -300,7 +300,7 @@
   color: var(--primary-color);
   font-size: 1rem;
   font-weight: 500;
-  margin-top: 1rem;
+  padding-top: 0.3rem;
 
 }
 .Search-guestP {
@@ -634,7 +634,7 @@
     margin-bottom: 0.5rem ;
     text-overflow: ellipsis;
   }
-  
+
 
   .Search-bar {
     display: none;

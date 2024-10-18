@@ -1,10 +1,12 @@
-/* Floating chat button */
+@import "~slick-carousel/slick/slick.css";
+@import "~slick-carousel/slick/slick-theme.css";
+
 .hostchatbot-toggle-button {
   position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 3000;
-  background-color: #0078D7; /* Modern blue color */
+  background-color: #0078D7;
   color: white;
   border: none;
   border-radius: 50%;
@@ -12,7 +14,7 @@
   height: 60px;
   font-size: 24px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* Soft shadow for a modern effect */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,20 +47,19 @@
 
 
 .hostchatbot-toggle-button:hover {
-  background-color: #005bb5; /* Darker blue on hover */
+  background-color: #005bb5;
 }
 
-/* Chatbot window container */
 .hostchatbot-container {
   position: fixed;
   bottom: 100px;
   right: 20px;
   z-index: 2000;
-  width: 380px; /* Slightly larger for a more modern feel */
-  height: 550px; /* Adjusted height */
+  width: 380px;
+  height: 550px;
   background: white;
-  border-radius: 16px; /* Softer, rounder corners */
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15); /* Stronger shadow for depth */
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -68,15 +69,13 @@
   transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
 }
 
-/* Show chat window when open */
 .hostchatbot-container.open {
   opacity: 1;
   visibility: visible;
 }
 
-/* Chatbot header */
 .hostchatbot-header {
-  background: linear-gradient(45deg, #0078D7, #00A8E8); /* Gradient for modern look */
+  background: linear-gradient(45deg, #0078D7, #00A8E8);
   color: white;
   padding: 12px 20px;
   border-top-left-radius: 16px;
@@ -101,10 +100,9 @@
 }
 
 .hostchatbot-header .hostchatbot-close-button:hover {
-  color: #FFD700; /* Gold color on hover */
+  color: #FFD700;
 }
 
-/* Chat window messages */
 .hostchatbot-window {
   flex: 1;
   padding: 16px;
@@ -134,7 +132,6 @@
   color: #333;
 }
 
-/* Option buttons */
 .hostchatbot-option-buttons button {
   background-color: #0078D7;
   color: white;
@@ -152,7 +149,6 @@
   background-color: #005bb5;
 }
 
-/* Suggestions box */
 .hostchatbot-suggestions {
   background-color: #f9f9f9;
   padding: 8px 16px;
@@ -167,7 +163,6 @@
   padding: 6px 0;
 }
 
-/* Chat input form */
 .hostchatbot-input {
   display: flex;
   padding: 12px 16px;
@@ -199,70 +194,105 @@
   cursor: not-allowed;
 }
 
-/* Modern styling for accommodation layout */
-.hostchatbot-accommodation {
-  background-color: #fafafa;
-  padding: 12px;
-  border: 1px solid #e0e0e0;
-  border-radius: 10px;
-  margin-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.hostchatbot-accommodation-title {
-  font-size: 16px;
-  font-weight: bold;
-  color: #0078D7;
-}
-
-.hostchatbot-accommodation-details {
-  font-size: 14px;
-  color: #555;
-}
-
-/* FAQ layout */
-.hostchatbot-faq {
-  background-color: #f1f1f1;
-  padding: 12px;
-  border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-.hostchatbot-faq-title {
-  font-weight: bold;
-  color: #0078D7;
-}
-
-.hostchatbot-faq-answer {
-  font-size: 14px;
-  color: #666;
-  margin-top: 6px;
-}
-
-/* Go back button */
 .hostchatbot-go-back-button {
-  background-color: #0078D7; /* Primary button color */
+  background-color: #0078D7;
   color: white;
   border: none;
   padding: 10px 16px;
-  margin-top: 12px;
+  margin: 12px 0;
   border-radius: 8px;
   cursor: pointer;
-  font-size: 14px;
-  text-align: center;
   width: 100%;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Soft shadow for a modern effect */
+  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+  font-size: 16px;
+  text-align: center;
+  font-weight: bold;
 }
 
 .hostchatbot-go-back-button:hover {
-  background-color: #005bb5; /* Darker blue on hover */
-  transform: translateY(-2px); /* Slight lift on hover */
+  background-color: #005bb5;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.hostchatbot-go-back-button:active {
-  background-color: #004494; /* Even darker blue on click */
-  transform: translateY(0); /* Reset lift effect on click */
+.hostchatbot-go-back-button:focus {
+  outline: none;
+  box-shadow: 0 0 5px #005bb5;
+}
+
+.hostchatbot-accommodation-tile {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  margin: 10px 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  background-color: #fff;
+}
+
+.hostchatbot-accommodation-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.hostchatbot-accommodation-details {
+  margin-top: 10px;
+}
+
+.hostchatbot-accommodation-details h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.hostchatbot-accommodation-details p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+.slick-dots li button:before {
+  color: #0078d7;
+}
+
+.slick-prev:before,
+.slick-next:before {
+  color: #0078d7;
+}
+
+.faq-layout {
+  border: 1px solid #0078d7;
+  background-color: #f1f9ff;
+  border-radius: 8px;
+  padding: 15px;
+  margin: 10px 0;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.faq-layout:hover {
+  background-color: #e0f2ff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.faq-layout p {
+  margin: 10px 0;
+  font-size: 15px;
+  color: #333;
+}
+
+.faq-layout strong {
+  font-weight: bold;
+  color: #0078d7;
+}
+
+.faq-layout .faq-question {
+  font-size: 16px;
+  font-weight: bold;
+  color: #0078d7;
+  margin-bottom: 8px;
+}
+
+.faq-layout .faq-answer {
+  font-size: 14px;
+  color: #555;
+  line-height: 1.6;
 }
