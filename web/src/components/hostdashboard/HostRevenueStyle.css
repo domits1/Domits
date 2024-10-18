@@ -1,31 +1,27 @@
 .hr-container {
-    width: 100%;
-    max-width: 2200px;
+    width: 90%;
+    max-width: 1200px;
     margin: 0 auto;
-    padding: 800px;
+    padding: 20px;
+}
 
+.hr-h1 {
+    font-size: 2em;
+    margin-bottom: 20px;
 }
 
 .hr-host-revenues {
     display: flex;
     flex-direction: row;
-    width: 100%;
-
 }
 
 .hr-pages {
-    width: 15%;
+    width: 20%;
     margin-right: 20px;
-    text-align: center;
-
 }
 
 .hr-content {
     width: 80%;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-
 }
 
 .hr-revenue-header {
@@ -40,23 +36,23 @@
     margin: 0;
 }
 
-.hr-filters {
+.hr-revenue-header .hr-filters {
     display: flex;
     gap: 10px;
 }
 
-.hr-filters button,
-.hr-filters select {
+.hr-revenue-header .hr-filters button,
+.hr-revenue-header .hr-filters select {
     padding: 10px 15px;
     font-size: 1em;
     border: 1px solid #ced4da;
     border-radius: 4px;
-    background-color: #fff;
+    background-color: #ffffff;
     cursor: pointer;
 }
 
 .hr-chart-container {
-    background-color: #fff;
+    background-color: #ffffff;
     padding: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -67,17 +63,83 @@
     margin-bottom: 20px;
 }
 
+.hr-summary {
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
+}
+
+.hr-summary h4 {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+}
+
+.hr-summary table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.hr-summary table th,
+.hr-summary table td {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    text-align: left;
+}
+
+.hr-summary table th {
+    background-color: #f1f3f5;
+}
+
+.hr-summary .hr-download-button {
+    text-align: right;
+    margin-top: 20px;
+}
+
+.hr-summary .hr-download-button button {
+    padding: 10px 20px;
+    font-size: 1em;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.hr-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.hr-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+.hr-button:hover {
+    background-color: #0056b3;
+}
+
+.hr-content {
+    display: flex;
+    gap: 20px;
+}
+
 .hr-revenue-overview {
     flex: 1;
     min-width: 300px;
 }
 
 .hr-monthly-comparison {
-    flex: 1;
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    flex: 2;
 }
 
 .hr-cards {
@@ -91,24 +153,6 @@
     padding: 20px;
     border: 1px solid #e0e0e0;
     border-radius: 10px;
-    background-color: #fff;
+    background-color: #ffffff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-@media (max-width: 768px) {
-    .hr-host-revenues {
-        flex-direction: column;
-    }
-
-    .hr-pages,
-    .hr-content,
-    .hr-revenue-overview,
-    .hr-monthly-comparison {
-        width: 100%;
-        margin-right: 0;
-    }
-
-    .hr-cards {
-        flex-direction: column;
-    }
 }
