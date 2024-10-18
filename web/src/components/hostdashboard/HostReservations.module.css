@@ -3,120 +3,223 @@
     flex-direction: column;
     margin-left: 5%;
     min-height: 55rem;
-    .header {
-        text-align: left;
-        padding-left: 2em;
+}
+
+.header {
+    text-align: left;
+    padding-left: 2em;
+}
+
+.reservationInfo {
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+}
+
+.infoIcon {
+    max-width: 1.5em;
+    max-height: 1.5em;
+    align-self: center;
+}
+
+.reservationSelector {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    gap: 0.5em;
+    width: 100%;
+    margin-bottom: 2rem;
+    justify-self: center;
+    flex-wrap: wrap;
+}
+
+.option {
+    border-radius: 5%;
+    padding: 0.25em;
+    box-shadow: inset 0 0 20px 10px #dedede;
+    font-size: 1em;
+    min-width: 6vw;
+    text-align: center;
+}
+
+.selected, .option:hover {
+    cursor: pointer;
+    color: white;
+    background-color: #0D9813;
+    box-shadow: none;
+}
+
+.reservationTh {
+    min-width: 7vw;
+}
+
+.reservationDisplay {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px 10px #dedede;
+    padding: 5%;
+    width: 100%;
+    gap: 1.5em;
+    margin: 1.5em;
+}
+
+.sort {
+    max-height: 1.5vh;
+    max-width: 1.5vw;
+    margin-left: 3%;
+}
+
+.sort:hover {
+    cursor: pointer;
+}
+
+.utilBox {
+    display: flex;
+    flex-direction: row;
+    gap: 1%;
+    justify-content: end;
+    width: auto;
+}
+
+.refreshBtn {
+    color: white;
+    background-color: var(--primary-color);
+    border: none;
+}
+
+.refreshBtn:hover {
+    color: var(--primary-color);
+    background-color: white;
+    border: 1px solid var(--primary-color);
+}
+
+.btnBox {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 1em;
+    padding: 0.75em;
+    border-radius: 2em;
+    background-color: #0D9813;
+    color: white;
+    align-items: center;
+}
+
+.selectedText {
+    color: white;
+    font-size: 1.1em;
+}
+
+button {
+    padding: 0.25em;
+    border-radius: 1em;
+    min-width: 5vw;
+    font-size: 1em;
+}
+
+button:hover {
+    cursor: pointer;
+    color: white;
+}
+
+.btnUndo:hover {
+    background-color: black;
+}
+
+.btnDeny:hover {
+    background-color: red;
+}
+
+.btnApprove:hover {
+    background-color: #0A760F;
+}
+
+.btnGroup {
+    display: flex;
+    justify-self: end;
+    gap: 1em;
+}
+
+@media (max-width: 768px) {
+    .reservationContent {
+        margin-left: 2%;
+        min-height: auto;
     }
+
     .reservationInfo {
-        display: flex;
-        flex-direction: row;
-        gap: 1em;
-        .infoIcon {
-            max-width: 1.5em;
-            max-height: 1.5em;
-            align-self: center;
-        }
-    }
-    .reservationSelector {
-        display: flex;
-        flex-direction: row;
-        justify-content: start;
-        gap: 0.5em;
-        width: 100%;
-        margin-bottom: 2rem;
-        justify-self: center;
-        flex-wrap: wrap;
-        .option {
-            border-radius: 5%;
-            padding: 0.25em;
-            box-shadow: inset 0 0 20px 10px #dedede;
-            font-size: 1em;
-            min-width: 6vw;
-            text-align: center;
-        }
-        .selected, .option:hover {
-            cursor: pointer;
-            color: white;
-            background-color: #0D9813;
-            box-shadow: none;
-        }
-    }
-    .reservationTh {
-        min-width: 7vw;
-    }
-    .reservationDisplay {
-        display: flex;
         flex-direction: column;
-        box-shadow: 0 0 20px 10px #dedede;
-        padding: 5%;
-        width: 100%;
-        gap: 1.5em;
-        margin: 1.5em;
+        gap: 0.5em;
     }
 
-    .sort {
-        max-height: 1.5vh;
-        max-width: 1.5vw;
-        margin-left: 3%;
-    }
-    .sort:hover {
-        cursor: pointer;
-    }
-    .utilBox {
-        display: flex;
-        flex-direction: row;
-        gap: 1%;
-        justify-content: end;
-        width: auto;
-        .refreshBtn {
-            color: white;
-            background-color: var(--primary-color);
-            border: none;
-        }.refreshBtn:hover {
-             color: var(--primary-color);
-             background-color: white;
-             border: 1px solid var(--primary-color);
-         }
-    }
-    .btnBox {
-        display: grid;
-        grid-template-columns: auto auto auto;
+    .reservationSelector {
+        justify-content: center;
         gap: 1em;
-        padding: 0.75em;
-        border-radius: 2em;
-        background-color: #0D9813;
-        color: white;
-        align-items: center;
     }
 
-    .selectedText {
-        color: white;
-        font-size: 1.1em;
+    .option {
+        min-width: 10vw;
+        font-size: 0.9em;
+    }
+
+    .reservationDisplay {
+        padding: 4%;
+        margin: 1em;
+        gap: 1em;
+    }
+
+    .btnBox {
+        grid-template-columns: auto auto;
+        gap: 0.5em;
     }
 
     button {
-        padding: 0.25em;
-        border-radius: 1em;
-        min-width: 5vw;
+        font-size: 0.9em;
+        min-width: 8vw;
+    }
+
+    .selectedText {
         font-size: 1em;
     }
-    button:hover {
-        cursor: pointer;
-        color: white;
+}
+
+@media (max-width: 480px) {
+    .reservationContent {
+        margin-left: 1%;
+        min-height: auto;
     }
-    .btnUndo:hover {
-        background-color: black;
+
+    .reservationInfo {
+        flex-direction: column;
+        gap: 0.5em;
     }
-    .btnDeny:hover {
-        background-color: red;
-    }
-    .btnApprove:hover {
-        background-color: #0A760F;
-    }
-    .btnGroup {
-        display: flex;
-        justify-self: end;
+
+    .reservationSelector {
+        flex-direction: column;
+        align-items: center;
         gap: 1em;
     }
 
+    .option {
+        min-width: 15vw;
+        font-size: 0.8em;
+    }
+
+    .reservationDisplay {
+        padding: 3%;
+        margin: 0.5em;
+        gap: 0.8em;
+    }
+
+    .btnBox {
+        grid-template-columns: auto;
+        gap: 0.5em;
+    }
+
+    button {
+        font-size: 0.8em;
+        min-width: 12vw;
+    }
+
+    .selectedText {
+        font-size: 0.9em;
+    }
 }
