@@ -171,13 +171,13 @@ function Pages() {
           <p>Messages</p>
         </div>
         {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
-        {/*<div*/}
-        {/*  className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}*/}
-        {/*  onClick={() => handleNavigation("/hostdashboard/revenues")}*/}
-        {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
-        {/*  <p>Revenues</p>*/}
-        {/*</div>*/}
+        <div
+          className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/revenues")}
+        >
+          <img src={dashboard} alt="Dashboard" />
+          <p>Revenues</p>
+        </div>
         {/*<div*/}
         {/*  className={`wijzer ${activeTab === "/hostdashboard/reporting" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/reporting")}*/}
