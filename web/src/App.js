@@ -91,7 +91,7 @@ function App() {
         uri: 'https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql',  //
         cache: new InMemoryCache(),
         headers: {
-            "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",  // Replace with your AppSync API key
+            "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",   // Replace with your AppSync API key
         },
     });
 
