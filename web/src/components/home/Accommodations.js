@@ -54,19 +54,24 @@ const Accommodations = ({ searchResults }) => {
   }, []);
 
   const formatData = (items) => {
-    return items.map((item) => ({
-      image: item.image || item.Images['homepage'] || item.Images['image1'],
-      title: item.Title,
-      city: item.City,
-      country: item.Country,
-      details: item.Description,
-      price: `€${item.Rent} per night`,
-      id: item.ID,
-      beds: `${item.Beds} Bed(s)`,
-      bedrooms: `${item.AccommodationType === 'Boat' ? item.Cabins : item.Bedrooms} ${item.AccommodationType === 'Boat' ? 'Cabins' : 'Bedrooms'}`,
-      persons: `${item.GuestAmount} ${item.GuestAmount > 1 ? 'People' : 'Person'}`,
-    }));
-  };
+    return items.map((item) => {
+      const isBoatOrCamper = item.AccommodationType === 'Boat' || item.AccommodationType === 'Camper';
+      const priceLabel = isBoatOrCamper ? 'per day' : 'per night';
+      
+      return {
+        image: item.image || item.Images['homepage'] || item.Images['image1'],
+        title: item.Title,
+        city: item.City,
+        country: item.Country,
+        details: item.Description,
+        price: `€${item.Rent} ${priceLabel}`,
+        id: item.ID,
+        beds: `${item.Beds} Bed(s)`,
+        bedrooms: `${item.AccommodationType === 'Boat' ? item.Cabins : item.Bedrooms} ${item.AccommodationType === 'Boat' ? 'Cabins' : 'Bedrooms'}`,
+        persons: `${item.GuestAmount} ${item.GuestAmount > 1 ? 'People' : 'Person'}`,
+      };
+    });
+  };  
 
   const populateAccoListWithImages = async (data) => {
     const formattedData = await Promise.all(
@@ -158,6 +163,11 @@ const Accommodations = ({ searchResults }) => {
         <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
           Next &gt;
         </button>
+      </div>
+      <div className="why-domits-button">
+        <a href="/why-domits" className="why-domits-link">
+          Why Domits?
+        </a>
       </div>
     </div>
   );

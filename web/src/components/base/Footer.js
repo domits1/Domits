@@ -54,7 +54,7 @@ const Footer = () => {
 
                 {/* Network section */}
                 <div className="footer-section borderline">
-                    <h4 className='footer-headers '>Network</h4>
+                    <h4 className='footer-headers'>Network</h4>
                     <ul className='footer-lists'>
                         <li className='footer-links'>Traveller</li>
                         <li className='footer-links'>Hosts</li>

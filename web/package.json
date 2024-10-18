@@ -83,11 +83,13 @@
   },
   "dependencies": {
     "@apollo/client": "^3.11.8",
+    "@emotion/react": "^11.13.3",
     "@emotion/styled": "^11.13.0",
     "@fortawesome/free-solid-svg-icons": "^6.5.2",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@hassanmojab/react-modern-calendar-datepicker": "^3.1.7",
     "@mui/icons-material": "^6.1.4",
+    "@mui/material": "^6.1.4",
     "axios": "^1.7.2",
     "browser-image-compression": "^2.0.2",
     "chart.js": "^4.4.3",
@@ -108,7 +110,9 @@
     "react-load-script": "^0.0.6",
     "react-markdown": "^9.0.1",
     "react-resizable": "^3.0.5",
+    "react-slick": "^0.30.2",
     "recharts": "^2.12.7",
+    "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4"
   },
   "jest": {
