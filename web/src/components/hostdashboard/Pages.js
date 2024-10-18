@@ -115,7 +115,7 @@ function Pages() {
                 <option value="/hostdashboard/settings">Settings</option>
               </select>
             </div>
-            <div>
+            {/* <div>
               <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Growth">
                 <option disabled>Growth</option>
                 <option value="/hostdashboard/reservations">Reservations</option>
@@ -129,7 +129,7 @@ function Pages() {
                 <option value="/hostdashboard/setup">Setup</option>
                 <option value="/hostdashboard/promo-codes">Promo Codes</option>
               </select>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
