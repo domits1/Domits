@@ -45,19 +45,22 @@
     justify-content: center;
     align-items: center;
     padding: 10px;
-    button {
-        padding: 5px 10px;
-        margin: 0 5px;
-        border: none;
-        background-color: #f4f4f4;
-        cursor: pointer;
-        border-radius: 15px;
-    }
-    .active {
-        background-color: var(--primary-color);
-        color: #fff;
-    }
 }
+
+.pagination button {
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: none;
+    background-color: #f4f4f4;
+    cursor: pointer;
+    border-radius: 15px;
+}
+
+.pagination .active {
+    background-color: var(--primary-color);
+    color: #fff;
+}
+
 .paginationButton:disabled {
     opacity: 0.5;
     cursor: default;
@@ -66,6 +69,7 @@
 .paginationButton:hover:not(:disabled) {
     background-color: #ddd;
 }
+
 .listing {
     box-shadow: none;
 }
@@ -76,6 +80,7 @@
     gap: 3%;
     padding: 1em;
 }
+
 .listingButton {
     color: white;
     padding: 0.35em 1.2em;
@@ -85,59 +90,74 @@
     transition: all 0.2s;
     max-height: 2em;
 }
+
 .listingEdit {
     background-color: #0D9813;
 }
+
 .listingDelete {
     background-color: red;
 }
+
 .listingDraft {
     background-color: #003366;
 }
+
 .listingDelete:hover {
     background-color: darkred;
 }
 
+/* Mobile Responsive Adjustments */
 @media (max-width: 480px) {
     .App {
         padding: 0;
         margin: 0;
     }
+    
     h2 {
         margin: 0;
     }
+    
     .wijzer {
         display: flex;
         flex-direction: column;
     }
+    
     div.box {
         margin: 0;
         padding: 0;
     }
+    
     .boxColumns {
         margin: 0;
     }
+    
     .fullBox {
         box-shadow: none;
     }
+    
     .page-body {
         display: flex;
         flex-direction: column;
     }
+    
     .dashboard {
         width: auto;
     }
+    
     .dashboardSection.section-1 {
         margin: 0;
         padding: 0;
         grid-template-columns: 0.5fr 0.5fr;
     }
+    
     .contentContainer {
         margin: 0;
         padding: 0;
         text-align: left;
     }
-    .accommodation-tab {
+    
+    .accommodationTab {
         margin: 0;
         padding: 0;
         flex-direction: column;
@@ -146,46 +166,35 @@
         gap: 0.1em;
         margin-bottom: 1em;
         max-width: none;
-        p {
-            font-size: 0.8em;
-        }
-        .accommodation-left {
-            padding: 0;
-        }
-        .accommodation-right {
-            padding: 1em;
-        }
-        .accommodation-title {
-            display: inline-block;
-            color: white;
-            margin: 0;
-            position: absolute;
-            font-size: 0.75em;
-            align-self: center;
-        }
-        .accommodation-location {
-            color: white;
-            align-self: center;
-            position: absolute;
-            font-size: 0.6em;
-            margin-top: 5%;
-        }
-        .accommodation-img {
-            border-radius: 0.5em 0.5em 0 0;
-            padding: 0;
-            align-self: center;
-            width: 100%;
-            max-width: none;
-            max-height: none;
-            height: auto;
-        }
-        .listing-button {
-            margin: 1em;
-        }
     }
+
+    .accommodationTitle {
+        font-size: 0.75em;
+        margin: 0;
+    }
+
+    .accommodationLeft, .accommodationRight {
+        padding: 0;
+    }
+
+    .accommodationImg {
+        border-radius: 0.5em 0.5em 0 0;
+        padding: 0;
+        align-self: center;
+        width: 100%;
+        max-width: none;
+        max-height: none;
+        height: auto;
+    }
+
+    .listingButton {
+        margin: 1em;
+    }
+
     .pagination {
         padding: 0;
     }
+
     .listing {
         display: flex;
         flex-direction: column;
@@ -199,5 +208,4 @@
         margin: 1em;
         place-self: center;
     }
-
 }

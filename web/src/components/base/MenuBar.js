@@ -153,7 +153,7 @@ function MenuBar() {
             return (
                 <>
                     <div className="helloUsername">Hello {username}!</div>
-                    <button onClick={navigateToGuestDashboard} className="dropdownLoginButton">Profile</button>
+                    <button onClick={navigateToGuestDashboard} className="dropdownLoginButton"> Profile</button>
                     <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
                     <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
                     <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
@@ -169,12 +169,12 @@ function MenuBar() {
         <div className="bottom-menu-bar">
             <div className="menu">
                 <div className='menuButtons'>
-                    <button className='headerButtons' onClick={Home}><HouseOutlinedIcon/>Home</button>
-                    <button className='headerButtons' onClick={navigateToMessages}><ForumOutlinedIcon/>Message</button>
+                    <button className='headerButtons' onClick={Home}><HouseOutlinedIcon className='imgMenu'/><p className='textMenu'>Home</p></button>
+                    <button className='headerButtons' onClick={navigateToMessages}><ForumOutlinedIcon className='imgMenu'/><p className='textMenu'>Messages</p></button>
 
                    
                     <button className="headerButtons" onClick={toggleDropdown}>
-          <AccountCircleOutlinedIcon/>Profile
+          <AccountCircleOutlinedIcon className='imgMenu'/><p className='textMenu'>Profile</p>  
         </button>
 
         <div className={"bottomPersonalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
