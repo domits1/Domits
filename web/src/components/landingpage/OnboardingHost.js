@@ -790,7 +790,7 @@ function OnboardingHost() {
 
     const constructURL = (userId, accommodationId, index, size = '') => {
         const folder = size ? `${size}/` : '';
-        return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/${folder}Image-${index + 1}.jpg`;
+        return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/${folder}Image-${index + 1}.webp`;
     };
 
 
@@ -804,13 +804,16 @@ function OnboardingHost() {
         for (const [key, sizeOptions] of Object.entries(sizes)) {
             try {
                 console.log(`Uploading image for size: ${key}, index: ${index}`);
-                const compressedFile = await imageCompression(file, sizeOptions);
-                const keyPath = `images/${userId}/${accommodationId}/${key}/Image-${index + 1}.jpg`;
+                const compressedFile = await imageCompression(file, {
+                    ...sizeOptions,
+                    fileType: 'image/webp'
+                });
+                const keyPath = `images/${userId}/${accommodationId}/${key}/Image-${index + 1}.webp`;
 
                 await Storage.put(keyPath, compressedFile, {
                     bucket: S3_BUCKET_NAME,
                     region: region,
-                    contentType: 'image/jpeg',
+                    contentType: 'image/webp',
                     level: 'public',
                     customPrefix: { public: '' }
                 });
