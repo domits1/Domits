@@ -4,7 +4,7 @@
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@fortawesome/react-native-fontawesome": "^0.3.2",
-    "@react-native-community/blur": "^4.4.0",
+    "@react-native-community/blur": "^4.4.1",
     "@react-native-community/checkbox": "^0.5.17",
     "@stripe/react-stripe-js": "^2.8.1",
     "@stripe/stripe-js": "^4.8.0",
