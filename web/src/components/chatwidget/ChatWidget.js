@@ -4,7 +4,6 @@ import { ResizableBox } from 'react-resizable';
 import './ChatWidget.css';
 import { useUser } from '../../UserContext';
 import Slider from 'react-slick';
-import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const ChatWidget = () => {
   const { user, isLoading } = useUser();
@@ -35,7 +34,6 @@ const ChatWidget = () => {
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
     }
   }, [messages, isOpen]);
-  
 
   const loadChatHistory = async () => {
     try {
@@ -49,7 +47,7 @@ const ChatWidget = () => {
         })));
       }
     } catch (error) {
-      //console.error('Error loading chat history:', error);
+      console.error('Error loading chat history:', error);
     }
   };
 
@@ -67,7 +65,7 @@ const ChatWidget = () => {
     let message = userInput;
 
     if (typeof message !== 'string') {
-      //console.warn('sendMessage received a non-string input:', message);
+      console.warn('sendMessage received a non-string input:', message);
       message = String(message);  
     }
 
@@ -112,9 +110,8 @@ const ChatWidget = () => {
 
       let { message: aiMessage, accommodations } = response.data;
 
-      // Ensure aiMessage is a string
       if (typeof aiMessage !== 'string') {
-        //console.warn('AI response message is not a string:', aiMessage);
+        console.warn('AI response message is not a string:', aiMessage);
         aiMessage = JSON.stringify(aiMessage);
       }
 
@@ -127,7 +124,7 @@ const ChatWidget = () => {
         setShowHumanDecision(true);
       }
     } catch (error) {
-      //console.error('Error sending message:', error);
+      console.error('Error sending message:', error);
       setMessages(prevMessages => prevMessages.filter(message => message.sender !== 'typing'));
     } finally {
       setLoading(false);
@@ -177,13 +174,12 @@ const ChatWidget = () => {
           setSocket(ws);
         };
 
-        
         ws.onmessage = (event) => {
           const incomingMessage = JSON.parse(event.data);
 
           setMessages(prevMessages => [
             ...prevMessages,
-            { text: incomingMessage.message, sender: 'employee' } 
+            { text: incomingMessage.message, sender: 'employee' }
           ]);
         };
 
@@ -200,12 +196,24 @@ const ChatWidget = () => {
       }
 
     } catch (err) {
-      //console.error('Failed to connect to employee:', err);
+      console.error('Failed to connect to employee:', err);
       setMessages(prevMessages => [
         ...prevMessages,
         { text: 'Failed to connect to an agent. Please continue with the AI.', sender: 'system' }
       ]);
       setIsAIChat(true);
+    }
+  };
+
+  const switchBackToAI = () => {
+    setIsAIChat(true);
+    setEmployeeConnectionId(null);
+    setMessages(prevMessages => [
+      ...prevMessages,
+      { text: 'You have switched back to Sophia (AI).', sender: 'system' }
+    ]);
+    if (socket) {
+      socket.close();
     }
   };
 
@@ -241,6 +249,21 @@ const ChatWidget = () => {
             <span className="chatwidget-title">Chat</span>
             <button className="chatwidget-close" onClick={() => setIsOpen(false)}>×</button>
           </div>
+
+          {/* New section to display chat partner and button to switch back to AI */}
+          <div className="chatwidget-partner-indicator">
+            {isAIChat ? (
+              <span>Chatting with: <strong>Sophia (AI)</strong></span>
+            ) : (
+              <div>
+                <span>Chatting with: <strong>Employee</strong></span>
+                <button className="chatwidget-switch-to-ai" onClick={switchBackToAI}>
+                  Switch to AI
+                </button>
+              </div>
+            )}
+          </div>
+
           <div className="chatwidget-container">
             <div className="chatwidget-messages" ref={chatMessagesRef}>
               {messages.map((message, index) => (
