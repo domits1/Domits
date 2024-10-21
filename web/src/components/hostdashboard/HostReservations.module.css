@@ -109,14 +109,14 @@
     font-size: 1.1em;
 }
 
-button {
+.refreshBtn {
     padding: 0.25em;
     border-radius: 1em;
     min-width: 5vw;
     font-size: 1em;
 }
 
-button:hover {
+.refreshBtn:hover {
     cursor: pointer;
     color: white;
 }
@@ -171,7 +171,7 @@ button:hover {
         gap: 0.5em;
     }
 
-    button {
+    .refreshBtn {
         font-size: 0.9em;
         min-width: 8vw;
     }
@@ -214,7 +214,7 @@ button:hover {
         gap: 0.5em;
     }
 
-    button {
+    .refreshBtn {
         font-size: 0.8em;
         min-width: 12vw;
     }
