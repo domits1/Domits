@@ -85,10 +85,15 @@
     color: white;
     background-color: var(--primary-color);
     border: none;
+    padding: 0.25em;
+    border-radius: 1em;
+    min-width: 5vw;
+    font-size: 1em;
 }
 
 .refreshBtn:hover {
     color: var(--primary-color);
+    cursor: pointer;
     background-color: white;
     border: 1px solid var(--primary-color);
 }
@@ -107,18 +112,6 @@
 .selectedText {
     color: white;
     font-size: 1.1em;
-}
-
-.refreshBtn {
-    padding: 0.25em;
-    border-radius: 1em;
-    min-width: 5vw;
-    font-size: 1em;
-}
-
-.refreshBtn:hover {
-    cursor: pointer;
-    color: white;
 }
 
 .btnUndo:hover {
