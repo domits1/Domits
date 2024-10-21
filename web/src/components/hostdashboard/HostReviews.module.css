@@ -3,69 +3,80 @@
     grid-template-columns: 250px auto;
     gap: 5%;
 }
+
 .contentContainer {
     width: 100%;
     display: flex;
     flex-direction: row;
     flex-wrap: wrap;
     justify-content: center;
-    .reviewColumn {
-        width: 48%;
-        height: auto;
-        margin: 10px;
-        min-width: 155px;
-        display: flex;
-        flex-direction: column;
-    }
-    .reviewBox {
-        margin-right: 5px;
-        margin-top: 10px;
-        padding: 10px;
-        height: 100%;
-        box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-        border-radius: 10px;
-        flex-wrap: wrap;
-        .reviewTab {
-            display: flex;
-            flex-direction: column;
-            border: 2px;
-            border-radius: 15px;
-            margin: 5%;
-            animation: fade-up 1s;
-            padding: 12px;
-            .reviewHeader {
-                font-size: 1.5em;
-            }
-            .reviewContent {
-                text-align: start;
-            }
-            .reviewDate {
-                color: #0D9813;
-            }
-            .reviewDelete {
-                align-self: end;
-                width: 40px;
-                height: 40px;
-                box-shadow: none;
-                padding: 0;
-                border: none;
-                background-color: white;
-            }
-            .reviewDelete:hover {
-                cursor: pointer;
-                transform: scale(1.2);
-            }
-            .reviewAlert {
-                margin: 10%;
-            }
-        }
-
-        .reviewTab:hover {
-            box-shadow: 4px 4px #0D9813;
-            transition: .3s;
-        }
-    }
 }
+
+.contentContainer .reviewColumn {
+    width: 48%;
+    height: auto;
+    margin: 10px;
+    min-width: 155px;
+    display: flex;
+    flex-direction: column;
+}
+
+.contentContainer .reviewBox {
+    margin-right: 5px;
+    margin-top: 10px;
+    padding: 10px;
+    height: 100%;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    border-radius: 10px;
+    flex-wrap: wrap;
+}
+
+.contentContainer .reviewBox .reviewTab {
+    display: flex;
+    flex-direction: column;
+    border: 2px;
+    border-radius: 15px;
+    margin: 5%;
+    animation: fade-up 1s;
+    padding: 12px;
+}
+
+.contentContainer .reviewBox .reviewTab .reviewHeader {
+    font-size: 1.5em;
+}
+
+.contentContainer .reviewBox .reviewTab .reviewContent {
+    text-align: start;
+}
+
+.contentContainer .reviewBox .reviewTab .reviewDate {
+    color: #0D9813;
+}
+
+.contentContainer .reviewBox .reviewTab .reviewDelete {
+    align-self: end;
+    width: 40px;
+    height: 40px;
+    box-shadow: none;
+    padding: 0;
+    border: none;
+    background-color: white;
+}
+
+.contentContainer .reviewBox .reviewTab .reviewDelete:hover {
+    cursor: pointer;
+    transform: scale(1.2);
+}
+
+.contentContainer .reviewBox .reviewTab .reviewAlert {
+    margin: 10%;
+}
+
+.contentContainer .reviewBox .reviewTab:hover {
+    box-shadow: 4px 4px #0D9813;
+    transition: .3s;
+}
+
 .boxText {
     border: 0.5px solid black;
     border-radius: 15px;
@@ -73,11 +84,54 @@
     text-align: center;
 }
 
+@media (max-width: 768px) {
+    .reviewGrid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .contentContainer {
+        flex-direction: column;
+        align-items: center;
+        padding: 0 10px;
+    }
+
+    .contentContainer .reviewColumn {
+        width: 90%;
+    }
+
+    .contentContainer .reviewBox {
+        margin-right: 0;
+        margin-left: 0;
+    }
+
+    .contentContainer .reviewBox .reviewTab {
+        margin: 5% 0;
+    }
+}
+
 @media (max-width: 480px) {
-    .reviewColumn {
+    .contentContainer .reviewColumn {
         width: 100%;
-        .reviewHeader {
-            font-size: 1.5em;
-        }
+        margin: 0;
+    }
+
+    .contentContainer .reviewBox {
+        margin: 10px 0;
+        padding: 8px;
+    }
+
+    .contentContainer .reviewBox .reviewTab .reviewHeader {
+        font-size: 1.1em;
+    }
+
+    .contentContainer .reviewBox .reviewTab {
+        padding: 6px;
+        margin: 3%;
+    }
+
+    .boxText {
+        font-size: 0.85em;
+        padding: 4px;
     }
 }

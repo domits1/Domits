@@ -6,41 +6,8 @@ import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import Washingmashine from "../../images/icons/Washingmachine.png";
-import Television from "../../images/icons/Television.png";
-import Smokedetector from "../../images/icons/Smokedetector.png";
-import Wifi from "../../images/icons/Wifi.png";
-import Homeoffice from "../../images/icons/Homeoffice.png";
-import Fireextinguisher from "../../images/icons/Fireextinguisher.png";
-import Airconditioning from "../../images/icons/Airconditioning.png";
-import FirstAidKit from "../../images/icons/FirstAidKit.png";
-import Kitchen from "../../images/icons/Kitchen.png";
-import Onsiteparking from "../../images/icons/Onsiteparking.png";
 import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
-import Armchair from "../../images/armchair.png";
-import BabyMonitor from "../../images/baby-monitor.png";
-import Baby from "../../images/baby.png";
-import Backyard from "../../images/backyard.png";
-import Blender from "../../images/blender.png";
-import BoardGame from "../../images/board-game.png";
-import Bus from "../../images/bus.png";
-import Car from "../../images/car.png";
-import ChargingStation from "../../images/charging-station.png";
-import CheckIn from "../../images/check-in.png";
-import Cleaner from "../../images/cleaner.png";
-import Clothes from "../../images/clothes.png";
-import CoffeeTable from "../../images/coffee-table.png";
-import Crib from "../../images/crib.png";
-import Dishwasher from "../../images/dishwasher.png";
-import Food from "../../images/food.png";
-import Gate from "../../images/gate.png";
-import GraphicDesign from "../../images/graphic-design.png";
-import Grill from "../../images/grill.png";
 import HighChair from "../../images/high-chair.png";
-import HotTub from "../../images/hot-tub.png";
-import CoffeeMachine from "../../images/coffee-machine.png";
-import AlarmClock from "../../images/alarm-clock.png";
-import AntiqueBalcony from "../../images/antique-balcony.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
 import { FaTimes } from 'react-icons/fa';
@@ -69,18 +36,66 @@ import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import TableBarIcon from '@mui/icons-material/TableBar';
 import CribIcon from '@mui/icons-material/Crib';
-
+import HvacIcon from '@mui/icons-material/Hvac';
 import FastfoodIcon from '@mui/icons-material/Fastfood';
 import FenceIcon from '@mui/icons-material/Fence';
-
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import BedIcon from '@mui/icons-material/Bed';
+import WcIcon from '@mui/icons-material/Wc';
+import SoapIcon from '@mui/icons-material/Soap';
+import MicrowaveIcon from '@mui/icons-material/Microwave';
+import BreakfastDiningIcon from '@mui/icons-material/BreakfastDining';
+import FlatwareIcon from '@mui/icons-material/Flatware';
+import FreeBreakfastIcon from '@mui/icons-material/FreeBreakfast';
+import FoodBankIcon from '@mui/icons-material/FoodBank';
+import EmojiFoodBeverageIcon from '@mui/icons-material/EmojiFoodBeverage';
+import AirIcon from '@mui/icons-material/Air';
+import IronIcon from '@mui/icons-material/Iron';
+import WeekendIcon from '@mui/icons-material/Weekend';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import CastIcon from '@mui/icons-material/Cast';
+import BluetoothIcon from '@mui/icons-material/Bluetooth';
+import ElectricalServicesIcon from '@mui/icons-material/ElectricalServices';
+import SmokeFreeIcon from '@mui/icons-material/SmokeFree';
+import LockPersonIcon from '@mui/icons-material/LockPerson';
+import ToysIcon from '@mui/icons-material/Toys';
+import BathtubIcon from '@mui/icons-material/Bathtub';
+import LiveTvIcon from '@mui/icons-material/LiveTv';
+import MapIcon from '@mui/icons-material/Map';
 import OutdoorGrillIcon from '@mui/icons-material/OutdoorGrill';
-
+import LuggageIcon from '@mui/icons-material/Luggage';
 import HotTubIcon from '@mui/icons-material/HotTub';
 import CoffeeMakerIcon from '@mui/icons-material/CoffeeMaker';
 import AccessAlarmIcon from '@mui/icons-material/AccessAlarm';
 import BalconyIcon from '@mui/icons-material/Balcony';
-import ExtensionOutlinedIcon from '@mui/icons-material/ExtensionOutlined';
-
+import EvStationIcon from '@mui/icons-material/EvStation';
+import AccessibleIcon from '@mui/icons-material/Accessible';
+import DoorSlidingIcon from '@mui/icons-material/DoorSliding';
+import AirportShuttleIcon from '@mui/icons-material/AirportShuttle';
+import LocalGroceryStoreIcon from '@mui/icons-material/LocalGroceryStore';
+import RamenDiningIcon from '@mui/icons-material/RamenDining';
+import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
+import SpaIcon from '@mui/icons-material/Spa';
+import RecyclingIcon from '@mui/icons-material/Recycling';
+import EnergySavingsLeafIcon from '@mui/icons-material/EnergySavingsLeaf';
+import SolarPowerIcon from '@mui/icons-material/SolarPower';
+import DeleteIcon from '@mui/icons-material/Delete';
+import FireplaceIcon from '@mui/icons-material/Fireplace';
+import PoolIcon from '@mui/icons-material/Pool';
+import DirectionsBikeIcon from '@mui/icons-material/DirectionsBike';
+import ShowerIcon from '@mui/icons-material/Shower';
+import TableRestaurantIcon from '@mui/icons-material/TableRestaurant';
+import SpeakerIcon from '@mui/icons-material/Speaker';
+import DeckIcon from '@mui/icons-material/Deck';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import ScubaDivingIcon from '@mui/icons-material/ScubaDiving';
+import PhishingIcon from '@mui/icons-material/Phishing';
+import DownhillSkiingIcon from '@mui/icons-material/DownhillSkiing';
+import PedalBikeIcon from '@mui/icons-material/PedalBike';
+import ControlCameraIcon from '@mui/icons-material/ControlCamera';
+import NavigationIcon from '@mui/icons-material/Navigation';
+import SevereColdIcon from '@mui/icons-material/SevereCold';
+import ChairAltIcon from '@mui/icons-material/ChairAlt';
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -112,6 +127,7 @@ const ListingDetails = () => {
     const [showTravelerPopup, setShowTravelerPopup] = useState(false);
     const travelerSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
     const popupRef = useRef(null);
+    const [bookings, setBookings] = useState([]);
 
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -123,168 +139,167 @@ const ListingDetails = () => {
 
     const featureIcons = {
         // Essentials
-        'Wi-Fi': <WifiIcon />,
-        'Air conditioning': <AcUnitIcon />,
-        'Heating': <AcUnitIcon />, // Gebruik AC-icoon voor verwarming
-        'TV with cable/satellite': <TvIcon />,
-        'Hot water': <AcUnitIcon />, // Placeholder voor Hot water
-        'Towels': <CheckroomIcon />,
-        'Bed linens': <CheckroomIcon />,
-        'Extra pillows and blankets': <CheckroomIcon />,
-        'Toilet paper': <CheckroomIcon />,
-        'Soap and shampoo': <CheckroomIcon />,
+        'Wi-Fi': <WifiIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Air conditioning': <AcUnitIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Heating': <HvacIcon sx={{ color: 'var(--primary-color)' }} />,
+        'TV with cable/satellite': <TvIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Hot water': <WhatshotIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Towels': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bed linens': <BedIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Extra pillows and blankets': <BedIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Toilet paper': <WcIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Soap and shampoo': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Kitchen
-        'Refrigerator': <KitchenIcon />,
-        'Microwave': <KitchenIcon />, // Gebruik KitchenIcon voor alle keukenitems
-        'Oven': <KitchenIcon />,
-        'Stove': <KitchenIcon />,
-        'Dishwasher': Dishwasher,
-        'Coffee maker': <CoffeeMakerIcon />,
-        'Toaster': <KitchenIcon />,
-        'Basic cooking essentials': <KitchenIcon />,
-        'Dishes and silverware': <KitchenIcon />,
-        'Glasses and mugs': <KitchenIcon />,
-        'Cutting board and knives': <KitchenIcon />,
-        'Blender': <BlenderIcon />,
-        'Kettle': <KitchenIcon />,
+        'Refrigerator': <KitchenIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Microwave': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Oven': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Stove': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Dishwasher': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Coffee maker': <CoffeeMakerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Toaster': <BreakfastDiningIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Basic cooking essentials': <FlatwareIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Dishes and silverware': <FlatwareIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Glasses and mugs': <FreeBreakfastIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Cutting board and knives': <FoodBankIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Blender': <BlenderIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Kettle': <EmojiFoodBeverageIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Bathroom
-        'Hair dryer': <KitchenIcon />, // Placeholder
-        'Shower gel': <MedicalServicesIcon />, // Placeholder
-        'Conditioner': <MedicalServicesIcon />,
-        'Body lotion': <MedicalServicesIcon />,
-        'First aid kit': <MedicalServicesIcon />,
+        'Hair dryer': <AirIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Shower gel': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Conditioner': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Body lotion': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'First aid kit': <MedicalServicesIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Bedroom
-        'Hangers': <CheckroomIcon />,
-        'Iron and ironing board': <CheckroomIcon />,
-        'Closet/drawers': <CheckroomIcon />,
-        'Alarm clock': <AccessAlarmIcon />,
+        'Hangers': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Iron and ironing board': <IronIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Closet/drawers': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Alarm clock': <AccessAlarmIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // LivingArea
-        'Sofa': <ChairIcon />, // Placeholder
-        'Armchairs': <ChairIcon />,
-        'Coffee table': <TableBarIcon />,
-        'Books and magazines': <ExtensionIcon />, // Placeholder voor boeken
-        'Board games': <ExtensionOutlinedIcon />,
+        'Sofa': <WeekendIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Armchairs': <ChairIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Coffee table': <TableBarIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Books and magazines': <LibraryBooksIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Board games': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Technology
-        'Smart TV': <TvIcon />,
-        'Streaming services': <TvIcon />,
-        'Bluetooth speaker': <TvIcon />,
-        'Universal chargers': <TvIcon />, // Placeholder
-        'Work desk and chair': <DeskIcon />,
+        'Smart TV': <TvIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Streaming services': <CastIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bluetooth speaker': <BluetoothIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Universal chargers': <ElectricalServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Work desk and chair': <DeskIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Safety
-        'Smoke detector': <RadarIcon />,
-        'Carbon monoxide detector': <RadarIcon />,
-        'Fire extinguisher': <FireExtinguisherIcon />,
-        'Lock on bedroom door': <CheckCircleIcon />, // Placeholder
+        'Smoke detector': <SmokeFreeIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Carbon monoxide detector': <RadarIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Fire extinguisher': <FireExtinguisherIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Lock on bedroom door': <LockPersonIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // FamilyFriendly
-        'High chair': HighChair,
-        'Crib': <CribIcon />,
-        'Children’s books and toys': <ChildCareIcon />,
-        'Baby safety gates': <ChildCareIcon />,
-        'Baby bath': <ChildCareIcon />,
-        'Baby monitor': <ChildFriendlyIcon />,
+        'High chair': <ChairAltIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Crib': <CribIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Children’s books and toys': <ToysIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Baby safety gates': <FenceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Baby bath': <BathtubIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Baby monitor': <LiveTvIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Laundry
-        'Washer and dryer': <LocalLaundryServiceIcon />,
-        'Laundry detergent': <LocalLaundryServiceIcon />,
-        'Clothes drying rack': <LocalLaundryServiceIcon />,
+        'Washer and dryer': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Laundry detergent': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Clothes drying rack': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Convenience
-        'Keyless entry': <CheckCircleIcon />,
-        'Self-check-in': <CheckCircleIcon />,
-        'Local maps and guides': <CheckCircleIcon />,
-        'Luggage drop-off allowed': <CheckCircleIcon />,
-        'Parking space': <LocalParkingIcon />,
-        'EV charger': <ChargingStationIcon />,
+        'Keyless entry': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Self-check-in': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Local maps and guides': <MapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Luggage drop-off allowed': <LuggageIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Parking space': <LocalParkingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'EV charger': <EvStationIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Accessibility
-        'Step-free access': <CheckCircleIcon />, // Placeholder
-        'Wide doorways': <CheckCircleIcon />, // Placeholder
-        'Accessible-height bed': <CheckCircleIcon />, // Placeholder
-        'Accessible-height toilet': <CheckCircleIcon />, // Placeholder
-        'Shower chair': <CheckCircleIcon />, // Placeholder
+        'Step-free access': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Wide doorways': <DoorSlidingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Accessible-height bed': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Accessible-height toilet': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Shower chair': <BathtubIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // ExtraServices
-        'Cleaning service (add service fee manually)': <CleaningServicesIcon />,
-        'Concierge service': <CleaningServicesIcon />,
-        'Housekeeping': <CleaningServicesIcon />,
-        'Grocery delivery': <CleaningServicesIcon />, // Placeholder
-        'Airport shuttle': <DirectionsBusIcon />,
-        'Private chef': <FastfoodIcon />,
-        'Personal trainer': <FastfoodIcon />, // Placeholder
-        'Massage therapist': <FastfoodIcon />, // Placeholder
+        'Cleaning service (add service fee manually)': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Concierge service': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Housekeeping': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Grocery delivery': <LocalGroceryStoreIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Airport shuttle': <AirportShuttleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Private chef': <RamenDiningIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Personal trainer': <DirectionsRunIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Massage therapist': <SpaIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // EcoFriendly
-        'Recycling bins': <CheckCircleIcon />, // Placeholder
-        'Energy-efficient appliances': <CheckCircleIcon />, // Placeholder
-        'Solar panels': <CheckCircleIcon />, // Placeholder
-        'Composting bin': <CheckCircleIcon />, // Placeholder
+        'Recycling bins': <RecyclingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Energy-efficient appliances': <EnergySavingsLeafIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Solar panels': <SolarPowerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Composting bin': <DeleteIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Outdoor
-        'Patio or balcony': <BalconyIcon />,
-        'Outdoor furniture': <OutdoorGrillIcon />,
-        'Grill': <OutdoorGrillIcon />,
-        'Fire pit': <OutdoorGrillIcon />, // Placeholder
-        'Pool': <HotTubIcon />,
-        'Hot tub': <HotTubIcon />,
-        'Garden or backyard': <GrassIcon />,
-        'Bicycle': <OutdoorGrillIcon />, // Placeholder
+        'Patio or balcony': <BalconyIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Outdoor furniture': <OutdoorGrillIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Grill': <OutdoorGrillIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Fire pit': <FireplaceIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Pool': <PoolIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Hot tub': <HotTubIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Garden or backyard': <GrassIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bicycle': <DirectionsBikeIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Boat-specific
-        'Bimini': <OutdoorGrillIcon />, // Placeholder
-        'Outdoor shower': <OutdoorGrillIcon />,
-        'External table': <OutdoorGrillIcon />,
-        'External speakers': <OutdoorGrillIcon />,
-        'Teak deck': <OutdoorGrillIcon />,
-        'Bow sundeck': <OutdoorGrillIcon />,
-        'Aft sundeck': <OutdoorGrillIcon />,
-        'Bathing Platform': <OutdoorGrillIcon />,
-        'Bathing ladder': <OutdoorGrillIcon />,
+        'Bimini': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Outdoor shower': <ShowerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'External table': <TableRestaurantIcon sx={{ color: 'var(--primary-color)' }} />,
+        'External speakers': <SpeakerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Teak deck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bow sundeck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Aft sundeck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bathing Platform': <ShowerIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bathing ladder': <PoolIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // NavigationalEquipment
-        'Bow thruster': <OutdoorGrillIcon />, // Placeholder
-        'Electric windlass': <OutdoorGrillIcon />,
-        'Autopilot': <OutdoorGrillIcon />,
-        'GPS': <OutdoorGrillIcon />,
-        'Depth sounder': <OutdoorGrillIcon />,
-        'VHF': <OutdoorGrillIcon />,
-        'Guides & Maps': <OutdoorGrillIcon />,
+        'Bow thruster': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Electric windlass': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Autopilot': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'GPS': <LocationOnIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Depth sounder': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'VHF': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Guides & Maps': <MapIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // LeisureActivities
-        'Snorkeling equipment': <ExtensionIcon />, // Placeholder
-        'Fishing equipment': <ExtensionIcon />,
-        'Diving equipment': <ExtensionIcon />,
+        'Snorkeling equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Fishing equipment': <PhishingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Diving equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // WaterSports
-        'Water skis': <ExtensionIcon />, // Placeholder
-        'Monoski': <ExtensionIcon />,
-        'Wakeboard': <ExtensionIcon />,
-        'Towable Tube': <ExtensionIcon />,
-        'Inflatable banana': <ExtensionIcon />,
-        'Kneeboard': <ExtensionIcon />,
+        'Water skis': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Monoski': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Wakeboard': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Towable Tube': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Inflatable banana': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Kneeboard': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
 
         // Camper-specific
-        'Baby seat': <ChildCareIcon />,
-        'Bicycle carrier': <DirectionsCarIcon />, // Placeholder
-        'Reversing camera': <DirectionsCarIcon />,
-        'Airbags': <DirectionsCarIcon />,
-        'Cruise control': <DirectionsCarIcon />,
-        'Imperial': <DirectionsCarIcon />, // Placeholder
-        'Navigation': <DirectionsCarIcon />,
-        'Awning': <DirectionsCarIcon />,
-        'Parking sensors': <DirectionsCarIcon />,
-        'Power steering': <DirectionsCarIcon />,
-        'Tow bar': <DirectionsCarIcon />,
-        'Snow chains': <DirectionsCarIcon />,
-        'Winter tires': <DirectionsCarIcon />
+        'Baby seat': <ChildCareIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bicycle carrier': <PedalBikeIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Reversing camera': <ControlCameraIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Airbags': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Cruise control': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Imperial': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Navigation': <NavigationIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Awning': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Parking sensors': <ControlCameraIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Power steering': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Tow bar': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Snow chains': <SevereColdIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Winter tires': <SevereColdIcon sx={{ color: 'var(--primary-color)' }} />,
     };
-
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -391,7 +406,7 @@ const ListingDetails = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setDates(data.StartDate, data.EndDate, data.BookedDates || []); // Pass the booked dates
+                setDates(data.StartDate, data.EndDate, data.BookedDates || []);
                 fetchHostInfo(data.OwnerId);
                 setHostID(data.OwnerId)
                 fetchReviewsByAccommodation(data.ID);
@@ -402,6 +417,43 @@ const ListingDetails = () => {
 
         fetchAccommodation();
     }, [id]);
+
+    useEffect(() => {
+            if (!accommodation) return;
+            const fetchBookings = async () => {
+                try {
+                    const response = await fetch('https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus', {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            AccoID: accommodation.ID,
+                            Status: 'Accepted'
+                        }),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch');
+                    }
+                    const data = await response.json();
+
+                    if (data.body && typeof data.body === 'string') {
+                        const retrievedBookingDataArray = JSON.parse(data.body);
+
+                        if (Array.isArray(retrievedBookingDataArray)) {
+                            setBookings(retrievedBookingDataArray);
+                            setBookedDates(retrievedBookingDataArray.map(booking => [booking.StartDate, booking.EndDate]));
+                        } else {
+                            console.error('Retrieved data is not an array:', retrievedBookingDataArray);
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to fetch booking data:', error);
+                }
+            }
+            fetchBookings();
+        }, [accommodation]
+    );
 
     const {isDemo} = DemoValidator(hostID);
 
@@ -619,7 +671,7 @@ const ListingDetails = () => {
             const categoriesToShow = showAll ? Object.keys(items) : Object.keys(items).slice(0, 2);
 
             return categoriesToShow.map(category => {
-                const uniqueItems = [...new Set(items[category])]; // Zorg dat items uniek zijn
+                const uniqueItems = [...new Set(items[category])];
                 if (uniqueItems.length > 0) {
                     return (
                         <div key={category} className='features-category'>
@@ -651,10 +703,10 @@ const ListingDetails = () => {
     };
 
     const isDateBooked = (date) => {
+        const selectedDate = new Date(date);
         return bookedDates.some(bookedRange => {
-            const start = new Date(bookedRange[0]);
-            const end = new Date(bookedRange[1]);
-            const selectedDate = new Date(date);
+            const start = new Date(bookedRange[0].S);
+            const end = new Date(bookedRange[1].S);
             return selectedDate >= start && selectedDate <= end;
         });
     };
@@ -663,13 +715,10 @@ const ListingDetails = () => {
         const selectedDate = new Date(date);
         if (!checkIn) return false;
 
-        for (let bookedRange of bookedDates) {
-            const start = new Date(bookedRange[0]);
-            if (checkIn <= start && selectedDate >= start) {
-                return true;
-            }
-        }
-        return false;
+        return bookedDates.some(bookedRange => {
+            const start = new Date(bookedRange[0].S);
+            return selectedDate >= start && selectedDate >= checkIn;
+        });
     };
 
     const isDateInRange = (date, startDate, endDate) => {
@@ -680,17 +729,25 @@ const ListingDetails = () => {
     };
 
     const filterBookedDates = (date) => {
-        return !isDateBooked(date) && !isDateAfterBookedNight(date);
+        const selectedDate = new Date(date);
+
+        return bookedDates.some(bookedRange => {
+            const start = new Date(bookedRange[0].S);
+            const end = new Date(bookedRange[1].S);
+
+            return selectedDate >= start && selectedDate <= end;
+        });
     };
 
     const filterDisabledDays = (date) => {
-        for (let i = 0; i < accommodation.DateRanges.length; i++) {
-            let index = accommodation.DateRanges[i];
-            if (isDateInRange(new Date(date), new Date(index.startDate), new Date(index.endDate))) {
-                return true;
-            }
-        }
-        return false;
+        const selectedDate = new Date(date);
+
+        return accommodation.DateRanges.every(range => {
+            const start = new Date(range.startDate);
+            const end = new Date(range.endDate);
+
+            return !(selectedDate >= start && selectedDate <= end);
+        });
     };
 
     const renderStars = (review) => {
@@ -709,6 +766,18 @@ const ListingDetails = () => {
         }
     };
 
+    const combinedDateFilter = (date) => {
+        const selectedDate = new Date(date);
+        const today = new Date();
+
+        const isInThePast = selectedDate < today;
+
+        const isOutsideAvailableRange = filterDisabledDays(date);
+        const isBooked = filterBookedDates(date);
+
+        return !(isOutsideAvailableRange || isBooked || isInThePast);
+    };
+
 
     return (
         <main className="container">
@@ -721,7 +790,7 @@ const ListingDetails = () => {
                                     <p className="backButton">Go Back</p>
                                 </Link>
                                 <h1>
-                                {accommodation.Title} {isDemo && "(DEMO)"}
+                                    {accommodation.Title} {isDemo && "(DEMO)"}
                                 </h1>
                             </div>
                             <div>
@@ -738,12 +807,12 @@ const ListingDetails = () => {
                             </div>
                             <p className='description'>{accommodation.Description}</p>
                             <div>
-                                <hr className="pageDividerr" />
+                                <hr className="pageDividerr"/>
                                 <h3>Calendar overview:</h3>
                                 <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
                             </div>
                             <div>
-                                <hr className="pageDividerr" />
+                                <hr className="pageDividerr"/>
                                 <h3>This place offers the following:</h3>
                                 {accommodation ? renderCategories() : ''}
                                 <div>
@@ -755,7 +824,7 @@ const ListingDetails = () => {
                                 </div>
 
                                 {showModal && (
-                                    <FeaturePopup features={accommodation.Features} onClose={toggleModal} />
+                                    <FeaturePopup features={accommodation.Features} onClose={toggleModal}/>
                                 )}
 
                                 {/*<section className="listing-reviews">*/}
@@ -820,11 +889,11 @@ const ListingDetails = () => {
                 {accommodation && (
                     <aside className='detailSummary'>
                         <div className="summary-section">
-                                {checkIn && checkOut && (
-                                    <div className="nights">
-                                        <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
-                                    </div>
-                                )}
+                            {checkIn && checkOut && (
+                                <div className="nights">
+                                    <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
+                                </div>
+                            )}
                             <h2>Booking details</h2>
                             <p>Available from {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
                                 to {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
@@ -839,7 +908,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={minStart && new Date(minStart)}
                                         maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={filterDisabledDays || filterBookedDates}
+                                        filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
@@ -859,7 +928,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckOut(date)}
                                         minDate={minEnd && new Date(minEnd)}
                                         maxDate={maxEnd && new Date(maxEnd)}
-                                        filterDate={filterDisabledDays || filterBookedDates}
+                                        filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
@@ -934,7 +1003,9 @@ const ListingDetails = () => {
 
                             {/* Price and Reserve Section */}
                             <button className="reserve-button" onClick={handleBooking}
-                                    disabled={!isFormValid || isDemo}
+                                    disabled={
+                                        !isFormValid || accommodation.Drafted === true || isDemo
+                                    }
                                     style={{
                                         backgroundColor: isFormValid ? 'green' : 'green',
                                         cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
@@ -978,4 +1049,4 @@ const ListingDetails = () => {
     );
 }
 
-    export default ListingDetails;
+export default ListingDetails;
