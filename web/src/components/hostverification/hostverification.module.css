@@ -4,19 +4,17 @@ html, body {
   margin: 0;
 }
 
-.headertext-container h1, p{
-  margin: 0 auto !important;
-}
-
 .headertext-container h1{
   font-size: 1.625em;
   font-weight: 800;
   color: #484848;
+  margin: 0 auto;
 }
 
 .headertext-container p{
   font-size: 1em;
   color: #484848;
+  margin: 0 auto;
 }
 
 .verification-container {
