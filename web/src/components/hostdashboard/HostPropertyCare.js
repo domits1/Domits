@@ -8,18 +8,15 @@ const HostPropertyCare = () => {
 
 
     const handleContactNavigation = () => {
-        navigate('/contact');  
+        navigate('/contact');
     };
     return (
         <main className="page-body">
-            <section className='host-pc' style={{
-                display: "flex",
-                width: "100%",
-            }}>
+            <section className='host-pc-property'>
                 <Pages/>
                 <div className="property-content">
                     <h1>Property Care</h1>
-                    <h3 style={{width:'60%'}}>
+                    <h3 className="property-h3">
                         Are you looking for a cleaner, housekeeper or maintenance handyman? Our partner Mostpros
                         has a network of home service professionals ready to support you.
                         <span className="property-span"
