@@ -20,6 +20,7 @@
     "react-native-paper": "^5.12.5",
     "react-native-vector-icons": "^10.2.0",
     "react-resizable": "^3.0.5",
-    "string-similarity": "^4.0.4"
+    "string-similarity": "^4.0.4",
+    "ws": "^8.18.0"
   }
 }
