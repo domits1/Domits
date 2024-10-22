@@ -14,6 +14,7 @@ const ChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isAIChat, setIsAIChat] = useState(true);
   const [employeeConnectionId, setEmployeeConnectionId] = useState(null);
+  const [employeeName, setEmployeeName] = useState(''); // Store employee name
   const [socket, setSocket] = useState(null);
   const [isConnected, setIsConnected] = useState(false);
   const [messageCount, setMessageCount] = useState(0);
@@ -21,13 +22,17 @@ const ChatWidget = () => {
   const [showConsentDecision, setShowConsentDecision] = useState(false);
   const chatMessagesRef = useRef(null);
 
+  // User name input when not logged in
+  const [userName, setUserName] = useState('');
+  const [nameEntered, setNameEntered] = useState(false); // Whether the name was entered for guests
+
   useEffect(() => {
     if (!isLoading && (chatID || user)) {
       loadChatHistory();
-    } else if (!isLoading) {
+    } else if (!isLoading && nameEntered) {
       sendWelcomeMessage();
     }
-  }, [isLoading, chatID, user]);
+  }, [isLoading, chatID, user, nameEntered]);
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -166,7 +171,7 @@ const ChatWidget = () => {
         setMessages(prevMessages => [...prevMessages, { text: 'Connecting you to an agent...', sender: 'system' }]);
 
         const ws = new WebSocket(
-          `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${user?.id || 'anon'}` 
+          `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${user?.id || 'anon'}&userName=${user?.attributes?.given_name || userName}` 
         );
 
         ws.onopen = () => {
@@ -176,6 +181,13 @@ const ChatWidget = () => {
 
         ws.onmessage = (event) => {
           const incomingMessage = JSON.parse(event.data);
+
+          console.log(incomingMessage)
+
+          // Check if the first message contains the employee's name
+          if (!employeeName && incomingMessage.employeeName) {
+            setEmployeeName(incomingMessage.employeeName);
+          }
 
           setMessages(prevMessages => [
             ...prevMessages,
@@ -223,11 +235,18 @@ const ChatWidget = () => {
         action: 'sendMessage',
         recipientConnectionId: employeeConnectionId,
         message: message,
+        userName: userName
       };
       socket.send(JSON.stringify(payload));
     }
 
     setMessages(prevMessages => [...prevMessages, { text: message, sender: 'user' }]);
+  };
+
+  const handleNameSubmit = () => {
+    if (userName.trim() !== '') {
+      setNameEntered(true);
+    }
   };
 
   return (
@@ -256,7 +275,7 @@ const ChatWidget = () => {
               <span>Chatting with: <strong>Sophia (AI)</strong></span>
             ) : (
               <div>
-                <span>Chatting with: <strong>Employee</strong></span>
+                <span>Chatting with: <strong>{employeeName || 'Employee'}</strong></span>
                 <button className="chatwidget-switch-to-ai" onClick={switchBackToAI}>
                   Switch to AI
                 </button>
@@ -264,92 +283,108 @@ const ChatWidget = () => {
             )}
           </div>
 
-          <div className="chatwidget-container">
-            <div className="chatwidget-messages" ref={chatMessagesRef}>
-              {messages.map((message, index) => (
-                <div className={`chatwidget-message ${message.sender}`} key={index}>
-                  <div className="chatwidget-sender">
-                    {message.sender === 'user'
-                      ? 'You'
-                      : message.sender === 'ai'
-                      ? 'Sophia (AI)'
-                      : message.sender === 'employee'
-                      ? 'Employee'
-                      : 'System'}
-                  </div>
-                  <div className={`chatwidget-message-content ${message.sender}`}>
-                    {typeof message.text === 'object'
-                      ? JSON.stringify(message.text)
-                      : message.text || 'Error: Invalid message format'}
-                  </div>
-                  {message.sender === 'ai' && message.accommodations && (
-                    <div className="chatwidget-accommodation-tiles">
-                      {message.accommodations.map((accommodation, idx) => (
-                        <div
-                          key={idx}
-                          className="chatwidget-accommodation-tile"
-                        >
-                          <Slider
-                            dots={true}
-                            infinite={false}
-                            speed={500}
-                            slidesToShow={1}
-                            slidesToScroll={1}
-                            arrows={true}
-                            className="chatwidget-slider"
-                          >
-                            {Object.keys(accommodation.Images).map((key, index) => (
-                              <div key={index}>
-                                <img src={accommodation.Images[key]} alt={`Slide ${index + 1}`} className="chatwidget-accommodation-image" />
-                              </div>
-                            ))}
-                          </Slider>
-                          <div className="chatwidget-accommodation-details"
-                          onClick={() => handleTileClick(accommodation.ID)}  // Click event for redirection
-                          style={{ cursor: 'pointer' }}  // Add pointer to indicate clickability
-                          >
-                            <h3>{accommodation.Title}</h3>
-                            <p>{accommodation.Description}</p>
-                            <p><strong>City:</strong> {accommodation.City}</p>
-                            <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
-                            <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {showHumanDecision && (
-              <div className="chatwidget-decision-box">
-                <p>Continue with AI or connect to a human?</p>
-                <button onClick={() => handleUserDecision('human')}>Talk to Human</button>
-                <button onClick={() => handleUserDecision('ai')}>Continue with AI</button>
-              </div>
-            )}
-
-            {showConsentDecision && (
-              <div className="chatwidget-decision-box">
-                <p>Do you consent to saving messages for training purposes?</p>
-                <button onClick={() => handleConsentDecision('yes')}>Yes</button>
-                <button onClick={() => handleConsentDecision('no')}>No</button>
-              </div>
-            )}
-
-            <div className="chatwidget-input">
+          {/* Name input for guests */}
+          {!user && !nameEntered && (
+            <div className="chatwidget-name-input">
+              <p>Please enter your name to start the chat:</p>
               <input
                 type="text"
-                value={userInput}
-                onChange={(e) => setUserInput(e.target.value)}
-                onKeyUp={(e) => { if (e.key === 'Enter') sendMessage(); }}
-                placeholder="Type a message..."
-                disabled={loading}
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Enter your name"
               />
-              <button onClick={sendMessage} disabled={loading}>Send</button>
+              <button onClick={handleNameSubmit}>Start Chat</button>
             </div>
-          </div>
+          )}
+
+          {nameEntered && (
+            <div className="chatwidget-container">
+              <div className="chatwidget-messages" ref={chatMessagesRef}>
+                {messages.map((message, index) => (
+                  <div className={`chatwidget-message ${message.sender}`} key={index}>
+                    <div className="chatwidget-sender">
+                      {message.sender === 'user'
+                        ? 'You'
+                        : message.sender === 'ai'
+                        ? 'Sophia (AI)'
+                        : message.sender === 'employee'
+                        ? employeeName || 'Employee'
+                        : 'System'}
+                    </div>
+                    <div className={`chatwidget-message-content ${message.sender}`}>
+                      {typeof message.text === 'object'
+                        ? JSON.stringify(message.text)
+                        : message.text || 'Error: Invalid message format'}
+                    </div>
+                    {message.sender === 'ai' && message.accommodations && (
+                      <div className="chatwidget-accommodation-tiles">
+                        {message.accommodations.map((accommodation, idx) => (
+                          <div
+                            key={idx}
+                            className="chatwidget-accommodation-tile"
+                          >
+                            <Slider
+                              dots={true}
+                              infinite={false}
+                              speed={500}
+                              slidesToShow={1}
+                              slidesToScroll={1}
+                              arrows={true}
+                              className="chatwidget-slider"
+                            >
+                              {Object.keys(accommodation.Images).map((key, index) => (
+                                <div key={index}>
+                                  <img src={accommodation.Images[key]} alt={`Slide ${index + 1}`} className="chatwidget-accommodation-image" />
+                                </div>
+                              ))}
+                            </Slider>
+                            <div className="chatwidget-accommodation-details"
+                            onClick={() => handleTileClick(accommodation.ID)}  // Click event for redirection
+                            style={{ cursor: 'pointer' }}  // Add pointer to indicate clickability
+                            >
+                              <h3>{accommodation.Title}</h3>
+                              <p>{accommodation.Description}</p>
+                              <p><strong>City:</strong> {accommodation.City}</p>
+                              <p><strong>Bathrooms:</strong> {accommodation.Bathrooms}</p>
+                              <p><strong>Guest Amount:</strong> {accommodation.GuestAmount}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {showHumanDecision && (
+                <div className="chatwidget-decision-box">
+                  <p>Continue with AI or connect to a human?</p>
+                  <button onClick={() => handleUserDecision('human')}>Talk to Human</button>
+                  <button onClick={() => handleUserDecision('ai')}>Continue with AI</button>
+                </div>
+              )}
+
+              {showConsentDecision && (
+                <div className="chatwidget-decision-box">
+                  <p>Do you consent to saving messages for training purposes?</p>
+                  <button onClick={() => handleConsentDecision('yes')}>Yes</button>
+                  <button onClick={() => handleConsentDecision('no')}>No</button>
+                </div>
+              )}
+
+              <div className="chatwidget-input">
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyUp={(e) => { if (e.key === 'Enter') sendMessage(); }}
+                  placeholder="Type a message..."
+                  disabled={loading}
+                />
+                <button onClick={sendMessage} disabled={loading}>Send</button>
+              </div>
+            </div>
+          )}
         </ResizableBox>
       )}
     </div>
