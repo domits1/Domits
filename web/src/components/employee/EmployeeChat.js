@@ -109,8 +109,8 @@ const EmployeeChat = () => {
       const payload = {
         action: 'sendMessage',
         recipientConnectionId,
-        employeeName: employeeName,
         message: `Hello, I'm ${employeeName}, how can I help you today?`,
+        employeeName: employeeName
       };
       socket.send(JSON.stringify(payload));
     }
@@ -162,7 +162,6 @@ const EmployeeChat = () => {
       action: 'sendMessage',
       recipientConnectionId: activeChat,
       message: employeeMessage,
-      employeeName: employeeName
     };
 
     socket.send(JSON.stringify(payload));
