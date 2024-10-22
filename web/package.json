@@ -102,6 +102,7 @@
     "immer": "^10.0.4",
     "jest-environment-jsdom": "^29.7.0",
     "minimist": "1.2.8",
+    "path-to-regexp": "^8.2.0",
     "react-chartjs-2": "^5.2.0",
     "react-country-flag": "^3.1.0",
     "react-date-range": "^2.0.0-alpha.4",
