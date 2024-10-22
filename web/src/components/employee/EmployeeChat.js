@@ -11,12 +11,8 @@ const EmployeeChat = () => {
   const [socket, setSocket] = useState(null); // WebSocket instance
   const { role, isLoading } = useUser();
   const [connectionId, setConnectionId] = useState(''); // Store connectionId
-
-  // Prompt employee to go online
-  const [wantsToConnect, setWantsToConnect] = useState(false);
-
-  // Store chat messages by chat ID
-  const [chatMessages, setChatMessages] = useState({}); // { chatID: [messages] }
+  const [wantsToConnect, setWantsToConnect] = useState(false); // Prompt employee to go online
+  const [chatMessages, setChatMessages] = useState({}); // Store chat messages by chat ID { chatID: [messages] }
 
   useEffect(() => {
     if (wantsToConnect && !socket) {
@@ -37,18 +33,12 @@ const EmployeeChat = () => {
 
       const data = await response.json();
       if (response.ok) {
-        // Parse the 'body' field of the response, which is a JSON string
         const parsedBody = JSON.parse(data.body);
-
-        //console.log(parsedBody); // This should now contain the connectionId
         return parsedBody.connectionId;
       } else {
-        //console.error('Error fetching connectionId:', data.message);
         return null;
       }
-
     } catch (error) {
-      //console.error('Failed to fetch connectionId:', error);
       return null;
     }
   };
@@ -62,12 +52,9 @@ const EmployeeChat = () => {
     );
 
     ws.onopen = async () => {
-      //console.log('WebSocket connection opened');
       setIsConnected(true);
 
-      // Fetch the connectionId using the new Lambda function
       const fetchedConnectionId = await fetchConnectionId(userInfo.attributes.sub);
-      //console.log(fetchedConnectionId)
       if (fetchedConnectionId) {
         setConnectionId(fetchedConnectionId);
         await setEmployeeAvailability(true, userInfo.attributes.sub, fetchedConnectionId);
@@ -77,62 +64,71 @@ const EmployeeChat = () => {
     ws.onmessage = (event) => {
       const incomingMessage = JSON.parse(event.data);
 
-      // Handle normal chat messages
+      console.log(incomingMessage)
+
       if (incomingMessage.senderId && incomingMessage.message) {
         const senderId = incomingMessage.senderId;
         const message = { role: 'user', content: incomingMessage.message };
 
-        // Add the message to the appropriate chat
         setChatMessages((prevChatMessages) => {
           const prevMessages = prevChatMessages[senderId] || [];
           return { ...prevChatMessages, [senderId]: [...prevMessages, message] };
         });
 
-        // If a new message comes in, either add to an existing chat or create a new one
         setChats((prevChats) => {
           const existingChat = prevChats.find((chat) => chat.chatID === senderId);
-
-          // Create new chat if it doesn't exist
           if (!existingChat) {
-            return [...prevChats, { chatID: senderId, userName: 'User' }];
+            return [...prevChats, { chatID: senderId, userName: incomingMessage.userName || 'User' }];
           }
-
           return prevChats;
         });
+
+        // Send the employee's name when the user sends their name and opens a new chat
+        if (incomingMessage.userName) {
+          sendEmployeeName(incomingMessage.senderId, userInfo.attributes['given_name']);
+        }
       }
     };
 
     ws.onerror = (error) => {
-      //console.error('WebSocket error observed:', error);
+      console.error('WebSocket error observed:', error);
     };
 
     ws.onclose = async (event) => {
-      //console.log('WebSocket connection closed:', event);
       setIsConnected(false);
       setSocket(null);
-      // Set employee availability to false on disconnect
       await setEmployeeAvailability(false, userInfo.attributes.sub, connectionId || '');
     };
 
     setSocket(ws);
   };
 
-  // Function to close WebSocket connection and go offline
+  // Function to send the employee's name once a new chat is started
+  const sendEmployeeName = (recipientConnectionId, employeeName) => {
+    if (socket && isConnected) {
+      const payload = {
+        action: 'sendMessage',
+        recipientConnectionId,
+        employeeName: employeeName,
+        message: `Hello, I'm ${employeeName}, how can I help you today?`,
+      };
+      socket.send(JSON.stringify(payload));
+    }
+  };
+
   const disconnectWebSocket = () => {
     if (socket) {
       socket.close();
       setWantsToConnect(false);
       setIsConnected(false);
       setSocket(null);
-      //console.log('WebSocket connection closed by user');
     }
   };
 
-  // Set employee availability in the database
   const setEmployeeAvailability = async (isAvailable, employeeId, connectionId) => {
     const payload = {
       employeeId,
-      connectionId: connectionId || '', // Set to empty string if connectionId is not present
+      connectionId: connectionId || '',
       isAvailable,
     };
 
@@ -150,18 +146,15 @@ const EmployeeChat = () => {
       }
 
       const data = await response.json();
-      //console.log(data.message);
     } catch (error) {
-      //console.error(error.message);
+      console.error(error.message);
     }
   };
 
-  // Handle the selection of a chat
   const selectChat = (chatID) => {
     setActiveChat(chatID);
   };
 
-  // Handle sending a message
   const sendMessage = () => {
     if (employeeMessage.trim() === '' || !activeChat || !socket) return;
 
@@ -169,18 +162,18 @@ const EmployeeChat = () => {
       action: 'sendMessage',
       recipientConnectionId: activeChat,
       message: employeeMessage,
+      employeeName: employeeName
     };
 
     socket.send(JSON.stringify(payload));
 
-    // Append sent message to the chat
     const newMessage = { role: 'employee', content: employeeMessage };
     setChatMessages((prevChatMessages) => ({
       ...prevChatMessages,
       [activeChat]: [...(prevChatMessages[activeChat] || []), newMessage],
     }));
 
-    setEmployeeMessage(''); // Clear the input field
+    setEmployeeMessage('');
   };
 
   if (isLoading) {
