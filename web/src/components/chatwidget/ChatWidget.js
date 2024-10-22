@@ -43,7 +43,7 @@ const ChatWidget = () => {
   const loadChatHistory = async () => {
     try {
       const params = user ? { userID: user.id } : { chatID };
-      const response = await axios.get('https://djs95w5kug.execute-api.eu-north-1.amazonaws.com/default/chatWidgetHistory', { params });
+      const response = await axios.get('https://pfjspybvsi.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
           text: msg.content,
