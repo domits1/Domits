@@ -9,3 +9,10 @@
     text-decoration: underline;
     cursor: pointer;
 }
+.host-pc-property{
+    display: flex;
+    width: 100%;
+}
+.property-h3{
+    width:60%;
+}
