@@ -30,9 +30,8 @@
 
 /* Chart area */
 .mc-chart-container {
-    background-color: #aaa4a4; /* White background for the chart area */
-    padding: 20px; /* Padding inside the white box */
-    border-radius: 10px; /* Rounded corners for the white box */
-    box-shadow: inset 0px 0px 0px 1px #ddd; /* Subtle border effect */
-    margin-top: 10px; /* Margin to create space between title and chart */
+    padding: 20px; /* Padding around the chart */
+    background-color: #f9f9f9; /* Light background for contrast */
+    border-radius: 10px; /* Rounded corners */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle shadow */
 }

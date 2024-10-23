@@ -73,7 +73,7 @@ function OnboardingHost() {
                 if (!data.hasOwnProperty('CleaningFee')) {
                     data.CleaningFee = 1;
                 }
-                console.log(data)
+
                 setFormData(data);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
@@ -125,7 +125,8 @@ function OnboardingHost() {
         "Electric boat": ElectricBoat,
         "Boat without license": BoatWithoutLicense
     };
-    const [formData, setFormData] = useState({});
+    const [formData, setFormData] = useState({
+    });
     const [selectedAccoType, setSelectedAccoType] = useState("");
     const [selectedBoatType, setSelectedBoatType] = useState("");
     const [selectedCamperType, setSelectedCamperType] = useState("");
@@ -216,11 +217,7 @@ function OnboardingHost() {
             ExtraServices: [],
             EcoFriendly: []
         },
-            // HouseRules: existingData.HouseRules  {
-            //     AllowSmoking: false,
-            //     AllowPets: false,
-            //     AllowParties: false,
-            // },
+
             AllowSmoking: existingData.AllowSmoking || false,
             AllowPets: existingData.AllowPets || false,
             AllowParties: existingData.AllowParties || false,
@@ -269,6 +266,7 @@ function OnboardingHost() {
         Renovated: isNew ? "" : formData.Renovated,
         Features: {
             ...generateCommonFormData().Features,
+            Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
             NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
             LeisureActivities: isNew ? [] : formData.Features?.LeisureActivities || [],
             WaterSports: isNew ? [] : formData.Features?.WaterSports || [],
@@ -279,6 +277,8 @@ function OnboardingHost() {
         Bedrooms: isNew ? 0 : formData.Bedrooms,
         PostalCode: isNew ? "" : formData.PostalCode,
         Street: isNew ? "" : formData.Street,
+        Bathrooms: isNew ? 0 : formData.Bathrooms,
+        Beds: isNew ? 0 : formData.Beds,
         LicensePlate: isNew ? "" : formData.LicensePlate,
         Category: isNew ? "" : formData.Category,
         CamperBrand: isNew ? "" : formData.CamperBrand,
@@ -296,6 +296,7 @@ function OnboardingHost() {
         Features: {
             ...generateCommonFormData().Features,
             Vehicle: isNew ? [] : formData.Features?.Vehicle || [],
+            Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
             NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
             LeisureActivities: isNew ? [] : formData.Features?.LeisureActivities || [],
             WaterSports: isNew ? [] : formData.Features?.WaterSports || [],
@@ -487,17 +488,17 @@ function OnboardingHost() {
         const getInitialFormData = (accoType) => {
             switch (accoType) {
                 case 'Boat':
-                    setFormData(generateBoatFormData());
+                    setFormData(generateBoatFormData);
                     setTypeAmenities(boatAmenities);
-                    break;
+                    return;
                 case 'Camper':
-                   setFormData(generateCamperFormData());
+                   setFormData(generateCamperFormData);
                     setTypeAmenities(camperAmenities);
-                   break;
+                   return;
                 default:
-                    setFormData(generateNormalAccommodationFormData());
+                    setFormData(generateNormalAccommodationFormData);
                     setTypeAmenities(allAmenities);
-                    break;
+                    return;
             }
         };
         getInitialFormData(selectedAccoType);
@@ -655,13 +656,16 @@ function OnboardingHost() {
     }
 
     const handleAmenities = (category, amenity, checked) => {
-        setFormData((prevData) => {
-            const updatedFeatures = { ...prevData.Features };
+        setFormData(prevFormData => {
+            const updatedFeatures = {...prevFormData.Features};
+
+            if (amenity === 'Cleaning service (add service fee manually)') {
+                resetCleaningFee();
+            }
 
             if (!Array.isArray(updatedFeatures[category])) {
                 updatedFeatures[category] = [];
             }
-
             if (checked) {
                 updatedFeatures[category] = [...updatedFeatures[category], amenity];
             } else {
@@ -669,12 +673,11 @@ function OnboardingHost() {
             }
 
             return {
-                ...prevData,
+                ...prevFormData,
                 Features: updatedFeatures
             };
         });
     };
-
     const handleCheckBoxChange = (event) => {
         const { name, type, checked, value } = event.target;
         setFormData((prevData) => ({
@@ -1213,7 +1216,7 @@ function OnboardingHost() {
                                     <div className="amount-btn-box">
                                         <button className="round-button" onClick={() => decrementAmount('Cabins')}>-
                                         </button>
-                                        {formData.Cabins || 0}
+                                        {formData.Cabins}
                                         <button
                                         className="round-button"
                                         onClick={() => incrementAmount('Cabins')}
@@ -1306,20 +1309,19 @@ function OnboardingHost() {
                                         borderRadius: '2rem'
                                     }}>
                                         <h2 className="amenity-header">{separatePascalCase(category)}</h2>
-                                        <div key={category}>
-                                            <section className="check-box">
-                                                {amenities.map((amenity) => (
-                                                    <label key={amenity}>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={featuresArray.includes(amenity)}
-                                                            onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
-                                                        />
-                                                        {amenity}
-                                                    </label>
-                                                ))}
-                                            </section>
-                                        </div>
+                                        <section className="check-box">
+                                            {amenities.map((amenity) => (
+                                                <label key={amenity}>
+                                                    <input
+                                                        type="checkbox"
+                                                        name={amenity}
+                                                        onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
+                                                        checked={featuresArray.includes(amenity)}
+                                                    />
+                                                    {separatePascalCase(amenity)}
+                                                </label>
+                                            ))}
+                                        </section>
                                     </div>
                                 );
                             })}
@@ -1343,27 +1345,27 @@ function OnboardingHost() {
                             <h2 className="onboardingSectionTitle">House rules</h2>
                             <div className="houseRulesContainer">
                             <div className="toggle-container">
-                                <label className="toggle">
-                                    <span className="toggle-label">Allow smoking</span>
-                                    <input
-                                        className="toggle-checkbox"
-                                        type="checkbox"
-                                        checked={formData.AllowSmoking}
-                                        onChange={(e) => handleHouseRulesChange('AllowSmoking', e.target.checked)}
-                                    />
-                                    <div className="toggle-switch"></div>
-                                </label>
+                            <label className="toggle">
+                                <span className="toggle-label">Allow smoking</span>
+                                <input
+                                    className="toggle-checkbox"
+                                    type="checkbox"
+                                    checked={formData.AllowSmoking}
+                                    onChange={(e) => handleHouseRulesChange('AllowSmoking', e.target.checked)}
+                                />
+                                <div className="toggle-switch"></div>
+                            </label>
 
-                                <label className="toggle">
-                                    <span className="toggle-label">Allow pets</span>
-                                    <input
-                                        className="toggle-checkbox"
-                                        type="checkbox"
-                                        checked={formData.AllowPets}
-                                        onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
-                                    />
-                                    <div className="toggle-switch"></div>
-                                </label>
+                            <label className="toggle">
+                                <span className="toggle-label">Allow pets</span>
+                                <input
+                                    className="toggle-checkbox"
+                                    type="checkbox"
+                                    checked={formData.AllowPets}
+                                    onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
+                                />
+                                <div className="toggle-switch"></div>
+                            </label>
 
                                 <label className="toggle">
                                     <span className="toggle-label">Allow parties/events</span>
@@ -1375,25 +1377,25 @@ function OnboardingHost() {
                                     />
                                     <div className="toggle-switch"></div>
                                 </label>
-                        </div>
-                <hr/>
-                        <label className="Check">
-                        <div className="Check-label">Check-in</div>
-                        <span>From</span>
-                        <input
-                            className="Check-checkbox"
-                            type="time"
-                            value={formData.CheckIn.From}
-                            onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
-                        />
-                        <span>Til</span>
-                        <input
-                            className="Check-checkbox"
-                            type="time"
-                            value={formData.CheckIn.Til}
-                            onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'Til')}
-                        />
-                    </label>
+                            </div>
+                            <hr/>
+                            <label className="Check">
+                                <div className="Check-label">Check-in</div>
+                                <span>From</span>
+                                <input
+                                    className="Check-checkbox"
+                                    type="time"
+                                    value={formData.CheckIn.From}
+                                    onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
+                                />
+                                <span>Til</span>
+                                <input
+                                    className="Check-checkbox"
+                                    type="time"
+                                    value={formData.CheckIn.Til}
+                                    onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'Til')}
+                                />
+                            </label>
 
                     <label className="Check">
                         <div className="Check-label">Check-out</div>
@@ -2028,19 +2030,21 @@ function OnboardingHost() {
                     </main>
                 );
             case 11:
-                    const address = {
-                        Country: formData.Country,
-                        City: formData.City,
-                        PostalCode: formData.PostalCode,
-                        Street: formData.Street,
-                    }
-                    return ( <RegistrationNumber
-                                Address={address}
-                                Next={() => pageUpdater(page + 1)}
-                                Previous={() => pageUpdater(page - 1)}
-                                setFormData={setFormData}
-                                RegistrationNumber={formData.RegistrationNumber}
-                                />);
+                const address = {
+                    Country: formData.Country,
+                    City: formData.City,
+                    PostalCode: formData.PostalCode,
+                    Street: formData.Street,
+                }
+                return (
+                    <RegistrationNumber
+                        Address={address}
+                        Next={() => pageUpdater(page + 1)}
+                        Previous={() => pageUpdater(page - 1)}
+                        setFormData={setFormData}
+                        RegistrationNumber={formData.RegistrationNumber}
+                    />
+                );
             case 12:
                 return (
                     <div className="container" id="summary" style={{width: '80%'}}>

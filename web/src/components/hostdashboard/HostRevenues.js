@@ -3,6 +3,7 @@ import Pages from "./Pages.js";
 import './HostRevenueStyle.css';
 import { gql, useQuery } from '@apollo/client';
 import RevenueOverview from './HostRevenueCards/RevenueOverview.jsx';
+import axios from "axios"; // Using axios for API calls
 import MonthlyComparison from './HostRevenueCards/MonthlyComparison.jsx';
 import OccupancyRateCard from './HostRevenueCards/OccupancyRate.jsx';
 import RevPARCard from './HostRevenueCards/RevPAR.jsx';
@@ -27,9 +28,25 @@ const HostRevenues = () => {
     const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
     const [loading, setLoading] = useState(true);
     const [stripeStatus, setStripeStatus] = useState('');
+    const [monthlyRevenueData, setMonthlyRevenueData] = useState([]); // State for monthly revenue data
 
     // Fetch revenue data from AppSync using GraphQL
     const { loading: revenueLoading, error, data } = useQuery(GET_REVENUE);
+
+    // Fetch monthly revenue data from your Lambda API
+    const fetchMonthlyRevenueData = async () => {
+        try {
+            const response = await axios.post('https://dcp1zwsq7c.execute-api.eu-north-1.amazonaws.com/default/GetMonthlyComparison');
+            setMonthlyRevenueData(response.data); // Set the data from the response
+            console.log("Monthly Revenue Data:", response.data); // Log the response for debugging
+        } catch (error) {
+            console.error("Error fetching monthly comparison data:", error);
+        }
+    };
+
+    useEffect(() => {
+        fetchMonthlyRevenueData(); // Call the fetch function when the component mounts
+    }, []);
 
     // Declare useEffect to fetch user and Stripe status
     useEffect(() => {
@@ -117,9 +134,6 @@ const HostRevenues = () => {
                     )}
                     {stripeStatus === 'complete' && (
                         <div>
-                            {/*<h3>Stripe Setup Complete</h3>
-                            <p>Your Stripe account is ready! You can now manage your revenue.</p>*/}
-
                             <div className="hr-revenue-overview">
                                 <h3>Revenue Overview</h3>
                                 <div className="hr-card-grid">
@@ -129,14 +143,10 @@ const HostRevenues = () => {
                                 </div>
                             </div>
 
-                            {/*<div className="hr-cards">
-                                <OccupancyRateCard />
-                                <RevPARCard />
-                            </div>*/}
-
-                            {/*<div className="hr-monthly-comparison">
-                                <MonthlyComparison data={chartData} />
-                            </div>*/}
+                            {/* Render Monthly Comparison */}
+                            <div className="hr-monthly-comparison">
+                                <MonthlyComparison data={monthlyRevenueData} /> {/* Pass the fetched data */}
+                            </div>
                         </div>
                     )}
                 </div>

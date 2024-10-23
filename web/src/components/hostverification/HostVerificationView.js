@@ -1,51 +1,41 @@
 import styles from "./hostverification.module.css";
 import Option from "./components/Option";
-import Listing from "./components/Listing";
-import { useNavigate, useLocation } from 'react-router-dom';
-import useOptionVisibility from "./hooks/useIsRegistrationNumberRequired";
-import useFetchAccommodation from "./hooks/useFetchAccomodation";
+import useStripeVerification from "./hooks/useStripeVerification";
 import Loading from "./components/Loading";
 import { useEffect } from "react";
 
 const HostVerificationView = () => {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const id = "e0707e21-a0e4-4a4f-a2b8-0b67135dd17f";
-  const { data, fetchAccommodationPreviewDetails } = useFetchAccommodation();
-  const { registrationNumber } = location.state || {};
+  const {
+    stripeLoading,
+    stripeErrorMessage,
+    startVerification,
+    verificationStatus,
+  } = useStripeVerification();
 
-  // useEffect(() => {
-  //   fetchAccommodationPreviewDetails(id);
-  // }, [id]);
+  useEffect(() => {
+    if (verificationStatus === "verified") {
+      console.log("User successfully verified");
+    } else if (verificationStatus === "unverified") {
+      console.log("User verification failed");
+    }
+  }, [verificationStatus]);
 
-  const { isRegistrationNumberRequired, loading, error } =
-    useOptionVisibility(id);
+  // if(error) {
+  //   return <p>Something went wrong {error.message}</p>;
+  // }
 
-  const handleClick = () => {
-    navigate(`/verify/registrationnumber/${id}`);
-  };
-
-  if (loading) {
-    return <Loading/>;
-  }
+  // if (loading) {
+  //   return <Loading/>;
+  // }
 
   return (
     <main className={styles["main-container"]}>
       <div className={styles["left-container"]}>
         <h1>What is the next step?</h1>
-        {isRegistrationNumberRequired && (
-          <>
-            <Option
-              option="Meet local requirements"
-              subtext="Your municipality wants hosts to first arrange certain things before they are allowed to rent out."
-              onClick={handleClick}
-            />
-            <hr />
-          </>
-        )}
         <Option
           option="Verify your identity"
           subtext="Tell us how you host and share a few required details."
+          onClick={() => console.log("Verify identity clicked")}
         />
         <hr></hr>
         <Option option="Connect with stripe to receive payments" />
@@ -58,9 +48,19 @@ const HostVerificationView = () => {
       <div className={styles["right-container"]}>
         {/* <Listing data={data}/> */}
       </div>
+      <hr></hr>
       <div className={styles["bottom-container"]}>
-        <hr></hr>
         <button className={styles["publish-btn"]}>Publish Listing</button>
+      </div>
+      <div>
+        <h1>Stripe Identity Verification</h1>
+        <button onClick={startVerification} disabled={stripeLoading}>
+          {stripeLoading ? "Loading..." : "Start Verification"}
+        </button>
+        {stripeErrorMessage && (
+          <p style={{ color: "red" }}>{stripeErrorMessage}</p>
+        )}
+        {verificationStatus && <p>Verification status: {verificationStatus}</p>}
       </div>
     </main>
   );
