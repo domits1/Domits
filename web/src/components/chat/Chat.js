@@ -475,7 +475,7 @@ const Chat = ({ user }) => {
                                     </article>
                                     <article className={styles.accoDisplay}>
                                         <h4>Referenced accommodation:</h4>
-                                        {accommodation && (
+                                        {accommodation === 'Accommodation not found' ? (
                                             <div className={styles.textDisplay}>
                                                 <h3>{accommodation.Title}</h3>
                                                 <p>{`${accommodation.Country}, ${accommodation.City}, ${accommodation.Street}, ${accommodation.PostalCode}`}</p>
@@ -483,6 +483,10 @@ const Chat = ({ user }) => {
                                                         onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>View
                                                     listing details
                                                 </button>
+                                            </div>
+                                        ) : ( 
+                                            <div className={styles.textDisplay}>
+                                                <h3>This accommodation is currently unavailable</h3> 
                                             </div>
                                         )}
                                     </article>

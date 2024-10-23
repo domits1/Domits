@@ -37,6 +37,19 @@
                     color: white;
                 }
             }
+            .displayItem{
+                align-items: center;
+                display: flex;
+                flex-direction: column;
+            }
+            .fullName {
+                display: inline-block;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 100%; 
+            }
+
             .displayItem:hover {
                 background-color: white;
                 color: var(--primary-color);
@@ -44,6 +57,15 @@
                 cursor: pointer;
                 div {
                     color: var(--primary-color);
+                }
+            }
+            .pendingContactItem:hover {
+                background-color: var(--primary-color);
+                color: white;
+                border: none;
+                cursor: default;
+                div {
+                    color: white;
                 }
             }
             .selectedUser{
@@ -68,6 +90,9 @@
     color: var(--primary-color);
     background-color: white;
 }
+button {
+    align-self: auto;
+}
 .verticalButtonBox {
     display: flex;
     flex-direction: column;
@@ -79,6 +104,7 @@
     flex-direction: row;
     justify-content: center;
     gap: 5%;
+    width: 100%;
 }
 .accept {
     background-color: mediumseagreen;
@@ -97,6 +123,7 @@
     color: red;
 }
 .roundButton {
+    width: 50%;
     border-radius: 50%;
     cursor: pointer;
     font-size: 1em;
@@ -120,6 +147,19 @@
     background-color: white;
     border: 1px solid var(--primary-color);
 }
+.hostButton {
+    border-radius: 0.5rem;
+    color: white;
+    background-color: #052C5A;
+    border: none;
+    padding: 0.5rem;
+    margin-top: 1.5em;
+}
+.hostButton:hover {
+    color: #052C5A;
+    background-color: white;
+    border: 1px solid #052C5A;
+}
 
 .accoDisplay{
     display: flex;
@@ -139,7 +179,9 @@
         margin: 5%;
         h3 {
             margin: 0;
+            text-align: center;
         }
+        align-items: center;
     }
 }
 
