@@ -6,7 +6,6 @@ import Instagram from '../../images/icons/Instagram.jpg'
 import linkedinIcon from '../../images/icons/LinkedIn.png';
 import instagramIcon from '../../images/icons/Instagram.jpg';
 import xIcon from '../../images/icons/x.png';
-
 import { ReactComponent as InstagramIcon } from '../../images/instagram.svg';
 import { Link } from 'react-router-dom';
 import './base.css'
@@ -23,8 +22,8 @@ const Footer = () => {
                 <div className="footer-section">
                     <h4 className='footer-headers'>Navigation</h4>
                     <ul className='footer-lists'>
-                        <li><Link to="/how-it-works" className='footer-links'>How it works</Link></li>
                         <li><Link to="/why-domits" className='footer-links'>Why Domits</Link></li>
+                        <li><Link to="/how-it-works" className='footer-links'>How it works</Link></li>
                         <li><Link to="/career" className='footer-links'>Jobs</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
                         <li><Link to="/release" className='footer-links'>Release</Link></li>

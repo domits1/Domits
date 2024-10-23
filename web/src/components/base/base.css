@@ -50,7 +50,6 @@
     margin-right: 10px;
 }
 
-/* Adjusted CSS for dropdown */
 .personalMenuDropdown {
     position: relative;
     display: inline-block;
@@ -246,7 +245,6 @@
     }
 }
 
-/* Footer styles */
 .main-footer {
     background-color: #f8f8f8;
 }
@@ -257,7 +255,6 @@
     flex-direction: row;
     width: 90%;
     justify-content: space-between;
-    padding: 20px;
 }
 
 .footer-headers {
@@ -402,5 +399,3 @@ a:hover {
     }
 
 }
-
-/* End of footer */

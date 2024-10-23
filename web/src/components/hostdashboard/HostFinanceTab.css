@@ -15,3 +15,7 @@
     gap: 0.5rem;
     flex-wrap: wrap;
 }
+.host-pc-finance{
+    display: flex;
+    width: 100%;
+}
