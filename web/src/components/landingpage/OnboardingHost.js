@@ -73,7 +73,7 @@ function OnboardingHost() {
                 if (!data.hasOwnProperty('CleaningFee')) {
                     data.CleaningFee = 1;
                 }
-
+                console.log(data)
                 setFormData(data);
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
@@ -125,8 +125,7 @@ function OnboardingHost() {
         "Electric boat": ElectricBoat,
         "Boat without license": BoatWithoutLicense
     };
-    const [formData, setFormData] = useState({
-    });
+    const [formData, setFormData] = useState({});
     const [selectedAccoType, setSelectedAccoType] = useState("");
     const [selectedBoatType, setSelectedBoatType] = useState("");
     const [selectedCamperType, setSelectedCamperType] = useState("");
@@ -185,17 +184,15 @@ function OnboardingHost() {
 
     const generateNormalAccommodationFormData = () => ({
         ...generateCommonFormData(formData, isNew),
-        Bedrooms: isNew ? 0 : formData.Bedrooms,
         PostalCode: isNew ? "" : formData.PostalCode,
         Street: isNew ? "" : formData.Street,
-        Bathrooms: isNew ? 0 : formData.Bathrooms,
-        Beds: isNew ? 0 : formData.Beds,
         GuestAccess: isNew ? "" : formData.GuestAccess,
-        GuestAmount: isNew ? 0 : formData.GuestAmount
+        Bedrooms: isNew ? 0 : formData.Bedrooms
+
     });
 
 
-    const generateCommonFormData = (existingData = {}, isNew = true) => ({
+    const generateCommonFormData = (existingData = {}, isNew) => ({
         ID: isNew ? generateUUID() : existingData.ID,
         Title: existingData.Title || "",
         Subtitle: existingData.Subtitle || "",
@@ -219,11 +216,15 @@ function OnboardingHost() {
             ExtraServices: [],
             EcoFriendly: []
         },
-        HouseRules: existingData.HouseRules || {
-            AllowSmoking: false,
-            AllowPets: false,
-            AllowParties: false,
-        },
+            // HouseRules: existingData.HouseRules  {
+            //     AllowSmoking: false,
+            //     AllowPets: false,
+            //     AllowParties: false,
+            // },
+            AllowSmoking: existingData.AllowSmoking || false,
+            AllowPets: existingData.AllowPets || false,
+            AllowParties: existingData.AllowParties || false,
+
         CheckIn: existingData.CheckIn || {
             From: "",
             Til: "",
@@ -246,14 +247,14 @@ function OnboardingHost() {
         CleaningFee: existingData.CleaningFee || 0,
         OwnerId: existingData.OwnerId || userId,
         GuestAmount: isNew ? 0 : formData.GuestAmount,
+        Bathrooms: isNew ? 0 : formData.Bathrooms,
+        Beds: isNew ? 0 : formData.Beds,
     });
 
     const generateBoatFormData = () => ({
         ...generateCommonFormData(formData, isNew),
         Harbour: isNew ? "" : formData.Harbour,
         Cabins: isNew ? 0 : formData.Cabins,
-        Bathrooms: isNew ? 0 : formData.Bathrooms,
-        Beds: isNew ? 0 : formData.Beds,
         isPro: isNew ? false : formData.isPro,
         Manufacturer: isNew ? "" : formData.Manufacturer,
         Model: isNew ? "" : formData.Model,
@@ -268,7 +269,6 @@ function OnboardingHost() {
         Renovated: isNew ? "" : formData.Renovated,
         Features: {
             ...generateCommonFormData().Features,
-            Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
             NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
             LeisureActivities: isNew ? [] : formData.Features?.LeisureActivities || [],
             WaterSports: isNew ? [] : formData.Features?.WaterSports || [],
@@ -279,8 +279,6 @@ function OnboardingHost() {
         Bedrooms: isNew ? 0 : formData.Bedrooms,
         PostalCode: isNew ? "" : formData.PostalCode,
         Street: isNew ? "" : formData.Street,
-        Bathrooms: isNew ? 0 : formData.Bathrooms,
-        Beds: isNew ? 0 : formData.Beds,
         LicensePlate: isNew ? "" : formData.LicensePlate,
         Category: isNew ? "" : formData.Category,
         CamperBrand: isNew ? "" : formData.CamperBrand,
@@ -298,7 +296,6 @@ function OnboardingHost() {
         Features: {
             ...generateCommonFormData().Features,
             Vehicle: isNew ? [] : formData.Features?.Vehicle || [],
-            Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
             NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
             LeisureActivities: isNew ? [] : formData.Features?.LeisureActivities || [],
             WaterSports: isNew ? [] : formData.Features?.WaterSports || [],
@@ -490,17 +487,17 @@ function OnboardingHost() {
         const getInitialFormData = (accoType) => {
             switch (accoType) {
                 case 'Boat':
-                    setFormData(generateBoatFormData);
+                    setFormData(generateBoatFormData());
                     setTypeAmenities(boatAmenities);
-                    return;
+                    break;
                 case 'Camper':
-                   setFormData(generateCamperFormData);
+                   setFormData(generateCamperFormData());
                     setTypeAmenities(camperAmenities);
-                   return;
+                   break;
                 default:
-                    setFormData(generateNormalAccommodationFormData);
+                    setFormData(generateNormalAccommodationFormData());
                     setTypeAmenities(allAmenities);
-                    return;
+                    break;
             }
         };
         getInitialFormData(selectedAccoType);
@@ -658,16 +655,13 @@ function OnboardingHost() {
     }
 
     const handleAmenities = (category, amenity, checked) => {
-        setFormData(prevFormData => {
-            const updatedFeatures = { ...prevFormData.Features };
-
-            if (amenity === 'Cleaning service (add service fee manually)') {
-                resetCleaningFee();
-            }
+        setFormData((prevData) => {
+            const updatedFeatures = { ...prevData.Features };
 
             if (!Array.isArray(updatedFeatures[category])) {
                 updatedFeatures[category] = [];
             }
+
             if (checked) {
                 updatedFeatures[category] = [...updatedFeatures[category], amenity];
             } else {
@@ -675,11 +669,12 @@ function OnboardingHost() {
             }
 
             return {
-                ...prevFormData,
+                ...prevData,
                 Features: updatedFeatures
             };
         });
     };
+
     const handleCheckBoxChange = (event) => {
         const { name, type, checked, value } = event.target;
         setFormData((prevData) => ({
@@ -1218,7 +1213,7 @@ function OnboardingHost() {
                                     <div className="amount-btn-box">
                                         <button className="round-button" onClick={() => decrementAmount('Cabins')}>-
                                         </button>
-                                        {formData.Cabins}
+                                        {formData.Cabins || 0}
                                         <button
                                         className="round-button"
                                         onClick={() => incrementAmount('Cabins')}
@@ -1311,19 +1306,20 @@ function OnboardingHost() {
                                         borderRadius: '2rem'
                                     }}>
                                         <h2 className="amenity-header">{separatePascalCase(category)}</h2>
-                                        <section className="check-box">
-                                            {amenities.map((amenity) => (
-                                                <label key={amenity}>
-                                                    <input
-                                                        type="checkbox"
-                                                        name={amenity}
-                                                        onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
-                                                        checked={featuresArray.includes(amenity)}
-                                                    />
-                                                    {separatePascalCase(amenity)}
-                                                </label>
-                                            ))}
-                                        </section>
+                                        <div key={category}>
+                                            <section className="check-box">
+                                                {amenities.map((amenity) => (
+                                                    <label key={amenity}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={featuresArray.includes(amenity)}
+                                                            onChange={(e) => handleAmenities(category, amenity, e.target.checked)}
+                                                        />
+                                                        {amenity}
+                                                    </label>
+                                                ))}
+                                            </section>
+                                        </div>
                                     </div>
                                 );
                             })}
@@ -1347,38 +1343,38 @@ function OnboardingHost() {
                             <h2 className="onboardingSectionTitle">House rules</h2>
                             <div className="houseRulesContainer">
                             <div className="toggle-container">
-                            <label className="toggle">
-                                <span className="toggle-label">Allow smoking</span>
-                                <input
-                                    className="toggle-checkbox"
-                                    type="checkbox"
-                                    checked={formData.AllowSmoking}
-                                    onChange={(e) => handleHouseRulesChange('AllowSmoking', e.target.checked)}
-                                />
-                                <div className="toggle-switch"></div>
-                            </label>
+                                <label className="toggle">
+                                    <span className="toggle-label">Allow smoking</span>
+                                    <input
+                                        className="toggle-checkbox"
+                                        type="checkbox"
+                                        checked={formData.AllowSmoking}
+                                        onChange={(e) => handleHouseRulesChange('AllowSmoking', e.target.checked)}
+                                    />
+                                    <div className="toggle-switch"></div>
+                                </label>
 
-                            <label className="toggle">
-                                <span className="toggle-label">Allow pets</span>
-                                <input
-                                    className="toggle-checkbox"
-                                    type="checkbox"
-                                    checked={formData.AllowPets}
-                                    onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
-                                />
-                                <div className="toggle-switch"></div>
-                            </label>
+                                <label className="toggle">
+                                    <span className="toggle-label">Allow pets</span>
+                                    <input
+                                        className="toggle-checkbox"
+                                        type="checkbox"
+                                        checked={formData.AllowPets}
+                                        onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
+                                    />
+                                    <div className="toggle-switch"></div>
+                                </label>
 
-                            <label className="toggle">
-                                <span className="toggle-label">Allow parties/events</span>
-                                <input
-                                    className="toggle-checkbox"
-                                    type="checkbox"
-                                    checked={formData.AllowParties}
-                                    onChange={(e) => handleHouseRulesChange('AllowParties', e.target.checked)}
-                                />
-                                <div className="toggle-switch"></div>
-                            </label>
+                                <label className="toggle">
+                                    <span className="toggle-label">Allow parties/events</span>
+                                    <input
+                                        className="toggle-checkbox"
+                                        type="checkbox"
+                                        checked={formData.AllowParties}
+                                        onChange={(e) => handleHouseRulesChange('AllowParties', e.target.checked)}
+                                    />
+                                    <div className="toggle-switch"></div>
+                                </label>
                         </div>
                 <hr/>
                         <label className="Check">
