@@ -264,7 +264,7 @@ function OnboardingHost() {
         YOC: isNew ? "" : formData.YOC,
         Renovated: isNew ? "" : formData.Renovated,
         Features: {
-            ...generateCommonFormData().Features,
+            ...generateCommonFormData(formData).Features,
             Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
             NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
             LeisureActivities: isNew ? [] : formData.Features?.LeisureActivities || [],
@@ -293,7 +293,7 @@ function OnboardingHost() {
         FWD: isNew ? false : formData.FWD,
         SelfBuilt: isNew ? false : formData.SelfBuilt,
         Features: {
-            ...generateCommonFormData().Features,
+            ...generateCommonFormData(formData).Features,
             Vehicle: isNew ? [] : formData.Features?.Vehicle || [],
             Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
             NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
@@ -491,9 +491,9 @@ function OnboardingHost() {
                     setTypeAmenities(boatAmenities);
                     return;
                 case 'Camper':
-                   setFormData(generateCamperFormData);
+                    setFormData(generateCamperFormData);
                     setTypeAmenities(camperAmenities);
-                   return;
+                    return;
                 default:
                     setFormData(generateNormalAccommodationFormData);
                     setTypeAmenities(allAmenities);
