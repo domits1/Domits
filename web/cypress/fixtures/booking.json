@@ -2,7 +2,7 @@
     {
       "ID": "1",
       "Title": "Cozy Apartment",
-      "Status": "Accepted",
+      "Status": "Accept",
       "Price": "100.00",
       "StartDate": "2024-10-01",
       "EndDate": "2024-10-05",
@@ -12,7 +12,7 @@
     {
       "ID": "2",
       "Title": "Beach House",
-      "Status": "Cancelled",
+      "Status": "Failed",
       "Price": "250.00",
       "StartDate": "2024-11-01",
       "EndDate": "2024-11-10",
