@@ -43,6 +43,27 @@ h2{
   grid-gap: 2rem;
 }
 
+.listing-calendar {
+  margin-left: 10%;
+}
+
+.staying_nights {
+  margin-left: 2%;
+  margin-top: 1%;
+}
+
+.stayMinMaxBox {
+    display: flex;
+    flex-direction: column;
+}
+
+.stayMinMaxField {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 768px) {
   .amenity-groups {
     grid-template-columns: 1fr;
