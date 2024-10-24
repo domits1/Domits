@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, {useState, useMemo, useEffect} from "react";
 import {useLocation, useNavigate} from 'react-router-dom';
 import spinner from "../../images/spinnner.gif";
 import info from "../../images/icons/info.png";
@@ -6,7 +6,7 @@ import './onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
-import { Storage, Auth } from "aws-amplify"
+import {Storage, Auth} from "aws-amplify"
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import Apartment from "../../images/icons/flat.png";
 import House from "../../images/icons/house.png";
@@ -30,12 +30,13 @@ import RegistrationNumber from "../hostverification/RegistrationNumberView";
 
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
+
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
     const [isNew, setIsNew] = useState(true);
     const [oldAccoID, setOldAccoID] = useState('');
-    const { search } = useLocation();
+    const {search} = useLocation();
     const searchParams = new URLSearchParams(search);
     const accommodationID = searchParams.get('ID');
     const [location, setLocation] = useState({
@@ -43,7 +44,7 @@ function OnboardingHost() {
         longitude: 0,
     });
     const [hasAccoType, setHasAccoType] = useState(false);
-    const [hasGuestAccess, setHasGuestAccess] =useState(false);
+    const [hasGuestAccess, setHasGuestAccess] = useState(false);
     const [isDeclarationChecked, setDeclarationChecked] = useState(false);
     const [isTermsChecked, setTermsChecked] = useState(false);
     const [hasAddress, setHasAddress] = useState(false);
@@ -60,7 +61,7 @@ function OnboardingHost() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ ID: accommodationID }),
+                    body: JSON.stringify({ID: accommodationID}),
                 });
 
                 if (!response.ok) {
@@ -89,6 +90,7 @@ function OnboardingHost() {
             setIsLoading(false)
         }
     }, [isNew, accommodationID]);
+
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -167,7 +169,7 @@ function OnboardingHost() {
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
                     },
-                    body: JSON.stringify({ sub: hostID }),
+                    body: JSON.stringify({sub: hostID}),
                 });
                 const data = await response.json();
                 if (data.hasStripeAccount) {
@@ -243,6 +245,10 @@ function OnboardingHost() {
         CleaningFee: existingData.CleaningFee || 0,
         OwnerId: existingData.OwnerId || userId,
         GuestAmount: isNew ? 0 : formData.GuestAmount,
+        MinimumStayArrival: isNew ? 0 : formData.MinimumStayArrival,
+        MinimumStayThrough: isNew ? 0 : formData.MinimumStayThrough,
+        MaximumStayArrival: isNew ? 0 : formData.MaximumStayArrival,
+        MaximumStayThrough: isNew ? 0 : formData.MaximumStayThrough,
     });
 
     const generateBoatFormData = () => ({
@@ -704,7 +710,7 @@ function OnboardingHost() {
     };
 
     const handleInputChange = (event) => {
-        const { name, type, checked, value } = event.target;
+        const {name, type, checked, value} = event.target;
 
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -789,9 +795,9 @@ function OnboardingHost() {
 
     const uploadImagesInDifferentSizes = async (file, userId, accommodationId, index) => {
         const sizes = {
-            mobile: { maxWidthOrHeight: 300, maxSizeMB: 0.1 },  // ~100kB
-            homepage: { maxWidthOrHeight: 800, maxSizeMB: 0.2 },  // ~200kB
-            detail: { maxWidthOrHeight: 1200, maxSizeMB: 0.5 }  // ~500kB
+            mobile: {maxWidthOrHeight: 300, maxSizeMB: 0.1},  // ~100kB
+            homepage: {maxWidthOrHeight: 800, maxSizeMB: 0.2},  // ~200kB
+            detail: {maxWidthOrHeight: 1200, maxSizeMB: 0.5}  // ~500kB
         };
 
         for (const [key, sizeOptions] of Object.entries(sizes)) {
@@ -808,7 +814,7 @@ function OnboardingHost() {
                     region: region,
                     contentType: 'image/webp',
                     level: 'public',
-                    customPrefix: { public: '' }
+                    customPrefix: {public: ''}
                 });
             } catch (error) {
                 console.error(`Error uploading ${key} image:`, error);
@@ -829,7 +835,7 @@ function OnboardingHost() {
                     bucket: S3_BUCKET_NAME,
                     region: region,
                     level: 'public',
-                    customPrefix: { public: '' }
+                    customPrefix: {public: ''}
                 });
                 console.log(`Deleted ${key} successfully`);
             } catch (err) {
@@ -841,7 +847,7 @@ function OnboardingHost() {
         try {
             setIsLoading(true);
             const AccoID = formData.ID;
-            const updatedFormData = { ...formData };
+            const updatedFormData = {...formData};
 
             for (let i = 0; i < updatedIndex.length; i++) {
                 const index = updatedIndex[i];
@@ -883,7 +889,7 @@ function OnboardingHost() {
         try {
             setIsLoading(true);
             const AccoID = formData.ID;
-            const updatedFormData = { ...formData };
+            const updatedFormData = {...formData};
 
             // Upload images and generate URLs
             for (let i = 0; i < imageFiles.length; i++) {
@@ -924,7 +930,7 @@ function OnboardingHost() {
     };
 
 
-    const [imageFiles, setImageFiles] = useState(Array.from({ length: 5 }, () => null));
+    const [imageFiles, setImageFiles] = useState(Array.from({length: 5}, () => null));
 
     const handleFileChange = async (file, index) => {
         if (file) {
@@ -934,7 +940,7 @@ function OnboardingHost() {
 
             await uploadImagesInDifferentSizes(file, userId, formData.ID, index);
 
-            const updatedFormData = { ...formData };
+            const updatedFormData = {...formData};
             updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'mobile');
             updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'homepage');
             updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'detail');
@@ -947,7 +953,7 @@ function OnboardingHost() {
         newImageFiles[index] = null;
         setImageFiles(newImageFiles);
 
-        const updatedFormData = { ...formData };
+        const updatedFormData = {...formData};
         const key = `Image-${index + 1}`;
         updatedFormData.Images[key] = "";
         setFormData(updatedFormData);
@@ -998,16 +1004,19 @@ function OnboardingHost() {
                                         className={`option ${selectedAccoType === option ? 'selected' : ''}`}
                                         onClick={() => changeAccoType(option)}
                                     >
-                                        <img className="accommodation-icon" src={accommodationIcons[option]} alt={option}/>
+                                        <img className="accommodation-icon" src={accommodationIcons[option]}
+                                             alt={option}/>
                                         {option}
                                     </div>
                                 ))}
                             </section>
                             <nav className="onboarding-button-box">
-                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard")} style={{opacity: "75%"}}>
+                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard")}
+                                        style={{opacity: "75%"}}>
                                     Go to dashboard
                                 </button>
-                                <button className={!hasAccoType ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
+                                <button className={!hasAccoType ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                        disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
                                     Confirm and proceed
                                 </button>
                             </nav>
@@ -1092,7 +1101,8 @@ function OnboardingHost() {
                             {isNew ? `Where can we find your ${selectedAccoType === 'Boat' || selectedAccoType === 'Camper' ? selectedAccoType.toLowerCase() : 'accommodation'}?`
                                 : `Change the location of your ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}`}
                         </h2>
-                        <p className="onboardingSectionSubtitle">We only share your address with guests after they have booked</p>
+                        <p className="onboardingSectionSubtitle">We only share your address with guests after they have
+                            booked</p>
 
                         <section className="acco-location">
                             <section className="location-left">
@@ -1101,10 +1111,10 @@ function OnboardingHost() {
                                 </label>
 
                                 <Select
-                                    options={options.map(country => ({ value: country, label: country }))}
+                                    options={options.map(country => ({value: country, label: country}))}
                                     name="Country"
                                     className="locationText"
-                                    value={{ value: formData.Country, label: formData.Country || ''}}
+                                    value={{value: formData.Country, label: formData.Country || ''}}
                                     onChange={handleCountryChange}
                                     id="country"
                                     required={true}
@@ -2021,15 +2031,75 @@ function OnboardingHost() {
                         <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within
                             your dashboard</p>
                         <section className="listing-calendar">
-                            <CalendarComponent passedProp={formData} isNew={true} updateDates={updateDates}/>
+                            <CalendarComponent passedProp={formData}
+                                               isNew={true}
+                                               updateDates={updateDates}
+                            />
+                            <div className="staying_nights">
+                                <div className="stayMinMaxBox">
+                                    <div className="stayMinMaxField">
+                                        <label>Minimum Stay (Arrival):</label>
+                                        <button className="round-button"
+                                                onClick={() => decrementAmount('MinimumStayArrival')}>-
+                                        </button>
+                                        {formData.MinimumStayArrival}
+                                        <button
+                                            className="round-button"
+                                            onClick={() => incrementAmount('MinimumStayArrival')}
+                                            disabled={formData.MinimumStayArrival >= 30} // Set your max value here
+                                        >+
+                                        </button>
+                                    </div>
+                                    <div className="stayMinMaxField">
+                                        <label>Minimum Stay (Through):</label>
+                                        <button className="round-button"
+                                                onClick={() => decrementAmount('MinimumStayThrough')}>-
+                                        </button>
+                                        {formData.MinimumStayThrough}
+                                        <button
+                                            className="round-button"
+                                            onClick={() => incrementAmount('MinimumStayThrough')}
+                                            disabled={formData.MinimumStayThrough >= 30} // Set your max value here
+                                        >+
+                                        </button>
+                                    </div>
+                                    <div className="stayMinMaxField">
+                                        <label>Maximum Stay (Arrival):</label>
+                                        <button className="round-button"
+                                                onClick={() => decrementAmount('MaximumStayArrival')}>-
+                                        </button>
+                                        {formData.MaximumStayArrival}
+                                        <button
+                                            className="round-button"
+                                            onClick={() => incrementAmount('MaximumStayArrival')}
+                                            disabled={formData.MaximumStayArrival >= 365} // Example: max 1 year
+                                        >+
+                                        </button>
+                                    </div>
+                                    <div className="stayMinMaxField">
+                                        <label>Maximum Stay (Through):</label>
+                                        <button className="round-button"
+                                                onClick={() => decrementAmount('MaximumStayThrough')}>-
+                                        </button>
+                                        {formData.MaximumStayThrough}
+                                        <button
+                                            className="round-button"
+                                            onClick={() => incrementAmount('MaximumStayThrough')}
+                                            disabled={formData.MaximumStayThrough >= 365} // Example: max 1 year
+                                        >+
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </section>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
                                 Go back
                             </button>
-                            <button className='onboarding-button'
-                                    onClick={() => pageUpdater(page + 1)}>
+                            <button className={!formData.DateRanges.length ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                    onClick={() => pageUpdater(page + 1)}
+                                    disabled={!formData.DateRanges.length}>
                                 Confirm and proceed
                             </button>
                         </nav>
@@ -2130,7 +2200,7 @@ function OnboardingHost() {
                                 <td>City:</td>
                                 <td>{formData.City}</td>
                             </tr>
-                            { selectedAccoType === 'Boat' ? (
+                            {selectedAccoType === 'Boat' ? (
                                 <tr>
                                     <td>Harbour:</td>
                                     <td>{formData.Harbour}</td>
@@ -2213,7 +2283,7 @@ function OnboardingHost() {
                                             <td>Year of construction:</td>
                                             <td>{DateFormatterDD_MM_YYYY(formData.YOC)}</td>
                                         </tr>
-                                        { formData.Renovated && (
+                                        {formData.Renovated && (
                                             <tr>
                                                 <td>Renovated on:</td>
                                                 <td>{DateFormatterDD_MM_YYYY(formData.Renovated)}</td>
@@ -2291,7 +2361,7 @@ function OnboardingHost() {
                                 </>
                             )
                         }
-                        { !(Object.values(formData.Features).every(arr => arr.length === 0)) &&
+                        {!(Object.values(formData.Features).every(arr => arr.length === 0)) &&
                             <>
                                 <th>
                                     <h3>Features:</h3>
@@ -2397,7 +2467,8 @@ function OnboardingHost() {
                             <p className="onboardingSectionSubtitle">It may take a while before your accommodation is
                                 verified</p>
                             <div className='button-box-last'>
-                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
+                                <button className='onboarding-button'
+                                        onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
                                 </button>
                                 <button className='onboarding-button' onClick={() => navigate("/hostdashboard")}>Go to
                                     dashboard
