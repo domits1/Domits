@@ -8,9 +8,11 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
     const [user, setUser] = useState(null);
     const [FullName, setFullName] = useState(null);
     const [hostName, setHostName] = useState(null);
-
+    const [isLoading, setIsLoading] = useState(true);
+    
     useEffect(() => {
         const fetchUserInfo = async () => {
+            setIsLoading(true);
             try {
                 const requestData = {
                     OwnerId: item.userId
@@ -37,6 +39,8 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
                 setUser(parsedData.Attributes[2].Value);
             } catch (error) {
                 console.error('Error fetching guest info:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
 
@@ -77,33 +81,36 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
                 console.error('Error fetching host info:', error);
             }
         };
+        if (type !== 'My contacts') {
+            fetchHostName();
+        }
         fetchHostName();
     }, [item]);
 
-    if (user) {
-        if (type === 'My contacts') {
-            return (
-                <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`}
-                    onClick={() => selectUser(index, FullName)}>
-                    <div>{FullName}</div>
-                    {unreadMessages[item.userId] > 0 && (
-                        <div>
-                            {unreadMessages[item.userId] > 9 ? '9+' : unreadMessages[item.userId]} new messages
-                        </div>
-                    )}
-                </div>
-            );
-        } else {
-            return (
-                <div className={styles.displayItem} key={index}>
-                    {hostName}
-                </div>
-            );
-        }
-    } else {
+    if (isLoading) {
         return (
             <div>
                 <img src={spinner} alt='spinner' style={{maxWidth: '50%', maxHeight: '50%'}}/>
+            </div>
+        );
+    }
+    
+    if (type === 'My contacts') {
+        return (
+            <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`}
+                onClick={() => selectUser(index, FullName)}>
+                <div className={styles.fullName}>{FullName}</div>
+                {unreadMessages[item.userId] > 0 && (
+                    <div>
+                        {unreadMessages[item.userId] > 9 ? '9+' : unreadMessages[item.userId]} new messages
+                    </div>
+                )}
+            </div>
+        );
+    } else {
+        return (
+            <div className={styles.displayItem}>
+                {hostName}
             </div>
         );
     }

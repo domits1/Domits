@@ -176,9 +176,11 @@
     display: flex;
     flex-direction: column;
     margin: 5%;
+    align-items: center;
 }
 .accoDisplay .textDisplay h3 {
     margin: 0;
+    text-align: center;
 }
 
 .chatContainer {

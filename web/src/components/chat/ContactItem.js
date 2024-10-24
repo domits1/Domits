@@ -6,8 +6,11 @@ import spinner from "../../images/spinnner.gif";
 const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selectedUser, unreadMessages, setPendingRequest, setContactModalOpen }) => {
     const [user, setUser] = useState(null);
     const [FullName, setFullName] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
+
     useEffect(() => {
         const fetchUserInfo = async () => {
+            setIsLoading(true);
             try {
                 const requestData = {
                     OwnerId: item.userId
@@ -34,13 +37,27 @@ const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selec
                 setUser(parsedData.Attributes[2].Value);                
             } catch (error) {
                 console.error('Error fetching guest info:', error);
+            } finally {
+                setIsLoading(false);
             }
         };
         fetchUserInfo();
     }, [item]);
 
-    if (user) {
-        if (type === 'My contacts') {
+    if (isLoading) {
+        return (
+            <div>
+                <img src={spinner} alt='spinner' style={{maxWidth: '50%', maxHeight: '50%'}}/>
+            </div>
+        );
+    }
+
+    if (!user) {
+        return null; 
+    }
+
+    switch (type) {
+        case 'My contacts':
             return (
                 <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`} onClick={() => selectUser(index, FullName)}>
                     <div className={styles.fullName}>{FullName}</div>
@@ -51,9 +68,9 @@ const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selec
                     )}
                 </div>
             );
-        } else if (type === 'Pending contacts'){
+        case 'Pending contacts':
             return (
-                <div className={`${styles.displayItem} ${styles.pendingContactItem}`} key={index}>
+                <div className={`${styles.displayItem} ${styles.pendingContactItem}`}>
                     {FullName}
                     <div className={styles.horizontalButtonBox}>
                         <button className={`${styles.accept} ${styles.roundButton}`}
@@ -68,17 +85,9 @@ const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selec
                     </div>
                 </div>
             );
-        } else {
-            return (
-                console.log('reached')
-            )
-        }
-    } else {
-        return (
-            <div>
-                <img src={spinner} alt='spinner' style={{maxWidth: '50%', maxHeight: '50%'}}/>
-            </div>
-        );
+        default:
+            console.log('Unhandled type:', type);
+            return null;
     }
 };
 
