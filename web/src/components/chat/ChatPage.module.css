@@ -40,6 +40,18 @@
 .chat__body .contactList .displayBody .displayItem div {
     color: white;
 }
+.chat__body .contactList .displayBody .displayItem {
+    align-items: center;
+    display: flex;
+    flex-direction: column;
+}
+.chat__body .contactList .displayBody .fullName {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
 .chat__body .contactList .displayBody .displayItem:hover {
     background-color: white;
     color: var(--primary-color);
@@ -48,6 +60,15 @@
 }
 .chat__body .contactList .displayBody .displayItem:hover div {
     color: var(--primary-color);
+}
+.chat__body .contactList .displayBody .pendingContactItem:hover {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: default;
+}
+.chat__body .contactList .displayBody .pendingContactItem:hover div {
+    color: white;
 }
 .chat__body .contactList .displayBody .selectedUser {
     color: var(--primary-color);
@@ -68,6 +89,9 @@
     color: var(--primary-color);
     background-color: white;
 }
+.chat__body button {
+    align-self: auto;
+}
 .chat__body .verticalButtonBox {
     display: flex;
     flex-direction: column;
@@ -79,6 +103,7 @@
     flex-direction: row;
     justify-content: center;
     gap: 5%;
+    width: 100%;
 }
 .chat__body .accept {
     background-color: mediumseagreen;
@@ -119,6 +144,19 @@
     color: var(--primary-color);
     background-color: white;
     border: 1px solid var(--primary-color);
+}
+.hostButton {
+    border-radius: 0.5rem;
+    color: white;
+    background-color: #052C5A;
+    border: none;
+    padding: 0.5rem;
+    margin-top: 1.5em;
+}
+.hostButton:hover {
+    color: #052C5A;
+    background-color: white;
+    border: 1px solid #052C5A;
 }
 
 .accoDisplay {
@@ -190,7 +228,8 @@
     .chat__body .contactList .displayBody .displayItem {
         padding: 0.25rem;
     }
-    .chat__body .verticalButtonBox, .chat__body .horizontalButtonBox {
+    .chat__body .verticalButtonBox,
+    .chat__body .horizontalButtonBox {
         gap: 2%;
     }
     .accoDisplay {
