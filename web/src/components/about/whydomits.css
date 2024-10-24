@@ -34,7 +34,6 @@
 
 .why-domits__cards-container {
     min-height: 20rem;
-    width: auto;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -59,6 +58,64 @@
     font-size: 1.25rem;
     font-weight: 400;
     color: white;
+}
+
+.why-domits-bar {
+    background-color: #D9D9D9;
+    align-items: center;
+    height: 5vh;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 10%;
+}
+
+.why-domits__flex-container.guest,
+.why-domits__flex-container.host,
+.why-domits__flex-container.dev,
+.why-domits__flex-container.growth {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 15px;
+    gap: 20px;
+}
+
+.why-domits__section.guest,
+.why-domits__section.host,
+.why-domits__section.dev,
+.why-domits__section.growth {
+    flex: 1 1 calc(50% - 20px);
+    box-sizing: border-box;
+    padding: 15px;
+    max-width: calc(50% - 20px);
+}
+
+.why-domits__flex-container.host,
+.why-domits__flex-container.growth {
+    background-color: #D9D9D9;
+}
+
+.navigation-arrows {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background-color: #ffffff;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+}
+
+.navigation-arrows {
+    text-decoration: none;
+    font-size: 1.25rem;
+    color: #003366;
+    font-weight: bold;
+}
+
+.navigation-arrows:hover {
+    color: #0055aa;
+    text-decoration: underline;
 }
 
 @media (max-width: 1024px) {
@@ -86,9 +143,6 @@
 @media (max-width: 955px) {
     .why-domits__cards-container {
         min-height: 20rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         gap: 5.5rem;
         flex-wrap: wrap;
         margin-bottom: 5rem;
@@ -98,18 +152,11 @@
         width: 70%;
     }
 
-    .why-domits__h3 {
-        text-align: center;
-    }
-
-    .why-domits__h4 {
-        text-align: center;
-    }
-
+    .why-domits__h3,
+    .why-domits__h4,
     .why-domits__p {
         text-align: center;
     }
-
 }
 
 @media (max-width: 768px) {
@@ -144,6 +191,13 @@
     .highlightText {
         font-weight: 500;
     }
+
+    .why-domits__section.guest,
+    .why-domits__section.host,
+    .why-domits__section.dev,
+    .why-domits__section.growth {
+        flex: 1 1 100%;
+    }
 }
 
 @media (max-width: 480px) {
@@ -164,7 +218,6 @@
     }
 
     .why-domits__card {
-        width: 100%;
         min-height: 5rem;
     }
 
