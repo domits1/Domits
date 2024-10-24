@@ -54,32 +54,59 @@ const Accommodations = ({ searchResults }) => {
   }, []);
 
   const formatData = (items) => {
-    return items.map((item) => ({
-      image: item.image || item.Images['homepage'] || item.Images['image1'],
-      title: item.Title,
-      city: item.City,
-      country: item.Country,
-      details: item.Description,
-      price: `€${item.Rent} per night`,
-      id: item.ID,
-      beds: `${item.Beds} Bed(s)`,
-      bedrooms: `${item.AccommodationType === 'Boat' ? item.Cabins : item.Bedrooms} ${item.AccommodationType === 'Boat' ? 'Cabins' : 'Bedrooms'}`,
-      persons: `${item.GuestAmount} ${item.GuestAmount > 1 ? 'People' : 'Person'}`,
-    }));
+    return items.map((item) => {
+      const isBoatOrCamper = item.AccommodationType === 'Boat' || item.AccommodationType === 'Camper';
+      const priceLabel = isBoatOrCamper ? 'per day' : 'per night';
+
+      return {
+        image: item.image || item.Images['homepage'] || item.Images['image1'],
+        title: item.Title,
+        city: item.City,
+        country: item.Country,
+        details: item.Description,
+        price: `€${item.Rent} ${priceLabel}`,
+        id: item.ID,
+        beds: `${item.Beds} Bed(s)`,
+        bedrooms: `${item.AccommodationType === 'Boat' ? item.Cabins : item.Bedrooms} ${item.AccommodationType === 'Boat' ? 'Cabins' : 'Bedrooms'}`,
+        persons: `${item.GuestAmount} ${item.GuestAmount > 1 ? 'People' : 'Person'}`,
+      };
+    });
   };
 
   const populateAccoListWithImages = async (data) => {
     const formattedData = await Promise.all(
-      data.map(async (item) => {
-        const homepageImageURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.jpg`;
-        return {
-          ...item,
-          image: homepageImageURL || item.Images['image1'], // Eerst homepage URL, dan fallback naar een andere URL
-        };
-      })
+        data.map(async (item) => {
+
+          const homepageWebpURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.webp`;
+          const homepageJpegURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.jpg`;
+
+          const imageExists = async (url) => {
+            try {
+              const response = await fetch(url, { method: 'HEAD' });
+              return response.ok;
+            } catch (error) {
+              console.error('Error checking image URL:', error);
+              return false;
+            }
+          };
+
+          //check for webp of jpg
+          const imageUrl = (await imageExists(homepageWebpURL))
+              ? homepageWebpURL
+              : (await imageExists(homepageJpegURL))
+                  ? homepageJpegURL
+                  : item.Images['image1'];
+
+          return {
+            ...item,
+            image: imageUrl,
+          };
+        })
     );
+
     setAccolist(formatData(formattedData));
   };
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -91,7 +118,6 @@ const Accommodations = ({ searchResults }) => {
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
 
-        // Vul de data met de juiste homepage-afbeeldingen
         await populateAccoListWithImages(data);
       } catch (error) {
         console.error('Error fetching or processing data:', error);
@@ -158,6 +184,11 @@ const Accommodations = ({ searchResults }) => {
         <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
           Next &gt;
         </button>
+      </div>
+      <div className="why-domits-button">
+        <a href="/why-domits" className="why-domits-link">
+          Why Domits?
+        </a>
       </div>
     </div>
   );

@@ -1,21 +1,21 @@
 // import '../support/commands';
-//
+
 // beforeEach(() => {
 //     cy.viewport(1920, 1080);
 //     cy.loginAsHost();
 //     cy.visit('https://acceptance.domits.com/hostdashboard/distribution/', { failOnStatusCode: false });
 //     cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard/distribution/');
 // });
-//
+
 // describe.skip('Visit Web Host Distribution', () => {
 //         it('should go to distribution section', () => {
 //             cy.get('.dashboardSection > :nth-child(8)').click();
-//
-//             cy.url().should('eq', 'http://localhost:3000/hostdashboard/distribution');
+
+//             cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard/distribution/');
 //         });
 //     }
 // );
-//
+
 // describe('Host Distribution - Add Channel Button', () => {
 //     it('should add a new channel', () => {
 //         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
@@ -34,16 +34,16 @@
 //         cy.get('.delete').click();
 //         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
 //     });
-//
+
 //     it('should close and cancel adding a new channel', () => {
 //         cy.get('.addChannelButton').click();
 //         cy.get('.addChannelButtonMenuContent').should('be.visible');
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-header > div > div > div > div.addCancelButtonContainer > button.addChannelButtonMenuButton.Cancel').click();
 //         cy.get('.addChannelButtonMenuContent').should('not.be.visible');
 //     });
-//
+
 // });
-//
+
 // describe('Host Distribution - Three dots Button', () => {
 //     it('should be able to delete an channel', () => {
 //         let initialRowCount;
@@ -71,7 +71,7 @@
 //         cy.get('.delete').click();
 //         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
 //     });
-//
+
 //     it('should be able to save changes', () => {
 //         let initialRowCount;
 //         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
@@ -87,7 +87,7 @@
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-header > div > div > div > div.addCancelButtonContainer > button.addChannelButtonMenuButton.Add').click();
 //         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
 //         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
-//
+
 //         cy.get('.host-dist-box-container').should('be.visible');
 //         cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
 //             initialRowCount = $rows.length;
@@ -105,7 +105,7 @@
 //             cy.get('.threeDotsMenuContent').should('be.visible');
 //             cy.get('.threeDotsMenuContent > :nth-child(2)').click();
 //             cy.wait('@editChannel').its('response.statusCode').should('eq', 200);
-//
+
 //             cy.get(':nth-child(1) > .host-dist-box-row > .threeDotsButton').should('be.visible').click();
 //             cy.get('.threeDotsMenuContent').should('be.visible');
 //             cy.get('.delete').click();
@@ -113,7 +113,7 @@
 //         });
 //     });
 // });
-//
+
 // describe('Host Distribution - Manage Channel Button', () => {
 //     it('should add an item to the list and close the menu', () => {
 //         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
@@ -127,7 +127,7 @@
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-header > div > div > div > div.addCancelButtonContainer > button.addChannelButtonMenuButton.Add').click();
 //         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
 //         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > .channelManageButton').should('be.visible').click();
 //         cy.get('.channelManageButtonContainer > :nth-child(1)').should('be.visible').click();
 //         cy.get('.addAccommodationsViewContainer').should('be.visible');
@@ -158,13 +158,13 @@
 //             .find('tr')
 //             .should('have.length.greaterThan', 0);
 //         cy.get('.closeRemoveViewButton').click();
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > .threeDotsButton').should('be.visible').click();
 //         cy.get('.threeDotsMenuContent').should('be.visible');
 //         cy.get('.delete').click();
 //         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
 //     });
-//
+
 //     it('should remove an item from the list and close the menu', () => {
 //         let initialRowCount = 0;
 //         let newAddRowCount = 0;
@@ -180,9 +180,9 @@
 //         cy.get('.channelAPIKey').type('123456789');
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-header > div > div > div > div.addCancelButtonContainer > button.addChannelButtonMenuButton.Add').click();
 //         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
-//         cy.wait(1000);
+//         cy.wait(10000);
 //         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > .channelManageButton').should('be.visible').click();
 //         cy.get('.channelManageButtonContainer > :nth-child(1)').should('be.visible').click();
 //         cy.get('.addAccommodationsViewContainer').should('be.visible');
@@ -234,13 +234,13 @@
 //                         }
 //                     });
 //             });
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > .threeDotsButton').should('be.visible').click();
 //         cy.get('.threeDotsMenuContent').should('be.visible');
 //         cy.get('.delete').click();
 //         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
 //     });
-//
+
 //     it('should be able to enable channel through the manage channel menu', () => {
 //         let initialRowCount;
 //         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
@@ -255,12 +255,12 @@
 //         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
 //         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
 //         cy.get('.host-dist-box-container').should('be.visible');
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > .channelManageButton').should('be.visible').click();
 //         cy.get('.enabled').should('be.visible').click();
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-content > div > div.contentContainer-channel > div:nth-child(1) > div > p:nth-child(3) > label > input[type=checkbox]')
 //             .should('be.checked', true);
-//
+
 //         cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
 //             initialRowCount = $rows.length;
 //             if (initialRowCount === 0) {
@@ -273,7 +273,7 @@
 //             cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
 //         });
 //     });
-//
+
 //     it('should be able to disable channel through the manage channel menu', () => {
 //         let initialRowCount;
 //         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
@@ -288,7 +288,7 @@
 //         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
 //         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
 //         cy.get('.host-dist-box-container').should('be.visible');
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > .channelManageButton').click();
 //         cy.get('.enabled').click();
 //         cy.get(':nth-child(1) > .host-dist-box-row > .channelManageButton').should('be.visible').click();
@@ -296,7 +296,7 @@
 //         cy.get('.disabled').should('be.visible').click();
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-content > div > div.contentContainer-channel > div:nth-child(1) > div > p:nth-child(3) > label > input[type=checkbox]')
 //             .should('not.be.checked', false);
-//
+
 //         cy.get('.host-dist-box-container').find('.host-dist-box-row').then(($rows) => {
 //             initialRowCount = $rows.length;
 //             if (initialRowCount === 0) {
@@ -310,7 +310,7 @@
 //         });
 //     });
 // });
-//
+
 // describe('Host Distribution - Slider', () => {
 //     it('should be able to enable an channel through the slider', () => {
 //         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
@@ -325,19 +325,19 @@
 //         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
 //         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
 //         cy.get('.host-dist-box-container').should('be.visible');
-//
+
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-content > div > div.contentContainer-channel > div:nth-child(1) > div > p:nth-child(3) > label > input[type=checkbox]')
 //             .should('not.be.checked');
 //         cy.get(':nth-child(1) > .host-dist-box-row > :nth-child(3) > .toggle-status-switch > .slider').click();
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-content > div > div.contentContainer-channel > div:nth-child(1) > div > p:nth-child(3) > label > input[type=checkbox]')
 //             .should('be.checked');
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > .threeDotsButton').should('be.visible').click();
 //         cy.get('.threeDotsMenuContent').should('be.visible');
 //         cy.get('.delete').click();
 //         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
 //     });
-//
+
 //     it('should be able to disable an channel through the slider', () => {
 //         cy.intercept('POST', 'https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel')
 //             .as('createChannel');
@@ -351,21 +351,21 @@
 //         cy.wait('@createChannel').its('response.statusCode').should('eq', 200);
 //         cy.get('.contentContainer-channel > :nth-child(1)').should('exist');
 //         cy.get('.host-dist-box-container').should('be.visible');
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > :nth-child(3) > .toggle-status-switch > .slider').should('be.visible').click();
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-content > div > div.contentContainer-channel > div:nth-child(1) > div > p:nth-child(3) > label > input[type=checkbox]')
 //             .should('be.checked', true);
 //         cy.get(':nth-child(1) > .host-dist-box-row > :nth-child(3) > .toggle-status-switch > .slider').click();
 //         cy.get('#root > div > div.containerHostDistribution > div.host-dist-content > div > div.contentContainer-channel > div:nth-child(1) > div > p:nth-child(3) > label > input[type=checkbox]')
 //             .should('not.be.checked', false);
-//
+
 //         cy.get(':nth-child(1) > .host-dist-box-row > .threeDotsButton').should('be.visible').click();
 //         cy.get('.threeDotsMenuContent').should('be.visible');
 //         cy.get('.delete').click();
 //         cy.wait('@deleteChannel').its('response.statusCode').should('eq', 200);
 //     });
 // });
-//
+
 // // This test is not working as expected, it is not returning the correct url when the test is performed by Cypress.
 // // But it does return the correct url when the test is performed manually.
 // describe.skip('Host Distribution - Creating a iCal link', () => {
@@ -408,4 +408,4 @@
 //         });
 //     });
 // });
-//
+

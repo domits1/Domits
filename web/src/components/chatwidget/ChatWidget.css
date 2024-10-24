@@ -22,6 +22,16 @@
 }
 
 
+@media screen and (max-width: 650px) {
+  .chatwidget-toggle{ 
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    z-index: 3000;
+  cursor: pointer;
+  }
+}
+
 .chatwidget-resizable {
   display: flex;
   flex-direction: column;

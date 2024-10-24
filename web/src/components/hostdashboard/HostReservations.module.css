@@ -1,122 +1,236 @@
+.reservationContainer {
+    display: flex;
+    flex-direction: row;
+}
+
+
+
 .reservationContent {
     display: flex;
     flex-direction: column;
     margin-left: 5%;
     min-height: 55rem;
-    .header {
-        text-align: left;
-        padding-left: 2em;
+}
+
+.reservationContent .header {
+    text-align: left;
+    padding-left: 2em;
+}
+
+.reservationContent .reservationInfo {
+    display: flex;
+    flex-direction: row;
+    gap: 1em;
+}
+
+.reservationContent .infoIcon {
+    max-width: 1.5em;
+    max-height: 1.5em;
+    align-self: center;
+}
+
+.reservationContent .reservationSelector {
+    display: flex;
+    flex-direction: row;
+    justify-content: start;
+    gap: 0.5em;
+    width: 100%;
+    margin-bottom: 2rem;
+    justify-self: center;
+    flex-wrap: wrap;
+}
+
+.reservationContent .option {
+    border-radius: 5%;
+    padding: 0.25em;
+    box-shadow: inset 0 0 20px 10px #dedede;
+    font-size: 1em;
+    min-width: 6vw;
+    text-align: center;
+}
+
+.reservationContent .selected, .reservationContent .option:hover {
+    cursor: pointer;
+    color: white;
+    background-color: #0D9813;
+    box-shadow: none;
+}
+
+.reservationContent .reservationTh {
+    min-width: 7vw;
+}
+
+.reservationContent .reservationDisplay {
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 20px 10px #dedede;
+    padding: 5%;
+    width: 100%;
+    gap: 1.5em;
+    margin: 1.5em;
+}
+
+.reservationContent .sort {
+    max-height: 1.5vh;
+    max-width: 1.5vw;
+    margin-left: 3%;
+}
+
+.reservationContent .sort:hover {
+    cursor: pointer;
+}
+
+.reservationContent .utilBox {
+    display: flex;
+    flex-direction: row;
+    gap: 1%;
+    justify-content: end;
+    width: auto;
+}
+
+.reservationContent .refreshBtn {
+    color: white;
+    background-color: var(--primary-color);
+    border: none;
+}
+
+.reservationContent .refreshBtn:hover {
+    color: var(--primary-color);
+    background-color: white;
+    border: 1px solid var(--primary-color);
+}
+
+.reservationContent .btnBox {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    gap: 1em;
+    padding: 0.75em;
+    border-radius: 2em;
+    background-color: #0D9813;
+    color: white;
+    align-items: center;
+}
+
+.reservationContent .selectedText {
+    color: white;
+    font-size: 1.1em;
+}
+
+.reservationContent button {
+    padding: 0.25em;
+    border-radius: 1em;
+    min-width: 1vw;
+    font-size: 1em;
+}
+
+.reservationContent button:hover {
+    cursor: pointer;
+    color: white;
+}
+
+.reservationContent .btnUndo:hover {
+    background-color: black;
+}
+
+.reservationContent .btnDeny:hover {
+    background-color: red;
+}
+
+.reservationContent .btnApprove:hover {
+    background-color: #0A760F;
+}
+
+.reservationContent .btnGroup {
+    display: flex;
+    justify-self: end;
+    gap: 1em;
+}
+
+
+@media (max-width: 768px) {
+    .reservationContent {
+        margin-left: 2%;
+        min-height: auto;
     }
-    .reservationInfo {
-        display: flex;
-        flex-direction: row;
-        gap: 1em;
-        .infoIcon {
-            max-width: 1.5em;
-            max-height: 1.5em;
-            align-self: center;
-        }
-    }
-    .reservationSelector {
-        display: flex;
-        flex-direction: row;
-        justify-content: start;
-        gap: 0.5em;
-        width: 100%;
-        margin-bottom: 2rem;
-        justify-self: center;
-        flex-wrap: wrap;
-        .option {
-            border-radius: 5%;
-            padding: 0.25em;
-            box-shadow: inset 0 0 20px 10px #dedede;
-            font-size: 1em;
-            min-width: 6vw;
-            text-align: center;
-        }
-        .selected, .option:hover {
-            cursor: pointer;
-            color: white;
-            background-color: #0D9813;
-            box-shadow: none;
-        }
-    }
-    .reservationTh {
-        min-width: 7vw;
-    }
-    .reservationDisplay {
-        display: flex;
+
+    .reservationContent .reservationInfo {
         flex-direction: column;
-        box-shadow: 0 0 20px 10px #dedede;
-        padding: 5%;
-        width: 100%;
-        gap: 1.5em;
-        margin: 1.5em;
+        gap: 0.5em;
     }
 
-    .sort {
-        max-height: 1.5vh;
-        max-width: 1.5vw;
-        margin-left: 3%;
-    }
-    .sort:hover {
-        cursor: pointer;
-    }
-    .utilBox {
-        display: flex;
-        flex-direction: row;
-        gap: 1%;
-        justify-content: end;
-        width: auto;
-        .refreshBtn {
-            color: white;
-            background-color: var(--primary-color);
-            border: none;
-        }.refreshBtn:hover {
-             color: var(--primary-color);
-             background-color: white;
-             border: 1px solid var(--primary-color);
-         }
-    }
-    .btnBox {
-        display: grid;
-        grid-template-columns: auto auto auto;
+    .reservationContent .reservationSelector {
+        justify-content: center;
         gap: 1em;
-        padding: 0.75em;
-        border-radius: 2em;
-        background-color: #0D9813;
-        color: white;
-        align-items: center;
     }
 
-    .selectedText {
-        color: white;
-        font-size: 1.1em;
+    .reservationContent .option {
+        min-width: 10vw;
+        font-size: 0.9em;
     }
 
-    button {
-        padding: 0.25em;
-        border-radius: 1em;
-        min-width: 5vw;
+    .reservationContent .reservationDisplay {
+        padding: 4%;
+        margin: 1em;
+        gap: 1em;
+    }
+
+    .reservationContent .btnBox {
+        grid-template-columns: auto auto;
+        gap: 0.5em;
+    }
+
+    .reservationContent button {
+        font-size: 0.9em;
+        min-width: 1vw;
+    }
+
+    .reservationContent .selectedText {
         font-size: 1em;
     }
-    button:hover {
-        cursor: pointer;
-        color: white;
+}
+
+@media (max-width: 480px) {
+    .reservationContent {
+        margin-left: 1%;
+        min-height: auto;
     }
-    .btnUndo:hover {
-        background-color: black;
+
+    .reservationContent .reservationInfo {
+        flex-direction: column;
+        gap: 0.5em;
     }
-    .btnDeny:hover {
-        background-color: red;
-    }
-    .btnApprove:hover {
-        background-color: #0A760F;
-    }
-    .btnGroup {
-        display: flex;
-        justify-self: end;
+
+    .reservationContent .reservationSelector {
+        flex-direction: column;
+        align-items: center;
         gap: 1em;
     }
 
+    .reservationContent .option {
+        min-width: 15vw;
+        font-size: 0.8em;
+    }
+
+    .reservationContent .reservationDisplay {
+        padding: 3%;
+        margin: 0.5em;
+        gap: 0.8em;
+    }
+
+    .reservationContent .btnBox {
+        grid-template-columns: auto;
+        gap: 0.5em;
+    }
+
+    .reservationContent button {
+        font-size: 0.8em;
+        min-width: 1vw;
+    }
+
+    .reservationContent .selectedText {
+        font-size: 0.9em;
+    }
+    .reservationContainer{
+        display: table-row;
+    }
 }

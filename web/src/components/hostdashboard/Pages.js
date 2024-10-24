@@ -115,7 +115,7 @@ function Pages() {
                 <option value="/hostdashboard/settings">Settings</option>
               </select>
             </div>
-            <div>
+            {/* <div>
               <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Growth">
                 <option disabled>Growth</option>
                 <option value="/hostdashboard/reservations">Reservations</option>
@@ -129,7 +129,7 @@ function Pages() {
                 <option value="/hostdashboard/setup">Setup</option>
                 <option value="/hostdashboard/promo-codes">Promo Codes</option>
               </select>
-            </div>
+            </div> */}
           </div>
         )}
       </div>
@@ -171,13 +171,13 @@ function Pages() {
           <p>Messages</p>
         </div>
         {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
-        {/*<div*/}
-        {/*  className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}*/}
-        {/*  onClick={() => handleNavigation("/hostdashboard/revenues")}*/}
-        {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
-        {/*  <p>Revenues</p>*/}
-        {/*</div>*/}
+        <div
+          className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/revenues")}
+        >
+          <img src={dashboard} alt="Dashboard" />
+          <p>Revenues</p>
+        </div>
         {/*<div*/}
         {/*  className={`wijzer ${activeTab === "/hostdashboard/reporting" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/reporting")}*/}
@@ -199,6 +199,14 @@ function Pages() {
           <img src={dashboard} alt="Dashboard" />
           <p>Property care</p>
         </div>
+        <div
+            className={`wijzer ${activeTab === "/hostdashboard/finance" ? "active" : ""}`}
+            onClick={() => handleNavigation("/hostdashboard/finance")}
+        >
+          <img src={payment} alt="Dashboard" />
+          <p>Finance</p>
+        </div>
+
         {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
         {/*<div*/}
         {/*  className={`wijzer ${activeTab === "/hostdashboard/iot-hub" ? "active" : ""}`}*/}
@@ -265,18 +273,19 @@ function Pages() {
         {/*  <img src={dashboard} alt="Dashboard" />*/}
         {/*  <p>Promo codes</p>*/}
         {/*</div>*/}
-        {loading ? (
-          <div className="spinnerdiv">
-            <img className="spinner" src={spinner} alt="Loading" />
-          </div>
-        ) : (
-          <div className="wijzer-grn" onClick={handleStripeAction}>
-            <div className="stripe-icon-div">
-              <img src={stripe} className="stripe-icon" alt="Stripe" />
-            </div>
-            <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>
-          </div>
-        )}
+        {/*commented for now and transfered it to finance tab*/}
+        {/*{loading ? (*/}
+        {/*  <div className="spinnerdiv">*/}
+        {/*    <img className="spinner" src={spinner} alt="Loading" />*/}
+        {/*  </div>*/}
+        {/*) : (*/}
+        {/*  <div className="wijzer-grn" onClick={handleStripeAction}>*/}
+        {/*    <div className="stripe-icon-div">*/}
+        {/*      <img src={stripe} className="stripe-icon" alt="Stripe" />*/}
+        {/*    </div>*/}
+        {/*    <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>*/}
+        {/*  </div>*/}
+        {/*)}*/}
       </div>
     </main>
   );

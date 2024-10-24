@@ -43,6 +43,7 @@
 .job-tags {
     display: flex;
     gap: 15px;
+    margin-top: 10px;
 }
 
 .tag {
@@ -165,7 +166,6 @@
     content: '';
     position: absolute;
     left: 0;
-    /* top: 0; */
     transform: translateY(50%);
     width: 20px;
     height: 20px;

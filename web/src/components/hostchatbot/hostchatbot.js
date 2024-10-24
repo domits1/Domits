@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import './hostchatbot.css';
 import { Auth } from 'aws-amplify';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
+import stringSimilarity from 'string-similarity';
+import AccommodationTile from '../hostchatbot/AccommodationTile';
 
 const HostChatbot = () => {
   const [messages, setMessages] = useState([]);
@@ -15,6 +16,8 @@ const HostChatbot = () => {
   const [userId, setUserId] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [username, setUserName] = useState(null);
+  const [accommodations, setAccommodations] = useState([]);
+  const [faqList, setFaqList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const { role, isLoading: userLoading } = useUser();
@@ -30,7 +33,7 @@ const HostChatbot = () => {
         setMessages([{ text: `Hello, ${name}! Please choose an option:`, sender: 'bot', contentType: 'text' }]);
         setAwaitingUserChoice(true);
       } catch (error) {
-        // Handle error
+        console.error('Error fetching user details:', error);
       } finally {
         setIsLoading(false);
       }
@@ -53,6 +56,7 @@ const HostChatbot = () => {
     setAwaitingUserChoice(true);
     setSuggestions([]);
     setCurrentOption(null);
+    setAccommodations([]);
     setMessages([{ text: `Hello again, ${username}! Please choose an option:`, sender: 'bot', contentType: 'text' }]);
   };
 
@@ -84,8 +88,8 @@ const HostChatbot = () => {
     }
 
     setMessages((prevMessages) => [
-      ...prevMessages.filter(message => message.text !== `Hello again, ${username}! Please choose an option:`),
-      { text: newMessage, sender: 'bot', contentType: 'text' }
+      ...prevMessages.filter((message) => message.text !== `Hello again, ${username}! Please choose an option:`),
+      { text: newMessage, sender: 'bot', contentType: 'text' },
     ]);
   };
 
@@ -93,10 +97,7 @@ const HostChatbot = () => {
     e.preventDefault();
 
     if (userInput.trim()) {
-      const newMessages = [
-        ...messages,
-        { text: userInput, sender: 'user', contentType: 'text' }
-      ];
+      const newMessages = [...messages, { text: userInput, sender: 'user', contentType: 'text' }];
       setMessages(newMessages);
       setUserInput('');
 
@@ -114,38 +115,54 @@ const HostChatbot = () => {
     if (userInput.toLowerCase().includes('list')) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: 'Here is the list of your accommodations.', sender: 'bot', contentType: 'text' }
+        { text: 'Here is the list of your accommodations.', sender: 'bot', contentType: 'text' },
       ]);
       fetchAccommodations();
     } else if (userInput.toLowerCase().includes('show')) {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: 'Here is all available accommodation data.', sender: 'bot', contentType: 'text' }
+        { text: 'Here is all available accommodation data.', sender: 'bot', contentType: 'text' },
       ]);
       fetchAllAccommodations();
     } else {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, I didn't understand your question about accommodations.", sender: 'bot', contentType: 'text' }
+        { text: "Sorry, I didn't understand your question about accommodations.", sender: 'bot', contentType: 'text' },
       ]);
     }
   };
 
   const handleFAQQuery = (userInput) => {
-    const faqMatch = faqList.find((faq) => faq.question.toLowerCase().includes(userInput.toLowerCase()));
-    if (faqMatch) {
+    if (faqList.length === 0) {
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { text: "Sorry, I don't have any FAQs available at the moment.", sender: 'bot', contentType: 'text' },
+      ]);
+      return;
+    }
+
+    const faqQuestions = faqList.map((faq) => faq.question.toLowerCase());
+    const bestMatch = stringSimilarity.findBestMatch(userInput.toLowerCase(), faqQuestions);
+
+    if (bestMatch.bestMatch.rating > 0.5) {
+      const matchedFAQ = faqList[bestMatch.bestMatchIndex];
       setMessages((prevMessages) => [
         ...prevMessages,
         {
-          text: `Q: ${faqMatch.question}\nA: ${faqMatch.answer}`,
+          text: (
+              <div className="faq-layout">
+                <p className="faq-question">Q: {matchedFAQ.question}</p>
+                <p className="faq-answer">A: {matchedFAQ.answer}</p>
+              </div>
+          ),
           sender: 'bot',
-          contentType: 'faq'
-        }
+          contentType: 'faq',
+        },
       ]);
     } else {
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, I couldn't find an answer to your question.", sender: 'bot', contentType: 'text' }
+        { text: "Sorry, I couldn't find an answer to your question.", sender: 'bot', contentType: 'text' },
       ]);
     }
   };
@@ -153,7 +170,7 @@ const HostChatbot = () => {
   const handleExpertContact = () => {
     setMessages((prevMessages) => [
       ...prevMessages,
-      { text: 'You can contact an expert at support@domits.com or call +123456789.', sender: 'bot', contentType: 'text' }
+      { text: 'You can contact an expert at support@domits.com or call +123456789.', sender: 'bot', contentType: 'text' },
     ]);
   };
 
@@ -167,24 +184,30 @@ const HostChatbot = () => {
           {
             method: 'POST',
             body: JSON.stringify({ OwnerId: userId }),
-            headers: { 'Content-type': 'application/json; charset=UTF-8' }
+            headers: { 'Content-type': 'application/json; charset=UTF-8' },
           }
       );
       const data = await response.json();
       const accommodationsArray = data.body ? JSON.parse(data.body) : [];
-      setAccolist(accommodationsArray);
+
+      const formattedAccommodations = accommodationsArray.map((acc) => ({
+        id: acc.ID,
+        title: acc.Title || 'Accommodation',
+        city: acc.City,
+        bathrooms: acc.Bathrooms,
+        guestAmount: acc.GuestAmount,
+        images: acc.Images || {},
+      }));
+
+      setAccommodations(formattedAccommodations);
       if (currentOption === '1') {
         setMessages((prevMessages) => [
           ...prevMessages,
-          {
-            text: formatAccommodationsResponse(accommodationsArray),
-            sender: 'bot',
-            contentType: 'accommodation'
-          }
+          { text: 'Here are your accommodations:', sender: 'bot', contentType: 'accommodation' },
         ]);
       }
     } catch (error) {
-      // Handle error
+      console.error('Error fetching accommodations:', error);
     } finally {
       setLoading(false);
     }
@@ -195,40 +218,45 @@ const HostChatbot = () => {
       const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation');
       const responseData = await response.json();
       const data = JSON.parse(responseData.body);
+
+      const formattedAccommodations = data.map((acc) => ({
+        id: acc.ID,
+        title: acc.Title || 'Accommodation',
+        city: acc.City,
+        bathrooms: acc.Bathrooms,
+        guestAmount: acc.GuestAmount,
+        images: acc.Images || {},
+      }));
+
+      setAccommodations(formattedAccommodations);
       if (currentOption === '1') {
         setMessages((prevMessages) => [
           ...prevMessages,
-          {
-            text: formatAccommodationsResponse(data),
-            sender: 'bot',
-            contentType: 'accommodation'
-          }
+          { text: 'Here is all available accommodation data:', sender: 'bot', contentType: 'accommodation' },
         ]);
       }
     } catch (error) {
-      // Handle error
+      console.error('Error fetching all accommodations:', error);
     }
   };
 
   const fetchFAQ = async () => {
     try {
-      const response = await fetch(
-          'https://vs3lm9q7e9.execute-api.eu-north-1.amazonaws.com/default/readFAQ',
-          { method: 'GET', headers: { 'Content-Type': 'application/json' } }
-      );
+      const response = await fetch('https://vs3lm9q7e9.execute-api.eu-north-1.amazonaws.com/default/readFAQ', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
       const responseData = await response.json();
       const faqData = JSON.parse(responseData.body);
       setFaqList(faqData);
     } catch (error) {
-      // Handle error
+      console.error('Error fetching FAQ data:', error);
     }
   };
 
-  const formatAccommodationsResponse = (accommodations) => {
-    return accommodations
-        .map((acc) => `Accommodation in ${acc.City} with ${acc.Bathrooms} bathrooms, suitable for ${acc.GuestAmount} guests.`)
-        .join('\n');
-  };
+  useEffect(() => {
+    fetchFAQ();
+  }, []);
 
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
@@ -262,6 +290,13 @@ const HostChatbot = () => {
                   <p>{message.text}</p>
                 </div>
             ))}
+            {accommodations.length > 0 && (
+                <div className="hostchatbot-accommodations">
+                  {accommodations.map((accommodation, index) => (
+                      <AccommodationTile key={index} accommodation={accommodation} />
+                  ))}
+                </div>
+            )}
             {awaitingUserChoice && (
                 <div className="hostchatbot-option-buttons">
                   <button onClick={() => handleButtonClick('1')}>1. I have a question regarding accommodations</button>
@@ -273,7 +308,9 @@ const HostChatbot = () => {
                 <div className="hostchatbot-suggestions">
                   <p>Suggestions:</p>
                   {suggestions.map((suggestion, index) => (
-                      <p key={index} className="hostchatbot-suggestion">{suggestion}</p>
+                      <p key={index} className="hostchatbot-suggestion">
+                        {suggestion}
+                      </p>
                   ))}
                 </div>
             )}

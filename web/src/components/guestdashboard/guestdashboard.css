@@ -1,3 +1,7 @@
+/* *{
+  border: 1px red solid;
+} */
+
 .container {
   display: flex;
   flex-direction: column;
@@ -141,6 +145,14 @@
   }
 }
 
+@media screen and (max-width: 768px) {
+  .dashboardSections{
+    visibility: hidden;
+    width: 0;
+    height: 0;
+  }
+}
+
 @media screen and (max-width: 830px) {
   .dashboards {
       display: flex;
@@ -163,6 +175,7 @@
   margin-right: 10px;
   color: #888;
 }
+
 
 .content {
   padding: 20px;
@@ -308,4 +321,17 @@
           font-size: 1.5em;
       }
   }
-}
+    .infoBox {
+        padding: 10px;
+        font-size: 0.8em;
+        width: 90%;
+        flex-wrap: wrap;
+    }
+
+    .dashboardSections{
+      visibility: hidden;
+      width: 0;
+      height: 0;
+    }
+  }
+  

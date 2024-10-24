@@ -9,6 +9,7 @@
 .filterContainer {
     text-align: center;
 }
+
 .filterContainer label {
     margin-right: 10px;
 }
@@ -52,4 +53,77 @@
     text-align: left;
     background-color: #4CAF50;
     color: white;
+}
+
+@media (max-width: 768px) {
+    .horizontalOptions {
+        flex-direction: column;
+    }
+
+    .settingsOptions .settingsOption, 
+    .dataRemovalOption, 
+    .horizontalOptions .settingsOption {
+        padding: 15px;
+        font-size: 0.9em;
+        margin-right: 0;
+        min-width: 100%;
+    }
+
+    .dataRemovalSection {
+        flex-direction: column;
+        margin-top: 15px;
+    }
+
+    .dataRemovalOption {
+        height: auto;
+        padding: 15px;
+        min-width: 100%;
+    }
+
+    .publicProfileContent .profileField input {
+        width: 100%;
+        margin: 5px 0;
+    }
+
+    .publicProfileContent .profilePicture .icon {
+        width: 80px;
+        height: 80px;
+    }
+
+    .InfoBox {
+        padding: 15px;
+        font-size: 0.9em;
+    }
+
+    .bookings-table {
+        width: 100%;
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    .bookingContent {
+        width: 100%;
+        margin-left: 20px;
+        margin-right: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .bookings-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        height: auto;
+        font-size: 0.8em;
+        overflow-x: auto;
+        display: block;
+        white-space: nowrap;
+    }
+
+    .bookings-table th, .bookings-table td {
+        padding: 8px;
+        text-align: left;
+    }
 }

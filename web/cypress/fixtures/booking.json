@@ -1,0 +1,23 @@
+[
+    {
+      "ID": "1",
+      "Title": "Cozy Apartment",
+      "Status": "Accept",
+      "Price": "100.00",
+      "StartDate": "2024-10-01",
+      "EndDate": "2024-10-05",
+      "createdAt": "2024-09-20",
+      "AccoID": "123"
+    },
+    {
+      "ID": "2",
+      "Title": "Beach House",
+      "Status": "Failed",
+      "Price": "250.00",
+      "StartDate": "2024-11-01",
+      "EndDate": "2024-11-10",
+      "createdAt": "2024-09-22",
+      "AccoID": "456"
+    }
+  ]
+  
