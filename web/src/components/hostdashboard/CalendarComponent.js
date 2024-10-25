@@ -164,7 +164,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                         (normalizedEndDate - normalizedStartDate) / (1000 * 60 * 60 * 24) + 1
                     );
 
-                    if (daysSelected < minimumStayArrival && minimumStayArrival !== 0) {
+                    if (daysSelected < minimumStayArrival) {
                         console.log(`The selected range is too short. Minimum stay is ${minimumStayArrival} days.`);
                         return {
                             startDate: null,
