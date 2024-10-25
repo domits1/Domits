@@ -9,6 +9,7 @@ const EmployeeChat = () => {
   const [employeeMessage, setEmployeeMessage] = useState(''); // Message typed by employee
   const [isConnected, setIsConnected] = useState(false); // WebSocket connection status
   const [socket, setSocket] = useState(null); // WebSocket instance
+  const [chatIds, setChatIds] = useState({}); // Stores chat IDs per connection ID
   const { role, isLoading } = useUser();
   const [connectionId, setConnectionId] = useState(''); // Store connectionId
   const [wantsToConnect, setWantsToConnect] = useState(false); // Prompt employee to go online
@@ -20,7 +21,6 @@ const EmployeeChat = () => {
     }
   }, [wantsToConnect]);
 
-  // Function to fetch connectionId from the backend using eChatGetConnectionId Lambda function
   const fetchConnectionId = async (userId) => {
     try {
       const response = await fetch('https://s5telb0icl.execute-api.eu-north-1.amazonaws.com/default/eChatGetConnectionId', {
@@ -43,7 +43,6 @@ const EmployeeChat = () => {
     }
   };
 
-  // Function to establish WebSocket connection
   const connectWebSocket = async () => {
     const userInfo = await Auth.currentUserInfo();
 
@@ -63,12 +62,16 @@ const EmployeeChat = () => {
 
     ws.onmessage = (event) => {
       const incomingMessage = JSON.parse(event.data);
-
-      console.log(incomingMessage)
+      console.log(incomingMessage);
 
       if (incomingMessage.senderId && incomingMessage.message) {
         const senderId = incomingMessage.senderId;
         const message = { role: 'user', content: incomingMessage.message };
+
+        // Save the chatId for this conversation if it's the first message
+        if (incomingMessage.chatId && !chatIds[senderId]) {
+          setChatIds((prevChatIds) => ({ ...prevChatIds, [senderId]: incomingMessage.chatId }));
+        }
 
         setChatMessages((prevChatMessages) => {
           const prevMessages = prevChatMessages[senderId] || [];
@@ -103,14 +106,14 @@ const EmployeeChat = () => {
     setSocket(ws);
   };
 
-  // Function to send the employee's name once a new chat is started
   const sendEmployeeName = (recipientConnectionId, employeeName) => {
     if (socket && isConnected) {
       const payload = {
         action: 'sendMessage',
         recipientConnectionId,
         message: `Hello, I'm ${employeeName}, how can I help you today?`,
-        employeeName: employeeName
+        employeeName: employeeName,
+        chatId: chatIds[recipientConnectionId] // Attach the chat ID here
       };
       socket.send(JSON.stringify(payload));
     }
@@ -162,6 +165,7 @@ const EmployeeChat = () => {
       action: 'sendMessage',
       recipientConnectionId: activeChat,
       message: employeeMessage,
+      chatId: chatIds[activeChat] // Attach the chat ID with each message
     };
 
     socket.send(JSON.stringify(payload));
