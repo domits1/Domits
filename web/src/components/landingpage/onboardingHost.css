@@ -62,6 +62,15 @@ h2{
   flex-direction: row;
   justify-content: space-between;
   flex-wrap: wrap;
+  gap: 1vw;
+}
+
+.minMaxButtons {
+  align-self: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 1.5vw;
 }
 
 @media (max-width: 768px) {

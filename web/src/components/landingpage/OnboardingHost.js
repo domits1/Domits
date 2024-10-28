@@ -245,10 +245,9 @@ function OnboardingHost() {
         CleaningFee: existingData.CleaningFee || 0,
         OwnerId: existingData.OwnerId || userId,
         GuestAmount: isNew ? 0 : formData.GuestAmount,
-        MinimumStayArrival: isNew ? 0 : formData.MinimumStayArrival,
-        MinimumStayThrough: isNew ? 0 : formData.MinimumStayThrough,
-        MaximumStayArrival: isNew ? 0 : formData.MaximumStayArrival,
-        MaximumStayThrough: isNew ? 0 : formData.MaximumStayThrough,
+        MinimumStay: isNew ? 0 : formData.MinimumStay,
+        MinimumBookingPeriod: isNew ? 0 : formData.MinimumBookingPeriod,
+        MaximumStay: isNew ? 0 : formData.MaximumStay,
     });
 
     const generateBoatFormData = () => ({
@@ -2038,56 +2037,49 @@ function OnboardingHost() {
                             <div className="staying_nights">
                                 <div className="stayMinMaxBox">
                                     <div className="stayMinMaxField">
-                                        <label>Minimum Stay (Arrival):</label>
-                                        <button className="round-button"
-                                                onClick={() => decrementAmount('MinimumStayArrival')}>-
-                                        </button>
-                                        {formData.MinimumStayArrival}
-                                        <button
-                                            className="round-button"
-                                            onClick={() => incrementAmount('MinimumStayArrival')}
-                                            disabled={formData.MinimumStayArrival >= 30} // Set your max value here
-                                        >+
-                                        </button>
+                                        <label className="minMaxLabel">Minimum Stay (Days):</label>
+                                        <div className="minMaxButtons">
+                                            <button className="round-button"
+                                                    onClick={() => decrementAmount('MinimumStay')}>-
+                                            </button>
+                                            {formData.MinimumStay}
+                                            <button
+                                                className="round-button"
+                                                onClick={() => incrementAmount('MinimumStay')}
+                                                disabled={formData.MinimumStay >= 30}
+                                            >+
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="stayMinMaxField">
-                                        <label>Minimum Stay (Through):</label>
-                                        <button className="round-button"
-                                                onClick={() => decrementAmount('MinimumStayThrough')}>-
-                                        </button>
-                                        {formData.MinimumStayThrough}
-                                        <button
-                                            className="round-button"
-                                            onClick={() => incrementAmount('MinimumStayThrough')}
-                                            disabled={formData.MinimumStayThrough >= 30} // Set your max value here
-                                        >+
-                                        </button>
+                                        <label className="minMaxLabel">Minimum booking period (Days):</label>
+                                        <div className="minMaxButtons">
+                                            <button className="round-button"
+                                                    onClick={() => decrementAmount('MinimumBookingPeriod')}>-
+                                            </button>
+                                            {formData.MinimumBookingPeriod}
+                                            <button
+                                                className="round-button"
+                                                onClick={() => incrementAmount('MinimumBookingPeriod')}
+                                                disabled={formData.MinimumBookingPeriod >= 30}
+                                            >+
+                                            </button>
+                                        </div>
                                     </div>
                                     <div className="stayMinMaxField">
-                                        <label>Maximum Stay (Arrival):</label>
-                                        <button className="round-button"
-                                                onClick={() => decrementAmount('MaximumStayArrival')}>-
-                                        </button>
-                                        {formData.MaximumStayArrival}
-                                        <button
-                                            className="round-button"
-                                            onClick={() => incrementAmount('MaximumStayArrival')}
-                                            disabled={formData.MaximumStayArrival >= 365} // Example: max 1 year
-                                        >+
-                                        </button>
-                                    </div>
-                                    <div className="stayMinMaxField">
-                                        <label>Maximum Stay (Through):</label>
-                                        <button className="round-button"
-                                                onClick={() => decrementAmount('MaximumStayThrough')}>-
-                                        </button>
-                                        {formData.MaximumStayThrough}
-                                        <button
-                                            className="round-button"
-                                            onClick={() => incrementAmount('MaximumStayThrough')}
-                                            disabled={formData.MaximumStayThrough >= 365} // Example: max 1 year
-                                        >+
-                                        </button>
+                                        <label className="minMaxLabel">Maximum Stay (Days):</label>
+                                        <div className="minMaxButtons">
+                                            <button className="round-button"
+                                                    onClick={() => decrementAmount('MaximumStay')}>-
+                                            </button>
+                                            {formData.MaximumStay}
+                                            <button
+                                                className="round-button"
+                                                onClick={() => incrementAmount('MaximumStay')}
+                                                disabled={formData.MaximumStay >= 365}
+                                            >+
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -2097,8 +2089,9 @@ function OnboardingHost() {
                                     style={{opacity: "75%"}}>
                                 Go back
                             </button>
-                            <button className={!formData.DateRanges.length ? 'onboarding-button-disabled' : 'onboarding-button'}
-                                    onClick={() => pageUpdater(page + 1)}>
+                            <button
+                                className={!formData.DateRanges.length ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>

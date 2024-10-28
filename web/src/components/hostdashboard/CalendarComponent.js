@@ -30,10 +30,9 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
         'September', 'October', 'November', 'December'
     ];
 
-    const [minimumStayArrival, setMinimumStayArrival] = useState();
-    const [minimumStayThrough, setMinimumStayThrough] = useState();
-    const [maximumStayArrival, setMaximumStayArrival] = useState();
-    const [maximumStayThrough, setMaximumStayThrough] = useState();
+    const [minimumStay, setMinimumStay] = useState();
+    const [minimumBookingPeriod, setMinimumBookingPeriod] = useState();
+    const [maximumStay, setMaximumStay] = useState();
 
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
@@ -48,22 +47,14 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
     }, [passedProp.ID]);
     useEffect(() => {
         if (passedProp &&
-            passedProp.MinimumStayArrival !== undefined &&
-            passedProp.MinimumStayThrough !== undefined &&
-            passedProp.MaximumStayArrival !== undefined &&
-            passedProp.MaximumStayThrough !== undefined) {
-            setMinimumStayArrival(passedProp.MinimumStayArrival);
-            setMinimumStayThrough(passedProp.MinimumStayThrough);
-            setMaximumStayArrival(passedProp.MaximumStayArrival);
-            setMaximumStayThrough(passedProp.MaximumStayThrough);
+            passedProp.MinimumStay !== undefined &&
+            passedProp.MinimumBookingPeriod !== undefined &&
+            passedProp.MaximumStay !== undefined){
+            setMinimumStay(passedProp.MinimumStay);
+            setMinimumBookingPeriod(passedProp.MinimumBookingPeriod);
+            setMaximumStay(passedProp.MaximumStay);
         }
-    }, [passedProp.ID, passedProp.MinimumStayArrival, passedProp.MinimumStayThrough, passedProp.MaximumStayArrival, passedProp.MaximumStayThrough]);
-    useEffect(() => {
-        console.log('MinimumStayArrival', minimumStayArrival);
-        // console.log('MinimumStayThrough', minimumStayThrough);
-        // console.log('MaximumStayArrival', maximumStayArrival);
-        // console.log('MaximumStayThrough', maximumStayThrough);
-    }, [minimumStayArrival, minimumStayThrough, maximumStayArrival, maximumStayThrough]);
+    }, [passedProp.ID, passedProp.MinimumStay, passedProp.MinimumBookingPeriod, passedProp.MaximumStay]);
 
     const renderDates = () => {
         const today = new Date();
@@ -133,7 +124,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
 
     useEffect(() => {
         renderDates();
-    }, [month, year, selectedRanges, minimumStayArrival]);
+    }, [month, year, selectedRanges, minimumStay]);
 
     const handleDateClick = (dateClicked) => {
         const clickedDate = new Date(dateClicked);
@@ -170,12 +161,8 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                         (normalizedEndDate - normalizedStartDate) / (1000 * 60 * 60 * 24) + 1
                     );
 
-                    console.log('currentMinimumStayArrival', minimumStayArrival);
-
-                    console.log('daysSelected', daysSelected);
-
-                    if (daysSelected < minimumStayArrival) {
-                        console.log(`The selected range is too short. Minimum stay is ${minimumStayArrival} days.`);
+                    if (daysSelected < minimumStay) {
+                        console.log(`The selected range is too short. Minimum stay is ${minimumStay} days.`);
                         return {
                             startDate: null,
                             endDate: null
