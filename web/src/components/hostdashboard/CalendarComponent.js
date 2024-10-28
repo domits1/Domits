@@ -162,7 +162,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                     );
 
                     if (daysSelected < minimumStay) {
-                        console.log(`The selected range is too short. Minimum stay is ${minimumStay} days.`);
+                        alert(`The selected range is too short. Minimum stay is ${minimumStay} days.`);
                         return {
                             startDate: null,
                             endDate: null
