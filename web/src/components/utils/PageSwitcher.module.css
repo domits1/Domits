@@ -92,19 +92,22 @@
 }
 
 .listingEdit {
-    background-color: #0D9813;
+    background-color: var(--primary-color);
+    cursor: pointer;
 }
 
 .listingDelete {
-    background-color: red;
+    background-color: rgb(193, 57, 57);
+    cursor: pointer;
 }
 
 .listingDraft {
-    background-color: #003366;
+    background-color: var(--secondary-color);
+    cursor: pointer;
 }
 
-.listingDelete:hover {
-    background-color: darkred;
+.listingDelete:hover, .listingDraft:hover, .listingEdit:hover {
+    opacity: 90%;
 }
 
 /* Mobile Responsive Adjustments */

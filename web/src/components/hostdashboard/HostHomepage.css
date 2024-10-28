@@ -66,7 +66,7 @@
   margin-bottom: 10px;
   align-items: center;
   width: 200px;
-  border: 0.5px solid black;
+  border: 0.1px solid black;
   border-radius: 15px;
   padding: 5px;
   box-sizing: border-box;
@@ -80,12 +80,13 @@
 }
 
 .wijzer:hover {
-  box-shadow: 4px 4px #003366;
+  background-color: var(--secondary-color);
+  color: white;
   transition: .3s;
 }
 
 .wijzer.active {
-  background-color: #0D9813;
+  background-color: var(--secondary-color);
   color: white;
 }
 
