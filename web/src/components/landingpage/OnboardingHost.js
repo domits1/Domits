@@ -2098,8 +2098,7 @@ function OnboardingHost() {
                                 Go back
                             </button>
                             <button className={!formData.DateRanges.length ? 'onboarding-button-disabled' : 'onboarding-button'}
-                                    onClick={() => pageUpdater(page + 1)}
-                                    disabled={!formData.DateRanges.length}>
+                                    onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>

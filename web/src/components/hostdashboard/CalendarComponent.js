@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import styles from './Calendar.module.css';
 import { isSameDay } from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
@@ -58,6 +58,12 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
             setMaximumStayThrough(passedProp.MaximumStayThrough);
         }
     }, [passedProp.ID, passedProp.MinimumStayArrival, passedProp.MinimumStayThrough, passedProp.MaximumStayArrival, passedProp.MaximumStayThrough]);
+    useEffect(() => {
+        console.log('MinimumStayArrival', minimumStayArrival);
+        // console.log('MinimumStayThrough', minimumStayThrough);
+        // console.log('MaximumStayArrival', maximumStayArrival);
+        // console.log('MaximumStayThrough', maximumStayThrough);
+    }, [minimumStayArrival, minimumStayThrough, maximumStayArrival, maximumStayThrough]);
 
     const renderDates = () => {
         const today = new Date();
@@ -127,7 +133,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
 
     useEffect(() => {
         renderDates();
-    }, [month, year, selectedRanges]);
+    }, [month, year, selectedRanges, minimumStayArrival]);
 
     const handleDateClick = (dateClicked) => {
         const clickedDate = new Date(dateClicked);
@@ -163,6 +169,10 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                     const daysSelected = Math.floor(
                         (normalizedEndDate - normalizedStartDate) / (1000 * 60 * 60 * 24) + 1
                     );
+
+                    console.log('currentMinimumStayArrival', minimumStayArrival);
+
+                    console.log('daysSelected', daysSelected);
 
                     if (daysSelected < minimumStayArrival) {
                         console.log(`The selected range is too short. Minimum stay is ${minimumStayArrival} days.`);
