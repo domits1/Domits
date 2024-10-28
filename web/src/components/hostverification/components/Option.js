@@ -1,16 +1,29 @@
 import React from "react";
 import styles from "../hostverification.module.css";
-import { sub } from "date-fns";
 
-function Option({option, onClick, subtext}) {
+function Option({
+  option,
+  onClick,
+  subtext,
+  statusText = "Required",
+  disabled = false,
+  statusIcon,
+}) {
   return (
-    <div className={styles["options-container"]} onClick={onClick}>
+    <div
+      className={`${styles["options-container"]} ${
+        disabled ? styles["disabled"] : ""
+      }`}
+      onClick={!disabled ? onClick : undefined}
+      style={{ cursor: disabled ? "not-allowed" : "pointer" }}
+    >
       <div className={styles["option-container"]}>
         <p className={styles["option-title"]}>{option}</p>
-        <p className={styles["option-text"]}>
-          {subtext}
-        </p>
-        <p className={styles["option-status"]}>Required</p>
+        <p className={styles["option-text"]}>{subtext}</p>
+        <div className={styles["option-status-container"]}>
+        <p>{statusIcon}</p>
+        <p className={styles["option-status"]}>{statusText}</p>
+        </div>
       </div>
       <svg
         xmlns="http://www.w3.org/2000/svg"

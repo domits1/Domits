@@ -60,8 +60,6 @@ import HostScreening from "./components/hostdashboard/HostScreening";
 import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
 import HostVerificationView from "./components/hostverification/HostVerificationView.js";
-import RegistrationNumberCheckView from './components/hostverification/RegistrationNumberCheckView.js';
-import RegistrationNumberView from "./components/hostverification/RegistrationNumberView.js";
 import PhoneNumberView from './components/hostverification/PhoneNumberView.js';
 import PhoneNumberConfirmView from './components/hostverification/PhoneNumberConfirmView.js';
 import { initializeUserAttributes } from './components/utils/userAttributes';
@@ -186,8 +184,6 @@ function App() {
 
                             {/* Verification */}
                             <Route path="/verify" element={<HostVerificationView />} />
-                            <Route path="/verify/registrationnumber/:id" element={<RegistrationNumberView />} />
-                            <Route path="/verify/registrationnumber/check" element={<RegistrationNumberCheckView />} />
                             <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                             <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
 

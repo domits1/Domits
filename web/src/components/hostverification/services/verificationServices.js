@@ -9,14 +9,11 @@ export const startVerificationAPI = async (userId) => {
       body: JSON.stringify({ userId }),
     });
   
-    const data = await response.json();
-    console.log('API response:', data);
-  
     if (!response.ok) {
       throw new Error("Failed to start verification");
     }
   
-    return data;
+    return await response.json();;
   };
   
   export const getIfRegistrationNumberIsRequired = async (Address) => {
@@ -39,4 +36,12 @@ export const startVerificationAPI = async (userId) => {
   
     return await response.json();
   };
+
+  export const getVerificationStatusFromDB = async (userId) => {
+    const response = await fetch(`https://vfn76mesc0.execute-api.eu-north-1.amazonaws.com/default/verificationStatus/${userId}`);
   
+    if (!response.ok) {
+      throw new Error("Failed to fetch verification status");
+    }
+    return await response.json();
+  };
