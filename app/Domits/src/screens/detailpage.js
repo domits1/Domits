@@ -1,38 +1,151 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, StyleSheet, Image, TouchableOpacity, Dimensions } from 'react-native';
+import React, {useEffect, useState} from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  Image,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { CommonActions } from '@react-navigation/native';
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {CommonActions} from '@react-navigation/native';
 
-const Detailpage = ({ navigation }) => {
-  const images = [
-    require('./pictures/detailPhoto.jpg'),
-    require('./pictures/detailPhoto2.jpg'),
-    require('./pictures/detailPhoto3.jpg'),
-    require('./pictures/detailPhoto4.jpg'),
-    require('./pictures/detailPhoto5.jpg'),
-  ];
+const Detailpage = ({route, navigation}) => {
+  const id = route.params.accommodation.id;
+  const [accommodation, setAccommodation] = useState([]);
+  const [parsedAccommodation, setParsedAccommodation] = useState({});
+  const [owner, setOwner] = useState();
+  const [loading, setLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [images, setImages] = useState([]);
+
+  useEffect(() => {
+    console.log('ID:', id);
+  }, [id]);
+
+  useEffect(() => {
+    const fetchAccommodation = async () => {
+      try {
+        const response = await fetch(
+          'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ID: id}),
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch data');
+        }
+        const responseData = await response.json();
+        setAccommodation(responseData);
+
+        const parsedBody =
+          typeof responseData.body === 'string'
+            ? JSON.parse(responseData.body)
+            : responseData.body;
+        setParsedAccommodation(parsedBody);
+      } catch (error) {
+        console.error('Error fetching or processing data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAccommodation();
+  }, [id]);
+
+  useEffect(() => {
+    const fetchOwner = async () => {
+      const ownerId = parsedAccommodation.OwnerId;
+      try {
+        const response = await fetch(
+          'https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({OwnerId: ownerId}),
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch owner data');
+        }
+        const responseData = await response.json();
+        const data = responseData.body ? JSON.parse(responseData.body) : null;
+        if (!data) {
+          console.error('No data found in response body');
+          return;
+        }
+        // Access the first element of the array and check if it has Attributes
+        if (data.length > 0 && data[0].Attributes) {
+          const attributes = data[0].Attributes; // Access Attributes correctly
+          attributes.forEach((attr, index) => {
+            console.log(`Attribute ${index + 1}:`, attr);
+          });
+        } else {
+          console.error('Attributes data is missing or malformed');
+        }
+
+        const attributesObject = data[0].Attributes.reduce((acc, attr) => {
+          acc[attr.Name] = attr.Value;
+          return acc;
+        }, {});
+
+        console.log('Attributes object:', attributesObject);
+        setOwner(
+          attributesObject.given_name + ' ' + attributesObject.family_name ||
+            'Unknown Host',
+        );
+      } catch (error) {
+        console.error('Error fetching owner data:', error);
+      }
+    };
+    fetchOwner();
+  }, [parsedAccommodation]);
+
+  useEffect(() => {
+    console.log('Owner:', owner);
+  }, [owner]);
+
+  useEffect(() => {
+    if (parsedAccommodation.Images) {
+      const originalImages = parsedAccommodation.Images;
+
+      const updatedImages = Object.entries(originalImages)
+        .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
+        .map(([key, url]) => {
+          const updatedUrl = url.replace('detail', 'mobile');
+          return {uri: updatedUrl};
+        });
+      setImages(updatedImages);
+    } else {
+      console.warn('No Images object found in parsed accommodation data.');
+    }
+  }, [id, accommodation, parsedAccommodation]);
 
   const [currentPage, setCurrentPage] = useState(0);
 
   const handleHomeScreenPress = () => {
     navigation.navigate('HomeScreen');
   };
- 
+
   const handleMessagesPress = () => {
     const email = 'user1@example.com';
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
-        routes: [{ name: 'Messages', params: { email } }],
-      })
+        routes: [{name: 'Messages', params: {email}}],
+      }),
     );
   };
-    
-
 
   const handleSettingsPress = () => {
     navigation.navigate('Settings');
@@ -41,10 +154,11 @@ const Detailpage = ({ navigation }) => {
     navigation.navigate('onBoarding1');
   };
 
-  
-
-  const handleScroll = (event) => {
-    const page = Math.round(event.nativeEvent.contentOffset.x / event.nativeEvent.layoutMeasurement.width);
+  const handleScroll = event => {
+    const page = Math.round(
+      event.nativeEvent.contentOffset.x /
+        event.nativeEvent.layoutMeasurement.width,
+    );
     setCurrentPage(page);
   };
 
@@ -52,7 +166,7 @@ const Detailpage = ({ navigation }) => {
   const imageWidth = Dimensions.get('window').width;
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{flex: 1}}>
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity onPress={handleHomeScreenPress}>
@@ -83,178 +197,182 @@ const Detailpage = ({ navigation }) => {
           </View>
         </View>
 
-        <ScrollView style={{ flex: 1 }}>
+        <ScrollView style={{flex: 1}}>
           <ScrollView
             horizontal={true}
             contentContainerStyle={styles.imageContainer}
             pagingEnabled={true}
             onScroll={handleScroll}
-            scrollEventThrottle={100}
-          >
-            {images.map((image, index) => (
-              <View key={index} style={styles.imageWrapper}>
-                <Image source={image} style={[styles.image, { width: imageWidth }]} />
+            scrollEventThrottle={100}>
+            {Object.entries(images).map(([key, url]) => (
+              <View key={key} style={styles.imageWrapper}>
+                <Image
+                  source={url}
+                  style={[styles.image, {width: imageWidth}]}
+                />
               </View>
             ))}
           </ScrollView>
           <View style={styles.counterContainer}>
-            <Text style={styles.counterText}>{currentPage + 1}/{images.length}</Text>
+            <Text style={styles.counterText}>
+              {currentPage + 1}/{images.length}
+            </Text>
           </View>
 
+          <View>
+            <Text style={styles.text}>{parsedAccommodation.Title}</Text>
+            <Text style={styles.additionalText}>
+              {parsedAccommodation.Subtitle}
+            </Text>
+          </View>
 
-        <View>
-          <Text style={styles.text}>
-            Minimalistic and cozy apartment in Haarlem
-          </Text>
-          <Text style={styles.additionalText}>
-            The perfect getaway for 2 people in Haarlem to relax with 100% cozy
-            vibes!
-          </Text>
-        </View>
-
-        <View style={styles.borderContainer}>
-          <View style={styles.bedroomsContainer}>
-            <Text style={styles.bedroomsText}>2 bedrooms</Text>
-          </View>
-          <View style={styles.bathroomsContainer}>
-            <Text style={styles.bathroomsText}>2 bathrooms</Text>
-          </View>
-        </View>
-
-        <View style={styles.newBorderContainer}>
-          <View style={styles.newBedroomsContainer}>
-            <Text style={styles.newBedroomsText}>125m²</Text>
-          </View>
-          <View style={styles.newBathroomsContainer}>
-            <Text style={styles.newBathroomsText}>Over 120+ bookings</Text>
-          </View>
-          <TouchableOpacity onPress={handleonBoarding1Press}>
-            <View style={styles.book}>
-              <Text style={styles.bookText2}>Book {'>'} </Text>
+          <View style={styles.borderContainer}>
+            <View style={styles.bedroomsContainer}>
+              <Text style={styles.bedroomsText}>
+                {parsedAccommodation.bedrooms || 0} bedrooms
+              </Text>
             </View>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.horizontalLine} />
-
-        <Text style={styles.verifiedHostText}>Verified Host</Text>
-
-        <View style={styles.hostInfoContainer}>
-          <View style={styles.namebutton}>
-            <Text style={styles.nameText}>Huub Homer</Text>
-          </View>
-          <View style={styles.rightHostInfo}>
-            <View style={styles.hostRatingContainer}>
-              <Text style={styles.hostRatingText}>
-                Huub Homer has an average star rating of 4.4{' '}
+            <View style={styles.bathroomsContainer}>
+              <Text style={styles.bathroomsText}>
+                {parsedAccommodation.Bathrooms} bathrooms
               </Text>
             </View>
           </View>
-        </View>
-        <View style={styles.horizontalLine1} />
-
-        <Text style={styles.verifiedHostText}>Amenities</Text>
-
-        <View style={styles.bothAmenities}>
-          <View style={styles.amenities}>
-            <View style={styles.iconItem}>
-              <FontAwesomeIcon
-                name="tv"
-                size={24}
-                color="black"
-                style={styles.iconamenities}
-              />
-              <Text style={styles.bedroomsText}>Smart TV</Text>
+          <View style={styles.newBorderContainer}>
+            <View style={styles.newBedroomsContainer}>
+              <Text style={styles.newBedroomsText}>
+                {parsedAccommodation.Length}m²
+              </Text>
             </View>
-
-            <View style={styles.iconItem}>
-              <FeatherIcon
-                name="gift"
-                size={24}
-                color="black"
-                style={styles.iconamenities}
-              />
-              <Text style={styles.bedroomsText}>Welcome Gift</Text>
+            <View style={styles.newBathroomsContainer}>
+              <Text style={styles.newBathroomsText}>Over 120+ bookings</Text>
             </View>
+            <TouchableOpacity onPress={handleonBoarding1Press}>
+              <View style={styles.book}>
+                <Text style={styles.bookText2}>Book {'>'} </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+          <View style={styles.horizontalLine} />
 
-            <View style={styles.iconItem}>
-              <MaterialCommunityIcons
-                name="lightning-bolt-outline"
-                size={24}
-                color="black"
-                style={styles.iconamenities}
-              />
-              <Text style={styles.bedroomsText}>Super fast Internet</Text>
+          <Text style={styles.verifiedHostText}>Verified Host</Text>
+
+          <View style={styles.hostInfoContainer}>
+            <View style={styles.namebutton}>
+              <Text style={styles.nameText}>{owner}</Text>
             </View>
-
-            <View style={styles.iconItem}>
-              <Ionicons
-                name="telescope-outline"
-                size={24}
-                color="black"
-                style={styles.iconamenities}
-              />
-              <Text style={styles.bedroomsText}>Telescope</Text>
+            <View style={styles.rightHostInfo}>
+              <View style={styles.hostRatingContainer}>
+                <Text style={styles.hostRatingText}>
+                  {owner} has an average star rating of 4.4{' '}
+                </Text>
+              </View>
             </View>
           </View>
+          <View style={styles.horizontalLine1} />
 
-          {/*  (Dit is tijdelijk)*/}
-          <View style={styles.amenities}>
-            <View style={styles.iconItem}>
-              <MaterialCommunityIcons
-                name="sun-thermometer-outline"
-                size={24}
-                color="black"
-                style={styles.iconamenities}
-              />
+          <Text style={styles.verifiedHostText}>Amenities</Text>
 
-              <Text style={styles.bedroomsText}>Sauna</Text>
+          <View style={styles.bothAmenities}>
+            <View style={styles.amenities}>
+              <View style={styles.iconItem}>
+                <FontAwesomeIcon
+                  name="tv"
+                  size={24}
+                  color="black"
+                  style={styles.iconamenities}
+                />
+                <Text style={styles.bedroomsText}>Smart TV</Text>
+              </View>
+
+              <View style={styles.iconItem}>
+                <FeatherIcon
+                  name="gift"
+                  size={24}
+                  color="black"
+                  style={styles.iconamenities}
+                />
+                <Text style={styles.bedroomsText}>Welcome Gift</Text>
+              </View>
+
+              <View style={styles.iconItem}>
+                <MaterialCommunityIcons
+                  name="lightning-bolt-outline"
+                  size={24}
+                  color="black"
+                  style={styles.iconamenities}
+                />
+                <Text style={styles.bedroomsText}>Super fast Internet</Text>
+              </View>
+
+              <View style={styles.iconItem}>
+                <Ionicons
+                  name="telescope-outline"
+                  size={24}
+                  color="black"
+                  style={styles.iconamenities}
+                />
+                <Text style={styles.bedroomsText}>Telescope</Text>
+              </View>
             </View>
 
-            <View style={styles.iconItem}>
-              <MaterialCommunityIcons
-                name="lightbulb-on-outline"
-                size={24}
-                color="black"
-                style={styles.iconamenities}
+            {/*  (Dit is tijdelijk)*/}
+            <View style={styles.amenities}>
+              <View style={styles.iconItem}>
+                <MaterialCommunityIcons
+                  name="sun-thermometer-outline"
+                  size={24}
+                  color="black"
+                  style={styles.iconamenities}
+                />
+
+                <Text style={styles.bedroomsText}>Sauna</Text>
+              </View>
+
+              <View style={styles.iconItem}>
+                <MaterialCommunityIcons
+                  name="lightbulb-on-outline"
+                  size={24}
+                  color="black"
+                  style={styles.iconamenities}
+                />
+                <Text style={styles.bedroomsText}>Dimmable lights</Text>
+              </View>
+
+              <View style={styles.iconItem}>
+                <FontAwesomeIcon
+                  name="diamond"
+                  size={20}
+                  color="black"
+                  style={styles.iconamenities}
+                />
+                <Text style={styles.bedroomsText}>Vault</Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.horizontalLine1} />
+
+          <Text style={styles.verifiedHostText}>In the Area:</Text>
+
+          <View style={styles.imageAndTextContainer}>
+            <View style={styles.imageWrapper}>
+              <Image
+                source={require('./pictures/goaty.png')}
+                style={styles.goaty}
               />
-              <Text style={styles.bedroomsText}>Dimmable lights</Text>
             </View>
 
-            <View style={styles.iconItem}>
-              <FontAwesomeIcon
-                name="diamond"
-                size={20}
-                color="black"
-                style={styles.iconamenities}
-              />
-              <Text style={styles.bedroomsText}>Vault</Text>
+            <View style={styles.randomTextWrapper}>
+              <Text style={styles.randomText}>
+                Goat milkig at Timo’s farm in Haarlem
+              </Text>
             </View>
           </View>
-        </View>
-        <View style={styles.horizontalLine1} />
-
-        <Text style={styles.verifiedHostText}>In the Area:</Text>
-
-        <View style={styles.imageAndTextContainer}>
-          <View style={styles.imageWrapper}>
-            <Image
-              source={require('./pictures/goaty.png')}
-              style={styles.goaty}
-            />
-          </View>
-
-          <View style={styles.randomTextWrapper}>
-            <Text style={styles.randomText}>
-              Goat milkig at Timo’s farm in Haarlem
-            </Text>
-          </View>
-        </View>
-      </ScrollView>
-    </View>
+        </ScrollView>
+      </View>
     </SafeAreaView>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -313,19 +431,17 @@ const styles = StyleSheet.create({
     marginLeft: 17,
     fontFamily: 'MotivaSansRegular.woff',
   },
-//padding for so that image wont touch phone wall
+  //padding for so that image wont touch phone wall
   imageContainer: {
     flexDirection: 'row',
   },
   // marginRight 32 for more spacing between pics
   imageWrapper: {
     position: 'relative',
-    
   },
   //resolution 360 to bring back old slide
   image: {
     height: 250,
-    
   },
   borderContainer: {
     flexDirection: 'row',
@@ -348,7 +464,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     padding: 10,
     marginLeft: 10,
-    marginLeft: 8,
     height: 40,
   },
   bedroomsText: {
@@ -419,7 +534,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 13,
     textAlign: 'center',
-     marginLeft: 5,
+    marginLeft: 5,
 
     fontFamily: 'MotivaSansRegular.woff',
   },
@@ -438,13 +553,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
     alignSelf: 'center',
     width: 330,
-  },
-
-  verifiedHostText: {
-    marginLeft: 20,
-    color: 'black',
-    fontSize: 16,
-    fontFamily: 'MotivaSansBold.woff',
   },
   namebutton: {
     width: 110,
@@ -501,7 +609,7 @@ const styles = StyleSheet.create({
   },
   randomTextWrapper: {
     flex: 1,
-    marginLeft: 20, 
+    marginLeft: 20,
   },
   randomText: {
     fontSize: 12,
@@ -516,8 +624,8 @@ const styles = StyleSheet.create({
     height: 30,
     borderWidth: 2,
     borderColor: 'rgba(0, 0, 0, 0.0)',
-    borderTopLeftRadius: 8, 
-    borderBottomRightRadius: 8, 
+    borderTopLeftRadius: 8,
+    borderBottomRightRadius: 8,
     backgroundColor: 'rgba(0, 0, 0, 0.4)',
     justifyContent: 'center',
     alignItems: 'center',
