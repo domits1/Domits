@@ -11,6 +11,7 @@ import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import ContactItem from "../chat/ContactItem";
 import spinner from "../../images/spinnner.gif";
+import ContactModal from "./contactModal";
 
 
 const Chat = ({ user }) => {
@@ -37,6 +38,8 @@ const Chat = ({ user }) => {
     const userId = user.attributes.sub;
     const navigate = useNavigate();
     const chatContainerRef = useRef(null);
+    const [isContactModalOpen, setContactModalOpen] = useState(false);
+    const [pendingRequest, setPendingRequest] = useState(null);
 
     const getUUIDForUser = (userId) => {
         let uuid = localStorage.getItem(`${userId}_uuid`);
@@ -110,7 +113,6 @@ const Chat = ({ user }) => {
             fetchAccommodation(accoId);
         }
     }, [accoId]);
-
     useEffect(() => {
         const subscription = API.graphql(
             graphqlOperation(subscriptions.onCreateChat)
@@ -380,8 +382,13 @@ const Chat = ({ user }) => {
             setSelectedUserName(user);
         }
     }
-
     const acceptOrDenyRequest = async (status, id, origin) => {
+        console.log("acceptOrDenyRequest called with:", status, id, origin);
+        if (status === 'rejected') {
+            setPendingRequest({ status, id, origin });
+            setContactModalOpen(true);
+            return; 
+        }
         if (status && id) {
             const body = {
                 Status: status,
@@ -425,8 +432,55 @@ const Chat = ({ user }) => {
                 fetchChatUsers();
             }
         }
-    }
+    };
+    const handleConfirmReject = async () => {
+        if (pendingRequest) {
+            const { status, id, origin } = pendingRequest;
+            
+            const body = { Status: status, Id: id };
+            console.log(body);
+            try {
+                const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
+                    method: 'PUT',
+                    body: JSON.stringify(body),
+                    headers: { 'Content-type': 'application/json; charset=UTF-8' }
+                });
+                if (!response.ok) throw new Error('Failed to update');
 
+                const data = await response.json();
+                const parsedData = JSON.parse(data.body);
+                console.log(parsedData);
+                if (parsedData.isAccepted) {
+                    const result = await API.graphql({
+                        query: mutations.createChat,
+                        variables: {
+                            input: {
+                                text: '',
+                                userId: userId,
+                                recipientId: origin,
+                                isRead: false,
+                                createdAt: new Date().toISOString(),
+                                channelID: channelUUID
+                            },
+                        },
+                    });
+                    console.log(result);
+                }
+            } catch (error) {
+                console.error("Unexpected error:", error);
+            } finally {
+                fetchHostContacts();
+                fetchChats(origin);
+                fetchChatUsers();
+            }
+        }
+        setPendingRequest(null);
+        setContactModalOpen(false); 
+    };
+    const handleCloseContactModal = () => {
+        setContactModalOpen(false);
+        setPendingRequest(null);
+    };
     return (
         <main className="page-body">
             <h2 className="chat__heading">Messages</h2>
@@ -456,6 +510,8 @@ const Chat = ({ user }) => {
                                             <ContactItem item={item} index={index} type={displayType}
                                                          acceptOrDenyRequest={acceptOrDenyRequest} selectUser={selectUser}
                                                          unreadMessages={unreadMessages}
+                                                         setPendingRequest={setPendingRequest}
+                                                         setContactModalOpen={setContactModalOpen} 
                                             selectedUser={selectedUserName}/>
                                         )
                                     )
@@ -522,13 +578,23 @@ const Chat = ({ user }) => {
                                     </article>
                                     <article className={styles.accoDisplay}>
                                         <h4>Referenced accommodation:</h4>
-                                        {accommodation && (
+                                        {accommodation === 'Accommodation not found' ? (
+                                            console.log(accommodation),
                                             <div className={styles.textDisplay}>
                                                 <h3>{accommodation.Title}</h3>
                                                 <p>{`${accommodation.Country}, ${accommodation.City}, ${accommodation.Street}, ${accommodation.PostalCode}`}</p>
                                                 <button className={styles.mainButton} onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>View listing details</button>
                                             </div>
-                                        )}
+                                        ) : (
+                                            <div className={styles.textDisplay}>
+                                                <h3>This accommodation is unavailable</h3>
+                                                {accoId !== '' && (
+                                                    <button className={styles.hostButton} onClick={() => navigate(`/enlist`)}>
+                                                        List accommodation
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}  
                                     </article>
                                 </div>
                                 <nav className="chat__nav">
@@ -541,6 +607,13 @@ const Chat = ({ user }) => {
                     )}
                 </section>
             </section>
+            <ContactModal
+                show={isContactModalOpen}
+                onClose={handleCloseContactModal}
+                onConfirm={handleConfirmReject}
+                title="Confirm Rejection"
+                message="Are you sure you want to reject this contact request?"
+            />
         </main>
     );
 };

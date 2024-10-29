@@ -118,7 +118,6 @@ const Accommodations = ({ searchResults }) => {
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
 
-        // Vul de data met de juiste homepage-afbeeldingen
         await populateAccoListWithImages(data);
       } catch (error) {
         console.error('Error fetching or processing data:', error);

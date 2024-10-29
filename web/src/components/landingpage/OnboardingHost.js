@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, {useState, useMemo, useEffect} from "react";
 import {useLocation, useNavigate} from 'react-router-dom';
 import spinner from "../../images/spinnner.gif";
 import info from "../../images/icons/info.png";
@@ -6,7 +6,7 @@ import './onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";
-import { Storage, Auth } from "aws-amplify"
+import {Storage, Auth} from "aws-amplify"
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import Apartment from "../../images/icons/flat.png";
 import House from "../../images/icons/house.png";
@@ -30,12 +30,13 @@ import RegistrationNumber from "../hostverification/RegistrationNumberView";
 
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
+
 function OnboardingHost() {
     const navigate = useNavigate();
     const options = useMemo(() => countryList().getLabels(), []);
     const [isNew, setIsNew] = useState(true);
     const [oldAccoID, setOldAccoID] = useState('');
-    const { search } = useLocation();
+    const {search} = useLocation();
     const searchParams = new URLSearchParams(search);
     const accommodationID = searchParams.get('ID');
     const [location, setLocation] = useState({
@@ -43,7 +44,7 @@ function OnboardingHost() {
         longitude: 0,
     });
     const [hasAccoType, setHasAccoType] = useState(false);
-    const [hasGuestAccess, setHasGuestAccess] =useState(false);
+    const [hasGuestAccess, setHasGuestAccess] = useState(false);
     const [isDeclarationChecked, setDeclarationChecked] = useState(false);
     const [isTermsChecked, setTermsChecked] = useState(false);
     const [hasAddress, setHasAddress] = useState(false);
@@ -60,7 +61,7 @@ function OnboardingHost() {
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: JSON.stringify({ ID: accommodationID }),
+                    body: JSON.stringify({ID: accommodationID}),
                 });
 
                 if (!response.ok) {
@@ -89,6 +90,7 @@ function OnboardingHost() {
             setIsLoading(false)
         }
     }, [isNew, accommodationID]);
+
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
@@ -125,8 +127,7 @@ function OnboardingHost() {
         "Electric boat": ElectricBoat,
         "Boat without license": BoatWithoutLicense
     };
-    const [formData, setFormData] = useState({
-    });
+    const [formData, setFormData] = useState({});
     const [selectedAccoType, setSelectedAccoType] = useState("");
     const [selectedBoatType, setSelectedBoatType] = useState("");
     const [selectedCamperType, setSelectedCamperType] = useState("");
@@ -168,7 +169,7 @@ function OnboardingHost() {
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
                     },
-                    body: JSON.stringify({ sub: hostID }),
+                    body: JSON.stringify({sub: hostID}),
                 });
                 const data = await response.json();
                 if (data.hasStripeAccount) {
@@ -219,11 +220,9 @@ function OnboardingHost() {
             ExtraServices: [],
             EcoFriendly: []
         },
-        HouseRules: existingData.HouseRules || {
-            AllowSmoking: false,
-            AllowPets: false,
-            AllowParties: false,
-        },
+        AllowSmoking: existingData.AllowSmoking || false,
+        AllowPets: existingData.AllowPets || false,
+        AllowParties: existingData.AllowParties || false,
         CheckIn: existingData.CheckIn || {
             From: "",
             Til: "",
@@ -246,6 +245,9 @@ function OnboardingHost() {
         CleaningFee: existingData.CleaningFee || 0,
         OwnerId: existingData.OwnerId || userId,
         GuestAmount: isNew ? 0 : formData.GuestAmount,
+        MinimumStay: isNew ? 0 : formData.MinimumStay,
+        MinimumBookingPeriod: isNew ? 0 : formData.MinimumBookingPeriod,
+        MaximumStay: isNew ? 0 : formData.MaximumStay,
     });
 
     const generateBoatFormData = () => ({
@@ -267,7 +269,7 @@ function OnboardingHost() {
         YOC: isNew ? "" : formData.YOC,
         Renovated: isNew ? "" : formData.Renovated,
         Features: {
-            ...generateCommonFormData().Features,
+            ...generateCommonFormData(formData).Features,
             Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
             NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
             LeisureActivities: isNew ? [] : formData.Features?.LeisureActivities || [],
@@ -296,7 +298,7 @@ function OnboardingHost() {
         FWD: isNew ? false : formData.FWD,
         SelfBuilt: isNew ? false : formData.SelfBuilt,
         Features: {
-            ...generateCommonFormData().Features,
+            ...generateCommonFormData(formData).Features,
             Vehicle: isNew ? [] : formData.Features?.Vehicle || [],
             Outdoor: isNew ? [] : formData.Features?.Outdoor || [],
             NavigationEquipment: isNew ? [] : formData.Features?.NavigationEquipment || [],
@@ -494,9 +496,9 @@ function OnboardingHost() {
                     setTypeAmenities(boatAmenities);
                     return;
                 case 'Camper':
-                   setFormData(generateCamperFormData);
+                    setFormData(generateCamperFormData);
                     setTypeAmenities(camperAmenities);
-                   return;
+                    return;
                 default:
                     setFormData(generateNormalAccommodationFormData);
                     setTypeAmenities(allAmenities);
@@ -543,6 +545,7 @@ function OnboardingHost() {
                 setHasAddress(!!(formData.Country && formData.City && formData.PostalCode && formData.Street));
                 setHasSpecs(!!(formData.Category && formData.LicensePlate && formData.CamperBrand && formData.Model && formData.Requirement && formData.GPI &&
                     formData.Height && formData.Length && formData.FuelTank && formData.Transmission && formData.YOC));
+                break;
             default:
                 setHasAddress(!!(formData.Country && formData.City && formData.PostalCode && formData.Street));
                 break;
@@ -659,7 +662,7 @@ function OnboardingHost() {
 
     const handleAmenities = (category, amenity, checked) => {
         setFormData(prevFormData => {
-            const updatedFeatures = { ...prevFormData.Features };
+            const updatedFeatures = {...prevFormData.Features};
 
             if (amenity === 'Cleaning service (add service fee manually)') {
                 resetCleaningFee();
@@ -681,7 +684,7 @@ function OnboardingHost() {
         });
     };
     const handleCheckBoxChange = (event) => {
-        const { name, type, checked, value } = event.target;
+        const {name, type, checked, value} = event.target;
         setFormData((prevData) => ({
             ...prevData,
             [name]: checked,
@@ -706,7 +709,7 @@ function OnboardingHost() {
     };
 
     const handleInputChange = (event) => {
-        const { name, type, checked, value } = event.target;
+        const {name, type, checked, value} = event.target;
 
         if (type === 'checkbox') {
             setFormData((prevData) => ({
@@ -720,14 +723,12 @@ function OnboardingHost() {
                     [name]: checked,
                 }
             }));
-        }
-        else if (type === 'radio') {
+        } else if (type === 'radio') {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: !prevData[name],
             }));
-        }
-        else if (type === 'number' || type === 'range') {
+        } else if (type === 'number' || type === 'range') {
             let newValue = parseFloat(value);
 
             if (name === 'Rent') {
@@ -742,8 +743,7 @@ function OnboardingHost() {
                 ...prevData,
                 [name]: newValue || ''
             }));
-        }
-        else {
+        } else {
             setFormData((prevData) => ({
                 ...prevData,
                 [name]: value
@@ -771,8 +771,6 @@ function OnboardingHost() {
         }
     };
 
-
-
     const handleCountryChange = (selectedOption) => {
         setFormData(currentFormData => ({
             ...currentFormData,
@@ -796,9 +794,9 @@ function OnboardingHost() {
 
     const uploadImagesInDifferentSizes = async (file, userId, accommodationId, index) => {
         const sizes = {
-            mobile: { maxWidthOrHeight: 300, maxSizeMB: 0.1 },  // ~100kB
-            homepage: { maxWidthOrHeight: 800, maxSizeMB: 0.2 },  // ~200kB
-            detail: { maxWidthOrHeight: 1200, maxSizeMB: 0.5 }  // ~500kB
+            mobile: {maxWidthOrHeight: 300, maxSizeMB: 0.1},  // ~100kB
+            homepage: {maxWidthOrHeight: 800, maxSizeMB: 0.2},  // ~200kB
+            detail: {maxWidthOrHeight: 1200, maxSizeMB: 0.5}  // ~500kB
         };
 
         for (const [key, sizeOptions] of Object.entries(sizes)) {
@@ -815,7 +813,7 @@ function OnboardingHost() {
                     region: region,
                     contentType: 'image/webp',
                     level: 'public',
-                    customPrefix: { public: '' }
+                    customPrefix: {public: ''}
                 });
             } catch (error) {
                 console.error(`Error uploading ${key} image:`, error);
@@ -836,7 +834,7 @@ function OnboardingHost() {
                     bucket: S3_BUCKET_NAME,
                     region: region,
                     level: 'public',
-                    customPrefix: { public: '' }
+                    customPrefix: {public: ''}
                 });
                 console.log(`Deleted ${key} successfully`);
             } catch (err) {
@@ -848,7 +846,7 @@ function OnboardingHost() {
         try {
             setIsLoading(true);
             const AccoID = formData.ID;
-            const updatedFormData = { ...formData };
+            const updatedFormData = {...formData};
 
             for (let i = 0; i < updatedIndex.length; i++) {
                 const index = updatedIndex[i];
@@ -886,22 +884,20 @@ function OnboardingHost() {
         }
     };
 
-
-
     const handleSubmit = async () => {
         try {
             setIsLoading(true);
             const AccoID = formData.ID;
-            const updatedFormData = { ...formData };
+            const updatedFormData = {...formData};
 
             // Upload images and generate URLs
             for (let i = 0; i < imageFiles.length; i++) {
                 const file = imageFiles[i];
                 if (file) {
                     await uploadImagesInDifferentSizes(file, userId, AccoID, i);
-                    updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'mobile');
-                    updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'homepage');
-                    updatedFormData.Images[`image-${i + 1}`] = constructURL(userId, AccoID, i, 'detail');
+                    updatedFormData.Images[`image${i + 1}`] = constructURL(userId, AccoID, i, 'mobile');
+                    updatedFormData.Images[`image${i + 1}`] = constructURL(userId, AccoID, i, 'homepage');
+                    updatedFormData.Images[`image${i + 1}`] = constructURL(userId, AccoID, i, 'detail');
                 }
             }
 
@@ -933,7 +929,7 @@ function OnboardingHost() {
     };
 
 
-    const [imageFiles, setImageFiles] = useState(Array.from({ length: 5 }, () => null));
+    const [imageFiles, setImageFiles] = useState(Array.from({length: 5}, () => null));
 
     const handleFileChange = async (file, index) => {
         if (file) {
@@ -943,7 +939,7 @@ function OnboardingHost() {
 
             await uploadImagesInDifferentSizes(file, userId, formData.ID, index);
 
-            const updatedFormData = { ...formData };
+            const updatedFormData = {...formData};
             updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'mobile');
             updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'homepage');
             updatedFormData.Images[`image${index + 1}`] = constructURL(userId, formData.ID, index, 'detail');
@@ -951,15 +947,12 @@ function OnboardingHost() {
         }
     };
 
-
-
-
     const handleDelete = async (index) => {
         const newImageFiles = [...imageFiles];
         newImageFiles[index] = null;
         setImageFiles(newImageFiles);
 
-        const updatedFormData = { ...formData };
+        const updatedFormData = {...formData};
         const key = `Image-${index + 1}`;
         updatedFormData.Images[key] = "";
         setFormData(updatedFormData);
@@ -1010,16 +1003,19 @@ function OnboardingHost() {
                                         className={`option ${selectedAccoType === option ? 'selected' : ''}`}
                                         onClick={() => changeAccoType(option)}
                                     >
-                                        <img className="accommodation-icon" src={accommodationIcons[option]} alt={option}/>
+                                        <img className="accommodation-icon" src={accommodationIcons[option]}
+                                             alt={option}/>
                                         {option}
                                     </div>
                                 ))}
                             </section>
                             <nav className="onboarding-button-box">
-                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard")} style={{opacity: "75%"}}>
+                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard")}
+                                        style={{opacity: "75%"}}>
                                     Go to dashboard
                                 </button>
-                                <button className={!hasAccoType ? 'onboarding-button-disabled' : 'onboarding-button'} disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
+                                <button className={!hasAccoType ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                        disabled={!hasAccoType} onClick={() => pageUpdater(page + 1)}>
                                     Confirm and proceed
                                 </button>
                             </nav>
@@ -1104,7 +1100,8 @@ function OnboardingHost() {
                             {isNew ? `Where can we find your ${selectedAccoType === 'Boat' || selectedAccoType === 'Camper' ? selectedAccoType.toLowerCase() : 'accommodation'}?`
                                 : `Change the location of your ${formData.AccommodationType === 'Boat' || 'Camper' ? formData.AccommodationType.toLowerCase() : 'accommodation'}`}
                         </h2>
-                        <p className="onboardingSectionSubtitle">We only share your address with guests after they have booked</p>
+                        <p className="onboardingSectionSubtitle">We only share your address with guests after they have
+                            booked</p>
 
                         <section className="acco-location">
                             <section className="location-left">
@@ -1113,10 +1110,10 @@ function OnboardingHost() {
                                 </label>
 
                                 <Select
-                                    options={options.map(country => ({ value: country, label: country }))}
+                                    options={options.map(country => ({value: country, label: country}))}
                                     name="Country"
                                     className="locationText"
-                                    value={{ value: formData.Country, label: formData.Country || ''}}
+                                    value={{value: formData.Country, label: formData.Country || ''}}
                                     onChange={handleCountryChange}
                                     id="country"
                                     required={true}
@@ -1178,12 +1175,13 @@ function OnboardingHost() {
                         </section>
 
                         <section className="listing-info enlist-info">
-                            <img src={info} className="info-icon" alt="info icon" />
+                            <img src={info} className="info-icon" alt="info icon"/>
                             <p className="info-msg">Fields with * are mandatory</p>
                         </section>
 
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{ opacity: "75%" }}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className={!hasAddress ? 'onboarding-button-disabled' : 'onboarding-button'}
@@ -1199,18 +1197,20 @@ function OnboardingHost() {
                     <main className="container">
                         <h2 className="onboardingSectionTitle">{isNew ? 'How many people can stay here?' : 'Adjust the maximum amount of guests'}</h2>
                         <section className="guest-amount">
-                        <div className="guest-amount-item">
-                        <p>Guests</p>
-                        <div className="amount-btn-box">
-                            <button className="round-button" onClick={() => decrementAmount('GuestAmount')}>-</button>
-                            {formData.GuestAmount}
-                            <button
-                                className="round-button"
-                                onClick={() => incrementAmount('GuestAmount')}
-                                disabled={formData.GuestAmount >= 10}
-                            >+</button>
-                        </div>
-                    </div>
+                            <div className="guest-amount-item">
+                                <p>Guests</p>
+                                <div className="amount-btn-box">
+                                    <button className="round-button" onClick={() => decrementAmount('GuestAmount')}>-
+                                    </button>
+                                    {formData.GuestAmount}
+                                    <button
+                                        className="round-button"
+                                        onClick={() => incrementAmount('GuestAmount')}
+                                        disabled={formData.GuestAmount >= 10}>
+                                        +
+                                    </button>
+                                </div>
+                            </div>
 
                             {selectedAccoType === 'Boat' ? (
                                 <div className="guest-amount-item">
@@ -1220,10 +1220,11 @@ function OnboardingHost() {
                                         </button>
                                         {formData.Cabins}
                                         <button
-                                        className="round-button"
-                                        onClick={() => incrementAmount('Cabins')}
-                                        disabled={formData.Cabins >= 10}
-                                        >+</button>
+                                            className="round-button"
+                                            onClick={() => incrementAmount('Cabins')}
+                                            disabled={formData.Cabins >= 10}>
+                                            +
+                                        </button>
                                     </div>
                                 </div>
                             ) : selectedAccoType === 'Camper' ? (
@@ -1234,26 +1235,28 @@ function OnboardingHost() {
                                         </button>
                                         {formData.Bedrooms}
                                         <button
-                                        className="round-button"
-                                        onClick={() => incrementAmount('Bedrooms')}
-                                        disabled={formData.Bedrooms >= 10}
-                                        >+</button>
+                                            className="round-button"
+                                            onClick={() => incrementAmount('Bedrooms')}
+                                            disabled={formData.Bedrooms >= 10}>
+                                            +
+                                        </button>
                                     </div>
                                 </div>
                             ) : (
-                            <div className="guest-amount-item">
-                                <p>Bedrooms</p>
-                                <div className="amount-btn-box">
-                                    <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
-                                    </button>
-                                    {formData.Bedrooms}
-                                    <button
-                                    className="round-button"
-                                    onClick={() => incrementAmount('Bedrooms')}
-                                    disabled={formData.Bedrooms >= 20}
-                                    >+</button>
+                                <div className="guest-amount-item">
+                                    <p>Bedrooms</p>
+                                    <div className="amount-btn-box">
+                                        <button className="round-button" onClick={() => decrementAmount('Bedrooms')}>-
+                                        </button>
+                                        {formData.Bedrooms}
+                                        <button
+                                            className="round-button"
+                                            onClick={() => incrementAmount('Bedrooms')}
+                                            disabled={formData.Bedrooms >= 20}>
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
                             )}
                             <div className="guest-amount-item">
                                 <p>Bathrooms</p>
@@ -1262,10 +1265,11 @@ function OnboardingHost() {
                                     </button>
                                     {formData.Bathrooms}
                                     <button
-                                    className="round-button"
-                                    onClick={() => incrementAmount('Bathrooms')}
-                                    disabled={formData.Bathrooms >= 10}
-                                    >+</button>
+                                        className="round-button"
+                                        onClick={() => incrementAmount('Bathrooms')}
+                                        disabled={formData.Bathrooms >= 10}>
+                                        +
+                                    </button>
                                 </div>
                             </div>
                             <div className="guest-amount-item">
@@ -1274,15 +1278,17 @@ function OnboardingHost() {
                                     <button className="round-button" onClick={() => decrementAmount('Beds')}>-</button>
                                     {formData.Beds}
                                     <button
-                                    className="round-button"
-                                    onClick={() => incrementAmount('Beds')}
-                                    disabled={formData.Beds >= 10}
-                                    >+</button>
+                                        className="round-button"
+                                        onClick={() => incrementAmount('Beds')}
+                                        disabled={formData.Beds >= 10}>
+                                        +
+                                    </button>
                                 </div>
                             </div>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button className="onboarding-button"
@@ -1342,102 +1348,102 @@ function OnboardingHost() {
                     </main>
                 );
             case 5:
-                    return (
-                        <main className="page-body">
-                            <h2 className="onboardingSectionTitle">House rules</h2>
-                            <div className="houseRulesContainer">
+                return (
+                    <main className="page-body">
+                        <h2 className="onboardingSectionTitle">House rules</h2>
+                        <div className="houseRulesContainer">
                             <div className="toggle-container">
-                            <label className="toggle">
-                                <span className="toggle-label">Allow smoking</span>
+                                <label className="toggle">
+                                    <span className="toggle-label">Allow smoking</span>
+                                    <input
+                                        className="toggle-checkbox"
+                                        type="checkbox"
+                                        checked={formData.AllowSmoking}
+                                        onChange={(e) => handleHouseRulesChange('AllowSmoking', e.target.checked)}
+                                    />
+                                    <div className="toggle-switch"></div>
+                                </label>
+
+                                <label className="toggle">
+                                    <span className="toggle-label">Allow pets</span>
+                                    <input
+                                        className="toggle-checkbox"
+                                        type="checkbox"
+                                        checked={formData.AllowPets}
+                                        onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
+                                    />
+                                    <div className="toggle-switch"></div>
+                                </label>
+
+                                <label className="toggle">
+                                    <span className="toggle-label">Allow parties/events</span>
+                                    <input
+                                        className="toggle-checkbox"
+                                        type="checkbox"
+                                        checked={formData.AllowParties}
+                                        onChange={(e) => handleHouseRulesChange('AllowParties', e.target.checked)}
+                                    />
+                                    <div className="toggle-switch"></div>
+                                </label>
+                            </div>
+                            <hr/>
+                            <label className="Check">
+                                <div className="Check-label">Check-in</div>
+                                <span>From</span>
                                 <input
-                                    className="toggle-checkbox"
-                                    type="checkbox"
-                                    checked={formData.AllowSmoking}
-                                    onChange={(e) => handleHouseRulesChange('AllowSmoking', e.target.checked)}
+                                    className="Check-checkbox"
+                                    type="time"
+                                    value={formData.CheckIn.From}
+                                    onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
                                 />
-                                <div className="toggle-switch"></div>
+                                <span>Til</span>
+                                <input
+                                    className="Check-checkbox"
+                                    type="time"
+                                    value={formData.CheckIn.Til}
+                                    onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'Til')}
+                                />
                             </label>
 
-                            <label className="toggle">
-                                <span className="toggle-label">Allow pets</span>
+                            <label className="Check">
+                                <div className="Check-label">Check-out</div>
+                                <span>From</span>
                                 <input
-                                    className="toggle-checkbox"
-                                    type="checkbox"
-                                    checked={formData.AllowPets}
-                                    onChange={(e) => handleHouseRulesChange('AllowPets', e.target.checked)}
+                                    className="Check-checkbox"
+                                    type="time"
+                                    value={formData.CheckOut.From}
+                                    onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'From')}
                                 />
-                                <div className="toggle-switch"></div>
-                            </label>
-
-                            <label className="toggle">
-                                <span className="toggle-label">Allow parties/events</span>
+                                <span>Til</span>
                                 <input
-                                    className="toggle-checkbox"
-                                    type="checkbox"
-                                    checked={formData.AllowParties}
-                                    onChange={(e) => handleHouseRulesChange('AllowParties', e.target.checked)}
+                                    className="Check-checkbox"
+                                    type="time"
+                                    value={formData.CheckOut.Til}
+                                    onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'Til')}
                                 />
-                                <div className="toggle-switch"></div>
                             </label>
                         </div>
-                <hr/>
-                        <label className="Check">
-                        <div className="Check-label">Check-in</div>
-                        <span>From</span>
-                        <input
-                            className="Check-checkbox"
-                            type="time"
-                            value={formData.CheckIn.From}
-                            onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
-                        />
-                        <span>Til</span>
-                        <input
-                            className="Check-checkbox"
-                            type="time"
-                            value={formData.CheckIn.Til}
-                            onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'Til')}
-                        />
-                    </label>
-
-                    <label className="Check">
-                        <div className="Check-label">Check-out</div>
-                        <span>From</span>
-                        <input
-                            className="Check-checkbox"
-                            type="time"
-                            value={formData.CheckOut.From}
-                            onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'From')}
-                        />
-                        <span>Til</span>
-                        <input
-                            className="Check-checkbox"
-                            type="time"
-                            value={formData.CheckOut.Til}
-                            onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'Til')}
-                        />
-                    </label>
-                            </div>
-                            <nav className="onboarding-button-box">
-                                <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
-                                        style={{opacity: "75%"}}>
-                                    Go back
-                                </button>
-                                <button
+                        <nav className="onboarding-button-box">
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
+                                Go back
+                            </button>
+                            <button
                                 className={
                                     formData.CheckIn?.From && formData.CheckIn?.Til && formData.CheckOut?.From && formData.CheckOut?.Til
-                                    ? 'onboarding-button'
-                                    : 'onboarding-button-disabled'
+                                        ? 'onboarding-button'
+                                        : 'onboarding-button-disabled'
                                 }
                                 disabled={
                                     !(formData.CheckIn?.From && formData.CheckIn?.Til && formData.CheckOut?.From && formData.CheckOut?.Til)
                                 }
                                 onClick={() => pageUpdater(page + 1)}
-                                >
+                            >
                                 Confirm and proceed
-                                </button>
-                            </nav>
-                        </main>
-                    );
+                            </button>
+                        </nav>
+                    </main>
+                );
             case 6:
                 return (
                     <main className="container">
@@ -1535,7 +1541,8 @@ function OnboardingHost() {
                             <p>{formData.Subtitle.length}/128</p>
                         </section>
                         <nav className="onboarding-button-box">
-                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)} style={{opacity: "75%"}}>
+                            <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
+                                    style={{opacity: "75%"}}>
                                 Go back
                             </button>
                             <button
@@ -1801,10 +1808,16 @@ function OnboardingHost() {
                                         Required driver’s license
                                     </label>
                                     <Select
-                                        options={licenseTypes.map(licenseType => ({value: licenseType, label: licenseType}))}
+                                        options={licenseTypes.map(licenseType => ({
+                                            value: licenseType,
+                                            label: licenseType
+                                        }))}
                                         name="Requirement"
                                         className="locationText"
-                                        value={{value: formData.Requirement, label: `${formData.Requirement ? formData.Requirement : 'Select the required license type'}`}}
+                                        value={{
+                                            value: formData.Requirement,
+                                            label: `${formData.Requirement ? formData.Requirement : 'Select the required license type'}`
+                                        }}
                                         onChange={setLicenseRequirement}
                                         id="requirement"
                                         required={true}
@@ -1955,12 +1968,12 @@ function OnboardingHost() {
                             <div className="pricing-row">
                                 <label>Base rate</label>
                                 <input className="pricing-input" type="number" name="Rent"
-                                        onChange={handleInputChange}
-                                        onInput={handleInputRestrictions}
-                                        value={formData.Rent}
-                                        min={1}
-                                        step={0.1}
-                                        required={true}/>
+                                       onChange={handleInputChange}
+                                       onInput={handleInputRestrictions}
+                                       value={formData.Rent}
+                                       min={1}
+                                       step={0.1}
+                                       required={true}/>
 
                             </div>
                             {formData.Features.ExtraServices.includes('Cleaning service (add service fee manually)') &&
@@ -2017,34 +2030,89 @@ function OnboardingHost() {
                         <p className="onboardingSectionSubtitle">You can edit and delete availabilities later within
                             your dashboard</p>
                         <section className="listing-calendar">
-                            <CalendarComponent passedProp={formData} isNew={true} updateDates={updateDates}/>
+                            <CalendarComponent passedProp={formData}
+                                               isNew={true}
+                                               updateDates={updateDates}
+                            />
+                            <div className="staying_nights">
+                                <div className="stayMinMaxBox">
+                                    <div className="stayMinMaxField">
+                                        <label className="minMaxLabel">Minimum Stay (Days):</label>
+                                        <div className="minMaxButtons">
+                                            <button className="round-button"
+                                                    onClick={() => decrementAmount('MinimumStay')}>-
+                                            </button>
+                                            {formData.MinimumStay}
+                                            <button
+                                                className="round-button"
+                                                onClick={() => incrementAmount('MinimumStay')}
+                                                disabled={formData.MinimumStay >= 30}
+                                            >+
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="stayMinMaxField">
+                                        <label className="minMaxLabel">Minimum booking period (Days):</label>
+                                        <div className="minMaxButtons">
+                                            <button className="round-button"
+                                                    onClick={() => decrementAmount('MinimumBookingPeriod')}>-
+                                            </button>
+                                            {formData.MinimumBookingPeriod}
+                                            <button
+                                                className="round-button"
+                                                onClick={() => incrementAmount('MinimumBookingPeriod')}
+                                                disabled={formData.MinimumBookingPeriod >= 30}
+                                            >+
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="stayMinMaxField">
+                                        <label className="minMaxLabel">Maximum Stay (Days):</label>
+                                        <div className="minMaxButtons">
+                                            <button className="round-button"
+                                                    onClick={() => decrementAmount('MaximumStay')}>-
+                                            </button>
+                                            {formData.MaximumStay}
+                                            <button
+                                                className="round-button"
+                                                onClick={() => incrementAmount('MaximumStay')}
+                                                disabled={formData.MaximumStay >= 365}
+                                            >+
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </section>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
                                 Go back
                             </button>
-                            <button className='onboarding-button'
-                                    onClick={() => pageUpdater(page + 1)}>
+                            <button
+                                className={!formData.DateRanges.length ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
                     </main>
                 );
             case 11:
-                    const address = {
-                        Country: formData.Country,
-                        City: formData.City,
-                        PostalCode: formData.PostalCode,
-                        Street: formData.Street,
-                    }
-                    return ( <RegistrationNumber
-                                Address={address}
-                                Next={() => pageUpdater(page + 1)}
-                                Previous={() => pageUpdater(page - 1)}
-                                setFormData={setFormData}
-                                RegistrationNumber={formData.RegistrationNumber}
-                                />);
+                const address = {
+                    Country: formData.Country,
+                    City: formData.City,
+                    PostalCode: formData.PostalCode,
+                    Street: formData.Street,
+                }
+                return (
+                    <RegistrationNumber
+                        Address={address}
+                        Next={() => pageUpdater(page + 1)}
+                        Previous={() => pageUpdater(page - 1)}
+                        setFormData={setFormData}
+                        RegistrationNumber={formData.RegistrationNumber}
+                    />
+                );
             case 12:
                 return (
                     <div className="container" id="summary" style={{width: '80%'}}>
@@ -2124,7 +2192,7 @@ function OnboardingHost() {
                                 <td>City:</td>
                                 <td>{formData.City}</td>
                             </tr>
-                            { selectedAccoType === 'Boat' ? (
+                            {selectedAccoType === 'Boat' ? (
                                 <tr>
                                     <td>Harbour:</td>
                                     <td>{formData.Harbour}</td>
@@ -2139,30 +2207,30 @@ function OnboardingHost() {
                                         <td>Street + House Nr.:</td>
                                         <td>{formData.Street}</td>
                                     </tr>
-                            <tr>
-                                <td>Smoking:</td>
-                                <td>{formData.AllowSmoking ? 'Yes' : 'No'}</td>
-                            </tr>
+                                    <tr>
+                                        <td>Smoking:</td>
+                                        <td>{formData.AllowSmoking ? 'Yes' : 'No'}</td>
+                                    </tr>
 
-                            <tr>
-                                <td>Pets:</td>
-                                <td>{formData.AllowPets ? 'Yes' : 'No'}</td>
-                            </tr>
+                                    <tr>
+                                        <td>Pets:</td>
+                                        <td>{formData.AllowPets ? 'Yes' : 'No'}</td>
+                                    </tr>
 
-                            <tr>
-                                <td>Parties/events:</td>
-                                <td>{formData.AllowParties ? 'Yes' : 'No'}</td>
-                            </tr>
+                                    <tr>
+                                        <td>Parties/events:</td>
+                                        <td>{formData.AllowParties ? 'Yes' : 'No'}</td>
+                                    </tr>
 
-                            <tr>
-                                <td>Checkin:</td>
-                                <td>From: {formData.CheckIn.From} Til: {formData.CheckIn.Til}</td>
-                            </tr>
+                                    <tr>
+                                        <td>Checkin:</td>
+                                        <td>From: {formData.CheckIn.From} Til: {formData.CheckIn.Til}</td>
+                                    </tr>
 
-                            <tr>
-                                <td>Checkout:</td>
-                                <td>From: {formData.CheckOut.From} Til: {formData.CheckOut.Til}</td>
-                            </tr>
+                                    <tr>
+                                        <td>Checkout:</td>
+                                        <td>From: {formData.CheckOut.From} Til: {formData.CheckOut.Til}</td>
+                                    </tr>
                                 </>
                             )}
                             </tbody>
@@ -2207,7 +2275,7 @@ function OnboardingHost() {
                                             <td>Year of construction:</td>
                                             <td>{DateFormatterDD_MM_YYYY(formData.YOC)}</td>
                                         </tr>
-                                        { formData.Renovated && (
+                                        {formData.Renovated && (
                                             <tr>
                                                 <td>Renovated on:</td>
                                                 <td>{DateFormatterDD_MM_YYYY(formData.Renovated)}</td>
@@ -2285,7 +2353,7 @@ function OnboardingHost() {
                                 </>
                             )
                         }
-                        { !(Object.values(formData.Features).every(arr => arr.length === 0)) &&
+                        {!(Object.values(formData.Features).every(arr => arr.length === 0)) &&
                             <>
                                 <th>
                                     <h3>Features:</h3>
@@ -2332,38 +2400,43 @@ function OnboardingHost() {
                             Mark as draft (Stripe account and date range is required)
                         </label>
                         <div className="verifyCheck">
-                        <label>
-                            <input
-                                type="checkbox"
-                                onChange={(e) => setDeclarationChecked(e.target.checked)}
-                            />
-                            I declare that this property is legitimate, complete with required licenses and permits,
-                            which can be displayed upon request. Domits B.V. reserves the right to verify and investigate your registration information.
-                        </label>
-                        <div>
-                        <label>
-                            <input
-                                type="checkbox"
-                                onChange={(e) => setTermsChecked(e.target.checked)}
-                            />
-                            I confirm that I have read and accept the <a className ="termsCondition" href="/terms">General Terms and Conditions</a>.
-                        </label>
-                        </div>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    onChange={(e) => setDeclarationChecked(e.target.checked)}
+                                />
+                                I declare that this property is legitimate, complete with required licenses and permits,
+                                which can be displayed upon request. Domits B.V. reserves the right to verify and
+                                investigate your registration information.
+                            </label>
+                            <div>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        onChange={(e) => setTermsChecked(e.target.checked)}
+                                    />
+                                    I confirm that I have read and accept the <a className="termsCondition"
+                                                                                 href="/terms">General Terms and
+                                    Conditions</a>.
+                                </label>
                             </div>
+                        </div>
                         <div className='onboarding-button-box'>
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
                                     style={{opacity: "75%"}}>
                                 Go back to change
                             </button>
-                            <button className={!(isDeclarationChecked && isTermsChecked) ? 'onboarding-button-disabled' : 'onboarding-button'} onClick={
-                                isNew ? () => {
-                                    handleSubmit();
-                                    pageUpdater(page + 1)
-                                } : () => {
-                                    handleUpdate();
-                                    pageUpdater(page + 1)
-                                }
-                            }disabled={!(isDeclarationChecked && isTermsChecked)}
+                            <button
+                                className={!(isDeclarationChecked && isTermsChecked) ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                onClick={
+                                    isNew ? () => {
+                                        handleSubmit();
+                                        pageUpdater(page + 1)
+                                    } : () => {
+                                        handleUpdate();
+                                        pageUpdater(page + 1)
+                                    }
+                                } disabled={!(isDeclarationChecked && isTermsChecked)}
                             >{isNew ? 'Confirm' : 'Confirm and update'}
                             </button>
                         </div>
@@ -2386,7 +2459,8 @@ function OnboardingHost() {
                             <p className="onboardingSectionSubtitle">It may take a while before your accommodation is
                                 verified</p>
                             <div className='button-box-last'>
-                                <button className='onboarding-button' onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
+                                <button className='onboarding-button'
+                                        onClick={() => navigate("/hostdashboard/listings")}>Go to my listings
                                 </button>
                                 <button className='onboarding-button' onClick={() => navigate("/hostdashboard")}>Go to
                                     dashboard
