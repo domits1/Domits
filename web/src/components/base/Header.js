@@ -180,7 +180,7 @@ function Header({ setSearchResults, setLoading }) {
                                 </button>
                             ) : group === 'Host' ? (
                                 <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
-                                    {currentView === 'guest' ? 'Switch to Host Dashboard' : 'Switch to Guest Dashboard'}
+                                    {currentView === 'guest' ? 'Switch to Host' : 'Switch to Guest'}
                                 </button>
                             ) : (
                                 <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
