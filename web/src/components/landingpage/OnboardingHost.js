@@ -245,9 +245,9 @@ function OnboardingHost() {
         CleaningFee: existingData.CleaningFee || 0,
         OwnerId: existingData.OwnerId || userId,
         GuestAmount: isNew ? 0 : formData.GuestAmount,
-        MinimumStay: isNew ? 0 : formData.MinimumStay,
-        MinimumBookingPeriod: isNew ? 0 : formData.MinimumBookingPeriod,
-        MaximumStay: isNew ? 0 : formData.MaximumStay,
+        MinimumStay: isNew ? 0 : (Number.isFinite(existingData.MinimumStay) ? existingData.MinimumStay : 0),
+        MinimumBookingPeriod: isNew ? 0 : (Number.isFinite(existingData.MinimumBookingPeriod) ? existingData.MinimumBookingPeriod : 0),
+        MaximumStay: isNew ? 0 : (Number.isFinite(existingData.MaximumStay) ? existingData.MaximumStay : 0),
     });
 
     const generateBoatFormData = () => ({
@@ -614,13 +614,25 @@ function OnboardingHost() {
             AccommodationType: accommodationType
         }));
     };
-    const changeGuestAccess = (access) => {
-        setFormData((prevData) => ({
-            ...prevData,
-            AccommodationType: selectedAccoType,
-            GuestAccess: access
-        }));
+    const changeGuestAccess = (option) => {
+        if (selectedAccoType === "Boat") {
+            setSelectedBoatType(option);
+        } else if (selectedAccoType === "Camper") {
+            setSelectedCamperType(option);
+        } else {
+            setFormData(prev => ({...prev, GuestAccess: option}));
+        }
     };
+    useEffect(() => {
+        if (selectedBoatType) {
+            setFormData(prev => ({...prev, GuestAccess: selectedBoatType}));
+        }
+    }, [selectedBoatType]);
+    useEffect(() => {
+        if (selectedCamperType) {
+            setFormData(prev => ({...prev, GuestAccess: selectedCamperType}));
+        }
+    }, [selectedCamperType]);
     const changeCamperCategory = (category) => {
         setFormData((prevData) => ({
             ...prevData,
@@ -2090,7 +2102,7 @@ function OnboardingHost() {
                                 Go back
                             </button>
                             <button
-                                className={!formData.DateRanges.length ? 'onboarding-button-disabled' : 'onboarding-button'}
+                                className={'onboarding-button'}
                                 onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
