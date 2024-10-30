@@ -7,6 +7,7 @@ import {
   Image,
   TouchableOpacity,
   Dimensions,
+  Modal,
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
@@ -14,6 +15,10 @@ import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityI
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {CommonActions} from '@react-navigation/native';
+import FontAwesome from 'react-native-vector-icons/FontAwesome';
+import Feather from 'react-native-vector-icons/Feather';
+import AntDesign from 'react-native-vector-icons/AntDesign';
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
 
 const Detailpage = ({route, navigation}) => {
   const id = route.params.accommodation.id;
@@ -23,10 +28,7 @@ const Detailpage = ({route, navigation}) => {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [images, setImages] = useState([]);
-
-  useEffect(() => {
-    console.log('ID:', id);
-  }, [id]);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const fetchAccommodation = async () => {
@@ -64,6 +66,9 @@ const Detailpage = ({route, navigation}) => {
   useEffect(() => {
     const fetchOwner = async () => {
       const ownerId = parsedAccommodation.OwnerId;
+      if (!ownerId) {
+        return;
+      }
       try {
         const response = await fetch(
           'https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo',
@@ -84,22 +89,11 @@ const Detailpage = ({route, navigation}) => {
           console.error('No data found in response body');
           return;
         }
-        // Access the first element of the array and check if it has Attributes
-        if (data.length > 0 && data[0].Attributes) {
-          const attributes = data[0].Attributes; // Access Attributes correctly
-          attributes.forEach((attr, index) => {
-            console.log(`Attribute ${index + 1}:`, attr);
-          });
-        } else {
-          console.error('Attributes data is missing or malformed');
-        }
 
         const attributesObject = data[0].Attributes.reduce((acc, attr) => {
           acc[attr.Name] = attr.Value;
           return acc;
         }, {});
-
-        console.log('Attributes object:', attributesObject);
         setOwner(
           attributesObject.given_name + ' ' + attributesObject.family_name ||
             'Unknown Host',
@@ -109,14 +103,10 @@ const Detailpage = ({route, navigation}) => {
       }
     };
     fetchOwner();
-  }, [parsedAccommodation]);
+  }, [id, parsedAccommodation]);
 
   useEffect(() => {
-    console.log('Owner:', owner);
-  }, [owner]);
-
-  useEffect(() => {
-    if (parsedAccommodation.Images) {
+    if (parsedAccommodation && parsedAccommodation.Images) {
       const originalImages = parsedAccommodation.Images;
 
       const updatedImages = Object.entries(originalImages)
@@ -165,6 +155,324 @@ const Detailpage = ({route, navigation}) => {
   // Dynamically calculate image width based on screen width
   const imageWidth = Dimensions.get('window').width;
 
+  const featureIcons = {
+    // Essentials
+    'Wi-Fi': <Ionicons name="wifi" size={24} color="green" />,
+    'Air conditioning': (
+      <MaterialCommunityIcons name="air-conditioner" size={24} color="green" />
+    ),
+    Heating: <MaterialCommunityIcons name="fire" size={24} color="green" />,
+    'TV with cable/satellite': (
+      <Ionicons name="tv-outline" size={24} color="green" />
+    ),
+    'Hot water': (
+      <MaterialCommunityIcons name="water-boiler" size={24} color="green" />
+    ),
+    Towels: <FontAwesome name="bath" size={24} color="green" />,
+    'Bed linens': <Ionicons name="bed-outline" size={24} color="green" />,
+    'Extra pillows and blankets': (
+      <Ionicons name="bed-outline" size={24} color="green" />
+    ),
+    'Toilet paper': <Ionicons name="paper" size={24} color="green" />,
+    'Soap and shampoo': (
+      <Ionicons name="water-outline" size={24} color="green" />
+    ),
+
+    // Kitchen
+    Refrigerator: (
+      <MaterialCommunityIcons name="fridge" size={24} color="green" />
+    ),
+    Microwave: (
+      <MaterialCommunityIcons name="microwave" size={24} color="green" />
+    ),
+    Oven: <MaterialCommunityIcons name="stove" size={24} color="green" />,
+    Stove: <MaterialCommunityIcons name="fire" size={24} color="green" />,
+    Dishwasher: (
+      <MaterialCommunityIcons name="dishwasher" size={24} color="green" />
+    ),
+    'Coffee maker': (
+      <MaterialCommunityIcons name="coffee" size={24} color="green" />
+    ),
+    Toaster: <MaterialCommunityIcons name="toaster" size={24} color="green" />,
+    'Basic cooking essentials': (
+      <MaterialCommunityIcons name="food" size={24} color="green" />
+    ),
+    'Dishes and silverware': (
+      <MaterialCommunityIcons
+        name="silverware-fork-knife"
+        size={24}
+        color="green"
+      />
+    ),
+    'Glasses and mugs': (
+      <MaterialCommunityIcons name="glass-cocktail" size={24} color="green" />
+    ),
+    'Cutting board and knives': (
+      <MaterialCommunityIcons name="knife" size={24} color="green" />
+    ),
+    Blender: <MaterialCommunityIcons name="blender" size={24} color="green" />,
+    Kettle: <MaterialCommunityIcons name="kettle" size={24} color="green" />,
+
+    // Bathroom
+    'Hair dryer': (
+      <MaterialCommunityIcons name="hair-dryer" size={24} color="green" />
+    ),
+    'Shower gel': (
+      <MaterialCommunityIcons name="shower" size={24} color="green" />
+    ),
+    Conditioner: (
+      <MaterialCommunityIcons name="spray-bottle" size={24} color="green" />
+    ),
+    'Body lotion': (
+      <MaterialCommunityIcons
+        name="bottle-soda-classic-outline"
+        size={24}
+        color="green"
+      />
+    ),
+    'First aid kit': (
+      <MaterialCommunityIcons name="medical-bag" size={24} color="green" />
+    ),
+
+    // Bedroom
+    Hangers: <MaterialCommunityIcons name="hanger" size={24} color="green" />,
+    'Iron and ironing board': (
+      <MaterialCommunityIcons name="iron" size={24} color="green" />
+    ),
+    'Closet/drawers': (
+      <Ionicons name="folder-open-outline" size={24} color="green" />
+    ),
+    'Alarm clock': <Ionicons name="alarm-outline" size={24} color="green" />,
+
+    // Living Area
+    Sofa: <Ionicons name="sofa" size={24} color="green" />,
+    Armchairs: (
+      <MaterialCommunityIcons
+        name="seat-recline-normal"
+        size={24}
+        color="green"
+      />
+    ),
+    'Coffee table': (
+      <MaterialCommunityIcons name="table-coffee" size={24} color="green" />
+    ),
+    'Books and magazines': (
+      <MaterialCommunityIcons
+        name="book-open-page-variant"
+        size={24}
+        color="green"
+      />
+    ),
+    'Board games': (
+      <MaterialCommunityIcons name="chess-king" size={24} color="green" />
+    ),
+
+    // Technology
+    'Smart TV': <Ionicons name="tv" size={24} color="green" />,
+    'Streaming services': (
+      <Ionicons name="tv-outline" size={24} color="green" />
+    ),
+    'Bluetooth speaker': <Ionicons name="bluetooth" size={24} color="green" />,
+    'Universal chargers': (
+      <MaterialCommunityIcons
+        name="cellphone-charging"
+        size={24}
+        color="green"
+      />
+    ),
+    'Work desk and chair': (
+      <MaterialCommunityIcons name="desk" size={24} color="green" />
+    ),
+
+    // Safety
+    'Smoke detector': (
+      <MaterialCommunityIcons name="smoke-detector" size={24} color="green" />
+    ),
+    'Carbon monoxide detector': (
+      <MaterialCommunityIcons name="carbon-monoxide" size={24} color="green" />
+    ),
+    'Fire extinguisher': (
+      <MaterialCommunityIcons
+        name="fire-extinguisher"
+        size={24}
+        color="green"
+      />
+    ),
+    'Lock on bedroom door': (
+      <Ionicons name="lock-closed-outline" size={24} color="green" />
+    ),
+
+    // Family Friendly
+    'High chair': (
+      <MaterialCommunityIcons name="chair-rolling" size={24} color="green" />
+    ),
+    Crib: <MaterialCommunityIcons name="baby-buggy" size={24} color="green" />,
+    'Children’s books and toys': (
+      <FontAwesome5 name="baby" size={24} color="green" />
+    ),
+    'Baby safety gates': (
+      <MaterialCommunityIcons name="gate" size={24} color="green" />
+    ),
+    'Baby bath': (
+      <MaterialCommunityIcons name="bathtub-outline" size={24} color="green" />
+    ),
+    'Baby monitor': <Ionicons name="tv-outline" size={24} color="green" />,
+
+    // Laundry
+    'Washer and dryer': (
+      <MaterialCommunityIcons name="washing-machine" size={24} color="green" />
+    ),
+    'Laundry detergent': (
+      <MaterialCommunityIcons
+        name="bottle-soda-classic-outline"
+        size={24}
+        color="green"
+      />
+    ),
+    'Clothes drying rack': <FontAwesome name="sun-o" size={24} color="green" />,
+
+    // Convenience
+    'Keyless entry': <Ionicons name="key-outline" size={24} color="green" />,
+    'Self-check-in': (
+      <Ionicons name="checkmark-circle-outline" size={24} color="green" />
+    ),
+    'Local maps and guides': (
+      <Ionicons name="map-outline" size={24} color="green" />
+    ),
+    'Luggage drop-off allowed': (
+      <MaterialCommunityIcons name="bag-suitcase" size={24} color="green" />
+    ),
+    'Parking space': (
+      <MaterialCommunityIcons name="parking" size={24} color="green" />
+    ),
+    'EV charger': (
+      <MaterialCommunityIcons name="car-electric" size={24} color="green" />
+    ),
+
+    // Accessibility
+    'Step-free access': (
+      <FontAwesome name="wheelchair" size={24} color="green" />
+    ),
+    'Wide doorways': (
+      <MaterialCommunityIcons name="door" size={24} color="green" />
+    ),
+    'Accessible-height bed': (
+      <FontAwesome name="wheelchair" size={24} color="green" />
+    ),
+    'Accessible-height toilet': (
+      <MaterialCommunityIcons name="toilet" size={24} color="green" />
+    ),
+    'Shower chair': (
+      <MaterialCommunityIcons name="shower" size={24} color="green" />
+    ),
+
+    // Extra Services
+    'Cleaning service (add service fee manually)': (
+      <MaterialCommunityIcons name="broom" size={24} color="green" />
+    ),
+    'Concierge service': (
+      <MaterialCommunityIcons name="account" size={24} color="green" />
+    ),
+    Housekeeping: (
+      <MaterialCommunityIcons name="broom" size={24} color="green" />
+    ),
+    'Grocery delivery': (
+      <MaterialCommunityIcons name="cart-outline" size={24} color="green" />
+    ),
+    'Airport shuttle': (
+      <MaterialCommunityIcons name="airplane" size={24} color="green" />
+    ),
+    'Private chef': (
+      <MaterialCommunityIcons name="chef-hat" size={24} color="green" />
+    ),
+    'Personal trainer': (
+      <Ionicons name="barbell-outline" size={24} color="green" />
+    ),
+    'Massage therapist': (
+      <MaterialCommunityIcons name="spa" size={24} color="green" />
+    ),
+
+    // Eco-Friendly
+    'Recycling bins': (
+      <MaterialCommunityIcons name="recycle" size={24} color="green" />
+    ),
+    'Energy-efficient appliances': (
+      <Ionicons name="battery-charging" size={24} color="green" />
+    ),
+    'Solar panels': (
+      <MaterialCommunityIcons name="solar-power" size={24} color="green" />
+    ),
+    'Composting bin': (
+      <MaterialCommunityIcons name="compost" size={24} color="green" />
+    ),
+
+    // Outdoor
+    'Patio or balcony': (
+      <MaterialCommunityIcons name="balcony" size={24} color="green" />
+    ),
+    'Garden or backyard': (
+      <MaterialCommunityIcons name="flower" size={24} color="green" />
+    ),
+    BBQ: <MaterialCommunityIcons name="grill" size={24} color="green" />,
+    'Outdoor furniture': (
+      <MaterialCommunityIcons name="chair-beach" size={24} color="green" />
+    ),
+    'Fire pit': <MaterialCommunityIcons name="fire" size={24} color="green" />,
+    'Pool and beach towels': (
+      <MaterialCommunityIcons name="towel" size={24} color="green" />
+    ),
+  };
+
+  const toggleModal = () => {
+    setShowModal(!showModal);
+  };
+
+  const FeaturePopup = ({features, onClose}) => {
+    return (
+      <Modal transparent={true} visible={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>✖</Text>
+            </TouchableOpacity>
+            <Text style={styles.title}>
+              What does this place have to offer?
+            </Text>
+            <ScrollView>
+              {Object.keys(features).map(category => {
+                const categoryItems = features[category];
+                if (categoryItems.length > 0) {
+                  return (
+                    <View key={category} style={styles.featuresCategory}>
+                      <Text style={styles.categoryTitle}>{category}</Text>
+                      <View style={styles.divider} />
+                      {categoryItems.map((item, index) => (
+                        <View key={index} style={styles.categoryItem}>
+                          {typeof featureIcons[item] === 'string' ? (
+                            <Image
+                              source={{uri: featureIcons[item]}}
+                              style={styles.featureIcon}
+                            />
+                          ) : featureIcons[item] ? (
+                            <View style={styles.featureIcon}>
+                              {featureIcons[item]}
+                            </View>
+                          ) : null}
+                          <Text style={styles.featureText}>{item}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                }
+                return null;
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.container}>
@@ -207,7 +515,7 @@ const Detailpage = ({route, navigation}) => {
             {Object.entries(images).map(([key, url]) => (
               <View key={key} style={styles.imageWrapper}>
                 <Image
-                  source={url}
+                  source={{uri: url.uri}}
                   style={[styles.image, {width: imageWidth}]}
                 />
               </View>
@@ -273,82 +581,22 @@ const Detailpage = ({route, navigation}) => {
 
           <Text style={styles.verifiedHostText}>Amenities</Text>
 
-          <View style={styles.bothAmenities}>
-            <View style={styles.amenities}>
-              <View style={styles.iconItem}>
-                <FontAwesomeIcon
-                  name="tv"
-                  size={24}
-                  color="black"
-                  style={styles.iconamenities}
-                />
-                <Text style={styles.bedroomsText}>Smart TV</Text>
-              </View>
+          <View>
+            <Text style={styles.showMoreAmenitiesText}>
+              This place offers the following:
+            </Text>
+            <TouchableOpacity
+              onPress={toggleModal}
+              style={styles.showMoreButton}>
+              <Text style={styles.showMoreText}>Show more</Text>
+            </TouchableOpacity>
 
-              <View style={styles.iconItem}>
-                <FeatherIcon
-                  name="gift"
-                  size={24}
-                  color="black"
-                  style={styles.iconamenities}
-                />
-                <Text style={styles.bedroomsText}>Welcome Gift</Text>
-              </View>
-
-              <View style={styles.iconItem}>
-                <MaterialCommunityIcons
-                  name="lightning-bolt-outline"
-                  size={24}
-                  color="black"
-                  style={styles.iconamenities}
-                />
-                <Text style={styles.bedroomsText}>Super fast Internet</Text>
-              </View>
-
-              <View style={styles.iconItem}>
-                <Ionicons
-                  name="telescope-outline"
-                  size={24}
-                  color="black"
-                  style={styles.iconamenities}
-                />
-                <Text style={styles.bedroomsText}>Telescope</Text>
-              </View>
-            </View>
-
-            {/*  (Dit is tijdelijk)*/}
-            <View style={styles.amenities}>
-              <View style={styles.iconItem}>
-                <MaterialCommunityIcons
-                  name="sun-thermometer-outline"
-                  size={24}
-                  color="black"
-                  style={styles.iconamenities}
-                />
-
-                <Text style={styles.bedroomsText}>Sauna</Text>
-              </View>
-
-              <View style={styles.iconItem}>
-                <MaterialCommunityIcons
-                  name="lightbulb-on-outline"
-                  size={24}
-                  color="black"
-                  style={styles.iconamenities}
-                />
-                <Text style={styles.bedroomsText}>Dimmable lights</Text>
-              </View>
-
-              <View style={styles.iconItem}>
-                <FontAwesomeIcon
-                  name="diamond"
-                  size={20}
-                  color="black"
-                  style={styles.iconamenities}
-                />
-                <Text style={styles.bedroomsText}>Vault</Text>
-              </View>
-            </View>
+            {showModal && (
+              <FeaturePopup
+                features={parsedAccommodation.Features}
+                onClose={toggleModal}
+              />
+            )}
           </View>
           <View style={styles.horizontalLine1} />
 
@@ -549,7 +797,7 @@ const styles = StyleSheet.create({
   horizontalLine1: {
     height: 1,
     backgroundColor: 'black',
-    marginVertical: -10,
+    marginVertical: 10,
     marginBottom: 5,
     alignSelf: 'center',
     width: 330,
@@ -635,6 +883,80 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: 'MotivaSansRegular.woff',
     marginLeft: 2,
+  },
+
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+  },
+  closeButton: {
+    alignSelf: 'flex-end',
+  },
+  closeButtonText: {
+    fontSize: 20,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  featuresCategory: {
+    marginBottom: 15,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: 'lightgray',
+    marginVertical: 5,
+  },
+  categoryItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 5,
+  },
+  featureIcon: {
+    width: 24,
+    height: 24,
+    marginRight: 8,
+  },
+  featureText: {
+    fontSize: 14,
+  },
+  showMoreText: {
+    fontSize: 16,
+    color: 'white',
+    lineHeight: 22,
+    textAlign: 'center',
+  },
+  showMoreButton: {
+    width: 120,
+    borderWidth: 2,
+    borderColor: 'green',
+    borderRadius: 25,
+    padding: 8,
+    marginLeft: 45,
+    height: 37,
+    backgroundColor: 'green',
+    alignSelf: 'center',
+  },
+  showMoreAmenitiesText: {
+    marginLeft: 20,
+    color: 'black',
+    fontFamily: 'MotivaSansBold.woff',
+    marginVertical: 5,
+    alignSelf: 'center',
   },
 });
 
