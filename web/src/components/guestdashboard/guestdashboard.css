@@ -46,6 +46,7 @@
 .wijzers:hover {
   background-color: var(--primary-color);
   transition: .3s;
+  color: white;
 }
 
 .wijzers.active {
