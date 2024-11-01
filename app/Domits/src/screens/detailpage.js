@@ -29,6 +29,7 @@ const Detailpage = ({route, navigation}) => {
   const [errorMessage, setErrorMessage] = useState('');
   const [images, setImages] = useState([]);
   const [showModal, setShowModal] = useState(false);
+  const [showAllAmenities, setShowAllAmenities] = useState(false);
 
   useEffect(() => {
     const fetchAccommodation = async () => {
@@ -116,10 +117,10 @@ const Detailpage = ({route, navigation}) => {
           return {uri: updatedUrl};
         });
       setImages(updatedImages);
-    } else {
+    } else if (!loading) {
       console.warn('No Images object found in parsed accommodation data.');
     }
-  }, [id, accommodation, parsedAccommodation]);
+  }, [parsedAccommodation, loading]);
 
   const [currentPage, setCurrentPage] = useState(0);
 
@@ -141,7 +142,11 @@ const Detailpage = ({route, navigation}) => {
     navigation.navigate('Settings');
   };
   const handleonBoarding1Press = () => {
-    navigation.navigate('onBoarding1');
+    navigation.navigate('onBoarding1', {
+      accommodation,
+      parsedAccommodation,
+      images,
+    });
   };
 
   const handleScroll = event => {
@@ -173,15 +178,25 @@ const Detailpage = ({route, navigation}) => {
     'Extra pillows and blankets': (
       <Ionicons name="bed-outline" size={24} color="green" />
     ),
-    'Toilet paper': <Ionicons name="paper" size={24} color="green" />,
+    'Toilet paper': (
+      <MaterialCommunityIcons
+        name="paper-roll-outline"
+        size={24}
+        color="green"
+      />
+    ),
     'Soap and shampoo': (
-      <Ionicons name="water-outline" size={24} color="green" />
+      <MaterialCommunityIcons
+        name="bottle-soda-outline"
+        size={24}
+        color="green"
+      />
     ),
 
     // Kitchen
     Refrigerator: (
-      <MaterialCommunityIcons name="fridge" size={24} color="green" />
-    ),
+      <MaterialCommunityIcons name="fridge-outline" size={24} color="green" />
+    ), // Adjusted for consistency
     Microwave: (
       <MaterialCommunityIcons name="microwave" size={24} color="green" />
     ),
@@ -191,8 +206,8 @@ const Detailpage = ({route, navigation}) => {
       <MaterialCommunityIcons name="dishwasher" size={24} color="green" />
     ),
     'Coffee maker': (
-      <MaterialCommunityIcons name="coffee" size={24} color="green" />
-    ),
+      <MaterialCommunityIcons name="coffee-maker" size={24} color="green" />
+    ), // Use "coffee-maker" for precision
     Toaster: <MaterialCommunityIcons name="toaster" size={24} color="green" />,
     'Basic cooking essentials': (
       <MaterialCommunityIcons name="food" size={24} color="green" />
@@ -211,7 +226,9 @@ const Detailpage = ({route, navigation}) => {
       <MaterialCommunityIcons name="knife" size={24} color="green" />
     ),
     Blender: <MaterialCommunityIcons name="blender" size={24} color="green" />,
-    Kettle: <MaterialCommunityIcons name="kettle" size={24} color="green" />,
+    Kettle: (
+      <MaterialCommunityIcons name="kettle-outline" size={24} color="green" />
+    ),
 
     // Bathroom
     'Hair dryer': (
@@ -240,12 +257,12 @@ const Detailpage = ({route, navigation}) => {
       <MaterialCommunityIcons name="iron" size={24} color="green" />
     ),
     'Closet/drawers': (
-      <Ionicons name="folder-open-outline" size={24} color="green" />
-    ),
+      <Ionicons name="folder-outline" size={24} color="green" />
+    ), // Replaced with valid "folder-outline"
     'Alarm clock': <Ionicons name="alarm-outline" size={24} color="green" />,
 
     // Living Area
-    Sofa: <Ionicons name="sofa" size={24} color="green" />,
+    Sofa: <MaterialCommunityIcons name="sofa" size={24} color="green" />,
     Armchairs: (
       <MaterialCommunityIcons
         name="seat-recline-normal"
@@ -254,15 +271,15 @@ const Detailpage = ({route, navigation}) => {
       />
     ),
     'Coffee table': (
-      <MaterialCommunityIcons name="table-coffee" size={24} color="green" />
+      <MaterialCommunityIcons name="table-furniture" size={24} color="green" />
     ),
     'Books and magazines': (
       <MaterialCommunityIcons
-        name="book-open-page-variant"
+        name="book-open-variant"
         size={24}
         color="green"
       />
-    ),
+    ), // Adjusted to "book-open-variant"
     'Board games': (
       <MaterialCommunityIcons name="chess-king" size={24} color="green" />
     ),
@@ -289,8 +306,8 @@ const Detailpage = ({route, navigation}) => {
       <MaterialCommunityIcons name="smoke-detector" size={24} color="green" />
     ),
     'Carbon monoxide detector': (
-      <MaterialCommunityIcons name="carbon-monoxide" size={24} color="green" />
-    ),
+      <MaterialCommunityIcons name="molecule-co2" size={24} color="green" />
+    ), // "carbon-monoxide" does not exist, replaced with "molecule-co2"
     'Fire extinguisher': (
       <MaterialCommunityIcons
         name="fire-extinguisher"
@@ -306,7 +323,9 @@ const Detailpage = ({route, navigation}) => {
     'High chair': (
       <MaterialCommunityIcons name="chair-rolling" size={24} color="green" />
     ),
-    Crib: <MaterialCommunityIcons name="baby-buggy" size={24} color="green" />,
+    Crib: (
+      <MaterialCommunityIcons name="cradle-outline" size={24} color="green" />
+    ), // Adjusted to "baby-carriage"
     'Children’s books and toys': (
       <FontAwesome5 name="baby" size={24} color="green" />
     ),
@@ -317,6 +336,9 @@ const Detailpage = ({route, navigation}) => {
       <MaterialCommunityIcons name="bathtub-outline" size={24} color="green" />
     ),
     'Baby monitor': <Ionicons name="tv-outline" size={24} color="green" />,
+    'Baby seat': (
+      <MaterialCommunityIcons name="baby-carriage" size={24} color="green" />
+    ),
 
     // Laundry
     'Washer and dryer': (
@@ -366,32 +388,6 @@ const Detailpage = ({route, navigation}) => {
       <MaterialCommunityIcons name="shower" size={24} color="green" />
     ),
 
-    // Extra Services
-    'Cleaning service (add service fee manually)': (
-      <MaterialCommunityIcons name="broom" size={24} color="green" />
-    ),
-    'Concierge service': (
-      <MaterialCommunityIcons name="account" size={24} color="green" />
-    ),
-    Housekeeping: (
-      <MaterialCommunityIcons name="broom" size={24} color="green" />
-    ),
-    'Grocery delivery': (
-      <MaterialCommunityIcons name="cart-outline" size={24} color="green" />
-    ),
-    'Airport shuttle': (
-      <MaterialCommunityIcons name="airplane" size={24} color="green" />
-    ),
-    'Private chef': (
-      <MaterialCommunityIcons name="chef-hat" size={24} color="green" />
-    ),
-    'Personal trainer': (
-      <Ionicons name="barbell-outline" size={24} color="green" />
-    ),
-    'Massage therapist': (
-      <MaterialCommunityIcons name="spa" size={24} color="green" />
-    ),
-
     // Eco-Friendly
     'Recycling bins': (
       <MaterialCommunityIcons name="recycle" size={24} color="green" />
@@ -403,28 +399,164 @@ const Detailpage = ({route, navigation}) => {
       <MaterialCommunityIcons name="solar-power" size={24} color="green" />
     ),
     'Composting bin': (
-      <MaterialCommunityIcons name="compost" size={24} color="green" />
+      <MaterialCommunityIcons name="recycle" size={24} color="green" />
     ),
 
     // Outdoor
     'Patio or balcony': (
       <MaterialCommunityIcons name="balcony" size={24} color="green" />
     ),
+    'Outdoor furniture': (
+      <MaterialCommunityIcons name="sofa-outline" size={24} color="green" />
+    ),
+    Grill: <MaterialCommunityIcons name="grill" size={24} color="green" />,
+    'Fire pit': <MaterialCommunityIcons name="fire" size={24} color="green" />,
+    Pool: <MaterialCommunityIcons name="pool" size={24} color="green" />,
+    'Hot tub': (
+      <MaterialCommunityIcons name="hot-tub" size={24} color="green" />
+    ),
     'Garden or backyard': (
       <MaterialCommunityIcons name="flower" size={24} color="green" />
     ),
-    BBQ: <MaterialCommunityIcons name="grill" size={24} color="green" />,
-    'Outdoor furniture': (
-      <MaterialCommunityIcons name="chair-beach" size={24} color="green" />
+    Bicycle: <MaterialCommunityIcons name="bike" size={24} color="green" />,
+    'Outdoor shower': (
+      <MaterialCommunityIcons name="shower-head" size={24} color="green" />
     ),
-    'Fire pit': <MaterialCommunityIcons name="fire" size={24} color="green" />,
-    'Pool and beach towels': (
-      <MaterialCommunityIcons name="towel" size={24} color="green" />
+    Bimini: <MaterialCommunityIcons name="umbrella" size={24} color="green" />,
+    'External table': (
+      <MaterialCommunityIcons name="table" size={24} color="green" />
+    ),
+    'External speakers': (
+      <MaterialCommunityIcons name="speaker" size={24} color="green" />
+    ),
+    'Teak deck': (
+      <MaterialCommunityIcons name="texture-box" size={24} color="green" />
+    ),
+    'Bow sundeck': (
+      <MaterialCommunityIcons name="weather-sunny" size={24} color="green" />
+    ),
+    'Aft sundeck': (
+      <MaterialCommunityIcons name="weather-sunny" size={24} color="green" />
+    ),
+    'Bathing Platform': (
+      <MaterialCommunityIcons name="beach" size={24} color="green" />
+    ),
+    'Bathing ladder': (
+      <MaterialCommunityIcons name="ladder" size={24} color="green" />
+    ),
+
+    // Boat-specific amenities
+    'Bow thruster': (
+      <MaterialCommunityIcons name="anchor" size={24} color="green" />
+    ),
+    'Electric windlass': (
+      <MaterialCommunityIcons name="anchor" size={24} color="green" />
+    ),
+    Autopilot: (
+      <MaterialCommunityIcons name="steering" size={24} color="green" />
+    ),
+    GPS: (
+      <MaterialCommunityIcons name="satellite-uplink" size={24} color="green" />
+    ),
+    'Depth sounder': (
+      <MaterialCommunityIcons name="water" size={24} color="green" />
+    ),
+    VHF: <MaterialCommunityIcons name="radio" size={24} color="green" />,
+    'Guides & Maps': (
+      <MaterialCommunityIcons name="map-outline" size={24} color="green" />
+    ),
+
+    // Leisure Activities
+    'Snorkeling equipment': (
+      <MaterialCommunityIcons name="diving-snorkel" size={24} color="green" />
+    ),
+    'Fishing equipment': (
+      <MaterialCommunityIcons name="fish" size={24} color="green" />
+    ),
+    'Diving equipment': (
+      <MaterialCommunityIcons
+        name="diving-scuba-tank"
+        size={24}
+        color="green"
+      />
+    ),
+
+    // Water Sports
+    'Water skis': (
+      <MaterialCommunityIcons name="water" size={24} color="green" />
+    ),
+    Monoski: (
+      <MaterialCommunityIcons name="ski-water" size={24} color="green" />
+    ),
+    Wakeboard: (
+      <MaterialCommunityIcons name="ski-water" size={24} color="green" />
+    ),
+    'Towable Tube': (
+      <MaterialCommunityIcons name="lifebuoy" size={24} color="green" />
+    ),
+    'Inflatable banana': (
+      <MaterialCommunityIcons name="water" size={24} color="green" />
+    ),
+    Kneeboard: (
+      <MaterialCommunityIcons name="kayaking" size={24} color="green" />
+    ),
+
+    // Extra Service
+    'Cleaning service': (
+      <MaterialCommunityIcons name="broom" size={24} color="green" />
+    ),
+    'Personal trainer': (
+      <MaterialCommunityIcons name="dumbbell" size={24} color="green" />
+    ),
+    'Private chef': (
+      <MaterialCommunityIcons name="chef-hat" size={24} color="green" />
+    ),
+    'Grocery delivery': (
+      <MaterialCommunityIcons name="shopping" size={24} color="green" />
+    ),
+    'Concierge service': (
+      <MaterialCommunityIcons name="broom" size={24} color="green" />
+    ),
+    'Airport shuttle': (
+      <MaterialCommunityIcons name="bus" size={24} color="green" />
+    ),
+    'Massage therapist': (
+      <MaterialCommunityIcons name="account-outline" size={24} color="green" />
+    ),
+    Housekeeping: (
+      <MaterialCommunityIcons name="broom" size={24} color="green" />
     ),
   };
 
   const toggleModal = () => {
     setShowModal(!showModal);
+  };
+
+  const renderAmenities = () => {
+    const allAmenities = parsedAccommodation.Features || {};
+    const categoriesToShow = Object.keys(allAmenities)
+      .filter(category => allAmenities[category].length > 0) // Filter out empty categories
+      .slice(0, 3); // Limit to first 5 categories with items
+
+    return categoriesToShow.map((category, categoryIndex) => {
+      const items = allAmenities[category].slice(0, 5); // Get only the first 5 items in each category
+
+      return (
+        <View key={categoryIndex} style={styles.featuresCategory}>
+          <Text style={styles.categoryTitle}>{category}</Text>
+          <View style={styles.divider} />
+
+          {items.map((item, itemIndex) => (
+            <View key={itemIndex} style={styles.iconItem}>
+              {featureIcons[item] ? (
+                <View style={styles.featureIcon}>{featureIcons[item]}</View>
+              ) : null}
+              <Text style={styles.featureText}>{item}</Text>
+            </View>
+          ))}
+        </View>
+      );
+    });
   };
 
   const FeaturePopup = ({features, onClose}) => {
@@ -473,6 +605,57 @@ const Detailpage = ({route, navigation}) => {
     );
   };
 
+  const renderDateRange = () => {
+    const dateRanges = parsedAccommodation.DateRanges || [];
+
+    if (dateRanges.length === 0) {
+      return null;
+    }
+
+    const sortedRanges = dateRanges.sort(
+      (a, b) => new Date(a.startDate) - new Date(b.startDate),
+    );
+
+    const earliestDate = new Date(sortedRanges[0].startDate);
+    const latestDate = new Date(sortedRanges[sortedRanges.length - 1].endDate);
+
+    const formatDate = date => {
+      const day = date.toLocaleDateString('en-US', {
+        day: 'numeric',
+        timeZone: 'UTC',
+      });
+      const month = date.toLocaleDateString('en-US', {
+        month: 'long',
+        timeZone: 'UTC',
+      });
+      return `${day} ${month}`;
+    };
+
+    return (
+      <View>
+        <Text>
+          {formatDate(earliestDate)} - {formatDate(latestDate)}
+        </Text>
+      </View>
+    );
+  };
+
+  const renderDotIndicator = () => {
+    return (
+      <View style={styles.dotContainer}>
+        {images.map((_, index) => (
+          <View
+            key={index}
+            style={[
+              styles.dot,
+              currentPage === index ? styles.activeDot : styles.inactiveDot,
+            ]}
+          />
+        ))}
+      </View>
+    );
+  };
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.container}>
@@ -505,6 +688,10 @@ const Detailpage = ({route, navigation}) => {
           </View>
         </View>
 
+        <View>
+          <Text style={styles.text}>{parsedAccommodation.Title}</Text>
+        </View>
+
         <ScrollView style={{flex: 1}}>
           <ScrollView
             horizontal={true}
@@ -522,38 +709,42 @@ const Detailpage = ({route, navigation}) => {
             ))}
           </ScrollView>
           <View style={styles.counterContainer}>
-            <Text style={styles.counterText}>
-              {currentPage + 1}/{images.length}
-            </Text>
+            {renderDotIndicator()}
           </View>
 
           <View>
-            <Text style={styles.text}>{parsedAccommodation.Title}</Text>
             <Text style={styles.additionalText}>
               {parsedAccommodation.Subtitle}
             </Text>
           </View>
-
+          <View>
+            <Text>€{parsedAccommodation.Rent} per night</Text>
+          </View>
+          <View>
+            <Text>{renderDateRange()}</Text>
+          </View>
           <View style={styles.borderContainer}>
             <View style={styles.bedroomsContainer}>
               <Text style={styles.bedroomsText}>
-                {parsedAccommodation.bedrooms || 0} bedrooms
+                {parsedAccommodation.GuestAmount} guests
               </Text>
             </View>
             <View style={styles.bathroomsContainer}>
-              <Text style={styles.bathroomsText}>
-                {parsedAccommodation.Bathrooms} bathrooms
+              <Text style={styles.bedroomsText}>
+                {parsedAccommodation.bedrooms || 0} bedrooms
               </Text>
             </View>
           </View>
           <View style={styles.newBorderContainer}>
             <View style={styles.newBedroomsContainer}>
               <Text style={styles.newBedroomsText}>
-                {parsedAccommodation.Length}m²
+                {parsedAccommodation.Beds} beds
               </Text>
             </View>
             <View style={styles.newBathroomsContainer}>
-              <Text style={styles.newBathroomsText}>Over 120+ bookings</Text>
+              <Text style={styles.bathroomsText}>
+                {parsedAccommodation.Bathrooms} bathrooms
+              </Text>
             </View>
             <TouchableOpacity onPress={handleonBoarding1Press}>
               <View style={styles.book}>
@@ -561,10 +752,29 @@ const Detailpage = ({route, navigation}) => {
               </View>
             </TouchableOpacity>
           </View>
+          <View style={styles.descriptionContainer}>
+            <Text style={styles.descriptionText}>
+              {parsedAccommodation.Description}
+            </Text>
+          </View>
           <View style={styles.horizontalLine} />
-
-          <Text style={styles.verifiedHostText}>Verified Host</Text>
-
+          <Text style={styles.verifiedHostText}>Amenities</Text>
+          <View style={styles.amenities}>{renderAmenities()}</View>
+          <View>
+            <TouchableOpacity
+              onPress={toggleModal}
+              style={styles.showMoreButton}>
+              <Text style={styles.showMoreText}>Show more</Text>
+            </TouchableOpacity>
+            {showModal && (
+              <FeaturePopup
+                features={parsedAccommodation.Features}
+                onClose={toggleModal}
+              />
+            )}
+          </View>
+          <View style={styles.horizontalLine1} />
+          <Text style={styles.verifiedHostText}>Hosted by</Text>
           <View style={styles.hostInfoContainer}>
             <View style={styles.namebutton}>
               <Text style={styles.nameText}>{owner}</Text>
@@ -578,44 +788,6 @@ const Detailpage = ({route, navigation}) => {
             </View>
           </View>
           <View style={styles.horizontalLine1} />
-
-          <Text style={styles.verifiedHostText}>Amenities</Text>
-
-          <View>
-            <Text style={styles.showMoreAmenitiesText}>
-              This place offers the following:
-            </Text>
-            <TouchableOpacity
-              onPress={toggleModal}
-              style={styles.showMoreButton}>
-              <Text style={styles.showMoreText}>Show more</Text>
-            </TouchableOpacity>
-
-            {showModal && (
-              <FeaturePopup
-                features={parsedAccommodation.Features}
-                onClose={toggleModal}
-              />
-            )}
-          </View>
-          <View style={styles.horizontalLine1} />
-
-          <Text style={styles.verifiedHostText}>In the Area:</Text>
-
-          <View style={styles.imageAndTextContainer}>
-            <View style={styles.imageWrapper}>
-              <Image
-                source={require('./pictures/goaty.png')}
-                style={styles.goaty}
-              />
-            </View>
-
-            <View style={styles.randomTextWrapper}>
-              <Text style={styles.randomText}>
-                Goat milkig at Timo’s farm in Haarlem
-              </Text>
-            </View>
-          </View>
         </ScrollView>
       </View>
     </SafeAreaView>
@@ -865,11 +1037,6 @@ const styles = StyleSheet.create({
     fontFamily: 'MotivaSansRegular.woff',
   },
   counterContainer: {
-    position: 'absolute',
-    top: 208,
-    right: 12,
-    width: 50,
-    height: 30,
     borderWidth: 2,
     borderColor: 'rgba(0, 0, 0, 0.0)',
     borderTopLeftRadius: 8,
@@ -957,6 +1124,34 @@ const styles = StyleSheet.create({
     fontFamily: 'MotivaSansBold.woff',
     marginVertical: 5,
     alignSelf: 'center',
+  },
+  descriptionContainer: {
+    marginVertical: 10,
+  },
+  descriptionText: {
+    color: 'black',
+    fontSize: 14,
+    fontFamily: 'MotivaSansRegular.woff',
+    marginVertical: 10,
+    marginLeft: 17,
+  },
+  dotContainer: {
+    flexDirection: 'row',
+    position: 'absolute',
+    bottom: 10,
+    alignSelf: 'center',
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginHorizontal: 4,
+  },
+  activeDot: {
+    backgroundColor: 'green',
+  },
+  inactiveDot: {
+    backgroundColor: 'gray',
   },
 });
 
