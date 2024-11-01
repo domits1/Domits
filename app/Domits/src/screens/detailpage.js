@@ -161,7 +161,6 @@ const Detailpage = ({route, navigation}) => {
   const imageWidth = Dimensions.get('window').width;
 
   const featureIcons = {
-    // Essentials
     'Wi-Fi': <Ionicons name="wifi" size={24} color="green" />,
     'Air conditioning': (
       <MaterialCommunityIcons name="air-conditioner" size={24} color="green" />
@@ -192,11 +191,9 @@ const Detailpage = ({route, navigation}) => {
         color="green"
       />
     ),
-
-    // Kitchen
     Refrigerator: (
       <MaterialCommunityIcons name="fridge-outline" size={24} color="green" />
-    ), // Adjusted for consistency
+    ),
     Microwave: (
       <MaterialCommunityIcons name="microwave" size={24} color="green" />
     ),
@@ -207,7 +204,7 @@ const Detailpage = ({route, navigation}) => {
     ),
     'Coffee maker': (
       <MaterialCommunityIcons name="coffee-maker" size={24} color="green" />
-    ), // Use "coffee-maker" for precision
+    ),
     Toaster: <MaterialCommunityIcons name="toaster" size={24} color="green" />,
     'Basic cooking essentials': (
       <MaterialCommunityIcons name="food" size={24} color="green" />
@@ -229,8 +226,6 @@ const Detailpage = ({route, navigation}) => {
     Kettle: (
       <MaterialCommunityIcons name="kettle-outline" size={24} color="green" />
     ),
-
-    // Bathroom
     'Hair dryer': (
       <MaterialCommunityIcons name="hair-dryer" size={24} color="green" />
     ),
@@ -250,18 +245,14 @@ const Detailpage = ({route, navigation}) => {
     'First aid kit': (
       <MaterialCommunityIcons name="medical-bag" size={24} color="green" />
     ),
-
-    // Bedroom
     Hangers: <MaterialCommunityIcons name="hanger" size={24} color="green" />,
     'Iron and ironing board': (
       <MaterialCommunityIcons name="iron" size={24} color="green" />
     ),
     'Closet/drawers': (
       <Ionicons name="folder-outline" size={24} color="green" />
-    ), // Replaced with valid "folder-outline"
+    ),
     'Alarm clock': <Ionicons name="alarm-outline" size={24} color="green" />,
-
-    // Living Area
     Sofa: <MaterialCommunityIcons name="sofa" size={24} color="green" />,
     Armchairs: (
       <MaterialCommunityIcons
@@ -279,12 +270,10 @@ const Detailpage = ({route, navigation}) => {
         size={24}
         color="green"
       />
-    ), // Adjusted to "book-open-variant"
+    ),
     'Board games': (
       <MaterialCommunityIcons name="chess-king" size={24} color="green" />
     ),
-
-    // Technology
     'Smart TV': <Ionicons name="tv" size={24} color="green" />,
     'Streaming services': (
       <Ionicons name="tv-outline" size={24} color="green" />
@@ -300,14 +289,12 @@ const Detailpage = ({route, navigation}) => {
     'Work desk and chair': (
       <MaterialCommunityIcons name="desk" size={24} color="green" />
     ),
-
-    // Safety
     'Smoke detector': (
       <MaterialCommunityIcons name="smoke-detector" size={24} color="green" />
     ),
     'Carbon monoxide detector': (
       <MaterialCommunityIcons name="molecule-co2" size={24} color="green" />
-    ), // "carbon-monoxide" does not exist, replaced with "molecule-co2"
+    ),
     'Fire extinguisher': (
       <MaterialCommunityIcons
         name="fire-extinguisher"
@@ -318,14 +305,12 @@ const Detailpage = ({route, navigation}) => {
     'Lock on bedroom door': (
       <Ionicons name="lock-closed-outline" size={24} color="green" />
     ),
-
-    // Family Friendly
     'High chair': (
       <MaterialCommunityIcons name="chair-rolling" size={24} color="green" />
     ),
     Crib: (
       <MaterialCommunityIcons name="cradle-outline" size={24} color="green" />
-    ), // Adjusted to "baby-carriage"
+    ),
     'Children’s books and toys': (
       <FontAwesome5 name="baby" size={24} color="green" />
     ),
@@ -339,8 +324,6 @@ const Detailpage = ({route, navigation}) => {
     'Baby seat': (
       <MaterialCommunityIcons name="baby-carriage" size={24} color="green" />
     ),
-
-    // Laundry
     'Washer and dryer': (
       <MaterialCommunityIcons name="washing-machine" size={24} color="green" />
     ),
@@ -352,8 +335,6 @@ const Detailpage = ({route, navigation}) => {
       />
     ),
     'Clothes drying rack': <FontAwesome name="sun-o" size={24} color="green" />,
-
-    // Convenience
     'Keyless entry': <Ionicons name="key-outline" size={24} color="green" />,
     'Self-check-in': (
       <Ionicons name="checkmark-circle-outline" size={24} color="green" />
@@ -370,8 +351,6 @@ const Detailpage = ({route, navigation}) => {
     'EV charger': (
       <MaterialCommunityIcons name="car-electric" size={24} color="green" />
     ),
-
-    // Accessibility
     'Step-free access': (
       <FontAwesome name="wheelchair" size={24} color="green" />
     ),
@@ -387,8 +366,6 @@ const Detailpage = ({route, navigation}) => {
     'Shower chair': (
       <MaterialCommunityIcons name="shower" size={24} color="green" />
     ),
-
-    // Eco-Friendly
     'Recycling bins': (
       <MaterialCommunityIcons name="recycle" size={24} color="green" />
     ),
@@ -401,8 +378,6 @@ const Detailpage = ({route, navigation}) => {
     'Composting bin': (
       <MaterialCommunityIcons name="recycle" size={24} color="green" />
     ),
-
-    // Outdoor
     'Patio or balcony': (
       <MaterialCommunityIcons name="balcony" size={24} color="green" />
     ),
@@ -444,8 +419,6 @@ const Detailpage = ({route, navigation}) => {
     'Bathing ladder': (
       <MaterialCommunityIcons name="ladder" size={24} color="green" />
     ),
-
-    // Boat-specific amenities
     'Bow thruster': (
       <MaterialCommunityIcons name="anchor" size={24} color="green" />
     ),
@@ -465,8 +438,6 @@ const Detailpage = ({route, navigation}) => {
     'Guides & Maps': (
       <MaterialCommunityIcons name="map-outline" size={24} color="green" />
     ),
-
-    // Leisure Activities
     'Snorkeling equipment': (
       <MaterialCommunityIcons name="diving-snorkel" size={24} color="green" />
     ),
@@ -480,8 +451,6 @@ const Detailpage = ({route, navigation}) => {
         color="green"
       />
     ),
-
-    // Water Sports
     'Water skis': (
       <MaterialCommunityIcons name="water" size={24} color="green" />
     ),
@@ -500,8 +469,6 @@ const Detailpage = ({route, navigation}) => {
     Kneeboard: (
       <MaterialCommunityIcons name="kayaking" size={24} color="green" />
     ),
-
-    // Extra Service
     'Cleaning service': (
       <MaterialCommunityIcons name="broom" size={24} color="green" />
     ),
@@ -535,11 +502,11 @@ const Detailpage = ({route, navigation}) => {
   const renderAmenities = () => {
     const allAmenities = parsedAccommodation.Features || {};
     const categoriesToShow = Object.keys(allAmenities)
-      .filter(category => allAmenities[category].length > 0) // Filter out empty categories
-      .slice(0, 3); // Limit to first 5 categories with items
+      .filter(category => allAmenities[category].length > 0)
+      .slice(0, 3);
 
     return categoriesToShow.map((category, categoryIndex) => {
-      const items = allAmenities[category].slice(0, 5); // Get only the first 5 items in each category
+      const items = allAmenities[category].slice(0, 5);
 
       return (
         <View key={categoryIndex} style={styles.featuresCategory}>
@@ -708,9 +675,7 @@ const Detailpage = ({route, navigation}) => {
               </View>
             ))}
           </ScrollView>
-          <View style={styles.counterContainer}>
-            {renderDotIndicator()}
-          </View>
+          <View style={styles.counterContainer}>{renderDotIndicator()}</View>
 
           <View>
             <Text style={styles.additionalText}>
