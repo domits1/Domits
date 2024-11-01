@@ -1,19 +1,21 @@
 import React, { useState, useEffect } from "react";
 import { Storage } from 'aws-amplify';
 import './Accommodations.css';
-import styles from '../utils/PageSwitcher.module.css'
+import styles from '../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
+import IosShareIcon from '@mui/icons-material/IosShare';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
 
 const getItemsPerPage = () => {
   if (window.matchMedia("(max-width: 480px)").matches) {
     return 8;
   } else if (window.matchMedia("(max-width: 856px)").matches) {
     return 12;
-  } else if (window.matchMedia("(max-width: 1292px").matches) {
+  } else if (window.matchMedia("(max-width: 1292px)").matches) {
     return 16;
-  }
-  else {
+  } else {
     return 15;
   }
 };
@@ -29,7 +31,6 @@ const Accommodations = ({ searchResults }) => {
   const [itemsPerPage, setItemsPerPage] = useState(getItemsPerPage());
 
   const totalPages = Math.ceil(accolist.length / itemsPerPage);
-
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
 
@@ -76,7 +77,6 @@ const Accommodations = ({ searchResults }) => {
   const populateAccoListWithImages = async (data) => {
     const formattedData = await Promise.all(
         data.map(async (item) => {
-
           const homepageWebpURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.webp`;
           const homepageJpegURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.jpg`;
 
@@ -90,7 +90,7 @@ const Accommodations = ({ searchResults }) => {
             }
           };
 
-          //check for webp of jpg
+          // Check for webp or jpg
           const imageUrl = (await imageExists(homepageWebpURL))
               ? homepageWebpURL
               : (await imageExists(homepageJpegURL))
@@ -106,7 +106,6 @@ const Accommodations = ({ searchResults }) => {
 
     setAccolist(formatData(formattedData));
   };
-
 
   useEffect(() => {
     const fetchData = async () => {
@@ -139,11 +138,13 @@ const Accommodations = ({ searchResults }) => {
 
   if (loading) {
     return (
-      <div className="full-visibility">
-        {Array(8).fill().map((_, index) => (
-          <SkeletonLoader key={index} />
-        ))}
-      </div>
+        <div className="full-visibility">
+          {Array(8)
+              .fill()
+              .map((_, index) => (
+                  <SkeletonLoader key={index} />
+              ))}
+        </div>
     );
   }
 
@@ -151,13 +152,43 @@ const Accommodations = ({ searchResults }) => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
 
-  return (
-    <div id="card-visibility">
-      {displayedAccolist.map((accommodation) => (
+  const AccommodationCard = ({ accommodation }) => {
+    const [liked, setLiked] = useState(false);
+
+    const handleLike = (e) => {
+      e.stopPropagation();
+      setLiked(!liked);
+    };
+
+    const handleShare = (e, ID) => {
+      e.stopPropagation();
+      const shareURL = `${window.location.origin}/listingdetails?ID=${encodeURIComponent(ID)}`;
+      navigator.clipboard
+          .writeText(shareURL)
+          .then(() => {
+            alert('Gekopieerd URL: ' + shareURL);
+          })
+          .catch((error) => {
+            console.error('Kon de URL niet kopiëren:', error);
+          });
+    };
+
+    return (
         <div className="accocard" key={accommodation.id} onClick={() => handleClick(accommodation.id)}>
+          <button className="accocard-share-button" onClick={(e) => handleShare(e, accommodation.id)}>
+            <IosShareIcon />
+          </button>
+          <button
+              className="accocard-like-button"
+              onClick={handleLike}
+          >
+            {liked ? <FavoriteIcon sx={{ color: '#ec5050' }} /> : <FavoriteBorderOutlinedIcon  />}
+          </button>
           <img src={accommodation.image} alt={accommodation.title} />
           <div className="accocard-content">
-            <div className="accocard-title">{accommodation.city}, {accommodation.country}</div>
+            <div className="accocard-title">
+              {accommodation.city}, {accommodation.country}
+            </div>
             <div className="accocard-price">{accommodation.price}</div>
             <div className="accocard-detail">{accommodation.details}</div>
             <div className="accocard-specs">
@@ -166,31 +197,38 @@ const Accommodations = ({ searchResults }) => {
             </div>
           </div>
         </div>
-      ))}
-      {/* Pagination */}
-      <div className={styles.pagination}>
-        <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
-          &lt; Previous
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => (
-          <button
-            key={i}
-            onClick={() => handlePageChange(i + 1)}
-            className={`${(currentPage === i + 1) && styles.active}`}
-          >
-            {i + 1}
-          </button>
+    );
+  };
+
+  return (
+      <div id="card-visibility">
+        {displayedAccolist.map((accommodation) => (
+            <AccommodationCard key={accommodation.id} accommodation={accommodation} />
         ))}
-        <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
-          Next &gt;
-        </button>
+        {/* Pagination */}
+        <div className={styles.pagination}>
+          <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
+            &lt; Previous
+          </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+              <button
+                  key={i}
+                  onClick={() => handlePageChange(i + 1)}
+                  className={`${currentPage === i + 1 && styles.active}`}
+              >
+                {i + 1}
+              </button>
+          ))}
+          <button onClick={() => handlePageChange(currentPage + 1)} disabled={currentPage === totalPages}>
+            Next &gt;
+          </button>
+        </div>
+        <div className="why-domits-button">
+          <a href="/why-domits" className="why-domits-link">
+            Why Domits?
+          </a>
+        </div>
       </div>
-      <div className="why-domits-button">
-        <a href="/why-domits" className="why-domits-link">
-          Why Domits?
-        </a>
-      </div>
-    </div>
   );
 };
 
