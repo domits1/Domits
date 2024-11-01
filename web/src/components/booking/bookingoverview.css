@@ -13,6 +13,327 @@
     flex-wrap: wrap;
 }
 
+
+.Bookingcontainer {
+    max-width: 1500px;
+    width: 100%;
+    display: flex;
+    gap: 20px;
+}
+
+.right-panel {
+    flex: 0 0 75%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 80%;
+    margin: 20px 0;
+}
+
+.circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid #4CAF50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    color: #4CAF50;
+    font-weight: bold;
+    font-size: 16px;
+    position: relative;
+    z-index: 1;
+}
+
+.circle.completed {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.circle.half-completed {
+    background-color: white;
+    color: #4CAF50;
+}
+
+.line {
+    height: 4px;
+    width: 100px;
+    background-color: #e0e0e0;
+    position: relative;
+    z-index: 0;
+    margin: 0 5px;
+    border-radius: 2px;
+}
+
+.line.completed {
+    background-color: #4CAF50;
+}
+
+.number {
+    font-size: 16px;
+    color: #4CAF50;
+}
+
+.number-complete{
+    font-size: 16px;
+    color: white;
+}
+
+
+.left-panel {
+    flex: 0 0 25%;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+
+.card-container {
+    display: flex;
+    gap: 10px;
+    justify-content: space-between;
+}
+
+.card {
+    flex: 1;
+    max-width: 40%; /* Stelt de breedte van de kaart in op 40% */
+    padding: 8px; /* Iets minder padding voor een compactere layout */
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    text-align: center;
+    font-size: 0.9em; /* Verkleint de tekst in de kaart */
+}
+
+.card h3 {
+    font-size: 1em; /* Maakt de koptekst wat kleiner */
+    margin-bottom: 5px;
+}
+
+.card p, .card a {
+    font-size: 0.8em; /* Maakt de beschrijvende tekst en links kleiner */
+}
+
+
+.main-card {
+    border: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.detail-row {
+    display: flex;
+
+    margin-bottom: 10px;
+}
+.checkin-checkout {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+}
+
+.detail-label {
+    font-weight: bold;
+    color: #333;
+    padding-right:10px ;
+}
+
+.detail-value {
+    color: #555;
+}
+
+.checkin-checkout {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.placeholder {
+    font-style: italic;
+    color: #999;
+}
+
+.text-field {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+
+
+.confirm-pay-button {
+    align-self: flex-end;
+    margin-top: 20px;
+    padding: 8px 16px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.booking-overview-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.right-panel {
+    flex: 0 0 75%; /* Maakt de rechter panel 75% van de breedte van het scherm */
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.booking-overview {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 20px;
+}
+
+.overview-text {
+    text-align: left;
+}
+
+.detail-labels {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: left;
+    font-weight: bold;
+    color: #333;
+}
+
+.detail-values {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    text-align: right;
+    color: #555;
+}
+
+.form-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.text-field {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.checkbox-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.checkbox-container label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.confirm-pay-button {
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.progress-bar {
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    display: flex;
+}
+
+.progress-bar div {
+    width: 60%; /* Stel voortgangspercentage in */
+    background-color: green;
+}
+
+.card-container {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.card {
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.main-card {
+    border-top: 1px solid #ddd;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin-top: 20px;
+}
+
+.form-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.text-field {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+
+.confirm-pay-button {
+    padding: 12px 24px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 20px;
+    align-self: flex-end;
+}
+
+
 .thumbnail-images img {
     width: 150px;
     height: 150px;
@@ -91,15 +412,15 @@ p {
 }
 
 .confirm-pay-button {
-    width: 100%;
-    padding: 15px;
-    background-color: #0D9813;
-    color: #ffffff;
+    padding: 8px 16px; /* Kleinere afmetingen voor de knop */
+    background-color: #4CAF50;
+    color: white;
     border: none;
-    border-radius: 4px;
-    font-size: 18px;
+    border-radius: 8px;
+    font-size: 14px;
     cursor: pointer;
-    margin-bottom: 1.25rem;
+    align-self: flex-end; /* Positioneer de knop aan de rechterkant */
+    margin-top: 20px;
 }
 
 .confirm-pay-button:hover {
