@@ -1010,7 +1010,8 @@ const ListingDetails = () => {
                                         backgroundColor: isFormValid ? 'green' : 'green',
                                         cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
                                         opacity: isFormValid && !isDemo ? 1 : 0.5
-                                    }}>
+                                    }}
+                            >
                                 Reserve
                             </button>
                             {isDemo ? (

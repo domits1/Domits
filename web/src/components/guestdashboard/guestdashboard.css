@@ -178,6 +178,7 @@
   padding: 20px;
   display: flex;
   justify-content: center;
+  gap: 15% ;
 }
 
 .leftContent {
@@ -194,7 +195,9 @@
   height: 40%;
   overflow: auto;
 }
-
+.viewAllBooking{
+  color: #0D9813;
+}
 .bookingBox,
 .messageBox {
   background-color: #fff;
@@ -222,10 +225,18 @@
 }
 
 .personalInfoContent {
-  display: flex;
+
   flex-direction: column;
   margin-left: 1px;
   width: 100%;
+  flex: 1;
+  padding: 20px;
+
+}
+
+.accomodation-side{
+  flex: 2;
+  padding: 20px;
 }
 
 .infoBox {
@@ -270,18 +281,29 @@
   border-radius: 12px;
   background-color: #f9f9f9;
 }
+
+.personal-info-header {
+  display: flex;
+  align-items: center;
+  gap: 10px; /* Ruimte tussen de koptekst en de bewerkknop */
+}
+
 .edit-icon-background {
   background-color: #0D9813;
   border: 1px solid #0D9813;
   border-radius: 15px;
   padding: 0.4rem;
-  margin-left: 2%;
   width: 2rem;
   height: 2rem;
-  position: relative;
   text-align: center;
   cursor: pointer;
-}
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+
 .edit-icon-background:hover{
   background-color: #6CD46F ;
 }
@@ -331,4 +353,4 @@
       height: 0;
     }
   }
-  
+
