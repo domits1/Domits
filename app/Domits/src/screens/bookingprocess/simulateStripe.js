@@ -1,13 +1,20 @@
 import React from 'react';
 import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 
-const SimulateStripe = ({navigation}) => {
+const SimulateStripe = ({navigation, route}) => {
+  const parsedAccommodation = route.params.parsedAccommodation;
+  const calculateCost = route.params.calculateCost;
   const handlePaymentAccepted = () => {
-    navigation.navigate('paymentAccepted');
+    navigation.navigate('paymentAccepted', {
+      parsedAccommodation: parsedAccommodation,
+      calculateCost: calculateCost,
+    });
   };
 
   const handlePaymentDeclined = () => {
-    navigation.navigate('paymentDeclined');
+    navigation.navigate('paymentDeclined', {
+      parsedAccommodation: parsedAccommodation,
+    });
   };
 
   return (

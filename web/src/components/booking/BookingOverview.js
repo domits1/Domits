@@ -10,12 +10,11 @@ import ImageGallery from './ImageGallery';
 
 const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
-
 const BookingOverview = () => {
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
             var r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : (r & 0x3 | 0x8);
+                v = c === 'x' ? r : (r & 0x3 | 0x8);
             return v.toString(16);
         });
     }
@@ -28,9 +27,10 @@ const BookingOverview = () => {
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [editMode, setEditMode] = useState(false); // New state for edit mode
 
     const [accommodation, setAccommodation] = useState(null);
-    const [isProcessing, setIsProcessing] = useState(false); // New state for cursor wait
+    const [isProcessing, setIsProcessing] = useState(false);
     const searchParams = new URLSearchParams(location.search);
     const id = searchParams.get('id');
     const checkIn = searchParams.get('checkIn');
@@ -38,8 +38,7 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('adults'), 10);
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
-    const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100
-    console.log(id)
+    const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100;
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
@@ -83,7 +82,6 @@ const BookingOverview = () => {
                 console.error('Error logging in:', error);
             }
         };
-
         checkAuthentication();
     }, []);
 
@@ -116,6 +114,9 @@ const BookingOverview = () => {
         return <div>Loading...</div>;
     }
 
+    const handleEditClick = () => {
+        setEditMode(!editMode);
+    };
 
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
@@ -140,8 +141,8 @@ const BookingOverview = () => {
         const accommodationTitle = accommodation.Title;
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
-        const basePrice = Math.round(accommodation.Rent * numberOfDays * 100); // Convert to cents and round to ensure integer
-        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee); // Total amount including 15% fee, rounding to ensure integer
+        const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
+        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee);
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -152,7 +153,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Accepted",
-            price: totalAmount / 100, // Convert back to EUR for display
+            price: totalAmount / 100,
             startDate,
             endDate
         }).toString();
@@ -163,7 +164,7 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Failed",
-            price: totalAmount / 100, // Convert back to EUR for display
+            price: totalAmount / 100,
             startDate,
             endDate
         }).toString();
@@ -173,8 +174,8 @@ const BookingOverview = () => {
 
         const checkoutData = {
             userId: cognitoUserId,
-            basePrice: basePrice, // Already in cents
-            totalAmount: totalAmount, // Already in cents
+            basePrice: basePrice,
+            totalAmount: totalAmount,
             currency: 'eur',
             productName: accommodation.Title,
             successUrl: successUrl,
@@ -218,65 +219,104 @@ const BookingOverview = () => {
     };
 
     return (
-        <main className="page-body Bookingcontainer" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
-            <div className="main-content">
-                <h1>{accommodation.Title}</h1>
-                <p>{accommodation.Description}</p>
-                <div>
+            <main className="page-body Bookingcontainer" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
+                {/* Left Panel: Image and Cards */}
+                <div className="left-panel">
                     <ImageGallery images={Object.values(accommodation.Images)} />
-                </div>
-                {error && <div className="error">{error}</div>}
-                <div className="booking-details">
-                    <div className="detail-item">
-                        <span>Dates</span>
-                        <span>{DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}</span>
-                        <a href="#">Change</a>
+
+                    {/* Card Container under Image */}
+                    <div className="card-container">
+                        <div className="card">
+                            <h3>Guest</h3>
+                            <p>{adults} adults - {kids} kids</p>
+                        </div>
+                        <div className="card">
+                            <h3>Extra Cleaning</h3>
+                            <p>{pets ? "Selected" : "Not selected"}</p>
+                        </div>
+                        <div className="card">
+                            <h3>Dates</h3>
+                            <p>{DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}</p>
+                        </div>
                     </div>
-                    <div className="detail-item">
-                        <span>Travellers</span>
-                        <span>{adults} adults - {kids} kids</span>
-                        <a href="#">Change</a>
+                </div>
+
+                {/* Right Panel */}
+                <div className="right-panel">
+                    <div className="progress-bar-container">
+                        <div className="circle completed">
+                            <span className="number-complete">1</span>
+                        </div>
+                        <div className="line completed"></div>
+                        <div className="circle half-completed">
+                            <span className="number">2</span>
+                        </div>
+                        <div className="line"></div>
+                        <div className="circle">
+                            <span className="number">3</span>
+                        </div>
                     </div>
-                    <div className="detail-item">
-                        <span>Extra cleaning</span>
-                        <span>Select if needed</span>
+
+
+                    <h1>{accommodation.Title}</h1>
+
+                    <div className="main-card">
+                        <h2>Booking Details </h2>
+
+                        {/* Editable Fields */}
+                        <div className="detail-row">
+                            <span className="detail-label">Main Booker:</span>
+                            {editMode ? (
+                                <input className="text-field" type="text" defaultValue={userData.username} />
+                            ) : (
+                                <span className="detail-value">{userData.username || "Name missing"}</span>
+                            )}
+                        </div>
+                        <div className="detail-row">
+                            <span className="detail-label">Amount of Guests:</span>
+                            {editMode ? (
+                                <input className="text-field" type="text" defaultValue={`${adults} adults - ${kids} kids`} />
+                            ) : (
+                                <span className="detail-value">{adults} adults - {kids} kids</span>
+                            )}
+                        </div>
+                        <div className="detail-row">
+                            <span className="detail-label">Email Address:</span>
+                            {editMode ? (
+                                <input className="text-field" type="text" defaultValue={userData.email} />
+                            ) : (
+                                <span className="detail-value">{userData.email || "Email missing"}</span>
+                            )}
+                        </div>
+                        <div className="detail-row">
+                            <span className="detail-label">Phone Number:</span>
+                            {editMode ? (
+                                <input className="text-field" type="text" defaultValue={userData.phone_number} />
+                            ) : (
+                                <span className="detail-value">{userData.phone_number || "Phone number missing"}</span>
+                            )}
+                        </div>
+                        <span onClick={handleEditClick} style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}>Change</span>
+
+                        <div className="checkbox-container">
+                            <label>
+                                <input type="checkbox" />
+                                I have read and accept the <a href="#" style={{ color: 'green' }}>accommodation rules</a>
+                            </label>
+                            <label>
+                                <input type="checkbox" />
+                                I have read and accept the <a href="#" style={{ color: 'green' }}>privacy agreement and terms and conditions</a>
+                            </label>
+                        </div>
+
+                        <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
+                            {loading ? 'Loading...' : 'Confirm & Pay'}
+                        </button>
                     </div>
                 </div>
-                <div className="booking-overview">
-                    <h2>Booking overview</h2>
-                    <p>Check-in: {DateFormatterDD_MM_YYYY(checkIn)}</p>
-                    <p>Check-out: {DateFormatterDD_MM_YYYY(checkOut)}</p>
-                </div>
-                <div className="accommodation-info">
-                    <h2>Accommodation</h2>
-                    <form>
-                        {isLoggedIn ? (
-                            <>
-                                <div className="form-group">
-                                    <label htmlFor="helloUsername">Hello {userData.username}!</label>
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="name">Name</label>
-                                    <input type="text" id="name" name="name" defaultValue={userData.username} />
-                                </div>
-                                <div className="form-group">
-                                    <label htmlFor="email">Email address</label>
-                                    <input type="text" id="email" name="email" defaultValue={userData.email} />
-                                </div>
-                                <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
-                                    {loading ? 'Loading...' : 'Confirm & Pay'}
-                                </button>
-                            </>
-                        ) : (
-                            <FlowProvider>
-                                <Register />
-                            </FlowProvider>
-                        )}
-                    </form>
-                </div>
-            </div>
-        </main>
+            </main>
     );
+
 };
 
 export default BookingOverview;

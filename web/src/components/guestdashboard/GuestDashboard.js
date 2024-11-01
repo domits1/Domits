@@ -5,14 +5,12 @@ import { API, graphqlOperation, Auth } from "aws-amplify";
 import Pages from "./Pages.js";
 import { confirmEmailChange } from "./emailSettings";
 
-
 const GuestDashboard = () => {
     const [tempUser, setTempUser] = useState({ email: '', name: '' });
     const [user, setUser] = useState({ email: '', name: '', address: '', phone: '', family: '' });
-    const [editState, setEditState] = useState({ email: false, name: false });
+    const [isEditing, setIsEditing] = useState(false);
     const [verificationCode, setVerificationCode] = useState('');
     const [isVerifying, setIsVerifying] = useState(false);
-    const [isVerifyingUsername, setIsVerifyingUsername] = useState(false);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -23,12 +21,11 @@ const GuestDashboard = () => {
         setVerificationCode(e.target.value);
     };
 
-    const toggleEditState = (field) => {
-        setEditState((prevState) => ({ ...prevState, [field]: !prevState[field] }));
+    const toggleEditState = () => {
+        setIsEditing((prev) => !prev);
         setIsVerifying(false);
-        setIsVerifyingUsername(false);
-        if (!editState[field]) {
-            setTempUser({ ...tempUser, [field]: user[field] });
+        if (!isEditing) {
+            setTempUser({ email: user.email, name: user.name });
         }
     };
 
@@ -38,7 +35,7 @@ const GuestDashboard = () => {
                 const result = await confirmEmailChange(verificationCode);
                 if (result.success) {
                     setUser({ ...user, email: tempUser.email });
-                    toggleEditState('email');
+                    toggleEditState();
                 } else {
                     alert("Incorrect verification code");
                 }
@@ -53,38 +50,25 @@ const GuestDashboard = () => {
             const userId = userInfo.username;
             const newEmail = tempUser.email;
 
-            const params = {
-                userId,
-                newEmail,
-            };
-
             const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/UpdateUserEmail', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, newEmail }),
             });
 
             const result = await response.json();
-
             let parsedBody = result.body;
-            if (typeof parsedBody === 'string') {
-                parsedBody = JSON.parse(parsedBody);
-            }
 
+            if (typeof parsedBody === 'string') parsedBody = JSON.parse(parsedBody);
             if (parsedBody.message === "Email update successful, please verify your new email.") {
                 setIsVerifying(true);
-            } else if (parsedBody.message === "This email address is already in use.") {
-                alert(parsedBody.message);
             } else {
-                console.error("Unexpected error:", parsedBody.message || "No message provided");
+                alert(parsedBody.message || "Unexpected error");
             }
         } catch (error) {
             console.error("Error updating email:", error);
         }
     };
-
 
     const saveUserName = async () => {
         try {
@@ -92,40 +76,29 @@ const GuestDashboard = () => {
             const userId = userInfo.username;
             const newName = tempUser.name;
 
-            const params = {
-                userId,
-                newName
-            };
-
             const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/UpdateUserName', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, newName }),
             });
 
             const result = await response.json();
-
             if (result.statusCode === 200) {
                 setUser({ ...user, name: tempUser.name });
-                toggleEditState('name');
+                toggleEditState();
             }
         } catch (error) {
             console.error("Error updating username:", error);
         }
     };
 
-    const handleKeyPressEmail = (e) => {
-        if (e.key === 'Enter') {
-            saveUserEmail();
-        }
+    const saveChanges = () => {
+        saveUserEmail();
+        saveUserName();
     };
 
-    const handleKeyPressName = (e) => {
-        if (e.key === 'Enter') {
-            saveUserName();
-        }
+    const handleKeyPress = (e) => {
+        if (e.key === 'Enter') saveChanges();
     };
 
     useEffect(() => {
@@ -164,106 +137,62 @@ const GuestDashboard = () => {
                 <Pages />
                 <div className="content">
                     <div className="personalInfoContent">
-                        <h3>Personal Information</h3>
-                        <div className="infoBox">
-                            <span>Email:</span>
-                            {editState.email ? (
-                                <div style={{ display: 'flex' }}>
-                                    {!isVerifying ? (
-                                        <>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={tempUser.email}
-                                                onChange={handleInputChange}
-                                                className="guest-edit-input"
-                                                onKeyPress={handleKeyPressEmail}
-                                            />
-                                            <div onClick={saveUserEmail} className="edit-icon-background">
-                                                <img src={checkIcon} alt="Save Email" className="guest-check-icon" />
-                                            </div>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <input
-                                                type="text"
-                                                name="verificationCode"
-                                                value={verificationCode}
-                                                onChange={handleVerificationInputChange}
-                                                placeholder="Code sent to your email!"
-                                                className="guest-edit-input"
-                                                onKeyPress={handleKeyPressEmail}
-                                            />
-                                            <div onClick={saveUserEmail} className="edit-icon-background">
-                                                <img src={checkIcon} alt="Confirm Verification Code" className="guest-check-icon" />
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            ) : (
-                                <p>{user.email}</p>
-                            )}
-                            <div onClick={() => toggleEditState('email')} className="edit-icon-background">
-                                <img src={editIcon} alt="Edit Email" className="guest-edit-icon" />
+                        <div className="personal-info-header">
+                            <h3>Personal Information</h3>
+                            <div onClick={toggleEditState} className="edit-icon-background">
+                                <img src={isEditing ? checkIcon : editIcon} alt="Edit" className="guest-edit-icon" />
                             </div>
                         </div>
 
                         <div className="infoBox">
+                            <span>Email:</span>
+                            {isEditing ? (
+                                <>
+                                    <input
+                                        type="email"
+                                        name="email"
+                                        value={tempUser.email}
+                                        onChange={handleInputChange}
+                                        onKeyPress={handleKeyPress}
+                                        className="guest-edit-input"
+                                    />
+                                </>
+                            ) : (
+                                <p>{user.email}</p>
+                            )}
+                        </div>
+                        <div className="infoBox">
                             <span>Name:</span>
-                            {editState.name ? (
-                                <div style={{ display: 'flex' }}>
+                            {isEditing ? (
+                                <>
                                     <input
                                         type="text"
                                         name="name"
                                         value={tempUser.name}
                                         onChange={handleInputChange}
+                                        onKeyPress={handleKeyPress}
                                         className="guest-edit-input"
-                                        onKeyPress={handleKeyPressName}
                                         minLength={1}
                                         maxLength={35}
                                         pattern="[A-Za-z\s]+"
                                     />
-                                    <div onClick={saveUserName} className="edit-icon-background">
-                                        <img src={checkIcon} alt="Save Name" className="guest-check-icon" />
-                                    </div>
-                                </div>
+                                </>
                             ) : (
                                 <p>{user.name}</p>
                             )}
-                            <div onClick={() => toggleEditState('name')} className="edit-icon-background">
-                                <img src={editIcon} alt="Edit Name" className="guest-edit-icon" />
-                            </div>
                         </div>
+                    </div>
 
-                        {/*<div className="infoBox">*/}
-                        {/*    <span>Address:</span>*/}
-                        {/*    <p>{user.address}</p>*/}
-                        {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Address" className="guest-edit-icon" />*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-
-                        {/*<div className="infoBox">*/}
-                        {/*    <span>Phone:</span>*/}
-                        {/*    <p>{user.phone}</p>*/}
-                        {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Phone" className="guest-edit-icon" />*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
-
-                        {/*<div className="infoBox">*/}
-                        {/*    <span>Family:</span>*/}
-                        {/*    <p>{user.family}</p>*/}
-                        {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Family" className="guest-edit-icon" />*/}
-                        {/*    </div>*/}
-                        {/*</div>*/}
+                    <div className="accomodation-side">
+                        <label>
+                            <a className="viewAllBooking" href="#">View all bookings</a>
+                        </label>
 
                     </div>
                 </div>
             </div>
         </div>
     );
-}
+};
 
 export default GuestDashboard;

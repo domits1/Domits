@@ -9,9 +9,15 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-const BookingConfirmationPage = ({navigation}) => {
+const BookingConfirmationPage = ({navigation, route}) => {
+  const parsedAccommodation = route.params.parsedAccommodation;
+  const calculateCost = route.params.calculateCost;
+
   const handleButton = () => {
-    navigation.navigate('bookedAccommodation');
+    navigation.navigate('bookedAccommodation', {
+      parsedAccommodation: parsedAccommodation,
+      calculateCost: calculateCost,
+    });
   };
 
   return (
@@ -25,18 +31,17 @@ const BookingConfirmationPage = ({navigation}) => {
 
         <View style={styles.confirmationContainer}>
           <Icon
-            name="checkmark-circle"
-            size={22}
-            color="green"
+            name="checkmark-circle-outline"
+            size={40}
+            color="white"
             style={styles.confirmationIcon}
           />
-          <Text style={styles.confirmationTitle}>Booking confirmed!</Text>
+          <Text style={styles.confirmationTitle}>Payment confirmed!</Text>
           <Text style={styles.confirmationSubtitle}>
             You paid with Mastercard
           </Text>
-          <Text style={styles.cardInfo}>
-            [ L. Summer ] [0123 xxxx xxxx 2345]
-          </Text>
+          <Text style={styles.cardInfo}>[ L. Summer ]</Text>
+          <Text style={styles.cardInfo}>[0123 xxxx xxxx 2345]</Text>
         </View>
 
         <View style={styles.priceDetailsContainer}>
@@ -45,25 +50,33 @@ const BookingConfirmationPage = ({navigation}) => {
             2 adults - 2 kids | 3 nights
           </Text>
           <View style={styles.priceItemRow}>
-            <Text style={styles.priceItem}>$140 night x 3</Text>
-            <Text style={styles.priceValue}>$420.00</Text>
+            <Text style={styles.priceItem}>
+              €{parsedAccommodation.Rent} night x 3
+            </Text>
+            <Text style={styles.priceValue}>
+              €{(parsedAccommodation.Rent * 3).toFixed(2)}
+            </Text>
           </View>
           <View style={styles.priceItemRow}>
             <Text style={styles.priceItem}>Cleaning fee</Text>
-            <Text style={styles.priceValue}>$50.00</Text>
+            <Text style={styles.priceValue}>
+              €{parsedAccommodation.CleaningFee.toFixed(2)}
+            </Text>
           </View>
           <View style={styles.priceItemRow}>
             <Text style={styles.priceItem}>Cat tax</Text>
-            <Text style={styles.priceValue}>$17.50</Text>
+            <Text style={styles.priceValue}>€0.00</Text>
           </View>
           <View style={styles.priceItemRow}>
             <Text style={styles.priceItem}>Domits service fee</Text>
-            <Text style={styles.priceValue}>$39.50</Text>
+            <Text style={styles.priceValue}>
+              €{parsedAccommodation.ServiceFee.toFixed(2)}
+            </Text>
           </View>
           <View style={styles.separator} />
           <View style={styles.totalRow}>
             <Text style={styles.totalText}>Total (DOL)</Text>
-            <Text style={styles.totalAmount}>$527.00</Text>
+            <Text style={styles.totalAmount}>€{calculateCost}</Text>
           </View>
         </View>
 
@@ -72,10 +85,9 @@ const BookingConfirmationPage = ({navigation}) => {
         </TouchableOpacity>
 
         <View style={styles.propertyDetailsContainer}>
-          <Text style={styles.propertyTitle}>Kinderhuissingel 6k</Text>
+          <Text style={styles.propertyTitle}>{parsedAccommodation.Title}</Text>
           <Text style={styles.propertyDescription}>
-            Fantastic villa with private swimming pool and surrounded by
-            beautiful parks.
+            {parsedAccommodation.Description}
           </Text>
         </View>
 
@@ -114,12 +126,18 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 20,
   },
+  confirmationIcon: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
   confirmationTitle: {
     fontSize: 20,
     fontWeight: 'bold',
     color: '#FFFFFF',
   },
   confirmationSubtitle: {
+    marginTop: 10,
     fontSize: 16,
     color: '#FFFFFF',
   },

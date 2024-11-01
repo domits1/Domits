@@ -9,9 +9,10 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-const BookingDeclinedPage = ({navigation}) => {
+const BookingDeclinedPage = ({navigation, route}) => {
+  const parsedAccommodation = route.params.parsedAccommodation;
   const handleGoBack = () => {
-    navigation.navigate('finalBookingOverview');
+    navigation.navigate('Home');
   };
 
   return (
@@ -29,9 +30,9 @@ const BookingDeclinedPage = ({navigation}) => {
           <Text style={styles.declinedSubtitle}>
             No money was deducted from
           </Text>
-          <Text style={styles.cardInfo}>
-            Mastercard [ L.Summer ] [0123 xxxx xxxx 2345]
-          </Text>
+          <Text style={styles.cardInfo}>Mastercard</Text>
+          <Text style={styles.cardInfo}>[ L.Summer ]</Text>
+          <Text style={styles.cardInfo}>[0123 xxxx xxxx 2345]</Text>
         </View>
 
         {/* Price details code from your previous BookingConfirmationPage component goes here */}
@@ -69,10 +70,9 @@ const BookingDeclinedPage = ({navigation}) => {
 
         <View style={styles.propertyDetailsContainer}>
           {/* Property details code from your previous BookingConfirmationPage component goes here */}
-          <Text style={styles.propertyTitle}>Kinderhuissingel 6k</Text>
+          <Text style={styles.propertyTitle}>{parsedAccommodation.Title}</Text>
           <Text style={styles.propertyDescription}>
-            Fantastic villa with private swimming pool and surrounded by
-            beautiful parks.
+            {parsedAccommodation.Description}
           </Text>
         </View>
 
@@ -157,6 +157,22 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderColor: '#cccccc',
     backgroundColor: '#f9f9f9',
+  },
+  propertyDetailsContainer: {
+    backgroundColor: '#F4F4F4',
+    padding: 20,
+    borderRadius: 8,
+    marginHorizontal: 20,
+    marginTop: 20,
+  },
+  propertyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+  },
+  propertyDescription: {
+    fontSize: 16,
+    color: '#666',
   },
 });
 

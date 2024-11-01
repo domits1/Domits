@@ -10,7 +10,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 
-const ProfileScreen = ({navigation}) => {
+const ProfileScreen = ({navigation, route}) => {
+  const parsedAccommodation = route.params.parsedAccommodation;
+  const calculateCost = route.params.calculateCost;
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollContainer}>
@@ -55,7 +57,7 @@ const ProfileScreen = ({navigation}) => {
                 From 24/02/2024 Until 30/02/2024
               </Text>
               <Text style={styles.guestsText}>2 adults - 2 kids</Text>
-              <Text style={styles.totalText}>Total: $527.00</Text>
+              <Text style={styles.totalText}>Total: €{calculateCost}</Text>
               <Text style={styles.propertyDescription}>
                 Minimalistic and cozy apartment
               </Text>
