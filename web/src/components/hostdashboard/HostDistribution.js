@@ -30,6 +30,7 @@ function HostDistribution() {
 
     const [selectedChannel, setSelectedChannel] = useState("Select Channel");
     const [apiKey, setApiKey] = useState("");
+    const addedChannels = channelData.map(channel => channel.ChannelName.S);
 
     useEffect(() => {
         const asyncSetUserId = async () => {
@@ -344,6 +345,17 @@ function HostDistribution() {
     }
 
     const renderAddChannelButtonMenu = () => {
+        const allChannels = [
+            'Airbnb',
+            'Booking.com',
+            'Expedia',
+            'HomeAway',
+            'TripAdvisor',
+            'Vrbo'
+        ];
+
+        const availableChannels = allChannels.filter(channel => !addedChannels.includes(channel));
+
         return (
             <div className="addChannelButtonMenuContent">
                 <div className="addChannelInputFields">
@@ -355,12 +367,11 @@ function HostDistribution() {
                             onChange={handleSelectChange}
                         >
                             <option value="Select Channel">Select Channel</option>
-                            <option value="Airbnb">Airbnb</option>
-                            <option value="Booking.com">Booking.com</option>
-                            <option value="Expedia">Expedia</option>
-                            <option value="HomeAway">HomeAway</option>
-                            <option value="TripAdvisor">TripAdvisor</option>
-                            <option value="Vrbo">Vrbo</option>
+                            {availableChannels.map(channel => (
+                                <option key={channel} value={channel}>
+                                    {channel}
+                                </option>
+                            ))}
                         </select>
                     </div>
                     <label className="channelLabel">API Key</label>
