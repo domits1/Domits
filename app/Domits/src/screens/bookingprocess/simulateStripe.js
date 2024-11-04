@@ -7,6 +7,7 @@ const SimulateStripe = ({navigation, route}) => {
   const adults = route.params.adults;
   const kids = route.params.kids;
   const pets = route.params.pets;
+  const nights = route.params.nights;
   const handlePaymentAccepted = () => {
     navigation.navigate('paymentAccepted', {
       parsedAccommodation: parsedAccommodation,
@@ -14,6 +15,7 @@ const SimulateStripe = ({navigation, route}) => {
       adults: adults,
       kids: kids,
       pets: pets,
+      nights: nights,
     });
   };
 

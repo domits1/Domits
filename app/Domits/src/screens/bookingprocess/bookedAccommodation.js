@@ -16,6 +16,7 @@ const ProfileScreen = ({navigation, route}) => {
   const adults = route.params.adults;
   const kids = route.params.kids;
   const pets = route.params.pets;
+  const nights = route.params.nights;
 
   return (
     <SafeAreaView style={styles.container}>

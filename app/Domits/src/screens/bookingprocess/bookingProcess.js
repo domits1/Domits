@@ -31,6 +31,7 @@ const OnBoarding1 = ({navigation, route}) => {
       adults: adults,
       kids: kids,
       pets: pets,
+      nights: nights,
     });
   };
 
@@ -90,6 +91,7 @@ const OnBoarding1 = ({navigation, route}) => {
     const confirmSelection = () => {
       if (selectedRange.startDate && selectedRange.endDate) {
         onConfirm(selectedRange);
+        calculateNights();
         onClose();
       } else {
         alert('Please select both start and end dates.');
@@ -217,9 +219,20 @@ const OnBoarding1 = ({navigation, route}) => {
     );
   };
 
+  const [nights, setNights] = useState(0);
+
+  const calculateNights = () => {
+    const start = new Date(selectedDates.startDate);
+    const end = new Date(selectedDates.endDate);
+    const timeDifference = end.getTime() - start.getTime();
+    const days = timeDifference / (1000 * 3600 * 24);
+    setNights(days);
+    return days;
+  };
+
   const calculateCost = () => {
     return (
-      parsedAccommodation.Rent * 3 +
+      parsedAccommodation.Rent * nights +
       parsedAccommodation.CleaningFee +
       parsedAccommodation.ServiceFee
     ).toFixed(2);
@@ -284,12 +297,12 @@ const OnBoarding1 = ({navigation, route}) => {
           <View style={styles.priceDetails}>
             <Text style={styles.sectionTitle}>Price details</Text>
             <Text style={styles.sectionContent}>
-              {adults} adults - {kids} kids - {pets} pets | 3 nights
+              {adults} adults - {kids} kids - {pets} pets | {nights} nights
             </Text>
 
             <Text style={styles.priceBreakdown}>
-              €{parsedAccommodation.Rent.toFixed(2)} night x 3 nights - €
-              {(parsedAccommodation.Rent * 3).toFixed(2)}
+              €{parsedAccommodation.Rent.toFixed(2)} night x {nights} nights - €
+              {(parsedAccommodation.Rent * nights).toFixed(2)}
             </Text>
 
             <Text style={styles.fee}>

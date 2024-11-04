@@ -15,6 +15,7 @@ const BookingConfirmationPage = ({navigation, route}) => {
   const adults = route.params.adults;
   const kids = route.params.kids;
   const pets = route.params.pets;
+  const nights = route.params.nights;
 
   const handleButton = () => {
     navigation.navigate('bookedAccommodation', {
@@ -23,6 +24,7 @@ const BookingConfirmationPage = ({navigation, route}) => {
       adults: adults,
       kids: kids,
       pets: pets,
+      nights: nights,
     });
   };
 
@@ -53,14 +55,14 @@ const BookingConfirmationPage = ({navigation, route}) => {
         <View style={styles.priceDetailsContainer}>
           <Text style={styles.priceDetailsTitle}>Price details</Text>
           <Text style={styles.priceDetailsText}>
-            {adults} adults - {kids} kids - {pets} - pets | 3 nights
+            {adults} adults - {kids} kids - {pets} - pets | {nights} nights
           </Text>
           <View style={styles.priceItemRow}>
             <Text style={styles.priceItem}>
-              €{parsedAccommodation.Rent} night x 3
+              €{parsedAccommodation.Rent} night x {nights}
             </Text>
             <Text style={styles.priceValue}>
-              €{(parsedAccommodation.Rent * 3).toFixed(2)}
+              €{(parsedAccommodation.Rent * nights).toFixed(2)}
             </Text>
           </View>
           <View style={styles.priceItemRow}>
