@@ -13,6 +13,10 @@ import Icon from 'react-native-vector-icons/Ionicons';
 const ProfileScreen = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
   const calculateCost = route.params.calculateCost;
+  const adults = route.params.adults;
+  const kids = route.params.kids;
+  const pets = route.params.pets;
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollContainer}>
@@ -56,7 +60,9 @@ const ProfileScreen = ({navigation, route}) => {
               <Text style={styles.dateText}>
                 From 24/02/2024 Until 30/02/2024
               </Text>
-              <Text style={styles.guestsText}>2 adults - 2 kids</Text>
+              <Text style={styles.guestsText}>
+                {adults} adults - {kids} kids - {pets} pets
+              </Text>
               <Text style={styles.totalText}>Total: €{calculateCost}</Text>
               <Text style={styles.propertyDescription}>
                 Minimalistic and cozy apartment

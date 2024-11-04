@@ -12,11 +12,17 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 const BookingConfirmationPage = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
   const calculateCost = route.params.calculateCost;
+  const adults = route.params.adults;
+  const kids = route.params.kids;
+  const pets = route.params.pets;
 
   const handleButton = () => {
     navigation.navigate('bookedAccommodation', {
       parsedAccommodation: parsedAccommodation,
       calculateCost: calculateCost,
+      adults: adults,
+      kids: kids,
+      pets: pets,
     });
   };
 
@@ -47,7 +53,7 @@ const BookingConfirmationPage = ({navigation, route}) => {
         <View style={styles.priceDetailsContainer}>
           <Text style={styles.priceDetailsTitle}>Price details</Text>
           <Text style={styles.priceDetailsText}>
-            2 adults - 2 kids | 3 nights
+            {adults} adults - {kids} kids - {pets} - pets | 3 nights
           </Text>
           <View style={styles.priceItemRow}>
             <Text style={styles.priceItem}>

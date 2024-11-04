@@ -4,10 +4,16 @@ import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
 const SimulateStripe = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
   const calculateCost = route.params.calculateCost;
+  const adults = route.params.adults;
+  const kids = route.params.kids;
+  const pets = route.params.pets;
   const handlePaymentAccepted = () => {
     navigation.navigate('paymentAccepted', {
       parsedAccommodation: parsedAccommodation,
       calculateCost: calculateCost,
+      adults: adults,
+      kids: kids,
+      pets: pets,
     });
   };
 

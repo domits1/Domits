@@ -6,6 +6,7 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import personalDetailsForm from './personalDetailsForm';
@@ -20,11 +21,15 @@ const OnBoarding1 = ({navigation, route}) => {
   const images = route.params.images;
   const [showModal, setShowModal] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const [showGuestAmountPopUp, setShowGuestAmountPopUp] = useState(false);
 
   const handleBookButton = () => {
     navigation.navigate('simulateStripe', {
       parsedAccommodation: parsedAccommodation,
       calculateCost: calculateCost(),
+      adults: adults,
+      kids: kids,
+      pets: pets,
     });
   };
 
@@ -33,6 +38,103 @@ const OnBoarding1 = ({navigation, route}) => {
   };
 
   const handleChangeDates = () => {};
+
+  const handleGuestAmountPopUp = () => {
+    setShowGuestAmountPopUp(!showGuestAmountPopUp);
+  };
+
+  const [adults, setAdults] = useState(0);
+  const [kids, setKids] = useState(0);
+  const [pets, setPets] = useState(0);
+
+  const GuestAmountModal = ({onClose, maxGuests}) => {
+    const totalGuests = adults + kids + pets;
+
+    const incrementGuests = type => {
+      if (totalGuests < maxGuests) {
+        if (type === 'adults') {
+          setAdults(adults + 1);
+        }
+        if (type === 'kids') {
+          setKids(kids + 1);
+        }
+        if (type === 'pets') {
+          setPets(pets + 1);
+        }
+      }
+    };
+
+    const decrementGuests = type => {
+      if (type === 'adults' && adults > 1) {
+        setAdults(adults - 1);
+      } // Minimum of 1 adult
+      if (type === 'kids' && kids > 0) {
+        setKids(kids - 1);
+      }
+      if (type === 'pets' && pets > 0) {
+        setPets(pets - 1);
+      }
+    };
+    return (
+      <Modal
+        transparent={true}
+        visible={showGuestAmountPopUp}
+        animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.guestAmountModalContent}>
+            <Text style={styles.modalTitle}>Select Guests</Text>
+
+            {/* Adults */}
+            <View style={styles.guestRow}>
+              <Text style={styles.guestType}>Adults</Text>
+              <View style={styles.counterContainer}>
+                <TouchableOpacity onPress={() => decrementGuests('adults')}>
+                  <Text style={styles.counterButton}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.counterText}>{adults}</Text>
+                <TouchableOpacity onPress={() => incrementGuests('adults')}>
+                  <Text style={styles.counterButton}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Kids */}
+            <View style={styles.guestRow}>
+              <Text style={styles.guestType}>Kids</Text>
+              <View style={styles.counterContainer}>
+                <TouchableOpacity onPress={() => decrementGuests('kids')}>
+                  <Text style={styles.counterButton}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.counterText}>{kids}</Text>
+                <TouchableOpacity onPress={() => incrementGuests('kids')}>
+                  <Text style={styles.counterButton}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Pets */}
+            <View style={styles.guestRow}>
+              <Text style={styles.guestType}>Pets</Text>
+              <View style={styles.counterContainer}>
+                <TouchableOpacity onPress={() => decrementGuests('pets')}>
+                  <Text style={styles.counterButton}>-</Text>
+                </TouchableOpacity>
+                <Text style={styles.counterText}>{pets}</Text>
+                <TouchableOpacity onPress={() => incrementGuests('pets')}>
+                  <Text style={styles.counterButton}>+</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Close Button */}
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
   const calculateCost = () => {
     return (
@@ -71,16 +173,24 @@ const OnBoarding1 = ({navigation, route}) => {
           <View style={styles.separator} />
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Travellers</Text>
-            <Text style={styles.sectionContent}>2 adults - 2 kids</Text>
-            <TouchableOpacity onPress={handleWIPButton}>
+            <Text style={styles.sectionContent}>
+              {adults} adults - {kids} kids - {pets} pets
+            </Text>
+            <TouchableOpacity onPress={handleGuestAmountPopUp}>
               <Text style={styles.linkText}>Change</Text>
             </TouchableOpacity>
           </View>
+          {showGuestAmountPopUp && (
+            <GuestAmountModal
+              onClose={handleGuestAmountPopUp}
+              maxGuests={parsedAccommodation.GuestAmount}
+            />
+          )}
           <View style={styles.separator} />
           <View style={styles.priceDetails}>
             <Text style={styles.sectionTitle}>Price details</Text>
             <Text style={styles.sectionContent}>
-              2 adults - 2 kids | 3 nights
+              {adults} adults - {kids} kids - {pets} pets | 3 nights
             </Text>
 
             <Text style={styles.priceBreakdown}>
@@ -216,6 +326,57 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     padding: 10,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  guestAmountModalContent: {
+    width: '80%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  guestRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+  guestType: {
+    fontSize: 16,
+  },
+  counterContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  counterButton: {
+    fontSize: 20,
+    paddingHorizontal: 10,
+    color: '#4CAF50',
+  },
+  counterText: {
+    fontSize: 16,
+    marginHorizontal: 10,
+  },
+  closeButton: {
+    backgroundColor: 'red',
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 5,
+    marginTop: 10,
+  },
+  closeButtonText: {
+    color: 'white',
+    fontWeight: 'bold',
   },
 });
 
