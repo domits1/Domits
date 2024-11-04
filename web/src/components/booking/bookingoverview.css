@@ -1,6 +1,8 @@
 .Bookingcontainer {
-    padding: 5rem 2rem;
-    height: 100%;
+    display: flex;
+    gap: 20px;
+    width: 92%;
+    padding: 20px;
     margin: 20px auto;
     border-radius: 8px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -13,14 +15,6 @@
     flex-wrap: wrap;
 }
 
-
-.Bookingcontainer {
-    max-width: 1500px;
-    width: 100%;
-    display: flex;
-    gap: 20px;
-}
-
 .right-panel {
     flex: 0 0 75%;
     display: flex;
@@ -28,12 +22,16 @@
     gap: 20px;
 }
 
+.acco-title-span {
+    font-size: 20px;
+}
+
 .progress-bar-container {
     display: flex;
     align-items: center;
     justify-content: center;
     width: 80%;
-    margin: 20px 0;
+    margin: 20px auto;
 }
 
 .circle {
@@ -103,33 +101,35 @@
 
 .card {
     flex: 1;
-    max-width: 40%; /* Stelt de breedte van de kaart in op 40% */
-    padding: 8px; /* Iets minder padding voor een compactere layout */
+    max-width: 40%; 
+    padding: 8px; 
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
     text-align: center;
-    font-size: 0.9em; /* Verkleint de tekst in de kaart */
+    font-size: 0.9em;
 }
 
 .card h3 {
-    font-size: 1em; /* Maakt de koptekst wat kleiner */
+    font-size: 1em; 
     margin-bottom: 5px;
 }
 
 .card p, .card a {
-    font-size: 0.8em; /* Maakt de beschrijvende tekst en links kleiner */
+    font-size: 0.8em; 
 }
 
 
 .main-card {
     border: 1px solid #ddd;
-    padding: 20px;
+    padding: 20px 0 40px 20px;
     border-radius: 5px;
     background-color: #f9f9f9;
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 10px;
+    border-top: 1px solid #ddd;
+    margin-right: 15px;
 }
 
 .detail-row {
@@ -171,19 +171,6 @@
     border-radius: 4px;
 }
 
-
-
-.confirm-pay-button {
-    align-self: flex-end;
-    margin-top: 20px;
-    padding: 8px 16px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
 .booking-overview-container {
     display: flex;
     flex-direction: column;
@@ -191,7 +178,7 @@
 }
 
 .right-panel {
-    flex: 0 0 75%; /* Maakt de rechter panel 75% van de breedte van het scherm */
+    flex: 0 0 75%;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -252,17 +239,6 @@
     gap: 5px;
 }
 
-.confirm-pay-button {
-    padding: 12px 24px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 20px;
-}
-
 .right-panel {
     display: flex;
     flex-direction: column;
@@ -299,14 +275,6 @@
     align-items: center;
 }
 
-.main-card {
-    border-top: 1px solid #ddd;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    margin-top: 20px;
-}
-
 .form-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -319,20 +287,6 @@
     border: 1px solid #ccc;
     border-radius: 4px;
 }
-
-
-.confirm-pay-button {
-    padding: 12px 24px;
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-top: 20px;
-    align-self: flex-end;
-}
-
 
 .thumbnail-images img {
     width: 150px;
@@ -364,10 +318,12 @@
     background-color: #4caf50;
 }
 
-h1,
-h2,
-p {
+.right-panel h2, .card-container p  {
     margin: 10px 0;
+}
+
+.right-panel h1 {
+    margin: 0;
 }
 
 .booking-details,
@@ -412,19 +368,18 @@ p {
 }
 
 .confirm-pay-button {
-    padding: 8px 16px; /* Kleinere afmetingen voor de knop */
+    padding: 8px 16px;
     background-color: #4CAF50;
     color: white;
     border: none;
     border-radius: 8px;
     font-size: 14px;
     cursor: pointer;
-    align-self: flex-end; /* Positioneer de knop aan de rechterkant */
-    margin-top: 20px;
+    margin: 20px auto 0 auto;
 }
 
 .confirm-pay-button:hover {
-    background-color: #45a049;
+    opacity: 90%;
 }
 
 .accommodation-info form {

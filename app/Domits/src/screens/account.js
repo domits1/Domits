@@ -1,23 +1,26 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, Button, SafeAreaView} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import {useAuth} from '../context/AuthContext'; // Ensure the path is correct
+import {useAuth} from '../context/AuthContext';
 import {signOut} from '@aws-amplify/auth';
 
 const Account = () => {
   const navigation = useNavigation();
   const {isAuthenticated, user, userAttributes, checkAuth} = useAuth();
+  const [firstName, setFirstName] = useState(''); // Add firstName state
   const [customUsername, setCustomUsername] = useState('');
   const [email, setEmail] = useState('');
   const [hostGuest, setHostGuest] = useState('');
 
   useEffect(() => {
     if (user) {
+      setFirstName(userAttributes?.['given_name'] || 'N/A'); // Set firstName from given_name attribute
       setCustomUsername(userAttributes?.['custom:username'] || 'N/A');
       setEmail(userAttributes?.email || 'N/A');
       setHostGuest(userAttributes?.['custom:group'] || 'N/A');
     } else {
       // Reset the state when the user is logged out
+      setFirstName('');
       setCustomUsername('');
       setEmail('');
       setHostGuest('');
@@ -39,6 +42,7 @@ const Account = () => {
       style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
       <Text>Account</Text>
       <Text>Authenticated: {isAuthenticated ? 'Yes' : 'No'}</Text>
+      <Text>First Name: {firstName}</Text>
       <Text>Username: {customUsername}</Text>
       <Text>Email: {email}</Text>
       <Text>Type: {hostGuest}</Text>
