@@ -105,12 +105,15 @@ function Pages() {
           <div className="dropdown-section">
             <div>
               <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Management">
-                <option disabled>Management</option>
+                <option disabled>Host Options</option>
                 <option value="/hostdashboard">Dashboard</option>
                 <option value="/hostdashboard/calendar">Calendar</option>
+                <option value="/hostdashboard/calendar">Reservations</option>
                 <option value="/hostdashboard/chat">Messages</option>
-                <option value="/hostdashboard/reporting">Reporting</option>
+                <option value="/hostdashboard/reporting">Revenues</option>
                 <option value="/hostdashboard/reviews">Reviews</option>
+                <option value="/hostdashboard/calendar">Property care</option>
+                <option value="/hostdashboard/calendar">Finance</option>
                 <option value="/hostdashboard/listings">Listing</option>
                 <option value="/hostdashboard/settings">Settings</option>
               </select>
