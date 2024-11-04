@@ -41,8 +41,14 @@ const ChatWidget = () => {
 
   const loadChatHistory = async () => {
     try {
-      const params = user ? { userID: user.id } : { chatID };
+      // Remove "CHAT#" prefix if it exists in chatID
+      const sanitizedChatID = chatID?.replace(/^CHAT#/, '');
+      
+      // Use sanitized chatID without "CHAT#" prefix
+      const params = user ? { userID: user.id } : { chatID: sanitizedChatID };
+      
       const response = await axios.get('https://pfjspybvsi.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
+      
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
           text: msg.content,
@@ -53,7 +59,8 @@ const ChatWidget = () => {
     } catch (error) {
       console.error('Error loading chat history:', error);
     }
-  };
+};
+
 
   const handleTileClick = (id) => {
     const url = `${window.location.origin}/listingdetails?ID=${id}`;
@@ -93,7 +100,7 @@ const ChatWidget = () => {
       if (chatID) payload.chatID = chatID;
       if (user) payload.userID = user.id;
 
-      const response = await axios.post('https://eja46okj64.execute-api.eu-north-1.amazonaws.com/default/chatWidgetQuery', payload);
+      const response = await axios.post('https://j0ci7xg9di.execute-api.eu-north-1.amazonaws.com/default/uChatbotQueryChatGPT', payload);
 
       if (response.data.chatID && !chatID) {
         setChatID(response.data.chatID);
