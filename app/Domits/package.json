@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@aws-amplify/api": "^6.0.33",
+    "@aws-amplify/api-graphql": "^4.5.1",
     "@aws-amplify/auth": "^6.5.5",
     "@aws-amplify/core": "^6.5.0",
     "@aws-amplify/react-native": "^1.0.28",
@@ -30,7 +31,7 @@
     "openai": "^4.32.0",
     "react": "18.2.0",
     "react-native": "^0.73.4",
-    "react-native-calendars": "^1.1304.1",
+    "react-native-calendars": "^1.1307.0",
     "react-native-camera": "^4.2.1",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-gesture-handler": "^2.15.0",

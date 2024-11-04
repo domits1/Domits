@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, memo} from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 import Icon from 'react-native-vector-icons/Ionicons';
 import personalDetailsForm from './personalDetailsForm';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {Calendar} from 'react-native-calendars';
 
 const OnBoarding1 = ({navigation, route}) => {
   const accommodation = route.params.accommodation;
@@ -19,7 +20,7 @@ const OnBoarding1 = ({navigation, route}) => {
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const images = route.params.images;
-  const [showModal, setShowModal] = useState(false);
+  const [showDatePopUp, setShowDatePopUp] = useState(false);
   const [showAllAmenities, setShowAllAmenities] = useState(false);
   const [showGuestAmountPopUp, setShowGuestAmountPopUp] = useState(false);
 
@@ -33,17 +34,99 @@ const OnBoarding1 = ({navigation, route}) => {
     });
   };
 
-  const handleWIPButton = () => {
-    alert('This feature is a work in progress');
+  const handleChangeDatesPopUp = () => {
+    setShowDatePopUp(!showDatePopUp);
   };
 
-  const handleChangeDates = () => {};
+  const [selectedDates, setSelectedDates] = useState({});
+  const [selectedRange, setSelectedRange] = useState({});
+
+  const CalendarModal = ({onClose, onConfirm, maxDate, dateRanges}) => {
+    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+
+    const onDayPress = day => {
+      if (!selectedRange.startDate) {
+        setSelectedRange({startDate: day.dateString});
+      } else if (!selectedRange.endDate) {
+        setSelectedRange({...selectedRange, endDate: day.dateString});
+      } else {
+        setSelectedRange({startDate: day.dateString});
+      }
+    };
+
+    const getDatesInRange = (start, end) => {
+      const dates = {};
+      let currentDate = new Date(start);
+      const endDate = new Date(end);
+
+      while (currentDate <= endDate) {
+        const dateString = currentDate.toISOString().split('T')[0];
+        dates[dateString] = {
+          color: '#4CAF50',
+          textColor: 'white',
+        };
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      return dates;
+    };
+
+    const markedDates = {
+      ...(selectedRange.startDate && selectedRange.endDate
+        ? getDatesInRange(selectedRange.startDate, selectedRange.endDate)
+        : {}),
+      [selectedRange.startDate]: {
+        startingDay: true,
+        color: '#4CAF50',
+        textColor: 'white',
+      },
+      [selectedRange.endDate]: {
+        endingDay: true,
+        color: '#4CAF50',
+        textColor: 'white',
+      },
+    };
+
+    const confirmSelection = () => {
+      if (selectedRange.startDate && selectedRange.endDate) {
+        onConfirm(selectedRange);
+        onClose();
+      } else {
+        alert('Please select both start and end dates.');
+      }
+    };
+
+    return (
+      <Modal transparent={true} visible={true} animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.calendarModalContent}>
+            <Text style={styles.modalTitle}>Select Dates</Text>
+            <Calendar
+              markingType="period"
+              minDate={today} // Set minDate to today
+              maxDate={maxDate}
+              onDayPress={onDayPress}
+              markedDates={markedDates}
+            />
+            <TouchableOpacity
+              onPress={confirmSelection}
+              style={styles.confirmButton}>
+              <Text style={styles.confirmButtonText}>Confirm Dates</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    );
+  };
 
   const handleGuestAmountPopUp = () => {
     setShowGuestAmountPopUp(!showGuestAmountPopUp);
   };
 
-  const [adults, setAdults] = useState(0);
+  const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
   const [pets, setPets] = useState(0);
 
@@ -67,7 +150,7 @@ const OnBoarding1 = ({navigation, route}) => {
     const decrementGuests = type => {
       if (type === 'adults' && adults > 1) {
         setAdults(adults - 1);
-      } // Minimum of 1 adult
+      }
       if (type === 'kids' && kids > 0) {
         setKids(kids - 1);
       }
@@ -75,11 +158,9 @@ const OnBoarding1 = ({navigation, route}) => {
         setPets(pets - 1);
       }
     };
+
     return (
-      <Modal
-        transparent={true}
-        visible={showGuestAmountPopUp}
-        animationType="slide">
+      <Modal transparent={true} visible={true} animationType="slide">
         <View style={styles.modalOverlay}>
           <View style={styles.guestAmountModalContent}>
             <Text style={styles.modalTitle}>Select Guests</Text>
@@ -165,11 +246,24 @@ const OnBoarding1 = ({navigation, route}) => {
           <View style={styles.separator} />
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Dates</Text>
-            <Text style={styles.sectionContent}>05/12/2023 - 08/12/2023</Text>
-            <TouchableOpacity onPress={handleWIPButton}>
+            <Text style={styles.sectionContent}>
+              {selectedDates && selectedDates.startDate && selectedDates.endDate
+                ? `${selectedDates.startDate} - ${selectedDates.endDate}`
+                : 'Choose dates'}
+            </Text>
+            <TouchableOpacity onPress={handleChangeDatesPopUp}>
               <Text style={styles.linkText}>Change</Text>
             </TouchableOpacity>
           </View>
+          {showDatePopUp && (
+            <CalendarModal
+              onClose={handleChangeDatesPopUp}
+              onConfirm={setSelectedDates}
+              minDate={parsedAccommodation.DateRanges[0].startDate}
+              maxDate={parsedAccommodation.DateRanges[2].endDate}
+              dateRanges={parsedAccommodation.DateRanges}
+            />
+          )}
           <View style={styles.separator} />
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Travellers</Text>
@@ -376,6 +470,27 @@ const styles = StyleSheet.create({
   },
   closeButtonText: {
     color: 'white',
+    fontWeight: 'bold',
+  },
+  calendarModalContent: {
+    width: '90%',
+    backgroundColor: 'white',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  confirmButton: {
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 25,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 15,
+    width: '100%',
+  },
+  confirmButtonText: {
+    color: 'white',
+    fontSize: 16,
     fontWeight: 'bold',
   },
 });
