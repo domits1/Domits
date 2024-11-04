@@ -3,8 +3,6 @@
     flex-direction: row;
 }
 
-
-
 .reservationContent {
     display: flex;
     flex-direction: column;
@@ -43,7 +41,6 @@
 .reservationContent .option {
     border-radius: 5%;
     padding: 0.25em;
-    box-shadow: inset 0 0 20px 10px #dedede;
     font-size: 1em;
     min-width: 6vw;
     text-align: center;
@@ -52,7 +49,7 @@
 .reservationContent .selected, .reservationContent .option:hover {
     cursor: pointer;
     color: white;
-    background-color: #0D9813;
+    background-color: var(--secondary-color);
     box-shadow: none;
 }
 
@@ -63,7 +60,8 @@
 .reservationContent .reservationDisplay {
     display: flex;
     flex-direction: column;
-    box-shadow: 0 0 20px 10px #dedede;
+    border: 0.1px solid black;
+    border-radius: 5px;
     padding: 5%;
     width: 100%;
     gap: 1.5em;
@@ -90,14 +88,14 @@
 
 .reservationContent .refreshBtn {
     color: white;
-    background-color: var(--primary-color);
+    background-color: var(--secondary-color);
     border: none;
 }
 
 .reservationContent .refreshBtn:hover {
-    color: var(--primary-color);
+    color: var(--secondary-color);
     background-color: white;
-    border: 1px solid var(--primary-color);
+    border: 1px solid var(--secondary-color);
 }
 
 .reservationContent .btnBox {
@@ -106,7 +104,7 @@
     gap: 1em;
     padding: 0.75em;
     border-radius: 2em;
-    background-color: #0D9813;
+    background-color: var(--secondary-color);
     color: white;
     align-items: center;
 }
@@ -137,7 +135,7 @@
 }
 
 .reservationContent .btnApprove:hover {
-    background-color: #0A760F;
+    background-color: var(--secondary-color);
 }
 
 .reservationContent .btnGroup {

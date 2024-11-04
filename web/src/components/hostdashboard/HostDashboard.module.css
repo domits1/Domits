@@ -52,7 +52,6 @@
     flex-direction: row;
     justify-content: start;
     gap: 5%;
-    box-shadow: 0 2px 8px 0 #63636333;
     border-radius: 1rem;
 }
 .dashboardCard {
@@ -104,22 +103,21 @@
     font-size: 0.75rem;
 }
 .isDrafted {
-    color: #003366;
+    color: var(--secondary-color);
 }
 .isLive {
-    color: #0fa616;
+    color: var(--secondary-color);
 }
 .greenBtn {
     color: white;
-    background-color: var(--primary-color);
+    background-color: var(--secondary-color);
     border: none;
-    border-radius: 1rem;
+    padding: 10px 25px;
+    border-radius: 10px;
+    cursor: pointer;
 }
 .greenBtn:hover {
-    color: var(--primary-color);
-    background-color: white;
-    border: 1px solid var(--primary-color);
-    cursor: pointer;
+    opacity: 90%;
 }
 .infoBox {
     display: flex;

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, {useCallback, useEffect, useState} from "react";
 import styles from './Calendar.module.css';
 import { isSameDay } from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
@@ -30,6 +30,10 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
         'September', 'October', 'November', 'December'
     ];
 
+    const [minimumStay, setMinimumStay] = useState();
+    const [minimumBookingPeriod, setMinimumBookingPeriod] = useState();
+    const [maximumStay, setMaximumStay] = useState();
+
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setSelectedRanges(passedProp.DateRanges);
@@ -41,6 +45,16 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
             setOriginalRanges(passedProp.DateRanges);
         }
     }, [passedProp.ID]);
+    useEffect(() => {
+        if (passedProp &&
+            passedProp.MinimumStay !== undefined &&
+            passedProp.MinimumBookingPeriod !== undefined &&
+            passedProp.MaximumStay !== undefined){
+            setMinimumStay(passedProp.MinimumStay);
+            setMinimumBookingPeriod(passedProp.MinimumBookingPeriod);
+            setMaximumStay(passedProp.MaximumStay);
+        }
+    }, [passedProp.ID, passedProp.MinimumStay, passedProp.MinimumBookingPeriod, passedProp.MaximumStay]);
 
     const renderDates = () => {
         const today = new Date();
@@ -110,7 +124,7 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
 
     useEffect(() => {
         renderDates();
-    }, [month, year, selectedRanges]);
+    }, [month, year, selectedRanges, minimumStay]);
 
     const handleDateClick = (dateClicked) => {
         const clickedDate = new Date(dateClicked);
@@ -134,6 +148,24 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                         newDateRange = {
                             startDate: clickedDate,
                             endDate: newDateRange.startDate
+                        };
+                    }
+
+                    const normalizedStartDate = new Date(newDateRange.startDate);
+                    normalizedStartDate.setHours(0, 0, 0, 0);
+
+                    const normalizedEndDate = new Date(newDateRange.endDate);
+                    normalizedEndDate.setHours(0, 0, 0, 0);
+
+                    const daysSelected = Math.floor(
+                        (normalizedEndDate - normalizedStartDate) / (1000 * 60 * 60 * 24) + 1
+                    );
+
+                    if (daysSelected < minimumStay) {
+                        alert(`The selected range is too short. Minimum stay is ${minimumStay} days.`);
+                        return {
+                            startDate: null,
+                            endDate: null
                         };
                     }
 
