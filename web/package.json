@@ -116,7 +116,8 @@
     "react-slick": "^0.30.2",
     "recharts": "^2.12.7",
     "slick-carousel": "^1.8.1",
-    "string-similarity": "^4.0.4"
+    "string-similarity": "^4.0.4",
+    "swiper": "^11.1.14"
   },
   "jest": {
     "moduleNameMapper": {
