@@ -5,6 +5,23 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="8a792168-a166-4f7b-a951-43743e50630d" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/OnboardingHost.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/pictures/Onboarding-icons/camper-van.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/pictures/Onboarding-icons/cottage.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/pictures/Onboarding-icons/flat.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/pictures/Onboarding-icons/house-boat.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/pictures/Onboarding-icons/house.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/app/Domits/src/screens/pictures/Onboarding-icons/mansion.png" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/ios/Podfile.lock" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/ios/Podfile.lock" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/navigation/appNavigation.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/account.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/account.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/hostdashboard/hostDashboard.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/login/loginScreen.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/login/loginScreen.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/Domits/src/screens/login/register.js" beforeDir="false" afterPath="$PROJECT_DIR$/app/Domits/src/screens/login/register.js" afterDir="false" />
+
       <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/web/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/web/.gitignore" afterDir="false" />
@@ -14,6 +31,7 @@
       <change beforePath="$PROJECT_DIR$/web/src/components/booking/imagegallery.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/imagegallery.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/web/src/components/home/Accommodations.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/home/Accommodations.css" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/web/src/components/home/Accommodations.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/home/Accommodations.js" afterDir="false" />
+
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -28,6 +46,54 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;chantbalci&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:domits1/Domits.git&quot;,
+    &quot;accountId&quot;: &quot;ce310fda-2949-485e-a03e-d52b73a7caea&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="2oF2cplK3ilpAGn3rMAA9Ijxwd4" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;App-login&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/chantbalci/Documents/GitHub/Domits/app/Domits/src/screens/pictures/Onboarding-icons&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/Users/chantbalci/Documents/GitHub/Domits/web/node_modules/typescript/lib&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/app/Domits/src/screens/pictures/Onboarding-icons" />
+    </key>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-28b599e66164-intellij.indexing.shared.core-IU-242.23339.11" />
+        <option value="bundled-js-predefined-d6986cc7102b-5c90d61e3bab-JavaScript-IU-242.23339.11" />
+      </set>
+    </attachedChunks>
+  </component>
+
   <component name="MarkdownSettingsMigration">
     <option name="stateVersion" value="1" />
   </component>
@@ -49,15 +115,18 @@
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
+
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
       <changelist id="8a792168-a166-4f7b-a951-43743e50630d" name="Changes" comment="" />
-      <created>1730467893533</created>
+
+      <created>1730451084430</created>
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
-      <updated>1730467893533</updated>
-      <workItem from="1730467894738" duration="7394000" />
+      <updated>1730451084430</updated>
+      <workItem from="1730451085657" duration="9923000" />
+      <workItem from="1730705788352" duration="831000" />
     </task>
     <servers />
   </component>
