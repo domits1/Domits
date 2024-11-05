@@ -42,6 +42,10 @@ const OnBoarding1 = ({navigation, route}) => {
   const [selectedDates, setSelectedDates] = useState({});
   const [selectedRange, setSelectedRange] = useState({});
 
+  useEffect(() => {
+    calculateNights();
+  }, [selectedDates]);
+
   const CalendarModal = ({onClose, onConfirm, maxDate, dateRanges}) => {
     const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
 
@@ -132,33 +136,50 @@ const OnBoarding1 = ({navigation, route}) => {
   const [kids, setKids] = useState(0);
   const [pets, setPets] = useState(0);
 
-  const GuestAmountModal = ({onClose, maxGuests}) => {
-    const totalGuests = adults + kids + pets;
+  const GuestAmountModal = ({
+    onClose,
+    maxGuests,
+    currentAdults,
+    currentKids,
+    currentPets,
+  }) => {
+    const [tempAdults, setTempAdults] = useState(currentAdults || 1);
+    const [tempKids, setTempKids] = useState(currentKids || 0);
+    const [tempPets, setTempPets] = useState(currentPets || 0);
+
+    const totalGuests = tempAdults + tempKids + tempPets;
 
     const incrementGuests = type => {
       if (totalGuests < maxGuests) {
         if (type === 'adults') {
-          setAdults(adults + 1);
+          setTempAdults(tempAdults + 1);
         }
         if (type === 'kids') {
-          setKids(kids + 1);
+          setTempKids(tempKids + 1);
         }
         if (type === 'pets') {
-          setPets(pets + 1);
+          setTempPets(tempPets + 1);
         }
       }
     };
 
     const decrementGuests = type => {
-      if (type === 'adults' && adults > 1) {
-        setAdults(adults - 1);
+      if (type === 'adults' && tempAdults > 0) {
+        setTempAdults(tempAdults - 1);
       }
-      if (type === 'kids' && kids > 0) {
-        setKids(kids - 1);
+      if (type === 'kids' && tempKids > 0) {
+        setTempKids(tempKids - 1);
       }
-      if (type === 'pets' && pets > 0) {
-        setPets(pets - 1);
+      if (type === 'pets' && tempPets > 0) {
+        setTempPets(tempPets - 1);
       }
+    };
+
+    const confirmGuestSelection = () => {
+      setAdults(tempAdults);
+      setKids(tempKids);
+      setPets(tempPets);
+      onClose();
     };
 
     return (
@@ -174,7 +195,7 @@ const OnBoarding1 = ({navigation, route}) => {
                 <TouchableOpacity onPress={() => decrementGuests('adults')}>
                   <Text style={styles.counterButton}>-</Text>
                 </TouchableOpacity>
-                <Text style={styles.counterText}>{adults}</Text>
+                <Text style={styles.counterText}>{tempAdults}</Text>
                 <TouchableOpacity onPress={() => incrementGuests('adults')}>
                   <Text style={styles.counterButton}>+</Text>
                 </TouchableOpacity>
@@ -188,7 +209,7 @@ const OnBoarding1 = ({navigation, route}) => {
                 <TouchableOpacity onPress={() => decrementGuests('kids')}>
                   <Text style={styles.counterButton}>-</Text>
                 </TouchableOpacity>
-                <Text style={styles.counterText}>{kids}</Text>
+                <Text style={styles.counterText}>{tempKids}</Text>
                 <TouchableOpacity onPress={() => incrementGuests('kids')}>
                   <Text style={styles.counterButton}>+</Text>
                 </TouchableOpacity>
@@ -202,14 +223,19 @@ const OnBoarding1 = ({navigation, route}) => {
                 <TouchableOpacity onPress={() => decrementGuests('pets')}>
                   <Text style={styles.counterButton}>-</Text>
                 </TouchableOpacity>
-                <Text style={styles.counterText}>{pets}</Text>
+                <Text style={styles.counterText}>{tempPets}</Text>
                 <TouchableOpacity onPress={() => incrementGuests('pets')}>
                   <Text style={styles.counterButton}>+</Text>
                 </TouchableOpacity>
               </View>
             </View>
 
-            {/* Close Button */}
+            {/* Confirm and Close Buttons */}
+            <TouchableOpacity
+              onPress={confirmGuestSelection}
+              style={styles.confirmButton}>
+              <Text style={styles.confirmButtonText}>Confirm</Text>
+            </TouchableOpacity>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Text style={styles.closeButtonText}>Close</Text>
             </TouchableOpacity>
@@ -279,7 +305,7 @@ const OnBoarding1 = ({navigation, route}) => {
           )}
           <View style={styles.separator} />
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Travellers</Text>
+            <Text style={styles.sectionTitle}>Guests</Text>
             <Text style={styles.sectionContent}>
               {adults} adults - {kids} kids - {pets} pets
             </Text>
@@ -291,6 +317,9 @@ const OnBoarding1 = ({navigation, route}) => {
             <GuestAmountModal
               onClose={handleGuestAmountPopUp}
               maxGuests={parsedAccommodation.GuestAmount}
+              currentAdults={adults}
+              currentKids={kids}
+              currentPets={pets}
             />
           )}
           <View style={styles.separator} />
