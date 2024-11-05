@@ -10,7 +10,7 @@ const EmployeeChat = () => {
   const [isConnected, setIsConnected] = useState(false); // WebSocket connection status
   const [socket, setSocket] = useState(null); // WebSocket instance
   const [chatIds, setChatIds] = useState({}); // Stores chat IDs per connection ID
-  const { role, isLoading } = useUser();
+  const { user, role, isLoading } = useUser();
   const [connectionId, setConnectionId] = useState(''); // Store connectionId
   const [wantsToConnect, setWantsToConnect] = useState(false); // Prompt employee to go online
   const [chatMessages, setChatMessages] = useState({}); // Store chat messages by chat ID { chatID: [messages] }
@@ -62,7 +62,7 @@ const EmployeeChat = () => {
 
     ws.onmessage = (event) => {
       const incomingMessage = JSON.parse(event.data);
-      console.log(incomingMessage);
+      //console.log(incomingMessage);
 
       if (incomingMessage.senderId && incomingMessage.message) {
         const senderId = incomingMessage.senderId;
@@ -160,12 +160,12 @@ const EmployeeChat = () => {
 
   const sendMessage = () => {
     if (employeeMessage.trim() === '' || !activeChat || !socket) return;
-
     const payload = {
       action: 'sendMessage',
       recipientConnectionId: activeChat,
       message: employeeMessage,
-      chatId: chatIds[activeChat] // Attach the chat ID with each message
+      userName: user.attributes.given_name,
+      liveChatId: "61d30741-0bda-4d0d-89ce-d6c5f64b6267" // NOG FIXEN
     };
 
     socket.send(JSON.stringify(payload));

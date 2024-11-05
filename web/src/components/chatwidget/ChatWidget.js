@@ -204,7 +204,11 @@ const ChatWidget = () => {
 
         ws.onmessage = (event) => {
           const incomingMessage = JSON.parse(event.data);
-          if (!employeeName && incomingMessage.employeeName) setEmployeeName(incomingMessage.employeeName);
+          console.log(incomingMessage)
+          if (!employeeName && incomingMessage.userName){
+            console.log(incomingMessage.userName)
+            setEmployeeName(incomingMessage.userName);
+          } 
 
           setMessages(prevMessages => [
             ...prevMessages,
@@ -307,7 +311,7 @@ const ChatWidget = () => {
               <span>Chatting with: <strong>Sophia (AI)</strong></span>
             ) : (
               <div>
-                <span>Chatting with: <strong>{employeeName || 'Employee'}</strong></span>
+                <span>Chatting with: <strong>{employeeName + " (Employee) " || 'Employee'}</strong></span>
                 <button className="chatwidget-switch-to-ai" onClick={switchBackToAI}>
                   Switch to AI
                 </button>
@@ -339,7 +343,7 @@ const ChatWidget = () => {
                         : message.sender === 'ai'
                         ? 'Sophia (AI)'
                         : message.sender === 'employee'
-                        ? employeeName || 'Employee'
+                        ? employeeName + " (Employee)"|| 'Employee'
                         : 'System'}
                     </div>
                     <div className={`chatwidget-message-content ${message.sender}`}>
