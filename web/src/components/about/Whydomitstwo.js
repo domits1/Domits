@@ -26,15 +26,6 @@ function Whydomits() {
         One of the fastest improving all-in-1 travel platforms.
         </h4>
         <p className="why-domits__p">
-        Start your journey as a guest or host within minutes. List, search and book holiday accommodations, 
-        campers and boats. Save costs with our <span className="highlightText">0% </span> system charges for hosts. 
-        To run the platform <span className="highlightText">24/7 </span> 
-        we ask guests to pay a 15% service fee per booking. 
-        There are no hidden costs or percentage cuts. Save administrative time and headaches with AI assistants. 
-        Make use of our global secure payment methods. Enjoy our warmhearted customer centric approach. 
-        Try it out for free!
-        </p>
-        <p className="why-domits__p">
           Start your journey as a Guest or <span className="highlightText">Host</span> within minutes. List, search and
           book holiday accommodations, campers and boats. Save cost with our
           small system charges. There are no hidden costs or percentage cuts.
@@ -60,7 +51,7 @@ function Whydomits() {
       <div className="why-domits-bar" id="TopBar">
         <p><a href="#Guest" onClick={(e) => handleSmoothScroll(e, 'Guest')}>Guest</a></p>
         <p><a href="#Host" onClick={(e) => handleSmoothScroll(e, 'Host')}>Host</a></p>
-        <p><a href="#Devs" onClick={(e) => handleSmoothScroll(e, 'Devs')}>Devs, data and experts</a></p>
+        <p><a href="#Devs" onClick={(e) => handleSmoothScroll(e, 'Devs')}>Dev, data and experts</a></p>
         <p><a href="#Growth" onClick={(e) => handleSmoothScroll(e, 'Growth')}>Growth, rev and ops experts</a></p>
       </div>
 
