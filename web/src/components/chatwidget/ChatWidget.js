@@ -47,7 +47,7 @@ const ChatWidget = () => {
       // Use sanitized chatID without "CHAT#" prefix
       const params = user ? { userID: user.id } : { chatID: sanitizedChatID };
       
-      const response = await axios.get('https://pfjspybvsi.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
+      const response = await axios.get('https://clmba23cj1.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
       
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
