@@ -27,6 +27,14 @@ const ChatWidget = () => {
 
   useEffect(() => {
     if (!isLoading && (chatID || user)) {
+      if(user){
+        setUserName(user.given_name);
+        setNameEntered(true);
+      }
+      else if(localStorage.getItem('userName')){
+        setNameEntered(true);
+        setUserName(localStorage.getItem('userName'))
+      }
       loadChatHistory();
     } else if (!isLoading && nameEntered) {
       sendWelcomeMessage();
@@ -42,7 +50,7 @@ const ChatWidget = () => {
   const loadChatHistory = async () => {
     try {
       const sanitizedChatID = chatID?.replace(/^CHAT#/, '');
-      const params = user ? { userID: user.id } : { chatID: sanitizedChatID };
+      const params = user ? { chatID: user.username } : { chatID: sanitizedChatID };
       
       const response = await axios.get('https://clmba23cj1.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
       
@@ -104,9 +112,10 @@ const ChatWidget = () => {
 
     setUserInput('');
     setMessageCount(prevCount => prevCount + 1);
-    setLoading(true);
+    //setLoading(true);
 
     if (isAIChat) {
+      setLoading(true);
       handleAIResponse(message);
     } else if (employeeConnectionId) {
       sendMessageToEmployee(message);
@@ -119,8 +128,13 @@ const ChatWidget = () => {
 
     try {
       const payload = { query: message };
-      if (chatID) payload.chatID = chatID;
-      if (user) payload.userID = user.id;
+      if (user) {
+        const userChatID = "CHAT#" + user.username;
+        payload.chatID = userChatID;
+      }
+      else if(chatID){
+        payload.chatID = chatID;
+      }
 
       const response = await axios.post('https://j0ci7xg9di.execute-api.eu-north-1.amazonaws.com/default/uChatbotQueryChatGPT', payload);
 
@@ -248,7 +262,10 @@ const ChatWidget = () => {
   };
 
   const handleNameSubmit = () => {
-    if (userName.trim() !== '') setNameEntered(true);
+    if (userName.trim() !== '') {
+      setNameEntered(true);
+      localStorage.setItem('userName', userName);
+    }
   };
 
   const generateLiveChatId = async () => {
