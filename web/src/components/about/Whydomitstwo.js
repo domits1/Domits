@@ -51,7 +51,7 @@ function Whydomits() {
       <div className="why-domits-bar" id="TopBar">
         <p><a href="#Guest" onClick={(e) => handleSmoothScroll(e, 'Guest')}>Guest</a></p>
         <p><a href="#Host" onClick={(e) => handleSmoothScroll(e, 'Host')}>Host</a></p>
-        <p><a href="#Devs" onClick={(e) => handleSmoothScroll(e, 'Devs')}>Dev, data and experts</a></p>
+        <p><a href="#Devs" onClick={(e) => handleSmoothScroll(e, 'Devs')}>Dev, data, sec experts</a></p>
         <p><a href="#Growth" onClick={(e) => handleSmoothScroll(e, 'Growth')}>Growth, rev and ops experts</a></p>
       </div>
 
