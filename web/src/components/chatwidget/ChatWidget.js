@@ -41,25 +41,47 @@ const ChatWidget = () => {
 
   const loadChatHistory = async () => {
     try {
-      // Remove "CHAT#" prefix if it exists in chatID
       const sanitizedChatID = chatID?.replace(/^CHAT#/, '');
-      
-      // Use sanitized chatID without "CHAT#" prefix
       const params = user ? { userID: user.id } : { chatID: sanitizedChatID };
       
       const response = await axios.get('https://clmba23cj1.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
       
       if (response.data.messages) {
-        setMessages(response.data.messages.map(msg => ({
-          text: msg.content,
-          sender: msg.role === 'user' ? 'user' : 'ai',
-          accommodations: msg.accommodations || null
-        })));
+        const updatedMessages = await Promise.all(response.data.messages.map(async (msg) => {
+          if (msg.role === "function" && Array.isArray(JSON.parse(msg.content))) {
+            const accommodationIds = JSON.parse(msg.content);
+            
+            const accommodations = await Promise.all(
+              accommodationIds.map(async (id) => {
+                const { data } = await axios.post(
+                  'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation',
+                  { ID: id }
+                );
+                return JSON.parse(data.body); // Parse the body to get the accommodation object
+              })
+            );
+  
+            return {
+              text: "Here are your accommodations:",
+              sender: "ai",
+              accommodations
+            };
+          } else {
+            return {
+              text: msg.content,
+              sender: msg.role === 'user' ? 'user' : 'ai',
+              accommodations: null
+            };
+          }
+        }));
+  
+        setMessages(updatedMessages);
       }
     } catch (error) {
       console.error('Error loading chat history:', error);
     }
-};
+  };
+  
 
 
   const handleTileClick = (id) => {
