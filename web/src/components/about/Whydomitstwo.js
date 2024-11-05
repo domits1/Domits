@@ -27,12 +27,12 @@ function Whydomits() {
         </h4>
         <p className="why-domits__p">
         Start your journey as a guest or host within minutes. List, search and book holiday accommodations, 
-        campers and boats. Save cost with our <span className="highlightText">0% </span> system charges for hosts. 
+        campers and boats. Save costs with our <span className="highlightText">0% </span> system charges for hosts. 
         To run the platform <span className="highlightText">24/7 </span> 
-        we ask guests to pay <span className="highlightText">15%</span> service fees per booking. 
+        we ask guests to pay a 15% service fee per booking. 
         There are no hidden costs or percentage cuts. Save administrative time and headaches with AI assistants. 
         Make use of our global secure payment methods. Enjoy our warmhearted customer centric approach. 
-        Try it out for free.
+        Try it out for free!
         </p>
         <p className="why-domits__p">
           Start your journey as a Guest or <span className="highlightText">Host</span> within minutes. List, search and
@@ -51,7 +51,7 @@ function Whydomits() {
         </article>
         <article className="why-domits__card">
           <p className="why-domits__card-p">
-        Travel Innovation Labs to create sustainable value. For hosts an AI-powered property management system to increase revenue, occupancy and rates. For guests an AI travel assistant with recommendations.
+        Travel Innovation Labs to create sustainable value. For hosts an AI-powered recommendations for growth, revenue, operations, and the guest experience to increase revenue, occupancy and rates. For guests an AI travel assistant with recommendations.
           </p>
           <img className="why-domits__image" src={chartbreakout} alt="Bar Chart" />
         </article>
@@ -106,8 +106,13 @@ function Whydomits() {
 <article id="Host" className="why-domits__title-text-container-host">
   <div className="why-domits__flex-container host">
     <div className="why-domits__section host">
-      <h4 className="why-domits__h3">Why Domits for host</h4>
-      <h4 className="why-domits__h3">“0% host fee: Avoid paying platform fees and increase your revenue with our 0% host fee.”</h4>
+      <h3 className="why-domits__h3">Why Domits for host</h3>
+    </div>
+    <div className="why-domits__section host">
+      <h3>0% host fee:</h3>
+      <p className="why-domits__p_host">
+      “0% host fee: Avoid paying platform fees and increase your revenue with our 0% host fee.”
+      </p>
     </div>
     <div className="why-domits__section host">
       <h3>Extra Income</h3>
