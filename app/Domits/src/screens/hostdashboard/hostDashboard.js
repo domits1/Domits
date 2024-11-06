@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from "react-native-safe-area-context";
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const HostDashboard = () => {
   const navigation = useNavigation();
@@ -23,6 +23,12 @@ const HostDashboard = () => {
             change app settings.
           </Text>
         </View>
+        <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => navigation.navigate('OnboardingHost')}>
+            <Text style={styles.listItemText}>Onboarding</Text>
+            <MaterialIcons name="chevron-right" size={22} color="#000" />
+            </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigation.navigate('HostDashboard')}>

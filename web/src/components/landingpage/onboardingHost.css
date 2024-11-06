@@ -87,6 +87,10 @@ h2{
   flex-wrap: wrap;
 }
 
+.Check-checkbox{
+  width: 10rem;
+}
+
 @media (max-width: 400px) {
   .check-box {
     grid-template-columns: 1fr; 
