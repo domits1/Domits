@@ -43,6 +43,36 @@ h2{
   grid-gap: 2rem;
 }
 
+.listing-calendar {
+  margin-left: 10%;
+}
+
+.staying_nights {
+  margin-left: 2%;
+  margin-top: 1%;
+}
+
+.stayMinMaxBox {
+    display: flex;
+    flex-direction: column;
+}
+
+.stayMinMaxField {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1vw;
+}
+
+.minMaxButtons {
+  align-self: center;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 1.5vw;
+}
+
 @media (max-width: 768px) {
   .amenity-groups {
     grid-template-columns: 1fr;
@@ -55,6 +85,10 @@ h2{
   grid-gap: 1rem;
   justify-content: start;
   flex-wrap: wrap;
+}
+
+.Check-checkbox{
+  width: 10rem;
 }
 
 @media (max-width: 400px) {

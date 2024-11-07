@@ -18,6 +18,7 @@
 .hr-pages {
     width: 20%;
     margin-right: 20px;
+
 }
 
 .hr-content {
@@ -32,8 +33,9 @@
 }
 
 .hr-revenue-header h2 {
-    font-size: 1.5em;
-    margin: 0;
+    font-size: 1.5em; /* Consistent size */
+    font-weight: bold; /* Emphasize the header */
+    color: #333; /* Dark text for readability */
 }
 
 .hr-revenue-header .hr-filters {
@@ -156,4 +158,10 @@
     border-radius: 10px;
     background-color: #ffffff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.ro-revenue-card, .hr-occupancy-rate-card, .hr-revpar-card {
+    flex: 1; /* Use flex to make them evenly spaced */
+    margin: 10px; /* Add some margin */
+    min-width: 250px; /* Ensure a minimum width for small screens */
 }

@@ -181,7 +181,7 @@ const HostSettings = () => {
                                                 className="guest-edit-input"
                                                 onKeyPress={handleKeyPressEmail}
                                             />
-                                            <div onClick={saveUserEmail} className="edit-icon-background">
+                                            <div onClick={saveUserEmail} className="host-icon-background">
                                                 <img src={checkIcon} alt="Save Email" className="guest-check-icon" />
                                             </div>
                                         </>
@@ -196,7 +196,7 @@ const HostSettings = () => {
                                                 className="guest-edit-input"
                                                 onKeyPress={handleKeyPressEmail}
                                             />
-                                            <div onClick={saveUserEmail} className="edit-icon-background">
+                                            <div onClick={saveUserEmail} className="host-icon-background">
                                                 <img src={checkIcon} alt="Confirm Verification Code" className="guest-check-icon" />
                                             </div>
                                         </>
@@ -205,7 +205,7 @@ const HostSettings = () => {
                             ) : (
                                 <p>{user.email}</p>
                             )}
-                            <div onClick={() => toggleEditState('email')} className="edit-icon-background">
+                            <div onClick={() => toggleEditState('email')} className="host-icon-background">
                                 <img src={editIcon} alt="Edit Email" className="guest-edit-icon" />
                             </div>
                         </div>
@@ -222,14 +222,14 @@ const HostSettings = () => {
                                         className="guest-edit-input"
                                         onKeyPress={handleKeyPressName}
                                     />
-                                    <div onClick={saveUserName} className="edit-icon-background">
+                                    <div onClick={saveUserName} className="host-icon-background">
                                         <img src={checkIcon} alt="Save Name" className="guest-check-icon" />
                                     </div>
                                 </div>
                             ) : (
                                 <p>{user.name}</p>
                             )}
-                            <div onClick={() => toggleEditState('name')} className="edit-icon-background">
+                            <div onClick={() => toggleEditState('name')} className="host-icon-background">
                                 <img src={editIcon} alt="Edit Name" className="guest-edit-icon" />
                             </div>
                         </div>

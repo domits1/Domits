@@ -27,6 +27,7 @@ Description: [Please add detailed description of the changes here]
 - [ ] Did you check for vulnerabilities using "npm audit"?
 
 ## Checklist
+- [ ] Check if you didn't use global styling
 - [ ] Console.logs are deleted
 - [ ] Comments are deleted
 - [ ] Jest tests are included

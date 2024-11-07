@@ -169,11 +169,8 @@ const HostReservations = () => {
         }
     }, [userId]);
     return (
-        <main className="page-body">
-            <section className='body' style={{
-                display: "flex",
-                flexDirection: "row"
-            }}>
+                    <main className="page-body">
+                        <section className={styles.reservationContainer}>
                 <Pages />
                 <section className={styles.reservationContent}>
                     <h1 className={styles.header}>Manage reservations</h1>

@@ -85,10 +85,7 @@ const HostFinanceTab = () => {
 
     return (
         <main className="page-body">
-            <section className='host-pc' style={{
-                display: "flex",
-                width: "100%",
-            }}>
+            <section className='host-pc-finance'>
                 <Pages />
                 <div className="finance-content">
                     <h1>Finance</h1>
@@ -113,7 +110,6 @@ const HostFinanceTab = () => {
                                                 <span
                                                     className="finance-span"
                                                     onClick={handleStripeAction}
-                                                    style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}
                                                 >
                                                     finish your Stripe onboarding
                                                 </span>

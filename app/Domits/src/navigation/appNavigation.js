@@ -21,6 +21,7 @@ import HostDashboard from '../screens/hostdashboard/dashboard';
 import HostProfile from '../screens/hostdashboard/profile';
 import HostPayments from '../screens/hostdashboard/payments';
 import HostListings from '../screens/hostdashboard/listings';
+import OnboardingHost from '../screens/hostdashboard/OnboardingHost';
 import HostSettings from '../screens/hostdashboard/settings';
 import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
@@ -86,6 +87,7 @@ function HomeStack() {
       <Stack.Screen name="HostHomepage" component={HostHomepage} />
       <Stack.Screen name="HostDashboard" component={HostDashboard} />
       <Stack.Screen name="HostProfile" component={HostProfile} />
+      <Stack.Screen name="OnboardingHost" component={OnboardingHost} />
       <Stack.Screen name="HostPayments" component={HostPayments} />
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
