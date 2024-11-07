@@ -1,12 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { Storage } from 'aws-amplify';
 import './Accommodations.css';
-import styles from '../utils/PageSwitcher.module.css';
+import PageSwithcher from '../utils/PageSwitcher.module.css';
+
 import SkeletonLoader from '../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
+
+// Import Swiper React components
+import { Swiper, SwiperSlide } from 'swiper/react';
+
+// Import Swiper styles
+import 'swiper/css';
+import 'swiper/css/effect-fade';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
+
+import { EffectFade, Navigation, Pagination } from 'swiper/modules';
+
 
 const getItemsPerPage = () => {
   if (window.matchMedia("(max-width: 480px)").matches) {
@@ -19,6 +32,7 @@ const getItemsPerPage = () => {
     return 15;
   }
 };
+
 
 const Accommodations = ({ searchResults }) => {
   const S3_BUCKET_NAME = 'accommodation';
@@ -35,6 +49,7 @@ const Accommodations = ({ searchResults }) => {
   const endIndex = startIndex + itemsPerPage;
 
   const displayedAccolist = accolist.slice(startIndex, endIndex);
+  const [allAccommodationImages, setAllAccommodationImages] = useState([])
 
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
@@ -60,7 +75,7 @@ const Accommodations = ({ searchResults }) => {
       const priceLabel = isBoatOrCamper ? 'per day' : 'per night';
 
       return {
-        image: item.image || item.Images['homepage'] || item.Images['image1'],
+        image: item.images || item.Images['homepage'] ,
         title: item.Title,
         city: item.City,
         country: item.Country,
@@ -77,35 +92,42 @@ const Accommodations = ({ searchResults }) => {
   const populateAccoListWithImages = async (data) => {
     const formattedData = await Promise.all(
         data.map(async (item) => {
-          const homepageWebpURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.webp`;
-          const homepageJpegURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-1.jpg`;
+          const imageUrls = [];
 
-          const imageExists = async (url) => {
-            try {
-              const response = await fetch(url, { method: 'HEAD' });
-              return response.ok;
-            } catch (error) {
-              console.error('Error checking image URL:', error);
-              return false;
+          for (let i = 1; i <= 5; i++) {
+            const webpURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-${i}.webp`;
+            const jpegURL = `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${item.OwnerId}/${item.ID}/homepage/Image-${i}.jpg`;
+
+            if (await checkImageExists(webpURL)) {
+              imageUrls.push(webpURL);
+            } else if (await checkImageExists(jpegURL)) {
+              imageUrls.push(jpegURL);
             }
-          };
+          }
 
-          // Check for webp or jpg
-          const imageUrl = (await imageExists(homepageWebpURL))
-              ? homepageWebpURL
-              : (await imageExists(homepageJpegURL))
-                  ? homepageJpegURL
-                  : item.Images['image1'];
+          console.log(`Images for item ${item.ID}:`, imageUrls);
 
           return {
             ...item,
-            image: imageUrl,
+            images: imageUrls.length > 0 ? imageUrls : [item.Images['image1']],
           };
         })
     );
 
     setAccolist(formatData(formattedData));
   };
+
+
+  const checkImageExists = async (url) => {
+    try {
+      const response = await fetch(url, { method: 'HEAD' });
+      return response.ok; // Return true als de afbeelding bestaat
+    } catch {
+      return false; // Return false als er een fout is
+    }
+  };
+
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -116,8 +138,10 @@ const Accommodations = ({ searchResults }) => {
         }
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
-
         await populateAccoListWithImages(data);
+        const  test =  await  populateAccoListWithImages(data);
+
+
       } catch (error) {
         console.error('Error fetching or processing data:', error);
       } finally {
@@ -166,12 +190,14 @@ const Accommodations = ({ searchResults }) => {
       navigator.clipboard
           .writeText(shareURL)
           .then(() => {
-            alert('Gekopieerd URL: ' + shareURL);
+            alert('URL is copied to clipboard!' + shareURL);
           })
           .catch((error) => {
-            console.error('Kon de URL niet kopiëren:', error);
+            console.error('Could not copy the URL:', error);
           });
     };
+
+    console.log("accomodation: ",accommodation)
 
     return (
         <div className="accocard" key={accommodation.id} onClick={() => handleClick(accommodation.id)}>
@@ -184,7 +210,34 @@ const Accommodations = ({ searchResults }) => {
           >
             {liked ? <FavoriteIcon sx={{ color: '#ec5050' }} /> : <FavoriteBorderOutlinedIcon  />}
           </button>
-          <img src={accommodation.image} alt={accommodation.title} />
+          <>
+            <Swiper
+                spaceBetween={30}
+                effect={'fade'}
+                navigation={true}
+                pagination={{
+                  clickable: true,
+                }}
+                modules={[EffectFade, Navigation, Pagination]}
+                className="mySwiper"
+            >
+              <SwiperSlide>
+                <img src={accommodation.image[0]} />
+              </SwiperSlide>
+              <SwiperSlide>
+                <img src={accommodation.image[1]} />
+              </SwiperSlide>
+              <SwiperSlide>
+                <img src={accommodation.image[2]} />
+              </SwiperSlide>
+              <SwiperSlide>
+                <img src={accommodation.image[3]} />
+              </SwiperSlide>
+              <SwiperSlide>
+                <img src={accommodation.image[4]} />
+              </SwiperSlide>
+            </Swiper>
+          </>
           <div className="accocard-content">
             <div className="accocard-title">
               {accommodation.city}, {accommodation.country}
@@ -206,7 +259,7 @@ const Accommodations = ({ searchResults }) => {
             <AccommodationCard key={accommodation.id} accommodation={accommodation} />
         ))}
         {/* Pagination */}
-        <div className={styles.pagination}>
+        <div className={PageSwithcher.pagination}>
           <button onClick={() => handlePageChange(currentPage - 1)} disabled={currentPage === 1}>
             &lt; Previous
           </button>
@@ -214,7 +267,7 @@ const Accommodations = ({ searchResults }) => {
               <button
                   key={i}
                   onClick={() => handlePageChange(i + 1)}
-                  className={`${currentPage === i + 1 && styles.active}`}
+                  className={`${currentPage === i + 1 && PageSwithcher.active}`}
               >
                 {i + 1}
               </button>
