@@ -55,6 +55,7 @@ export const SearchBar = ({setSearchResults, setLoading, toggleBar, sourceLangua
         searchText: "Search",
         noResultsError: "No results have been found...",
         fetchError: "Er is een fout opgetreden bij het ophalen van de gegevens.",
+        accommodationType: "Accommodation",
         apartment: "Apartment",
         house: "House",
         villa: "Villa",
@@ -495,7 +496,7 @@ export const SearchBar = ({setSearchResults, setLoading, toggleBar, sourceLangua
                                     ]}
                                     isSearchable={false}
                                     isClearable={true}
-                                    placeholder={<span className="searchTitle">{translatedTexts.searchDestination}</span>}
+                                    placeholder={<span className="searchTitle">{translatedTexts.accommodationType}</span>}
                                     styles={{
                                         control: (provided) => {
                                             const isMobile = window.innerWidth <= 768;
@@ -684,7 +685,6 @@ export const SearchBar = ({setSearchResults, setLoading, toggleBar, sourceLangua
                                             fontSize: '1rem',
                                             whiteSpace: 'nowrap',
                                             textOverflow: 'ellipsis',
-
                                         }}
                                     >
                       {translatedTexts.checkInOut}
