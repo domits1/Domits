@@ -41,7 +41,7 @@ const Dashboard = () => {
   }, [userId]);
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor:'#F9F9F9', }}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Dashboard</Text>
@@ -62,10 +62,10 @@ const Dashboard = () => {
         </View>
         
         <View style={styles.personalDetails}>
-          <Text style={styles.personalText}>Personal details</Text>
+          <Text style={styles.personalDetails}>Personal details</Text>
         </View>
-                  <Text style={styles.personalText}>Name: {firstName}</Text>
-          <Text style={styles.personalText}>Email: {email}</Text>
+                  <Text style={styles.personalText}><Text style={styles.bold}>Name:</Text> {firstName}</Text>
+          <Text style={styles.personalText} ><Text style={styles.bold}>Email:</Text> {email}</Text>
 
         <Text style={styles.listingText}>Listings</Text>
         <View style={styles.accommodationContainer}>
@@ -82,11 +82,11 @@ const Dashboard = () => {
               >
                 <View style={styles.accommodationText}>
                   <Text style={styles.accommodationTitle}>{accommodation.Title}</Text>
-                  <Text style={styles.accommodationLocation}>
+                  {/* <Text style={styles.accommodationLocation}>
                     {accommodation.AccommodationType === 'Boat'
                       ? `${accommodation.City}, ${accommodation.Harbour}`
                       : `${accommodation.City}, ${accommodation.Street}, ${accommodation.PostalCode}`}
-                  </Text>
+                  </Text> */}
                 </View>
                 <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                 <ImageSlider images={accommodation.Images} seconds={5} page="dashboard" />
@@ -121,16 +121,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    alignItems: 'center',
+    left: 20,
     paddingVertical: 10,
-    borderBottomWidth: 1,
+    // borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
   welcome: {
     textAlign: 'center',
+    fontWeight: 'bold',
     color: 'black',
     fontSize: 20,
-    marginVertical: 10,
+    marginVertical: 20,
   },
   headerText: {
     fontSize: 20,
@@ -141,23 +142,34 @@ const styles = StyleSheet.create({
   rowContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingHorizontal: 1,
+    paddingHorizontal: 10,
     marginVertical: 10,
   },
   sectionButton: { 
     paddingVertical: 10,
-    borderRadius: 10,
+    paddingHorizontal: 10, 
+    borderRadius: 8,
     backgroundColor: '#003366',
-    marginRight: 5,
+    marginHorizontal: 5, 
     alignItems: 'center',
   },
 
   personalDetails: {
-    alignItems: 'center',
-    paddingVertical: 10,
+    textAlign: 'center',
+    fontWeight: 'bold',
+    paddingVertical: 20,
+    fontSize: 20,
+    color: 'black',
   },
   personalText: {
     color: 'black',
+    left: 30,
+    fontSize: 15,
+    padding: 5,
+  },
+  bold:{
+    fontWeight: 'bold',
+    fontSize: 15,
   },
   infoText: {
     color: 'white',
@@ -168,44 +180,54 @@ const styles = StyleSheet.create({
     color: 'black',
     marginVertical: 10,
   },
-  accommodationContainer: {
-    paddingVertical: 10,
-  },
   dashboardCard: {
     padding: 15,
     marginBottom: 15,
     borderRadius: 8,
     borderColor: '#ddd',
-    borderWidth: 1,
   },
   accommodationText: {
-    marginBottom: 10,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    position: 'absolute',
+    bottom: 110,  
+    left: 80,
+    right: 80,
+    top: 220,  
+    paddingVertical: 5,
+    borderRadius: 20,
+    zIndex: 1,
+    alignItems: 'center', 
   },
+
   accommodationTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: 'black',
+    color: 'white', 
   },
   accommodationLocation: {
     fontSize: 16,
-    color: '#666',
+    color: '#ddd', 
   },
   accommodationDetails: {
     marginTop: 10,
   },
   isDrafted: {
     color: 'red',
+    textAlign: 'center',
   },
   isLive: {
     color: 'green',
+    textAlign: 'center',
   },
-  availableText:{
-    color: 'black'
+  availableText: {
+    color: 'black',
+    textAlign: 'center',
   },
   noAccommodations: {
     alignItems: 'center',
     paddingVertical: 20,
   },
 });
+
 
 export default Dashboard;

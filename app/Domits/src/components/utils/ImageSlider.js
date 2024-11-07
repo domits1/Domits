@@ -60,7 +60,8 @@ const styles = StyleSheet.create({
     },
     accommodationImg: {
         width: 300,
-        height: 200,
+        height: 270,
+        borderRadius: 15,
     },
     imgSliderImage: {
         width: 300,
