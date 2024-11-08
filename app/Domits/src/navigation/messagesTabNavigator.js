@@ -1,13 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { useAuth } from '../context/AuthContext';
 
 import Notifications from '../screens/message/notifications';
 import Inbox from '../screens/message/chatInbox';
-import Support from '../screens/message/support';
+import SupportHost from '../screens/message/supportHost';
+import SupportGuest from '../screens/message/supportGuest';
 
 const MessagesTab = () => {
     const [activeTab, setActiveTab] = useState('Notifications');
+    const {user, userAttributes, checkAuth} = useAuth();
+    const [userGroup, setUserGroup] = useState('');
 
+    useEffect(() => {
+        if (user) {
+          setUserGroup(userAttributes?.['custom:group'] || 'N/A');
+        } else {
+            setUserGroup('');
+        }
+      }, [user, userAttributes]);
+      
     return (
         <View style={styles.tabAll}>
             {/* Tab Buttons */}
@@ -33,7 +45,7 @@ const MessagesTab = () => {
             <View style={styles.screenContainer}>
                 {activeTab === 'Notifications' && <Notifications />}
                 {activeTab === 'Inbox' && <Inbox />}
-                {activeTab === 'Support' && <Support />}
+                {activeTab === 'Support' && (userGroup === 'Host' ? <SupportHost /> : <SupportGuest />)}
             </View>
         </View>
     );

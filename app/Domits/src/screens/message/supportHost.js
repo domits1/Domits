@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 const Support = () => {
   return (
     <View style={styles.container}>
-      <Text>Support Screen</Text>
+      <Text>Host Support Screen</Text>
     </View>
   );
 };
