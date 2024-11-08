@@ -96,7 +96,7 @@ function Header({setSearchResults, setLoading}) {
 
     const handleLanguageChange = async (event) => {
         const targetLang = event.target.value;
-        setTargetLanguage(targetLang); // Update the target language for SearchBar
+        setTargetLanguage(targetLang);
         const translationKeys = Object.keys(translatedTexts);
 
         const translations = {};
@@ -105,7 +105,7 @@ function Header({setSearchResults, setLoading}) {
         }
 
         setTranslatedTexts(translations);
-        setLanguage(targetLang); // Update current language in Header
+        setLanguage(targetLang);
     };
 
     const renderDropdownMenu = () => {
