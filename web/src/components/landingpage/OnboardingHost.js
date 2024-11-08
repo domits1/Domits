@@ -581,33 +581,7 @@ function OnboardingHost() {
         appendUserId();
     }, [userId]);
 
-    const handleLocationChange = async (Country, City, PostalCode, Street) => {
-        const address = `${Country} ${City} ${Street} ${PostalCode}`;
-        try {
-            const response = await fetch(
-                `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
-                    address
-                )}&key=AIzaSyDsc4bZSQfuPkpluzSPfT5eYnVRzPWD-ow`
-            );
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch geocoding data');
-            }
-            const data = await response.json();
-            if (data.results && data.results.length > 0) {
-                const location = data.results[0].geometry.location;
-                setLocation({
-                    latitude: location.lat,
-                    longitude: location.lng
-                });
-            } else {
-                console.error('No results found for the provided address');
-            }
-        } catch (error) {
-            console.error('Error fetching geocoding data:', error);
-        }
-    };
-
+    
     const changeAccoType = (accommodationType) => {
         setFormData((prevData) => ({
             ...prevData,
@@ -789,6 +763,10 @@ function OnboardingHost() {
             Country: selectedOption.value
         }));
         handleLocationChange(selectedOption.value, formData.City, formData.PostalCode, formData.Street);
+    };
+
+    const handleLocationChange = (newLocation) => {
+        console.log('Location changed to:', newLocation);
     };
 
     const setLicenseRequirement = (selectedOption) => {
