@@ -20,9 +20,32 @@ const HostChatbot = () => {
   const [accommodations, setAccommodations] = useState([]);
   const [faqList, setFaqList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [messageAudios, setMessageAudios] = useState({});
 
   const { role, isLoading: userLoading } = useUser();
   const location = useLocation();
+
+  const fetchPollySpeech = async (text, messageId) => {
+    try {
+      const response = await axios.post(
+          'https://4gcqhbseki.execute-api.eu-north-1.amazonaws.com/default/PollySpeech',
+          { text: text, voiceId: 'Joanna' },
+          { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      const audioContent = response.data?.body ? JSON.parse(response.data.body).audioContent : null;
+      if (audioContent) {
+        setMessageAudios((prevAudios) => ({
+          ...prevAudios,
+          [messageId]: `data:audio/mp3;base64,${audioContent}`,
+        }));
+      } else {
+        console.warn("No audio content found in response.");
+      }
+    } catch (error) {
+      console.error('Error fetching speech from Polly:', error);
+    }
+  };
 
   useEffect(() => {
     const setUserDetails = async () => {
@@ -31,7 +54,10 @@ const HostChatbot = () => {
         setUserId(userInfo.attributes.sub);
         const name = userInfo.attributes['custom:username'] || 'Host';
         setUserName(name);
-        setMessages([{ text: `Hello, ${name}! Please choose an option:`, sender: 'bot', contentType: 'text' }]);
+        const greeting = `Hello, ${name}! Please choose an option:`;
+        const messageId = Date.now();
+        setMessages([{ id: messageId, text: greeting, sender: 'bot', contentType: 'text' }]);
+        fetchPollySpeech(greeting, messageId);
         setAwaitingUserChoice(true);
       } catch (error) {
         console.error('Error fetching user details:', error);
@@ -58,7 +84,10 @@ const HostChatbot = () => {
     setSuggestions([]);
     setCurrentOption(null);
     setAccommodations([]);
-    setMessages([{ text: `Hello again, ${username}! Please choose an option:`, sender: 'bot', contentType: 'text' }]);
+    const message = `Hello again, ${username}! Please choose an option:`;
+    const messageId = Date.now();
+    setMessages([{ id: messageId, text: message, sender: 'bot', contentType: 'text' }]);
+    fetchPollySpeech(message, messageId);
   };
 
   const handleButtonClick = (choice) => {
@@ -69,16 +98,18 @@ const HostChatbot = () => {
 
   const handleUserChoice = (choice) => {
     let newMessage = '';
+    const messageId = Date.now();
+
     switch (choice) {
-      case '1':
-        newMessage = 'You can ask me about accommodations. Here are some suggestions:';
+      case '1': // Option for "My Accommodation"
+        newMessage = 'You can ask me about your accommodations. Here are some suggestions:';
         setSuggestions(['List my accommodation', 'Show all accommodations']);
         break;
-      case '2':
+      case '2': // Option for FAQ
         newMessage = 'You can ask me about Domits. Here are some suggestions:';
         setSuggestions(['Is Domits 100% free for hosts']);
         break;
-      case '3':
+      case '3': // Contact Expert
         newMessage = 'You can contact an expert at support@domits.com or call +123456789.';
         setSuggestions([]);
         break;
@@ -90,17 +121,22 @@ const HostChatbot = () => {
 
     setMessages((prevMessages) => [
       ...prevMessages.filter((message) => message.text !== `Hello again, ${username}! Please choose an option:`),
-      { text: newMessage, sender: 'bot', contentType: 'text' },
+      { id: messageId, text: newMessage, sender: 'bot', contentType: 'text' },
     ]);
+    fetchPollySpeech(newMessage, messageId);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     if (userInput.trim()) {
-      console.log('User input:', userInput); // Log the user input
-      const newMessages = [...messages, { text: userInput, sender: 'user', contentType: 'text' }];
+      const messageId = Date.now();
+      const newMessages = [
+        ...messages,
+        { id: messageId, text: userInput, sender: 'user', contentType: 'text' },
+      ];
       setMessages(newMessages);
+      fetchPollySpeech(userInput, messageId);
       setUserInput('');
 
       if (currentOption === '1') {
@@ -113,23 +149,28 @@ const HostChatbot = () => {
     }
   };
 
-  // GPT-3.5 Turbo implementation for handling accommodation queries with logs and checks
   const handleAccommodationQuery = async (userInput) => {
+    const messageId = Date.now();
+
+    if (userInput.toLowerCase().includes("all accommodations")) {
+      await fetchAllAccommodations(); // Fetch all accommodations
+    } else {
+      await fetchAccommodations(); // Fetch only user-specific accommodations
+    }
+
+    // Check if accommodations are available after fetching
     if (accommodations.length === 0) {
-      console.warn('No accommodation data available. Fetching data might still be in progress.');
+      const noDataMessage = "Sorry, there is no accommodation data available right now.";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, there is no accommodation data available right now.", sender: 'bot', contentType: 'text' },
+        { id: messageId, text: noDataMessage, sender: 'bot', contentType: 'text' },
       ]);
+      fetchPollySpeech(noDataMessage, messageId);
       return;
     }
 
     setLoading(true);
     try {
-      // Log the accommodation data
-      console.log('Accommodation data passed to GPT:', accommodations);
-
-      // Convert the accommodation data into a human-readable format for GPT-3.5 Turbo
       const contextData = accommodations.map((acc) => ({
         title: acc.title || 'Accommodation',
         city: acc.city || 'Not specified',
@@ -139,8 +180,6 @@ const HostChatbot = () => {
       }));
 
       const prompt = `
-      You are an AI assistant that helps users with accommodation-related queries. Answer the user's questions based only on the provided accommodation data.
-
       Accommodation Details:
       ${contextData.map((acc) => `
         Title: ${acc.title}
@@ -149,58 +188,52 @@ const HostChatbot = () => {
         Bathrooms: ${acc.bathrooms}
         Guest Capacity: ${acc.guestAmount}
       `).join('\n\n')}
-      
-      User Input: "${userInput}"
-      
-      Answer based only on the provided data. If the user asks to filter by country or guest rooms, respond with the relevant filtered data.
-    `;
 
-      console.log('Prompt sent to GPT-3.5 Turbo:', prompt);
+      User Input: "${userInput}"
+    `;
 
       const response = await axios.post(
           'https://api.openai.com/v1/chat/completions',
           {
             model: 'gpt-3.5-turbo',
-            messages: [
-              { role: 'system', content: 'You are a helpful assistant that provides answers based on accommodation data.' },
-              { role: 'user', content: prompt },
-            ],
+            messages: [{ role: 'user', content: prompt }],
             max_tokens: 250,
             temperature: 0.7,
             n: 1,
           },
           {
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_KEY}`,
-            },
-          });
+            headers: { 'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_KEY}` },
+          }
+      );
 
       const gptResponse = response.data.choices[0].message.content.trim();
-      console.log('GPT-3.5 Turbo response:', gptResponse);
-
-      // Display the GPT-3.5 Turbo response in the chatbot
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: gptResponse, sender: 'bot', contentType: 'text' },
+        { id: messageId, text: gptResponse, sender: 'bot', contentType: 'text' },
       ]);
+      fetchPollySpeech(gptResponse, messageId);
     } catch (error) {
-      console.error('Error with GPT-3.5 Turbo API:', error);
+      const errorMessage = "Sorry, I couldn't process your request at the moment.";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, I couldn't process your request at the moment.", sender: 'bot', contentType: 'text' },
+        { id: messageId, text: errorMessage, sender: 'bot', contentType: 'text' },
       ]);
+      fetchPollySpeech(errorMessage, messageId);
     } finally {
       setLoading(false);
     }
   };
 
   const handleFAQQuery = (userInput) => {
+    const messageId = Date.now();
+
     if (faqList.length === 0) {
+      const noFaqMessage = "Sorry, I don't have any FAQs available at the moment.";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, I don't have any FAQs available at the moment.", sender: 'bot', contentType: 'text' },
+        { id: messageId, text: noFaqMessage, sender: 'bot', contentType: 'text' },
       ]);
+      fetchPollySpeech(noFaqMessage, messageId);
       return;
     }
 
@@ -209,32 +242,30 @@ const HostChatbot = () => {
 
     if (bestMatch.bestMatch.rating > 0.5) {
       const matchedFAQ = faqList[bestMatch.bestMatchIndex];
+      const faqMessage = `Q: ${matchedFAQ.question} A: ${matchedFAQ.answer}`;
       setMessages((prevMessages) => [
         ...prevMessages,
-        {
-          text: (
-              <div className="faq-layout">
-                <p className="faq-question">Q: {matchedFAQ.question}</p>
-                <p className="faq-answer">A: {matchedFAQ.answer}</p>
-              </div>
-          ),
-          sender: 'bot',
-          contentType: 'faq',
-        },
+        { id: messageId, text: faqMessage, sender: 'bot', contentType: 'faq' },
       ]);
+      fetchPollySpeech(faqMessage, messageId);
     } else {
+      const notFoundMessage = "Sorry, I couldn't find an answer to your question.";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { text: "Sorry, I couldn't find an answer to your question.", sender: 'bot', contentType: 'text' },
+        { id: messageId, text: notFoundMessage, sender: 'bot', contentType: 'text' },
       ]);
+      fetchPollySpeech(notFoundMessage, messageId);
     }
   };
 
   const handleExpertContact = () => {
+    const expertMessage = 'You can contact an expert at support@domits.com or call +123456789.';
+    const messageId = Date.now();
     setMessages((prevMessages) => [
       ...prevMessages,
-      { text: 'You can contact an expert at support@domits.com or call +123456789.', sender: 'bot', contentType: 'text' },
+      { id: messageId, text: expertMessage, sender: 'bot', contentType: 'text' },
     ]);
+    fetchPollySpeech(expertMessage, messageId);
   };
 
   const fetchAccommodations = async () => {
@@ -252,9 +283,6 @@ const HostChatbot = () => {
       );
       const data = await response.json();
       const accommodationsArray = data.body ? JSON.parse(data.body) : [];
-
-      console.log('Fetched accommodations:', accommodationsArray); // Log fetched accommodations
-
       const formattedAccommodations = accommodationsArray.map((acc) => ({
         id: acc.ID,
         title: acc.Title || 'Accommodation',
@@ -265,7 +293,6 @@ const HostChatbot = () => {
       }));
 
       setAccommodations(formattedAccommodations);
-      console.log('Accommodations saved in state:', formattedAccommodations); // Log the formatted accommodations
     } catch (error) {
       console.error('Error fetching accommodations:', error);
     } finally {
@@ -274,14 +301,15 @@ const HostChatbot = () => {
   };
 
   const fetchAllAccommodations = async () => {
+    setLoading(true);
     try {
-      const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation');
+      const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
       const responseData = await response.json();
-      const data = JSON.parse(responseData.body);
-
-      console.log('Fetched all accommodations:', data); // Log all accommodations fetched
-
-      const formattedAccommodations = data.map((acc) => ({
+      const allAccommodations = responseData.body ? JSON.parse(responseData.body) : [];
+      const formattedAccommodations = allAccommodations.map((acc) => ({
         id: acc.ID,
         title: acc.Title || 'Accommodation',
         city: acc.City,
@@ -291,14 +319,11 @@ const HostChatbot = () => {
       }));
 
       setAccommodations(formattedAccommodations);
-      if (currentOption === '1') {
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { text: 'Here is all available accommodation data:', sender: 'bot', contentType: 'accommodation' },
-        ]);
-      }
+      console.log("All accommodations fetched and set.");
     } catch (error) {
       console.error('Error fetching all accommodations:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -311,8 +336,6 @@ const HostChatbot = () => {
       const responseData = await response.json();
       const faqData = JSON.parse(responseData.body);
       setFaqList(faqData);
-
-      console.log('Fetched FAQ data:', faqData); // Log FAQ data
     } catch (error) {
       console.error('Error fetching FAQ data:', error);
     }
@@ -342,7 +365,7 @@ const HostChatbot = () => {
           <div className="hostchatbot-window">
             {messages.map((message, index) => (
                 <div
-                    key={index}
+                    key={message.id}
                     className={`hostchatbot-message ${
                         message.contentType === 'accommodation'
                             ? 'accommodation-layout'
@@ -352,6 +375,11 @@ const HostChatbot = () => {
                     }`}
                 >
                   <p>{message.text}</p>
+                  {messageAudios[message.id] && (
+                      <button onClick={() => new Audio(messageAudios[message.id]).play()} className="play-audio-button">
+                        {message.sender === 'user' ? 'Hear My Question' : 'Hear Response'}
+                      </button>
+                  )}
                 </div>
             ))}
             {accommodations.length > 0 && (
