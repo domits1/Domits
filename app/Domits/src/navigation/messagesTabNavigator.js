@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 import Notifications from '../screens/message/notifications';
-import ChatInbox from '../screens/message/chatInbox';
+import Inbox from '../screens/message/chatInbox';
 import Support from '../screens/message/support';
 
 const MessagesTab = () => {
@@ -17,9 +17,9 @@ const MessagesTab = () => {
                         Notifications
                     </Text>
                 </TouchableOpacity>
-                <TouchableOpacity onPress={() => setActiveTab('Chat Inbox')}>
-                    <Text style={[styles.tabText, activeTab === 'Chat Inbox' && styles.activeTabText]}>
-                        Chat Inbox
+                <TouchableOpacity onPress={() => setActiveTab('Inbox')}>
+                    <Text style={[styles.tabText, activeTab === 'Inbox' && styles.activeTabText]}>
+                        Inbox
                     </Text>
                 </TouchableOpacity>
                 <TouchableOpacity onPress={() => setActiveTab('Support')}>
@@ -32,7 +32,7 @@ const MessagesTab = () => {
             {/* Active Tab Content */}
             <View style={styles.screenContainer}>
                 {activeTab === 'Notifications' && <Notifications />}
-                {activeTab === 'Chat Inbox' && <ChatInbox />}
+                {activeTab === 'Inbox' && <Inbox />}
                 {activeTab === 'Support' && <Support />}
             </View>
         </View>

@@ -157,8 +157,8 @@ function BottomTabNavigator() {
       />
       <Tab.Screen
         name="Messages"
-        component={MessagesStackNavigator} // Navigate to the stack with the custom header
-        options={{ headerShown: false }} // Disable the header in BottomTabNavigator
+        component={MessagesStackNavigator}
+        options={{ headerShown: false }} 
       />
       <Tab.Screen name="Account" component={AccountPage} />
     </Tab.Navigator>

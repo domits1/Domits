@@ -3,11 +3,13 @@ import { View, Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import MessagesTab from './messagesTabNavigator';
+import { useNavigation } from '@react-navigation/native';
 
 
 const Stack = createNativeStackNavigator();
 
 const MessagesStackNavigator = () => {
+  const navigation = useNavigation();
   return (
     <Stack.Navigator
       screenOptions={{
