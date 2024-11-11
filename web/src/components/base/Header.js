@@ -56,6 +56,19 @@ function Header({setSearchResults, setLoading}) {
     ];
 
     useEffect(() => {
+        // Voeg het Trustpilot-script toe
+        const script = document.createElement('script');
+        script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
+        script.async = true;
+        document.head.appendChild(script);
+
+        // Verwijder het script bij demontage van de component
+        return () => {
+            document.head.removeChild(script);
+        };
+    }, []);
+
+    useEffect(() => {
         checkAuthentication();
     }, []);
 
@@ -94,6 +107,59 @@ function Header({setSearchResults, setLoading}) {
         setDropdownVisible(!dropdownVisible);
     };
 
+    const navigateToLogin = () => {
+        navigate('/login');
+    };
+    const navigateToRegister = () => {
+        navigate('/register');
+    };
+    const navigateToLanding = () => {
+        navigate('/landing');
+    };
+    const navigateToWhyDomits = () => {
+        navigate('/why-domits');
+    };
+    const navigateToNinedots = () => {
+        navigate('/travelinnovation');
+    };
+    const navigateToGuestDashboard = () => {
+        setCurrentView('guest');
+        navigate('/guestdashboard');
+    };
+    const navigateToHostDashboard = () => {
+        setCurrentView('host');
+        navigate('/hostdashboard');
+    };
+    const navigateToMessages = () => {
+        if (currentView === 'host') {
+            navigate('/hostdashboard/chat');
+        } else {
+            navigate('/guestdashboard/chat');
+        }
+    };
+    const navigateToPayments = () => {
+        navigate('/guestdashboard/payments');
+    };
+    const navigateToReviews = () => {
+        navigate('/guestdashboard/reviews');
+    };
+    const navigateToSettings = () => {
+        navigate('/guestdashboard/settings');
+    };
+
+    const navigateToDashboard = () => {
+        if (!isLoggedIn) {
+            setFlowState({ isHost: true });
+            navigate('/landing');
+        } else {
+            if (currentView === 'host') {
+                navigateToGuestDashboard();
+            } else {
+                navigateToHostDashboard();
+            }
+        }
+    };
+
     const handleLanguageChange = async (event) => {
         const targetLang = event.target.value;
         setTargetLanguage(targetLang);
@@ -130,23 +196,27 @@ function Header({setSearchResults, setLoading}) {
         } else {
             return (
                 <>
-                    <div className="helloUsername">{translatedTexts.hello} {username}!</div>
-                    <button onClick={() => navigate('/guestdashboard')}
-                            className="dropdownLoginButton">{translatedTexts.profile}</button>
-                    <button onClick={() => navigate('/guestdashboard/chat')}
-                            className="dropdownLoginButton">{translatedTexts.messages}</button>
-                    <button onClick={() => navigate('/guestdashboard/payments')}
-                            className="dropdownLoginButton">{translatedTexts.payments}</button>
-                    <button onClick={() => navigate('/guestdashboard/reviews')}
-                            className="dropdownLoginButton">{translatedTexts.reviews}</button>
-                    <button onClick={() => navigate('/guestdashboard/settings')}
-                            className="dropdownLoginButton">{translatedTexts.settings}</button>
-                    <button onClick={handleLogout} className="dropdownLogoutButton">{translatedTexts.logOut}<img
-                        src={logoutArrow} alt="Logout Arrow"/></button>
+                    <div className="helloUsername">Hello {username}!</div>
+                    <button onClick={navigateToGuestDashboard} className="dropdownLoginButton">Profile</button>
+                    <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
+                    <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
+                    <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
+                    <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
+                    <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
+                        src={logoutArrow} alt="Logout Arrow" /></button>
                 </>
             );
         }
     };
+
+    const toggleSearchBar = (status) => {
+        setActiveSearchBar(status);
+        if (status) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = 'auto';
+        }
+    }
 
     return (
         <div className="App">
@@ -155,7 +225,7 @@ function Header({setSearchResults, setLoading}) {
                     className={`header-nav ${isActiveSearchBar ? 'active' : 'inactive'} ${isActiveSearchBar ? 'no-scroll' : ''}`}>
                     <div className="logo">
                         <a href="/">
-                            <img src={logo} width={150} alt="Logo"/>
+                            <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>
                     <div className='App'>
@@ -201,11 +271,9 @@ function Header({setSearchResults, setLoading}) {
                             <div className={"personalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>
                                 {isLoggedIn ? renderDropdownMenu() : (
                                     <>
-                                        <button onClick={() => navigate('/login')}
-                                                className="dropdownLoginButton">{translatedTexts.login}<img
-                                            src={loginArrow} alt="Login Arrow"/></button>
-                                        <button onClick={() => navigate('/register')}
-                                                className="dropdownRegisterButton">{translatedTexts.register}</button>
+                                        <button onClick={navigateToLogin} className="dropdownLoginButton">{translatedTexts.login}<img
+                                            src={loginArrow} alt="Login Arrow" /></button>
+                                        <button onClick={navigateToRegister} className="dropdownRegisterButton">{translatedTexts.register}</button>
                                     </>
                                 )}
                             </div>
@@ -227,6 +295,16 @@ function Header({setSearchResults, setLoading}) {
                         </div>
                     </div>
                 </nav>
+                 {/* Extra balk voor de Trustpilot-widget */}
+                 <div className="trustpilot-bar">
+                    <div className="trustpilot-widget" data-locale="en-GB" data-template-id="56278e9abfbbba0bdcd568bc"
+                        data-businessunit-id="6731d0f09ecd53e30da42a87" data-style-height="40px" data-style-width="80%">
+                        <a href="https://uk.trustpilot.com/review/domits.com" target="_blank" rel="noopener noreferrer">
+                            Trustpilot
+                        </a>
+                    </div>
+                </div>
+                {/* Einde van de extra balk */}
             </header>
         </div>
     );

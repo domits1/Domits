@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {View, Text, Button, SafeAreaView} from 'react-native';
+import {View, Text, Button, SafeAreaView, StyleSheet} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
 import {signOut} from '@aws-amplify/auth';
@@ -37,15 +37,25 @@ const Account = () => {
     }
   };
 
+  const styles = StyleSheet.create({
+    listItemText: {
+      color: 'black',
+    },
+    items:{
+      flex: 1,
+      justifyContent: 'center',
+       alignItems: 'center',
+    }
+  });
+
   return (
-    <SafeAreaView
-      style={{flex: 1, justifyContent: 'center', alignItems: 'center'}}>
-      <Text>Account</Text>
-      <Text>Authenticated: {isAuthenticated ? 'Yes' : 'No'}</Text>
-      <Text>First Name: {firstName}</Text>
-      <Text>Username: {customUsername}</Text>
-      <Text>Email: {email}</Text>
-      <Text>Type: {hostGuest}</Text>
+    <SafeAreaView style={styles.items}>
+      <Text style={styles.listItemText}>Account</Text>
+      <Text style={styles.listItemText}>Authenticated: {isAuthenticated ? 'Yes' : 'No'}</Text>
+      <Text style={styles.listItemText}>First Name: {firstName}</Text>
+      <Text style={styles.listItemText}>Username: {customUsername}</Text>
+      <Text style={styles.listItemText}>Email: {email}</Text>
+      <Text style={styles.listItemText}>Type: {hostGuest}</Text>
       <View>
         {isAuthenticated && hostGuest === 'Host' && (
           <Button
@@ -69,6 +79,12 @@ const Account = () => {
           <Button
             title="Register"
             onPress={() => navigation.navigate('Register')}
+          />
+        )}
+                {!isAuthenticated && (
+          <Button
+            title="Landing"
+            onPress={() => navigation.navigate('Landing')}
           />
         )}
         {isAuthenticated && <Button title="Logout" onPress={handleLogout} />}

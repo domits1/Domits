@@ -110,6 +110,7 @@ const styles = StyleSheet.create({
   },
   listItemText: {
     fontSize: 18,
+    color: 'black',
   },
   helpSection: {
     marginTop: 20,
