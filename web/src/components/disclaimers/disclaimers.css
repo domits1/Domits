@@ -2,7 +2,7 @@
     padding: 50px;
     padding-left: 150px;
     font-weight: 450;
-    width: 950px;;
+    width: 950px;
 }
 
 .disclaimers input{
@@ -46,4 +46,8 @@
     border: 1px solid;
     justify-content: center;
     align-items: center;
+}
+
+.bold{
+    font-weight: bold;
 }
