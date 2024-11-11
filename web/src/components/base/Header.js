@@ -97,6 +97,8 @@ function Header({setSearchResults, setLoading}) {
     const handleLanguageChange = async (event) => {
         const targetLang = event.target.value;
         setTargetLanguage(targetLang);
+        localStorage.setItem('translationLanguage', JSON.stringify({'source': language, 'target': targetLang}));
+        window.dispatchEvent(new Event("localStorageChanged"));
         const translationKeys = Object.keys(translatedTexts);
 
         const translations = {};

@@ -1,4 +1,4 @@
-export async function fetchTranslation(text, sourceLang = "en", targetLang = "nl") {
+export async function fetchTranslation(text, sourceLang, targetLang) {
     console.log("Text:", text);
     console.log("Source language:", sourceLang);
     console.log("Target language:", targetLang);
