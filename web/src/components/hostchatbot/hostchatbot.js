@@ -22,6 +22,7 @@ const HostChatbot = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [messageAudios, setMessageAudios] = useState({});
   const [isRecording, setIsRecording] = useState(false); // State for recording
+  const [isRecording, setIsRecording] = useState(false);
 
   const { role, isLoading: userLoading } = useUser();
   const location = useLocation();
@@ -103,7 +104,7 @@ const HostChatbot = () => {
 
     switch (choice) {
       case '1':
-        newMessage = 'You can ask me about your accommodations. Here are some suggestions:';
+        newMessage = 'You can ask me about accommodations. Here are some suggestions:';
         setSuggestions(['List my accommodation', 'Show all accommodations']);
         break;
       case '2':
@@ -250,6 +251,10 @@ const HostChatbot = () => {
     fetchPollySpeech(expertMessage, messageId);
   };
 
+
+    recognition.start();
+  };
+
   const fetchAccommodations = async () => {
     if (!userId) return;
 
@@ -326,37 +331,43 @@ const HostChatbot = () => {
     fetchFAQ();
   }, []);
 
-  const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.continuous = false;
-
     recognition.onstart = () => {
-      setIsRecording(true);
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setUserInput(transcript);
-      setIsRecording(false);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Voice input error:', event.error);
-      setIsRecording(false);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-
-    recognition.start();
-  };
-
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
-  if (isLoading || userLoading || role !== 'Host') return null;
+  const downloadChatHistory = () => {
+    const chatText = messages
+        .map(message => `${message.sender === 'bot' ? 'Bot' : 'User'}: ${message.text}`)
+        .join('\n\n');
+
+    const blob = new Blob([chatText], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'chat_history.txt';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const printChatHistory = () => {
+    const printableContent = messages
+        .map(message => `<p><strong>${message.sender === 'bot' ? 'Bot' : 'User'}:</strong> ${message.text}</p>`)
+        .join('');
+
+    const newWindow = window.open('', '', 'width=600,height=400');
+    newWindow.document.write(`
+      <html>
+        <head>
+          <title>Chat History</title>
+        </head>
+        <body>
+          <h2>Chat History</h2>
+          ${printableContent}
+        </body>
+      </html>
+    `);
+    newWindow.document.close();
+    newWindow.print();
+  };
 
   return (
       <>
@@ -372,7 +383,7 @@ const HostChatbot = () => {
             </button>
           </div>
           <div className="hostchatbot-window">
-            {messages.map((message, index) => (
+            {messages.map((message) => (
                 <div
                     key={message.id}
                     className={`hostchatbot-message ${
@@ -405,7 +416,6 @@ const HostChatbot = () => {
                   <button onClick={() => handleButtonClick('3')}>3. Connect me with an expert</button>
                 </div>
             )}
-
             {suggestions.length > 0 && (
                 <div className="hostchatbot-suggestions">
                   <p>Suggestions:</p>
@@ -443,6 +453,8 @@ const HostChatbot = () => {
               Send
             </button>
           </form>
+          <button onClick={downloadChatHistory} className="download-button">Download Chat</button>
+          <button onClick={printChatHistory} className="print-button">Print Chat</button>
         </div>
       </>
   );
