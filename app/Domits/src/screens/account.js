@@ -81,6 +81,12 @@ const Account = () => {
             onPress={() => navigation.navigate('Register')}
           />
         )}
+                {!isAuthenticated && (
+          <Button
+            title="Landing"
+            onPress={() => navigation.navigate('Landing')}
+          />
+        )}
         {isAuthenticated && <Button title="Logout" onPress={handleLogout} />}
       </View>
     </SafeAreaView>
