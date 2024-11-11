@@ -21,6 +21,7 @@ const HostChatbot = () => {
   const [faqList, setFaqList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [messageAudios, setMessageAudios] = useState({});
+  const [isRecording, setIsRecording] = useState(false); // State for recording
 
   const { role, isLoading: userLoading } = useUser();
   const location = useLocation();
@@ -101,15 +102,15 @@ const HostChatbot = () => {
     const messageId = Date.now();
 
     switch (choice) {
-      case '1': // Option for "My Accommodation"
+      case '1':
         newMessage = 'You can ask me about your accommodations. Here are some suggestions:';
         setSuggestions(['List my accommodation', 'Show all accommodations']);
         break;
-      case '2': // Option for FAQ
+      case '2':
         newMessage = 'You can ask me about Domits. Here are some suggestions:';
         setSuggestions(['Is Domits 100% free for hosts']);
         break;
-      case '3': // Contact Expert
+      case '3':
         newMessage = 'You can contact an expert at support@domits.com or call +123456789.';
         setSuggestions([]);
         break;
@@ -152,13 +153,13 @@ const HostChatbot = () => {
   const handleAccommodationQuery = async (userInput) => {
     const messageId = Date.now();
 
-    if (userInput.toLowerCase().includes("all accommodations")) {
-      await fetchAllAccommodations(); // Fetch all accommodations
+    const normalizedInput = userInput.toLowerCase().trim();
+    if (normalizedInput.includes("show all accommodations") || normalizedInput.includes("list all accommodations")) {
+      await fetchAllAccommodations();
     } else {
-      await fetchAccommodations(); // Fetch only user-specific accommodations
+      await fetchAccommodations();
     }
 
-    // Check if accommodations are available after fetching
     if (accommodations.length === 0) {
       const noDataMessage = "Sorry, there is no accommodation data available right now.";
       setMessages((prevMessages) => [
@@ -179,41 +180,22 @@ const HostChatbot = () => {
         guestAmount: acc.guestAmount || 'Not specified',
       }));
 
-      const prompt = `
-      Accommodation Details:
-      ${contextData.map((acc) => `
+      const responseMessage = `Here are the accommodations:\n${contextData.map((acc) => `
         Title: ${acc.title}
         City: ${acc.city}
         Country: ${acc.country}
         Bathrooms: ${acc.bathrooms}
         Guest Capacity: ${acc.guestAmount}
-      `).join('\n\n')}
+      `).join('\n\n')}`;
 
-      User Input: "${userInput}"
-    `;
-
-      const response = await axios.post(
-          'https://api.openai.com/v1/chat/completions',
-          {
-            model: 'gpt-3.5-turbo',
-            messages: [{ role: 'user', content: prompt }],
-            max_tokens: 250,
-            temperature: 0.7,
-            n: 1,
-          },
-          {
-            headers: { 'Authorization': `Bearer ${process.env.REACT_APP_OPENAI_KEY}` },
-          }
-      );
-
-      const gptResponse = response.data.choices[0].message.content.trim();
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: messageId, text: gptResponse, sender: 'bot', contentType: 'text' },
+        { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
       ]);
-      fetchPollySpeech(gptResponse, messageId);
+      fetchPollySpeech(responseMessage, messageId);
     } catch (error) {
       const errorMessage = "Sorry, I couldn't process your request at the moment.";
+      console.error('Error with GPT-3.5 Turbo API:', error);
       setMessages((prevMessages) => [
         ...prevMessages,
         { id: messageId, text: errorMessage, sender: 'bot', contentType: 'text' },
@@ -319,7 +301,6 @@ const HostChatbot = () => {
       }));
 
       setAccommodations(formattedAccommodations);
-      console.log("All accommodations fetched and set.");
     } catch (error) {
       console.error('Error fetching all accommodations:', error);
     } finally {
@@ -344,6 +325,34 @@ const HostChatbot = () => {
   useEffect(() => {
     fetchFAQ();
   }, []);
+
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setUserInput(transcript);
+      setIsRecording(false);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Voice input error:', event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
+
+    recognition.start();
+  };
 
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
@@ -396,6 +405,7 @@ const HostChatbot = () => {
                   <button onClick={() => handleButtonClick('3')}>3. Connect me with an expert</button>
                 </div>
             )}
+
             {suggestions.length > 0 && (
                 <div className="hostchatbot-suggestions">
                   <p>Suggestions:</p>
@@ -421,6 +431,14 @@ const HostChatbot = () => {
                 placeholder="Type a message..."
                 disabled={loading || awaitingUserChoice}
             />
+            <button
+                type="button"
+                onClick={handleVoiceInput}
+                disabled={awaitingUserChoice || isRecording}
+                className="voice-input-button"
+            >
+              {isRecording ? 'Listening...' : 'Start Recording'}
+            </button>
             <button type="submit" disabled={loading || awaitingUserChoice}>
               Send
             </button>
