@@ -21,7 +21,6 @@ const HostChatbot = () => {
   const [faqList, setFaqList] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [messageAudios, setMessageAudios] = useState({});
-  const [isRecording, setIsRecording] = useState(false); // State for recording
   const [isRecording, setIsRecording] = useState(false);
 
   const { role, isLoading: userLoading } = useUser();
@@ -251,6 +250,30 @@ const HostChatbot = () => {
     fetchPollySpeech(expertMessage, messageId);
   };
 
+  const handleVoiceInput = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.continuous = false;
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+    };
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0][0].transcript;
+      setUserInput(transcript);
+      setIsRecording(false);
+    };
+
+    recognition.onerror = (event) => {
+      console.error('Voice input error:', event.error);
+      setIsRecording(false);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+    };
 
     recognition.start();
   };
@@ -331,7 +354,6 @@ const HostChatbot = () => {
     fetchFAQ();
   }, []);
 
-    recognition.onstart = () => {
   const toggleChat = () => setIsChatOpen(!isChatOpen);
 
   const downloadChatHistory = () => {
