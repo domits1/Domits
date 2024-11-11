@@ -5,7 +5,7 @@ import { getVerificationStatusFromDB } from "../services/verificationServices";
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
-function useStripeVerification(userId) {
+function useStripeVerification(userData) {
   const [stripeLoading, setStripeLoading] = useState(false);
   const [stripeErrorMessage, setStripeErrorMessage] = useState("");
   const [verificationStatus, setVerificationStatus] = useState("");
@@ -18,7 +18,7 @@ function useStripeVerification(userId) {
   const fetchData = async () => {
     setStripeLoading(true);
     try {
-      const status = await getVerificationStatusFromDB(userId);
+      const status = await getVerificationStatusFromDB(userData.userId);
       if (status.lastErrorReason) {
         setVerificationStatus({
           status: status.lastErrorReason,
@@ -44,7 +44,7 @@ function useStripeVerification(userId) {
 
   useEffect(() => {
     fetchData();
-  }, [userId]);
+  }, [userData.userId]);
 
   const startVerification = async () => {
     setStripeLoading(true);
@@ -70,7 +70,7 @@ function useStripeVerification(userId) {
     }
 
     try {
-      const { clientSecret } = await startVerificationAPI(userId);
+      const { clientSecret } = await startVerificationAPI(userData);
 
       if (!clientSecret) {
         throw new Error("No client secret returned");

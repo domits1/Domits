@@ -1,4 +1,4 @@
-export const startVerificationAPI = async (userId) => {
+export const startVerificationAPI = async (userData) => {
     const url =
       "https://xjj8u4jhec.execute-api.eu-north-1.amazonaws.com/default/UsersVerification";
     const response = await fetch(url, {
@@ -6,7 +6,7 @@ export const startVerificationAPI = async (userId) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ userId }),
+      body: JSON.stringify({ userId: userData.userId, firstName: userData.firstName, lastName: userData.lastName }),
     });
   
     if (!response.ok) {

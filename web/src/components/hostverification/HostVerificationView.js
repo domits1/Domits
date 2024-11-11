@@ -5,6 +5,12 @@ import Loading from "./components/Loading";
 import Toast from "../toast/Toast";
 
 const HostVerificationView = () => {
+  const userData = {
+    userId: "100f12f1-244a-494b-9eb0-2cd3d25e47bg5",
+    firstName: "John",
+    lastName: "Doe",
+  };
+
   const {
     stripeLoading,
     stripeErrorMessage,
@@ -12,7 +18,7 @@ const HostVerificationView = () => {
     verificationStatus,
     toastConfig,
     setToastConfig,
-  } = useStripeVerification("100f12f1-244a-494b-9eb0-2cd3d25e47bq");
+  } = useStripeVerification(userData);
 
   if (stripeLoading) {
     return <Loading />;
