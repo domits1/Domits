@@ -56,7 +56,7 @@ function Contact() {
                 We are 24/7 available to ensure optimal reachability across all time zones.
                 The more specific you are in your reach out, the faster we can assist you!
                 We always get back to you within 24 hours of reaching out. Not received any response from us yet?
-                Check your spam inbox.
+                Check your spam inbox.  
             </p>
             <form onSubmit={handleSubmit}>
                 <div className="contactform">
