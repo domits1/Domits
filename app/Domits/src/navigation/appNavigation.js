@@ -23,6 +23,7 @@ import HostPayments from '../screens/hostdashboard/payments';
 import HostListings from '../screens/hostdashboard/listings';
 import OnboardingHost from '../screens/hostdashboard/OnboardingHost';
 import HostSettings from '../screens/hostdashboard/settings';
+import Landing from '../screens/Landing';
 import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingprocess/bookingProcess';
@@ -78,7 +79,7 @@ function HomeStack() {
         name="bookedAccommodation"
         component={bookedAccommodation}
       />
-
+      <Stack.Screen name="Landing" component={Landing} />
       <Stack.Screen name="Profile" component={profile} />
       <Stack.Screen name="PaymentMethods" component={paymentMethods} />
       <Stack.Screen name="Reviews" component={reviews} />
