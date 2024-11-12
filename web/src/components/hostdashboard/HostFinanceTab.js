@@ -77,7 +77,7 @@ const HostFinanceTab = () => {
     }
 
     return (
-        <main className="page-body">
+        <main className="page-Host">
             <div className="sidebar">
                 <Pages />
             </div>

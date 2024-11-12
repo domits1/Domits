@@ -1,21 +1,9 @@
-.page-body {
-    display: flex;
-}
-
-.host-pc-property {
+.page-Host {
     display: flex;
     flex-direction: row;
-    width: 100%;
-}
-
-.property-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
-    margin-left: 24%;
-    max-width: 1000px;
+    max-width: 100%;
+    width: 93%;
+    margin: 0 auto;
 }
 
 .finance-span{
@@ -24,51 +12,49 @@
     cursor: pointer;
 }
 
-.property-h3 {
-    width: 60%;
+.host-pc-finance {
+    flex: 1;
+    margin-left: 15vw;
+}
+
+.finance-content {
+    display: flex;
+    flex-direction: column;
+    max-width: 800px;
+    align-items: flex-start;
+    padding: 15px;
 }
 
 @media (max-width: 768px) {
-    .page-body {
+    .page-Host {
         flex-direction: column;
     }
 
-    .sidebar {
-        width: 100%;
-    }
 
-    .property-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: 10px;
-        margin-left: 14%;
-        max-width: 1000px;
+    .host-pc-finance {
+        margin-left: 15vw;
     }
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
-    .page-body {
-        flex-direction: column;
+    .page-Host {
+        flex-direction: row;
     }
 
-    .host-pc-property {
-        flex-direction: column;
-        width: 100%;
-        margin-top: 20px;
-    }
 
-    .property-content {
-        padding: 15px;
-        margin-left: 0;
-        max-width: 80%;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .property-h3 {
-        width: 80%;
+    .host-pc-finance {
+        margin-left: 15vw;
     }
 }
+
+@media (min-width: 1024px) {
+    .page-Host {
+        flex-direction: row;
+    }
+
+
+    .host-pc-finance {
+        margin-left: 15vw;
+    }
+}
+
