@@ -70,6 +70,13 @@ import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
 
 
+import AccommodationTypeView from './components/hostonboarding/views/AccommodationTypeView.js';
+import GuestAccessView from './components/hostonboarding/views/GuestAccessView.js';
+import BoatTypeView from './components/hostonboarding/views/BoatTypeView.js';
+import CamperTypeView from './components/hostonboarding/views/CamperTypeView.js';
+import AddressInputView from './components/hostonboarding/views/AddressInputView.js';
+
+
 
 import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
@@ -231,6 +238,15 @@ function App() {
 
                                     {/* Error*/}
                                     <Route path="/*" element={<PageNotFound />} />
+
+                                    {/* Host Onboarding v3 */}
+                                    <Route path="/hostonboarding" element={<AccommodationTypeView />} />
+                                    <Route path="/hostonboarding/accommodation" element={<GuestAccessView />} />
+                                    <Route path="/hostonboarding/boat" element={<BoatTypeView />} />
+                                    <Route path="/hostonboarding/camper" element={<CamperTypeView />} />
+                                    <Route path="/hostonboarding/accommodation/address" element={<AddressInputView />} />
+
+
                                 </Routes>
                                 {renderFooter()}
                                 {currentPath !== '/admin' && <MenuBar />}

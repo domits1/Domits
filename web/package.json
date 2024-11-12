@@ -117,7 +117,8 @@
     "recharts": "^2.12.7",
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
-    "swiper": "^11.1.14"
+    "swiper": "^11.1.14",
+    "zustand": "^5.0.1"
   },
   "jest": {
     "moduleNameMapper": {
