@@ -151,7 +151,7 @@ const ChatWidget = () => {
         { text: aiMessage || '', sender: 'ai', accommodations }
       ]);
 
-      if (messageCount + 1 >= 2) setShowHumanDecision(true);
+      if (messageCount + 1 >= 5) setShowHumanDecision(true);
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages(prevMessages => prevMessages.filter(msg => msg.sender !== 'typing'));
