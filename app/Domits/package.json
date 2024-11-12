@@ -29,7 +29,7 @@
     "aws-sdk": "^2.1613.0",
     "openai": "^4.32.0",
     "react": "18.2.0",
-    "react-native": "^0.73.4",
+    "react-native": "^0.73.10",
     "react-native-calendars": "^1.1304.1",
     "react-native-camera": "^4.2.1",
     "react-native-dropdown-picker": "^5.4.6",
