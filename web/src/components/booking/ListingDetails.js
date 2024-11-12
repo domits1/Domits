@@ -132,8 +132,15 @@ const ListingDetails = () => {
         nights: 'nights',
         cleaningFee: 'Cleaning fee',
         domitsFee: 'Domits service fee',
-        total: 'Total'
-
+        total: 'Total',
+        goBack: 'Go back',
+        perNight: 'per night',
+        guest: 'guest',
+        beds: 'beds',
+        bedrooms: 'bedrooms',
+        bathrooms: 'bathrooms',
+        showMore: 'Show more',
+        contactHost: 'Contact host',
     });
     const [translatedAccommodation, setTranslatedAccommodation] = useState(null);
     const [reviews, setReviews] = useState([]);
@@ -568,7 +575,7 @@ const ListingDetails = () => {
             }
         };
 
-        if (targetLanguage !== 'en') {
+        if (targetLanguage !== sourceLanguage) {
             translateAccommodation();
         }
     }, [sourceLanguage, targetLanguage, accommodation]);
@@ -907,7 +914,7 @@ const ListingDetails = () => {
                         <div>
                             <div>
                                 <Link to="/">
-                                    <p className="backButton">Go Back</p>
+                                    <p className="backButton">{translatedText.goBack}</p>
                                 </Link>
                                 <h1>
                                     {translatedAccommodation?.Title || accommodation.Title} {isDemo && "(DEMO)"}
@@ -920,9 +927,9 @@ const ListingDetails = () => {
 
                                 <p className='details'>
                                     <p className="placeName">{translatedAccommodation?.City || accommodation.City}, {translatedAccommodation?.Country || accommodation.Country} </p>
-                                    {`€ ${accommodation.Rent} per night • ${accommodation.GuestAmount} guests • 
-                                    ${accommodation.Beds} beds • 
-                                    ${accommodation.Bedrooms} bedrooms • ${accommodation.Bathrooms} bathrooms`}
+                                    {`€ ${accommodation.Rent} ${translatedText.perNight} • ${accommodation.GuestAmount} ${translatedText.guest} • 
+                                    ${accommodation.Beds} ${translatedText.beds} • 
+                                    ${accommodation.Bedrooms} ${translatedText.bedrooms} • ${accommodation.Bathrooms} ${translatedText.bathrooms}`}
                                 </p>
                             </div>
                             <p className='description'>{translatedAccommodation?.Description || accommodation.Description}</p>
@@ -938,7 +945,7 @@ const ListingDetails = () => {
                                 <div>
                                     {Object.keys(translatedAccommodation?.Features || accommodation.Features).length > 2 && (
                                         <button className='showMore' onClick={toggleModal}>
-                                            Show more
+                                            {translatedText.showMore}
                                         </button>
                                     )}
                                 </div>
@@ -996,7 +1003,7 @@ const ListingDetails = () => {
                                             </section>
                                             <section className="card-bottom">
                                                 <div>
-                                                    <button className='button'>Contact host</button>
+                                                    <button className='button'>{translatedText.contactHost}</button>
                                                 </div>
                                             </section>
                                         </div>
