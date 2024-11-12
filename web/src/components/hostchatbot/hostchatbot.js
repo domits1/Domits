@@ -1,243 +1,143 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './hostchatbot.css';
-import { Auth } from 'aws-amplify';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
-import stringSimilarity from 'string-similarity';
-import AccommodationTile from '../hostchatbot/AccommodationTile';
-import axios from 'axios';
+
+import AccommodationTile from './AccommodationTile';
+import useChatToggle from './hooks/useChatToggle';
+import usePollySpeech from './hooks/usePollySpeech';
+import useUserDetails from './hooks/useUserDetails';
+import useFetchData from './hooks/useFetchData';
+import useVoiceInput from './hooks/useVoiceInput';
+import useChatHistory from './hooks/useChatHistory';
 
 const HostChatbot = () => {
+  const { role, isLoading: userLoading } = useUser();
+  const location = useLocation();
+
+  // Main state hooks
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [awaitingUserChoice, setAwaitingUserChoice] = useState(true);
   const [currentOption, setCurrentOption] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
-  const [userId, setUserId] = useState(null);
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [username, setUserName] = useState(null);
-  const [accommodations, setAccommodations] = useState([]);
-  const [faqList, setFaqList] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [messageAudios, setMessageAudios] = useState({});
-  const [isRecording, setIsRecording] = useState(false);
 
-  const { role, isLoading: userLoading } = useUser();
-  const location = useLocation();
+  // Custom hooks
+  const { messageAudios, fetchPollySpeech } = usePollySpeech();
+  const { userId, username } = useUserDetails(setMessages, fetchPollySpeech);
+  const { isChatOpen, toggleChat } = useChatToggle(role, location);
+  const { accommodations, faqList, fetchAccommodations, fetchFAQ } = useFetchData();
+  const { isRecording, handleVoiceInput } = useVoiceInput(setUserInput);
+  const { downloadChatHistory, printChatHistory } = useChatHistory(messages);
 
-  const fetchPollySpeech = async (text, messageId) => {
-    try {
-      const response = await axios.post(
-          'https://4gcqhbseki.execute-api.eu-north-1.amazonaws.com/default/PollySpeech',
-          { text: text, voiceId: 'Joanna' },
-          { headers: { 'Content-Type': 'application/json' } }
-      );
-
-      const audioContent = response.data?.body ? JSON.parse(response.data.body).audioContent : null;
-      if (audioContent) {
-        setMessageAudios((prevAudios) => ({
-          ...prevAudios,
-          [messageId]: `data:audio/mp3;base64,${audioContent}`,
-        }));
-      } else {
-        console.warn("No audio content found in response.");
-      }
-    } catch (error) {
-      console.error('Error fetching speech from Polly:', error);
-    }
-  };
-
-  useEffect(() => {
-    const setUserDetails = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        setUserId(userInfo.attributes.sub);
-        const name = userInfo.attributes['custom:username'] || 'Host';
-        setUserName(name);
-        const greeting = `Hello, ${name}! Please choose an option:`;
-        const messageId = Date.now();
-        setMessages([{ id: messageId, text: greeting, sender: 'bot', contentType: 'text' }]);
-        fetchPollySpeech(greeting, messageId);
-        setAwaitingUserChoice(true);
-      } catch (error) {
-        console.error('Error fetching user details:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    setUserDetails();
-  }, []);
-
+  // Load FAQ data once the component mounts and role is confirmed
   useEffect(() => {
     if (!userLoading && role === 'Host') {
-      const chatOpened = sessionStorage.getItem('chatOpened');
-      if (!chatOpened && location.pathname === '/hostdashboard') {
-        setIsChatOpen(true);
-        sessionStorage.setItem('chatOpened', 'true');
-      }
+      fetchFAQ();
     }
-  }, [userLoading, role, location]);
+  }, [userLoading, role, fetchFAQ]);
 
-  const goBackToOptions = () => {
-    setAwaitingUserChoice(true);
-    setSuggestions([]);
-    setCurrentOption(null);
-    setAccommodations([]);
-    const message = `Hello again, ${username}! Please choose an option:`;
-    const messageId = Date.now();
-    setMessages([{ id: messageId, text: message, sender: 'bot', contentType: 'text' }]);
-    fetchPollySpeech(message, messageId);
-  };
-
-  const handleButtonClick = (choice) => {
+  // Handle button click to select a menu option
+  const handleButtonClick = useCallback((choice) => {
     setAwaitingUserChoice(false);
     setCurrentOption(choice);
     handleUserChoice(choice);
-  };
+  }, []);
 
-  const handleUserChoice = (choice) => {
-    let newMessage = '';
-    const messageId = Date.now();
+  // Process user choices and clear the greeting message
+  const handleUserChoice = useCallback(
+      (choice) => {
+        const messageId = Date.now();
+        let newMessage = '';
 
-    switch (choice) {
-      case '1':
-        newMessage = 'You can ask me about accommodations. Here are some suggestions:';
-        setSuggestions(['List my accommodation', 'Show all accommodations']);
-        break;
-      case '2':
-        newMessage = 'You can ask me about Domits. Here are some suggestions:';
-        setSuggestions(['Is Domits 100% free for hosts']);
-        break;
-      case '3':
-        newMessage = 'You can contact an expert at support@domits.com or call +123456789.';
-        setSuggestions([]);
-        break;
-      default:
-        newMessage = 'Please choose a valid option (1, 2, or 3).';
-        setSuggestions([]);
-        setAwaitingUserChoice(true);
-    }
+        switch (choice) {
+          case '1':
+            newMessage = 'You can ask me about accommodations. Here are some suggestions:';
+            setSuggestions(['List my accommodation', 'Show all accommodations']);
+            break;
+          case '2':
+            newMessage = 'You can ask me about Domits. Here are some suggestions:';
+            setSuggestions(['Is Domits 100% free for hosts']);
+            break;
+          case '3':
+            newMessage = 'You can contact an expert at support@domits.com or call +123456789.';
+            setSuggestions([]);
+            break;
+          default:
+            newMessage = 'Please choose a valid option (1, 2, or 3).';
+            setSuggestions([]);
+            setAwaitingUserChoice(true);
+        }
 
-    setMessages((prevMessages) => [
-      ...prevMessages.filter((message) => message.text !== `Hello again, ${username}! Please choose an option:`),
-      { id: messageId, text: newMessage, sender: 'bot', contentType: 'text' },
-    ]);
-    fetchPollySpeech(newMessage, messageId);
-  };
+        // Replace greeting with the selected choice message
+        setMessages([{ id: messageId, text: newMessage, sender: 'bot', contentType: 'text' }]);
+        fetchPollySpeech(newMessage, messageId);
+      },
+      [fetchPollySpeech]
+  );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+      (e) => {
+        e.preventDefault();
 
-    if (userInput.trim()) {
-      const messageId = Date.now();
-      const newMessages = [
-        ...messages,
-        { id: messageId, text: userInput, sender: 'user', contentType: 'text' },
-      ];
-      setMessages(newMessages);
-      fetchPollySpeech(userInput, messageId);
-      setUserInput('');
+        if (userInput.trim()) {
+          const messageId = Date.now();
+          setMessages((prevMessages) => [
+            ...prevMessages,
+            { id: messageId, text: userInput, sender: 'user', contentType: 'text' },
+          ]);
+          fetchPollySpeech(userInput, messageId);
+          setUserInput('');
 
-      if (currentOption === '1') {
-        handleAccommodationQuery(userInput);
-      } else if (currentOption === '2') {
-        handleFAQQuery(userInput);
-      } else {
-        handleExpertContact();
-      }
-    }
-  };
+          if (currentOption === '1') {
+            handleAccommodationQuery(userInput);
+          } else if (currentOption === '2') {
+            handleFAQQuery(userInput);
+          } else {
+            handleExpertContact();
+          }
+        }
+      },
+      [userInput, currentOption, fetchPollySpeech]
+  );
 
   const handleAccommodationQuery = async (userInput) => {
     const messageId = Date.now();
-
-    const normalizedInput = userInput.toLowerCase().trim();
-    if (normalizedInput.includes("show all accommodations") || normalizedInput.includes("list all accommodations")) {
-      await fetchAllAccommodations();
-    } else {
+    if (userInput.toLowerCase().includes('show all accommodations')) {
       await fetchAccommodations();
     }
 
-    if (accommodations.length === 0) {
-      const noDataMessage = "Sorry, there is no accommodation data available right now.";
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: messageId, text: noDataMessage, sender: 'bot', contentType: 'text' },
-      ]);
-      fetchPollySpeech(noDataMessage, messageId);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const contextData = accommodations.map((acc) => ({
-        title: acc.title || 'Accommodation',
-        city: acc.city || 'Not specified',
-        country: acc.country || 'Not specified',
-        bathrooms: acc.bathrooms || 'Not specified',
-        guestAmount: acc.guestAmount || 'Not specified',
-      }));
-
-      const responseMessage = `Here are the accommodations:\n${contextData.map((acc) => `
+    const responseMessage = accommodations.length
+        ? `Here are the accommodations:\n${accommodations
+            .map((acc) => `
         Title: ${acc.title}
         City: ${acc.city}
-        Country: ${acc.country}
-        Bathrooms: ${acc.bathrooms}
-        Guest Capacity: ${acc.guestAmount}
-      `).join('\n\n')}`;
+      `)
+            .join('\n\n')}`
+        : 'Sorry, there is no accommodation data available right now.';
 
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
-      ]);
-      fetchPollySpeech(responseMessage, messageId);
-    } catch (error) {
-      const errorMessage = "Sorry, I couldn't process your request at the moment.";
-      console.error('Error with GPT-3.5 Turbo API:', error);
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: messageId, text: errorMessage, sender: 'bot', contentType: 'text' },
-      ]);
-      fetchPollySpeech(errorMessage, messageId);
-    } finally {
-      setLoading(false);
-    }
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
+    ]);
+    fetchPollySpeech(responseMessage, messageId);
   };
 
   const handleFAQQuery = (userInput) => {
     const messageId = Date.now();
+    const bestMatch = faqList.find((faq) =>
+        faq.question.toLowerCase().includes(userInput.toLowerCase())
+    );
+    const responseMessage = bestMatch
+        ? `Q: ${bestMatch.question} A: ${bestMatch.answer}`
+        : "Sorry, I couldn't find an answer to your question.";
 
-    if (faqList.length === 0) {
-      const noFaqMessage = "Sorry, I don't have any FAQs available at the moment.";
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: messageId, text: noFaqMessage, sender: 'bot', contentType: 'text' },
-      ]);
-      fetchPollySpeech(noFaqMessage, messageId);
-      return;
-    }
-
-    const faqQuestions = faqList.map((faq) => faq.question.toLowerCase());
-    const bestMatch = stringSimilarity.findBestMatch(userInput.toLowerCase(), faqQuestions);
-
-    if (bestMatch.bestMatch.rating > 0.5) {
-      const matchedFAQ = faqList[bestMatch.bestMatchIndex];
-      const faqMessage = `Q: ${matchedFAQ.question} A: ${matchedFAQ.answer}`;
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: messageId, text: faqMessage, sender: 'bot', contentType: 'faq' },
-      ]);
-      fetchPollySpeech(faqMessage, messageId);
-    } else {
-      const notFoundMessage = "Sorry, I couldn't find an answer to your question.";
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: messageId, text: notFoundMessage, sender: 'bot', contentType: 'text' },
-      ]);
-      fetchPollySpeech(notFoundMessage, messageId);
-    }
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
+    ]);
+    fetchPollySpeech(responseMessage, messageId);
   };
 
   const handleExpertContact = () => {
@@ -250,145 +150,17 @@ const HostChatbot = () => {
     fetchPollySpeech(expertMessage, messageId);
   };
 
-  const handleVoiceInput = () => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SpeechRecognition();
-    recognition.lang = 'en-US';
-    recognition.continuous = false;
+  // Reset to initial state for choosing an option when "Go Back" is pressed
+  const goBackToOptions = () => {
+    setAwaitingUserChoice(true);
+    setSuggestions([]);
+    setCurrentOption(null);
 
-    recognition.onstart = () => {
-      setIsRecording(true);
-    };
-
-    recognition.onresult = (event) => {
-      const transcript = event.results[0][0].transcript;
-      setUserInput(transcript);
-      setIsRecording(false);
-    };
-
-    recognition.onerror = (event) => {
-      console.error('Voice input error:', event.error);
-      setIsRecording(false);
-    };
-
-    recognition.onend = () => {
-      setIsRecording(false);
-    };
-
-    recognition.start();
-  };
-
-  const fetchAccommodations = async () => {
-    if (!userId) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(
-          'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
-          {
-            method: 'POST',
-            body: JSON.stringify({ OwnerId: userId }),
-            headers: { 'Content-type': 'application/json; charset=UTF-8' },
-          }
-      );
-      const data = await response.json();
-      const accommodationsArray = data.body ? JSON.parse(data.body) : [];
-      const formattedAccommodations = accommodationsArray.map((acc) => ({
-        id: acc.ID,
-        title: acc.Title || 'Accommodation',
-        city: acc.City,
-        bathrooms: acc.Bathrooms,
-        guestAmount: acc.GuestAmount,
-        images: acc.Images || {},
-      }));
-
-      setAccommodations(formattedAccommodations);
-    } catch (error) {
-      console.error('Error fetching accommodations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAllAccommodations = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const responseData = await response.json();
-      const allAccommodations = responseData.body ? JSON.parse(responseData.body) : [];
-      const formattedAccommodations = allAccommodations.map((acc) => ({
-        id: acc.ID,
-        title: acc.Title || 'Accommodation',
-        city: acc.City,
-        bathrooms: acc.Bathrooms,
-        guestAmount: acc.GuestAmount,
-        images: acc.Images || {},
-      }));
-
-      setAccommodations(formattedAccommodations);
-    } catch (error) {
-      console.error('Error fetching all accommodations:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchFAQ = async () => {
-    try {
-      const response = await fetch('https://vs3lm9q7e9.execute-api.eu-north-1.amazonaws.com/default/readFAQ', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-      });
-      const responseData = await response.json();
-      const faqData = JSON.parse(responseData.body);
-      setFaqList(faqData);
-    } catch (error) {
-      console.error('Error fetching FAQ data:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchFAQ();
-  }, []);
-
-  const toggleChat = () => setIsChatOpen(!isChatOpen);
-
-  const downloadChatHistory = () => {
-    const chatText = messages
-        .map(message => `${message.sender === 'bot' ? 'Bot' : 'User'}: ${message.text}`)
-        .join('\n\n');
-
-    const blob = new Blob([chatText], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'chat_history.txt';
-    link.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const printChatHistory = () => {
-    const printableContent = messages
-        .map(message => `<p><strong>${message.sender === 'bot' ? 'Bot' : 'User'}:</strong> ${message.text}</p>`)
-        .join('');
-
-    const newWindow = window.open('', '', 'width=600,height=400');
-    newWindow.document.write(`
-      <html>
-        <head>
-          <title>Chat History</title>
-        </head>
-        <body>
-          <h2>Chat History</h2>
-          ${printableContent}
-        </body>
-      </html>
-    `);
-    newWindow.document.close();
-    newWindow.print();
+    const message = `Hello again, ${username}! Please choose an option:`;
+    const messageId = Date.now();
+    // Clear previous messages and add only the greeting message
+    setMessages([{ id: messageId, text: message, sender: 'bot', contentType: 'text' }]);
+    fetchPollySpeech(message, messageId);
   };
 
   return (
@@ -406,31 +178,19 @@ const HostChatbot = () => {
           </div>
           <div className="hostchatbot-window">
             {messages.map((message) => (
-                <div
-                    key={message.id}
-                    className={`hostchatbot-message ${
-                        message.contentType === 'accommodation'
-                            ? 'accommodation-layout'
-                            : message.contentType === 'faq'
-                                ? 'faq-layout'
-                                : message.sender
-                    }`}
-                >
+                <div key={message.id} className={`hostchatbot-message ${message.sender}`}>
                   <p>{message.text}</p>
+                  {/* Unconditionally render the play audio button if there's an audio message */}
                   {messageAudios[message.id] && (
-                      <button onClick={() => new Audio(messageAudios[message.id]).play()} className="play-audio-button">
+                      <button
+                          onClick={() => new Audio(messageAudios[message.id]).play()}
+                          className="play-audio-button"
+                      >
                         {message.sender === 'user' ? 'Hear My Question' : 'Hear Response'}
                       </button>
                   )}
                 </div>
             ))}
-            {accommodations.length > 0 && (
-                <div className="hostchatbot-accommodations">
-                  {accommodations.map((accommodation, index) => (
-                      <AccommodationTile key={index} accommodation={accommodation} />
-                  ))}
-                </div>
-            )}
             {awaitingUserChoice && (
                 <div className="hostchatbot-option-buttons">
                   <button onClick={() => handleButtonClick('1')}>1. I have a question regarding accommodations</button>
