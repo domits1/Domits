@@ -15,7 +15,6 @@ const HostChatbot = () => {
   const { role, isLoading: userLoading } = useUser();
   const location = useLocation();
 
-  // Main state hooks
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -23,7 +22,6 @@ const HostChatbot = () => {
   const [currentOption, setCurrentOption] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
 
-  // Custom hooks
   const { messageAudios, fetchPollySpeech } = usePollySpeech();
   const { userId, username } = useUserDetails(setMessages, fetchPollySpeech);
   const { isChatOpen, toggleChat } = useChatToggle(role, location);
@@ -31,21 +29,18 @@ const HostChatbot = () => {
   const { isRecording, handleVoiceInput } = useVoiceInput(setUserInput);
   const { downloadChatHistory, printChatHistory } = useChatHistory(messages);
 
-  // Load FAQ data once the component mounts and role is confirmed
   useEffect(() => {
     if (!userLoading && role === 'Host') {
       fetchFAQ();
     }
   }, [userLoading, role, fetchFAQ]);
 
-  // Handle button click to select a menu option
   const handleButtonClick = useCallback((choice) => {
     setAwaitingUserChoice(false);
     setCurrentOption(choice);
     handleUserChoice(choice);
   }, []);
 
-  // Process user choices and clear the greeting message
   const handleUserChoice = useCallback(
       (choice) => {
         const messageId = Date.now();
@@ -70,7 +65,6 @@ const HostChatbot = () => {
             setAwaitingUserChoice(true);
         }
 
-        // Replace greeting with the selected choice message
         setMessages([{ id: messageId, text: newMessage, sender: 'bot', contentType: 'text' }]);
         fetchPollySpeech(newMessage, messageId);
       },
@@ -150,7 +144,6 @@ const HostChatbot = () => {
     fetchPollySpeech(expertMessage, messageId);
   };
 
-  // Reset to initial state for choosing an option when "Go Back" is pressed
   const goBackToOptions = () => {
     setAwaitingUserChoice(true);
     setSuggestions([]);
@@ -158,7 +151,6 @@ const HostChatbot = () => {
 
     const message = `Hello again, ${username}! Please choose an option:`;
     const messageId = Date.now();
-    // Clear previous messages and add only the greeting message
     setMessages([{ id: messageId, text: message, sender: 'bot', contentType: 'text' }]);
     fetchPollySpeech(message, messageId);
   };
@@ -180,7 +172,6 @@ const HostChatbot = () => {
             {messages.map((message) => (
                 <div key={message.id} className={`hostchatbot-message ${message.sender}`}>
                   <p>{message.text}</p>
-                  {/* Unconditionally render the play audio button if there's an audio message */}
                   {messageAudios[message.id] && (
                       <button
                           onClick={() => new Audio(messageAudios[message.id]).play()}
