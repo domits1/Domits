@@ -6,7 +6,7 @@ import { useUser } from '../../UserContext';
 import Slider from 'react-slick';
 
 const ChatWidget = () => {
-  const { user, isLoading } = useUser();
+  const { user, role, isLoading } = useUser();
   const [userInput, setUserInput] = useState('');
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -290,6 +290,14 @@ const ChatWidget = () => {
       }
     }
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (role !== 'Guest') {
+    return null;
+  }
 
   return (
     <div className={`chatwidget-widget ${isOpen ? 'open' : ''}`}>
