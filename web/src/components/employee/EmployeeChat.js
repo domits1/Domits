@@ -94,7 +94,7 @@ const EmployeeChat = () => {
     };
 
     ws.onerror = (error) => {
-      console.error('WebSocket error observed:', error);
+      //error('WebSocket error observed:', error);
     };
 
     ws.onclose = async (event) => {
@@ -150,7 +150,7 @@ const EmployeeChat = () => {
 
       const data = await response.json();
     } catch (error) {
-      console.error(error.message);
+      //console.error(error.message);
     }
   };
 

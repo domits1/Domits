@@ -86,7 +86,7 @@ const ChatWidget = () => {
         setMessages(updatedMessages);
       }
     } catch (error) {
-      console.error('Error loading chat history:', error);
+      //console.error('Error loading chat history:', error);
     }
   };
   
@@ -153,7 +153,7 @@ const ChatWidget = () => {
 
       if (messageCount + 1 >= 5) setShowHumanDecision(true);
     } catch (error) {
-      console.error('Error sending message:', error);
+      //console.error('Error sending message:', error);
       setMessages(prevMessages => prevMessages.filter(msg => msg.sender !== 'typing'));
     } finally {
       setLoading(false);
@@ -204,9 +204,9 @@ const ChatWidget = () => {
 
         ws.onmessage = (event) => {
           const incomingMessage = JSON.parse(event.data);
-          console.log(incomingMessage)
+          //console.log(incomingMessage)
           if (!employeeName && incomingMessage.userName){
-            console.log(incomingMessage.userName)
+            //console.log(incomingMessage.userName)
             setEmployeeName(incomingMessage.userName);
           } 
 
@@ -229,7 +229,7 @@ const ChatWidget = () => {
       }
 
     } catch (err) {
-      console.error('Failed to connect to employee:', err);
+      //console.error('Failed to connect to employee:', err);
       setMessages(prevMessages => [
         ...prevMessages,
         { text: 'Failed to connect to an agent.', sender: 'system' }
@@ -257,10 +257,10 @@ const ChatWidget = () => {
         userName: userName,
         liveChatId: liveChatId 
       };
-      console.log("Sending message:", payload);
+      //console.log("Sending message:", payload);
       socket.send(JSON.stringify(payload));
     } else {
-      console.log("Not sending message", { socket, isConnected, liveChatId });
+      //console.log("Not sending message", { socket, isConnected, liveChatId });
     }
     setMessages(prevMessages => [...prevMessages, { text: message, sender: 'user' }]);
   };
@@ -279,14 +279,14 @@ const ChatWidget = () => {
         const data = JSON.parse(response.data.body);
 
         if (data.liveChatId) {
-          console.log("Generated liveChatId:", data.liveChatId);
+          //console.log("Generated liveChatId:", data.liveChatId);
           setLiveChatId(data.liveChatId);
         } else {
-          console.warn("No liveChatId found in response data:", data);
+          //console.warn("No liveChatId found in response data:", data);
         }
         
       } catch (error) {
-        console.error("Error generating liveChatId:", error);
+        //console.error("Error generating liveChatId:", error);
       }
     }
   };
