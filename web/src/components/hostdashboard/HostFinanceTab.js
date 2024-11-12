@@ -2,8 +2,6 @@ import React, { useEffect, useState } from 'react';
 import Pages from "./Pages.js";
 import './HostFinanceTab.css';
 import { useNavigate } from 'react-router-dom';
-import spinner from "../../images/spinnner.gif";
-import stripeIcon from "../../images/icons/stripe-icon.png";
 import { Auth } from "aws-amplify";
 
 const HostFinanceTab = () => {
@@ -13,7 +11,6 @@ const HostFinanceTab = () => {
     const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
     const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState('/hostdashboard');
 
     const handleEnlistNavigation = () => {
         navigate('/enlist');
@@ -50,10 +47,6 @@ const HostFinanceTab = () => {
         setUserEmailAsync();
     }, []);
 
-    useEffect(() => {
-        setActiveTab(location.pathname);
-    }, [location.pathname]);
-
     async function handleStripeAction() {
         if (stripeLoginUrl) {
             window.open(stripeLoginUrl, '_blank');
@@ -85,8 +78,10 @@ const HostFinanceTab = () => {
 
     return (
         <main className="page-body">
-            <section className='host-pc-finance'>
+            <div className="sidebar">
                 <Pages />
+            </div>
+            <section className="host-pc-finance">
                 <div className="finance-content">
                     <h1>Finance</h1>
                     <h2>Ready to receive payments?</h2>
@@ -95,37 +90,28 @@ const HostFinanceTab = () => {
                             <li>1. Create an accommodation first before you proceed to the next step: <span
                                 className="finance-span" onClick={handleEnlistNavigation}> Create Accommodation </span>
                             </li>
-                            <br></br>
-                            <br></br>
+                            <br />
                             <li className="finance-li">
                                 {stripeLoginUrl ? (
-                                    <>
-                                        {bankDetailsProvided ? (
-                                            <>
-                                                2. You are connected to Stripe!
-                                            </>
-                                        ) : (
-                                            <>
-                                                2. Your payment details are not provided yet, make sure to{" "}
-                                                <span
-                                                    className="finance-span"
-                                                    onClick={handleStripeAction}
-                                                >
-                                                    finish your Stripe onboarding
-                                                </span>
-                                                {" "}before you proceed.
-                                            </>
-                                        )}
-                                    </>
+                                    bankDetailsProvided ? (
+                                        <>2. You are connected to Stripe!</>
+                                    ) : (
+                                        <>2. Your payment details are not provided yet, make sure to{" "}
+                                            <span
+                                                className="finance-span"
+                                                onClick={handleStripeAction}
+                                            >
+                                                finish your Stripe onboarding
+                                            </span> before you proceed.
+                                        </>
+                                    )
                                 ) : (
-                                    <>
-                                        <span>2. Once your accommodation is created, you can create a Stripe account to receive payments: </span>
-                                        <span className="finance-span" onClick={handleStripeAction}>Domits Stripe</span>
+                                    <>2. Once your accommodation is created, you can create a Stripe account to receive payments: 
+                                        <span className="finance-span" onClick={handleStripeAction}> Domits Stripe</span>
                                     </>
                                 )}
                             </li>
-                            <br></br>
-                            <br></br>
+                            <br />
                             <li>3. Set your accommodation live at <span
                                 onClick={() => handleNavigation("/hostdashboard/listings")}
                                 className="finance-span">listings! </span></li>
