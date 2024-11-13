@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { signUp, getCurrentUser, signOut } from '@aws-amplify/auth';
@@ -70,7 +70,7 @@ const Register = () => {
 
       navigation.navigate('ConfirmEmail', {
         email: email,
-        username: email, // Using email as the username for confirmation
+        username: email,
       });
     } catch (error) {
       if (error.code === 'UsernameExistsException') {
@@ -97,82 +97,78 @@ const Register = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
-      <ScrollView contentContainerStyle={styles.container}>
-      <View style={styles.container}>
-      {isAuthenticated ? (
-        <TouchableOpacity
-          style={styles.signOutButton}
-          onPress={async () => {
-            await signOut();
-            setIsAuthenticated(false);
-          }}
-        >
-          <Text style={styles.buttonText}>Sign Out</Text>
-          </TouchableOpacity>
-      ) : (
-        <View style={styles.registerContainer}>
-          <Text style={styles.title}>Create an Account on Domits</Text>
-          <Text style={styles.label}>Username:</Text>
-          <TextInput
-            style={styles.input} // for now because it doesnt want to work with confirmmail
-            placeholder="Username"
-            value={formData.username}
-            onChangeText={(value) => handleChange('username', value)}
-          />
-          <Text style={styles.label}>First Name:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="First Name"
-            value={formData.firstName}
-            onChangeText={(value) => handleChange('firstName', value)}
-          />
-          <Text style={styles.label}>Last Name:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Last Name"
-            value={formData.lastName}
-            onChangeText={(value) => handleChange('lastName', value)}
-          />
-          <Text style={styles.label}>Email:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={formData.email}
-            onChangeText={(value) => handleChange('email', value)}
-          />
-          <Text style={styles.label}>Password:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Password"
-            secureTextEntry
-            value={formData.password}
-            onChangeText={(value) => handleChange('password', value)}
-          />
-          <View style={styles.checkboxContainer}>
-            <CheckBox
-            value={isHost}
-            onValueChange={handleHostChange}
-            tintColors={{ true: 'black', false: 'black' }}
-          />
-            <Text
-                style={[
-                  styles.checkBoxLabel,
-                  { color: isHost ? 'black' : 'black' }
-                ]}>
-              Become a Host
-            </Text>
-          </View>
-          {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
-          <TouchableOpacity style={styles.signUpButton} onPress={onSubmit}>
-            <Text style={styles.buttonText}>Sign Up</Text>
-          </TouchableOpacity>
-          <Text style={styles.linkText} onPress={() => navigation.navigate('Login')}>
-            Already have an account? Log in here
-          </Text>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          {isAuthenticated ? (
+            <TouchableOpacity
+              style={styles.signOutButton}
+              onPress={async () => {
+                await signOut();
+                setIsAuthenticated(false);
+              }}
+            >
+              <Text style={styles.buttonText}>Sign Out</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.registerContainer}>
+              <Text style={styles.title}>Create an Account on Domits</Text>
+              <Text style={styles.label}>Username:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                value={formData.username}
+                onChangeText={(value) => handleChange('username', value)}
+              />
+              <Text style={styles.label}>First Name:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                value={formData.firstName}
+                onChangeText={(value) => handleChange('firstName', value)}
+              />
+              <Text style={styles.label}>Last Name:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                value={formData.lastName}
+                onChangeText={(value) => handleChange('lastName', value)}
+              />
+              <Text style={styles.label}>Email:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={formData.email}
+                onChangeText={(value) => handleChange('email', value)}
+              />
+              <Text style={styles.label}>Password:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry
+                value={formData.password}
+                onChangeText={(value) => handleChange('password', value)}
+              />
+              <View style={styles.checkboxContainer}>
+                <CheckBox
+                  value={isHost}
+                  onValueChange={handleHostChange}
+                  tintColors={{ true: 'black', false: 'black' }}
+                />
+                <Text style={styles.checkBoxLabel}>
+                  Become a Host
+                </Text>
+              </View>
+              {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+              <TouchableOpacity style={styles.signUpButton} onPress={onSubmit}>
+                <Text style={styles.buttonText}>Sign Up</Text>
+              </TouchableOpacity>
+              <Text style={styles.linkText} onPress={() => navigation.navigate('Login')}>
+                Already have an account? Log in here
+              </Text>
+            </View>
+          )}
         </View>
-      )}
-    </View>
-    </ScrollView>
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -181,6 +177,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
+    paddingHorizontal: 20,
   },
   container: {
     justifyContent: 'center',
@@ -253,9 +250,8 @@ const styles = StyleSheet.create({
 
   signOutButton: {
     backgroundColor: '#003366',
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-    borderRadius: 1,
+    paddingVertical: 12,
+    borderRadius: 5,
     alignItems: 'center',
   },
   buttonText: {

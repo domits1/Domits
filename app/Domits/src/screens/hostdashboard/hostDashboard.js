@@ -37,6 +37,12 @@ const HostDashboard = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
+          onPress={() => navigation.navigate('HostCalendar')}>
+          <Text style={styles.listItemText}>Calendar</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.listItem}
           onPress={() => navigation.navigate('HostProfile')}>
           <Text style={styles.listItemText}>Profile</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
