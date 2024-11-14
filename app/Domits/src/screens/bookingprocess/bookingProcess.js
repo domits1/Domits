@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import personalDetailsForm from './personalDetailsForm';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Calendar} from 'react-native-calendars';
+import DateFormatterYYYY_MM_DD from '../../components/utils/DateFormatterYYYY_MM_DD';
 
 const OnBoarding1 = ({navigation, route}) => {
   const accommodation = route.params.accommodation;
@@ -46,16 +47,177 @@ const OnBoarding1 = ({navigation, route}) => {
     calculateNights();
   }, [selectedDates]);
 
-  const CalendarModal = ({onClose, onConfirm, maxDate, dateRanges}) => {
-    const today = new Date().toISOString().split('T')[0]; // Get today's date in YYYY-MM-DD format
+  const [bookings, setBookings] = useState([]);
+  const [bookedDates, setBookedDates] = useState([]);
+
+  useEffect(() => {
+    if (!accommodation) {
+      return;
+    }
+
+    const fetchBookings = async () => {
+      try {
+        const response = await fetch(
+          'https://ct7hrhtgac.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingByAccommodationAndStatus',
+          {
+            method: 'POST',
+            body: JSON.stringify({
+              AccoID: parsedAccommodation.ID,
+              Status: 'Accepted',
+            }),
+            headers: {
+              'Content-type': 'application/json; charset=UTF-8',
+            },
+          },
+        );
+        if (!response.ok) {
+          throw new Error('Failed to fetch');
+        }
+        const data = await response.json();
+
+        if (data.body && typeof data.body === 'string') {
+          const retrievedBookingDataArray = JSON.parse(data.body);
+
+          if (Array.isArray(retrievedBookingDataArray)) {
+            const validBookings = retrievedBookingDataArray
+              .filter(booking => {
+                const startDate = booking.StartDate?.S;
+                const endDate = booking.EndDate?.S;
+
+                const startDateValid =
+                  startDate && !isNaN(Date.parse(startDate));
+                const endDateValid = endDate && !isNaN(Date.parse(endDate));
+
+                return startDateValid && endDateValid;
+              })
+              .map(booking => {
+                const startDateObj = new Date(booking.StartDate.S);
+                startDateObj.setDate(startDateObj.getDate() + 1);
+                const startDateFormatted =
+                  DateFormatterYYYY_MM_DD(startDateObj);
+                const endDateObj = new Date(booking.EndDate.S);
+                endDateObj.setDate(endDateObj.getDate() + 1);
+                const endDateFormatted = DateFormatterYYYY_MM_DD(endDateObj);
+
+                return [startDateFormatted, endDateFormatted];
+              });
+
+            setBookings(retrievedBookingDataArray);
+            setBookedDates(validBookings);
+          } else {
+            console.error(
+              'Retrieved data is not an array:',
+              retrievedBookingDataArray,
+            );
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch booking data:', error);
+      }
+    };
+
+    fetchBookings();
+  }, [accommodation, parsedAccommodation]);
+
+  const CalendarModal = ({onClose, onConfirm, dateRanges}) => {
+    const today = DateFormatterYYYY_MM_DD(new Date());
+    const [selectedRange, setSelectedRange] = useState({
+      startDate: '',
+      endDate: '',
+    });
+
+    const maxDateObj = new Date(
+      Math.max(...dateRanges.map(range => new Date(range.endDate))),
+    );
+    const maxDateStr = DateFormatterYYYY_MM_DD(maxDateObj);
+    const minDate = today;
+
+    const filterBookedDates = date => {
+      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date));
+      return bookedDates.some(bookedRange => {
+        const start = DateFormatterYYYY_MM_DD(new Date(bookedRange[0]));
+        const end = DateFormatterYYYY_MM_DD(new Date(bookedRange[1]));
+        return selectedDate >= start && selectedDate <= end;
+      });
+    };
+
+    const filterDisabledDays = date => {
+      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date));
+      return !dateRanges.some(range => {
+        const start = DateFormatterYYYY_MM_DD(new Date(range.startDate));
+        const end = DateFormatterYYYY_MM_DD(new Date(range.endDate));
+        return selectedDate >= start && selectedDate <= end;
+      });
+    };
+
+    const combinedDateFilter = date => {
+      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date));
+      const isInThePast = selectedDate < today;
+      const isOutsideAvailableRange = filterDisabledDays(selectedDate);
+      const isBooked = filterBookedDates(selectedDate);
+
+      return !(isOutsideAvailableRange || isBooked || isInThePast);
+    };
+
+    const [currentDateRange, setCurrentDateRange] = useState({});
 
     const onDayPress = day => {
+      const selectedDate = day.dateString;
+      if (!combinedDateFilter(selectedDate)) {
+        alert('This date is unavailable.');
+        return;
+      }
+
       if (!selectedRange.startDate) {
-        setSelectedRange({startDate: day.dateString});
+        const selectedRange = dateRanges.find(range => {
+          const start = DateFormatterYYYY_MM_DD(new Date(range.startDate));
+          const end = DateFormatterYYYY_MM_DD(new Date(range.endDate));
+          return selectedDate >= start && selectedDate <= end;
+        });
+
+        if (selectedRange) {
+          setSelectedRange({startDate: selectedDate});
+          setCurrentDateRange(selectedRange);
+        }
       } else if (!selectedRange.endDate) {
-        setSelectedRange({...selectedRange, endDate: day.dateString});
+        const selectedEndDate = DateFormatterYYYY_MM_DD(new Date(selectedDate));
+        const rangeStart = DateFormatterYYYY_MM_DD(
+          new Date(currentDateRange.startDate),
+        );
+        const rangeEnd = DateFormatterYYYY_MM_DD(
+          new Date(currentDateRange.endDate),
+        );
+
+        if (selectedEndDate >= rangeStart && selectedEndDate <= rangeEnd) {
+          const startDate = new Date(selectedRange.startDate);
+          const endDate = new Date(selectedDate);
+
+          const isOverlap = bookedDates.some(bookedRange => {
+            const bookedStart = new Date(bookedRange[0]);
+            const bookedEnd = new Date(bookedRange[1]);
+            return startDate <= bookedEnd && endDate >= bookedStart;
+          });
+
+          if (isOverlap) {
+            alert(
+              'The selected date range includes booked dates. Please choose another range.',
+            );
+            setSelectedRange({startDate: '', endDate: ''});
+            return;
+          }
+
+          setSelectedRange({...selectedRange, endDate: selectedDate});
+        } else {
+          alert('Please select an end date within the same range.');
+        }
       } else {
-        setSelectedRange({startDate: day.dateString});
+        setSelectedRange({startDate: selectedDate});
+        const selectedRange = dateRanges.find(range => {
+          const start = DateFormatterYYYY_MM_DD(new Date(range.startDate));
+          const end = DateFormatterYYYY_MM_DD(new Date(range.endDate));
+          return selectedDate >= start && selectedDate <= end;
+        });
+        setCurrentDateRange(selectedRange);
       }
     };
 
@@ -65,18 +227,63 @@ const OnBoarding1 = ({navigation, route}) => {
       const endDate = new Date(end);
 
       while (currentDate <= endDate) {
-        const dateString = currentDate.toISOString().split('T')[0];
-        dates[dateString] = {
-          color: '#4CAF50',
-          textColor: 'white',
-        };
+        const dateString = DateFormatterYYYY_MM_DD(currentDate);
+        dates[dateString] = {color: '#4CAF50', textColor: 'white'};
         currentDate.setDate(currentDate.getDate() + 1);
       }
-
       return dates;
     };
 
+    const getUnavailableDates = () => {
+      const unavailableDates = {};
+
+      const markDisabledDate = date => {
+        const dateString = DateFormatterYYYY_MM_DD(new Date(date));
+        unavailableDates[dateString] = {
+          disabled: true,
+          disableTouchEvent: true,
+          textColor: '#a9a9a9',
+        };
+      };
+
+      const earliestStart = new Date(dateRanges[0].startDate);
+      let currentDate = new Date(today);
+      while (currentDate <= maxDateObj) {
+        if (
+          !dateRanges.some(range => {
+            const start = new Date(range.startDate);
+            const end = new Date(range.endDate);
+            return currentDate >= start && currentDate <= end;
+          })
+        ) {
+          markDisabledDate(currentDate);
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
+
+      bookedDates.forEach(bookedRange => {
+        let start = new Date(bookedRange[0]);
+        const end = new Date(bookedRange[1]);
+        while (start <= end) {
+          markDisabledDate(start);
+          start.setDate(start.getDate() + 1);
+        }
+      });
+
+      currentDate = new Date(today);
+      currentDate.setDate(currentDate.getDate() - 1);
+      while (currentDate >= earliestStart) {
+        markDisabledDate(currentDate);
+        currentDate.setDate(currentDate.getDate() - 1);
+      }
+
+      return unavailableDates;
+    };
+
+    const unavailableDates = getUnavailableDates();
+
     const markedDates = {
+      ...unavailableDates,
       ...(selectedRange.startDate && selectedRange.endDate
         ? getDatesInRange(selectedRange.startDate, selectedRange.endDate)
         : {}),
@@ -95,7 +302,6 @@ const OnBoarding1 = ({navigation, route}) => {
     const confirmSelection = () => {
       if (selectedRange.startDate && selectedRange.endDate) {
         onConfirm(selectedRange);
-        calculateNights();
         onClose();
       } else {
         alert('Please select both start and end dates.');
@@ -109,8 +315,8 @@ const OnBoarding1 = ({navigation, route}) => {
             <Text style={styles.modalTitle}>Select Dates</Text>
             <Calendar
               markingType="period"
-              minDate={today} // Set minDate to today
-              maxDate={maxDate}
+              minDate={minDate}
+              maxDate={maxDateStr}
               onDayPress={onDayPress}
               markedDates={markedDates}
             />
@@ -298,8 +504,6 @@ const OnBoarding1 = ({navigation, route}) => {
             <CalendarModal
               onClose={handleChangeDatesPopUp}
               onConfirm={setSelectedDates}
-              minDate={parsedAccommodation.DateRanges[0].startDate}
-              maxDate={parsedAccommodation.DateRanges[2].endDate}
               dateRanges={parsedAccommodation.DateRanges}
             />
           )}
