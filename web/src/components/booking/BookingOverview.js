@@ -155,7 +155,8 @@ const BookingOverview = () => {
             State: "Accepted",
             price: totalAmount / 100,
             startDate,
-            endDate
+            endDate,
+            cleaningFee
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
@@ -166,7 +167,8 @@ const BookingOverview = () => {
             State: "Failed",
             price: totalAmount / 100,
             startDate,
-            endDate
+            endDate,
+            cleaningFee
         }).toString();
 
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
@@ -257,7 +259,6 @@ const BookingOverview = () => {
                         </div>
                     </div>
 
-
                     <h1>{accommodation.Title}</h1>
 
                     <div className="main-card">
@@ -313,6 +314,9 @@ const BookingOverview = () => {
                             {loading ? 'Loading...' : 'Confirm & Pay'}
                         </button>
                     </div>
+
+
+
                 </div>
             </main>
     );

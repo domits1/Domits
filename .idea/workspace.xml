@@ -4,15 +4,34 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8a792168-a166-4f7b-a951-43743e50630d" name="Changes" comment="share button works and like button is implemented">
+    <list default="true" id="8a792168-a166-4f7b-a951-43743e50630d" name="Changes" comment="slid are giving errors not done yet">
+      <change afterPath="$PROJECT_DIR$/web/src/components/booking/PaymentConfirmPage.js" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/web/src/components/booking/paymentconfirmpage.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/web/src/components/home/Accommodations.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/home/Accommodations.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/App.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/App.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/booking/BookingCalendar.module.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/BookingCalendar.module.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/booking/BookingOverview.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/BookingOverview.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/booking/ListingDetails.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/ListingDetails.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/booking/PaymentConfirm.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/PaymentConfirm.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/booking/bookingoverview.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/bookingoverview.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/booking/listing.css" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/booking/listing.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/guestdashboard/GuestBooking.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/guestdashboard/GuestBooking.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/web/src/components/home/Accommodations.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/home/Accommodations.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/web/src/components/landingpage/OnboardingHost.js" beforeDir="false" afterPath="$PROJECT_DIR$/web/src/components/landingpage/OnboardingHost.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="JavaScript File" />
+        <option value="CSS File" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
@@ -30,19 +49,20 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowFactoryState&quot;: &quot;false&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;C:\\Users\\chaos\\Documents\\Projects\\Domits\\app\\Domits\\node_modules\\typescript\\lib&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "RunOnceActivity.OpenProjectViewOnStart": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "WebServerToolWindowFactoryState": "false",
+    "list.type.of.created.stylesheet": "CSS",
+    "node.js.detected.package.eslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "ts.external.directory.path": "/Users/ashoe/Santosh/Schooljaar3/Domits/web/node_modules/typescript/lib",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
@@ -52,7 +72,7 @@
       <option name="presentableId" value="Default" />
       <updated>1730467893533</updated>
       <workItem from="1730467894738" duration="8914000" />
-      <workItem from="1730812202716" duration="20176000" />
+      <workItem from="1730812202716" duration="54883000" />
     </task>
     <task id="LOCAL-00001" summary="share button works and like button is implemented">
       <created>1730475715627</created>
@@ -61,7 +81,14 @@
       <option name="project" value="LOCAL" />
       <updated>1730475715627</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="slid are giving errors not done yet">
+      <created>1730972474340</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1730972474340</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -86,7 +113,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="share button works and like button is implemented" />
-    <option name="LAST_COMMIT_MESSAGE" value="share button works and like button is implemented" />
+    <MESSAGE value="slid are giving errors not done yet" />
+    <option name="LAST_COMMIT_MESSAGE" value="slid are giving errors not done yet" />
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
