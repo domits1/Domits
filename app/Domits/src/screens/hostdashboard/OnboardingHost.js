@@ -41,6 +41,11 @@ const OnboardingHost = () => {
     GuestAccess: '',
     BoatType: '',
     CamperType: '',
+    GuestAmount: 0,
+    Cabins: 0,
+    Bedrooms: 0,
+    Bathrooms: 0,
+    Beds: 0,
   });
   const [errors, setErrors] = useState({});
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -162,6 +167,22 @@ const OnboardingHost = () => {
       ...formData,
       [field]: value,
     });
+  };
+
+  const incrementAmount = (field) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      [field]: prevData[field] + 1,
+    }));
+  };
+
+  const decrementAmount = (field) => {
+    if (formData[field] > 0) {
+      setFormData((prevData) => ({
+        ...prevData,
+        [field]: prevData[field] - 1,
+      }));
+    }
   };
   const renderPageContent = page => {
     switch (page) {
@@ -460,6 +481,121 @@ const OnboardingHost = () => {
             </View>
           </SafeAreaView>
         );
+      case 3:
+        return (
+          <SafeAreaView style={styles.container}>
+            <Text style={styles.title}>How many people can stay here?</Text>
+            <ScrollView>
+              <View style={styles.guestAmountItem}>
+                <Text style={styles.label}>Guests</Text>
+                <View style={styles.amountBtnBox}>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => decrementAmount('GuestAmount')}>
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{formData.GuestAmount}</Text>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => incrementAmount('GuestAmount')}
+                    disabled={formData.GuestAmount >= 10}>
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {selectedAccoType === 'Boat' && (
+                <View style={styles.guestAmountItem}>
+                  <Text style={styles.label}>Cabins</Text>
+                  <View style={styles.amountBtnBox}>
+                    <TouchableOpacity
+                      style={styles.roundButton}
+                      onPress={() => decrementAmount('Cabins')}>
+                      <Text style={styles.buttonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.amountText}>{formData.Cabins}</Text>
+                    <TouchableOpacity
+                      style={styles.roundButton}
+                      onPress={() => incrementAmount('Cabins')}
+                      disabled={formData.Cabins >= 10}>
+                      <Text style={styles.buttonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.guestAmountItem}>
+                <Text style={styles.label}>Bedrooms</Text>
+                <View style={styles.amountBtnBox}>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => decrementAmount('Bedrooms')}>
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{formData.Bedrooms}</Text>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => incrementAmount('Bedrooms')}
+                    disabled={
+                      formData.Bedrooms >=
+                      (selectedAccoType === 'Boat' ? 10 : 20)
+                    }>
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.guestAmountItem}>
+                <Text style={styles.label}>Bathrooms</Text>
+                <View style={styles.amountBtnBox}>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => decrementAmount('Bathrooms')}>
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{formData.Bathrooms}</Text>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => incrementAmount('Bathrooms')}
+                    disabled={formData.Bathrooms >= 10}>
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.guestAmountItem}>
+                <Text style={styles.label}>Beds</Text>
+                <View style={styles.amountBtnBox}>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => decrementAmount('Beds')}>
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{formData.Beds}</Text>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => incrementAmount('Beds')}
+                    disabled={formData.Beds >= 10}>
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => setPage(2)}>
+                  <Text style={styles.buttonText}>Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.nextButton}
+                  onPress={() => setPage(3)}>
+                  <Text style={styles.buttonText}>Next</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        );
       default:
         return null;
     }
@@ -508,6 +644,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 30,
+    marginLeft: '10%',
     width: '80%',
   },
   dashboardButton: {
@@ -627,6 +764,27 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#555',
+  },
+  amountText: {
+    fontSize: 18,
+  },
+  amountBtnBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  guestAmountItem: {
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  roundButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    marginHorizontal: 10,
   },
 });
 
