@@ -26,6 +26,7 @@
     "@react-navigation/native": "^6.1.14",
     "@react-navigation/native-stack": "^6.9.22",
     "@react-navigation/stack": "^6.3.25",
+    "@stripe/stripe-react-native": "^0.39.0",
     "aws-amplify": "^6.7.0",
     "aws-sdk": "^2.1613.0",
     "openai": "^4.32.0",
