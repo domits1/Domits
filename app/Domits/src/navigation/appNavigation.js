@@ -18,6 +18,7 @@ import settings from '../screens/guestdashboard/settings';
 import helpAndFeedback from '../screens/guestdashboard/helpAndFeedback';
 import HostHomepage from '../screens/hostdashboard/hostDashboard';
 import HostDashboard from '../screens/hostdashboard/dashboard';
+import HostCalendar from '../screens/hostdashboard/HostCalendar';
 import HostProfile from '../screens/hostdashboard/profile';
 import HostPayments from '../screens/hostdashboard/payments';
 import HostListings from '../screens/hostdashboard/listings';
@@ -88,6 +89,7 @@ function HomeStack() {
       <Stack.Screen name="HelpAndFeedback" component={helpAndFeedback} />
       <Stack.Screen name="HostHomepage" component={HostHomepage} />
       <Stack.Screen name="HostDashboard" component={HostDashboard} />
+      <Stack.Screen name="HostCalendar" component={HostCalendar} />
       <Stack.Screen name="HostProfile" component={HostProfile} />
       <Stack.Screen name="OnboardingHost" component={OnboardingHost} />
       <Stack.Screen name="HostPayments" component={HostPayments} />
