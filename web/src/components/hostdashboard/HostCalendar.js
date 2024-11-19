@@ -6,6 +6,8 @@ import spinner from "../../images/spinnner.gif";
 import CalendarComponent from "./CalendarComponent";
 import styles from "./HostDashboard.module.css";
 import calenderStyles from "./HostCalendar.module.css";
+import generateUUID from "../utils/generateUUID";
+import {formatDate, uploadICalToS3} from "../utils/iCalFormatHost";
 
 
 function HostCalendar() {
@@ -47,8 +49,9 @@ function HostCalendar() {
                 try {
                     const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
                         method: 'POST',
-                        body: JSON.stringify({ OwnerId: userId }),
-                        headers: {'Content-type': 'application/json; charset=UTF-8',
+                        body: JSON.stringify({OwnerId: userId}),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
                         }
                     });
                     if (!response.ok) {
@@ -77,19 +80,106 @@ function HostCalendar() {
             fetchAccommodations().catch(console.error);
         }
     }, [userId]);
+
+    const copyToClipboard = (text) => {
+        navigator.clipboard.writeText(text).then(() => {
+            alert("The URL has been copied to your clipboard: " + text);
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+        });
+    };
+
+    const handleICal = async (e) => {
+        e.preventDefault();
+
+        let uid;
+        let dtStamp;
+        let dtStart;
+        let dtEnd;
+        let accommodationId;
+        let street;
+        let city;
+        let country;
+        let harbour;
+        let location;
+        let status;
+        let summary;
+        let ownerId;
+
+        let params;
+
+        let listOfAccommodations = [];
+
+        console.log('accommodations:', accommodations);
+
+        for (let i = 0; i < accommodations.length; i++) {
+            for (let j = 0; j < accommodations[i].DateRanges.length; j++) {
+                uid = generateUUID();
+                dtStamp = formatDate(new Date());
+                dtStart = formatDate(new Date(accommodations[i].DateRanges[j].startDate));
+                dtEnd = formatDate(new Date(accommodations[i].DateRanges[j].endDate));
+                accommodationId = accommodations[i].ID;
+                street = accommodations[i].Street || '';
+                harbour = accommodations[i].Harbour || '';
+                city = accommodations[i].City;
+                country = accommodations[i].Country;
+                if (accommodations[i].AccommodationType === 'Boat') {
+                    location = harbour + ', ' + city + ', ' + country;
+                } else {
+                    location = street + ', ' + city + ', ' + country;
+                }
+                if (accommodations[i].Drafted === true) {
+                    status = 'Unavailable';
+                } else if (accommodations[i].Drafted === false) {
+                    status = 'Available';
+                }
+                summary = accommodations[i].Title + ' - ' + status;
+                ownerId = accommodations[i].OwnerId;
+
+                params = {
+                    UID: uid,
+                    Dtstamp: dtStamp,
+                    Dtstart: dtStart,
+                    Dtend: dtEnd,
+                    Summary: summary,
+                    Location: location,
+                    AccommodationId: accommodationId,
+                    OwnerId: ownerId,
+                }
+                listOfAccommodations.push(params);
+            }
+        }
+
+        try {
+            const uploadURL = await uploadICalToS3(listOfAccommodations, userId);
+            if (uploadURL) {
+                copyToClipboard(uploadURL);
+            } else {
+                console.error('Failed to POST iCal data');
+            }
+        } catch (error) {
+            console.error('Failed to POST iCal data:', error);
+        }
+    }
+
     return (
         <div className="page-body">
             <div className={styles.dashboardHost}>
-                <Pages />
+                <Pages/>
                 {isLoading ? (
-                        <div>
-                            <img src={spinner}/>
-                        </div>
-                    ) : accommodations.length < 1 ? (
+                    <div>
+                        <img src={spinner}/>
+                    </div>
+                ) : accommodations.length < 1 ? (
                         <p>No accommodations found...</p>
                     ) :
                     <div className={calenderStyles.contentContainerCalendar}>
-                        <h2>Calendar</h2>
+                        <div className={calenderStyles.calendarHeader}>
+                            <h2>Calendar</h2>
+                            <button className={calenderStyles.exportICal} onClick={handleICal}>
+                                Export to calender
+                            </button>
+                        </div>
                         <div className={calenderStyles.calendarDropdown}>
                             <div>
                                 <select className={calenderStyles.locationBox}
