@@ -75,6 +75,7 @@ import GuestAccessView from './components/hostonboarding/views/GuestAccessView.j
 import BoatTypeView from './components/hostonboarding/views/BoatTypeView.js';
 import CamperTypeView from './components/hostonboarding/views/CamperTypeView.js';
 import AddressInputView from './components/hostonboarding/views/AddressInputView.js';
+import CapacityView from './components/hostonboarding/views/GuestAmountView.js';
 
 
 
@@ -244,7 +245,8 @@ function App() {
                                     <Route path="/hostonboarding/accommodation" element={<GuestAccessView />} />
                                     <Route path="/hostonboarding/boat" element={<BoatTypeView />} />
                                     <Route path="/hostonboarding/camper" element={<CamperTypeView />} />
-                                    <Route path="/hostonboarding/accommodation/address" element={<AddressInputView />} />
+                                    <Route path="/hostonboarding/:type/address" element={<AddressInputView />} />
+                                    <Route path="/hostonboarding/:type/capacity" element={<CapacityView />} />
 
 
                                 </Routes>

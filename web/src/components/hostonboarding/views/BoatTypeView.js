@@ -19,7 +19,7 @@ function BoatTypeView() {
       />
       <nav className="onboarding-button-box">
         <Button routePath="/hostonboarding" btnText="Back" />
-        <Button routePath="/hostonboarding/boat" btnText="Proceed" />
+        <Button routePath="/hostonboarding/boat/address" btnText="Proceed" />
       </nav>
     </main>
   );

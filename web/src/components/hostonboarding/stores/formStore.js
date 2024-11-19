@@ -6,13 +6,30 @@ const useFormStore = create((set) => ({
     guestAccessType: "",
     boatType: "",
     camperType: "",
+    boatDetails: {
+      country: "",
+      city: "",
+      harbor: "",
+    },
+    camperDetails: {
+      country: "",
+      city: "",
+      street: "",
+      zipCode: "",
+    },
     address: {
       street: "",
       city: "",
-      state: "",
       zipCode: "",
       country: "",
-    }
+    },
+    accommodationCapacity: {
+      GuestAmount: 0,
+      Cabins: 0,
+      Bedrooms: 0,
+      Bathrooms: 0,
+      Beds: 0,
+    },
   },
   setAccommodationType: (type) =>
     set((state) => ({
@@ -42,11 +59,38 @@ const useFormStore = create((set) => ({
         camperType: camperType,
       },
     })),
-  setAddress: (address) =>
+  setAddress: (details) =>
     set((state) => ({
       accommodationDetails: {
         ...state.accommodationDetails,
-        address: address,
+        address: { ...state.accommodationDetails.address, ...details },
+      },
+    })),
+  setBoatDetails: (details) =>
+    set((state) => ({
+      accommodationDetails: {
+        ...state.accommodationDetails,
+        boatDetails: { ...state.accommodationDetails.boatDetails, ...details },
+      },
+    })),
+  setCamperDetails: (details) =>
+    set((state) => ({
+      accommodationDetails: {
+        ...state.accommodationDetails,
+        camperDetails: {
+          ...state.accommodationDetails.camperDetails,
+          ...details,
+        },
+      },
+    })),
+  setAccommodationCapacity: (key, value) =>
+    set((state) => ({
+      accommodationDetails: {
+        ...state.accommodationDetails,
+        accommodationCapacity: {
+          ...state.accommodationDetails.accommodationCapacity,
+          [key]: value,
+        },
       },
     })),
   resetAccommodationDetails: () =>
@@ -55,6 +99,30 @@ const useFormStore = create((set) => ({
       guestAccessType: "",
       boatType: "",
       camperType: "",
+      boatDetails: {
+        country: "",
+        city: "",
+        harbor: "",
+      },
+      camperDetails: {
+        country: "",
+        city: "",
+        street: "",
+        zipCode: "",
+      },
+      address: {
+        street: "",
+        city: "",
+        zipCode: "",
+        country: "",
+      },
+      accommodationCapacity: {
+        GuestAmount: 0,
+        Cabins: 0,
+        Bedrooms: 0,
+        Bathrooms: 0,
+        Beds: 0,
+      },
     }),
 }));
 
