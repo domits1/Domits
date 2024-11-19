@@ -110,8 +110,6 @@ function HostCalendar() {
 
         let listOfAccommodations = [];
 
-        console.log('accommodations:', accommodations);
-
         for (let i = 0; i < accommodations.length; i++) {
             for (let j = 0; j < accommodations[i].DateRanges.length; j++) {
                 uid = generateUUID();
