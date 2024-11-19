@@ -22,6 +22,8 @@
     "react-native-paper": "^5.12.5",
     "react-native-vector-icons": "^10.2.0",
     "react-resizable": "^3.0.5",
+    "react-slick": "^0.30.2",
+    "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
     "ws": "^8.18.0"
   }
