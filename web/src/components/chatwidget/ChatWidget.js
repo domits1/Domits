@@ -295,7 +295,7 @@ const ChatWidget = () => {
     return <div>Loading...</div>;
   }
 
-  if (role !== 'Guest') {
+  if (role === 'Host') {
     return null;
   }
 
