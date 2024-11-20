@@ -24,6 +24,14 @@ const ChatWidget = () => {
   const [liveChatId, setLiveChatId] = useState(null);
   const [userName, setUserName] = useState('');
   const [nameEntered, setNameEntered] = useState(false);
+  const [showDecisionTree, setShowDecisionTree] = useState(true);
+  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(false);
+
+  const predefinedOptions = [
+    "Plan my trip",
+    "Find my suitable accommodations",
+    "Help me plan a family vacation"
+  ];
 
   useEffect(() => {
     if (!isLoading && (chatID || user)) {
@@ -55,6 +63,10 @@ const ChatWidget = () => {
       const response = await axios.get('https://clmba23cj1.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
       
       if (response.data.messages) {
+
+        setHasSentFirstMessage(true); // Disable decision tree after the first message
+        setShowDecisionTree(false);
+
         const updatedMessages = await Promise.all(response.data.messages.map(async (msg) => {
           if (msg.role === "function" && Array.isArray(JSON.parse(msg.content))) {
             const accommodationIds = JSON.parse(msg.content);
@@ -105,6 +117,11 @@ const ChatWidget = () => {
   const sendMessage = async () => {
     let message = userInput.trim();
     if (!message) return;
+
+    if (!hasSentFirstMessage) {
+      setHasSentFirstMessage(true); // Disable decision tree after the first message
+      setShowDecisionTree(false);
+    }
 
     if (isAIChat) {
       setMessages(prevMessages => [...prevMessages, { text: message, sender: 'user' }]);
@@ -165,7 +182,7 @@ const ChatWidget = () => {
     setMessageCount(0);
 
     if (decision === 'human') {
-      setMessages(prevMessages => [...prevMessages, { text: 'Connecting to a human...', sender: 'system' }]);
+      setMessages(prevMessages => [...prevMessages, { text: 'Connecting to an agent...', sender: 'system' }]);
       setShowConsentDecision(true);
     } else {
       setMessages(prevMessages => [...prevMessages, { text: 'Continuing with Sophia (AI).', sender: 'system' }]);
@@ -178,7 +195,7 @@ const ChatWidget = () => {
     if (consent === 'yes') {
       await connectToEmployee();
     } else {
-      setMessages(prevMessages => [...prevMessages, { text: "You chose not to connect to a human.", sender: "system" }]);
+      setMessages(prevMessages => [...prevMessages, { text: "You chose not to connect to an agent.", sender: "system" }]);
       setIsAIChat(true);
     }
   };
@@ -193,7 +210,7 @@ const ChatWidget = () => {
       if (data.connectionId) {
         setEmployeeConnectionId(data.connectionId);
         setIsAIChat(false);
-        setMessages(prevMessages => [...prevMessages, { text: 'Connecting you to an agent...', sender: 'system' }]);
+        setMessages(prevMessages => [...prevMessages, { text: 'Connection successful! Type your message.', sender: 'system' }]);
 
         const ws = new WebSocket(`wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${user?.id || 'anon'}&userName=${user?.attributes?.given_name || userName}`);
         
@@ -385,8 +402,8 @@ const ChatWidget = () => {
 
               {showHumanDecision && (
                 <div className="chatwidget-decision-box">
-                  <p>Continue with AI or connect to a human?</p>
-                  <button onClick={() => handleUserDecision('human')}>Talk to Human</button>
+                  <p>Continue with AI or connect to an employee?</p>
+                  <button onClick={() => handleUserDecision('human')}>Talk to an employee</button>
                   <button onClick={() => handleUserDecision('ai')}>Continue with AI</button>
                 </div>
               )}
@@ -398,6 +415,31 @@ const ChatWidget = () => {
                   <button onClick={() => handleConsentDecision('no')}>No</button>
                 </div>
               )}
+
+              {!hasSentFirstMessage && showDecisionTree && (
+                <div className="chatwidget-decision-tree">
+                  <p>Select an option to get started:</p>
+                  {predefinedOptions.map((option, index) => (
+                    <button
+                      key={index}
+                      className="chatwidget-decision-option"
+                      onClick={() => {
+                        setMessages(prevMessages => [
+                          ...prevMessages,
+                          { text: option, sender: 'user' }  
+                        ]);
+                        setUserInput(''); 
+                        setShowDecisionTree(false);
+                        setHasSentFirstMessage(true); 
+                        handleAIResponse(option);
+                      }}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
+
 
               <div className="chatwidget-input">
                 <input
