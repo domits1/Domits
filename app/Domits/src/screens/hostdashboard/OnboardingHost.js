@@ -118,6 +118,119 @@ const OnboardingHost = () => {
     'Boat without license': Boat_Without_License,
   };
 
+  const allAmenities = {
+    Essentials: [
+      'Wi-Fi',
+      'Air conditioning',
+      'Heating',
+      'TV with cable/satellite',
+      'Hot water',
+      'Towels',
+      'Bed linens',
+      'Extra pillows and blankets',
+      'Toilet paper',
+      'Soap and shampoo',
+    ],
+    Kitchen: [
+      'Refrigerator',
+      'Microwave',
+      'Oven',
+      'Stove',
+      'Dishwasher',
+      'Coffee maker',
+      'Toaster',
+      'Basic cooking essentials',
+      'Dishes and silverware',
+      'Glasses and mugs',
+      'Cutting board and knives',
+      'Blender',
+      'Kettle',
+    ],
+    Bathroom: [
+      'Hair dryer',
+      'Shower gel',
+      'Conditioner',
+      'Body lotion',
+      'First aid kit',
+    ],
+    Bedroom: [
+      'Hangers',
+      'Iron and ironing board',
+      'Closet/drawers',
+      'Alarm clock',
+    ],
+    LivingArea: [
+      'Sofa',
+      'Armchairs',
+      'Coffee table',
+      'Books and magazines',
+      'Board games',
+    ],
+    Technology: [
+      'Smart TV',
+      'Streaming services',
+      'Bluetooth speaker',
+      'Universal chargers',
+      'Work desk and chair',
+    ],
+    Safety: [
+      'Smoke detector',
+      'Carbon monoxide detector',
+      'Fire extinguisher',
+      'Lock on bedroom door',
+    ],
+    FamilyFriendly: [
+      'High chair',
+      'Crib',
+      'Children’s books and toys',
+      'Baby safety gates',
+      'Baby bath',
+      'Baby monitor',
+    ],
+    Laundry: ['Washer and dryer', 'Laundry detergent', 'Clothes drying rack'],
+    Convenience: [
+      'Keyless entry',
+      'Self-check-in',
+      'Local maps and guides',
+      'Luggage drop-off allowed',
+      'Parking space',
+      'EV charger',
+    ],
+    Accessibility: [
+      'Step-free access',
+      'Wide doorways',
+      'Accessible-height bed',
+      'Accessible-height toilet',
+      'Shower chair',
+    ],
+    ExtraServices: [
+      'Cleaning service (add service fee manually)',
+      'Concierge service',
+      'Housekeeping',
+      'Grocery delivery',
+      'Airport shuttle',
+      'Private chef',
+      'Personal trainer',
+      'Massage therapist',
+    ],
+    EcoFriendly: [
+      'Recycling bins',
+      'Energy-efficient appliances',
+      'Solar panels',
+      'Composting bin',
+    ],
+    Outdoor: [
+      'Patio or balcony',
+      'Outdoor furniture',
+      'Grill',
+      'Fire pit',
+      'Pool',
+      'Hot tub',
+      'Garden or backyard',
+      'Bicycle',
+    ],
+  };
+
   const handleSelectType = type => {
     setSelectedAccoType(type);
     setFormData({
@@ -168,17 +281,27 @@ const OnboardingHost = () => {
       [field]: value,
     });
   };
+  const [selectedAmenities, setSelectedAmenities] = useState({});
 
-  const incrementAmount = (field) => {
-    setFormData((prevData) => ({
+  const toggleAmenity = (category, amenity) => {
+    setSelectedAmenities(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [amenity]: !prev[category]?.[amenity],
+      },
+    }));
+  };
+  const incrementAmount = field => {
+    setFormData(prevData => ({
       ...prevData,
       [field]: prevData[field] + 1,
     }));
   };
 
-  const decrementAmount = (field) => {
+  const decrementAmount = field => {
     if (formData[field] > 0) {
-      setFormData((prevData) => ({
+      setFormData(prevData => ({
         ...prevData,
         [field]: prevData[field] - 1,
       }));
@@ -589,11 +712,60 @@ const OnboardingHost = () => {
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={styles.nextButton}
-                  onPress={() => setPage(3)}>
+                  onPress={() => setPage(4)}>
                   <Text style={styles.buttonText}>Next</Text>
                 </TouchableOpacity>
               </View>
             </ScrollView>
+          </SafeAreaView>
+        );
+      case 4:
+        return (
+          <SafeAreaView style={styles.aminityContainer}>
+            <ScrollView>
+              <Text style={styles.title}>
+                Let Guests Know What Your Space Offers
+              </Text>
+              {Object.keys(allAmenities).map(category => (
+                <View key={category} style={styles.categoryContainer}>
+                  <Text style={styles.categoryTitle}>{category}</Text>
+                  <View style={styles.amenitiesGrid}>
+                    {allAmenities[category].map(amenity => (
+                      <TouchableOpacity
+                        key={amenity}
+                        style={[
+                          styles.amenityItem,
+                          selectedAmenities[category]?.[amenity] &&
+                            styles.amenityItemSelected,
+                        ]}
+                        onPress={() => toggleAmenity(category, amenity)}
+                        activeOpacity={0.8}>
+                        <Text
+                          style={[
+                            styles.amenityText,
+                            selectedAmenities[category]?.[amenity] &&
+                              styles.amenityTextSelected,
+                          ]}>
+                          {amenity}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setPage(3)}>
+                <Text style={styles.buttonText}>Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.nextButton}
+                onPress={() => setPage(5)}>
+                <Text style={styles.buttonText}>Next</Text>
+              </TouchableOpacity>
+            </View>
           </SafeAreaView>
         );
       default:
@@ -785,6 +957,48 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#007AFF',
     marginHorizontal: 10,
+  },
+  aminityContainer: {
+    backgroundColor: 'white',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 5,
+  },
+  categoryContainer: {
+    marginBottom: 20,
+  },
+  categoryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#555',
+  },
+  amenitiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  amenityItem: {
+    width: '46%',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    marginBottom: 10,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  amenityItemSelected: {
+    backgroundColor: '#003366',
+  },
+  amenityText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+  },
+  amenityTextSelected: {
+    color: '#fff',
   },
 });
 
