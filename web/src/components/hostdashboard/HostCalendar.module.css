@@ -29,4 +29,24 @@
         display: flex;
         text-align: center;
     }
+    .exportICal {
+        background-color: #003366;
+        color: #fff;
+        padding: 10px;
+        border-radius: 40px;
+        font-size: 1em;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+        margin: 1em 0;
+    }
+    .calendarHeader {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        margin: 1em 0;
+        gap: 1rem;
+    }
 }
