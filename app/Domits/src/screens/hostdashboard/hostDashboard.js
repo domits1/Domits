@@ -37,6 +37,12 @@ const HostDashboard = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
+          onPress={() => navigation.navigate('HostCalendar')}>
+          <Text style={styles.listItemText}>Calendar</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.listItem}
           onPress={() => navigation.navigate('HostProfile')}>
           <Text style={styles.listItemText}>Profile</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
@@ -65,7 +71,12 @@ const HostDashboard = () => {
           <Text style={styles.listItemText}>Revenue Tool</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('HostReviews')}>
+          <Text style={styles.listItemText}>Reviews</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
         <View style={styles.helpSection}>
           <Text style={styles.helpText}>
             Do you have trouble with using our app?{'\n'}Please send a support

@@ -155,6 +155,10 @@ const HostChatbot = () => {
     fetchPollySpeech(message, messageId);
   };
 
+  // Conditional rendering based on user role
+  if (userLoading) return <div>Loading...</div>;
+  if (role !== 'Host') return null;
+
   return (
       <>
         <button className="hostchatbot-toggle-button" onClick={toggleChat}>
