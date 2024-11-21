@@ -140,7 +140,7 @@ function App() {
                                     <Route path="/data-safety" element={<Datasafety />} />
                                     <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
                                     <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
-                                    <Route path="/how-it-works" element={<Howitworks />} />
+                                    <Route path="/howitworks" element={<Howitworks />} />
                                     <Route path="/why-domits" element={<Whydomits />} />
                                     <Route path="/contact" element={<Contact />} />
                                     <Route path="/travelinnovation" element={<Travelinnovation />} />

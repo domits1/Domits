@@ -7,11 +7,12 @@
     font-style: normal;
 }
 
-.about__subtitle-container h3 {
+.about__subtitle-container h3, h4{
     font-family: 'Kanit', sans-serif;
     font-weight: 400;
-    font-size: 1.25em;
-    margin: 0.5em 0;
+    font-size: 1em;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
 }
 
 .about__fact-subtitle {
@@ -28,9 +29,22 @@
     gap: 3.75rem;
 }
 
-.about__title-container {
-    display: flex;
-    align-items: flex-start;
+.ref{
+    text-decoration: underline;
+}
+
+.about__title-container h2, h3 {
+    flex-direction: column;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    font-size: 1.5em;
+    margin: 0.5em 0;
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+.about__title{
+    text-align: left;
 }
 
 .highlightH2 {
@@ -76,10 +90,14 @@
 
 .about__who-we-are-title--margintop {
     margin-top: 2rem;
+    font-weight: 400;
+    font-size: 1.8em;
+
 }
 
 .about__who-we-are-subtitle--marginbottom {
     margin-bottom: 4rem;
+    text-align: left;
 }
 
 .about__text--margintop {
@@ -101,7 +119,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    align-items: center;
+    /* align-items: center; */
     min-height: 30px;
     margin-top: 10px;
     margin-bottom: 10px;
