@@ -1,7 +1,7 @@
 {
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^6.7.0",
-    "@fortawesome/free-solid-svg-icons": "^6.7.0",
+    "@fortawesome/free-solid-svg-icons": "^6.7.1",
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@fortawesome/react-native-fontawesome": "^0.3.2",
     "@react-native-community/blur": "^4.4.1",
