@@ -1,4 +1,4 @@
-#card-visibility{
+#card-visibility {
   padding-top: 30px;
 }
 
@@ -16,6 +16,7 @@
   vertical-align: top;
   transition: all 0.5s ease-in-out;
   position: relative;
+  z-index: 0;
 }
 
 .accocard:hover {
@@ -32,9 +33,12 @@
   transition: transform 0.4s ease-in-out;
 }
 
+.accocard:hover img {
+  transform: scale(1.05); /* Zoom-effect op afbeelding */
+}
 
-.accocard:hover .accocard-title{
-  background: rgba(13, 152, 20, 0.616);
+.accocard:hover .accocard-title {
+  background: rgba(13, 152, 20, 0.8); /* Groene tint bij hover */
 }
 
 .accocard-content {
@@ -61,7 +65,6 @@
   font-size: 18px;
   font-weight: 500;
   transition: background 0.4s ease-in-out;
-
 }
 
 .accocard-price {
@@ -121,8 +124,7 @@
   text-decoration: none;
 }
 
-
-
+/* Media queries voor responsiveness */
 @media (max-width: 1292px) {
   .accocard {
     width: 23%;
@@ -167,57 +169,115 @@
   }
 }
 
-.accocard-share-button {
+/* Like- en Share-knoppen */
+.accocard-share-button, .accocard-like-button {
   position: absolute;
   top: 10px;
-  left: 10px;
   background-color: rgba(255, 255, 255, 0.8);
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 35px;
+  height: 35px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-  transition: opacity 0.5s ease-in;
-  opacity: 0;
-  transition-delay: 0.1s;
+  z-index: 10;
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
-.accocard-share-button:hover, .accocard-like-button:hover {
-  background-color: rgba(255, 255, 255, 0.9);
+.accocard-share-button {
+  left: 10px;
 }
 
 .accocard-like-button {
-  position: absolute;
-  top: 10px;
   right: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-  transition: opacity 0.5s ease-in;
-  opacity: 0;
-  transition-delay: 0.1s;
 }
 
-.accocard:hover .accocard-share-button,.accocard:hover .accocard-like-button {
+
+.accocard-share-button:hover, .accocard-like-button:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+
+.accocard:hover .accocard-share-button, .accocard:hover .accocard-like-button {
   opacity: 1;
+  transform: scale(1);
+}
+
+
+.accocard .accocard-share-button, .accocard .accocard-like-button {
+  opacity: 0;
+}
+
+
+.accocard .accocard-share-button, .accocard .accocard-like-button {
+  transition: opacity 0.5s ease-in-out;
+}
+
+
+.swiper-button-next, .swiper-button-prev {
+  z-index: 30 !important;
+  opacity: 1 !important;
+  cursor: pointer;
+  color: #333;
+  pointer-events: auto;
+  padding: 5px;
+
+}
+
+.swiper-button-next, .swiper-button-prev {
+  width: 20px;
+  height: 20px; /* Maak de knop minder hoog */
+  background: rgba(255, 255, 255, 0.8); /* Lichte achtergrondkleur */
+  border-radius: 50%; /* Rond de knoppen af */
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2); /* Voeg een schaduw toe */
+  color: #333; /* Kleur van de pijlen */
+  opacity: 1; /* Zorg dat ze altijd zichtbaar zijn */
+  cursor: pointer; /* Cursor verandert in pointer bij hover */
+  z-index: 20 !important;
+  font-size: 10px; /* Pijl kleiner maken */
+
+}
+
+.swiper-button-next:hover, .swiper-button-prev:hover {
+  background: rgba(255, 255, 255, 1); /* Maak de achtergrond feller bij hover */
+  transform: scale(1.1); /* Licht vergroten bij hover */
+  transition: all 0.3s ease; /* Vloeiende overgang */
+  z-index: 20 !important;
+
+}
+
+.swiper-button-next::after, .swiper-button-prev::after {
+  color: #000; /* Donkere kleur voor contrast */
+  font-size: 10px !important;
+  z-index: 20 !important;
+
+}
+
+
+.swiper-pagination-bullet {
+  background: rgba(0, 0, 0, 0.5);
+  width: 10px;
+  height: 10px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+  z-index: 15 !important;
+
+}
+
+.swiper-pagination-bullet-active {
+  background: #007bff;
+  opacity: 1;
+  z-index: 15 !important;
+
 }
 
 body {
   position: relative;
   height: 100%;
-}
-
-body {
   background: #eee;
   font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
   font-size: 14px;
