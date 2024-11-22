@@ -32,7 +32,7 @@ function Whydomits() {
            methods. Enjoy our warmhearted customer centric approach and quick phone support.
         </p>  
         <p className="why-domits__p"><a className="ref" href="/landing">Try it out for
-        free</a>, discover more on <a className="ref" href="/howitworks">how it works</a> or read more <a className="ref" href="/about">about us</a>.</p>
+        free</a>, discover more on <a className="ref" href="/how-it-works">how it works</a> or read more <a className="ref" href="/about">about us</a>.</p>
       </article>
       <section className="why-domits__cards-container">
         <article className="why-domits__card">
