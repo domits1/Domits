@@ -1,62 +1,57 @@
-/* OccupancyRate.css */
-
 .or-occupancy-rate-card {
-    width: 300px; /* Set a fixed width */
-    padding: 20px; /* Add some padding */
-    margin: 15px; /* Space between cards */
-    border: 1px solid #ccc; /* Optional border */
-    border-radius: 8px; /* Rounded corners */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
-    background-color: #fff; /* Background color */
+    width: 300px;
+    padding: 20px;
+    margin: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
 }
 
 .or-date-picker {
-    margin-bottom: 15px; /* Space below the date picker */
-    font-size: 14px; /* Adjust font size */
-    display: flex; /* Use flexbox for better alignment */
-    align-items: center; /* Center vertically */
-    border-color : #aaa4a4; /* Border color */
+    margin-bottom: 15px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    border-color: #aaa4a4;
 }
 
 .or-date-picker label {
-    margin-right: 10px; /* Space between label and select */
-    font-weight: 300; /* Make the label text bold */
-    font-size: 14px; /* Adjust font size */
+    margin-right: 10px;
+    font-weight: 300;
+    font-size: 14px;
 }
 
 .or-occupancy-rate-details {
-    display: flex; /* Use flexbox for layout */
-    justify-content: space-between; /* Space between items */
-    align-items: center; /* Center items vertically */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .or-details-left {
-    flex: 1; /* Allow this section to take up available space */
-    padding-right: 10px; /* Space between text and gauge */
+    flex: 1;
+    padding-right: 10px;
 }
 
-/* Additional styles for DatePicker if needed */
 .react-datepicker-wrapper {
-    display: inline-block; /* Align with other elements */
-    margin-left: 10px; /* Space between the label and date picker */
+    display: inline-block;
+    margin-left: 10px;
 }
 
 .or-gauge-wrapper {
-    width: 150px; /* Fixed width for the gauge */
-    max-width: 150px; /* Limit the maximum width */
-    height: 150px; /* Set a height to allow the gauge to be visible */
-    margin-left: 10px; /* Optional space between text and gauge */
+    width: 150px;
+    max-width: 150px;
+    height: 150px;
+    margin-left: 10px;
 }
 
 .or-icon {
-    margin-right: 5px; /* Space between icon and text */
+    margin-right: 5px;
 }
 
 .or-gauge-labels {
     display: flex;
-    justify-content: space-between; /* Space between 0 and 100 labels */
+    justify-content: space-between;
     width: 100%;
-    margin-top: 10px; /* Space above labels */
+    margin-top: 10px;
 }
-
-
