@@ -405,16 +405,62 @@
             font-weight: bold;
         }
     }
+} 
+
+.clientDetails {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}      
+
+.clientReview img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
 }
 
+.clientReviewMobile {
+    width: 25vw;
+    align-items: center;
+    padding: 0px;
+    text-align: center;
+    border: 2px solid #003366;
+    border-radius: 1px;
+}
+
+.clientDetails {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}      
+
+.clientInfo {
+    margin-left: 20px;
+}
+
+.clientReviewMobile img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+@media (max-width: 2560px) {
+    .clientReviewMobile{
+        visibility: hidden;
+        height: 0;
+    }
+}
 @media (max-width: 768px) {
     .clientRevieuw {
-        flex-direction: column;
-        width: 80%;
+        display: none;
         .client_text {
             width: 100%;
             margin: 1rem 0;
         }
+    }
+    .clientReviewMobile{
+        visibility: visible;
+        height: 40vh;
     }
         h1 {
             font-size: 2rem;
@@ -428,18 +474,63 @@
                 font-size: 1.2rem;
           }
     }
-}
 
-@media (max-width: 480px) {
-    .clientRevieuw {
-        flex-direction: column;
-        width: 80%;
-        .client_text {
-            width: 80%;
-        }
+    .clientReview {
+        width: 100%;
     }
-    h1 {
-        font-size: 1.8rem;
+
+    .clientReview .reviewSlide {
+        flex-direction: column;
+    }
+
+    .reviewText{
+        margin-bottom: 1rem;
+    }
+
+    .clientDetails {
+        flex-direction: column;
+    }
+
+    .clientInfo {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .clientReview img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .clientReviewMobile {
+        width: auto;
+    }
+
+    .clientReviewMobile .reviewSlide {
+        flex-direction: column;
+    }
+
+    .clientDetails {
+        flex-direction: column;
+    }
+
+    .clientInfo {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .clientReview img {
+        width: 60px;
+        height: 60px;
+    }
+} 
+
+@media (max-width: 320px) {
+    .clientReviewMobile{
+        visibility: visible;  
+        height: 40vh;      
+    }
+    .clientRevieuw {
+     display: none;
     }
 
     .client_text {
@@ -577,6 +668,10 @@
 
     }
 
+    .checkListItem__header{
+        text-align: center;
+    }
+    
     .personal__advice {
         img {
             width: 50%;
@@ -596,7 +691,7 @@
         flex-direction: column-reverse;
         .MainText {
             width: 80vw;
-            margin: 0;
+            margin: 10px;
             padding: 5%;
             backdrop-filter: blur(0.25rem);
             border-radius: 1.5rem;
@@ -618,7 +713,7 @@
         }
         .firstPicture img {
             border-radius: 0;
-            width: 95vw;
+            width: 100vw;
             object-fit: contain;
         }
     }
@@ -640,7 +735,7 @@
         flex-direction: column;
         .SecPicture img {
             border-radius: 0;
-            width: 94vw;
+            width: 100vw;
             object-fit: contain;
         }
         .whyHostText {
