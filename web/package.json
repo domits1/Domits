@@ -117,6 +117,7 @@
     "react-markdown": "^9.0.1",
     "react-resizable": "^3.0.5",
     "react-slick": "^0.30.2",
+    "react-twitter-embed": "^4.0.4",
     "recharts": "^2.12.7",
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",

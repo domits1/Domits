@@ -72,12 +72,11 @@ import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
 
 
-
 import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
 import Hostchatbot from "./components/hostchatbot/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-
+import ReleaseUpdates from './components/about/ReleaseUpdates.js'
 
 
 Modal.setAppElement('#root');
@@ -140,10 +139,11 @@ function App() {
                                     <Route path="/data-safety" element={<Datasafety />} />
                                     <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
                                     <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
-                                    <Route path="/how-it-works" element={<Howitworks />} />
+                                    <Route path="/howitworks" element={<Howitworks />} />
                                     <Route path="/why-domits" element={<Whydomits />} />
                                     <Route path="/contact" element={<Contact />} />
                                     <Route path="/travelinnovation" element={<Travelinnovation />} />
+                                    <Route path="/ReleaseUpdates" element={<ReleaseUpdates />} />
                                     <Route path="/landing" element={<Landing />} />
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/register" element={<Register />} />

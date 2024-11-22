@@ -94,16 +94,6 @@ function Landing() {
             isOpen: false
         },
         {
-            question: "How reservations work",
-            answer: (
-                <>
-                    Log in to your account, navigate to 'Bookings', and select the reservation you want to view, change, or cancel.
-                    Make sure to confirm any changes to keep your records updated.
-                </>
-            ),
-            isOpen: false
-        },
-        {
             question: "How payouts and taxes work",
             answer: (
                 <>
@@ -234,7 +224,7 @@ function Landing() {
                             <span>Boat</span> 
                         </div> 
                     </span>
-                    <br/>for free on Domits
+                    <br/>for free with 0% booking fee
                 </h1>
                     <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
 
@@ -264,19 +254,19 @@ function Landing() {
             
             <div className={styles.easyHosting}>
                 <div className={styles.easyHosting_text}>
-                    <h1>Hosting on <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
+                    <h1> Hosting with <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
                     <h3>It only takes 3 steps</h3>
                 </div>
                 <div className={styles.threeSteps}>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>1.</span></h1>
                         <h2>List your property</h2>
-                        <p>Start earning by listing your property for free in just minutes</p>
+                        <p>Start earning by listing your property for free with 0% fee in just minutes</p>
                     </div>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>2.</span></h1>
                         <h2>Get paid</h2>
-                        <p>Enjoy fast, easy and secure payments.</p>
+                        <p>Enjoy fast, easy and Secure payments, Verified guests/hosts, Quick phone support, Domits Quality Guarantee ✓</p>
                     </div>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>3.</span></h1>
@@ -315,22 +305,22 @@ function Landing() {
                             <div className={styles.simpleSafeCards}>
                                 <img src={verifiedLogo} alt="verified logo"></img>
                                 <div className={styles.safeMiniText}>
-                                    <h3>Certified guests</h3>
-                                    <p>We verify guests' email adresses and credit cards for partners using Payments by Stripe.</p>
+                                    <h3>Verified  guests</h3>
+                                    <p>We verify guest with email address, phone, a personal message and payments with our partner Stripe.</p>
                                 </div>
                             </div>
                             <div className={styles.simpleSafeCards}>
                                 <img src={rulesLogo} alt="houserules logo"></img>
                                 <div className={styles.safeMiniText}>
                                     <h3>Your own house rules</h3>
-                                    <p>Let your potential house guest know your house rules. The must agree to them in order to book.</p>
+                                    <p>Let your potential guests know your house rules. They must agree in order to book.</p>
                                 </div>
                             </div>
                             <div className={styles.simpleSafeCards}>
                                 <img src={approveLogo} alt="approve logo"></img>
                                 <div className={styles.safeMiniText}>
                                     <h3>Choose how you want to receive your bookings</h3>
-                                    <p>you can allow your guest too book directly, or you can approve a booking request before accepting them</p>
+                                    <p>You can allow your guests to book directly.</p>
                                 </div>
                             </div>
                         </div>
