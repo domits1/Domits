@@ -1,70 +1,62 @@
-.or-occupancy-rate-card {
-    padding: 15px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background-color: #f0f0f0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 280px; /* Adjusted the width to make it smaller */
-    height: auto;
-}
+/* OccupancyRate.css */
 
-.or-occupancy-rate-card h4 {
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #3a3a3a;
+.or-occupancy-rate-card {
+    width: 300px; /* Set a fixed width */
+    padding: 20px; /* Add some padding */
+    margin: 15px; /* Space between cards */
+    border: 1px solid #ccc; /* Optional border */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+    background-color: #fff; /* Background color */
 }
 
 .or-date-picker {
-    background-color: #ffffff;
-    padding: 8px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    text-align: center;
+    margin-bottom: 15px; /* Space below the date picker */
+    font-size: 14px; /* Adjust font size */
+    display: flex; /* Use flexbox for better alignment */
+    align-items: center; /* Center vertically */
+    border-color : #aaa4a4; /* Border color */
+}
+
+.or-date-picker label {
+    margin-right: 10px; /* Space between label and select */
+    font-weight: 300; /* Make the label text bold */
+    font-size: 14px; /* Adjust font size */
 }
 
 .or-occupancy-rate-details {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: flex; /* Use flexbox for layout */
+    justify-content: space-between; /* Space between items */
+    align-items: center; /* Center items vertically */
 }
 
-.or-occupancy-rate-details p {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 13px;
-    color: #4a4a4a;
-    margin: 0;
+.or-details-left {
+    flex: 1; /* Allow this section to take up available space */
+    padding-right: 10px; /* Space between text and gauge */
 }
 
-.or-occupancy-rate-details strong {
-    color: #000;
-}
-
-.or-icon {
-    color: #8c8c8c;
-    font-size: 18px;
-}
-
-.or-down {
-    color: red;
+/* Additional styles for DatePicker if needed */
+.react-datepicker-wrapper {
+    display: inline-block; /* Align with other elements */
+    margin-left: 10px; /* Space between the label and date picker */
 }
 
 .or-gauge-wrapper {
-    position: relative;
-    margin-top: 10px;
-    padding: 20px;
+    width: 150px; /* Fixed width for the gauge */
+    max-width: 150px; /* Limit the maximum width */
+    height: 150px; /* Set a height to allow the gauge to be visible */
+    margin-left: 10px; /* Optional space between text and gauge */
 }
 
-.or-gauge-chart {
-    height: 90px; /* Adjusted to make the gauge smaller */
-    width: 90px; /* Keep it proportional */
+.or-icon {
+    margin-right: 5px; /* Space between icon and text */
 }
 
 .or-gauge-labels {
     display: flex;
-    justify-content: space-between;
-    font-size: 12px;
-    color: #8c8c8c;
-    margin-top: -10px;
+    justify-content: space-between; /* Space between 0 and 100 labels */
+    width: 100%;
+    margin-top: 10px; /* Space above labels */
 }
+
+
