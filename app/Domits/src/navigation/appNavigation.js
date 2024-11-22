@@ -46,7 +46,7 @@ import Register from '../screens/login/register';
 import ConfirmMail from '../screens/login/confirmMail';
 import HostDetailPage from '../screens/hostdashboard/HostDetailPage';
 import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
-import MessagesStackNavigator from './messagesStackNavigator'; 
+import MessagesStackNavigator from './messagesStackNavigator';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -165,7 +165,7 @@ function BottomTabNavigator() {
       <Tab.Screen
         name="Messages"
         component={MessagesStackNavigator}
-        options={{ headerShown: false }} 
+        options={{ headerShown: false }}
       />
       <Tab.Screen name="Account" component={AccountPage} />
     </Tab.Navigator>
