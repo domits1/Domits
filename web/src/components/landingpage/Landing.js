@@ -238,6 +238,18 @@ function Landing() {
                 </div>
 
             </div>
+
+                <div className={styles.iconsContainer}>
+                <div className={styles.iconsContainerText}>
+                        <p>Secure payments</p>
+                        <p>Verified guests/hosts</p>
+                        <p>Quick phone support</p>
+                        <p>Domits Quality Guarantee</p>
+            </div>
+            </div>
+
+        
+
             <div className={styles.RegisterBlock}>
                 {isAuthenticated && group !== 'Host' ? (
                     <div className={styles.updateGroupButtonDiv}>
@@ -260,17 +272,17 @@ function Landing() {
                 <div className={styles.threeSteps}>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>1.</span></h1>
-                        <h2>List your property</h2>
+                        <h2 className={styles.headerTwoText}>List your property</h2>
                         <p>Start earning by listing your property for free with 0% fee in just minutes</p>
                     </div>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>2.</span></h1>
-                        <h2>Get paid</h2>
-                        <p>Enjoy fast, easy and Secure payments, Verified guests/hosts, Quick phone support, Domits Quality Guarantee ✓</p>
+                        <h2 className={styles.headerTwoText}>Get paid</h2>
+                        <p>Enjoy fast, easy and secure payments.</p>
                     </div>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>3.</span></h1>
-                        <h2>Receive guest</h2>
+                        <h2 className={styles.headerTwoText}>Receive guest</h2>
                         <p>Welcome your guest with a warm and personal touch</p>
                     </div>
                 </div>

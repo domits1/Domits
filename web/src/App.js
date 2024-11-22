@@ -134,16 +134,16 @@ function App() {
                                 <Routes>
                                     <Route path="/" element={<Home searchResults={searchResults} />} />
                                     <Route path="/about" element={<About />} />
-                                    <Route path="/release" element={<Release />} />
+                                    {/* <Route path="/release" element={<Release />} /> */}
                                     <Route path="/releaseTwo" element={<ReleaseTwo />} />
                                     <Route path="/data-safety" element={<Datasafety />} />
                                     <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
                                     <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
-                                    <Route path="/howitworks" element={<Howitworks />} />
+                                    <Route path="/how-it-works" element={<Howitworks />} />
                                     <Route path="/why-domits" element={<Whydomits />} />
                                     <Route path="/contact" element={<Contact />} />
                                     <Route path="/travelinnovation" element={<Travelinnovation />} />
-                                    <Route path="/ReleaseUpdates" element={<ReleaseUpdates />} />
+                                    <Route path="/release" element={<ReleaseUpdates />} />
                                     <Route path="/landing" element={<Landing />} />
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/register" element={<Register />} />
