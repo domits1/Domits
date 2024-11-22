@@ -280,7 +280,7 @@
     text-align: left;
     padding-top: 1%;
     background-color: #f9f9f9;
-    justify-content: center;
+    justify-content: center;    
 }
 .firstSection{
     display: flex;
@@ -450,6 +450,12 @@
         height: 0;
     }
 }
+
+@media (max-width: 1024px) {
+    .firstPicture{
+        width: 39%;
+    }
+}
 @media (max-width: 768px) {
     .clientRevieuw {
         display: none;
@@ -477,6 +483,10 @@
 
     .clientReview {
         width: 100%;
+    }
+
+    .firstPicture{
+        width: 46%;
     }
 
     .clientReview .reviewSlide {
@@ -690,7 +700,7 @@
         display: flex;
         flex-direction: column-reverse;
         .MainText {
-            width: 80vw;
+            width: 85vw;
             margin: 10px;
             padding: 5%;
             backdrop-filter: blur(0.25rem);
@@ -708,7 +718,7 @@
 
             }
             position: absolute;
-            left: 50%;
+            left: 47%;
             transform: translateX(-50%);
         }
         .firstPicture img {

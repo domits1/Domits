@@ -24,8 +24,8 @@ const Footer = () => {
                     <ul className='footer-lists'>
                         <li><Link to="/why-domits" className='footer-links'>Why Domits</Link></li>
                         <li><Link to="/how-it-works" className='footer-links'>How it works</Link></li>
+                        <li><Link to="/ReleaseUpdates" className='footer-links'>Release Updates</Link></li>
                         <li><Link to="/career" className='footer-links'>Jobs</Link></li>
-                        <li><Link to="/about" className='footer-links'>About</Link></li>
                         <li><Link to="/release" className='footer-links'>Release</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
                         <br />
