@@ -9,6 +9,7 @@ import {
   ScrollView,
   FlatList,
   TextInput,
+  Switch,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
@@ -46,6 +47,11 @@ const OnboardingHost = () => {
     Bedrooms: 0,
     Bathrooms: 0,
     Beds: 0,
+    AllowSmoking: false,
+    AllowPets: false,
+    AllowParties: false,
+    CheckIn: {From: '00:00', Til: '00:00'},
+    CheckOut: {From: '00:00', Til: '00:00'},
   });
   const [errors, setErrors] = useState({});
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -304,6 +310,22 @@ const OnboardingHost = () => {
       setFormData(prevData => ({
         ...prevData,
         [field]: prevData[field] - 1,
+      }));
+    }
+  };
+  const handleHouseRulesChange = (field, value, subField = null) => {
+    if (subField) {
+      setFormData(prevData => ({
+        ...prevData,
+        [field]: {
+          ...prevData[field],
+          [subField]: value,
+        },
+      }));
+    } else {
+      setFormData(prevData => ({
+        ...prevData,
+        [field]: value,
       }));
     }
   };
@@ -768,6 +790,131 @@ const OnboardingHost = () => {
             </View>
           </SafeAreaView>
         );
+      case 5:
+        return (
+          <View style={styles.pageBody}>
+            <Text style={styles.title}>House rules</Text>
+            <View style={styles.toggleContainer}>
+              <View style={styles.toggle}>
+                <Text style={styles.toggleLabel}>Allow Smoking</Text>
+                <Switch
+                  value={formData.AllowSmoking}
+                  onValueChange={value =>
+                    handleHouseRulesChange('AllowSmoking', value)
+                  }
+                />
+              </View>
+
+              <View style={styles.toggle}>
+                <Text style={styles.toggleLabel}>Allow Pets</Text>
+                <Switch
+                  value={formData.AllowPets}
+                  onValueChange={value =>
+                    handleHouseRulesChange('AllowPets', value)
+                  }
+                />
+              </View>
+
+              <View style={styles.toggle}>
+                <Text style={styles.toggleLabel}>Allow Parties/Events</Text>
+                <Switch
+                  value={formData.AllowParties}
+                  onValueChange={value =>
+                    handleHouseRulesChange('AllowParties', value)
+                  }
+                />
+              </View>
+            </View>
+
+            {/* Check-In Time */}
+            <View style={styles.checkContainer}>
+              <Text style={styles.checkLabel}>Check-In</Text>
+              <Text>From</Text>
+              <Picker
+                selectedValue={formData.CheckIn.From}
+                onValueChange={value =>
+                  handleHouseRulesChange('CheckIn', value, 'From')
+                }
+                style={styles.picker}>
+                {Array.from({length: 24}, (_, i) => {
+                  const time = `${i.toString().padStart(2, '0')}:00`;
+                  return <Picker.Item key={time} label={time} value={time} />;
+                })}
+              </Picker>
+              <Text>Til</Text>
+              <Picker
+                selectedValue={formData.CheckIn.Til}
+                onValueChange={value =>
+                  handleHouseRulesChange('CheckIn', value, 'Til')
+                }
+                style={styles.picker}>
+                {Array.from({length: 24}, (_, i) => {
+                  const time = `${i.toString().padStart(2, '0')}:00`;
+                  return <Picker.Item key={time} label={time} value={time} />;
+                })}
+              </Picker>
+            </View>
+
+            {/* Check-Out Time */}
+            <View style={styles.checkContainer}>
+              <Text style={styles.checkLabel}>Check-Out</Text>
+              <Text>From</Text>
+              <Picker
+                selectedValue={formData.CheckOut.From}
+                onValueChange={value =>
+                  handleHouseRulesChange('CheckOut', value, 'From')
+                }
+                style={styles.picker}>
+                {Array.from({length: 24}, (_, i) => {
+                  const time = `${i.toString().padStart(2, '0')}:00`;
+                  return <Picker.Item key={time} label={time} value={time} />;
+                })}
+              </Picker>
+              <Text>Til</Text>
+              <Picker
+                selectedValue={formData.CheckOut.Til}
+                onValueChange={value =>
+                  handleHouseRulesChange('CheckOut', value, 'Til')
+                }
+                style={styles.picker}>
+                {Array.from({length: 24}, (_, i) => {
+                  const time = `${i.toString().padStart(2, '0')}:00`;
+                  return <Picker.Item key={time} label={time} value={time} />;
+                })}
+              </Picker>
+            </View>
+
+            {/* Navigation Buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.backButton, {opacity: 1}]}
+                onPress={() => setPage(page - 1)}>
+                <Text style={styles.buttonText}>Go Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  formData.CheckIn?.From &&
+                  formData.CheckIn?.Til &&
+                  formData.CheckOut?.From &&
+                  formData.CheckOut?.Til
+                    ? null
+                    : styles.disabledButton,
+                ]}
+                disabled={
+                  !(
+                    formData.CheckIn?.From &&
+                    formData.CheckIn?.Til &&
+                    formData.CheckOut?.From &&
+                    formData.CheckOut?.Til
+                  )
+                }
+                onPress={() => setPage(page + 1)}>
+                <Text style={styles.buttonText}>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
       default:
         return null;
     }
@@ -999,6 +1146,40 @@ const styles = StyleSheet.create({
   },
   amenityTextSelected: {
     color: '#fff',
+  },
+  pageBody: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  toggleContainer: {
+    marginVertical: 16,
+  },
+  toggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  toggleLabel: {
+    fontSize: 16,
+  },
+  checkContainer: {
+    marginVertical: 16,
+  },
+  checkLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  picker: {
+    height: 50,
+    width: '100%',
   },
 });
 
