@@ -31,7 +31,7 @@ function About() {
                 In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners. There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.  
                 </p> 
                 
-                <p className="about__text about__text--margintop">Read here more about <a className="ref" href="/howitworks">how Domits works</a> and <a className="ref" href="/why-domits">Why to choose Domits</a>.</p>
+                <p className="about__text about__text--margintop">Read here more about <a className="ref" href="/how-it-works">how Domits works</a> and <a className="ref" href="/why-domits">Why to choose Domits</a>.</p>
      
             </div>
             <br />
