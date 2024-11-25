@@ -1,3 +1,5 @@
+// Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
+
 import GuestAccessTypeSelector from "../components/GuestAccessTypeSelector";
 import Button from "../components/button";
 

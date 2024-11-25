@@ -2141,7 +2141,6 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
-            case 11:
                 const address = {
                     Country: formData.Country,
                     City: formData.City,
@@ -2157,7 +2156,7 @@ function OnboardingHost() {
                         RegistrationNumber={formData.RegistrationNumber}
                     />
                 );
-            case 12:
+            case 11:
                 return (
                     <div className="container" id="summary" style={{width: '80%'}}>
                         <h2>Please check if everything is correct</h2>
@@ -2486,7 +2485,7 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
-            case 13:
+            case 12:
                 if (isLoading) {
                     return (
                         <main className="loading">

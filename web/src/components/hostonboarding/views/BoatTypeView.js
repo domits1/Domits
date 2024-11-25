@@ -1,3 +1,5 @@
+// Desc: dependend step 2 - Choose the type of boat you want to list on the platform
+
 import BoatTypeSelector from "../components/TypeSelector";
 import { boatData } from "../constants/boatData";
 import useFormStore from "../stores/formStore";

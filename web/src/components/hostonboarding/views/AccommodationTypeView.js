@@ -1,8 +1,8 @@
-// Desc: Choose the type of accommodation you want to list on the platform
+// Desc: Step 1 - Choose the type of accommodation you want to list on the platform
 
 import AccommodationTypeSelector from "../components/TypeSelector";
 import Button from "../components/button";
-import useHandleAccommodationTypeProceed from "../hooks/useHandleAccommodationTypeProceed";
+import { useHandleAccommodationTypeProceed } from "../hooks/useHandleAccommodationTypeProceed";
 import { accommodationData } from "../constants/accommodationData";
 import useFormStore from "../stores/formStore";
 

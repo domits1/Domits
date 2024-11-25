@@ -1,3 +1,5 @@
+// Desc: dependend step 2 - Choose the type of camper you want to list on the platform
+
 import CamperTypeSelector from "../components/TypeSelector";
 import { camperData } from "../constants/camperData";
 import useFormStore from "../stores/formStore";

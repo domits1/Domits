@@ -1,36 +1,15 @@
-import React, { useMemo } from "react";
-import countryList from "react-select-country-list";
+// Desc: Step 3 - Add the address of the accommodation you want to list on the platform
+
 import { useParams } from "react-router-dom";
-import useFormStore from "../stores/formStore";
 import AddressFormFields from "../components/AddressFormFields";
 import Button from "../components/button";
+import { useAddressInput } from "../hooks/useAddressInput";
 
 function AddressInputView() {
-  const { type } = useParams();
-  const accommodationType = type || "accommodation";
+  const { type: accommodationType } = useParams();
 
-  const options = useMemo(() => countryList().getLabels(), []);
-  const {
-    accommodationDetails,
-    setBoatDetails,
-    setCamperDetails,
-    setAddress,
-  } = useFormStore();
-
-  const details =
-    accommodationType === "boat"
-      ? accommodationDetails.boatDetails
-      : accommodationType === "camper"
-      ? accommodationDetails.camperDetails
-      : accommodationDetails.address;
-
-  const handleChange =
-    accommodationType === "boat"
-      ? setBoatDetails
-      : accommodationType === "camper"
-      ? setCamperDetails
-      : setAddress;
-
+  const { options, details, handleChange } = useAddressInput(accommodationType);
+  
   return (
     <main className="page-body">
       <h2 className="onboardingSectionTitle">

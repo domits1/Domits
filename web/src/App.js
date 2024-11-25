@@ -76,6 +76,15 @@ import BoatTypeView from './components/hostonboarding/views/BoatTypeView.js';
 import CamperTypeView from './components/hostonboarding/views/CamperTypeView.js';
 import AddressInputView from './components/hostonboarding/views/AddressInputView.js';
 import CapacityView from './components/hostonboarding/views/GuestAmountView.js';
+import AmenitiesView from './components/hostonboarding/views/AmenitiesView.js';
+import HouseRulesView from './components/hostonboarding/views/HouseRulesView.js';
+import PhotosView from './components/hostonboarding/views/PhotosView.js';
+import AccommodationTitleView from './components/hostonboarding/views/AccommodationTitleView.js';
+import DescriptionView from './components/hostonboarding/views/DescriptionView.js';
+import PricingView from './components/hostonboarding/views/PricingView.js';
+import AvailabilityView from './components/hostonboarding/views/AvailabilityView.js';
+import RegistrationNumberView from './components/hostverification/RegistrationNumberView.js';
+import SummaryView from './components/hostonboarding/views/SummaryView.js';
 
 
 
@@ -247,6 +256,17 @@ function App() {
                                     <Route path="/hostonboarding/camper" element={<CamperTypeView />} />
                                     <Route path="/hostonboarding/:type/address" element={<AddressInputView />} />
                                     <Route path="/hostonboarding/:type/capacity" element={<CapacityView />} />
+                                    <Route path="/hostonboarding/:type/amenities" element={<AmenitiesView />} />
+                                    <Route path='/hostonboarding/:type/rules' element={<HouseRulesView/>} />
+                                    <Route path='/hostonboarding/:type/photos' element={<PhotosView/>} />
+                                    <Route path='/hostonboarding/:type/title' element={<AccommodationTitleView/>} />
+                                    <Route path='/hostonboarding/:type/description' element={<DescriptionView/>} />
+                                    <Route path='/hostonboarding/:type/pricing' element={<PricingView/>} />
+                                    <Route path='/hostonboarding/:type/availability' element={<AvailabilityView/>} />
+                                    <Route path='/hostonboarding/legal/registrationnumber' element={<RegistrationNumberView/>} />
+                                    <Route path='/hostonboarding/summary' element={<SummaryView/>} />
+                                    
+
 
 
                                 </Routes>

@@ -1,3 +1,5 @@
+// Desc: Step 4 - Add the number of guests that can stay in the accommodation you want to list on the platform
+
 import GuestAmountItem from "../components/GuestAmountItem";
 import { useParams } from "react-router-dom";
 import useFormStore from "../stores/formStore";
@@ -44,7 +46,7 @@ function GuestAmountView() {
       </section>
       <nav className="onboarding-button-box">
       <Button routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
-      <Button routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Proceed" />
+      <Button routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" />
       </nav>
     </main>
   );

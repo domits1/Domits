@@ -19,8 +19,8 @@ export const startVerificationAPI = async (userData) => {
   export const getIfRegistrationNumberIsRequired = async (Address) => {
     const url = `https://236k9o88ek.execute-api.eu-north-1.amazonaws.com/default/registationnumberRequired`;
     const requestBody = {
-      city: Address.City,
-      country: Address.Country,
+      city: Address.city,
+      country: Address.country,
     };
   
     const response = await fetch(url, {
