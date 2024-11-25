@@ -163,6 +163,7 @@
     flex-direction: column;
     justify-content: flex-start;
     padding: 1rem;
+    max-height: 20rem;
 
     header {
         display: flex;
