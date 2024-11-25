@@ -18,12 +18,15 @@ import settings from '../screens/guestdashboard/settings';
 import helpAndFeedback from '../screens/guestdashboard/helpAndFeedback';
 import HostHomepage from '../screens/hostdashboard/hostDashboard';
 import HostDashboard from '../screens/hostdashboard/dashboard';
+import HostCalendar from '../screens/hostdashboard/HostCalendar';
+import HostReviews from '../screens/hostdashboard/HostRevieuws';
 import HostProfile from '../screens/hostdashboard/profile';
 import HostPayments from '../screens/hostdashboard/payments';
 import HostListings from '../screens/hostdashboard/listings';
 import OnboardingHost from '../screens/hostdashboard/OnboardingHost';
 import HostSettings from '../screens/hostdashboard/settings';
 import Landing from '../screens/Landing';
+import emailSettings from '../screens/hostdashboard/emailSettings'
 import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingprocess/bookingProcess';
@@ -88,11 +91,14 @@ function HomeStack() {
       <Stack.Screen name="HelpAndFeedback" component={helpAndFeedback} />
       <Stack.Screen name="HostHomepage" component={HostHomepage} />
       <Stack.Screen name="HostDashboard" component={HostDashboard} />
+      <Stack.Screen name="HostCalendar" component={HostCalendar} />
+      <Stack.Screen name="HostReviews" component={HostReviews} />
       <Stack.Screen name="HostProfile" component={HostProfile} />
       <Stack.Screen name="OnboardingHost" component={OnboardingHost} />
       <Stack.Screen name="HostPayments" component={HostPayments} />
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
+      <Stack.Screen name="emailSettings" component={emailSettings} />
       <Stack.Screen name="HostRevenue" component={HostRevenue} />
       <Stack.Screen name="ListProperty" component={ListProperty} />
       <Stack.Screen name="LocationFillIn" component={LocationFillIn} />

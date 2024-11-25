@@ -44,7 +44,7 @@ import GuestReviews from "./components/guestdashboard/GuestReviews";
 import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat.js";
 import Chatbot from "./components/chatbot/chatbot";
-import ChatWidget from './components/chatwidget/ChatWidget';
+import ChatWidget from "./components/chatwidget/ChatWidget";
 import EmployeeChat from './components/employee/EmployeeChat';
 import FlowContext from './FlowContext';
 import Hostchat from './components/hostdashboard/Hostchat';
@@ -68,6 +68,7 @@ import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
+// import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
 
 
 import AccommodationTypeView from './components/hostonboarding/views/AccommodationTypeView.js';
@@ -92,7 +93,7 @@ import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
 import Hostchatbot from "./components/hostchatbot/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-
+import ReleaseUpdates from './components/about/ReleaseUpdates.js'
 
 
 Modal.setAppElement('#root');
@@ -150,7 +151,7 @@ function App() {
                                 <Routes>
                                     <Route path="/" element={<Home searchResults={searchResults} />} />
                                     <Route path="/about" element={<About />} />
-                                    <Route path="/release" element={<Release />} />
+                                    {/* <Route path="/release" element={<Release />} /> */}
                                     <Route path="/releaseTwo" element={<ReleaseTwo />} />
                                     <Route path="/data-safety" element={<Datasafety />} />
                                     <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
@@ -159,6 +160,7 @@ function App() {
                                     <Route path="/why-domits" element={<Whydomits />} />
                                     <Route path="/contact" element={<Contact />} />
                                     <Route path="/travelinnovation" element={<Travelinnovation />} />
+                                    <Route path="/release" element={<ReleaseUpdates />} />
                                     <Route path="/landing" element={<Landing />} />
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/register" element={<Register />} />
@@ -166,6 +168,7 @@ function App() {
                                     <Route path="/listingdetails" element={<ListingDetails />} />
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
+                                    {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />
@@ -272,8 +275,9 @@ function App() {
                                 </Routes>
                                 {renderFooter()}
                                 {currentPath !== '/admin' && <MenuBar />}
-                                <Hostchatbot />
                                 {renderChatWidget()}
+                                <Hostchatbot />
+                               
 
                             </div>
                         </UserProvider>

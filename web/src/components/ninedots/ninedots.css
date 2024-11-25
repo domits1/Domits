@@ -19,8 +19,54 @@
 
 .boxColumn {
     width: 24%;
-    height: 600px;
+    height: 10vh;
     margin: auto;
+}
+
+.travelContainer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 85%;
+    margin-left: 10vw;
+    margin-right: 10vw;
+    padding-top: 5vw;
+    padding-bottom: 5vw;
+}
+
+.travelItem {
+    width: 30%;
+    display: flex;
+    flex-direction: column;
+}
+
+.headerTwo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.headerTwo .headerTwoText, 
+.headerTwo h2 {
+    width: 70%;
+}
+
+.headerTwo img {
+    width: 35%;
+    height: auto;
+    margin-right: 15vw;
+}
+
+.TextTravelh2 {
+    margin-right: 55vw;
+}
+
+.TextTravel {
+    width: 25vw;
+    font-size: smaller;
+    margin-left: 10vw;
+    padding: 1vw;
 }
 
 .imageContainer {
@@ -44,11 +90,10 @@
 .titleHolder {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
 .boxTitle {
@@ -60,5 +105,4 @@
     height: 100%;
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
     border-radius: 10px;
-    
 }

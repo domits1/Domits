@@ -53,10 +53,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
     marginBottom: 30,
     marginTop: 10,
+    color: 'black',
   },
   headerText: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: 'black',
   },
   listItem: {
     flexDirection: 'row',
@@ -71,6 +73,7 @@ const styles = StyleSheet.create({
   },
   listItemText: {
     fontSize: 18,
+    color: 'black',
   },
 });
 
