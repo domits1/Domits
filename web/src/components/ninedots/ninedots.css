@@ -47,9 +47,9 @@
     width: 100%;
 }
 
-.headerTwoText, h2 {
+.headerTwo .headerTwoText, 
+.headerTwo h2 {
     width: 70%;
-    text-align: left;
 }
 
 .headerTwo img {
@@ -58,7 +58,7 @@
     margin-right: 15vw;
 }
 
-.TextTravelh2{
+.TextTravelh2 {
     margin-right: 55vw;
 }
 
@@ -90,11 +90,10 @@
 .titleHolder {
     display: flex;
     flex-direction: row;
-    justify-content: flex-start;
-    margin-bottom: 15px;
-    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
 }
 
 .boxTitle {
@@ -106,5 +105,4 @@
     height: 100%;
     box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
     border-radius: 10px;
-    
 }
