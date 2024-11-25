@@ -7,6 +7,9 @@ import MainTextpicture from "../../images/host-landing-example.png";
 import whyHostpicture from "../../images/host-landing-example2.jpg";
 import verifiedLogo from "../../images/icons/verify-icon.png";
 import approveLogo from "../../images/icons/approve-accept-icon.png";
+import checkMark from "../../images/icons/checkMark.png";
+import question from "../../images/icons/question.png";
+import bill from "../../images/icons/bill.png";
 import banknoteLogo from "../../images/icons/banknote-icon.png";
 import supportLogo from "../../images/icons/question-mark-round-icon.png";
 import internationalLogo from "../../images/icons/world-globe-line-icon.png";
@@ -89,16 +92,6 @@ function Landing() {
                     you can add your property by providing details like type, location, and amenities. After submitting, your listing will be verified.
                     Once approved, set your availability, pricing, and upload photos. To go live, create a Stripe account for payments. 
                     You can manage everything—availability, pricing, and details—directly from the Host Dashboard.
-                </>
-            ),
-            isOpen: false
-        },
-        {
-            question: "How reservations work",
-            answer: (
-                <>
-                    Log in to your account, navigate to 'Bookings', and select the reservation you want to view, change, or cancel.
-                    Make sure to confirm any changes to keep your records updated.
                 </>
             ),
             isOpen: false
@@ -234,7 +227,7 @@ function Landing() {
                             <span>Boat</span> 
                         </div> 
                     </span>
-                    <br/>for free on Domits
+                    <br/>for free with 0% booking fee
                 </h1>
                     <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
 
@@ -248,6 +241,31 @@ function Landing() {
                 </div>
 
             </div>
+
+        <div className={styles.iconsContainer}>
+            <div className={styles.iconsContainerText}>
+                <div className={styles.iconTextGroup}>
+                    <img src={bill} alt="bill"></img>
+                    <p>Secure payments</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={verifiedLogo} alt="verified logo"></img>
+                    <p>Verified guests/hosts</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={question} alt="question"></img>
+                    <p>Quick phone support</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={checkMark} alt="checkMark"></img>
+                    <p>Domits Quality Guarantee</p>
+                </div>
+            </div>
+        </div>
+
+
+        
+
             <div className={styles.RegisterBlock}>
                 {isAuthenticated && group !== 'Host' ? (
                     <div className={styles.updateGroupButtonDiv}>
@@ -264,23 +282,23 @@ function Landing() {
             
             <div className={styles.easyHosting}>
                 <div className={styles.easyHosting_text}>
-                    <h1>Hosting on <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
+                    <h1> Hosting with <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
                     <h3>It only takes 3 steps</h3>
                 </div>
                 <div className={styles.threeSteps}>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>1.</span></h1>
-                        <h2>List your property</h2>
-                        <p>Start earning by listing your property for free in just minutes</p>
+                        <h2 className={styles.headerTwoText}>List your property</h2>
+                        <p>Start earning by listing your property for free with 0% fee in just minutes</p>
                     </div>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>2.</span></h1>
-                        <h2>Get paid</h2>
+                        <h2 className={styles.headerTwoText}>Get paid</h2>
                         <p>Enjoy fast, easy and secure payments.</p>
                     </div>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>3.</span></h1>
-                        <h2>Receive guest</h2>
+                        <h2 className={styles.headerTwoText}>Receive guest</h2>
                         <p>Welcome your guest with a warm and personal touch</p>
                     </div>
                 </div>
@@ -315,22 +333,22 @@ function Landing() {
                             <div className={styles.simpleSafeCards}>
                                 <img src={verifiedLogo} alt="verified logo"></img>
                                 <div className={styles.safeMiniText}>
-                                    <h3>Certified guests</h3>
-                                    <p>We verify guests' email adresses and credit cards for partners using Payments by Stripe.</p>
+                                    <h3>Verified  guests</h3>
+                                    <p>We verify guest with email address, phone, a personal message and payments with our partner Stripe.</p>
                                 </div>
                             </div>
                             <div className={styles.simpleSafeCards}>
                                 <img src={rulesLogo} alt="houserules logo"></img>
                                 <div className={styles.safeMiniText}>
                                     <h3>Your own house rules</h3>
-                                    <p>Let your potential house guest know your house rules. The must agree to them in order to book.</p>
+                                    <p>Let your potential guests know your house rules. They must agree in order to book.</p>
                                 </div>
                             </div>
                             <div className={styles.simpleSafeCards}>
                                 <img src={approveLogo} alt="approve logo"></img>
                                 <div className={styles.safeMiniText}>
                                     <h3>Choose how you want to receive your bookings</h3>
-                                    <p>you can allow your guest too book directly, or you can approve a booking request before accepting them</p>
+                                    <p>You can allow your guests to book directly.</p>
                                 </div>
                             </div>
                         </div>
@@ -374,7 +392,7 @@ function Landing() {
                 prevArrow={<button type="button" className="slick-prev">Previous</button>}
                 nextArrow={<button type="button" className="slick-next">Next</button>}
             >
-                    {reviews.map((review) => (
+                {reviews.map((review) => (
                     <div key={review.id} className={styles.reviewSlide}>
                         <p className={styles.reviewText}>"{review.text}"</p>
                         <div className={styles.clientDetails}>
