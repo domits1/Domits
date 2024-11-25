@@ -1375,7 +1375,7 @@ function OnboardingHost() {
                                     />
                                     <div className="toggle-switch"></div>
                                 </label>
-                                
+
                                 <label className="toggle">
                                     <span className="toggle-label">Allow pets</span>
                                     <input
@@ -2078,55 +2078,6 @@ function OnboardingHost() {
                                                isNew={true}
                                                updateDates={updateDates}
                             />
-                            <div className="staying_nights">
-                                <div className="stayMinMaxBox">
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Minimum Stay (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MinimumStay')}>-
-                                            </button>
-                                            {formData.MinimumStay}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MinimumStay')}
-                                                disabled={formData.MinimumStay >= 30}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Minimum booking period (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MinimumBookingPeriod')}>-
-                                            </button>
-                                            {formData.MinimumBookingPeriod}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MinimumBookingPeriod')}
-                                                disabled={formData.MinimumBookingPeriod >= 30}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Maximum Stay (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MaximumStay')}>-
-                                            </button>
-                                            {formData.MaximumStay}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MaximumStay')}
-                                                disabled={formData.MaximumStay >= 365}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </section>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
