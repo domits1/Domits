@@ -16,11 +16,52 @@
     width: auto;
     margin: auto;
 }
+.iconsContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9f9f9;
+    flex-wrap: wrap;
+    height: 13vh;
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+.iconsContainerText {
+    font-size: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.iconTextGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+}
+
+.iconsContainerText img {
+    width: 36px;
+    object-fit: contain;
+}
+
+.iconsContainerText p {
+    margin: 0;
+}
+
+
+
 
 .pages {
     display: flex;
     flex-direction: row;
     justify-content: center;
+    text-align: center;
     margin-bottom: 20px;
 }
 
@@ -118,12 +159,16 @@
     border-radius: 5px;
     box-shadow: none;
     padding: 10px;
-    margin: 0 10px;
+    margin-top: 15px;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1rem;
+}
+
+.headerTwoText{
+    width: 100%;
 }
 
 .nextButtons:hover {
@@ -280,7 +325,7 @@
     text-align: left;
     padding-top: 1%;
     background-color: #f9f9f9;
-    justify-content: center;
+    justify-content: center;    
 }
 .firstSection{
     display: flex;
@@ -450,6 +495,12 @@
         height: 0;
     }
 }
+
+@media (max-width: 1024px) {
+    .firstPicture{
+        width: 39%;
+    }
+}
 @media (max-width: 768px) {
     .clientRevieuw {
         display: none;
@@ -477,6 +528,10 @@
 
     .clientReview {
         width: 100%;
+    }
+
+    .firstPicture{
+        width: 46%;
     }
 
     .clientReview .reviewSlide {
@@ -690,7 +745,7 @@
         display: flex;
         flex-direction: column-reverse;
         .MainText {
-            width: 80vw;
+            width: 85vw;
             margin: 10px;
             padding: 5%;
             backdrop-filter: blur(0.25rem);
@@ -708,7 +763,7 @@
 
             }
             position: absolute;
-            left: 50%;
+            left: 47%;
             transform: translateX(-50%);
         }
         .firstPicture img {
