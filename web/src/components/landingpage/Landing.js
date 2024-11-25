@@ -7,6 +7,9 @@ import MainTextpicture from "../../images/host-landing-example.png";
 import whyHostpicture from "../../images/host-landing-example2.jpg";
 import verifiedLogo from "../../images/icons/verify-icon.png";
 import approveLogo from "../../images/icons/approve-accept-icon.png";
+import checkMark from "../../images/icons/checkMark.png";
+import question from "../../images/icons/question.png";
+import bill from "../../images/icons/bill.png";
 import banknoteLogo from "../../images/icons/banknote-icon.png";
 import supportLogo from "../../images/icons/question-mark-round-icon.png";
 import internationalLogo from "../../images/icons/world-globe-line-icon.png";
@@ -239,14 +242,27 @@ function Landing() {
 
             </div>
 
-                <div className={styles.iconsContainer}>
-                <div className={styles.iconsContainerText}>
-                        <p>Secure payments</p>
-                        <p>Verified guests/hosts</p>
-                        <p>Quick phone support</p>
-                        <p>Domits Quality Guarantee</p>
+        <div className={styles.iconsContainer}>
+            <div className={styles.iconsContainerText}>
+                <div className={styles.iconTextGroup}>
+                    <img src={bill} alt="bill"></img>
+                    <p>Secure payments</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={verifiedLogo} alt="verified logo"></img>
+                    <p>Verified guests/hosts</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={question} alt="question"></img>
+                    <p>Quick phone support</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={checkMark} alt="checkMark"></img>
+                    <p>Domits Quality Guarantee</p>
+                </div>
             </div>
-            </div>
+        </div>
+
 
         
 
@@ -376,7 +392,7 @@ function Landing() {
                 prevArrow={<button type="button" className="slick-prev">Previous</button>}
                 nextArrow={<button type="button" className="slick-next">Next</button>}
             >
-                    {reviews.map((review) => (
+                {reviews.map((review) => (
                     <div key={review.id} className={styles.reviewSlide}>
                         <p className={styles.reviewText}>"{review.text}"</p>
                         <div className={styles.clientDetails}>

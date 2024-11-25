@@ -16,27 +16,44 @@
     width: auto;
     margin: auto;
 }
-
 .iconsContainer {
     display: flex;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 2% 5%;
     background-color: #f9f9f9;
-    flex-wrap: nowrap;
-    gap: 20px;
+    flex-wrap: wrap;
+    height: 13vh;
+    padding-left: 5%;
+    padding-right: 5%;
 }
 
 .iconsContainerText {
     font-size: 1.5rem;
-    font-weight: bold;
-    flex-direction: row;
-    justify-content: center;
     display: flex;
-    gap: 20px;
-    margin-left: 10rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    flex-wrap: wrap;
+    width: 100%;
 }
+
+.iconTextGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+}
+
+.iconsContainerText img {
+    width: 36px;
+    object-fit: contain;
+}
+
+.iconsContainerText p {
+    margin: 0;
+}
+
 
 
 

@@ -184,17 +184,6 @@ function OnboardingHost() {
 
     const [page, setPage] = useState(0);
 
-    const generateNormalAccommodationFormData = () => ({
-        ...generateCommonFormData(formData, isNew),
-        Bedrooms: isNew ? 0 : formData.Bedrooms,
-        PostalCode: isNew ? "" : formData.PostalCode,
-        Street: isNew ? "" : formData.Street,
-        Bathrooms: isNew ? 0 : formData.Bathrooms,
-        Beds: isNew ? 0 : formData.Beds,
-        GuestAccess: isNew ? "" : formData.GuestAccess,
-        GuestAmount: isNew ? 0 : formData.GuestAmount
-    });
-
 
     const generateCommonFormData = (existingData = {}, isNew = true) => ({
         ID: isNew ? generateUUID() : existingData.ID,
@@ -248,6 +237,17 @@ function OnboardingHost() {
         MinimumStay: isNew ? 0 : (Number.isFinite(existingData.MinimumStay) ? existingData.MinimumStay : 0),
         MinimumBookingPeriod: isNew ? 0 : (Number.isFinite(existingData.MinimumBookingPeriod) ? existingData.MinimumBookingPeriod : 0),
         MaximumStay: isNew ? 0 : (Number.isFinite(existingData.MaximumStay) ? existingData.MaximumStay : 0),
+    });
+
+    const generateNormalAccommodationFormData = () => ({
+        ...generateCommonFormData(formData, isNew),
+        Bedrooms: isNew ? 0 : formData.Bedrooms,
+        PostalCode: isNew ? "" : formData.PostalCode,
+        Street: isNew ? "" : formData.Street,
+        Bathrooms: isNew ? 0 : formData.Bathrooms,
+        Beds: isNew ? 0 : formData.Beds,
+        GuestAccess: isNew ? "" : formData.GuestAccess,
+        GuestAmount: isNew ? 0 : formData.GuestAmount
     });
 
     const generateBoatFormData = () => ({
@@ -838,8 +838,8 @@ function OnboardingHost() {
 
         for (const folder of folders) {
             const key = folder
-                ? `images/${userId}/${accommodationId}/${folder}/Image-${index + 1}.jpg`
-                : `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+                ? `images/${userId}/${accommodationId}/${folder}/Image-${index + 1}.webp`
+                : `images/${userId}/${accommodationId}/Image-${index + 1}.webp`;
 
             try {
                 await Storage.remove(key, {
