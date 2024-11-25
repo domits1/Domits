@@ -30,16 +30,19 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
         'September', 'October', 'November', 'December'
     ];
 
-    const [minimumStay, setMinimumStay] = useState(passedProp.MinimumStay || 1);
-    const [minimumBookingPeriod, setMinimumBookingPeriod] = useState(passedProp.MinimumBookingPeriod || 1);
-    const [maximumStay, setMaximumStay] = useState(passedProp.MaximumStay || 30);
+    const [minimumStay, setMinimumStay] = useState(passedProp.MinimumStay || 0);
+    const [minimumBookingPeriod, setMinimumBookingPeriod] = useState(passedProp.MinimumBookingPeriod || 0);
+    const [maximumStay, setMaximumStay] = useState(passedProp.MaximumStay || 0);
 
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setSelectedRanges(passedProp.DateRanges);
             setOriginalRanges(passedProp.DateRanges);
+            setMinimumStay(passedProp.MinimumStay || 0);
+            setMinimumBookingPeriod(passedProp.MinimumBookingPeriod || 0);
+            setMaximumStay(passedProp.MaximumStay || 0);
         }
-    }, [passedProp.ID, passedProp.DateRanges]);
+    }, [passedProp.ID, passedProp.DateRanges, passedProp.MinimumStay, passedProp.MinimumBookingPeriod, passedProp.MaximumStay]);
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setOriginalRanges(passedProp.DateRanges);
