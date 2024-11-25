@@ -70,6 +70,8 @@ import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
+// import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
+
 
 
 import { Auth } from 'aws-amplify';
@@ -151,6 +153,7 @@ function App() {
                                     <Route path="/listingdetails" element={<ListingDetails />} />
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
+                                    {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />

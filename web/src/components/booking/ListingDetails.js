@@ -124,8 +124,8 @@ const ListingDetails = () => {
     const [showAll, setShowAll] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [userID, setUserID] = useState('');
-    const [showTravelerPopup, setShowTravelerPopup] = useState(false);
-    const travelerSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
+    const [showGuestPopup, setShowGuestPopup] = useState(false);
+    const guestSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
     const popupRef = useRef(null);
     const [bookings, setBookings] = useState([]);
 
@@ -304,18 +304,18 @@ const ListingDetails = () => {
     useEffect(() => {
         function handleClickOutside(event) {
             if (popupRef.current && !popupRef.current.contains(event.target)) {
-                setShowTravelerPopup(false);
+                setShowGuestPopup(false);
             }
         }
 
-        if (showTravelerPopup) {
+        if (showGuestPopup) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [showTravelerPopup]);
+    }, [showGuestPopup]);
 
     useEffect(() => {
         if (showModal) {
@@ -331,7 +331,7 @@ const ListingDetails = () => {
 
     const toggleDropdown = (e) => {
         e.stopPropagation();
-        setShowTravelerPopup(!showTravelerPopup);
+        setShowGuestPopup(!showGuestPopup);
     };
 
     const toggleModal = () => {
@@ -339,12 +339,22 @@ const ListingDetails = () => {
     };
 
     const FeaturePopup = ({ features, onClose }) => {
+        // Bepaal de gewenste volgorde van categorieën
+        const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
+
+        // Sorteer de categorieën op basis van de gewenste volgorde
+        const sortedCategories = Object.keys(features).sort((a, b) => {
+            const orderA = categoryOrder.indexOf(a) !== -1 ? categoryOrder.indexOf(a) : Infinity;
+            const orderB = categoryOrder.indexOf(b) !== -1 ? categoryOrder.indexOf(b) : Infinity;
+            return orderA - orderB;
+        });
+
         return (
             <div className="modal-overlay" onClick={onClose}>
-                <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <div className="modal-contentPopUp" onClick={e => e.stopPropagation()}>
                     <button className="close-button" onClick={onClose}>✖</button>
                     <h2>What does this place have to offer?</h2>
-                    {Object.keys(features).map(category => {
+                    {sortedCategories.map(category => {
                         const categoryItems = features[category];
                         if (categoryItems.length > 0) {
                             return (
@@ -377,6 +387,7 @@ const ListingDetails = () => {
         );
     };
 
+
     useEffect(() => {
         const appendUserID = async () => {
             try {
@@ -405,6 +416,7 @@ const ListingDetails = () => {
                 }
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
+                console.log(data)
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []);
                 fetchHostInfo(data.OwnerId);
@@ -894,9 +906,11 @@ const ListingDetails = () => {
                                     <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
                                 </div>
                             )}
-                            <h2>Booking details</h2>
-                            <p>Available from {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
-                                to {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
+                            <h2>
+                                €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
+                            </h2>
+
+
                             <div className="dates" style={{display: 'flex', justifyContent: 'space-between'}}>
                                 <div className="summaryBlock dateInput"
                                      style={{flex: '1', position: 'relative', marginRight: '10px'}}>
@@ -941,17 +955,17 @@ const ListingDetails = () => {
                                 </div>
                             </div>
 
-                            {/* Travelers Popup */}
-                            <div className="travelers">
+                            {/* Guest Popup */}
+                            <div className="guests">
                                 <div className="dropdown">
-                                    <label>Travelers</label>
+                                    <label>Guests</label>
                                     <div
                                         className="dropdown-button"
                                         onClick={toggleDropdown}
                                     >
-                                        {travelerSummary} {showTravelerPopup ? '▲' : '▼'}
+                                        {guestSummary} {showGuestPopup ? '▲' : '▼'}
                                     </div>
-                                    {showTravelerPopup && (
+                                    {showGuestPopup && (
                                         <div ref={popupRef} className="dropdown-content">
                                             <div className="counter">
                                                 <span>Adults</span>
@@ -992,25 +1006,25 @@ const ListingDetails = () => {
                                                 </div>
                                             </div>
                                             <div className="closeButtonContainer">
-                                                <p onClick={() => setShowTravelerPopup(false)} className="closeButton">Close</p>
+                                                <p onClick={() => setShowGuestPopup(false)} className="closeButton">Close</p>
                                             </div>
                                         </div>
                                     )}
                                 </div>
-                                <p>Maximum amount of travelers: {accommodation.GuestAmount}</p>
+                                <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                             </div>
 
 
                             {/* Price and Reserve Section */}
                             <button className="reserve-button" onClick={handleBooking}
-                                    disabled={
-                                        !isFormValid || accommodation.Drafted === true || isDemo
-                                    }
-                                    style={{
-                                        backgroundColor: isFormValid ? 'green' : 'green',
-                                        cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
-                                        opacity: isFormValid && !isDemo ? 1 : 0.5
-                                    }}
+                                    // disabled={
+                                    //     !isFormValid || accommodation.Drafted === true || isDemo
+                                    // }
+                                    // style={{
+                                    //     backgroundColor: isFormValid ? 'green' : 'green',
+                                    //     cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
+                                    //     opacity: isFormValid && !isDemo ? 1 : 0.5
+                                    // }}
                             >
                                 Reserve
                             </button>
