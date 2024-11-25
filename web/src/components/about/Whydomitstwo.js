@@ -21,26 +21,18 @@ function Whydomits() {
   return (
     <section className="why-domits">
       <article className="why-domits__title-text-container">
-        <h3 className="why-domits__h3">Why <span className="highlightText">Domits</span> & how we win together</h3>
+        <h3 className="why-domits__h3">Why Domits & how we win together</h3>
         <h4 className="why-domits__h4">
         One of the fastest improving all-in-1 travel platforms.
         </h4>
         <p className="why-domits__p">
-        Start your journey as a guest or host within minutes. List, search and book holiday accommodations, 
-        campers and boats. Save cost with our <span className="highlightText">0% </span> system charges for hosts. 
-        To run the platform <span className="highlightText">24/7 </span> 
-        we ask guests to pay <span className="highlightText">15%</span> service fees per booking. 
-        There are no hidden costs or percentage cuts. Save administrative time and headaches with AI assistants. 
-        Make use of our global secure payment methods. Enjoy our warmhearted customer centric approach. 
-        Try it out for free.
-        </p>
-        <p className="why-domits__p">
-          Start your journey as a Guest or <span className="highlightText">Host</span> within minutes. List, search and
-          book holiday accommodations, campers and boats. Save cost with our
-          small system charges. There are no hidden costs or percentage cuts.
-          Save administrative time. Make use of our global payment methods.
-          Enjoy our warmhearted customer centric approach. Try it out for free.
-        </p>
+        Start your journey as a Guest or Host within minutes. List, search and book holiday accommodations,
+         campers and boats. 0% fee for property owners and managers. There are no hidden costs or percentage
+          cuts. Save administrative time AI assistants and insights. Make use of our global secure payment
+           methods. Enjoy our warmhearted customer centric approach and quick phone support.
+        </p>  
+        <p className="why-domits__p"><a className="ref" href="/landing">Try it out for
+        free</a>, discover more on <a className="ref" href="/how-it-works">how it works</a> or read more <a className="ref" href="/about">about us</a>.</p>
       </article>
       <section className="why-domits__cards-container">
         <article className="why-domits__card">
@@ -51,7 +43,7 @@ function Whydomits() {
         </article>
         <article className="why-domits__card">
           <p className="why-domits__card-p">
-        Travel Innovation Labs to create sustainable value. For hosts an AI-powered property management system to increase revenue, occupancy and rates. For guests an AI travel assistant with recommendations.
+        Travel Innovation Labs to create sustainable value. For hosts an AI-powered recommendations for growth, revenue, operations, and the guest experience to increase revenue, occupancy and rates. For guests an AI travel assistant with recommendations.
           </p>
           <img className="why-domits__image" src={chartbreakout} alt="Bar Chart" />
         </article>
@@ -60,7 +52,7 @@ function Whydomits() {
       <div className="why-domits-bar" id="TopBar">
         <p><a href="#Guest" onClick={(e) => handleSmoothScroll(e, 'Guest')}>Guest</a></p>
         <p><a href="#Host" onClick={(e) => handleSmoothScroll(e, 'Host')}>Host</a></p>
-        <p><a href="#Devs" onClick={(e) => handleSmoothScroll(e, 'Devs')}>Devs, data and experts</a></p>
+        <p><a href="#Devs" onClick={(e) => handleSmoothScroll(e, 'Devs')}>Dev, data, sec experts</a></p>
         <p><a href="#Growth" onClick={(e) => handleSmoothScroll(e, 'Growth')}>Growth, rev and ops experts</a></p>
       </div>
 
@@ -99,6 +91,13 @@ function Whydomits() {
         Domits often provides more affordable options than hotels, especially for longer stays or for groups who can split the cost of larger properties. Guests can also find budget-friendly choices by renting a room in someone's home rather than an entire property.
       </p>
     </div>
+
+    <div className="why-domits__section guest">
+      <h3>24/7 Travel platform</h3>
+      <p className="why-domits__p_guest">
+      To run the platform 24/7 we ask guests to pay 15% service fees per booking.
+      </p>
+    </div>
   </div>
 </article>
 
@@ -106,8 +105,13 @@ function Whydomits() {
 <article id="Host" className="why-domits__title-text-container-host">
   <div className="why-domits__flex-container host">
     <div className="why-domits__section host">
-      <h4 className="why-domits__h3">Why Domits for host</h4>
-      <h4 className="why-domits__h3">“0% host fee: Avoid paying platform fees and increase your revenue with our 0% host fee.”</h4>
+      <h3 className="why-domits__h3">Why Domits for host</h3>
+    </div>
+    <div className="why-domits__section host">
+      <h3>0% host fee:</h3>
+      <p className="why-domits__p_host">
+      “Avoid paying platform fees and increase your revenue with our 0% host fee.”
+      </p>
     </div>
     <div className="why-domits__section host">
       <h3>Extra Income</h3>

@@ -20,33 +20,19 @@ function About() {
         <div className="about">
             <div className="about__title-container">
                 <h2 className="about__title"><span className="highlightH2">About Domits</span></h2>
+                <h3 className="about__title">Tailor-made travel partnerships</h3>
             </div>
             <div className="about__subtitle-container">
-                <h3 className="about__subtitle">Tailor made partnership</h3>
+                <h4>Mission: Simplify travel.</h4>
             </div>
 
             <div className="about__text-container">
-                <p className="about__text">
-                <span className="highlightText">Domits</span> is a platform to list, search and book holiday accommodations.
-                </p>
-                <p className="about__text">
-                    We build cool stuff in our travel innovation labs for People, Growth, Cloud IT and AI Data.
-                </p>
                 <p className="about__text about__text--margintop">
-                    In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners.
-                    There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.
-                </p>
-                <p className="about__text about__text--margintop">
-                    We strive to support tenants and landlords in every step of the process.
-                    <span className="highlightText"> Domits</span> acts as the intermediary in this process.
-                </p>
-                <p className="about__text">
-                    You enter into a rental agreement directly with the landlord and/or owner of the accommodation.
-                    Through <span className="highlightText">Domits</span>, you have the opportunity to inquire about options without any obligation.
-                </p>
-                <p className="about__text about__text--margintop">
-                    By charging one-time service fees, we can keep our platform running and provide services such as support.
-                </p>
+                In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners. There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.  
+                </p> 
+                
+                <p className="about__text about__text--margintop">Read here more about <a className="ref" href="/howitworks">how Domits works</a> and <a className="ref" href="/why-domits">Why to choose Domits</a>.</p>
+     
             </div>
             <br />
             <div className="about__factsbox">
@@ -72,7 +58,7 @@ function About() {
                     <p className="about__fact-text">
                         We build our travel platform to list, search and book accommodations.
                         Besides that we are providing traveltech development and consultancy for a select group of partners.
-                        We are open to cooperate through ventures and our travel innovation labs.
+                        We are open to cooperate through ventures and our <a className="ref" href="/travelinnovation">travel innovation labs</a>.
                     </p>
                 </div>
             </div>

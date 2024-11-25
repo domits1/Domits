@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from "react-native-safe-area-context";
+import {SafeAreaView} from 'react-native-safe-area-context';
 
 const HostDashboard = () => {
   const navigation = useNavigation();
@@ -24,9 +24,21 @@ const HostDashboard = () => {
           </Text>
         </View>
         <TouchableOpacity
+            style={styles.listItem}
+            onPress={() => navigation.navigate('OnboardingHost')}>
+            <Text style={styles.listItemText}>Onboarding</Text>
+            <MaterialIcons name="chevron-right" size={22} color="#000" />
+            </TouchableOpacity>
+        <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigation.navigate('HostDashboard')}>
           <Text style={styles.listItemText}>Dashboard</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('HostCalendar')}>
+          <Text style={styles.listItemText}>Calendar</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <TouchableOpacity
@@ -59,7 +71,12 @@ const HostDashboard = () => {
           <Text style={styles.listItemText}>Revenue Tool</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('HostReviews')}>
+          <Text style={styles.listItemText}>Reviews</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
         <View style={styles.helpSection}>
           <Text style={styles.helpText}>
             Do you have trouble with using our app?{'\n'}Please send a support
@@ -104,6 +121,7 @@ const styles = StyleSheet.create({
   },
   listItemText: {
     fontSize: 18,
+    color: 'black',
   },
   helpSection: {
     marginTop: 20,

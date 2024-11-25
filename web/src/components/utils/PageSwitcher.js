@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import ImageSlider from "./ImageSlider";
 import styles from './PageSwitcher.module.css';
 import DateFormatterDD_MM_YYYY from "./DateFormatterDD_MM_YYYY";
-function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onUpdate}) {
+function PageSwitcher({accommodations, bankDetailsProvided, amount, onEdit, onDelete , onUpdate}) {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = amount;
     const pageCount = Math.ceil(accommodations.length / itemsPerPage);
@@ -79,17 +79,24 @@ function PageSwitcher({accommodations, amount, hasStripe, onEdit, onDelete , onU
                             <button className={`${styles.listingButton} ${styles.listingDelete}`}
                                     onClick={() => onDelete(accommodation)}>Remove
                             </button>
-                            {accommodation.Drafted === true ?
-                                <button className={styles.listingButton}
-                                        onClick={() => onUpdate(accommodation.ID, false)}
-                                        disabled={!(hasStripe && Object.keys(accommodation.DateRanges).length > 0)}
-                                        style={{backgroundColor: !(hasStripe && accommodation.DateRanges) ? 'gray' : '#003366', fontSize: '0.8rem'}}
-                                >Set Live</button>
-                                :
-                                <button className={`${styles.listingButton} ${styles.listingDraft}`}
-                                        onClick={() => onUpdate(accommodation.ID, true)}
-                                        style={{backgroundColor: '#003366', fontSize: '0.75rem'}}
-                                >Set Draft</button>}
+                            {accommodation.Drafted === true ? (
+                                <button
+                                    className={styles.listingButton}
+                                    onClick={() => onUpdate(accommodation.ID, false)}
+                                    disabled={!(bankDetailsProvided && accommodation.DateRanges.length > 0)}
+                                    style={{ backgroundColor: !(bankDetailsProvided && accommodation.DateRanges.length > 0) ? 'gray' : '#003366', fontSize: '0.8rem' }}
+                                >
+                                    Set Live
+                                </button>
+                            ) : (
+                                <button
+                                    className={`${styles.listingButton} ${styles.listingDraft}`}
+                                    onClick={() => onUpdate(accommodation.ID, true)}
+                                    style={{ backgroundColor: '#003366', fontSize: '0.75rem' }}
+                                >
+                                    Set Draft
+                                </button>
+                            )}
                         </div>
                     </section>
                 ))}

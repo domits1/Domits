@@ -9,9 +9,9 @@ import PageSwitcher from "../utils/PageSwitcher";
 
 function HostListings() {
     const [accommodations, setAccommodations] = useState([]);
+    const [bankDetailsProvided, setBankDetailsProvided] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [userId, setUserId] = useState(null);
-    const [hasStripe, setHostStripe] = useState(false);
     const navigate = useNavigate();
     useEffect(() => {
         const setUserIdAsync = async () => {
@@ -37,12 +37,12 @@ function HostListings() {
                 });
                 const data = await response.json();
                 if (data.hasStripeAccount) {
-                    setHostStripe(true);
+                    setBankDetailsProvided(data.bankDetailsProvided);
                 }
             } catch (error) {
                 console.error("Error fetching user data or Stripe status:", error);
             }
-        }
+        };
         checkHostStripeAcc(userId);
     }, [userId]);
 
@@ -55,7 +55,6 @@ function HostListings() {
     const fetchAccommodations = async () => {
         setIsLoading(true);
         if (!userId) {
-            console.log("No user id")
             return;
         } else {
             try {
@@ -172,12 +171,14 @@ function HostListings() {
                             <section className={styles.listingsDisplay}>
                                 <p className={styles.header}>Current listings</p>
                                 {accommodations.length > 0 ? (
-                                    <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === false)}
-                                                  amount={3}
-                                                  hasStripe={hasStripe}
-                                                  onEdit={asyncEditAccommodation}
-                                                  onDelete={asyncDeleteAccommodation}
-                                                  onUpdate={asyncChangeAccommodationStatus}/>
+                                    <PageSwitcher
+                                        accommodations={accommodations.filter(acco => acco.Drafted === false)}
+                                        amount={3}
+                                        bankDetailsProvided={bankDetailsProvided}
+                                        onEdit={asyncEditAccommodation}
+                                        onDelete={asyncDeleteAccommodation}
+                                        onUpdate={asyncChangeAccommodationStatus}
+                                    />
                                 ) : (
                                     <div>
                                         <p>It appears that you have not listed any accommodations yet...</p>
@@ -193,7 +194,7 @@ function HostListings() {
                                 ) : accommodations.length > 0 ? (
                                     <PageSwitcher accommodations={accommodations.filter(acco => acco.Drafted === true)}
                                                   amount={3}
-                                                  hasStripe={hasStripe}
+                                                  bankDetailsProvided={bankDetailsProvided}
                                                   onEdit={asyncEditAccommodation}
                                                   onDelete={asyncDeleteAccommodation}
                                                   onUpdate={asyncChangeAccommodationStatus}/>

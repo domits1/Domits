@@ -24,9 +24,9 @@ const Footer = () => {
                     <ul className='footer-lists'>
                         <li><Link to="/why-domits" className='footer-links'>Why Domits</Link></li>
                         <li><Link to="/how-it-works" className='footer-links'>How it works</Link></li>
-                        <li><Link to="/career" className='footer-links'>Jobs</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
-                        <li><Link to="/release" className='footer-links'>Release</Link></li>
+                        <li><Link to="/career" className='footer-links'>Jobs</Link></li>
+                        <li><Link to="/release" className='footer-links'>Release Updates</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
                         <br />
                     </ul>
@@ -35,10 +35,10 @@ const Footer = () => {
 
                 {/* Guests section */}
                 <div className="footer-section">
-                    <h4 className='footer-headers'>Guest</h4>
+                    <h4 className='footer-headers'>Guests</h4>
                     <ul className='footer-lists'>
                         <li><Link to="/" className='footer-links'>Search and book</Link></li>
-                        <li><Link to="/helpdesk-guest" className='footer-links'>Helpdesk for Guest</Link></li>
+                        <li><Link to="/helpdesk-guest" className='footer-links'>Helpdesk for guests</Link></li>
                     </ul>
                 </div>
 
@@ -57,7 +57,7 @@ const Footer = () => {
                 <div className="footer-section borderline">
                     <h4 className='footer-headers'>Network</h4>
                     <ul className='footer-lists'>
-                        <li className='footer-links'>Traveller</li>
+                        <li className='footer-links'>Guests</li>
                         <li className='footer-links'>Hosts</li>
                         <li className='footer-links'>Developers</li>
                         <li className='footer-links'>Partners</li>
