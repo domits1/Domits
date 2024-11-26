@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './hostchatbot.css';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
-import { PDFDocument } from 'pdf-lib';
+import * as pdfjsLib from 'pdfjs-dist';
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js`;
 
 import AccommodationTile from './AccommodationTile';
 import useChatToggle from './hooks/useChatToggle';
@@ -18,6 +20,7 @@ const HostChatbot = () => {
 
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
+  const [pdfMode, setPdfMode] = useState(false); // Track if the input is populated from a PDF
   const [loading, setLoading] = useState(false);
   const [awaitingUserChoice, setAwaitingUserChoice] = useState(true);
   const [currentOption, setCurrentOption] = useState(null);
@@ -78,88 +81,77 @@ const HostChatbot = () => {
 
         if (userInput.trim()) {
           const messageId = Date.now();
+
+          // Add the user message to the chat
           setMessages((prevMessages) => [
             ...prevMessages,
             { id: messageId, text: userInput, sender: 'user', contentType: 'text' },
           ]);
-          fetchPollySpeech(userInput, messageId);
-          setUserInput('');
 
-          if (currentOption === '1') {
-            handleAccommodationQuery(userInput);
-          } else if (currentOption === '2') {
-            handleFAQQuery(userInput);
-          } else {
-            handleExpertContact();
-          }
+          // Fetch Polly speech for the input text
+          fetchPollySpeech(userInput, messageId);
+
+          // Reset input field and PDF mode
+          setUserInput('');
+          setPdfMode(false); // Exit PDF mode after sending
+          console.log('Message sent:', userInput);
         }
       },
-      [userInput, currentOption, fetchPollySpeech]
+      [userInput, fetchPollySpeech]
   );
-
-  const handleAccommodationQuery = async (userInput) => {
-    const messageId = Date.now();
-    if (userInput.toLowerCase().includes('show all accommodations')) {
-      await fetchAccommodations();
-    }
-
-    const responseMessage = accommodations.length
-        ? `Here are the accommodations:\n${accommodations
-            .map((acc) => `Title: ${acc.title} City: ${acc.city}`)
-            .join('\n\n')}`
-        : 'Sorry, there is no accommodation data available right now.';
-
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
-    ]);
-    fetchPollySpeech(responseMessage, messageId);
-  };
-
-  const handleFAQQuery = (userInput) => {
-    const messageId = Date.now();
-    const bestMatch = faqList.find((faq) =>
-        faq.question.toLowerCase().includes(userInput.toLowerCase())
-    );
-    const responseMessage = bestMatch
-        ? `Q: ${bestMatch.question} A: ${bestMatch.answer}`
-        : "Sorry, I couldn't find an answer to your question.";
-
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
-    ]);
-    fetchPollySpeech(responseMessage, messageId);
-  };
-
-  const handleExpertContact = () => {
-    const expertMessage = 'You can contact an expert at support@domits.com or call +123456789.';
-    const messageId = Date.now();
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { id: messageId, text: expertMessage, sender: 'bot', contentType: 'text' },
-    ]);
-    fetchPollySpeech(expertMessage, messageId);
-  };
 
   const handlePDFUpload = async (event) => {
     const file = event.target.files[0];
-    if (file) {
+    if (!file) {
+      console.error('No file selected');
+      alert('No file selected!');
+      return;
+    }
+
+    console.log('Selected file:', file.name, 'Size:', file.size);
+
+    if (file.size > 5 * 1024 * 1024) { // Limit to 5 MB
+      console.error('File is too large');
+      alert('The file is too large. Please select a smaller file.');
+      return;
+    }
+
+    try {
       const fileReader = new FileReader();
       fileReader.onload = async (e) => {
-        const pdfData = new Uint8Array(e.target.result);
-        const pdfDoc = await PDFDocument.load(pdfData);
-        const pages = pdfDoc.getPages();
-        const extractedText = pages.map((page) => page.getTextContent().items.map((item) => item.str).join(' ')).join('\n');
+        try {
+          const typedArray = new Uint8Array(e.target.result);
+          const pdf = await pdfjsLib.getDocument(typedArray).promise;
+          console.log('Number of pages in PDF:', pdf.numPages);
 
-        const messageId = Date.now();
-        setMessages((prevMessages) => [
-          ...prevMessages,
-          { id: messageId, text: extractedText, sender: 'user', contentType: 'text' },
-        ]);
-        fetchPollySpeech(extractedText, messageId);
+          let extractedText = '';
+          const numPagesToProcess = Math.min(pdf.numPages, 5); // Limit to first 5 pages
+          for (let i = 1; i <= numPagesToProcess; i++) {
+            const page = await pdf.getPage(i);
+            const textContent = await page.getTextContent();
+            const pageText = textContent.items.map((item) => item.str).join(' ');
+            extractedText += pageText + '\n';
+            console.log(`Extracted text from page ${i}:`, pageText);
+          }
+
+          if (extractedText.length > 200) {
+            console.error('Extracted text exceeds 200-character limit');
+            alert('Error: The PDF content exceeds the 200-character limit.');
+            return;
+          }
+
+          setUserInput(extractedText);
+          setPdfMode(true); // Assume you already have pdfMode in your state
+          console.log('Final extracted text:', extractedText);
+        } catch (error) {
+          console.error('Error processing PDF:', error);
+          alert('Failed to process the PDF file.');
+        }
       };
       fileReader.readAsArrayBuffer(file);
+    } catch (error) {
+      console.error('Error reading file:', error);
+      alert('An error occurred while reading the file.');
     }
   };
 
@@ -174,7 +166,6 @@ const HostChatbot = () => {
     fetchPollySpeech(message, messageId);
   };
 
-  // Conditional rendering based on user role
   if (userLoading) return <div>Loading...</div>;
   if (role !== 'Host') return null;
 
@@ -234,18 +225,18 @@ const HostChatbot = () => {
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                placeholder="Type a message..."
-                disabled={loading || awaitingUserChoice}
+                placeholder={pdfMode ? 'Cannot edit text while PDF is selected' : 'Type a message or upload a PDF...'}
+                disabled={pdfMode} // Disable input in PDF mode
             />
             <button
                 type="button"
                 onClick={handleVoiceInput}
-                disabled={awaitingUserChoice || isRecording}
+                disabled={awaitingUserChoice || isRecording || pdfMode} // Disable voice input in PDF mode
                 className="voice-input-button"
             >
               {isRecording ? 'Listening...' : 'Start Recording'}
             </button>
-            <button type="submit" disabled={loading || awaitingUserChoice}>
+            <button type="submit" disabled={loading || awaitingUserChoice || !userInput}>
               Send
             </button>
           </form>
