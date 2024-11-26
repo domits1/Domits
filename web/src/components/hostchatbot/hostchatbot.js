@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import './hostchatbot.css';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
+import { PDFDocument } from 'pdf-lib';
 
 import AccommodationTile from './AccommodationTile';
 import useChatToggle from './hooks/useChatToggle';
@@ -104,10 +105,7 @@ const HostChatbot = () => {
 
     const responseMessage = accommodations.length
         ? `Here are the accommodations:\n${accommodations
-            .map((acc) => `
-        Title: ${acc.title}
-        City: ${acc.city}
-      `)
+            .map((acc) => `Title: ${acc.title} City: ${acc.city}`)
             .join('\n\n')}`
         : 'Sorry, there is no accommodation data available right now.';
 
@@ -142,6 +140,27 @@ const HostChatbot = () => {
       { id: messageId, text: expertMessage, sender: 'bot', contentType: 'text' },
     ]);
     fetchPollySpeech(expertMessage, messageId);
+  };
+
+  const handlePDFUpload = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const fileReader = new FileReader();
+      fileReader.onload = async (e) => {
+        const pdfData = new Uint8Array(e.target.result);
+        const pdfDoc = await PDFDocument.load(pdfData);
+        const pages = pdfDoc.getPages();
+        const extractedText = pages.map((page) => page.getTextContent().items.map((item) => item.str).join(' ')).join('\n');
+
+        const messageId = Date.now();
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: messageId, text: extractedText, sender: 'user', contentType: 'text' },
+        ]);
+        fetchPollySpeech(extractedText, messageId);
+      };
+      fileReader.readAsArrayBuffer(file);
+    }
   };
 
   const goBackToOptions = () => {
@@ -230,8 +249,18 @@ const HostChatbot = () => {
               Send
             </button>
           </form>
-          <button onClick={downloadChatHistory} className="download-button">Download Chat</button>
-          <button onClick={printChatHistory} className="print-button">Print Chat</button>
+          <input
+              type="file"
+              accept="application/pdf"
+              onChange={handlePDFUpload}
+              className="pdf-upload-button"
+          />
+          <button onClick={downloadChatHistory} className="download-button">
+            Download Chat
+          </button>
+          <button onClick={printChatHistory} className="print-button">
+            Print Chat
+          </button>
         </div>
       </>
   );
