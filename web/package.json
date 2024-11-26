@@ -108,6 +108,7 @@
     "node-fetch": "^3.3.2",
     "nth-check": "^2.1.1",
     "path-to-regexp": "^8.2.0",
+    "pdf-lib": "^1.17.1",
     "react-chartjs-2": "^5.2.0",
     "react-country-flag": "^3.1.0",
     "react-date-range": "^2.0.0-alpha.4",
