@@ -1,18 +1,19 @@
-import React, {useState, useEffect} from 'react';
-import {View, Text, TextInput, Button, StyleSheet} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {useAuth} from '../../context/AuthContext';
-import {signUp, getCurrentUser, signOut} from '@aws-amplify/auth';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import { useAuth } from '../../context/AuthContext';
+import { signUp, getCurrentUser, signOut } from '@aws-amplify/auth';
 import CheckBox from '@react-native-community/checkbox';
 
 const Register = () => {
   const navigation = useNavigation();
-  const {setAuthCredentials} = useAuth(); // Remove if not defined in AuthContext
+  const { setAuthCredentials } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    repeatPassword: '',
     username: '',
+    firstName: '',
+    lastName: '',
   });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -23,17 +24,21 @@ const Register = () => {
   };
 
   const handleChange = (name, value) => {
-    setFormData(prevState => ({
+    setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
   };
 
   const onSubmit = async () => {
-    const {username, email, password, repeatPassword} = formData;
+    const { username, email, password, firstName, lastName } = formData;
 
     if (username.length < 4) {
       setErrorMessage('Username must be at least 4 characters long.');
+      return;
+    }
+    if (firstName.length < 2 || lastName.length < 2) {
+      setErrorMessage('First and last name must be at least 2 characters long.');
       return;
     }
     if (password.length < 7) {
@@ -44,36 +49,28 @@ const Register = () => {
       setErrorMessage("Email can't be empty!");
       return;
     }
-    if (!password || !repeatPassword) {
-      setErrorMessage("Password can't be empty!");
-      return;
-    }
-    if (password !== repeatPassword) {
-      setErrorMessage('Passwords do not match!');
-      return;
-    }
 
-    // Attempt to sign up the user
     try {
       const groupName = isHost ? 'Host' : 'Traveler';
-      const data = await signUp({
+      await signUp({
         username: email,
         password,
         attributes: {
           'custom:group': groupName,
           'custom:username': username,
           email: email,
+          given_name: firstName,
+          family_name: lastName,
         },
       });
 
-      // Only setAuthCredentials if it's defined in the context
       if (setAuthCredentials) {
         setAuthCredentials(email, password);
       }
-console.log(data.userId)
+
       navigation.navigate('ConfirmEmail', {
         email: email,
-        username: data.userId,
+        username: email,
       });
     } catch (error) {
       if (error.code === 'UsernameExistsException') {
@@ -90,7 +87,7 @@ console.log(data.userId)
       try {
         await getCurrentUser();
         setIsAuthenticated(true);
-      } catch (error) {
+      } catch {
         setIsAuthenticated(false);
       }
     };
@@ -99,115 +96,170 @@ console.log(data.userId)
   }, []);
 
   return (
-    <View style={styles.container}>
-      {isAuthenticated ? (
-        <Button
-          onPress={async () => {
-            await signOut();
-            setIsAuthenticated(false);
-          }}
-          title="Sign out"
-        />
-      ) : (
-        <View style={styles.registerContainer}>
-          <Text style={styles.title}>Create an account on Domits</Text>
-          <Text style={styles.label}>Username:</Text>
-          <TextInput
-            style={[
-              styles.input,
-              errorMessage.includes('Username') && styles.inputError,
-            ]}
-            placeholder="Username"
-            value={formData.username}
-            onChangeText={value => handleChange('username', value)}
-          />
-          <Text style={styles.label}>Email:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={formData.email}
-            onChangeText={value => handleChange('email', value)}
-          />
-          <Text style={styles.label}>Password:</Text>
-          <TextInput
-            style={[
-              styles.input,
-              errorMessage.includes('Password') && styles.inputError,
-            ]}
-            placeholder="Password"
-            secureTextEntry
-            value={formData.password}
-            onChangeText={value => handleChange('password', value)}
-          />
-          <Text style={styles.label}>Repeat Password:</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Repeat Password"
-            secureTextEntry
-            value={formData.repeatPassword}
-            onChangeText={value => handleChange('repeatPassword', value)}
-          />
-          <View style={styles.checkboxContainer}>
-            <Text>Become a Host</Text>
-            <CheckBox value={isHost} onValueChange={handleHostChange} />
-          </View>
-          {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
-          <Button title="Sign Up" onPress={onSubmit} />
-          <Text
-            style={styles.linkText}
-            onPress={() => navigation.navigate('Login')}>
-            Already have an account? Log in here
-          </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: 'white' }}>
+      <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.container}>
+          {isAuthenticated ? (
+            <TouchableOpacity
+              style={styles.signOutButton}
+              onPress={async () => {
+                await signOut();
+                setIsAuthenticated(false);
+              }}
+            >
+              <Text style={styles.buttonText}>Sign Out</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.registerContainer}>
+              <Text style={styles.title}>Create an Account on Domits</Text>
+              <Text style={styles.label}>Username:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Username"
+                value={formData.username}
+                onChangeText={(value) => handleChange('username', value)}
+              />
+              <Text style={styles.label}>First Name:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="First Name"
+                value={formData.firstName}
+                onChangeText={(value) => handleChange('firstName', value)}
+              />
+              <Text style={styles.label}>Last Name:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Last Name"
+                value={formData.lastName}
+                onChangeText={(value) => handleChange('lastName', value)}
+              />
+              <Text style={styles.label}>Email:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Email"
+                value={formData.email}
+                onChangeText={(value) => handleChange('email', value)}
+              />
+              <Text style={styles.label}>Password:</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Password"
+                secureTextEntry
+                value={formData.password}
+                onChangeText={(value) => handleChange('password', value)}
+              />
+              <View style={styles.checkboxContainer}>
+                <CheckBox
+                  value={isHost}
+                  onValueChange={handleHostChange}
+                  tintColors={{ true: 'black', false: 'black' }}
+                />
+                <Text style={styles.checkBoxLabel}>
+                  Become a Host
+                </Text>
+              </View>
+              {errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
+              <TouchableOpacity style={styles.signUpButton} onPress={onSubmit}>
+                <Text style={styles.buttonText}>Sign Up</Text>
+              </TouchableOpacity>
+              <Text style={styles.linkText} onPress={() => navigation.navigate('Login')}>
+                Already have an account? Log in here
+              </Text>
+            </View>
+          )}
         </View>
-      )}
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  scrollContainer: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
   container: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#ffffff',
   },
   registerContainer: {
     width: '100%',
     maxWidth: 400,
+    padding: 20,
+    backgroundColor: '#ffffff',
   },
   title: {
     fontSize: 24,
+    fontWeight: 'bold',
+    color: 'black',
     marginBottom: 20,
     textAlign: 'center',
   },
   label: {
+    fontSize: 16,
+    color: 'black',
     marginBottom: 5,
-    fontWeight: 'bold',
+    fontWeight: '600',
   },
   input: {
-    height: 40,
-    borderColor: 'gray',
+    height: 50,
+    borderColor: '#003366',
     borderWidth: 1,
-    marginBottom: 12,
-    paddingHorizontal: 8,
-  },
-  inputError: {
-    borderColor: 'red',
+    borderRadius: 5,
+    paddingHorizontal: 10,
+    marginBottom: 15,
+    fontSize: 16,
+    color: 'black',
   },
   checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
   },
+  checkBoxLabel: {
+    fontSize: 16,
+    color: 'black',
+    marginLeft: 8,
+  },
   errorText: {
     color: 'red',
+    fontSize: 14,
     marginBottom: 20,
-  },
-  linkText: {
-    color: 'blue',
-    marginTop: 20,
     textAlign: 'center',
   },
+  signUpButton: {
+    backgroundColor: '#003366',
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  linkText: {
+    color: '#003366',
+    marginTop: 20,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+
+  signOutButton: {
+    backgroundColor: '#003366',
+    paddingVertical: 12,
+    borderRadius: 5,
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  
 });
 
 export default Register;

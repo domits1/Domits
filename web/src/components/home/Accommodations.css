@@ -1,4 +1,4 @@
-#card-visibility{
+#card-visibility {
   padding-top: 30px;
 }
 
@@ -16,6 +16,7 @@
   vertical-align: top;
   transition: all 0.5s ease-in-out;
   position: relative;
+  z-index: 1;
 }
 
 .accocard:hover {
@@ -32,9 +33,12 @@
   transition: transform 0.4s ease-in-out;
 }
 
+.accocard:hover img {
+  transform: scale(1.05);
+}
 
-.accocard:hover .accocard-title{
-  background: rgba(13, 152, 20, 0.616);
+.accocard:hover .accocard-title {
+  background: rgba(13, 152, 20, 0.8);
 }
 
 .accocard-content {
@@ -53,7 +57,6 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  position: absolute;
   bottom: 160px;
   left: 50%;
   transform: translateX(-50%);
@@ -61,7 +64,8 @@
   font-size: 18px;
   font-weight: 500;
   transition: background 0.4s ease-in-out;
-
+  position: absolute;
+  z-index: 2;
 }
 
 .accocard-price {
@@ -85,6 +89,7 @@
 .accocard-specs {
   display: flex;
   flex-direction: row;
+  gap: 5px;
 }
 
 .accocard-size {
@@ -120,8 +125,6 @@
   opacity: 90%;
   text-decoration: none;
 }
-
-
 
 @media (max-width: 1292px) {
   .accocard {
@@ -167,38 +170,114 @@
   }
 }
 
-.accocard-share-button {
+.accocard-share-button, .accocard-like-button {
   position: absolute;
   top: 10px;
-  left: 10px;
   background-color: rgba(255, 255, 255, 0.8);
   border: none;
   border-radius: 50%;
-  width: 30px;
-  height: 30px;
+  width: 35px;
+  height: 35px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
-.accocard-share-button:hover, .accocard-like-button:hover {
-  background-color: rgba(255, 255, 255, 0.9); /* Optionele hover effect */
+.accocard-share-button {
+  left: 10px;
 }
 
 .accocard-like-button {
-  position: absolute;
-  top: 10px;
   right: 10px;
-  background-color: rgba(255, 255, 255, 0.8);
-  border: none;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+.accocard-share-button:hover, .accocard-like-button:hover {
+  background-color: rgba(255, 255, 255, 0.9);
+  transform: scale(1.1);
+}
+
+.accocard:hover .accocard-share-button, .accocard:hover .accocard-like-button {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.accocard .accocard-share-button, .accocard .accocard-like-button {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.swiper-button-next, .swiper-button-prev {
+  z-index: 30 !important;
+  opacity: 1 !important;
+  cursor: pointer !important;
+  color: #333;
+  pointer-events: auto;
+  padding: 5px;
+  width: 20px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  color: #333;
+  opacity: 1;
+  cursor: pointer !important;
+  z-index: 20 !important;
+  font-size: 10px;
+}
+
+.swiper-button-next:hover, .swiper-button-prev:hover {
+  background: rgba(255, 255, 255, 1);
+  transform: scale(1.1);
+  transition: all 0.3s ease;
+  z-index: 20 !important;
+}
+
+.swiper-button-next::after, .swiper-button-prev::after {
+  color: #000;
+  font-size: 10px !important;
+  z-index: 20 !important;
+}
+
+.swiper-pagination-bullet {
+  background: rgba(0, 0, 0, 0.5);
+  width: 10px;
+  height: 10px;
+  opacity: 0.7;
+  transition: opacity 0.3s ease;
+  z-index: 15 !important;
+}
+
+.swiper-pagination-bullet-active {
+  background: #007bff;
+  opacity: 1;
+  z-index: 15 !important;
+}
+
+body {
+  position: relative;
+  height: 100%;
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  color: #000;
+  margin: 0;
+  padding: 0;
+}
+
+.swiper {
+  width: 100%;
+  height: 100%;
+}
+
+.swiper-slide {
+  background-position: center;
+  background-size: cover;
+}
+
+.swiper-slide img {
+  display: block;
+  width: 100%;
+}

@@ -1047,6 +1047,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: 'black',
   },
   divider: {
     height: 1,
@@ -1065,6 +1066,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
+    color: 'black',
   },
   showMoreText: {
     fontSize: 16,

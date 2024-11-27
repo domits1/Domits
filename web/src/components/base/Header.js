@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useContext } from 'react';
-import { Link } from 'react-router-dom'; // Make sure Link is imported
+import { Link } from 'react-router-dom';
 import './base.css';
 import logo from "../../logo.svg";
 import nineDots from '../../images/dots-grid.svg';
@@ -22,6 +22,19 @@ function Header({ setSearchResults, setLoading }) {
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [currentView, setCurrentView] = useState('guest'); // 'guest' or 'host'
     const [isActiveSearchBar, setActiveSearchBar] = useState(false);
+
+    useEffect(() => {
+        // Voeg het Trustpilot-script toe
+        const script = document.createElement('script');
+        script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
+        script.async = true;
+        document.head.appendChild(script);
+
+        // Verwijder het script bij demontage van de component
+        return () => {
+            document.head.removeChild(script);
+        };
+    }, []);
 
     useEffect(() => {
         checkAuthentication();
@@ -195,8 +208,6 @@ function Header({ setSearchResults, setLoading }) {
                             <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
                                 <img src={nineDots} alt="Nine Dots" />
                             </button>
-
-
                         </ul>
                         <div className="personalMenuDropdown">
                             <button className="personalMenu" onClick={toggleDropdown}>
@@ -208,18 +219,26 @@ function Header({ setSearchResults, setLoading }) {
                                     <>
                                         <button onClick={navigateToLogin} className="dropdownLoginButton">Login<img
                                             src={loginArrow} alt="Login Arrow" /></button>
-                                        <button onClick={navigateToRegister}
-                                            className="dropdownRegisterButton">Register
-                                        </button>
+                                        <button onClick={navigateToRegister} className="dropdownRegisterButton">Register</button>
                                     </>
                                 )}
                             </div>
                         </div>
                     </div>
                 </nav>
+                 {/* Extra balk voor de Trustpilot-widget */}
+                 <div className="trustpilot-bar">
+                    <div className="trustpilot-widget" data-locale="en-GB" data-template-id="56278e9abfbbba0bdcd568bc"
+                        data-businessunit-id="6731d0f09ecd53e30da42a87" data-style-height="40px" data-style-width="80%">
+                        <a href="https://uk.trustpilot.com/review/domits.com" target="_blank" rel="noopener noreferrer">
+                            Trustpilot
+                        </a>
+                    </div>
+                </div>
+                {/* Einde van de extra balk */}
             </header>
         </div>
-    );
+    );    
 }
 
 export default Header;

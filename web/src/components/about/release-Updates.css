@@ -1,0 +1,44 @@
+.updates-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 2rem 0;
+  margin: auto;
+}
+
+.embed-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: 100%;
+  padding: 0 2rem;
+  margin: 0 auto;
+}
+
+.twitter-tweet {
+  margin: 1rem;
+  max-width: 325px;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .embed-container {
+    padding: 0 1rem;
+  }
+
+  .twitter-tweet {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .embed-container {
+    padding: 0 0.5rem;
+  }
+
+  .twitter-tweet {
+    margin: 0.5rem;
+  }
+}

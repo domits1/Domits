@@ -44,7 +44,7 @@ import GuestReviews from "./components/guestdashboard/GuestReviews";
 import GuestSettings from "./components/guestdashboard/GuestSettings";
 import Chat from "./components/chat/Chat.js";
 import Chatbot from "./components/chatbot/chatbot";
-import ChatWidget from './components/chatwidget/ChatWidget';
+import ChatWidget from "./components/chatwidget/ChatWidget";
 import EmployeeChat from './components/employee/EmployeeChat';
 import FlowContext from './FlowContext';
 import Hostchat from './components/hostdashboard/Hostchat';
@@ -60,8 +60,6 @@ import HostScreening from "./components/hostdashboard/HostScreening";
 import HostSetup from "./components/hostdashboard/HostSetup";
 import HostPromoCodes from "./components/hostdashboard/HostPromoCodes";
 import HostVerificationView from "./components/hostverification/HostVerificationView.js";
-import RegistrationNumberCheckView from './components/hostverification/RegistrationNumberCheckView.js';
-import RegistrationNumberView from "./components/hostverification/RegistrationNumberView.js";
 import PhoneNumberView from './components/hostverification/PhoneNumberView.js';
 import PhoneNumberConfirmView from './components/hostverification/PhoneNumberConfirmView.js';
 import { initializeUserAttributes } from './components/utils/userAttributes';
@@ -70,6 +68,24 @@ import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
+// import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
+
+
+import AccommodationTypeView from './components/hostonboarding/views/AccommodationTypeView.js';
+import GuestAccessView from './components/hostonboarding/views/GuestAccessView.js';
+import BoatTypeView from './components/hostonboarding/views/BoatTypeView.js';
+import CamperTypeView from './components/hostonboarding/views/CamperTypeView.js';
+import AddressInputView from './components/hostonboarding/views/AddressInputView.js';
+import CapacityView from './components/hostonboarding/views/GuestAmountView.js';
+import AmenitiesView from './components/hostonboarding/views/AmenitiesView.js';
+import HouseRulesView from './components/hostonboarding/views/HouseRulesView.js';
+import PhotosView from './components/hostonboarding/views/PhotosView.js';
+import AccommodationTitleView from './components/hostonboarding/views/AccommodationTitleView.js';
+import DescriptionView from './components/hostonboarding/views/DescriptionView.js';
+import PricingView from './components/hostonboarding/views/PricingView.js';
+import AvailabilityView from './components/hostonboarding/views/AvailabilityView.js';
+import RegistrationNumberView from './components/hostverification/RegistrationNumberView.js';
+import SummaryView from './components/hostonboarding/views/SummaryView.js';
 
 
 
@@ -77,7 +93,7 @@ import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
 import Hostchatbot from "./components/hostchatbot/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-
+import ReleaseUpdates from './components/about/ReleaseUpdates.js'
 
 
 Modal.setAppElement('#root');
@@ -135,7 +151,7 @@ function App() {
                                 <Routes>
                                     <Route path="/" element={<Home searchResults={searchResults} />} />
                                     <Route path="/about" element={<About />} />
-                                    <Route path="/release" element={<Release />} />
+                                    {/* <Route path="/release" element={<Release />} /> */}
                                     <Route path="/releaseTwo" element={<ReleaseTwo />} />
                                     <Route path="/data-safety" element={<Datasafety />} />
                                     <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
@@ -144,6 +160,7 @@ function App() {
                                     <Route path="/why-domits" element={<Whydomits />} />
                                     <Route path="/contact" element={<Contact />} />
                                     <Route path="/travelinnovation" element={<Travelinnovation />} />
+                                    <Route path="/release" element={<ReleaseUpdates />} />
                                     <Route path="/landing" element={<Landing />} />
                                     <Route path="/login" element={<Login />} />
                                     <Route path="/register" element={<Register />} />
@@ -151,6 +168,7 @@ function App() {
                                     <Route path="/listingdetails" element={<ListingDetails />} />
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
+                                    {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />
@@ -186,8 +204,6 @@ function App() {
 
                             {/* Verification */}
                             <Route path="/verify" element={<HostVerificationView />} />
-                            <Route path="/verify/registrationnumber/:id" element={<RegistrationNumberView />} />
-                            <Route path="/verify/registrationnumber/check" element={<RegistrationNumberCheckView />} />
                             <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
                             <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
 
@@ -235,11 +251,33 @@ function App() {
 
                                     {/* Error*/}
                                     <Route path="/*" element={<PageNotFound />} />
+
+                                    {/* Host Onboarding v3 */}
+                                    <Route path="/hostonboarding" element={<AccommodationTypeView />} />
+                                    <Route path="/hostonboarding/accommodation" element={<GuestAccessView />} />
+                                    <Route path="/hostonboarding/boat" element={<BoatTypeView />} />
+                                    <Route path="/hostonboarding/camper" element={<CamperTypeView />} />
+                                    <Route path="/hostonboarding/:type/address" element={<AddressInputView />} />
+                                    <Route path="/hostonboarding/:type/capacity" element={<CapacityView />} />
+                                    <Route path="/hostonboarding/:type/amenities" element={<AmenitiesView />} />
+                                    <Route path='/hostonboarding/:type/rules' element={<HouseRulesView/>} />
+                                    <Route path='/hostonboarding/:type/photos' element={<PhotosView/>} />
+                                    <Route path='/hostonboarding/:type/title' element={<AccommodationTitleView/>} />
+                                    <Route path='/hostonboarding/:type/description' element={<DescriptionView/>} />
+                                    <Route path='/hostonboarding/:type/pricing' element={<PricingView/>} />
+                                    <Route path='/hostonboarding/:type/availability' element={<AvailabilityView/>} />
+                                    <Route path='/hostonboarding/legal/registrationnumber' element={<RegistrationNumberView/>} />
+                                    <Route path='/hostonboarding/summary' element={<SummaryView/>} />
+                                    
+
+
+
                                 </Routes>
                                 {renderFooter()}
                                 {currentPath !== '/admin' && <MenuBar />}
-                                <Hostchatbot />
                                 {renderChatWidget()}
+                                <Hostchatbot />
+                               
 
                             </div>
                         </UserProvider>

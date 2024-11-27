@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
+  ScrollView,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {signIn} from '@aws-amplify/auth'; // Correct import for Amplify Auth
@@ -42,22 +43,26 @@ const LoginScreen = () => {
     // Google sign-in logic
   };
 
+
   return (
     <SafeAreaView style={styles.container}>
+      <ScrollView>
       <View style={styles.header}>
         <Text style={styles.headerText}>Log in or sign up</Text>
       </View>
-      <Label>Email</Label>
+      <Label style={styles.labelText}>Email</Label>
       <TextInput
         placeholder="Email"
+        placeholderTextColor="gray"
         value={formData.email}
         onChangeText={value => handleChange('email', value)}
         style={styles.input}
         keyboardType="email-address"
       />
-      <Label>Password</Label>
+      <Label style={styles.labelText}>Password</Label>
       <TextInput
         placeholder="Password"
+        placeholderTextColor="gray"
         value={formData.password}
         onChangeText={value => handleChange('password', value)}
         style={styles.input}
@@ -79,16 +84,21 @@ const LoginScreen = () => {
       {/*  <Text style={styles.linkText}>Don't have an account? Sign up!</Text>*/}
       {/*</TouchableOpacity>*/}
       <View style={styles.buttonAlignment}>
+        {/* Log in button */}
         <TouchableOpacity onPress={handleLogin} style={styles.loginButton}>
           <Text style={styles.loginButtonText}>Log in</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Divider with "or" */}
       <View style={styles.dividerRow}>
         <View style={styles.divider} />
         <Text style={styles.orText}>or</Text>
         <View style={styles.divider} />
       </View>
+
       <View style={styles.buttonAlignment}>
+        {/* Register button */}
         <TouchableOpacity
           style={styles.registerButton}
           onPress={() => {
@@ -97,10 +107,12 @@ const LoginScreen = () => {
           <Text style={styles.registerButtonText}>Register</Text>
         </TouchableOpacity>
       </View>
+
       {/* <TouchableOpacity onPress={handleGoogleSignIn} style={styles.googleSignInButton}>
         <Image source={require('./path-to-your-google-icon.png')} style={styles.googleIcon} />
         <Text style={styles.googleSignInText}>Sign in with Google</Text>
       </TouchableOpacity> */}
+      </ScrollView>
     </SafeAreaView>
   );
 };
@@ -118,12 +130,19 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   headerText: {
+    paddingTop: 40,
     fontSize: 24,
     fontWeight: 'bold',
+    color: 'black',
+  },
+  labelText: {
+    fontWeight: 'bold',
+    marginLeft: 1,
   },
   input: {
     height: 50,
-    borderColor: 'gray',
+    borderColor: 'green',
+    color: 'black',
     borderWidth: 1,
     marginBottom: 12,
     borderRadius: 4,
@@ -135,71 +154,56 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     fontSize: 16,
   },
+  buttonAlignment: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    marginVertical: 10,
+  },
   dividerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 350,
+    marginVertical: 20,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: 'black',
-    marginHorizontal: 9,
+    backgroundColor: 'gray',
+    marginHorizontal: 10,
   },
   orText: {
-    marginHorizontal: 20,
-    fontSize: 23,
-  },
-  googleSignInButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 30,
-    borderWidth: 1,
-    borderColor: 'gray',
-    borderRadius: 4,
-    marginBottom: 20,
-  },
-  googleIcon: {
-    width: 24,
-    height: 24,
-    marginRight: 10,
-  },
-  googleSignInText: {
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: '500',
+    color: 'gray',
+    textTransform: 'uppercase',
   },
   loginButton: {
     backgroundColor: '#0D9813',
-    width: 105,
+    width: 140,
     height: 47,
     borderRadius: 8,
     paddingVertical: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginVertical: 10,
   },
   loginButtonText: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 15,
     fontWeight: 'bold',
-  },
-  buttonAlignment: {
-    flex: 1,
-    alignItems: 'center',
   },
   registerButton: {
     backgroundColor: '#003366',
-    width: 105,
+    width: 140,
+    height: 47,
     borderRadius: 8,
     paddingVertical: 12,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: -340,
+    marginVertical: 10,
   },
   registerButtonText: {
     color: 'white',
-    fontSize: 20,
+    fontSize: 15,
     fontWeight: 'bold',
   },
   errorMessage: {

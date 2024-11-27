@@ -9,45 +9,29 @@ const Disclaimer = () =>{
             <input type="text" placeholder="Search within disclaimer..." />
 
             <h3>Disclaimer</h3>
-            <p>Last updated: December 28, 2023 </p>
+            <p>Last updated: November, 2024 </p>
             <h3>Interpretation and Definitions </h3>
 
-            <p>Interpretation</p>
-            <p>The words of which the initial letter is capitalized have meanings defined under the following conditions.
-                The following definitions shall have the same meaning regardless of whether they appear in singular or in plural. </p>
+            <p>No rights can be derived or claimed from the content of this website in any way. 
+                Although the greatest possible care has been taken in compiling the content of this website, 
+                it is possible that certain information may (over time) become outdated or no longer correct.</p>
             <br />
-            <h3>Definitions </h3>
-            For the purposes of this Disclaimer:
-
-            <p>· Company (referred to as either "the Company", "We", "Us" or "Our" in this Disclaimer) refers to Domits, Kinderhuissingel 6-K, Haarlem 2013 AS. </p>
-            <p>· Service refers to the Website. </p>
-            <p>· You means the individual accessing the Service, or the company, or other legal entity on behalf of which such individual is accessing or using the Service, as applicable.</p>
-            <p>· Website refers to Domits.com, accessible from domits.com </p>
+            <p>Domits is not liable for any damage that could result from the use of data from the site created by Domits. 
+                Domits hereby disclaims all liability for damage resulting from the use of this data or data to which links on this site(s) refer. 
+                The information on this site is subject to change without notice.</p>
             <br />
-            <h3>Disclaimer The information </h3>
-
-            contained on the Service is for general information purposes only.
-            The Company assumes no responsibility for errors or omissions in the contents of the Service. In no event shall the Company be liable for any special, direct, indirect, consequential,
-            or incidental damages or any damages whatsoever, whether in an action of contract, negligence or other tort,
-            arising out of or in connection with the use of the Service or the contents of the Service.
-            The Company reserves the right to make additions, deletions,
-            or modifications to the contents on the Service at any time without prior notice.
-            The Company does not warrant that the Service is free of viruses or other harmful components.
+            <p>Domits gives no guarantees with regard to the nature and content of the information on the site and is not liable for the content of this information
+                 or for the consequences of its use. Any liability for any damage resulting from access to and use of the site is expressly rejected by Domits. Furthermore, 
+                 no guarantee is offered for the error-free and uninterrupted functioning of the site. References or connections to other sites or sources that are not the property
+                  of Domits are only included for the information of the user of the site.
+            </p>
             <br />
-            <h3>External Links Disclaimer</h3>
-
-            The Service may contain links to external websites that are not provided or maintained by or in any way affiliated with the Company.
-            Please note that the Company does not guarantee the accuracy, relevance, timeliness, or completeness of any information on these external websites.
-            <br />
-            <h3>Errors and Omissions Disclaimer </h3>
-
-            The information given by the Service is for general guidance on matters of interest only. Even if the Company takes every precaution to ensure that the content of the Service is both current and accurate, errors can occur.
-            Plus, given the changing nature of laws, rules and regulations, there may be delays, omissions or inaccuracies in the information contained on the Service. The Company is not responsible for any errors or omissions, or for the results obtained from the use of this information.
-            <br />
-            <h3>Fair Use Disclaimer</h3>
-
-            The Company may use copyrighted material which has not always been specifically authorized by the copyright owner. The Company is making such material available for criticism, comment, news reporting, teaching, scholarship, or research.
-            If You wish to use copyrighted material from the Service for your own purposes that go beyond fair use, You must obtain permission from the copyright owner.
+            <p>Domits is not responsible for the availability of these sites or sources. Domits accepts no liability whatsoever for the content,
+                 advertising, products or other matters on such sites or resources or their availability. Domits is not liable for any form of damage or loss caused by or 
+                 in connection with the use of or reliance on the content, goods or services offered on such sites or sources.</p>
+            <h3>©Copyright</h3>
+            <p>All rights reserved. Nothing from this website (information, images, images) may be copied or stored in a database,
+                 in any form or by any means, whether electronic, digital, mechanical, manual, photographic or any other way.</p>       
         </div>
     );
 }

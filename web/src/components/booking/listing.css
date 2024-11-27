@@ -17,7 +17,7 @@
   top: 5%;
   max-height: 45.313rem;
 }
-.travelers {
+.guests {
   position: relative;
   display: flex;
   flex-direction: column;
@@ -36,11 +36,11 @@
   z-index: 1000;
 }
 
-.modal-content {
+.modal-contentPopUp {
   background: white;
   padding: 20px;
   border-radius: 8px;
-  width: 80%;
+  width: 100%;
   max-width: 600px;
   max-height: 80vh;
   overflow-y: auto;
@@ -55,6 +55,7 @@
   border: none;
   font-size: 24px;
   cursor: pointer;
+  z-index: 10;
 }
 
 
@@ -337,6 +338,7 @@
   margin-top: 20px;
 }
 .features-category {
+  font-weight: bold;
   ul {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -347,7 +349,9 @@
 
 .category-item {
   display: flex;
+  align-items: center;
   flex-direction: row;
+  margin-bottom: 10px;
   gap: 1.5%;
   span {
     font-weight: lighter;
@@ -355,7 +359,12 @@
   }
 }
 
-/* Stijl voor individuele functies */
+.features-category ul {
+  list-style: none; /* Verwijder standaard opsommingstekens */
+  padding: 0; /* Geen extra padding rondom de lijst */
+  margin: 0; /* Geen extra marge rondom de lijst */
+}
+
 .acco-feature-item {
   display: flex;
   flex-direction: column;
@@ -378,10 +387,10 @@
   box-shadow: 0px 0px 0px;
 }
 
-/* Stijl voor de feature iconen */
 .feature-icon {
   width: 1.25rem;
   height: 1.25rem;
+  margin-right: 10px;
   align-self: center;
 }
 
