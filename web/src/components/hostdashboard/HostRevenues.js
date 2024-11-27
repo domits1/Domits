@@ -6,7 +6,7 @@ import RevenueOverview from './HostRevenueCards/RevenueOverview.jsx';
 import axios from "axios";
 import MonthlyComparison from './HostRevenueCards/MonthlyComparison.jsx';
 import OccupancyRateCard from './HostRevenueCards/OccupancyRate.jsx';
-import RevPARCard from './HostRevenueCards/RevPAR.jsx';
+import RevPARCard from './HostRevenueCards/RevPAR.jsx'; // Import RevPARCard
 import ADRCard from './HostRevenueCards/ADRCard.jsx';
 import { Auth } from 'aws-amplify';
 
@@ -145,11 +145,9 @@ const HostRevenues = () => {
                                 </div>
                             </div>
 
-
                             <div className="hr-monthly-comparison">
                                 <MonthlyComparison data={monthlyRevenueData} />
                             </div>
-
 
                             {occupancyData ? (
                                 <OccupancyRateCard
@@ -160,8 +158,10 @@ const HostRevenues = () => {
                                 <p>Loading Occupancy Data...</p>
                             )}
 
-
-                            <ADRCard hostId={cognitoUserId} />  {/* New ADR Card */}
+                            <div className="hr-card-grid">
+                                <ADRCard hostId={cognitoUserId} />  {/* ADR Card */}
+                                <RevPARCard />  {/* New RevPAR Card */}
+                            </div>
                         </div>
                     )}
                 </div>
