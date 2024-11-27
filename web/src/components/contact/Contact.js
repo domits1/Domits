@@ -159,14 +159,14 @@ function Contact() {
                             <button type="button" id="attachmentsbutton" onClick={handleAttachmentClick}>
                                 Add attachments
                             </button>
+                            <button type="submit" id="sendbutton" disabled={isSubmitting}>
+                                {isSubmitting ? "Sending..." : "Send message"}
+                            </button>
                             <ul>
                                 {attachmentNames.map((name, index) => (
                                     <li key={index}>{name}</li>
                                 ))}
                             </ul>
-                            <button type="submit" id="sendbutton" disabled={isSubmitting}>
-                                {isSubmitting ? "Sending..." : "Send message"}
-                            </button>
                         </div>
                     </div>
                 </div>
