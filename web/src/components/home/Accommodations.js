@@ -100,9 +100,19 @@ const Accommodations = ({ searchResults }) => {
     );
   }
 
-  const handleClick = (ID) => {
+  const handleClick = (e, ID) => {
+    if (!e || !e.target) {
+      console.error('Event or event target is undefined.');
+      return; 
+    }
+    if (e.target.closest('.swiper-button-next') || e.target.closest('.swiper-button-prev')) {
+      e.stopPropagation(); 
+      return; 
+    }
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
+  
+
 
   const AccommodationCard = ({ accommodation }) => {
     const [liked, setLiked] = useState(false);
@@ -132,7 +142,8 @@ const Accommodations = ({ searchResults }) => {
     const imageArray = Object.values(images); // Zet het `Images`-object om naar een array
 
     return (
-        <div className="accocard" key={accommodation.ID} onClick={() => handleClick(accommodation.ID)}>
+
+      <div className="accocard" key={accommodation.ID} onClick={(e) => handleClick(e, accommodation.ID)}>
           <button className="accocard-share-button" onClick={(e) => handleShare(e, accommodation.ID)}>
             <IosShareIcon />
           </button>
