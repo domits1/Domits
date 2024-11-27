@@ -43,6 +43,7 @@ import ConfirmMail from '../screens/login/confirmMail';
 import HostDetailPage from '../screens/hostdashboard/HostDetailPage';
 import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
 import MessagesStackNavigator from './messagesStackNavigator'; 
+import InboxHost from '../screens/message/chatInboxHost';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -100,6 +101,7 @@ function HomeStack() {
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="ConfirmEmail" component={ConfirmMail} />
       <Stack.Screen name="HostDetailPage" component={HostDetailPage} />
+      <Stack.Screen name="HostInbox" component={InboxHost} />
       <Stack.Screen
         name="ReviewAndSubmitScreen"
         component={ReviewAndSubmitScreen}
