@@ -3,6 +3,7 @@ import './hostchatbot.css';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
 import * as pdfjsLib from 'pdfjs-dist';
+import { FiMenu, FiDownload, FiPrinter, FiMic, FiPaperclip } from 'react-icons/fi'; // Icons for buttons
 
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js`;
 
@@ -22,9 +23,10 @@ const HostChatbot = () => {
   const [userInput, setUserInput] = useState('');
   const [pdfMode, setPdfMode] = useState(false); // Track if the input is populated from a PDF
   const [loading, setLoading] = useState(false);
-  const [awaitingUserChoice, setAwaitingUserChoice] = useState(true);
+  const [awaitingUserChoice, setAwaitingUserChoice] = useState(true); // Ensure decisions disable text box
   const [currentOption, setCurrentOption] = useState(null);
   const [suggestions, setSuggestions] = useState([]);
+  const [isMenuOpen, setIsMenuOpen] = useState(false); // For hamburger menu
 
   const { messageAudios, fetchPollySpeech } = usePollySpeech();
   const { userId, username } = useUserDetails(setMessages, fetchPollySpeech);
@@ -94,7 +96,6 @@ const HostChatbot = () => {
           // Reset input field and PDF mode
           setUserInput('');
           setPdfMode(false); // Exit PDF mode after sending
-          console.log('Message sent:', userInput);
         }
       },
       [userInput, fetchPollySpeech]
@@ -122,7 +123,6 @@ const HostChatbot = () => {
         try {
           const typedArray = new Uint8Array(e.target.result);
           const pdf = await pdfjsLib.getDocument(typedArray).promise;
-          console.log('Number of pages in PDF:', pdf.numPages);
 
           let extractedText = '';
           const numPagesToProcess = Math.min(pdf.numPages, 5); // Limit to first 5 pages
@@ -131,7 +131,6 @@ const HostChatbot = () => {
             const textContent = await page.getTextContent();
             const pageText = textContent.items.map((item) => item.str).join(' ');
             extractedText += pageText + '\n';
-            console.log(`Extracted text from page ${i}:`, pageText);
           }
 
           if (extractedText.length > 200) {
@@ -141,8 +140,7 @@ const HostChatbot = () => {
           }
 
           setUserInput(extractedText);
-          setPdfMode(true); // Assume you already have pdfMode in your state
-          console.log('Final extracted text:', extractedText);
+          setPdfMode(true);
         } catch (error) {
           console.error('Error processing PDF:', error);
           alert('Failed to process the PDF file.');
@@ -166,6 +164,10 @@ const HostChatbot = () => {
     fetchPollySpeech(message, messageId);
   };
 
+  const toggleMenu = () => {
+    setIsMenuOpen((prev) => !prev);
+  };
+
   if (userLoading) return <div>Loading...</div>;
   if (role !== 'Host') return null;
 
@@ -178,6 +180,20 @@ const HostChatbot = () => {
         <div className={`hostchatbot-container ${isChatOpen ? 'open' : ''}`}>
           <div className="hostchatbot-header">
             <span>Chat with us</span>
+            {/* Hamburger menu */}
+            <button className="hamburger-menu" onClick={toggleMenu}>
+              <FiMenu />
+            </button>
+            {isMenuOpen && (
+                <div className="hamburger-dropdown">
+                  <button onClick={downloadChatHistory}>
+                    <FiDownload /> Download Chat
+                  </button>
+                  <button onClick={printChatHistory}>
+                    <FiPrinter /> Print Chat
+                  </button>
+                </div>
+            )}
             <button className="hostchatbot-close-button" onClick={toggleChat}>
               ✖
             </button>
@@ -225,33 +241,29 @@ const HostChatbot = () => {
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                placeholder={pdfMode ? 'Cannot edit text while PDF is selected' : 'Type a message or upload a PDF...'}
-                disabled={pdfMode} // Disable input in PDF mode
+                placeholder={pdfMode ? 'Cannot edit text while PDF is selected' : 'Type a message...'}
+                disabled={pdfMode || awaitingUserChoice} // Disable when awaiting user choice or in PDF mode
             />
-            <button
-                type="button"
-                onClick={handleVoiceInput}
-                disabled={awaitingUserChoice || isRecording || pdfMode} // Disable voice input in PDF mode
-                className="voice-input-button"
-            >
-              {isRecording ? 'Listening...' : 'Start Recording'}
+            {/* Voice button */}
+            <button type="button" onClick={handleVoiceInput} disabled={awaitingUserChoice || isRecording || pdfMode} className="icon-button">
+              <FiMic />
             </button>
+            {/* PDF upload button */}
+            <label htmlFor="pdf-upload" className="icon-button" style={{ pointerEvents: awaitingUserChoice ? 'none' : 'auto' }}>
+              <FiPaperclip />
+              <input
+                  id="pdf-upload"
+                  type="file"
+                  accept="application/pdf"
+                  onChange={handlePDFUpload}
+                  disabled={awaitingUserChoice} // Disable PDF upload button until decision is made
+              />
+            </label>
+            {/* Send button */}
             <button type="submit" disabled={loading || awaitingUserChoice || !userInput}>
               Send
             </button>
           </form>
-          <input
-              type="file"
-              accept="application/pdf"
-              onChange={handlePDFUpload}
-              className="pdf-upload-button"
-          />
-          <button onClick={downloadChatHistory} className="download-button">
-            Download Chat
-          </button>
-          <button onClick={printChatHistory} className="print-button">
-            Print Chat
-          </button>
         </div>
       </>
   );
