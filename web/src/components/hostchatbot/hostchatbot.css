@@ -223,6 +223,7 @@
   cursor: not-allowed;
 }
 
+/* Voice button with glowing effect while recording */
 .icon-button {
   background: none;
   border: none;
@@ -237,22 +238,27 @@
   transition: background-color 0.2s, color 0.2s;
 }
 
-.icon-button:disabled {
-  color: #ccc;
-  cursor: not-allowed;
+.icon-button.active {
+  background-color: #007bff;
+  color: white;
+  box-shadow: 0 0 8px 2px rgba(0, 123, 255, 0.7), 0 0 12px 4px rgba(0, 123, 255, 0.5);
+  animation: pulse 1.5s infinite;
 }
 
-.icon-button:hover:not(:disabled) {
-  background-color: #f0f0f0;
-  color: #000;
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 8px 2px rgba(0, 123, 255, 0.7), 0 0 12px 4px rgba(0, 123, 255, 0.5);
+  }
+  50% {
+    box-shadow: 0 0 12px 4px rgba(0, 123, 255, 0.9), 0 0 16px 8px rgba(0, 123, 255, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 8px 2px rgba(0, 123, 255, 0.7), 0 0 12px 4px rgba(0, 123, 255, 0.5);
+  }
 }
 
 .icon-button input[type="file"] {
   display: none;
-}
-
-.voice-input-button {
-  color: #007bff;
 }
 
 .hostchatbot-input button[type="submit"] {
@@ -275,6 +281,8 @@
   background-color: #ccc;
   cursor: not-allowed;
 }
+
+/* Other unchanged styles below remain intact */
 
 .hostchatbot-go-back-button {
   background-color: #0078D7;
