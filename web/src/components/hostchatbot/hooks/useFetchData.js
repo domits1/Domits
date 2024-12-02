@@ -10,7 +10,7 @@ const useFetchData = () => {
         setLoading(true);
         try {
             const response = await fetch(
-                'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
+                'https://kd929sivhg.execute-api.eu-north-1.amazonaws.com/default/FetchAccommodation',
                 {
                     method: 'POST',
                     body: JSON.stringify({ OwnerId: userId }),
