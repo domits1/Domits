@@ -1,57 +1,61 @@
 .or-occupancy-rate-card {
-    width: 300px;
+    width: 320px;
     padding: 20px;
-    margin: 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    background-color: #fff;
+    margin: 20px auto;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
+    text-align: center;
+    height: auto; /* Dynamic height */
 }
 
 .or-date-picker {
-    margin-bottom: 15px;
+    margin-bottom: 10px; /* Reduce space below date */
     font-size: 14px;
-    display: flex;
-    align-items: center;
-    border-color: #aaa4a4;
-}
-
-.or-date-picker label {
-    margin-right: 10px;
-    font-weight: 300;
-    font-size: 14px;
+    font-weight: bold;
+    color: #555;
 }
 
 .or-occupancy-rate-details {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    gap: 10px; /* Slightly reduce gap between rows */
     align-items: center;
 }
 
-.or-details-left {
-    flex: 1;
-    padding-right: 10px;
-}
-
-.react-datepicker-wrapper {
-    display: inline-block;
-    margin-left: 10px;
-}
-
 .or-gauge-wrapper {
-    width: 150px;
-    max-width: 150px;
-    height: 150px;
-    margin-left: 10px;
-}
-
-.or-icon {
-    margin-right: 5px;
+    width: 180px; /* Keep larger size for prominence */
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 5px;
 }
 
 .or-gauge-labels {
     display: flex;
     justify-content: space-between;
-    width: 100%;
-    margin-top: 10px;
+    width: 80%; /* Align to gauge size */
+    margin-top: -10px; /* Pull labels closer to the gauge */
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.or-icon {
+    margin-right: 8px;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.or-details-left p,
+.or-details-left strong {
+    font-size: 13px; /* Slightly reduce details text */
+    font-weight: normal;
+}
+
+.or-occupancy-rate-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
