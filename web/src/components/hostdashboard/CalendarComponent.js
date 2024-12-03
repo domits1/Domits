@@ -214,7 +214,7 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
 
         console.log(body);
         try {
-            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/UpdateAccommodation', {
+            const response = await fetch('https://m2e7jwiohg.execute-api.eu-north-1.amazonaws.com/default/UpdateAccommodation', {
                 method: 'PUT',
                 body: JSON.stringify(body),
                 headers: {

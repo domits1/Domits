@@ -56,7 +56,7 @@ function OnboardingHost() {
         const fetchAccommodation = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                const response = await fetch(`https://7onjvhdxsl.execute-api.eu-north-1.amazonaws.com/default/GetAccommodation`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -876,7 +876,7 @@ function OnboardingHost() {
                 }
             }
 
-            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
+            const response = await fetch('https://q0ydcuagj0.execute-api.eu-north-1.amazonaws.com/default/EditAccommodation', {
                 method: 'PUT',
                 body: JSON.stringify(updatedFormData),
                 headers: {
@@ -920,7 +920,7 @@ function OnboardingHost() {
             const endpoint = isNew ? 'CreateAccomodation' : 'EditAccommodation';
             const method = isNew ? 'POST' : 'PUT';
 
-            const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`, {
+            const response = await fetch(`https://w6e5g9joaa.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`, {
                 method: method,
                 body: JSON.stringify(updatedFormData),
                 headers: {
