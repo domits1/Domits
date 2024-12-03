@@ -74,7 +74,7 @@ function HostDashboard() {
             return;
         } else {
             try {
-                const response = await fetch('https://2b0ztg3dic.execute-api.eu-north-1.amazonaws.com/default/FetchRecentAccommodationss', {
+                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchRecentAccommodations', {
                     method: 'POST',
                     body: JSON.stringify({ OwnerId: userId }),
                     headers: {'Content-type': 'application/json; charset=UTF-8',
