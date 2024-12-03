@@ -100,7 +100,7 @@ function HostListings() {
             };
 
             try {
-                const response = await fetch('https://0mgd6vf5q5.execute-api.eu-north-1.amazonaws.com/default/ChangeAccommodationStatues', {
+                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ChangeAccommodationStatues', {
                     method: 'PUT',
                     body: JSON.stringify(options),
                     headers: {'Content-type': 'application/json; charset=UTF-8',
