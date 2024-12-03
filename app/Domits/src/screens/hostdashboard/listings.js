@@ -34,7 +34,7 @@ const Listings = () => {
       return;
     }
     try {
-      const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
+      const response = await fetch('https://kd929sivhg.execute-api.eu-north-1.amazonaws.com/default/FetchAccommodation', {
         method: 'POST',
         body: JSON.stringify({ OwnerId: userId }),
         headers: { 'Content-type': 'application/json; charset=UTF-8' },

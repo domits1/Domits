@@ -57,7 +57,7 @@ function Calendar({passedProp, isNew, updateDates}) {
     }
       setIsLoading(true);
       try {
-          const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/UpdateAccommodation', {
+          const response = await fetch('https://m2e7jwiohg.execute-api.eu-north-1.amazonaws.com/default/UpdateAccommodation', {
               method: 'PUT',
               body: JSON.stringify(body),
               headers: {'Content-type': 'application/json; charset=UTF-8',
