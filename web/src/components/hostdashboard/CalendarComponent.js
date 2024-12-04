@@ -33,6 +33,9 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
     const [minimumStay, setMinimumStay] = useState(passedProp.MinimumStay || 0);
     const [minimumBookingPeriod, setMinimumBookingPeriod] = useState(passedProp.MinimumBookingPeriod || 0);
     const [maximumStay, setMaximumStay] = useState(passedProp.MaximumStay || 0);
+    const [originalMinimumStay, setOriginalMinimumStay] = useState(passedProp.MinimumStay || 0);
+    const [originalMinimumBookingPeriod, setOriginalMinimumBookingPeriod] = useState(passedProp.MinimumBookingPeriod || 0);
+    const [originalMaximumStay, setOriginalMaximumStay] = useState(passedProp.MaximumStay || 0);
 
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
@@ -214,7 +217,7 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
 
         console.log(body);
         try {
-            const response = await fetch('https://m2e7jwiohg.execute-api.eu-north-1.amazonaws.com/default/UpdateAccommodation', {
+            const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Update-AccommodationStayParameters', {
                 method: 'PUT',
                 body: JSON.stringify(body),
                 headers: {
@@ -252,6 +255,13 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
             return updatedRanges;
         });
     };
+
+    const handleUndo = () => {
+        setSelectedRanges(originalRanges);
+        setMinimumStay(originalMinimumStay);
+        setMinimumBookingPeriod(originalMinimumBookingPeriod);
+        setMaximumStay(originalMaximumStay);
+    }
 
     return (
         <main className={styles.body}>
@@ -355,7 +365,7 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
                 </section>
             </section>
             {!isNew && <section className={styles.buttonBox}>
-                <button className={styles.undo} onClick={() => setSelectedRanges(originalRanges)}>Undo</button>
+                <button className={styles.undo} onClick={() => handleUndo()}>Undo</button>
                 <button className={styles.save} onClick={() => asyncSaveDates()}>Save</button>
             </section>}
         </main>
