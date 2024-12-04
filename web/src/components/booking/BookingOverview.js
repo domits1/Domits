@@ -45,7 +45,7 @@ const BookingOverview = () => {
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

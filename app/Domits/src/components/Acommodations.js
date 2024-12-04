@@ -35,7 +35,7 @@ const Accommodations = ({searchResults}) => {
     const fetchData = async () => {
       try {
         const response = await fetch(
-          'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation',
+          'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation',
         );
         if (!response.ok) {
           throw new Error('Failed to fetch data');
