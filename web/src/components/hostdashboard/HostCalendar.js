@@ -47,7 +47,7 @@ function HostCalendar() {
                 return;
             } else {
                 try {
-                    const response = await fetch('https://kd929sivhg.execute-api.eu-north-1.amazonaws.com/default/FetchAccommodation', {
+                    const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
                         method: 'POST',
                         body: JSON.stringify({OwnerId: userId}),
                         headers: {

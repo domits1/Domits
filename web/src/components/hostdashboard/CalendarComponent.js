@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from "react";
 import styles from './Calendar.module.css';
-import {isSameDay} from "date-fns";
+import { isSameDay } from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";
 
@@ -12,7 +12,7 @@ import {useNavigate} from "react-router-dom";
  * @returns {Element}
  * @constructor
  */
-function CalendarComponent({passedProp, isNew, updateDates}) {
+function CalendarComponent({ passedProp, isNew, updateDates }) {
     const navigate = useNavigate();
     const [month, setMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
@@ -113,8 +113,8 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
     };
 
     const dateRangesOverlap = (range1, range2) => {
-        const {startDate: start1, endDate: end1} = range1;
-        const {startDate: start2, endDate: end2} = range2;
+        const { startDate: start1, endDate: end1 } = range1;
+        const { startDate: start2, endDate: end2 } = range2;
 
         return (
             (start1 <= start2 && (end1 === null || start2 <= end1)) ||
@@ -123,6 +123,7 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
             (start2 <= end1 && (end2 === null || end1 <= end2))
         );
     };
+
 
 
     useEffect(() => {
@@ -224,7 +225,6 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
                     'Content-type': 'application/json; charset=UTF-8',
                 }
             });
-
             if (!response.ok) {
                 alert("Something went wrong, please try again later...");
                 throw new Error('Failed to fetch');
