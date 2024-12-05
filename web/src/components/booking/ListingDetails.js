@@ -952,12 +952,12 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckOut(date)}
                                         minDate={
                                             checkIn
-                                                ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000) // Minimum days after checkIn
+                                                ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
                                                 : (minEnd && new Date(minEnd))
                                         }
                                         maxDate={
                                             checkIn
-                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay  * 24 * 60 * 60 * 1000) // Maximum days after checkIn
+                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay  * 24 * 60 * 60 * 1000)
                                                 : (maxEnd && new Date(maxEnd))
                                         }
                                         filterDate={combinedDateFilter}
