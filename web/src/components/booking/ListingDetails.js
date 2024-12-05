@@ -953,12 +953,12 @@ const ListingDetails = () => {
                                         minDate={
                                             checkIn
                                                 ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000) // Minimum days after checkIn
-                                                : (minEnd && new Date(minEnd)) // Default minDate
+                                                : (minEnd && new Date(minEnd))
                                         }
                                         maxDate={
                                             checkIn
                                                 ? new Date(checkIn.getTime() + accommodation.MaximumStay  * 24 * 60 * 60 * 1000) // Maximum days after checkIn
-                                                : (maxEnd && new Date(maxEnd)) // Default maxDate
+                                                : (maxEnd && new Date(maxEnd))
                                         }
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
