@@ -8,15 +8,29 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
+import {deleteUser} from '../GeneralUtils/GenUtils';
+import {useAuth} from '../../context/AuthContext';
 
-const Settings = () => {
+const HostSettings = () => {
+  const navigation = useNavigation();
+  const {userAttributes} = useAuth();
+  const userId = userAttributes?.sub;
+
+  const handleDeleteAccount = () => {
+    navigation.navigate('login/loginScreen');
+    deleteUser(userId, navigation);
+  };
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Settings</Text>
         </View>
-        <TouchableOpacity style={styles.listItem}>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('emailSettings')}>
           <Text style={styles.listItemText}>Change mail settings</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -36,6 +50,14 @@ const Settings = () => {
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.listItem, {backgroundColor: '#ffe6e6'}]}
+          onPress={handleDeleteAccount}>
+          <Text style={[styles.listItemText, {color: 'red'}]}>
+            Delete Account
+          </Text>
+          <MaterialIcons name="delete" size={22} color="red" />
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -53,10 +75,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#e0e0e0',
     marginBottom: 30,
     marginTop: 10,
+    color: 'black',
   },
   headerText: {
     fontSize: 20,
     fontWeight: 'bold',
+    color: 'black',
   },
   listItem: {
     flexDirection: 'row',
@@ -71,7 +95,8 @@ const styles = StyleSheet.create({
   },
   listItemText: {
     fontSize: 18,
+    color: 'black',
   },
 });
 
-export default Settings;
+export default HostSettings;

@@ -9,6 +9,7 @@ import {
   ScrollView,
   FlatList,
   TextInput,
+  Switch,
 } from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 
@@ -41,6 +42,16 @@ const OnboardingHost = () => {
     GuestAccess: '',
     BoatType: '',
     CamperType: '',
+    GuestAmount: 0,
+    Cabins: 0,
+    Bedrooms: 0,
+    Bathrooms: 0,
+    Beds: 0,
+    AllowSmoking: false,
+    AllowPets: false,
+    AllowParties: false,
+    CheckIn: {From: '00:00', Til: '00:00'},
+    CheckOut: {From: '00:00', Til: '00:00'},
   });
   const [errors, setErrors] = useState({});
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -113,6 +124,119 @@ const OnboardingHost = () => {
     'Boat without license': Boat_Without_License,
   };
 
+  const allAmenities = {
+    Essentials: [
+      'Wi-Fi',
+      'Air conditioning',
+      'Heating',
+      'TV with cable/satellite',
+      'Hot water',
+      'Towels',
+      'Bed linens',
+      'Extra pillows and blankets',
+      'Toilet paper',
+      'Soap and shampoo',
+    ],
+    Kitchen: [
+      'Refrigerator',
+      'Microwave',
+      'Oven',
+      'Stove',
+      'Dishwasher',
+      'Coffee maker',
+      'Toaster',
+      'Basic cooking essentials',
+      'Dishes and silverware',
+      'Glasses and mugs',
+      'Cutting board and knives',
+      'Blender',
+      'Kettle',
+    ],
+    Bathroom: [
+      'Hair dryer',
+      'Shower gel',
+      'Conditioner',
+      'Body lotion',
+      'First aid kit',
+    ],
+    Bedroom: [
+      'Hangers',
+      'Iron and ironing board',
+      'Closet/drawers',
+      'Alarm clock',
+    ],
+    LivingArea: [
+      'Sofa',
+      'Armchairs',
+      'Coffee table',
+      'Books and magazines',
+      'Board games',
+    ],
+    Technology: [
+      'Smart TV',
+      'Streaming services',
+      'Bluetooth speaker',
+      'Universal chargers',
+      'Work desk and chair',
+    ],
+    Safety: [
+      'Smoke detector',
+      'Carbon monoxide detector',
+      'Fire extinguisher',
+      'Lock on bedroom door',
+    ],
+    FamilyFriendly: [
+      'High chair',
+      'Crib',
+      'Children’s books and toys',
+      'Baby safety gates',
+      'Baby bath',
+      'Baby monitor',
+    ],
+    Laundry: ['Washer and dryer', 'Laundry detergent', 'Clothes drying rack'],
+    Convenience: [
+      'Keyless entry',
+      'Self-check-in',
+      'Local maps and guides',
+      'Luggage drop-off allowed',
+      'Parking space',
+      'EV charger',
+    ],
+    Accessibility: [
+      'Step-free access',
+      'Wide doorways',
+      'Accessible-height bed',
+      'Accessible-height toilet',
+      'Shower chair',
+    ],
+    ExtraServices: [
+      'Cleaning service (add service fee manually)',
+      'Concierge service',
+      'Housekeeping',
+      'Grocery delivery',
+      'Airport shuttle',
+      'Private chef',
+      'Personal trainer',
+      'Massage therapist',
+    ],
+    EcoFriendly: [
+      'Recycling bins',
+      'Energy-efficient appliances',
+      'Solar panels',
+      'Composting bin',
+    ],
+    Outdoor: [
+      'Patio or balcony',
+      'Outdoor furniture',
+      'Grill',
+      'Fire pit',
+      'Pool',
+      'Hot tub',
+      'Garden or backyard',
+      'Bicycle',
+    ],
+  };
+
   const handleSelectType = type => {
     setSelectedAccoType(type);
     setFormData({
@@ -162,6 +286,48 @@ const OnboardingHost = () => {
       ...formData,
       [field]: value,
     });
+  };
+  const [selectedAmenities, setSelectedAmenities] = useState({});
+
+  const toggleAmenity = (category, amenity) => {
+    setSelectedAmenities(prev => ({
+      ...prev,
+      [category]: {
+        ...prev[category],
+        [amenity]: !prev[category]?.[amenity],
+      },
+    }));
+  };
+  const incrementAmount = field => {
+    setFormData(prevData => ({
+      ...prevData,
+      [field]: prevData[field] + 1,
+    }));
+  };
+
+  const decrementAmount = field => {
+    if (formData[field] > 0) {
+      setFormData(prevData => ({
+        ...prevData,
+        [field]: prevData[field] - 1,
+      }));
+    }
+  };
+  const handleHouseRulesChange = (field, value, subField = null) => {
+    if (subField) {
+      setFormData(prevData => ({
+        ...prevData,
+        [field]: {
+          ...prevData[field],
+          [subField]: value,
+        },
+      }));
+    } else {
+      setFormData(prevData => ({
+        ...prevData,
+        [field]: value,
+      }));
+    }
   };
   const renderPageContent = page => {
     switch (page) {
@@ -460,6 +626,295 @@ const OnboardingHost = () => {
             </View>
           </SafeAreaView>
         );
+      case 3:
+        return (
+          <SafeAreaView style={styles.container}>
+            <Text style={styles.title}>How many people can stay here?</Text>
+            <ScrollView>
+              <View style={styles.guestAmountItem}>
+                <Text style={styles.label}>Guests</Text>
+                <View style={styles.amountBtnBox}>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => decrementAmount('GuestAmount')}>
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{formData.GuestAmount}</Text>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => incrementAmount('GuestAmount')}
+                    disabled={formData.GuestAmount >= 10}>
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {selectedAccoType === 'Boat' && (
+                <View style={styles.guestAmountItem}>
+                  <Text style={styles.label}>Cabins</Text>
+                  <View style={styles.amountBtnBox}>
+                    <TouchableOpacity
+                      style={styles.roundButton}
+                      onPress={() => decrementAmount('Cabins')}>
+                      <Text style={styles.buttonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.amountText}>{formData.Cabins}</Text>
+                    <TouchableOpacity
+                      style={styles.roundButton}
+                      onPress={() => incrementAmount('Cabins')}
+                      disabled={formData.Cabins >= 10}>
+                      <Text style={styles.buttonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+
+              <View style={styles.guestAmountItem}>
+                <Text style={styles.label}>Bedrooms</Text>
+                <View style={styles.amountBtnBox}>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => decrementAmount('Bedrooms')}>
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{formData.Bedrooms}</Text>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => incrementAmount('Bedrooms')}
+                    disabled={
+                      formData.Bedrooms >=
+                      (selectedAccoType === 'Boat' ? 10 : 20)
+                    }>
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.guestAmountItem}>
+                <Text style={styles.label}>Bathrooms</Text>
+                <View style={styles.amountBtnBox}>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => decrementAmount('Bathrooms')}>
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{formData.Bathrooms}</Text>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => incrementAmount('Bathrooms')}
+                    disabled={formData.Bathrooms >= 10}>
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.guestAmountItem}>
+                <Text style={styles.label}>Beds</Text>
+                <View style={styles.amountBtnBox}>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => decrementAmount('Beds')}>
+                    <Text style={styles.buttonText}>-</Text>
+                  </TouchableOpacity>
+                  <Text style={styles.amountText}>{formData.Beds}</Text>
+                  <TouchableOpacity
+                    style={styles.roundButton}
+                    onPress={() => incrementAmount('Beds')}
+                    disabled={formData.Beds >= 10}>
+                    <Text style={styles.buttonText}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.buttonContainer}>
+                <TouchableOpacity
+                  style={styles.backButton}
+                  onPress={() => setPage(2)}>
+                  <Text style={styles.buttonText}>Back</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.nextButton}
+                  onPress={() => setPage(4)}>
+                  <Text style={styles.buttonText}>Next</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+        );
+      case 4:
+        return (
+          <SafeAreaView style={styles.aminityContainer}>
+            <ScrollView>
+              <Text style={styles.title}>
+                Let Guests Know What Your Space Offers
+              </Text>
+              {Object.keys(allAmenities).map(category => (
+                <View key={category} style={styles.categoryContainer}>
+                  <Text style={styles.categoryTitle}>{category}</Text>
+                  <View style={styles.amenitiesGrid}>
+                    {allAmenities[category].map(amenity => (
+                      <TouchableOpacity
+                        key={amenity}
+                        style={[
+                          styles.amenityItem,
+                          selectedAmenities[category]?.[amenity] &&
+                            styles.amenityItemSelected,
+                        ]}
+                        onPress={() => toggleAmenity(category, amenity)}
+                        activeOpacity={0.8}>
+                        <Text
+                          style={[
+                            styles.amenityText,
+                            selectedAmenities[category]?.[amenity] &&
+                              styles.amenityTextSelected,
+                          ]}>
+                          {amenity}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setPage(3)}>
+                <Text style={styles.buttonText}>Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.nextButton}
+                onPress={() => setPage(5)}>
+                <Text style={styles.buttonText}>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        );
+      case 5:
+        return (
+          <View style={styles.pageBody}>
+            <Text style={styles.title}>House rules</Text>
+            <View style={styles.toggleContainer}>
+              <View style={styles.toggle}>
+                <Text style={styles.toggleLabel}>Allow Smoking</Text>
+                <Switch
+                  value={formData.AllowSmoking}
+                  onValueChange={value =>
+                    handleHouseRulesChange('AllowSmoking', value)
+                  }
+                />
+              </View>
+
+              <View style={styles.toggle}>
+                <Text style={styles.toggleLabel}>Allow Pets</Text>
+                <Switch
+                  value={formData.AllowPets}
+                  onValueChange={value =>
+                    handleHouseRulesChange('AllowPets', value)
+                  }
+                />
+              </View>
+
+              <View style={styles.toggle}>
+                <Text style={styles.toggleLabel}>Allow Parties/Events</Text>
+                <Switch
+                  value={formData.AllowParties}
+                  onValueChange={value =>
+                    handleHouseRulesChange('AllowParties', value)
+                  }
+                />
+              </View>
+            </View>
+
+            {/* Check-In Time */}
+            <View style={styles.checkContainer}>
+              <Text style={styles.checkLabel}>Check-In</Text>
+              <Text>From</Text>
+              <Picker
+                selectedValue={formData.CheckIn.From}
+                onValueChange={value =>
+                  handleHouseRulesChange('CheckIn', value, 'From')
+                }
+                style={styles.picker}>
+                {Array.from({length: 24}, (_, i) => {
+                  const time = `${i.toString().padStart(2, '0')}:00`;
+                  return <Picker.Item key={time} label={time} value={time} />;
+                })}
+              </Picker>
+              <Text>Til</Text>
+              <Picker
+                selectedValue={formData.CheckIn.Til}
+                onValueChange={value =>
+                  handleHouseRulesChange('CheckIn', value, 'Til')
+                }
+                style={styles.picker}>
+                {Array.from({length: 24}, (_, i) => {
+                  const time = `${i.toString().padStart(2, '0')}:00`;
+                  return <Picker.Item key={time} label={time} value={time} />;
+                })}
+              </Picker>
+            </View>
+
+            {/* Check-Out Time */}
+            <View style={styles.checkContainer}>
+              <Text style={styles.checkLabel}>Check-Out</Text>
+              <Text>From</Text>
+              <Picker
+                selectedValue={formData.CheckOut.From}
+                onValueChange={value =>
+                  handleHouseRulesChange('CheckOut', value, 'From')
+                }
+                style={styles.picker}>
+                {Array.from({length: 24}, (_, i) => {
+                  const time = `${i.toString().padStart(2, '0')}:00`;
+                  return <Picker.Item key={time} label={time} value={time} />;
+                })}
+              </Picker>
+              <Text>Til</Text>
+              <Picker
+                selectedValue={formData.CheckOut.Til}
+                onValueChange={value =>
+                  handleHouseRulesChange('CheckOut', value, 'Til')
+                }
+                style={styles.picker}>
+                {Array.from({length: 24}, (_, i) => {
+                  const time = `${i.toString().padStart(2, '0')}:00`;
+                  return <Picker.Item key={time} label={time} value={time} />;
+                })}
+              </Picker>
+            </View>
+
+            {/* Navigation Buttons */}
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={[styles.backButton, {opacity: 1}]}
+                onPress={() => setPage(page - 1)}>
+                <Text style={styles.buttonText}>Go Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  formData.CheckIn?.From &&
+                  formData.CheckIn?.Til &&
+                  formData.CheckOut?.From &&
+                  formData.CheckOut?.Til
+                    ? null
+                    : styles.disabledButton,
+                ]}
+                disabled={
+                  !(
+                    formData.CheckIn?.From &&
+                    formData.CheckIn?.Til &&
+                    formData.CheckOut?.From &&
+                    formData.CheckOut?.Til
+                  )
+                }
+                onPress={() => setPage(page + 1)}>
+                <Text style={styles.buttonText}>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        );
       default:
         return null;
     }
@@ -508,6 +963,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 30,
+    marginLeft: '10%',
     width: '80%',
   },
   dashboardButton: {
@@ -627,6 +1083,103 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: '#555',
+  },
+  amountText: {
+    fontSize: 18,
+  },
+  amountBtnBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 40,
+  },
+  guestAmountItem: {
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  roundButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 20,
+    backgroundColor: '#007AFF',
+    marginHorizontal: 10,
+  },
+  aminityContainer: {
+    backgroundColor: 'white',
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 5,
+  },
+  categoryContainer: {
+    marginBottom: 20,
+  },
+  categoryTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+    color: '#555',
+  },
+  amenitiesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  amenityItem: {
+    width: '46%',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 5,
+    marginBottom: 10,
+    backgroundColor: '#f5f5f5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  amenityItemSelected: {
+    backgroundColor: '#003366',
+  },
+  amenityText: {
+    fontSize: 16,
+    color: '#333',
+    textAlign: 'center',
+  },
+  amenityTextSelected: {
+    color: '#fff',
+  },
+  pageBody: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 16,
+  },
+  toggleContainer: {
+    marginVertical: 16,
+  },
+  toggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  toggleLabel: {
+    fontSize: 16,
+  },
+  checkContainer: {
+    marginVertical: 16,
+  },
+  checkLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  picker: {
+    height: 50,
+    width: '100%',
   },
 });
 

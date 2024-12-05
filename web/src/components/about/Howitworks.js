@@ -63,6 +63,61 @@ function Howitworks() {
                     <p className="howitworks__info-text">Give your guests a warmhearted welcome. Manage your properties, calendars, reservations, messages and much more.</p>
                 </section>
             </article>
+
+
+            <article className="howitworks__titles-container">
+                <div>
+                <h3 className="howitworks__title">Feature overview for hosts</h3>
+                    <h4>Increase revenue, reduce workload, deliver beautiful experiences</h4> 
+
+            <div className="HostContainer">
+                    <div>
+                        <p><span className="span">#1: Core Feature.</span></p>
+                        <p><span className="span">#2: Performance Bundles.</span> Digital Growth, Revenue, Operations, Guest Experience. </p>
+                        <p><span className="span">#3: Education & Support.</span> 9-5 mo-fr support, onboarding solutions, account team, Community.</p> 
+                    </div>  
+                    </div>
+
+                    <div className="Container">
+                    <span className="span">Property Management System (PMS)</span>
+                    <p>Listings</p>
+                    <p>Calendar</p>
+                    <p>Reservations</p>
+                    <p>Messages</p>
+                    <p>Revenues</p>
+                    <p>Reviews</p>
+                    <p>Finance</p>
+                    <br/>
+
+                    <span className="span">Communication</span>
+                    <p>Unified Inbox</p>
+                    <p>Host Dashboard</p>
+                    <p>Guest Dashboard</p>
+                    <br/>
+
+
+                    <span className="span">Revenue Management</span>
+                    <p>Revenue overview</p>
+                    <p>Occupancy rates</p>
+                    <p>ADR (Average Daily Rate)</p>
+                    <p>RevPAR (Revenue per Available Room)</p>
+                    <br/>
+                    <span className="span">Operations</span>
+                    <p>Reservation management</p>
+                    <p>Pricing management</p>
+                    <p>Housekeeping</p>
+                    <p>Maintenance management</p>
+                    <br/>
+                    <span className="span">Client support</span>
+                    <p>FAQ</p>
+                    <p>E-mail</p>
+                    <p>Phone Support</p>
+                            
+
+                    </div>
+                </div>
+            </article>
+            
         </section>
     );
 }

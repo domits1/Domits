@@ -54,7 +54,7 @@ const Chat = () => {
   const loadChatHistory = async () => {
     try {
       const params = chatID ? { chatID } : { userID: user.id };
-      const response = await axios.get('http://localhost:3001/chat-history', { params });
+      const response = await axios.get('https://pfjspybvsi.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
           text: msg.content,

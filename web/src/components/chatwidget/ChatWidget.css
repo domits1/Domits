@@ -1,4 +1,6 @@
 /* ChatWidget.css */
+@import "slick-carousel/slick/slick.css"; 
+@import "slick-carousel/slick/slick-theme.css";
 
 
 .chatwidget-widget {
@@ -77,7 +79,7 @@
 .chatwidget-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 20px 20px 40px 20px;
+  padding: 20px 20px 100px 20px;
   background-color: #f9f9f9;
   max-height: calc(100% - 80px); /* Leave room for the input field */
 }
@@ -172,11 +174,12 @@
   overflow: hidden;
   background-color: #fff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
 }
 
 .chatwidget-accommodation-image {
   width: 100%;
-  height: 100px;
+  height: 200px;
   object-fit: cover;
 }
 
@@ -235,7 +238,7 @@
 
 
 .chatwidget-decision-box {
-  padding: 1px 20px 60px 20px;
+  padding: 1px 20px 100px 20px;
   background-color: #f1f1f1;
   border-top: 1px solid #ddd;
   text-align: center;
@@ -257,4 +260,70 @@
 
 .chatwidget-decision-box button:hover {
   opacity: 0.9;
+}
+
+.chatwidget-accommodation-tile .chatwidget-slider {
+  margin-bottom: 15px; 
+}
+
+.slick-dots {
+  bottom: -25px; 
+}
+
+.slick-dots li button:before {
+  font-size: 12px;
+  color: #28a745; 
+}
+
+.slick-dots li.slick-active button:before {
+  color: #1d6f34; 
+}
+
+
+.slick-prev, .slick-next {
+  z-index: 1;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.slick-prev {
+  left: 5px; 
+}
+
+.slick-next {
+  right: 5px; 
+}
+
+.chatwidget-partner-indicator {
+  padding: 10px;
+  background-color: #f1f1f1;
+  border-bottom: 1px solid #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chatwidget-partner-indicator span {
+  font-size: 14px;
+  color: #333;
+}
+
+.chatwidget-switch-to-ai {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-left: auto; /* Pushes the button to the right */
+}
+
+.chatwidget-switch-to-ai:hover {
+  background-color: #e04343;
 }

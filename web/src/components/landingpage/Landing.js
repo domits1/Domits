@@ -7,11 +7,18 @@ import MainTextpicture from "../../images/host-landing-example.png";
 import whyHostpicture from "../../images/host-landing-example2.jpg";
 import verifiedLogo from "../../images/icons/verify-icon.png";
 import approveLogo from "../../images/icons/approve-accept-icon.png";
+import checkMark from "../../images/icons/checkMark.png";
+import question from "../../images/icons/question.png";
+import bill from "../../images/icons/bill.png";
 import banknoteLogo from "../../images/icons/banknote-icon.png";
 import supportLogo from "../../images/icons/question-mark-round-icon.png";
 import internationalLogo from "../../images/icons/world-globe-line-icon.png";
 import rulesLogo from "../../images/icons/result-pass-icon.png";
 import PersonalAdvice from "../../images/personal-advice.png";
+import Slider from 'react-slick';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
+
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
     const answerRef = useRef(null);
@@ -90,16 +97,6 @@ function Landing() {
             isOpen: false
         },
         {
-            question: "How reservations work",
-            answer: (
-                <>
-                    Log in to your account, navigate to 'Bookings', and select the reservation you want to view, change, or cancel.
-                    Make sure to confirm any changes to keep your records updated.
-                </>
-            ),
-            isOpen: false
-        },
-        {
             question: "How payouts and taxes work",
             answer: (
                 <>
@@ -119,6 +116,53 @@ function Landing() {
             isOpen: false
         }
     ]);
+
+    const reviews = [
+        {
+            id: 1,
+            text: "Renting out my home through this website has been a wonderful experience. The user-friendly interface and the reliable platform make it easy for me to list my property. The booking system works flawlessly, and I always receive timely notifications when a reservation is made. Communication with guests is smooth, allowing me to offer a personal and hassle-free service. Thanks to this website, I am confident that my home is in good hands, and the positive feedback from my guests reaffirms this every time!",
+            author: "Rick Terp",
+            location: "Host from the Netherlands",
+            img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096"
+        },
+        {
+            id: 2,
+            text: "Renting out my boat through this platform was a fantastic experience. Everything went smoothly and professionally, from the booking to the communication with renters. Perfect for boat owners!",
+            author: "Melissa Steenberk",
+            location: "Host from the Netherlands",
+            img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096"
+        },
+        {
+            id: 3,
+            text: "As the owner of a luxury yacht company, this platform offers us the perfect opportunity to rent out our fleet easily and efficiently. From the user-friendly system to the excellent customer support, everything is flawlessly organized. Our clients appreciate the quality and luxury of our yachts, and thanks to the platform, we can provide them with a hassle-free booking experience. The team behind the platform ensures that our yachts receive optimal visibility for potential renters, resulting in frequent and reliable bookings. A valuable asset for our business!",
+            author: "James Heck",
+            location: "Owner of a luxury yacht company",
+            img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096"
+        },
+        {
+            id: 4,
+            text: "I recently hosted my website with Domits in the UK, and the experience has been exceptional. The platform is user-friendly, allowing for quick setup and seamless integration. Speed and reliability are top-notch, with minimal downtime, ensuring my site is always accessible. The customer support team is also extremely helpful, addressing any issues promptly and professionally. If you're looking for a solid hosting solution in the UK, this service offers great performance, security, and value for money. Highly recommended for anyone serious about a stable online presence!",
+            author: "Jaimee Becker",
+            location: "Host from UK",
+            img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096"
+        },
+        {
+            id: 5,
+            text: "Reliable and Efficient Hosting from Germany I recently switched to a hosting provider based in Germany, and it’s been an excellent decision. The platform is fast and stable, offering great performance with little to no downtime. The setup process was straightforward, and the service provides excellent security features, which is especially important for websites dealing with sensitive data. The German-based servers have shown impressive speed for both local and international visitors, making it a fantastic choice for businesses or personal websites looking for reliability and performance. Highly recommended for those seeking a strong hosting solution from Germany!",
+            author: "Maurice von Dorn",
+            location: "Host from Germany",
+            img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096"
+        },
+        {
+            id: 6,
+            text: "As the owner of Amode, I’ve had the opportunity to host several websites on various platforms, and the service we provide has consistently exceeded expectations. Our hosting solutions are designed to offer a seamless, high-performance experience with reliable uptime, top-notch security features, and a user-friendly interface. Whether you're running a small business or a larger operation, our infrastructure is built to scale efficiently and ensure your site is always performing at its best. At Amode, we prioritize customer satisfaction, and our support team is available around the clock to help with any issues that may arise. We take pride in offering hosting that’s as robust as it is reliable, making us a trusted choice for clients worldwide.",
+            author: "Laisa Feldt",
+            location: "Owner at Amode",
+            img: "https://pbs.twimg.com/media/FNA5U8jXwAURgR-?format=jpg&name=4096x4096"
+        },
+
+    ];
+
     const toggleOpen = (index) => {
         const updatedFaqs = faqs.map((faq, i) =>
             i === index ? { ...faq, isOpen: !faq.isOpen } : faq
@@ -159,6 +203,19 @@ function Landing() {
         }
     };
 
+    const handleSmoothScroll = (e, targetId) => {
+        e.preventDefault();
+        const targetElement = document.getElementById(targetId);
+        if (targetElement) {
+            targetElement.scrollIntoView({
+                behavior: 'smooth', 
+                block: 'start' 
+            });
+        } else {
+            console.error(`Target element with id "${targetId}" not found.`);
+        }
+    };
+    
     return (
         <main className={styles.container}>
             <div className={styles.firstSection}>
@@ -170,10 +227,13 @@ function Landing() {
                             <span>Boat</span> 
                         </div> 
                     </span>
-                    <br/>for free on Domits
+                    <br/>for free with 0% booking fee
                 </h1>
                     <p>Hobby or profession, register your property today and start increasing your earning potential, revenue, occupancy and average daily rate.</p>
-                    <button className={styles.nextButtons}>Start hosting</button>
+
+                    <button className={styles.nextButtons}>
+                    <a href="#Register" onClick={(e) => handleSmoothScroll(e, 'Register')}>Start hosting</a>
+                     </button>
                 </div>
                 
                 <div className={styles.firstPicture}>
@@ -181,6 +241,31 @@ function Landing() {
                 </div>
 
             </div>
+
+        <div className={styles.iconsContainer}>
+            <div className={styles.iconsContainerText}>
+                <div className={styles.iconTextGroup}>
+                    <img src={bill} alt="bill"></img>
+                    <p>Secure payments</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={verifiedLogo} alt="verified logo"></img>
+                    <p>Verified guests/hosts</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={question} alt="question"></img>
+                    <p>Quick phone support</p>
+                </div>
+                <div className={styles.iconTextGroup}>
+                    <img src={checkMark} alt="checkMark"></img>
+                    <p>Domits Quality Guarantee</p>
+                </div>
+            </div>
+        </div>
+
+
+        
+
             <div className={styles.RegisterBlock}>
                 {isAuthenticated && group !== 'Host' ? (
                     <div className={styles.updateGroupButtonDiv}>
@@ -189,29 +274,31 @@ function Landing() {
                         </button>
                     </div>
                 ) : (
-                    <Register />
+                    <div id="Register">
+                    <Register/>
+                    </div>
                 )}
             </div>
             
             <div className={styles.easyHosting}>
                 <div className={styles.easyHosting_text}>
-                    <h1>Hosting on <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
+                    <h1> Hosting with <span className={styles.highlightText}>Domits</span> has never been <span className={styles.highlightText}>easier</span>.</h1>
                     <h3>It only takes 3 steps</h3>
                 </div>
                 <div className={styles.threeSteps}>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>1.</span></h1>
-                        <h2>List your property</h2>
-                        <p>Start earning by listing your property for free in just minutes</p>
+                        <h2 className={styles.headerTwoText}>List your property</h2>
+                        <p>Start earning by listing your property for free with 0% fee in just minutes</p>
                     </div>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>2.</span></h1>
-                        <h2>Get paid</h2>
+                        <h2 className={styles.headerTwoText}>Get paid</h2>
                         <p>Enjoy fast, easy and secure payments.</p>
                     </div>
                     <div className={styles.steps}>
                         <h1><span className={styles.highlightText}>3.</span></h1>
-                        <h2>Receive guest</h2>
+                        <h2 className={styles.headerTwoText}>Receive guest</h2>
                         <p>Welcome your guest with a warm and personal touch</p>
                     </div>
                 </div>
@@ -222,7 +309,7 @@ function Landing() {
                     <img src={whyHostpicture} alt="House"/>
                 </div>
                 <div className={styles.whyHostText}>
-                    <h1>Why should i host on <span className={styles.highlightText}>Domits</span>?</h1>
+                    <h1>Why should I host on <span className={styles.highlightText}>Domits</span>?</h1>
                     <p>At Domits, we're not just another platform, we're building a future-focused, 
                     sustainable community with our Travel Innovation Labs. Our innovative approach 
                     ensures that your property adds meaningful value to both travelers and the 
@@ -233,7 +320,8 @@ function Landing() {
                     to help you thrive. Hosting with Domits means aligning with deeply embedded 
                     values of health, safety, and sustainability, creating a future-proof path for 
                     your business.</p>
-                    <button onClick={updateUserGroup} className={styles.nextButtons}>Start hosting</button>
+                    <button onClick={updateUserGroup} className={styles.nextButtons}><a href="#Register" onClick={(e) => handleSmoothScroll(e, 'Register')}>Start hosting</a></button>
+
                 </div>
             </div>
             
@@ -245,22 +333,22 @@ function Landing() {
                             <div className={styles.simpleSafeCards}>
                                 <img src={verifiedLogo} alt="verified logo"></img>
                                 <div className={styles.safeMiniText}>
-                                    <h3>Certified guests</h3>
-                                    <p>We verify guests' email adresses and credit cards for partners using Payments by Stripe.</p>
+                                    <h3>Verified  guests</h3>
+                                    <p>We verify guest with email address, phone, a personal message and payments with our partner Stripe.</p>
                                 </div>
                             </div>
                             <div className={styles.simpleSafeCards}>
                                 <img src={rulesLogo} alt="houserules logo"></img>
                                 <div className={styles.safeMiniText}>
                                     <h3>Your own house rules</h3>
-                                    <p>Let your potential house guest know your house rules. The must agree to them in order to book.</p>
+                                    <p>Let your potential guests know your house rules. They must agree in order to book.</p>
                                 </div>
                             </div>
                             <div className={styles.simpleSafeCards}>
                                 <img src={approveLogo} alt="approve logo"></img>
                                 <div className={styles.safeMiniText}>
                                     <h3>Choose how you want to receive your bookings</h3>
-                                    <p>you can allow your guest too book directly, or you can approve a booking request before accepting them</p>
+                                    <p>You can allow your guests to book directly.</p>
                                 </div>
                             </div>
                         </div>
@@ -291,9 +379,36 @@ function Landing() {
                 </div>
             </div>
 
+            <div className={styles.clientReviewMobile}>
+            <h1>What others say about <span className={styles.highlightText}>Domits</span></h1>
+            <Slider
+                dots={true}
+                infinite={true}
+                speed={500}
+                slidesToShow={1}
+                slidesToScroll={1}
+                autoplay={true}
+                autoplaySpeed={30000}
+                prevArrow={<button type="button" className="slick-prev">Previous</button>}
+                nextArrow={<button type="button" className="slick-next">Next</button>}
+            >
+                {reviews.map((review) => (
+                    <div key={review.id} className={styles.reviewSlide}>
+                        <p className={styles.reviewText}>"{review.text}"</p>
+                        <div className={styles.clientDetails}>
+                            <img src={review.img} alt={review.author} />
+                            <div className={styles.clientInfo}>
+                                <h2>{review.author}</h2>
+                                <p>{review.location}</p>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </Slider>
+        </div>
 
 
-            <div className={styles.clientRevieuw}>
+                <div className={styles.clientRevieuw}>
                 <h1> What others say about <span className={styles.highlightText}>Domits</span></h1>
 
                 <div className={styles.client_text}>
@@ -410,7 +525,7 @@ function Landing() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div> 
 
             <div className={styles.checkList}>
                 <h1>Is your property suitable for <span className={styles.highlightText}>renting out</span>?</h1>
@@ -489,7 +604,7 @@ function Landing() {
                 <div className={styles.personal__advice__left}>
                     <h1>Free personal advice from our <span className={styles.highlightText}>rental expert team</span></h1>
                     <h3>Our expert team is ready for support!</h3>
-                    <button className={styles.nextButtons}> <a href='/hostdashboard/chat'>Talk to a specialist</a></button>
+                    <button className={styles.nextButtons}> <a href='/contact'>Talk to a specialist</a></button>
                 </div>
                 <img src={PersonalAdvice} alt='personalAdvice'/>
             </div>

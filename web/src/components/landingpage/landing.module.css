@@ -16,11 +16,52 @@
     width: auto;
     margin: auto;
 }
+.iconsContainer {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #f9f9f9;
+    flex-wrap: wrap;
+    height: 13vh;
+    padding-left: 5%;
+    padding-right: 5%;
+}
+
+.iconsContainerText {
+    font-size: 1.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
+.iconTextGroup {
+    display: flex;
+    align-items: center;
+    gap: 10px; 
+}
+
+.iconsContainerText img {
+    width: 36px;
+    object-fit: contain;
+}
+
+.iconsContainerText p {
+    margin: 0;
+}
+
+
+
 
 .pages {
     display: flex;
     flex-direction: row;
     justify-content: center;
+    text-align: center;
     margin-bottom: 20px;
 }
 
@@ -118,12 +159,16 @@
     border-radius: 5px;
     box-shadow: none;
     padding: 10px;
-    margin: 0 10px;
+    margin-top: 15px;
     border: none;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 1rem;
+}
+
+.headerTwoText{
+    width: 100%;
 }
 
 .nextButtons:hover {
@@ -280,7 +325,7 @@
     text-align: left;
     padding-top: 1%;
     background-color: #f9f9f9;
-    justify-content: center;
+    justify-content: center;    
 }
 .firstSection{
     display: flex;
@@ -405,16 +450,68 @@
             font-weight: bold;
         }
     }
+} 
+
+.clientDetails {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}      
+
+.clientReview img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
 }
 
+.clientReviewMobile {
+    width: 25vw;
+    align-items: center;
+    padding: 0px;
+    text-align: center;
+    border: 2px solid #003366;
+    border-radius: 1px;
+}
+
+.clientDetails {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}      
+
+.clientInfo {
+    margin-left: 20px;
+}
+
+.clientReviewMobile img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+
+@media (max-width: 2560px) {
+    .clientReviewMobile{
+        visibility: hidden;
+        height: 0;
+    }
+}
+
+@media (max-width: 1024px) {
+    .firstPicture{
+        width: 39%;
+    }
+}
 @media (max-width: 768px) {
     .clientRevieuw {
-        flex-direction: column;
-        width: 80%;
+        display: none;
         .client_text {
             width: 100%;
             margin: 1rem 0;
         }
+    }
+    .clientReviewMobile{
+        visibility: visible;
+        height: 40vh;
     }
         h1 {
             font-size: 2rem;
@@ -428,18 +525,67 @@
                 font-size: 1.2rem;
           }
     }
-}
 
-@media (max-width: 480px) {
-    .clientRevieuw {
-        flex-direction: column;
-        width: 80%;
-        .client_text {
-            width: 80%;
-        }
+    .clientReview {
+        width: 100%;
     }
-    h1 {
-        font-size: 1.8rem;
+
+    .firstPicture{
+        width: 46%;
+    }
+
+    .clientReview .reviewSlide {
+        flex-direction: column;
+    }
+
+    .reviewText{
+        margin-bottom: 1rem;
+    }
+
+    .clientDetails {
+        flex-direction: column;
+    }
+
+    .clientInfo {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .clientReview img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .clientReviewMobile {
+        width: auto;
+    }
+
+    .clientReviewMobile .reviewSlide {
+        flex-direction: column;
+    }
+
+    .clientDetails {
+        flex-direction: column;
+    }
+
+    .clientInfo {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .clientReview img {
+        width: 60px;
+        height: 60px;
+    }
+} 
+
+@media (max-width: 320px) {
+    .clientReviewMobile{
+        visibility: visible;  
+        height: 40vh;      
+    }
+    .clientRevieuw {
+     display: none;
     }
 
     .client_text {
@@ -577,6 +723,10 @@
 
     }
 
+    .checkListItem__header{
+        text-align: center;
+    }
+    
     .personal__advice {
         img {
             width: 50%;
@@ -595,8 +745,8 @@
         display: flex;
         flex-direction: column-reverse;
         .MainText {
-            width: 80vw;
-            margin: 0;
+            width: 85vw;
+            margin: 10px;
             padding: 5%;
             backdrop-filter: blur(0.25rem);
             border-radius: 1.5rem;
@@ -613,12 +763,12 @@
 
             }
             position: absolute;
-            left: 50%;
+            left: 47%;
             transform: translateX(-50%);
         }
         .firstPicture img {
             border-radius: 0;
-            width: 95vw;
+            width: 100vw;
             object-fit: contain;
         }
     }
@@ -640,7 +790,7 @@
         flex-direction: column;
         .SecPicture img {
             border-radius: 0;
-            width: 94vw;
+            width: 100vw;
             object-fit: contain;
         }
         .whyHostText {

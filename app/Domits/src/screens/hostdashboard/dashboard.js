@@ -19,7 +19,7 @@ const Dashboard = () => {
     if (!userId) return;
 
     try {
-      const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchRecentAccommodations', {
+      const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchRecentAccommodations', {
         method: 'POST',
         headers: { 'Content-type': 'application/json; charset=UTF-8' },
         body: JSON.stringify({ OwnerId: userId }),

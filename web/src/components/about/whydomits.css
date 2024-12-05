@@ -75,9 +75,10 @@
 .why-domits__flex-container.host,
 .why-domits__flex-container.dev,
 .why-domits__flex-container.growth {
+    padding-left: 3rem;
+    padding-right: 3rem;
     display: flex;
     flex-wrap: wrap;
-    padding: 15px;
     gap: 20px;
 }
 

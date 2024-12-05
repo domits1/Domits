@@ -58,7 +58,7 @@ function HostListings() {
             return;
         } else {
             try {
-                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
+                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
                     method: 'POST',
                     body: JSON.stringify({ OwnerId: userId }),
                     headers: {'Content-type': 'application/json; charset=UTF-8',
@@ -100,7 +100,7 @@ function HostListings() {
             };
 
             try {
-                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ChangeAccommodationStatues', {
+                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ChangeAccommodationStatues', {
                     method: 'PUT',
                     body: JSON.stringify(options),
                     headers: {'Content-type': 'application/json; charset=UTF-8',
@@ -129,7 +129,7 @@ function HostListings() {
             };
             setIsLoading(true);
             try {
-                const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/DeleteAccommodation', {
+                const response = await fetch('https://hfsqawwfu0.execute-api.eu-north-1.amazonaws.com/default/DeleteAccommodation', {
                     method: 'DELETE',
                     body: JSON.stringify(options),
                     headers: {

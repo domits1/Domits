@@ -43,6 +43,7 @@ const BookingGuestDashboard = () => {
                         throw new Error('Failed to fetch bookings');
                     }
                     const data = await response.json();
+                    console.log(data)
                     setBookings(data);
                 } catch (error) {
                     console.error('Error fetching bookings:', error);

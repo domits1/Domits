@@ -3,13 +3,13 @@ import Pages from "./Pages.js";
 import './HostRevenueStyle.css';
 import { gql, useQuery } from '@apollo/client';
 import RevenueOverview from './HostRevenueCards/RevenueOverview.jsx';
-import axios from "axios"; // Using axios for API calls
+import axios from "axios";
 import MonthlyComparison from './HostRevenueCards/MonthlyComparison.jsx';
 import OccupancyRateCard from './HostRevenueCards/OccupancyRate.jsx';
-import RevPARCard from './HostRevenueCards/RevPAR.jsx';
+import RevPARCard from './HostRevenueCards/RevPAR.jsx'; // Import RevPARCard
+import ADRCard from './HostRevenueCards/ADRCard.jsx';
 import { Auth } from 'aws-amplify';
 
-// GraphQL query to fetch revenue data
 const GET_REVENUE = gql`
     query GetRevenue {
         getRevenue {
@@ -21,34 +21,40 @@ const GET_REVENUE = gql`
 `;
 
 const HostRevenues = () => {
-    // Declare all hooks unconditionally at the top
     const [userEmail, setUserEmail] = useState(null);
     const [cognitoUserId, setCognitoUserId] = useState(null);
     const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
     const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
     const [loading, setLoading] = useState(true);
     const [stripeStatus, setStripeStatus] = useState('');
-    const [monthlyRevenueData, setMonthlyRevenueData] = useState([]); // State for monthly revenue data
+    const [monthlyRevenueData, setMonthlyRevenueData] = useState([]);
+    const [occupancyData, setOccupancyData] = useState(null);
 
-    // Fetch revenue data from AppSync using GraphQL
     const { loading: revenueLoading, error, data } = useQuery(GET_REVENUE);
 
-    // Fetch monthly revenue data from your Lambda API
     const fetchMonthlyRevenueData = async () => {
         try {
             const response = await axios.post('https://dcp1zwsq7c.execute-api.eu-north-1.amazonaws.com/default/GetMonthlyComparison');
-            setMonthlyRevenueData(response.data); // Set the data from the response
-            console.log("Monthly Revenue Data:", response.data); // Log the response for debugging
+            setMonthlyRevenueData(response.data);
         } catch (error) {
             console.error("Error fetching monthly comparison data:", error);
         }
     };
 
+    const fetchOccupancyData = async () => {
+        try {
+            const response = await axios.get('https://cui7ru7r87.execute-api.eu-north-1.amazonaws.com/prod/occupancy');
+            setOccupancyData(response.data);
+        } catch (error) {
+            console.error("Error fetching occupancy data:", error);
+        }
+    };
+
     useEffect(() => {
-        fetchMonthlyRevenueData(); // Call the fetch function when the component mounts
+        fetchMonthlyRevenueData();
+        fetchOccupancyData();
     }, []);
 
-    // Declare useEffect to fetch user and Stripe status
     useEffect(() => {
         const fetchUserAndStripeStatus = async () => {
             try {
@@ -80,7 +86,6 @@ const HostRevenues = () => {
         fetchUserAndStripeStatus();
     }, []);
 
-    // Handle Stripe account creation
     const handleStripeAction = () => {
         if (stripeLoginUrl) {
             window.open(stripeLoginUrl, '_blank');
@@ -98,18 +103,15 @@ const HostRevenues = () => {
         }
     };
 
-    // Handle loading and error state at the top
     if (loading || revenueLoading) return <p>Loading...</p>;
     if (error) return <p>Error loading revenue data: {error.message}</p>;
 
-    // Fetched revenue data to be used in the cards
     const revenueData = [
         { title: "Total Revenue This Month", value: `$${data.getRevenue.totalRevenueThisMonth}` },
         { title: "Year-To-Date Revenue", value: `$${data.getRevenue.yearToDateRevenue}` },
         { title: "Total Revenue", value: `$${data.getRevenue.totalRevenue}` }
     ];
 
-    // Render JSX based on Stripe status
     return (
         <main className="hr-page-body hr-container">
             <section className="hr-host-revenues">
@@ -143,9 +145,22 @@ const HostRevenues = () => {
                                 </div>
                             </div>
 
-                            {/* Render Monthly Comparison */}
                             <div className="hr-monthly-comparison">
-                                <MonthlyComparison data={monthlyRevenueData} /> {/* Pass the fetched data */}
+                                <MonthlyComparison data={monthlyRevenueData} />
+                            </div>
+
+                            {occupancyData ? (
+                                <OccupancyRateCard
+                                    occupancyRate={occupancyData.combinedOccupancyRate}
+                                    numberOfProperties={occupancyData.totalProperties}
+                                />
+                            ) : (
+                                <p>Loading Occupancy Data...</p>
+                            )}
+
+                            <div className="hr-card-grid">
+                                <ADRCard hostId={cognitoUserId} />  {/* ADR Card */}
+                                <RevPARCard />  {/* New RevPAR Card */}
                             </div>
                         </div>
                     )}

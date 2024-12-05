@@ -1,25 +1,27 @@
 import React from "react";
 import styles from "./hostverification.module.css";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Loading from "./components/Loading";
 import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired";
+import useFormStore from "../hostonboarding/stores/formStore";
+import Button from "../hostonboarding/components/button";
 
-const RegistrationNumber = ({ Address, Next, Previous, setFormData }) => {
+const RegistrationNumber = () => {
+  const accommodationType = useFormStore((state) => state.accommodationDetails.type);
+  const address = useFormStore((state) => state.accommodationDetails.address);
+  const registrationNumber = useFormStore(
+    (state) => state.accommodationDetails.registrationNumber
+  );
+
+  const setRegistrationNumber = useFormStore(
+    (state) => state.setRegistrationNumber
+  );
+
   const { isRegistrationNumberRequired, loading, error } =
-    useIsRegistrationNumberRequired(Address);
+    useIsRegistrationNumberRequired(address);
 
-  const [localRegistrationNumber, setLocalRegistrationNumber] = useState("");
   const [isCheckboxChecked, setIsCheckboxChecked] = useState(false);
-  const isButtonDisabled = isRegistrationNumberRequired && !isCheckboxChecked;
-
-  const handleContinue = () => {
-    setFormData((prevData) => ({
-      ...prevData,
-      RegistrationNumber: localRegistrationNumber,
-    }));
-
-    Next();
-  };
+  const isButtonDisabled = registrationNumber && !isCheckboxChecked;
 
   if (loading) {
     return <Loading />;
@@ -33,7 +35,7 @@ const RegistrationNumber = ({ Address, Next, Previous, setFormData }) => {
         <h1>Add your registration number</h1>
         <p>
           Your registration number will appear on your listing page, so that
-          guests know that your accommodation is registered in {Address.City}.
+          guests know that your accommodation is registered in {address.city}.
         </p>
       </div>
       <hr></hr>
@@ -47,15 +49,15 @@ const RegistrationNumber = ({ Address, Next, Previous, setFormData }) => {
           <input
             type="text"
             placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
-            value={localRegistrationNumber}
-            onChange={(e) => setLocalRegistrationNumber(e.target.value)}
+            value={registrationNumber}
+            onChange={setRegistrationNumber}
           ></input>
         </div>
         <div className={styles["registrationnumber-address"]}>
           <h2>Listing address</h2>
           <p>
-            {Address.Street}, {Address.City}, {Address.PostalCode},{" "}
-            {Address.Country}
+            {address.street}, {address.city}, {address.zipCode},{" "}
+            {address.country}
           </p>
         </div>
         {isRegistrationNumberRequired && (
@@ -78,17 +80,11 @@ const RegistrationNumber = ({ Address, Next, Previous, setFormData }) => {
       </div>
       <hr></hr>
       <div className={styles["bottom-container"]}>
-        <button onClick={Previous} className={styles["publish-btn"]}>
-          Previous
-        </button>
-        <button
-          onClick={handleContinue}
-          className={
-            isButtonDisabled ? styles["disabled-btn"] : styles["publish-btn"]
-          }
-        >
-          Continue
-        </button>
+        <Button
+          routePath={`/hostonboarding/${accommodationType}/availability`}
+          btnText="Go back"
+        />
+        <Button routePath={`/hostonboarding/summary`}  btnText="Proceed" />
       </div>
     </main>
   );

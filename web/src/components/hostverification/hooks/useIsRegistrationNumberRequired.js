@@ -4,12 +4,12 @@ import { getIfRegistrationNumberIsRequired } from "../services/verificationServi
 const useIsRegistrationNumberRequired = (Address) => {
   const [isRegistrationNumberRequired, setIsRegistrationNumberRequired] =
     useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      if (Address && Address.City && Address.Country) {
+      if (Address && Address.city && Address.country) {
         setLoading(true);
         try {
           const data = await getIfRegistrationNumberIsRequired(Address);

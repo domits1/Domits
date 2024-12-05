@@ -21,30 +21,12 @@
   transition: background-color 0.3s ease;
 }
 
-
-
 @media screen and (max-width: 650px) {
-  .hostchatbot-toggle-button { 
-      position: fixed;
-      bottom: 100px;
-      right: 20px;
-      z-index: 3000;
-      background-color: #0078D7; 
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 60px;
-      height: 60px;
-      font-size: 24px;
-      cursor: pointer;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); 
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: background-color 0.3s ease;
+  .hostchatbot-toggle-button {
+    bottom: 100px;
+    right: 20px;
   }
 }
-
 
 .hostchatbot-toggle-button:hover {
   background-color: #005bb5;
@@ -118,6 +100,7 @@
   max-width: 75%;
   word-wrap: break-word;
   font-size: 14px;
+  position: relative;
 }
 
 .hostchatbot-message.user {
@@ -128,8 +111,13 @@
 
 .hostchatbot-message.bot {
   align-self: flex-start;
-  background-color: #f1f1f1;
+  background-color: #f9f9f9;
   color: #333;
+  transition: background-color 0.3s ease;
+}
+
+.hostchatbot-message.bot:hover {
+  background-color: #e0e0e0;
 }
 
 .hostchatbot-option-buttons button {
@@ -214,11 +202,6 @@
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }
 
-.hostchatbot-go-back-button:focus {
-  outline: none;
-  box-shadow: 0 0 5px #005bb5;
-}
-
 .hostchatbot-accommodation-tile {
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -295,4 +278,23 @@
   font-size: 14px;
   color: #555;
   line-height: 1.6;
+}
+
+/* Style for audio playback buttons */
+.play-audio-button {
+  background-color: #0078D7;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 14px;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+  font-weight: bold;
+}
+
+.play-audio-button:hover {
+  background-color: #005bb5;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
 }

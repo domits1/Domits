@@ -9,13 +9,15 @@
 
 .Toast {
   position: absolute;
-  top: 94px;
+  top: 1%;
+  right: 1%;
   margin-top: 10px;
   padding: 20px;
   border-radius: 5px;
   font-size: 1em;
-  width: 50%;
+  width: 20%;
   opacity: 1;
+  z-index: 1000;
   visibility: visible;
   transition: opacity 0.5s ease-in, visibility 0.5s ease-in;
 }

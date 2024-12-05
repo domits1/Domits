@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import {Link, useLocation, useNavigate} from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
@@ -10,7 +10,7 @@ import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import HighChair from "../../images/high-chair.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
-import {FaTimes} from 'react-icons/fa';
+import { FaTimes } from 'react-icons/fa';
 import DemoValidator from './DemoValidator';
 import ChairIcon from '@mui/icons-material/Chair';
 import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService';
@@ -165,6 +165,8 @@ const ListingDetails = () => {
     const [userID, setUserID] = useState('');
     const [showTravelerPopup, setShowTravelerPopup] = useState(false);
     const travelerSummary = `${adults} ${translatedText.adults}, ${children} ${translatedText.children}, ${pets} ${translatedText.pets}`;
+    const [showGuestPopup, setShowGuestPopup] = useState(false);
+    const guestSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
     const popupRef = useRef(null);
     const [bookings, setBookings] = useState([]);
 
@@ -343,18 +345,18 @@ const ListingDetails = () => {
     useEffect(() => {
         function handleClickOutside(event) {
             if (popupRef.current && !popupRef.current.contains(event.target)) {
-                setShowTravelerPopup(false);
+                setShowGuestPopup(false);
             }
         }
 
-        if (showTravelerPopup) {
+        if (showGuestPopup) {
             document.addEventListener('mousedown', handleClickOutside);
         }
 
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [showTravelerPopup]);
+    }, [showGuestPopup]);
 
     useEffect(() => {
         if (showModal) {
@@ -370,7 +372,7 @@ const ListingDetails = () => {
 
     const toggleDropdown = (e) => {
         e.stopPropagation();
-        setShowTravelerPopup(!showTravelerPopup);
+        setShowGuestPopup(!showGuestPopup);
     };
 
     const toggleModal = () => {
@@ -381,9 +383,19 @@ const ListingDetails = () => {
         const originalFeatures = accommodation.Features;
         const translatedCategories = translatedAccommodation?.Categories || {}; // Access translated categories with fallback to original
 
+        const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
+
+        // Sorteer de categorieën op basis van de gewenste volgorde
+        const sortedCategories = Object.keys(features).sort((a, b) => {
+            const orderA = categoryOrder.indexOf(a) !== -1 ? categoryOrder.indexOf(a) : Infinity;
+            const orderB = categoryOrder.indexOf(b) !== -1 ? categoryOrder.indexOf(b) : Infinity;
+            return orderA - orderB;
+        });
+
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-contentPopUp" onClick={e => e.stopPropagation()}>
                     <button className="close-button" onClick={onClose}>✖</button>
                     <h2>{translatedText?.featurePopUpTitle || "Available Features"}</h2>
 
@@ -429,6 +441,7 @@ const ListingDetails = () => {
         );
     };
 
+
     useEffect(() => {
         const appendUserID = async () => {
             try {
@@ -445,7 +458,7 @@ const ListingDetails = () => {
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -457,6 +470,7 @@ const ListingDetails = () => {
                 }
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
+                console.log(data)
                 setAccommodation(data);
                 setDates(data.StartDate, data.EndDate, data.BookedDates || []);
                 fetchHostInfo(data.OwnerId);
@@ -788,6 +802,7 @@ const ListingDetails = () => {
         navigate(`/bookingoverview?${queryString}`);
     };
 
+
     const renderCategories = () => {
         if (accommodation && accommodation.Features) {
             const items = accommodation.Features;
@@ -894,16 +909,26 @@ const ListingDetails = () => {
         }
     };
 
+    const filterAdvancedReservedDates = (date) => {
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const advancedReservation = new Date();
+        advancedReservation.setDate(today.getDate() + accommodation.MinimumBookingPeriod);
+
+        return selectedDate < advancedReservation;
+    };
+
     const combinedDateFilter = (date) => {
         const selectedDate = new Date(date);
         const today = new Date();
 
         const isInThePast = selectedDate < today;
-
         const isOutsideAvailableRange = filterDisabledDays(date);
         const isBooked = filterBookedDates(date);
+        const isAdvancedReserved = filterAdvancedReservedDates(date);
 
-        return !(isOutsideAvailableRange || isBooked || isInThePast);
+        return !(isOutsideAvailableRange || isBooked || isInThePast || isAdvancedReserved);
     };
 
     return (
@@ -1028,6 +1053,11 @@ const ListingDetails = () => {
                             <h2>{translatedText.bookingDetailsText}</h2>
                             <p>{translatedText.dateRange} {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
                                 {translatedText.to} {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
+                            <h2>
+                                €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
+                            </h2>
+
+
                             <div className="dates" style={{display: 'flex', justifyContent: 'space-between'}}>
                                 <div className="summaryBlock dateInput"
                                      style={{flex: '1', position: 'relative', marginRight: '10px'}}>
@@ -1057,8 +1087,16 @@ const ListingDetails = () => {
                                         selected={checkOut}
                                         className='datePickerLD'
                                         onChange={(date) => setCheckOut(date)}
-                                        minDate={minEnd && new Date(minEnd)}
-                                        maxDate={maxEnd && new Date(maxEnd)}
+                                        minDate={
+                                            checkIn
+                                                ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
+                                                : (minEnd && new Date(minEnd))
+                                        }
+                                        maxDate={
+                                            checkIn
+                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay  * 24 * 60 * 60 * 1000)
+                                                : (maxEnd && new Date(maxEnd))
+                                        }
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                     />
@@ -1072,17 +1110,17 @@ const ListingDetails = () => {
                                 </div>
                             </div>
 
-                            {/* Travelers Popup */}
-                            <div className="travelers">
+                            {/* Guest Popup */}
+                            <div className="guests">
                                 <div className="dropdown">
                                     <label>{translatedText.travelers}</label>
                                     <div
                                         className="dropdown-button"
                                         onClick={toggleDropdown}
                                     >
-                                        {travelerSummary} {showTravelerPopup ? '▲' : '▼'}
+                                        {guestSummary} {showGuestPopup ? '▲' : '▼'}
                                     </div>
-                                    {showTravelerPopup && (
+                                    {showGuestPopup && (
                                         <div ref={popupRef} className="dropdown-content">
                                             <div className="counter">
                                                 <span>{translatedText.adults}</span>
@@ -1124,26 +1162,30 @@ const ListingDetails = () => {
                                                 </div>
                                             </div>
                                             <div className="closeButtonContainer">
-                                                <p onClick={() => setShowTravelerPopup(false)}
+                                                <p onClick={() => setShowGuestPopup(false)}
                                                    className="closeButton">{translatedText.close}</p>
                                             </div>
                                         </div>
                                     )}
                                 </div>
                                 <p>{translatedText.maxAmountTravelers}: {accommodation.GuestAmount}</p>
+                                <p>Minimum amount of days to stay: {accommodation.MinimumStay}</p>
+                                <p>Minimum amount of days to reservation in advanced: {accommodation.MinimumBookingPeriod}</p>
+                                <p>Maximum amount of days to stay: {accommodation.MaximumStay}</p>
+                                <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                             </div>
 
 
                             {/* Price and Reserve Section */}
                             <button className="reserve-button" onClick={handleBooking}
-                                    disabled={
-                                        !isFormValid || accommodation.Drafted === true || isDemo
-                                    }
-                                    style={{
-                                        backgroundColor: isFormValid ? 'green' : 'green',
-                                        cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
-                                        opacity: isFormValid && !isDemo ? 1 : 0.5
-                                    }}
+                                    // disabled={
+                                    //     !isFormValid || accommodation.Drafted === true || isDemo
+                                    // }
+                                    // style={{
+                                    //     backgroundColor: isFormValid ? 'green' : 'green',
+                                    //     cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
+                                    //     opacity: isFormValid && !isDemo ? 1 : 0.5
+                                    // }}
                             >
                                 {translatedText.reserve}
                             </button>

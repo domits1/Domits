@@ -122,6 +122,11 @@ hr {
   color: black;
 }
 
+.option-status-container {
+  display: flex;
+  gap: 5px;
+}
+
 .option-status {
   font-size: 0.75em;
   color: black;

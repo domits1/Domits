@@ -654,7 +654,7 @@
     "model": "Hybrid/Remote",
     "description": "Currently we are forming the core growth team and looking for Business Developer. We're open for intern and trainee Business Developer. Interested? Send a message or read more...",
     "details": {
-      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking AI Data Marketing Analysts to join us. We welcome both interns and trainee AI Data Marketing Analysts, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Business Developers to join us. We welcome both interns and trainee Business Developers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
       "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
       "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
       "preferredExperience": [
@@ -668,19 +668,19 @@
       "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
       "requirements": [
         "A university-level working and thinking mindset is a plus.",
-        "1 - 5+ years of experience as a Marketing Analyst.",
-        "Excellent communication skills.",
-        "As an AI Data Marketing Analyst, you’ll be working closely with the growth team to create valuable insights.",
-        "Ability to simplify complex AI Data topics for broader understanding.",
-        "Strong attention to detail and impeccable grasp of the English language.",
-        "Basic knowledge of AI Data and Machine Learning is a plus.",
+        "0.5 - 5+ years of experience as a business developer.",
+        "Good written and verbal communication skills.",
+        "Sound knowledge of IT sales.",
+        "Knowledge about lead generation.",
+        "Understanding of the inbound and outbound sales process.",
+        "Logical thinking and the ability to explain software features clearly.",
         "Strong logical thinking and problem-solving skills.",
         "A good team player who is highly interested in everything related to the domain.",
         "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
       ],
-      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll contact you as soon as possible to discuss the next steps.",
       "extraInformation": [
-        "Education: All levels/University.",
+        "Education Level: All levels/University.",
         "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
         "Working hours per week: 10 - 40+.",
         "Employment types: Internship, Traineeship, Freelance, and Contract.",

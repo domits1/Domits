@@ -3,7 +3,7 @@
     box-sizing: border-box;
     padding: 0.5rem;
     border-radius: 0.75rem;
-    background: #cccccc;
+    background: white;
     display: flex;
     flex-direction: column;
     gap: 5%;

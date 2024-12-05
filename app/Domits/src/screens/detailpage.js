@@ -35,7 +35,7 @@ const Detailpage = ({route, navigation}) => {
     const fetchAccommodation = async () => {
       try {
         const response = await fetch(
-          'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation',
+          'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation',
           {
             method: 'POST',
             headers: {
@@ -1047,6 +1047,7 @@ const styles = StyleSheet.create({
   categoryTitle: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: 'black',
   },
   divider: {
     height: 1,
@@ -1065,6 +1066,7 @@ const styles = StyleSheet.create({
   },
   featureText: {
     fontSize: 14,
+    color: 'black',
   },
   showMoreText: {
     fontSize: 16,

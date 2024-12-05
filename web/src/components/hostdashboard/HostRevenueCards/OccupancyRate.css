@@ -1,70 +1,61 @@
 .or-occupancy-rate-card {
-    padding: 15px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background-color: #f0f0f0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 280px; /* Adjusted the width to make it smaller */
-    height: auto;
-}
-
-.or-occupancy-rate-card h4 {
-    font-weight: bold;
-    margin-bottom: 10px;
-    color: #3a3a3a;
+    width: 320px;
+    padding: 20px;
+    margin: 20px auto;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #f9f9f9;
+    text-align: center;
+    height: auto; /* Dynamic height */
 }
 
 .or-date-picker {
-    background-color: #ffffff;
-    padding: 8px;
-    border-radius: 6px;
-    margin-bottom: 10px;
-    text-align: center;
+    margin-bottom: 10px; /* Reduce space below date */
+    font-size: 14px;
+    font-weight: bold;
+    color: #555;
 }
 
 .or-occupancy-rate-details {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-}
-
-.or-occupancy-rate-details p {
-    display: flex;
+    gap: 10px; /* Slightly reduce gap between rows */
     align-items: center;
-    gap: 5px;
-    font-size: 13px;
-    color: #4a4a4a;
-    margin: 0;
-}
-
-.or-occupancy-rate-details strong {
-    color: #000;
-}
-
-.or-icon {
-    color: #8c8c8c;
-    font-size: 18px;
-}
-
-.or-down {
-    color: red;
 }
 
 .or-gauge-wrapper {
-    position: relative;
-    margin-top: 10px;
-    padding: 20px;
-}
-
-.or-gauge-chart {
-    height: 90px; /* Adjusted to make the gauge smaller */
-    width: 90px; /* Keep it proportional */
+    width: 180px; /* Keep larger size for prominence */
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 5px;
 }
 
 .or-gauge-labels {
     display: flex;
     justify-content: space-between;
+    width: 80%; /* Align to gauge size */
+    margin-top: -10px; /* Pull labels closer to the gauge */
     font-size: 12px;
-    color: #8c8c8c;
-    margin-top: -10px;
+    font-weight: bold;
+}
+
+.or-icon {
+    margin-right: 8px;
+    color: #2c3e50;
+    font-size: 14px;
+}
+
+.or-details-left p,
+.or-details-left strong {
+    font-size: 13px; /* Slightly reduce details text */
+    font-weight: normal;
+}
+
+.or-occupancy-rate-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }

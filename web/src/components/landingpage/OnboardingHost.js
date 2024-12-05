@@ -56,7 +56,7 @@ function OnboardingHost() {
         const fetchAccommodation = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -184,17 +184,6 @@ function OnboardingHost() {
 
     const [page, setPage] = useState(0);
 
-    const generateNormalAccommodationFormData = () => ({
-        ...generateCommonFormData(formData, isNew),
-        Bedrooms: isNew ? 0 : formData.Bedrooms,
-        PostalCode: isNew ? "" : formData.PostalCode,
-        Street: isNew ? "" : formData.Street,
-        Bathrooms: isNew ? 0 : formData.Bathrooms,
-        Beds: isNew ? 0 : formData.Beds,
-        GuestAccess: isNew ? "" : formData.GuestAccess,
-        GuestAmount: isNew ? 0 : formData.GuestAmount
-    });
-
 
     const generateCommonFormData = (existingData = {}, isNew = true) => ({
         ID: isNew ? generateUUID() : existingData.ID,
@@ -248,6 +237,17 @@ function OnboardingHost() {
         MinimumStay: isNew ? 0 : (Number.isFinite(existingData.MinimumStay) ? existingData.MinimumStay : 0),
         MinimumBookingPeriod: isNew ? 0 : (Number.isFinite(existingData.MinimumBookingPeriod) ? existingData.MinimumBookingPeriod : 0),
         MaximumStay: isNew ? 0 : (Number.isFinite(existingData.MaximumStay) ? existingData.MaximumStay : 0),
+    });
+
+    const generateNormalAccommodationFormData = () => ({
+        ...generateCommonFormData(formData, isNew),
+        Bedrooms: isNew ? 0 : formData.Bedrooms,
+        PostalCode: isNew ? "" : formData.PostalCode,
+        Street: isNew ? "" : formData.Street,
+        Bathrooms: isNew ? 0 : formData.Bathrooms,
+        Beds: isNew ? 0 : formData.Beds,
+        GuestAccess: isNew ? "" : formData.GuestAccess,
+        GuestAmount: isNew ? 0 : formData.GuestAmount
     });
 
     const generateBoatFormData = () => ({
@@ -838,8 +838,8 @@ function OnboardingHost() {
 
         for (const folder of folders) {
             const key = folder
-                ? `images/${userId}/${accommodationId}/${folder}/Image-${index + 1}.jpg`
-                : `images/${userId}/${accommodationId}/Image-${index + 1}.jpg`;
+                ? `images/${userId}/${accommodationId}/${folder}/Image-${index + 1}.webp`
+                : `images/${userId}/${accommodationId}/Image-${index + 1}.webp`;
 
             try {
                 await Storage.remove(key, {
@@ -876,7 +876,7 @@ function OnboardingHost() {
                 }
             }
 
-            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
+            const response = await fetch('https://q0ydcuagj0.execute-api.eu-north-1.amazonaws.com/default/EditAccommodation', {
                 method: 'PUT',
                 body: JSON.stringify(updatedFormData),
                 headers: {
@@ -920,8 +920,8 @@ function OnboardingHost() {
             const endpoint = isNew ? 'CreateAccomodation' : 'EditAccommodation';
             const method = isNew ? 'POST' : 'PUT';
 
-            const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`, {
-                method: method,
+            const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`, {
+                method: method,     
                 body: JSON.stringify(updatedFormData),
                 headers: {
                     'Content-Type': 'application/json',
@@ -1375,7 +1375,7 @@ function OnboardingHost() {
                                     />
                                     <div className="toggle-switch"></div>
                                 </label>
-                                
+
                                 <label className="toggle">
                                     <span className="toggle-label">Allow pets</span>
                                     <input
@@ -2078,55 +2078,6 @@ function OnboardingHost() {
                                                isNew={true}
                                                updateDates={updateDates}
                             />
-                            <div className="staying_nights">
-                                <div className="stayMinMaxBox">
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Minimum Stay (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MinimumStay')}>-
-                                            </button>
-                                            {formData.MinimumStay}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MinimumStay')}
-                                                disabled={formData.MinimumStay >= 30}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Minimum booking period (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MinimumBookingPeriod')}>-
-                                            </button>
-                                            {formData.MinimumBookingPeriod}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MinimumBookingPeriod')}
-                                                disabled={formData.MinimumBookingPeriod >= 30}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Maximum Stay (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MaximumStay')}>-
-                                            </button>
-                                            {formData.MaximumStay}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MaximumStay')}
-                                                disabled={formData.MaximumStay >= 365}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </section>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
@@ -2141,7 +2092,6 @@ function OnboardingHost() {
                         </nav>
                     </main>
                 );
-            case 11:
                 const address = {
                     Country: formData.Country,
                     City: formData.City,
@@ -2157,7 +2107,7 @@ function OnboardingHost() {
                         RegistrationNumber={formData.RegistrationNumber}
                     />
                 );
-            case 12:
+            case 11:
                 return (
                     <div className="container" id="summary" style={{width: '80%'}}>
                         <h2>Please check if everything is correct</h2>
@@ -2486,7 +2436,7 @@ function OnboardingHost() {
                         </div>
                     </div>
                 );
-            case 13:
+            case 12:
                 if (isLoading) {
                     return (
                         <main className="loading">
