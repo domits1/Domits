@@ -63,14 +63,18 @@ const useFetchData = () => {
             const responseData = await response.json();
             console.log("FAQ Response Data:", responseData);
 
-            const faqData = responseData.body ? JSON.parse(responseData.body) : [];
+            const faqData = Array.isArray(responseData.body) ? responseData.body : JSON.parse(responseData.body);
             console.log("Parsed FAQ Data:", faqData);
 
             setFaqList(faqData);
         } catch (error) {
             console.error('Error fetching FAQ data:', error.message);
         }
-    }, []); // Stable fetch function
+    }, []);
+
+
+
+
 
     return { accommodations, faqList, loading, fetchAccommodations, fetchFAQ };
 };
