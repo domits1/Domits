@@ -3,17 +3,17 @@
   "name": "Domits - Holiday rentals, campers, boats and more...",
   "icons": [
     {
-      "src": "image.png",
+      "src": "logo192.png",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/png"
     },
     {
-      "src": "image.png",
+      "src": "logo192.png",
       "type": "image/png",
       "sizes": "192x192"
     },
     {
-      "src": "image.png",
+      "src": "logo192.png",
       "type": "image/png",
       "sizes": "512x512"
     }

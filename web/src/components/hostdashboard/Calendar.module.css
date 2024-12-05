@@ -163,6 +163,7 @@
     flex-direction: column;
     justify-content: flex-start;
     padding: 1rem;
+    max-height: 20rem;
 
     header {
         display: flex;
@@ -221,6 +222,86 @@
 
 }
 
+.staying_nights {
+    background: #FFFFFF;
+    border-radius: 0.625rem;
+    box-shadow: 0 0 0.625rem rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    height: 100vh;
+    max-height: 22rem;
+}
+
+.stayMinMaxBox {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    background: #FFFFFF;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0 0.5rem rgba(0, 0, 0, 0.1);
+    flex: 1;
+    max-width: 23.75rem;
+    box-sizing: border-box;
+}
+
+.stayMinMaxField {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.minMaxLabel {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #333333;
+    text-align: center;
+}
+
+.minMaxButtons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.roundButton {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    border: none;
+    background: #007BFF;
+    color: #FFFFFF;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.roundButton:hover {
+    background-color: #0056b3;
+}
+
+.roundButton:active {
+    transform: scale(0.95);
+}
+
+.roundButton:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+}
+
+.minMaxButtons div {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #333333;
+    min-width: 2rem;
+    text-align: center;
+}
 
 @media only screen and (max-width: 768px) {
     .body {
@@ -233,7 +314,7 @@
     }
     .body .buttonBox {
         flex-direction: column;
-        align-items: stretch;   
+        align-items: stretch;
         gap: 1rem;
     }
     .calendar {
