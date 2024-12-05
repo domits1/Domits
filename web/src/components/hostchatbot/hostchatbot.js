@@ -19,6 +19,7 @@ const HostChatbot = () => {
   const { role, isLoading: userLoading } = useUser();
   const location = useLocation();
 
+  const [isUnsupportedBrowser, setIsUnsupportedBrowser] = useState(false);
   const [messages, setMessages] = useState([]);
   const [userInput, setUserInput] = useState('');
   const [pdfMode, setPdfMode] = useState(false);
@@ -55,6 +56,15 @@ const HostChatbot = () => {
     return () => clearInterval(timer);
   }, [isRecording]);
 
+
+  useEffect(() => {
+    const isChromiumBased = !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
+    if (!isChromiumBased) {
+      setIsUnsupportedBrowser(true);
+    }
+  }, []);
+
+
   const handleButtonClick = useCallback((choice) => {
     setAwaitingUserChoice(false);
     setCurrentOption(choice);
@@ -90,6 +100,19 @@ const HostChatbot = () => {
       },
       [fetchPollySpeech]
   );
+
+  const renderBrowserWarning = () => (
+      <div className="browser-warning">
+        <div className="warning-overlay">
+          <div className="warning-content">
+            <h2>Browser Not Supported</h2>
+            <p>This feature only works on Chromium-based browsers like Google Chrome.</p>
+            <button onClick={() => setIsUnsupportedBrowser(false)}>OK</button>
+          </div>
+        </div>
+      </div>
+  );
+
 
   const handleSubmit = useCallback(
       (e) => {
@@ -177,6 +200,8 @@ const HostChatbot = () => {
 
   return (
       <>
+        {isUnsupportedBrowser && renderBrowserWarning()}
+
         <button className="hostchatbot-toggle-button" onClick={toggleChat}>
           💬
         </button>
