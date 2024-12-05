@@ -339,10 +339,8 @@ const ListingDetails = () => {
     };
 
     const FeaturePopup = ({ features, onClose }) => {
-        // Bepaal de gewenste volgorde van categorieën
         const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
 
-        // Sorteer de categorieën op basis van de gewenste volgorde
         const sortedCategories = Object.keys(features).sort((a, b) => {
             const orderA = categoryOrder.indexOf(a) !== -1 ? categoryOrder.indexOf(a) : Infinity;
             const orderB = categoryOrder.indexOf(b) !== -1 ? categoryOrder.indexOf(b) : Infinity;
