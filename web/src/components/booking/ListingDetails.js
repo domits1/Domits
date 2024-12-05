@@ -778,16 +778,26 @@ const ListingDetails = () => {
         }
     };
 
+    const filterAdvancedReservedDates = (date) => {
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const advancedReservation = new Date();
+        advancedReservation.setDate(today.getDate() + accommodation.MinimumBookingPeriod);
+
+        return selectedDate < advancedReservation;
+    };
+
     const combinedDateFilter = (date) => {
         const selectedDate = new Date(date);
         const today = new Date();
 
         const isInThePast = selectedDate < today;
-
         const isOutsideAvailableRange = filterDisabledDays(date);
         const isBooked = filterBookedDates(date);
+        const isAdvancedReserved = filterAdvancedReservedDates(date);
 
-        return !(isOutsideAvailableRange || isBooked || isInThePast);
+        return !(isOutsideAvailableRange || isBooked || isInThePast || isAdvancedReserved);
     };
 
 
@@ -940,8 +950,16 @@ const ListingDetails = () => {
                                         selected={checkOut}
                                         className='datePickerLD'
                                         onChange={(date) => setCheckOut(date)}
-                                        minDate={minEnd && new Date(minEnd)}
-                                        maxDate={maxEnd && new Date(maxEnd)}
+                                        minDate={
+                                            checkIn
+                                                ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000) // Minimum days after checkIn
+                                                : (minEnd && new Date(minEnd)) // Default minDate
+                                        }
+                                        maxDate={
+                                            checkIn
+                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay  * 24 * 60 * 60 * 1000) // Maximum days after checkIn
+                                                : (maxEnd && new Date(maxEnd)) // Default maxDate
+                                        }
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                     />
@@ -991,26 +1009,31 @@ const ListingDetails = () => {
                                             </div>
                                             <div className="counter">
                                                 <span>Children</span>
-                                                <div className= "button__box">
-                                                <button onClick={() => setChildren(Math.max(children - 1, 0))}>-</button>
-                                                {children}
-                                                <button onClick={() => setChildren(children + 1)}>+</button>
+                                                <div className="button__box">
+                                                    <button onClick={() => setChildren(Math.max(children - 1, 0))}>-
+                                                    </button>
+                                                    {children}
+                                                    <button onClick={() => setChildren(children + 1)}>+</button>
                                                 </div>
                                             </div>
                                             <div className="counter">
                                                 <span>Pets</span>
-                                                <div className= "button__box">
-                                                <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
-                                                {pets}
-                                                <button onClick={() => setPets(pets + 1)}>+</button>
+                                                <div className="button__box">
+                                                    <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
+                                                    {pets}
+                                                    <button onClick={() => setPets(pets + 1)}>+</button>
                                                 </div>
                                             </div>
                                             <div className="closeButtonContainer">
-                                                <p onClick={() => setShowGuestPopup(false)} className="closeButton">Close</p>
+                                                <p onClick={() => setShowGuestPopup(false)}
+                                                   className="closeButton">Close</p>
                                             </div>
                                         </div>
                                     )}
                                 </div>
+                                <p>Minimum amount of days to stay: {accommodation.MinimumStay}</p>
+                                <p>Minimum amount of days to reservation in advanced: {accommodation.MinimumBookingPeriod}</p>
+                                <p>Maximum amount of days to stay: {accommodation.MaximumStay}</p>
                                 <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                             </div>
 
