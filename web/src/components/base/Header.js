@@ -163,17 +163,20 @@ function Header({setSearchResults, setLoading}) {
     const handleLanguageChange = async (event) => {
         const targetLang = event.target.value;
         setTargetLanguage(targetLang);
-        localStorage.setItem('translationLanguage', JSON.stringify({'source': language, 'target': targetLang}));
+        const newSourceLang = language;
+        localStorage.setItem('translationLanguage', JSON.stringify({'source': newSourceLang, 'target': targetLang}));
         window.dispatchEvent(new Event("localStorageChanged"));
+
         const translationKeys = Object.keys(translatedTexts);
 
         const translations = {};
         for (const key of translationKeys) {
-            translations[key] = await fetchTranslation(translatedTexts[key], language, targetLang);
+            // Force translation even if the languages are the same
+            translations[key] = await fetchTranslation(translatedTexts[key], newSourceLang, targetLang);
         }
 
         setTranslatedTexts(translations);
-        setLanguage(targetLang);
+        setLanguage(targetLang); // Update source language after translations are complete
     };
 
     const renderDropdownMenu = () => {

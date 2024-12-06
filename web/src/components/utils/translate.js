@@ -12,11 +12,8 @@ export async function fetchTranslation(text, sourceLang, targetLang) {
 
         const data = await response.json();
 
-        console.log("Translation response:", data);
-
         if (typeof data === 'object') {
             const result = data;
-            console.log("Translation response:", result.translatedText);
             // Ensure translated text is not empty, otherwise, fallback to original text
             return result.translatedText || text;
         } else {
