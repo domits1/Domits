@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {Link, useLocation, useNavigate} from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
@@ -10,7 +10,7 @@ import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import HighChair from "../../images/high-chair.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
-import { FaTimes } from 'react-icons/fa';
+import {FaTimes} from 'react-icons/fa';
 import DemoValidator from './DemoValidator';
 import ChairIcon from '@mui/icons-material/Chair';
 import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService';
@@ -163,7 +163,7 @@ const ListingDetails = () => {
     const [showAll, setShowAll] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [userID, setUserID] = useState('');
-    const [showTravelerPopup, setShowTravelerPopup] = useState(false);
+    // const [showTravelerPopup, setShowTravelerPopup] = useState(false);
     const travelerSummary = `${adults} ${translatedText.adults}, ${children} ${translatedText.children}, ${pets} ${translatedText.pets}`;
     const [showGuestPopup, setShowGuestPopup] = useState(false);
     const guestSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
@@ -395,47 +395,49 @@ const ListingDetails = () => {
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-contentPopUp" onClick={e => e.stopPropagation()}>
-                    <button className="close-button" onClick={onClose}>✖</button>
-                    <h2>{translatedText?.featurePopUpTitle || "Available Features"}</h2>
+                    <div className="modal-contentPopUp" onClick={e => e.stopPropagation()}>
+                        <button className="close-button" onClick={onClose}>✖</button>
+                        <h2>{translatedText?.featurePopUpTitle || "Available Features"}</h2>
 
-                    {Object.keys(features).map((category) => {
-                        const categoryItems = features[category] || [];
-                        const originalCategoryItems = originalFeatures[category] || [];
-                        const translatedCategoryName = translatedCategories[category] || category; // Use translated category name or fallback to original
+                        {Object.keys(features).map((category) => {
+                            const categoryItems = features[category] || [];
+                            const originalCategoryItems = originalFeatures[category] || [];
+                            const translatedCategoryName = translatedCategories[category] || category; // Use translated category name or fallback to original
 
-                        if (categoryItems.length > 0) {
-                            return (
-                                <div key={category} className="features-category">
-                                    <h3>{translatedCategoryName}</h3>
-                                    <hr className="pageDividerr"/>
-                                    <ul>
-                                        {categoryItems.map((translatedItem, index) => {
-                                            const originalItem = originalCategoryItems[index] || translatedItem;
+                            if (categoryItems.length > 0) {
+                                return (
+                                    <div key={category} className="features-category">
+                                        <h3>{translatedCategoryName}</h3>
+                                        <hr className="pageDividerr"/>
+                                        <ul>
+                                            {categoryItems.map((translatedItem, index) => {
+                                                const originalItem = originalCategoryItems[index] || translatedItem;
 
-                                            return (
-                                                <li key={index} className="category-item">
-                                                    {typeof featureIcons[originalItem] === 'string' ? (
-                                                        <img src={featureIcons[originalItem]} className="feature-icon"
-                                                             alt={`${originalItem} icon`}/>
-                                                    ) : (
-                                                        featureIcons[originalItem] && React.isValidElement(featureIcons[originalItem]) ? (
-                                                            <span
-                                                                className="feature-icon">{featureIcons[originalItem]}</span>
+                                                return (
+                                                    <li key={index} className="category-item">
+                                                        {typeof featureIcons[originalItem] === 'string' ? (
+                                                            <img src={featureIcons[originalItem]}
+                                                                 className="feature-icon"
+                                                                 alt={`${originalItem} icon`}/>
                                                         ) : (
-                                                            <span>{originalItem}</span>
-                                                        )
-                                                    )}
-                                                    <span>{translatedItem}</span>
-                                                </li>
-                                            );
-                                        })}
-                                    </ul>
-                                </div>
-                            );
-                        }
-                        return null;
-                    })}
+                                                            featureIcons[originalItem] && React.isValidElement(featureIcons[originalItem]) ? (
+                                                                <span
+                                                                    className="feature-icon">{featureIcons[originalItem]}</span>
+                                                            ) : (
+                                                                <span>{originalItem}</span>
+                                                            )
+                                                        )}
+                                                        <span>{translatedItem}</span>
+                                                    </li>
+                                                );
+                                            })}
+                                        </ul>
+                                    </div>
+                                );
+                            }
+                            return null;
+                        })}
+                    </div>
                 </div>
             </div>
         );
@@ -1051,8 +1053,6 @@ const ListingDetails = () => {
                                 </div>
                             )}
                             <h2>{translatedText.bookingDetailsText}</h2>
-                            <p>{translatedText.dateRange} {DateFormatterDD_MM_YYYY(accommodation.DateRanges[0].startDate) + ' '}
-                                {translatedText.to} {DateFormatterDD_MM_YYYY(accommodation.DateRanges[accommodation.DateRanges.length - 1].endDate)}</p>
                             <h2>
                                 €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
                             </h2>
@@ -1094,7 +1094,7 @@ const ListingDetails = () => {
                                         }
                                         maxDate={
                                             checkIn
-                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay  * 24 * 60 * 60 * 1000)
+                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay * 24 * 60 * 60 * 1000)
                                                 : (maxEnd && new Date(maxEnd))
                                         }
                                         filterDate={combinedDateFilter}
@@ -1118,7 +1118,7 @@ const ListingDetails = () => {
                                         className="dropdown-button"
                                         onClick={toggleDropdown}
                                     >
-                                        {guestSummary} {showGuestPopup ? '▲' : '▼'}
+                                        {travelerSummary} {showGuestPopup ? '▲' : '▼'}
                                     </div>
                                     {showGuestPopup && (
                                         <div ref={popupRef} className="dropdown-content">
@@ -1170,7 +1170,8 @@ const ListingDetails = () => {
                                 </div>
                                 <p>{translatedText.maxAmountTravelers}: {accommodation.GuestAmount}</p>
                                 <p>Minimum amount of days to stay: {accommodation.MinimumStay}</p>
-                                <p>Minimum amount of days to reservation in advanced: {accommodation.MinimumBookingPeriod}</p>
+                                <p>Minimum amount of days to reservation in
+                                    advanced: {accommodation.MinimumBookingPeriod}</p>
                                 <p>Maximum amount of days to stay: {accommodation.MaximumStay}</p>
                                 <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                             </div>
@@ -1178,14 +1179,14 @@ const ListingDetails = () => {
 
                             {/* Price and Reserve Section */}
                             <button className="reserve-button" onClick={handleBooking}
-                                    // disabled={
-                                    //     !isFormValid || accommodation.Drafted === true || isDemo
-                                    // }
-                                    // style={{
-                                    //     backgroundColor: isFormValid ? 'green' : 'green',
-                                    //     cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
-                                    //     opacity: isFormValid && !isDemo ? 1 : 0.5
-                                    // }}
+                                // disabled={
+                                //     !isFormValid || accommodation.Drafted === true || isDemo
+                                // }
+                                // style={{
+                                //     backgroundColor: isFormValid ? 'green' : 'green',
+                                //     cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
+                                //     opacity: isFormValid && !isDemo ? 1 : 0.5
+                                // }}
                             >
                                 {translatedText.reserve}
                             </button>
