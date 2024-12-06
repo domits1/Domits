@@ -14,6 +14,8 @@ import useUserDetails from './hooks/useUserDetails';
 import useFetchData from './hooks/useFetchData';
 import useVoiceInput from './hooks/useVoiceInput';
 import useChatHistory from './hooks/useChatHistory';
+import stringSimilarity from 'string-similarity';
+
 
 const HostChatbot = () => {
   const { role, isLoading: userLoading } = useUser();
@@ -91,6 +93,48 @@ const HostChatbot = () => {
       [faqList, fetchPollySpeech]
   );
 
+  const handleFAQQuery = (userInput) => {
+    const messageId = Date.now();
+
+    // Check if FAQ list is empty
+    if (faqList.length === 0) {
+      const noFaqMessage = "Sorry, I don't have any FAQs available at the moment.";
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: messageId, text: noFaqMessage, sender: 'bot', contentType: 'text' }
+      ]);
+      fetchPollySpeech(noFaqMessage, messageId);
+      return;
+    }
+
+    // Normalize user input and FAQ questions for comparison
+    const normalizedInput = userInput.toLowerCase().trim();
+    const faqQuestions = faqList.map((faq) => faq.question.toLowerCase());
+
+    // Find the best match using string similarity
+    const bestMatch = stringSimilarity.findBestMatch(normalizedInput, faqQuestions);
+
+    // Check if the match rating is high enough
+    if (bestMatch.bestMatch.rating > 0.5) {
+      const matchedFAQ = faqList[bestMatch.bestMatchIndex]; // Get the matching FAQ
+      const faqResponse = `Q: ${matchedFAQ.question}\nA: ${matchedFAQ.answer}`;
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: messageId, text: faqResponse, sender: 'bot', contentType: 'faq' }
+      ]);
+      fetchPollySpeech(faqResponse, messageId);
+    } else {
+      // No sufficiently close match found
+      const notFoundMessage = "Sorry, I couldn't find an answer to your question.";
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: messageId, text: notFoundMessage, sender: 'bot', contentType: 'text' }
+      ]);
+      fetchPollySpeech(notFoundMessage, messageId);
+    }
+  };
+
+
 
   const handleUserChoice = useCallback(
       (choice) => {
@@ -151,19 +195,19 @@ const HostChatbot = () => {
 
         if (userInput.trim()) {
           const messageId = Date.now();
-
           setMessages((prevMessages) => [
             ...prevMessages,
             { id: messageId, text: userInput, sender: 'user', contentType: 'text' },
           ]);
 
-          fetchPollySpeech(userInput, messageId);
+          if (currentOption === '2') {
+            handleFAQQuery(userInput);
+          }
 
           setUserInput('');
-          setPdfMode(false);
         }
       },
-      [userInput, fetchPollySpeech]
+      [userInput, currentOption, handleFAQQuery]
   );
 
   const handlePDFUpload = async (event) => {
@@ -211,16 +255,19 @@ const HostChatbot = () => {
     }
   };
 
-  const goBackToOptions = () => {
+  const goBackToOptions = useCallback(() => {
     setAwaitingUserChoice(true);
     setSuggestions([]);
     setCurrentOption(null);
 
     const message = `Hello again, ${username}! Please choose an option:`;
     const messageId = Date.now();
+
+    // Clear previous messages and add only the greeting
     setMessages([{ id: messageId, text: message, sender: 'bot', contentType: 'text' }]);
     fetchPollySpeech(message, messageId);
-  };
+  }, [username, fetchPollySpeech]);
+
 
   const toggleMenu = () => {
     setIsMenuOpen((prev) => !prev);
