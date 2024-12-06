@@ -35,7 +35,7 @@ const GuestDashboard = () => {
                 const result = await confirmEmailChange(verificationCode);
                 if (result.success) {
                     setUser({ ...user, email: tempUser.email });
-                    toggleEditState();
+                    toggleEditState('email');
                 } else {
                     alert("Incorrect verification code");
                 }
@@ -50,23 +50,45 @@ const GuestDashboard = () => {
             const userId = userInfo.username;
             const newEmail = tempUser.email;
 
-            const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/UpdateUserEmail', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, newEmail }),
-            });
+            // Validate email before sending request
+            if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
+                alert("Please provide a valid email address.");
+                return;
+            }
+
+            const params = {
+                userId,
+                newEmail,
+            };
+
+            const response = await fetch(
+                'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail',
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(params),
+                }
+            );
 
             const result = await response.json();
-            let parsedBody = result.body;
 
-            if (typeof parsedBody === 'string') parsedBody = JSON.parse(parsedBody);
-            if (parsedBody.message === "Email update successful, please verify your new email.") {
-                setIsVerifying(true);
+            if (response.ok) {
+                if (result.message === "Email update successful, please verify your new email.") {
+                    setIsVerifying(true);
+                } else if (result.message === "This email address is already in use.") {
+                    alert(result.message);
+                } else {
+                    console.error("Unexpected error:", result.message || "No message provided");
+                }
             } else {
-                alert(parsedBody.message || "Unexpected error");
+                console.error("Request failed with status:", response.status);
+                alert("Failed to update email. Please try again later.");
             }
         } catch (error) {
             console.error("Error updating email:", error);
+            alert("An error occurred while updating the email. Please try again later.");
         }
     };
 
@@ -76,16 +98,24 @@ const GuestDashboard = () => {
             const userId = userInfo.username;
             const newName = tempUser.name;
 
-            const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/UpdateUserName', {
+            const params = {
+                userId,
+                newName
+            };
+
+            const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId, newName }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(params),
             });
 
             const result = await response.json();
+
             if (result.statusCode === 200) {
                 setUser({ ...user, name: tempUser.name });
-                toggleEditState();
+                toggleEditState('name');
             }
         } catch (error) {
             console.error("Error updating username:", error);
