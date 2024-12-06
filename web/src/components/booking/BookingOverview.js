@@ -236,7 +236,6 @@ const BookingOverview = () => {
                         </div>
                     </div>
                 <div className="Bookingcontainer">
-                    
                 {/* Left Panel: Image and Cards */}
                 <div className="left-panel">
                     <ImageGallery images={Object.values(accommodation.Images)} />
@@ -260,19 +259,6 @@ const BookingOverview = () => {
 
                 {/* Right Panel */}
                 <div className="right-panel">
-                    <div className="progress-bar-container">
-                        <div className="circle completed">
-                            <span className="number-complete">1</span>
-                        </div>
-                        <div className="line completed"></div>
-                        <div className="circle half-completed">
-                            <span className="number">2</span>
-                        </div>
-                        <div className="line"></div>
-                        <div className="circle">
-                            <span className="number">3</span>
-                        </div>
-                    </div>
                     <h1>{accommodation.Title}</h1>
                     <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
                     <div className="main-card">
