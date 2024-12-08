@@ -9,25 +9,15 @@ const useFetchData = () => {
         if (!userId) return;
         setLoading(true);
         try {
-            console.log("Fetching accommodations for user:", userId);
-
             const response = await fetch(
-                'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
+                'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
                 {
                     method: 'POST',
                     body: JSON.stringify({ OwnerId: userId }),
-                    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+                    headers: { 'Content-type': 'application/json; charset=UTF-8' },
                 }
             );
-
-            console.log("Response Status:", response.status);
-            if (!response.ok) {
-                throw new Error(`Failed to fetch accommodations: ${response.statusText}`);
-            }
-
             const data = await response.json();
-            console.log("Accommodations Response Data:", data);
-
             const accommodationsArray = data.body ? JSON.parse(data.body) : [];
             const formattedAccommodations = accommodationsArray.map((acc) => ({
                 id: acc.ID,
@@ -43,38 +33,38 @@ const useFetchData = () => {
         } finally {
             setLoading(false);
         }
-    }, []); // Stable fetch function
+    }, []); // St
 
+
+    // able fetch function
     const fetchFAQ = useCallback(async () => {
         try {
-            console.log("Fetching FAQ data...");
+            const response = await fetch(
+                'https://lsenj0sq47.execute-api.eu-north-1.amazonaws.com/default/General-Help-Production-Read-Faqlist',
+                {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' },
+                }
+            );
 
-            const response = await fetch('https://lsenj0sq47.execute-api.eu-north-1.amazonaws.com/default/General-Help-Production-Read-Faqlist', {
-                method: 'GET',
-                headers: { 'Content-Type': 'application/json' },
-            });
-
-            console.log("Response Status:", response.status);
             if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Failed to fetch FAQ: ${response.statusText} - ${errorText}`);
+                throw new Error(`Failed to fetch FAQ: ${response.statusText}`);
             }
 
             const responseData = await response.json();
-            console.log("FAQ Response Data:", responseData);
 
-            const faqData = Array.isArray(responseData.body) ? responseData.body : JSON.parse(responseData.body);
-            console.log("Parsed FAQ Data:", faqData);
+            // Assuming responseData.body is already an array (as per logs)
+            const faqData = Array.isArray(responseData.body)
+                ? responseData.body
+                : JSON.parse(responseData.body);
 
             setFaqList(faqData);
+            console.log('Fetched FAQ data:', faqData); // Debugging log
         } catch (error) {
             console.error('Error fetching FAQ data:', error.message);
+            setFaqList([]); // Ensure faqList is cleared on error
         }
     }, []);
-
-
-
-
 
     return { accommodations, faqList, loading, fetchAccommodations, fetchFAQ };
 };

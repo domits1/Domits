@@ -73,30 +73,32 @@ const HostChatbot = () => {
     handleUserChoice(choice);
   }, []);
 
-  const handleFAQClick = useCallback(
-      (question) => {
-        console.log('FAQ Clicked:', question); // Debug
-        const selectedFAQ = faqList.find((faq) => faq.question === question);
-        if (selectedFAQ) {
-          const messageId = Date.now();
-          const answer = selectedFAQ.answer;
+  const handleAccommodationQuery = async (userInput) => {
+    const messageId = Date.now();
+    if (userInput.toLowerCase().includes('show all accommodations')) {
+      await fetchAccommodations();
+    }
 
-          setMessages((prev) => [
-            ...prev,
-            { id: messageId, text: answer, sender: 'bot', contentType: 'text' },
-          ]);
-          fetchPollySpeech(answer, messageId);
-        } else {
-          console.error('FAQ not found for the question:', question);
-        }
-      },
-      [faqList, fetchPollySpeech]
-  );
+    const responseMessage = accommodations.length
+        ? `Here are the accommodations:\n${accommodations
+            .map((acc) => `
+        Title: ${acc.title}
+        City: ${acc.city}
+      `)
+            .join('\n\n')}`
+        : 'Sorry, there is no accommodation data available right now.';
+
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
+    ]);
+    fetchPollySpeech(responseMessage, messageId);
+  };
+
 
   const handleFAQQuery = (userInput) => {
     const messageId = Date.now();
-
-    // Check if FAQ list is empty
+    console.log(faqList);
     if (faqList.length === 0) {
       const noFaqMessage = "Sorry, I don't have any FAQs available at the moment.";
       setMessages((prevMessages) => [
@@ -107,16 +109,13 @@ const HostChatbot = () => {
       return;
     }
 
-    // Normalize user input and FAQ questions for comparison
     const normalizedInput = userInput.toLowerCase().trim();
     const faqQuestions = faqList.map((faq) => faq.question.toLowerCase());
 
-    // Find the best match using string similarity
     const bestMatch = stringSimilarity.findBestMatch(normalizedInput, faqQuestions);
 
-    // Check if the match rating is high enough
     if (bestMatch.bestMatch.rating > 0.5) {
-      const matchedFAQ = faqList[bestMatch.bestMatchIndex]; // Get the matching FAQ
+      const matchedFAQ = faqList[bestMatch.bestMatchIndex];
       const faqResponse = `Q: ${matchedFAQ.question}\nA: ${matchedFAQ.answer}`;
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -124,7 +123,6 @@ const HostChatbot = () => {
       ]);
       fetchPollySpeech(faqResponse, messageId);
     } else {
-      // No sufficiently close match found
       const notFoundMessage = "Sorry, I couldn't find an answer to your question.";
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -133,6 +131,7 @@ const HostChatbot = () => {
       fetchPollySpeech(notFoundMessage, messageId);
     }
   };
+
 
 
 
@@ -146,15 +145,9 @@ const HostChatbot = () => {
             newMessage = 'You can ask me about accommodations. Here are some suggestions:';
             setSuggestions(['List my accommodation', 'Show all accommodations']);
             break;
-          case '2': // FAQ handling
-            if (faqList.length > 0) {
-              newMessage = 'Here are some frequently asked questions about Domits:';
-              setSuggestions(['Is Domits 100% free for hosts']);
-              console.log('FAQ Suggestions:', faqList.map((faq) => faq.question)); // Debug
-            } else {
-              newMessage = 'No FAQ data available at the moment.';
-              setSuggestions([]);
-            }
+          case '2':
+            newMessage = 'You can ask me about Domits. Here are some suggestions:';
+            setSuggestions(['Is Domits 100% free for hosts']);
             break;
           case '3':
             newMessage = 'You can contact an expert at support@domits.com or call +123456789.';
@@ -166,13 +159,11 @@ const HostChatbot = () => {
             setAwaitingUserChoice(true);
         }
 
-        setMessages((prev) => [
-          ...prev,
-          { id: messageId, text: newMessage, sender: 'bot', contentType: 'text' },
-        ]);
+        // Replace greeting with the selected choice message
+        setMessages([{ id: messageId, text: newMessage, sender: 'bot', contentType: 'text' }]);
         fetchPollySpeech(newMessage, messageId);
       },
-      [faqList, fetchPollySpeech]
+      [fetchPollySpeech]
   );
 
 
@@ -189,6 +180,7 @@ const HostChatbot = () => {
   );
 
 
+
   const handleSubmit = useCallback(
       (e) => {
         e.preventDefault();
@@ -199,16 +191,32 @@ const HostChatbot = () => {
             ...prevMessages,
             { id: messageId, text: userInput, sender: 'user', contentType: 'text' },
           ]);
-
-          if (currentOption === '2') {
-            handleFAQQuery(userInput);
-          }
-
+          fetchPollySpeech(userInput, messageId);
           setUserInput('');
+
+          if (currentOption === '1') {
+            handleAccommodationQuery(userInput);
+          } else if (currentOption === '2') {
+            handleFAQQuery(userInput);
+          } else {
+            handleExpertContact();
+          }
         }
       },
-      [userInput, currentOption, handleFAQQuery]
+      [userInput, currentOption, fetchPollySpeech]
   );
+
+
+  const handleExpertContact = () => {
+    const expertMessage = 'You can contact an expert at support@domits.com or call +123456789.';
+    const messageId = Date.now();
+    setMessages((prevMessages) => [
+      ...prevMessages,
+      { id: messageId, text: expertMessage, sender: 'bot', contentType: 'text' },
+    ]);
+    fetchPollySpeech(expertMessage, messageId);
+  };
+
 
   const handlePDFUpload = async (event) => {
     const file = event.target.files[0];
@@ -306,7 +314,7 @@ const HostChatbot = () => {
           </div>
           <div className="hostchatbot-window">
             {messages.map((message) => (
-                <div key={message.id} className={`hostchatbot-message ${message.sender}`}>
+                <div key={`${message.id}-${message.sender}`} className={`hostchatbot-message ${message.sender}`}>
                   <p>{message.text}</p>
                   {messageAudios[message.id] && (
                       <button
@@ -318,6 +326,7 @@ const HostChatbot = () => {
                   )}
                 </div>
             ))}
+
             {awaitingUserChoice && (
                 <div className="hostchatbot-option-buttons">
                   <button onClick={() => handleButtonClick('1')}>
@@ -330,35 +339,23 @@ const HostChatbot = () => {
                 </div>
             )}
 
-            {suggestions.length > 0 && (
-                <div className="hostchatbot-suggestions">
-                  <p>Suggestions:</p>
-                  {suggestions.map((suggestion, index) => (
-                      <button
-                          key={index}
-                          className="hostchatbot-suggestion"
-                          onClick={() => handleFAQClick(suggestion)}
-                      >
-                        {suggestion}
-                      </button>
-                  ))}
-                </div>
-            )}
+
 
             {suggestions.length > 0 && (
                 <div className="hostchatbot-suggestions">
                   <p>Suggestions:</p>
                   {suggestions.map((suggestion, index) => (
-                      <button
-                          key={index}
+                      <p
+                          key={`${index}-${suggestion}`} // Ensures unique key using index and suggestion
                           className="hostchatbot-suggestion"
-                          onClick={() => handleFAQClick(suggestion)}
+                          onClick={() => setUserInput(suggestion)} // Optional: Allow suggestion click to set input
                       >
                         {suggestion}
-                      </button>
+                      </p>
                   ))}
                 </div>
             )}
+
 
             {loading && <div className="hostchatbot-message bot">Loading...</div>}
             {!awaitingUserChoice && (
