@@ -33,24 +33,24 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     ];
 
     const [minimumStay, setMinimumStay] = useState(passedProp.MinimumStay || 0);
-    const [minimumAdvancedReservation, setMinimumAdvancedReservation] = useState(passedProp.MinimumAdvancedReservation || 0);
+    const [minimumAdvanceReservation, setMinimumAdvanceReservation] = useState(passedProp.MinimumAdvanceReservation || 0);
     const [maximumStay, setMaximumStay] = useState(passedProp.MaximumStay || 0);
-    const [maximumAdvancedReservation, setMaximumAdvancedReservation] = useState(passedProp.MaximumAdvancedReservation || 0);
+    const [maximumAdvanceReservation, setMaximumAdvanceReservation] = useState(passedProp.MaximumAdvanceReservation || 0);
     const [originalMinimumStay, setOriginalMinimumStay] = useState(passedProp.MinimumStay || 0);
-    const [originalMinimumAdvancedReservation, setOriginalMinimumAdvancedReservation] = useState(passedProp.MinimumAdvancedReservation || 0);
+    const [originalMinimumAdvanceReservation, setOriginalMinimumAdvanceReservation] = useState(passedProp.MinimumAdvanceReservation || 0);
     const [originalMaximumStay, setOriginalMaximumStay] = useState(passedProp.MaximumStay || 0);
-    const [originalMaximumAdvancedReservation, setOriginalMaximumAdvancedReservation] = useState(passedProp.MaximumAdvancedReservation || 0);
+    const [originalMaximumAdvanceReservation, setOriginalMaximumAdvanceReservation] = useState(passedProp.MaximumAdvanceReservation || 0);
 
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setSelectedRanges(passedProp.DateRanges);
             setOriginalRanges(passedProp.DateRanges);
             setMinimumStay(passedProp.MinimumStay || 0);
-            setMinimumAdvancedReservation(passedProp.MinimumAdvancedReservation || 0);
+            setMinimumAdvanceReservation(passedProp.MinimumAdvanceReservation || 0);
             setMaximumStay(passedProp.MaximumStay || 0);
-            setMaximumAdvancedReservation(passedProp.MaximumAdvancedReservation || 0);
+            setMaximumAdvanceReservation(passedProp.MaximumAdvanceReservation || 0);
         }
-    }, [passedProp.ID, passedProp.DateRanges, passedProp.MinimumStay, passedProp.MinimumAdvancedReservation, passedProp.MaximumStay, passedProp.MaximumAdvancedReservation]);
+    }, [passedProp.ID, passedProp.DateRanges, passedProp.MinimumStay, passedProp.MinimumAdvanceReservation, passedProp.MaximumStay, passedProp.MaximumAdvanceReservation]);
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setOriginalRanges(passedProp.DateRanges);
@@ -215,9 +215,9 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         const body = {
             DateRanges: selectedRanges,
             MinimumStay: minimumStay,
-            MinimumAdvancedReservation: minimumAdvancedReservation,
+            MinimumAdvanceReservation: minimumAdvanceReservation,
             MaximumStay: maximumStay,
-            MaximumAdvancedReservation: maximumAdvancedReservation,
+            MaximumAdvanceReservation: maximumAdvanceReservation,
             ID: passedProp.ID
         };
 
@@ -264,9 +264,9 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     const handleUndo = () => {
         setSelectedRanges(originalRanges);
         setMinimumStay(originalMinimumStay);
-        setMinimumAdvancedReservation(originalMinimumAdvancedReservation);
+        setMinimumAdvanceReservation(originalMinimumAdvanceReservation);
         setMaximumStay(originalMaximumStay);
-        setMaximumAdvancedReservation(originalMaximumAdvancedReservation);
+        setMaximumAdvanceReservation(originalMaximumAdvanceReservation);
     }
 
     useEffect(() => {
@@ -343,14 +343,14 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                                     <div className={styles.minMaxButtons}>
                                         <button
                                             className={styles.roundButton}
-                                            onClick={() => decrementAmount(setMinimumAdvancedReservation, minimumAdvancedReservation)}
+                                            onClick={() => decrementAmount(setMinimumAdvanceReservation, minimumAdvanceReservation)}
                                         >
                                             -
                                         </button>
-                                        {minimumAdvancedReservation}
+                                        {minimumAdvanceReservation}
                                         <button
                                             className={styles.roundButton}
-                                            onClick={() => incrementAmount(setMinimumAdvancedReservation, minimumAdvancedReservation, 30)}
+                                            onClick={() => incrementAmount(setMinimumAdvanceReservation, minimumAdvanceReservation, 30)}
                                         >
                                             +
                                         </button>
@@ -375,18 +375,18 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                                     </div>
                                 </div>
                                 <div className={styles.stayMinMaxField}>
-                                    <label className={styles.minMaxLabel}>Maximum Advanced Reservation (Days):</label>
+                                    <label className={styles.minMaxLabel}>Maximum Advance Reservation (Days):</label>
                                     <div className={styles.minMaxButtons}>
                                         <button
                                             className={styles.roundButton}
-                                            onClick={() => decrementAmount(setMaximumAdvancedReservation, maximumAdvancedReservation, minimumAdvancedReservation)}
+                                            onClick={() => decrementAmount(setMaximumAdvanceReservation, maximumAdvanceReservation, minimumAdvanceReservation)}
                                         >
                                             -
                                         </button>
-                                        {maximumAdvancedReservation}
+                                        {maximumAdvanceReservation}
                                         <button
                                             className={styles.roundButton}
-                                            onClick={() => incrementAmount(setMaximumAdvancedReservation, maximumAdvancedReservation, 365)}
+                                            onClick={() => incrementAmount(setMaximumAdvanceReservation, maximumAdvanceReservation, 365)}
                                         >
                                             +
                                         </button>

@@ -778,19 +778,19 @@ const ListingDetails = () => {
         }
     };
 
-    const filterAdvancedReservedDates = (date) => {
+    const filterAdvanceReservedDates = (date) => {
         const selectedDate = new Date(date);
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const minAdvancedReservation = new Date();
-        minAdvancedReservation.setDate(today.getDate() + accommodation.MinimumAdvancedReservation);
-        const maxAdvancedReservation = new Date();
-        maxAdvancedReservation.setDate(today.getDate() + accommodation.MaximumAdvancedReservation);
+        const minAdvanceReservation = new Date();
+        minAdvanceReservation.setDate(today.getDate() + accommodation.MinimumAdvanceReservation);
+        const maxAdvanceReservation = new Date();
+        maxAdvanceReservation.setDate(today.getDate() + accommodation.MaximumAdvanceReservation);
 
-        if (accommodation.MaximumAdvancedReservation === 0) {
-            return selectedDate >= minAdvancedReservation;
+        if (accommodation.MaximumAdvanceReservation === 0) {
+            return selectedDate >= minAdvanceReservation;
         } else {
-            return selectedDate >= minAdvancedReservation && selectedDate <= maxAdvancedReservation;
+            return selectedDate >= minAdvanceReservation && selectedDate <= maxAdvanceReservation;
         }
     };
 
@@ -801,9 +801,9 @@ const ListingDetails = () => {
         const isInThePast = selectedDate < today;
         const isOutsideAvailableRange = filterDisabledDays(date);
         const isBooked = filterBookedDates(date);
-        const isAdvancedReserved = filterAdvancedReservedDates(date);
+        const isAdvanceReserved = filterAdvanceReservedDates(date);
 
-        return !(isOutsideAvailableRange || isBooked || isInThePast || !isAdvancedReserved);
+        return !(isOutsideAvailableRange || isBooked || isInThePast || !isAdvanceReserved);
     };
 
 
@@ -1039,10 +1039,10 @@ const ListingDetails = () => {
                                 </div>
                                 <p>Minimum amount of days to stay: {accommodation.MinimumStay}</p>
                                 <p>Minimum amount of days to reservation in
-                                    advanced: {accommodation.MinimumAdvancedReservation}</p>
+                                    advance: {accommodation.MinimumAdvanceReservation}</p>
                                 <p>Maximum amount of days to stay: {accommodation.MaximumStay}</p>
                                 <p>Maximum amount of days to reservation in
-                                    advanced: {accommodation.MaximumAdvancedReservation}</p>
+                                    advance: {accommodation.MaximumAdvanceReservation}</p>
                                 <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                             </div>
 

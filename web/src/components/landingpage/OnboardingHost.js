@@ -235,9 +235,9 @@ function OnboardingHost() {
         OwnerId: existingData.OwnerId || userId,
         GuestAmount: isNew ? 0 : formData.GuestAmount,
         MinimumStay: isNew ? 0 : (Number.isFinite(existingData.MinimumStay) ? existingData.MinimumStay : 0),
-        MinimumAdvancedReservation: isNew ? 0 : (Number.isFinite(existingData.MinimumAdvancedReservation) ? existingData.MinimumAdvancedReservation : 0),
+        MinimumAdvanceReservation: isNew ? 0 : (Number.isFinite(existingData.MinimumAdvanceReservation) ? existingData.MinimumAdvanceReservation : 0),
         MaximumStay: isNew ? 0 : (Number.isFinite(existingData.MaximumStay) ? existingData.MaximumStay : 0),
-        MaximumAdvancedReservation: isNew ? 0 : (Number.isFinite(existingData.MaximumAdvancedReservation) ? existingData.MaximumAdvancedReservation : 0),
+        MaximumAdvanceReservation: isNew ? 0 : (Number.isFinite(existingData.MaximumAdvanceReservation) ? existingData.MaximumAdvanceReservation : 0),
     });
 
     const generateNormalAccommodationFormData = () => ({
