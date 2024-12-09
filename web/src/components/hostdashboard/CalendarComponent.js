@@ -12,7 +12,7 @@ import {useNavigate} from "react-router-dom";
  * @returns {Element}
  * @constructor
  */
-function CalendarComponent({passedProp, isNew, updateDates}) {
+function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     const navigate = useNavigate();
     const [month, setMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
@@ -23,6 +23,8 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
         startDate: null,
         endDate: null
     });
+
+    const [showSection, setShowSection] = useState(componentView || false);
 
     const months = [
         'January', 'February', 'March', 'April',
@@ -267,6 +269,14 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
         setMaximumAdvancedReservation(originalMaximumAdvancedReservation);
     }
 
+    useEffect(() => {
+        if (componentView === true) {
+         setShowSection(true);
+        } else {
+            setShowSection(false);
+        }
+    }, [componentView]);
+
     return (
         <main className={styles.body}>
             <section className={styles.calendarContent}>
@@ -307,84 +317,85 @@ function CalendarComponent({passedProp, isNew, updateDates}) {
                         )) : <div>Start by selecting your date range</div>}
                     </section>
                 </div>
-                <section>
-                    <div className={styles.staying_nights}>
-                        <div className={styles.stayMinMaxBox}>
-                            <div className={styles.stayMinMaxField}>
-                                <label className={styles.minMaxLabel}>Minimum Stay (Days):</label>
-                                <div className={styles.minMaxButtons}>
-                                    <button
-                                        className={styles.roundButton}
-                                        onClick={() => decrementAmount(setMinimumStay, minimumStay)}
-                                    >
-                                        -
-                                    </button>
-                                    {minimumStay}
-                                    <button
-                                        className={styles.roundButton}
-                                        onClick={() => incrementAmount(setMinimumStay, minimumStay, 30)}
-                                    >
-                                        +
-                                    </button>
+                {showSection === true && (<section>
+                        <div className={styles.staying_nights}>
+                            <div className={styles.stayMinMaxBox}>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Minimum Stay (Days):</label>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setMinimumStay, minimumStay)}
+                                        >
+                                            -
+                                        </button>
+                                        {minimumStay}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setMinimumStay, minimumStay, 30)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className={styles.stayMinMaxField}>
-                                <label className={styles.minMaxLabel}>Minimum Booking Period (Days):</label>
-                                <div className={styles.minMaxButtons}>
-                                    <button
-                                        className={styles.roundButton}
-                                        onClick={() => decrementAmount(setMinimumAdvancedReservation, minimumAdvancedReservation)}
-                                    >
-                                        -
-                                    </button>
-                                    {minimumAdvancedReservation}
-                                    <button
-                                        className={styles.roundButton}
-                                        onClick={() => incrementAmount(setMinimumAdvancedReservation, minimumAdvancedReservation, 30)}
-                                    >
-                                        +
-                                    </button>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Minimum Booking Period (Days):</label>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setMinimumAdvancedReservation, minimumAdvancedReservation)}
+                                        >
+                                            -
+                                        </button>
+                                        {minimumAdvancedReservation}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setMinimumAdvancedReservation, minimumAdvancedReservation, 30)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className={styles.stayMinMaxField}>
-                                <label className={styles.minMaxLabel}>Maximum Stay (Days):</label>
-                                <div className={styles.minMaxButtons}>
-                                    <button
-                                        className={styles.roundButton}
-                                        onClick={() => decrementAmount(setMaximumStay, maximumStay, minimumStay)}
-                                    >
-                                        -
-                                    </button>
-                                    {maximumStay}
-                                    <button
-                                        className={styles.roundButton}
-                                        onClick={() => incrementAmount(setMaximumStay, maximumStay, 365)}
-                                    >
-                                        +
-                                    </button>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Maximum Stay (Days):</label>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setMaximumStay, maximumStay, minimumStay)}
+                                        >
+                                            -
+                                        </button>
+                                        {maximumStay}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setMaximumStay, maximumStay, 365)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                            <div className={styles.stayMinMaxField}>
-                                <label className={styles.minMaxLabel}>Maximum Advanced Reservation (Days):</label>
-                                <div className={styles.minMaxButtons}>
-                                    <button
-                                        className={styles.roundButton}
-                                        onClick={() => decrementAmount(setMaximumAdvancedReservation, maximumAdvancedReservation, minimumAdvancedReservation)}
-                                    >
-                                        -
-                                    </button>
-                                    {maximumAdvancedReservation}
-                                    <button
-                                        className={styles.roundButton}
-                                        onClick={() => incrementAmount(setMaximumAdvancedReservation, maximumAdvancedReservation, 365)}
-                                    >
-                                        +
-                                    </button>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Maximum Advanced Reservation (Days):</label>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setMaximumAdvancedReservation, maximumAdvancedReservation, minimumAdvancedReservation)}
+                                        >
+                                            -
+                                        </button>
+                                        {maximumAdvancedReservation}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setMaximumAdvancedReservation, maximumAdvancedReservation, 365)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </section>
+                    </section>
+                )}
             </section>
             {!isNew && <section className={styles.buttonBox}>
                 <button className={styles.undo} onClick={() => handleUndo()}>Undo</button>

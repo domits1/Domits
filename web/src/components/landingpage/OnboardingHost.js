@@ -877,7 +877,7 @@ function OnboardingHost() {
                 }
             }
 
-            const response = await fetch('https://q0ydcuagj0.execute-api.eu-north-1.amazonaws.com/default/EditAccommodation', {
+            const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
                 method: 'PUT',
                 body: JSON.stringify(updatedFormData),
                 headers: {
@@ -2078,6 +2078,7 @@ function OnboardingHost() {
                             <CalendarComponent passedProp={formData}
                                                isNew={true}
                                                updateDates={updateDates}
+                                               componentView={false}
                             />
                         </section>
                         <nav className="onboarding-button-box">
