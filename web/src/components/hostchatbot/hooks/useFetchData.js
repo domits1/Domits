@@ -36,7 +36,6 @@ const useFetchData = () => {
     }, []); // St
 
 
-    // able fetch function
     const fetchFAQ = useCallback(async () => {
         try {
             const response = await fetch(
@@ -52,19 +51,17 @@ const useFetchData = () => {
             }
 
             const responseData = await response.json();
+            console.log('Raw API response:', responseData);
 
-            // Assuming responseData.body is already an array (as per logs)
-            const faqData = Array.isArray(responseData.body)
-                ? responseData.body
-                : JSON.parse(responseData.body);
-
-            setFaqList(faqData);
-            console.log('Fetched FAQ data:', faqData); // Debugging log
+            // Directly use the data as it is already an array
+            setFaqList(responseData);
+            console.log('Parsed FAQ data:', responseData); // Verify the final state update
         } catch (error) {
             console.error('Error fetching FAQ data:', error.message);
             setFaqList([]); // Ensure faqList is cleared on error
         }
     }, []);
+
 
     return { accommodations, faqList, loading, fetchAccommodations, fetchFAQ };
 };
