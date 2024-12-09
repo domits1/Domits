@@ -89,7 +89,7 @@ function HostDistribution() {
                     const ownerId = userId;
 
                     try {
-                        const response = await fetch('https://boovagkg50.execute-api.eu-north-1.amazonaws.com/default/getAccommodationByOwner', {
+                        const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Read-AccommodationByOwner', {
                             method: 'POST',
                             body: JSON.stringify({id: ownerId}),
                             headers: {

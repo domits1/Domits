@@ -208,7 +208,9 @@ function HostCalendar() {
                                     </p>
                                     <div className={calenderStyles.locationBox}>
                                         <CalendarComponent passedProp={selectedAccommodation} isNew={false}
-                                                           updateDates={updateDates}/>
+                                                           updateDates={updateDates}
+                                                           componentView={true}
+                                        />
                                     </div>
                                 </div>
                             ) : (
