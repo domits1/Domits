@@ -54,35 +54,45 @@ const GuestDashboard = () => {
             const userId = userInfo.username;
             const newEmail = tempUser.email;
 
+            // Validate email before sending request
+            if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
+                alert("Please provide a valid email address.");
+                return;
+            }
+
             const params = {
                 userId,
                 newEmail,
             };
 
-            const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/UpdateUserEmail', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(params),
-            });
+            const response = await fetch(
+                'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-CustomerIAM-Production-Update-UserEmail',
+                {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(params),
+                }
+            );
 
             const result = await response.json();
 
-            let parsedBody = result.body;
-            if (typeof parsedBody === 'string') {
-                parsedBody = JSON.parse(parsedBody);
-            }
-
-            if (parsedBody.message === "Email update successful, please verify your new email.") {
-                setIsVerifying(true);
-            } else if (parsedBody.message === "This email address is already in use.") {
-                alert(parsedBody.message);
+            if (response.ok) {
+                if (result.message === "Email update successful, please verify your new email.") {
+                    setIsVerifying(true);
+                } else if (result.message === "This email address is already in use.") {
+                    alert(result.message);
+                } else {
+                    console.error("Unexpected error:", result.message || "No message provided");
+                }
             } else {
-                console.error("Unexpected error:", parsedBody.message || "No message provided");
+                console.error("Request failed with status:", response.status);
+                alert("Failed to update email. Please try again later.");
             }
         } catch (error) {
             console.error("Error updating email:", error);
+            alert("An error occurred while updating the email. Please try again later.");
         }
     };
 
@@ -98,7 +108,7 @@ const GuestDashboard = () => {
                 newName
             };
 
-            const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/UpdateUserName', {
+            const response = await fetch('https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
