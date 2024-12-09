@@ -26,7 +26,6 @@ const HostFinanceTab = () => {
                 const userInfo = await Auth.currentUserInfo();
                 setUserEmail(userInfo.attributes.email);
                 setCognitoUserId(userInfo.attributes.sub);
-                console.log("User Info:", userInfo); // Log user info for debugging
 
                 const response = await fetch(`https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`, {
                     method: 'POST',
@@ -41,11 +40,8 @@ const HostFinanceTab = () => {
                 }
 
                 const data = await response.json();
-                console.log("API Response:", data); // Log the API response
 
-                // Parse the stringified JSON in the body
                 const parsedBody = JSON.parse(data.body);
-                console.log("Parsed API Body:", parsedBody); // Log parsed body for debugging
 
                 if (parsedBody.hasStripeAccount) {
                     setStripeLoginUrl(parsedBody.loginLinkUrl);
@@ -54,7 +50,7 @@ const HostFinanceTab = () => {
             } catch (error) {
                 console.error("Error fetching user data or Stripe status:", error);
             } finally {
-                setLoading(false); // Ensure loading is set to false
+                setLoading(false);
             }
         };
         setUserEmailAsync();
@@ -80,8 +76,7 @@ const HostFinanceTab = () => {
                 }
 
                 const data = await response.json();
-                console.log("Stripe Action Response:", data); // Log the response
-                window.location.replace(data.url); // Redirect to the provided URL
+                window.location.replace(data.url);
             } catch (error) {
                 console.error("Error during Stripe action:", error);
             }
@@ -91,11 +86,11 @@ const HostFinanceTab = () => {
     }
 
     if (loading) {
-        return <div>Loading...</div>; // Display a loading indicator
+        return <div>Loading...</div>;
     }
 
-    console.log("Stripe Login URL:", stripeLoginUrl); // Log for debugging
-    console.log("Bank Details Provided:", bankDetailsProvided); // Log for debugging
+    console.log("Stripe Login URL:", stripeLoginUrl);
+    console.log("Bank Details Provided:", bankDetailsProvided);
 
     return (
         <main className="page-Host">
