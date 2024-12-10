@@ -172,7 +172,9 @@ function OnboardingHost() {
                     body: JSON.stringify({sub: hostID}),
                 });
                 const data = await response.json();
-                if (data.hasStripeAccount) {
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
                     setHostStripe(true);
                 }
             } catch (error) {
@@ -235,8 +237,9 @@ function OnboardingHost() {
         OwnerId: existingData.OwnerId || userId,
         GuestAmount: isNew ? 0 : formData.GuestAmount,
         MinimumStay: isNew ? 0 : (Number.isFinite(existingData.MinimumStay) ? existingData.MinimumStay : 0),
-        MinimumBookingPeriod: isNew ? 0 : (Number.isFinite(existingData.MinimumBookingPeriod) ? existingData.MinimumBookingPeriod : 0),
+        MinimumAdvanceReservation: isNew ? 0 : (Number.isFinite(existingData.MinimumAdvanceReservation) ? existingData.MinimumAdvanceReservation : 0),
         MaximumStay: isNew ? 0 : (Number.isFinite(existingData.MaximumStay) ? existingData.MaximumStay : 0),
+        MaximumAdvanceReservation: isNew ? 0 : (Number.isFinite(existingData.MaximumAdvanceReservation) ? existingData.MaximumAdvanceReservation : 0),
     });
 
     const generateNormalAccommodationFormData = () => ({
@@ -876,7 +879,7 @@ function OnboardingHost() {
                 }
             }
 
-            const response = await fetch('https://q0ydcuagj0.execute-api.eu-north-1.amazonaws.com/default/EditAccommodation', {
+            const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
                 method: 'PUT',
                 body: JSON.stringify(updatedFormData),
                 headers: {
@@ -1399,73 +1402,73 @@ function OnboardingHost() {
                                 </label>
                             </div>
                             <hr/>
-                        <label className="Check">
-                        <div className="Check-label">Check-in</div>
-                        <span>From</span>
-                        <select
-                            className="Check-checkbox"
-                            value={formData.CheckIn.From}
-                            onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const time = i.toString().padStart(2, '0') + ':00';
-                                return (
-                                    <option key={i} value={time}>
-                                        {time}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        <span>Til</span>
-                        <select
-                            className="Check-checkbox"
-                            value={formData.CheckIn.Til}
-                            onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'Til')}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const time = i.toString().padStart(2, '0') + ':00';
-                                return (
-                                    <option key={i} value={time}>
-                                        {time}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                    </label>
+                            <label className="Check">
+                                <div className="Check-label">Check-in</div>
+                                <span>From</span>
+                                <select
+                                    className="Check-checkbox"
+                                    value={formData.CheckIn.From}
+                                    onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
+                                >
+                                    {Array.from({length: 24}, (_, i) => {
+                                        const time = i.toString().padStart(2, '0') + ':00';
+                                        return (
+                                            <option key={i} value={time}>
+                                                {time}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                                <span>Til</span>
+                                <select
+                                    className="Check-checkbox"
+                                    value={formData.CheckIn.Til}
+                                    onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'Til')}
+                                >
+                                    {Array.from({length: 24}, (_, i) => {
+                                        const time = i.toString().padStart(2, '0') + ':00';
+                                        return (
+                                            <option key={i} value={time}>
+                                                {time}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </label>
 
-                    <label className="Check">
-                        <div className="Check-label">Check-out</div>
-                        <span>From</span>
-                        <select
-                            className="Check-checkbox"
-                            value={formData.CheckOut.From}
-                            onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'From')}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const time = i.toString().padStart(2, '0') + ':00';
-                                return (
-                                    <option key={i} value={time}>
-                                        {time}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        <span>Til</span>
-                        <select
-                            className="Check-checkbox"
-                            value={formData.CheckOut.Til}
-                            onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'Til')}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const time = i.toString().padStart(2, '0') + ':00';
-                                return (
-                                    <option key={i} value={time}>
-                                        {time}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                    </label>
+                            <label className="Check">
+                                <div className="Check-label">Check-out</div>
+                                <span>From</span>
+                                <select
+                                    className="Check-checkbox"
+                                    value={formData.CheckOut.From}
+                                    onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'From')}
+                                >
+                                    {Array.from({length: 24}, (_, i) => {
+                                        const time = i.toString().padStart(2, '0') + ':00';
+                                        return (
+                                            <option key={i} value={time}>
+                                                {time}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                                <span>Til</span>
+                                <select
+                                    className="Check-checkbox"
+                                    value={formData.CheckOut.Til}
+                                    onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'Til')}
+                                >
+                                    {Array.from({length: 24}, (_, i) => {
+                                        const time = i.toString().padStart(2, '0') + ':00';
+                                        return (
+                                            <option key={i} value={time}>
+                                                {time}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </label>
                         </div>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
@@ -2077,6 +2080,7 @@ function OnboardingHost() {
                             <CalendarComponent passedProp={formData}
                                                isNew={true}
                                                updateDates={updateDates}
+                                               componentView={false}
                             />
                         </section>
                         <nav className="onboarding-button-box">
