@@ -33,8 +33,9 @@ function HostDashboard() {
                     body: JSON.stringify({ sub: cognitoUserId }),
                 });
                 const { hasStripeAccount } = await response.json();
+                const parsedBody = JSON.parse(hasStripeAccount.body);
 
-                setIsStripeModalOpen(!hasStripeAccount);
+                setIsStripeModalOpen(!parsedBody);
             } catch (error) {
                 console.error("Error fetching user's Stripe account status:", error);
             }

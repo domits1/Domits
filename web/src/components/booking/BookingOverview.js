@@ -96,7 +96,9 @@ const BookingOverview = () => {
                     body: JSON.stringify({ sub: ownerId }),
                 });
                 const data = await response.json();
-                setOwnerStripeId(data.accountId);
+                const parsedBody = JSON.parse(data.body);
+
+                setOwnerStripeId(parsedBody.accountId);
             } catch (error) {
                 console.error("Error fetching owner Stripe ID:", error);
                 setError("Error fetching owner Stripe ID. Please try again later.");
