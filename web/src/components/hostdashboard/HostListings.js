@@ -36,8 +36,10 @@ function HostListings() {
                     body: JSON.stringify({ sub: hostID }),
                 });
                 const data = await response.json();
-                if (data.hasStripeAccount) {
-                    setBankDetailsProvided(data.bankDetailsProvided);
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
+                    setBankDetailsProvided(parsedBody.bankDetailsProvided);
                 }
             } catch (error) {
                 console.error("Error fetching user data or Stripe status:", error);

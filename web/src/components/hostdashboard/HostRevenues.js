@@ -69,10 +69,12 @@ const HostRevenues = () => {
                 });
 
                 const data = await response.json();
-                if (data.hasStripeAccount) {
-                    setStripeLoginUrl(data.loginLinkUrl);
-                    setBankDetailsProvided(data.bankDetailsProvided);
-                    setStripeStatus(data.bankDetailsProvided ? 'complete' : 'incomplete');
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
+                    setStripeLoginUrl(parsedBody.loginLinkUrl);
+                    setBankDetailsProvided(parsedBody.bankDetailsProvided);
+                    setStripeStatus(parsedBody.bankDetailsProvided ? 'complete' : 'incomplete');
                 } else {
                     setStripeStatus('none');
                 }

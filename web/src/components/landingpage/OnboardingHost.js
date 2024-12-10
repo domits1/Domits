@@ -172,7 +172,9 @@ function OnboardingHost() {
                     body: JSON.stringify({sub: hostID}),
                 });
                 const data = await response.json();
-                if (data.hasStripeAccount) {
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
                     setHostStripe(true);
                 }
             } catch (error) {
