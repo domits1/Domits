@@ -39,43 +39,43 @@ function HostCalendar() {
 
     };
 
-    const fetchAccommodations = async () => {
-        setIsLoading(true);
-        if (!userId) {
-            console.log("No user id")
-            return;
-        } else {
-            try {
-                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
-                    method: 'POST',
-                    body: JSON.stringify({OwnerId: userId}),
-                    headers: {
-                        'Content-type': 'application/json; charset=UTF-8',
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to fetch');
-                }
-                const data = await response.json();
-
-                if (data.body && typeof data.body === 'string') {
-                    const accommodationsArray = JSON.parse(data.body);
-                    if (Array.isArray(accommodationsArray)) {
-                        setAccommodations(accommodationsArray);
-                    } else {
-                        console.error("Parsed data is not an array:", accommodationsArray);
-                        setAccommodations([]);
-                    }
-                }
-            } catch (error) {
-                console.error("Unexpected error:", error);
-            } finally {
-                setIsLoading(false);
-            }
-        }
-    };
-
     useEffect(() => {
+        const fetchAccommodations = async () => {
+            setIsLoading(true);
+            if (!userId) {
+                console.log("No user id")
+                return;
+            } else {
+                try {
+                    const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
+                        method: 'POST',
+                        body: JSON.stringify({OwnerId: userId}),
+                        headers: {
+                            'Content-type': 'application/json; charset=UTF-8',
+                        }
+                    });
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch');
+                    }
+                    const data = await response.json();
+
+                    if (data.body && typeof data.body === 'string') {
+                        const accommodationsArray = JSON.parse(data.body);
+                        if (Array.isArray(accommodationsArray)) {
+                            setAccommodations(accommodationsArray);
+                        } else {
+                            console.error("Parsed data is not an array:", accommodationsArray);
+                            setAccommodations([]);
+                        }
+                    }
+                } catch (error) {
+                    console.error("Unexpected error:", error);
+                } finally {
+                    setIsLoading(false);
+                }
+            }
+        };
+
         if (userId) {
             fetchAccommodations().catch(console.error);
         }
@@ -210,7 +210,6 @@ function HostCalendar() {
                                         <CalendarComponent passedProp={selectedAccommodation} isNew={false}
                                                            updateDates={updateDates}
                                                            componentView={true}
-                                                           fetchAccommodations={fetchAccommodations}
                                         />
                                     </div>
                                 </div>

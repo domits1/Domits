@@ -13,7 +13,7 @@ import HostCalendar from "./HostCalendar";
  * @returns {Element}
  * @constructor
  */
-function CalendarComponent({passedProp, isNew, updateDates, componentView, fetchAccommodations}) {
+function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     const navigate = useNavigate();
     const [month, setMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
@@ -251,7 +251,6 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView, fetch
             console.error("Unexpected error:", error);
         } finally {
             navigate(0);
-            await fetchAccommodations();
         }
     };
 
