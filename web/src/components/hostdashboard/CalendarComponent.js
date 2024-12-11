@@ -109,7 +109,6 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             );
         }
 
-        // Handle the next month's dates
         for (let i = end + 1; i <= 6; i++) {
             newDates.push(
                 <li key={`inactive-next-${i}`} className={`${styles.date} ${styles.inactive}`}>
