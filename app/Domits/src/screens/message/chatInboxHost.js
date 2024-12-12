@@ -208,6 +208,9 @@ const InboxHost = ({ user }) => {
       const filteredContactIds = filteredContacts.map(contact => contact.userId);
 
       // Fetch chats for each contact
+      // filteredContactIds.forEach(contactId => {
+      //   fetchChats(contactId);
+      // });
       const fetchAllChats = async () => {
         try {
           setLoading(true); // Set loading true while chats are being fetched
