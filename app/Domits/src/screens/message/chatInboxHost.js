@@ -99,96 +99,73 @@ const InboxHost = ({ user }) => {
       console.error("Error fetching chat users:", error);
     }
   };
-  const fetchChats = async (recipientId) => {
+  const fetchLatestChat = async (recipientId) => {
     if (!recipientId) {
       console.error('No valid recipient ID provided');
       return;
     }
-
     setLoading(true); // Show loading spinner
     try {
-      const sentMessagesResponse = await client.graphql(graphqlOperation(queries.listChats, {
-        filter: {
-          userId: { eq: userId },
-          recipientId: { eq: recipientId },
+      const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
         },
-      }));
-      const sentMessages = sentMessagesResponse.data.listChats.items;
-
-      const receivedMessagesResponse = await client.graphql(graphqlOperation(queries.listChats, {
-        filter: {
-          userId: { eq: recipientId },
-          recipientId: { eq: userId },
-        },
-      }));
-
-      const receivedMessages = receivedMessagesResponse.data.listChats.items;
-
-      const allMessages = [...sentMessages, ...receivedMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-
-      const lastMessage = allMessages.length > 0
-        ? (allMessages[allMessages.length - 1].text || "No messages yet")
-        : "No messages yet";
-
-      // console.log(`Fetched Messages for ${recipientId}:`, allMessages);
-
-      setChatMessages(prevChats => ({
-        ...prevChats,
-        [recipientId]: allMessages,
-      }));
-
-      setChatUsers(prevUsers => {
-        const updatedUsers = prevUsers.map(user => {
-          if (user.userId === recipientId) {
-            return {
-              ...user,
-              lastMessage: lastMessage,
-              lastMessageTimestamp: allMessages[allMessages.length - 1]?.createdAt || 0,
-            };
-          }
-          return user;
-        });
-        return updatedUsers;
+        body: JSON.stringify({
+          userId: userId,
+          recipientId: recipientId,
+        }),
       });
 
+      const rawResponse = await response.text();
+      const result = JSON.parse(rawResponse);
+
+      if (response.ok) {
+        const latestChat = result;
+
+        setChatMessages((prevChats) => {
+          const updatedChats = { ...prevChats };
+          // Update the recipient's chat messages with the latest chat
+          updatedChats[recipientId] = [latestChat, ...(prevChats[recipientId] || [])];
+          updatedChats[recipientId].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by date
+
+          return updatedChats;
+        });
+
+        // Update the last message information for the user
+        setChatUsers((prevUsers) => {
+          return prevUsers.map((user) => {
+            if (user.userId === recipientId) {
+              return {
+                ...user,
+                lastMessage: latestChat.text || "No messages yet",
+                lastMessageTimestamp: latestChat.createdAt || 0,
+              };
+            }
+            return user;
+          });
+        });
+
+      } else {
+        console.error("Error fetching latest chat:", result.body);
+      }
     } catch (error) {
-      console.error(`Error fetching chats for recipientId ${recipientId}:`, error);
+      console.error('Error fetching latest chat:', error);
     } finally {
       setLoading(false); // Hide loading spinner
     }
   };
-
-
   // useEffect(() => {
-  //   if (!userId) return;
-
-  //   const subscription = client.graphql(graphqlOperation(onCreateChat)).subscribe({
-  //     next: ({ value }) => {
-
-  //       const newMessage = value.data.onCreateChat;
-  //       const { userId: messageUserId, recipientId, text } = newMessage;
-
-  //       // Only update if the message is for the current user or a contact
-  //       if (
-  //         (messageUserId === userId && recipientId !== userId) ||
-  //         (recipientId === userId && messageUserId !== userId)
-  //       ) {
-  //         setChatMessages(prevChats => {
-  //           const updatedChats = { ...prevChats };
-  //           if (updatedChats[recipientId]) {
-  //             updatedChats[recipientId].lastMessage = text;
-  //           } else {
-  //             updatedChats[recipientId] = { lastMessage: text };
-  //           }
-  //           return updatedChats;
-  //         });
-  //       }
+  //   const subscription = client.graphql(
+  //     graphqlOperation(subscriptions.onCreateChat)
+  //   ).subscribe({
+  //     next: ({ }) => {
+  //       fetchLatestChat();
   //     },
-  //     error: (err) => console.error('Subscription error:', err),
+  //     error: error => console.error("Subscription error:", error),
   //   });
-
   //   return () => subscription.unsubscribe();
-  // }, [userId]);
+  // }, []);
 
   const generateChannelName = (userId, recipientId) => {
     const sortedIds = [userId, recipientId].sort();
@@ -207,16 +184,12 @@ const InboxHost = ({ user }) => {
       const filteredContacts = contacts.filter(contact => contact.userId !== userId);
       const filteredContactIds = filteredContacts.map(contact => contact.userId);
 
-      // Fetch chats for each contact
-      // filteredContactIds.forEach(contactId => {
-      //   fetchChats(contactId);
-      // });
       const fetchAllChats = async () => {
         try {
           setLoading(true); // Set loading true while chats are being fetched
 
-          // Use Promise.all to fetch chats for all contacts concurrently
-          await Promise.all(filteredContactIds.map(contactId => fetchChats(contactId)));
+          // Use Promise.all to fetch the latest chat for each contact concurrently
+          await Promise.all(filteredContactIds.map(contactId => fetchLatestChat(contactId)));
 
         } catch (error) {
           console.error('Error fetching chats:', error);
@@ -228,6 +201,7 @@ const InboxHost = ({ user }) => {
       fetchAllChats();
     }
   }, [userId, contacts]);
+
 
   useEffect(() => {
     setItemsDisplay(chatUsers)
