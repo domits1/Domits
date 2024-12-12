@@ -1,21 +1,16 @@
 import React, { useState, useEffect, useRef, useLayoutEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Image } from 'react-native';
-import Amplify from 'aws-amplify';
 import { graphqlOperation } from '@aws-amplify/api-graphql';
-import { API } from '@aws-amplify/api';
-import * as queries from "../queries";
-// import { format } from 'date-fns';
 import { useRoute } from '@react-navigation/native';
 import { generateClient } from 'aws-amplify/api';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useNavigation } from '@react-navigation/native';
-
+import * as subscriptions from '../subscriptions';
 
 const client = generateClient();
 
-
 const ChatScreen = ({ }) => {
-    const [messageText, setMessageText] = useState('');
+    const [newMessage, setNewMessage] = useState('');
     const [chatMessages, setChatMessages] = useState();
     const [loading, setLoading] = useState(false);
     const route = useRoute();
@@ -23,21 +18,23 @@ const ChatScreen = ({ }) => {
     const [givenName, setGivenName] = useState(null);
     const { userId, recipientId, } = route.params;
     const navigation = useNavigation();
+    const [channelUUID, setChannelUUID] = useState(null);
+    const [showDate, setShowDate] = useState(false);
+    const [lastMessageDate, setLastMessageDate] = useState(null);
+
+
+    const generateChannelName = (userId, recipientId) => {
+        const sortedIds = [userId, recipientId].sort();
+        return sortedIds.join('_');
+    };
 
     useEffect(() => {
+        const channelName = generateChannelName(recipientId, recipientId);
+        setChannelUUID(channelName);
         fetchChats();
-        console.log('contact', recipientId)
     }, [userId, recipientId]);
-    if (givenName !== null) {
-        navigation.setOptions({
-            headerRight: () => (
-                <Text style={styles.headerText}>{givenName || 'Loading...'}</Text>
-            ),
-        });
-    }
 
     useEffect(() => {
-
 
         const fetchUserInfo = async () => {
             try {
@@ -61,29 +58,33 @@ const ChatScreen = ({ }) => {
                 }, {});
 
                 setGivenName(attributes['given_name']);
-                console.log('this is', givenName)
+
             } catch (error) {
                 console.error('Error fetching guest info:', error);
             } finally {
                 setLoading(false);
             }
         };
-
         fetchUserInfo();
     }, [recipientId]);
 
-
-
-
-
-
-
     useEffect(() => {
-        // Scroll to the bottom whenever the chatMessages are updated
         if (flatListRef.current) {
             flatListRef.current.scrollToEnd({ animated: true });
         }
     }, [chatMessages]);
+
+    useEffect(() => {
+        const subscription = client.graphql(
+            graphqlOperation(subscriptions.onCreateChat)
+        ).subscribe({
+            next: ({ }) => {
+                fetchLatestChat(recipientId);
+            },
+            error: error => console.error("Subscription error:", error),
+        });
+        return () => subscription.unsubscribe();
+    }, []);
 
     const fetchChats = async () => {
         if (!recipientId || !userId) {
@@ -91,45 +92,140 @@ const ChatScreen = ({ }) => {
             return;
         }
 
-        setLoading(true); // Show loading spinner
+        const recipientIdToSend = recipientId;
         try {
-            // Fetch sent messages
-            const sentMessagesResponse = await client.graphql(graphqlOperation(queries.listChats, {
-                filter: {
-                    userId: { eq: userId },
-                    recipientId: { eq: recipientId },
+            const response = await fetch('https://8pwu9lnge0.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-MessagesHistory', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
                 },
-            }));
-            const sentMessages = sentMessagesResponse.data.listChats.items;
+                body: JSON.stringify({
+                    userId: userId,
+                    recipientId: recipientIdToSend,
+                }),
+            });
 
-            // Fetch received messages
-            const receivedMessagesResponse = await client.graphql(graphqlOperation(queries.listChats, {
-                filter: {
-                    userId: { eq: recipientId },
-                    recipientId: { eq: userId },
-                },
-            }));
-            const receivedMessages = receivedMessagesResponse.data.listChats.items;
+            const rawResponse = await response.text();
+            const result = JSON.parse(rawResponse);
 
-            // Combine and sort messages
-            const allSentChats = sentMessages.map((chat) => ({
-                ...chat,
-                isSent: true,
-            }));
-            const allReceivedChats = receivedMessages.map((chat) => ({
-                ...chat,
-                isSent: false,
-            }));
-            const allChats = [...allSentChats, ...allReceivedChats].sort(
-                (a, b) => new Date(b.createdAt) - new Date(a.createdAt) // Change the order here
-            );
+            if (response.ok) {
+                const allChats = result;
 
-
-            setChatMessages(allChats);
+                allChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                setChatMessages(allChats);
+            } else {
+                console.error("Error fetching messages:", result.body);
+            }
         } catch (error) {
             console.error('Error fetching chats:', error);
         } finally {
             setLoading(false); // Hide loading spinner
+        }
+    };
+
+    const fetchLatestChat = async () => {
+        if (!recipientId || !userId) {
+            console.error('Missing userId or recipientId');
+            return;
+        }
+
+        const recipientIdToSend = recipientId;
+        try {
+            const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    userId: userId,
+                    recipientId: recipientIdToSend,
+                }),
+            });
+            const rawResponse = await response.text();
+            const result = JSON.parse(rawResponse);
+
+            if (response.ok) {
+                const latestChat = result;
+
+                setChatMessages((prevChats) => {
+                    const updatedChats = [latestChat, ...prevChats]; // Add the new chat at the beginning
+                    // Sort the updated chats by creation date in descending order
+                    updatedChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+                    return updatedChats;
+                });
+            } else {
+                console.error("Error fetching latest chat:", result.body);
+            }
+        } catch (error) {
+            console.error('Error fetching latest chat:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+
+    const sendMessage = async () => {
+        const recipientIdToSend = recipientId;
+        try {
+            const messageData = {
+                text: newMessage.trim(),
+                userId: userId,
+                recipientId: recipientIdToSend,
+                channelId: channelUUID,
+            };
+            const response = await fetch('https://qkptcbb445.execute-api.eu-north-1.amazonaws.com/ChatSendMessageFunction', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    text: newMessage.trim(),
+                    userId: userId,
+                    recipientId: recipientIdToSend,
+                    channelId: channelUUID,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+                // console.log("Message sent successfully:", result);
+                setNewMessage('');
+                setShowDate(true);
+                setLastMessageDate(new Date());
+
+                // Fetch updated chats
+                await fetchLatestChat(recipientIdToSend);
+            } else {
+                console.error("Error sending message:", result);
+            }
+
+        } catch (error) {
+            console.error("Error sending message:", error);
+        }
+    };
+
+
+    const generateUUID = () => {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0,
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    };
+
+    useEffect(() => {
+        if (channelUUID) {
+            console.log('Channel UUID is set:', channelUUID);
+        } else {
+            console.log('Channel UUID is not set or invalid.');
+        }
+    }, [channelUUID]);
+
+    const handleKeyUp = (e) => {
+        if (e.nativeEvent.key === 'Enter') {
+            sendMessage();
         }
     };
 
@@ -193,8 +289,9 @@ const ChatScreen = ({ }) => {
                 <TextInput
                     style={styles.input}
                     placeholder="Write a message..."
-                    value={messageText}
-                    onChangeText={setMessageText}
+                    value={newMessage}
+                    onChangeText={setNewMessage}
+                    onKeyPress={handleKeyUp}
                 />
                 {/* Uncomment to add a send button */}
                 {/* <TouchableOpacity style={styles.sendButton}>
