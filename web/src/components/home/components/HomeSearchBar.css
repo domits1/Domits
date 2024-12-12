@@ -1,0 +1,227 @@
+.my-searchbar {
+  background-color: white;
+  width: 42.5rem;
+  margin: auto;
+  box-shadow: 0 0 5px hsl(0 0% 78%);
+  border-radius: 1.875rem;
+  border: solid 1px #7171716a;
+  display: flex;
+  height: 3.43rem;
+  box-sizing: border-box;
+}
+
+.my-searchbar .my-searchbar-search-input-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 0.3125rem;
+}
+
+.my-searchbar-suggestions-container {
+  position: relative;
+  z-index: 1;
+}
+
+.css-qbdosj-Input {
+  margin: 0 !important;
+}
+
+.autocomplete-container input::placeholder {
+  text-align: center;
+}
+
+.searchTitle {
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-family: 'Kanit', sans-serif;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  transform: translateY(-15%);
+}
+
+.my-searchbar-check-in {
+  width: 17%;
+  cursor: auto;
+}
+
+.my-searchbar-location {
+  width: 34%;
+}
+
+.input-calendar {
+  background: none;
+  border: none;
+  text-align: center;
+  width: 92%;
+  height: 3.5rem;
+}
+
+.my-searchbar > div {
+  position: relative;
+  transition: background 150ms ease, width 150ms ease;
+}
+
+.my-searchbar > div::before {
+  position: absolute;
+  content: "";
+  left: -1.85%;
+  top: 50%;
+  transform: translateY(-40%);
+  width: 0.05rem;
+  height: 60%;
+  background: rgb(88, 153, 22);
+}
+
+.my-searchbar > div:nth-of-type(1)::before {
+  background: transparent;
+}
+
+.my-searchbar > div:nth-of-type(3)::before {
+  transform: translateY(-40%);
+  left: -0.01%;
+}
+
+.my-searchbar > div:nth-of-type(4)::before {
+  background: solid;
+  height: 56%;
+  transform: translateY(-40%);
+}
+
+.DatePicker__calendarContainer {
+  position: absolute;
+  top: calc(-20% + 0.4rem);
+  left: 60%;
+  transform: translateX(-50%);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  border-radius: 0.5rem;
+}
+
+.my-searchbar-button {
+  display: inline-block;
+  outline: 0;
+  cursor: pointer;
+  padding: 3px;
+  font-size: 0.6rem;
+  line-height: 1.875rem;
+  border: 1px solid var(--primary-color);
+  border-radius: 50%;
+  color: #ffffff;
+  background-color: var(--primary-color);
+  box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+  height: 2.5rem;
+  width: 2.5rem;
+  margin-top: 0.45rem;
+  margin-left: 0.4rem;
+}
+.my-searchbar-button:hover {
+  opacity: 90%;
+  transition-duration: 0.0s;
+}
+
+
+.my-searchbar-button svg {
+  color: rgb(255, 255, 255);
+  margin-top: 0.625rem;
+  margin-left: 0.2rem;
+}
+
+.search-text {
+  font-size: 1rem;
+  margin-right: 1rem;
+}
+
+.searchBar_inputfield {
+  background: none;
+  border: none;
+  text-align: left;
+  transform: translateY(10%);
+  width: 90%;
+  height: 2rem;
+  margin-left: 1rem;
+}
+
+.searchBar_inputfield[type="search"]::-webkit-search-cancel-button {
+  position: relative;
+  color: black;
+  font-size: large;
+  filter: grayscale(100%);
+}
+
+.searchBar_inputfield:focus {
+  outline: none;
+}
+
+.searchBar_inputfield::placeholder {
+  color: var(--primary-color);
+  font-family: 'Kanit', sans-serif;
+  font-weight: 500;
+  font-size: 1rem;
+  margin: auto;
+}
+
+.my-searchbar-button-section {
+  border: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding: 1.625rem;
+  border-radius: 1.25rem;
+  width: 13.2%;
+}
+
+.my-searchbar-error-message {
+  background-color: #f8d7da;
+  color: #721c24;
+  border: 2px solid #f5c6cb;
+  padding: 24px 36px;
+  border-radius: 16px;
+  font-size: 1.2rem;
+  position: absolute;
+  z-index: 1;
+  height: auto;
+  cursor: pointer;
+  transform: translate(60%, 80%);
+  max-width: 400px;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.my-searchbar-guest-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 0.625rem);
+  margin-right: -250%;
+  transform: translateX(-50%) scale(0.95);
+  background: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  border-radius: 1.5625rem;
+  padding: 1.5625rem;
+  z-index: 999;
+  width: 25.125rem;
+  min-width: 15.625rem;
+  box-sizing: border-box;
+  cursor: auto;
+}
+
+.my-searchbar-guest-dropdown.active {
+  display: block;
+  opacity: 1;
+  transform: translateX(-50%) scale(1);
+}
+
+.hidden {
+  transform: translateX(-50%) translateY(-100%);
+  opacity: 0;
+  transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+.fixed-search-bar {
+  position: fixed;
+  left: 50%; 
+  top: 3vh; 
+  transform: translateX(-50%); 
+  width: 42.5rem; 
+  z-index: 9999; 
+  background-color: none;
+}

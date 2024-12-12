@@ -1,0 +1,472 @@
+body.hide-header .app-header {
+  display: none;
+  visibility: hidden;
+}
+
+.domits-homepage {
+  background-color: #f9f9f9;
+  position: relative; 
+  z-index: auto; 
+}
+
+.domits-accocard {
+  background-color: #f9f9f9;
+  border-radius: 15px;
+  margin: 1%;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+  cursor: pointer;
+  width: 20%; 
+  aspect-ratio: 1 / 1; 
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.domits-accocard img {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+}
+
+.domits-accocard-title {
+  position: absolute;
+  bottom: 37%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.6);
+  padding: 8px 10px;
+  border-radius: 10px;
+  text-align: center;
+  color: white;
+  font-size: clamp(12px, 3vw, 18px);
+  font-weight: 600;
+  z-index: 2;
+  max-width: 90%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+
+.domits-accocard:hover {
+  transform: translateY(-10px);
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.domits-accocard:hover .domits-accocard-title {
+  background: rgba(13, 152, 20, 0.8);
+}
+
+.domits-accocard-content {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.domits-accocard-price {
+  font-size: 18px;
+  color: #0d9814;
+  font-weight: bold;
+  margin-top: 5px;
+}
+
+.domits-accocard-specs {
+  font-size: 14px;
+  color: #555;
+  margin-top: 5px;
+}
+
+.domits-accommodationGroup {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+
+.domits-searchContainer {
+  height: 75vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/houseBoat.png");
+  background-size: cover;
+  background-position: 70% 100%;
+  background-repeat: no-repeat;
+  width: 100%;
+}
+
+.domits-searchTextCon {
+  padding-top: 20vh;
+  color: white;
+  text-align: center;
+  font-size: 8em;
+  height: 15vh;
+  width: 100%;
+  font-weight: 100;
+}
+
+.domits-searchText {
+  font-size: 4rem;
+  padding-bottom: 2vh;
+}
+
+.domits-searchbarCon {
+  padding-top: 4vw;
+}
+
+.domits-subHead {
+  margin-left: 5vw;
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.domits-iconsContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f9f9f9;
+  flex-wrap: wrap;
+  height: 10vh;
+  padding: 0 4%;
+}
+
+.domits-iconsContainerText {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.domits-iconTextGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1.2rem;
+}
+
+.domits-iconsContainerText img {
+  width: 30px;
+}
+
+.domits-communityContainer {
+  text-align: center;
+  margin-top: 1.5rem;
+  padding-top: 4vh;
+  padding-bottom: 8vh;
+}
+
+.domits-communityButtons {
+  display: flex;
+  align-items: center;
+  font-size: 1.5vw;
+  margin-top: 1.5rem;
+  gap: 8vw;
+  justify-content: center;
+}
+
+.domits-hostButton,
+.domits-SearchButton {
+  border: none;
+  border-radius: 0.6em;
+  padding: 8px 4vw;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-size: 0.9vw;
+}
+
+.domits-hostButton {
+  background-color: #003366;
+  color: white;
+}
+
+.domits-SearchButton {
+  background-color: #0d9813;
+  color: white;
+}
+
+.domits-trendingContainer {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 25px;
+  margin-left: 1vw;
+  padding-bottom: 2vh;
+}
+
+.domits-trendingContainer > div {
+  width: 12vw;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+  font-size: 16px;
+  margin-left: 4%;
+}
+
+.domits-trendingContainer > div:hover::after {
+  content: attr(data-popup-text);
+  display: block;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 15px;
+  position: absolute;
+  white-space: normal;
+  z-index: 10;
+  width: 20%;
+  height: auto;
+  overflow: auto;
+  transform: translateX(50%);
+  transform: translateY(90%);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.domits-communityHead {
+  font-size: 3vw;
+  font-weight: 450;
+}
+
+.domits-communityGroup {
+  font-size: 1.5vw;
+  font-weight: 300;
+  width: 25%;
+  height: 15vh;
+  text-align: left;
+  padding-left: 38vw;
+}
+
+@media (max-width: 1024px) {
+  .domits-searchText {
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 1440px) {
+  .domits-accocard {
+    width: 40%;
+    height: auto;
+  }
+
+  .domits-searchText {
+    font-size: 0.6em;
+  }
+
+  .domits-accommodationGroup {
+    gap: 15px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .domits-accocard {
+    width: 45%;
+  }
+
+  .domits-searchTextCon {
+    font-size: 5em;
+  }
+
+  .domits-communityContainer {
+    padding: 2vh 5vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .domits-accocard-title {
+    font-size: clamp(10px, 4vw, 14px);
+    bottom: 22%;
+    padding: 6px 8px;
+  }
+
+  .domits-searchTextCon {
+    font-size: 3em;
+  }
+
+  .domits-communityContainer {
+    padding: 2vh 3vw;
+  }
+
+  .domits-communityButtons {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .domits-accocard {
+    width: 60%;
+    height: auto;
+    margin: 10px auto;
+  }
+
+  .domits-accocard-title {
+    font-size: 14px;
+  }
+
+  .domits-accocard-price {
+    font-size: 16px;
+    margin-top: 5px;
+  }
+
+  .domits-accocard-specs {
+    font-size: 12px;
+  }
+
+  .domits-accommodationGroup {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
+  .domits-subHead {
+    font-size: 2rem;
+    margin-left: 2vw;
+    text-align: center;
+  }
+
+  .domits-trendingContainer {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    margin: 0 auto;
+    padding: 10px 0;
+  }
+
+  .domits-trendingContainer > div {
+    width: 90%;
+    font-size: 16px;
+  }
+
+  .domits-searchTextCon {
+    font-size: 2.5em;
+    padding-top: 20vh;
+  }
+
+  .domits-searchText {
+    font-size: 1.5em;
+  }
+
+  .domits-communityContainer {
+    padding: 2vh 5vw;
+    text-align: center;
+  }
+
+  .domits-communityButtons {
+    flex-direction: column;
+    gap: 10px;
+    margin: 10px auto;
+  }
+
+  .domits-hostButton,
+  .domits-SearchButton {
+    font-size: 1rem;
+    padding: 10px 20px;
+    width: 80%;
+    margin: 5px auto;
+  }
+
+  .domits-searchbarCon {
+    padding-top: 15px;
+  }
+
+  .domits-iconsContainer {
+    flex-direction: column;
+    gap: 15px;
+    height: auto;
+    padding: 10px 5vw;
+  }
+
+  .domits-iconsContainerText {
+    flex-direction: column;
+    gap: 10px;
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .domits-communityHead {
+    font-size: 1.8rem;
+  }
+
+  .domits-communityGroup {
+    font-size: 1rem;
+    width: 85%;
+    margin: 0 auto;
+    text-align: center;
+    padding-left: 6vw;
+    height: 5vh;
+  }
+}
+
+@media (max-width: 425px) {
+  .domits-accocard-title {
+    font-size: clamp(8px, 5vw, 12px);
+    bottom: 40%;
+    padding: 4px 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .domits-searchTextCon {
+    font-size: 2em;
+  }
+
+  .domits-searchText {
+    font-size: 1.5em;
+  }
+
+  .domits-accocard-title {
+    font-size: clamp(8px, 5vw, 12px);
+    bottom: 40%;
+    padding: 4px 6px;
+  }
+
+  .domits-accocard-price {
+    font-size: 14px;
+  }
+
+  .domits-subHead {
+    font-size: 1.5rem;
+    margin: 10px auto;
+    text-align: center;
+  }
+
+  .domits-trendingContainer > div {
+    font-size: 14px;
+  }
+
+  .domits-communityHead {
+    font-size: 1.5rem;
+  }
+
+  .domits-hostButton,
+  .domits-SearchButton {
+    font-size: 0.8rem;
+    padding: 8px 15px;
+  }
+
+  .domits-iconsContainerText {
+    font-size: 1rem;
+  }
+
+  .domits-searchContainer {
+    height: 50vh;
+  }
+
+  .domits-trendingContainer > div:hover::after {
+    width: 60%;
+    transform: translateX(0%);
+    transform: translateY(0%);
+  }
+}
+
