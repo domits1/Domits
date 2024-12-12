@@ -50,7 +50,7 @@ const InboxHost = ({ user }) => {
       const responseData = await response.json();
       const JSONData = JSON.parse(responseData.body);
       setContacts(JSONData.accepted);
-      console.log('all contacts: ', contacts)
+      // console.log('all contacts: ', contacts)
 
     } catch (error) {
       console.error('Error fetching host contacts:', error);
@@ -92,9 +92,9 @@ const InboxHost = ({ user }) => {
       const filteredUsersData = usersWithData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
       setChatUsers(filteredUsersData);
       setItemsDisplay(filteredUsersData);
-      console.log('fecthchat: ', chatUsers);
-      console.log('itemsdispl', itemsDisplay);
-      console.log('userid:', userId);
+      // console.log('fecthchat: ', chatUsers);
+      // console.log('itemsdispl', itemsDisplay);
+      // console.log('userid:', userId);
     } catch (error) {
       console.error("Error fetching chat users:", error);
     }
@@ -125,16 +125,16 @@ const InboxHost = ({ user }) => {
       const receivedMessages = receivedMessagesResponse.data.listChats.items;
 
       const allMessages = [...sentMessages, ...receivedMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-      
+
       const lastMessage = allMessages.length > 0
         ? (allMessages[allMessages.length - 1].text || "No messages yet")
         : "No messages yet";
 
-      console.log(`Fetched Messages for ${recipientId}:`, allMessages);
+      // console.log(`Fetched Messages for ${recipientId}:`, allMessages);
 
       setChatMessages(prevChats => ({
         ...prevChats,
-        [recipientId]: allMessages, 
+        [recipientId]: allMessages,
       }));
 
       setChatUsers(prevUsers => {
@@ -159,33 +159,36 @@ const InboxHost = ({ user }) => {
   };
 
 
-  useEffect(() => {
-    const subscription = client.graphql(graphqlOperation(onCreateChat)).subscribe({
-      next: ({ value }) => {
-        const newMessage = value.data.onCreateChat;
-        const { userId: messageUserId, recipientId, text } = newMessage;
+  // useEffect(() => {
+  //   if (!userId) return;
 
-        // Only update if the message is for the current user or a contact
-        if (
-          (messageUserId === userId && recipientId !== userId) ||
-          (recipientId === userId && messageUserId !== userId)
-        ) {
-          setChatMessages(prevChats => {
-            const updatedChats = { ...prevChats };
-            if (updatedChats[recipientId]) {
-              updatedChats[recipientId].lastMessage = text;
-            } else {
-              updatedChats[recipientId] = { lastMessage: text };
-            }
-            return updatedChats;
-          });
-        }
-      },
-      error: (err) => console.error('Subscription error:', err),
-    });
+  //   const subscription = client.graphql(graphqlOperation(onCreateChat)).subscribe({
+  //     next: ({ value }) => {
 
-    return () => subscription.unsubscribe();
-  }, [userId]);
+  //       const newMessage = value.data.onCreateChat;
+  //       const { userId: messageUserId, recipientId, text } = newMessage;
+
+  //       // Only update if the message is for the current user or a contact
+  //       if (
+  //         (messageUserId === userId && recipientId !== userId) ||
+  //         (recipientId === userId && messageUserId !== userId)
+  //       ) {
+  //         setChatMessages(prevChats => {
+  //           const updatedChats = { ...prevChats };
+  //           if (updatedChats[recipientId]) {
+  //             updatedChats[recipientId].lastMessage = text;
+  //           } else {
+  //             updatedChats[recipientId] = { lastMessage: text };
+  //           }
+  //           return updatedChats;
+  //         });
+  //       }
+  //     },
+  //     error: (err) => console.error('Subscription error:', err),
+  //   });
+
+  //   return () => subscription.unsubscribe();
+  // }, [userId]);
 
   const generateChannelName = (userId, recipientId) => {
     const sortedIds = [userId, recipientId].sort();
@@ -205,24 +208,21 @@ const InboxHost = ({ user }) => {
       const filteredContactIds = filteredContacts.map(contact => contact.userId);
 
       // Fetch chats for each contact
-      // filteredContactIds.forEach(contactId => {
-      //   fetchChats(contactId);
-      // });
       const fetchAllChats = async () => {
         try {
-            setLoading(true); // Set loading true while chats are being fetched
+          setLoading(true); // Set loading true while chats are being fetched
 
-            // Use Promise.all to fetch chats for all contacts concurrently
-            await Promise.all(filteredContactIds.map(contactId => fetchChats(contactId)));
+          // Use Promise.all to fetch chats for all contacts concurrently
+          await Promise.all(filteredContactIds.map(contactId => fetchChats(contactId)));
 
         } catch (error) {
-            console.error('Error fetching chats:', error);
+          console.error('Error fetching chats:', error);
         } finally {
-            setLoading(false); // Set loading false once all chats are fetched
+          setLoading(false); // Set loading false once all chats are fetched
         }
-    };
+      };
 
-    fetchAllChats();
+      fetchAllChats();
     }
   }, [userId, contacts]);
 
