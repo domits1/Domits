@@ -24,11 +24,11 @@ const HostDashboard = () => {
           </Text>
         </View>
         <TouchableOpacity
-            style={styles.listItem}
-            onPress={() => navigation.navigate('OnboardingHost')}>
-            <Text style={styles.listItemText}>Onboarding</Text>
-            <MaterialIcons name="chevron-right" size={22} color="#000" />
-            </TouchableOpacity>
+          style={styles.listItem}
+          onPress={() => navigation.navigate('OnboardingHost')}>
+          <Text style={styles.listItemText}>Onboarding</Text>
+          <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigation.navigate('HostDashboard')}>
@@ -65,12 +65,12 @@ const HostDashboard = () => {
           <Text style={styles.listItemText}>Settings</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.listItem}
-          onPress={() => navigation.navigate('HostRevenue')}>
-          <Text style={styles.listItemText}>Revenue Tool</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
+        {/*<TouchableOpacity*/}
+        {/*  style={styles.listItem}*/}
+        {/*  onPress={() => navigation.navigate('HostRevenue')}>*/}
+        {/*  <Text style={styles.listItemText}>Revenue Tool</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigation.navigate('HostReviews')}>

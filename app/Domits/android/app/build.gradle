@@ -10,8 +10,8 @@ android {
         applicationId "com.domitstest.domits"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 2
-        versionName "1.1"
+        versionCode 4
+        versionName "4.5"
         missingDimensionStrategy 'react-native-camera', 'general' // Specify the dimension strategy for react-native-camera
     }
 

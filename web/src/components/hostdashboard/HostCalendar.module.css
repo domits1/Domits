@@ -49,4 +49,11 @@
         margin: 1em 0;
         gap: 1rem;
     }
+    .spinnerLoader {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+        width: 100%;
+    }
 }

@@ -53,14 +53,16 @@ const OccupancyRateCard = () => {
             <div className="or-date-picker">{formattedDate}</div>
 
             <div className="or-occupancy-rate-details">
-                <p><FaHome className="or-icon" /> Number of Properties: <strong>{numberOfProperties}</strong></p>
-                <p><FaBullseye className="or-icon" /> vs. Last Month: <strong className={vsLastMonth < 0 ? "or-down" : ""}>{vsLastMonth}% {vsLastMonth < 0 ? "↓" : "↑"}</strong></p>
+                <p><FaHome className="or-icon"/> Number of Properties: <strong>{numberOfProperties}</strong></p>
+                <p><FaBullseye className="or-icon"/> vs. Last Month: <strong
+                    className={vsLastMonth < 0 ? "or-down" : ""}>{vsLastMonth}% {vsLastMonth < 0 ? "↓" : "↑"}</strong>
+                </p>
 
                 <div className="or-gauge-wrapper">
                     <GaugeChart
                         id="gauge-chart1"
                         nrOfLevels={100}
-                        percent={occupancyRate} // Occupancy rate as a percentage in decimal format
+                        percent={occupancyRate}
                         colors={['#e0e0e0', '#2c3e50']}
                         arcWidth={0.2}
                         textColor="#000000"

@@ -5,7 +5,8 @@ import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
-import Home from "./components/home/Accommodations";
+import Home from './components/home/Accommodations';
+import Homepage from './components/home/homePage.js';
 import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomitstwo.js";
 import Release from "./components/about/release.js";
@@ -137,62 +138,37 @@ function App() {
 
   const [flowState, setFlowState] = useState({ isHost: false });
 
-  return (
-    <ApolloProvider client={client}>
-      {" "}
-      {/* ApolloProvider */}
-      <FlowContext.Provider value={{ flowState, setFlowState }}>
-        <Router>
-          <ScrollToTop />
-          <AuthProvider>
-            <UserProvider>
-              <div className="App">
-                {currentPath !== "/admin" && (
-                  <Header
-                    setSearchResults={setSearchResults}
-                    setLoading={setLoading}
-                  />
-                )}
-
-                <Routes>
-                  <Route
-                    path="/"
-                    element={<Home searchResults={searchResults} />}
-                  />
-                  <Route path="/about" element={<About />} />
-                  {/* <Route path="/release" element={<Release />} /> */}
-                  <Route path="/releaseTwo" element={<ReleaseTwo />} />
-                  <Route path="/data-safety" element={<Datasafety />} />
-                  <Route
-                    path="/helpdesk-guest"
-                    element={<Helpdesk category="guest" />}
-                  />
-                  <Route
-                    path="/helpdesk-host"
-                    element={<Helpdesk category="host" />}
-                  />
-                  <Route path="/how-it-works" element={<Howitworks />} />
-                  <Route path="/why-domits" element={<Whydomits />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route
-                    path="/travelinnovation"
-                    element={<Travelinnovation />}
-                  />
-                  <Route path="/release" element={<ReleaseUpdates />} />
-                  <Route path="/landing" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/confirm-email" element={<ConfirmRegister />} />
-                  <Route path="/listingdetails" element={<ListingDetails />} />
-                  <Route
-                    path="/bookingoverview"
-                    element={<BookingOverview />}
-                  />
-                  <Route
-                    path="/bookingconfirmation"
-                    element={<BookingConfirmation />}
-                  />
-                  {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
+    return (
+        <ApolloProvider client={client}> {/* ApolloProvider */}
+            <FlowContext.Provider value={{ flowState, setFlowState }}>
+                <Router>
+                    <ScrollToTop />
+                    <AuthProvider>
+                        <UserProvider>
+                            <div className="App">
+                            {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
+                                <Routes>
+                                    <Route path="/home" element={<Home searchResults={searchResults} />} />
+                                    <Route path="/" element={<Homepage />} />
+                                    <Route path="/about" element={<About />} />
+                                    {/* <Route path="/release" element={<Release />} /> */}
+                                    <Route path="/releaseTwo" element={<ReleaseTwo />} />
+                                    <Route path="/data-safety" element={<Datasafety />} />
+                                    <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
+                                    <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
+                                    <Route path="/how-it-works" element={<Howitworks />} />
+                                    <Route path="/why-domits" element={<Whydomits />} />
+                                    <Route path="/contact" element={<Contact />} />
+                                    <Route path="/travelinnovation" element={<Travelinnovation />} />
+                                    <Route path="/release" element={<ReleaseUpdates />} />
+                                    <Route path="/landing" element={<Landing />} />
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/register" element={<Register />} />
+                                    <Route path="/confirm-email" element={<ConfirmRegister />} />
+                                    <Route path="/listingdetails" element={<ListingDetails />} />
+                                    <Route path="/bookingoverview" element={<BookingOverview />} />
+                                    <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
+                                    {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
 
                   {/* Chat */}
                   <Route path="/chat" element={<Chat />} />

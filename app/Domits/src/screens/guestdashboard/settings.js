@@ -5,14 +5,26 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
   Switch,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from "react-native-safe-area-context";
-
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useAuth} from '../../context/AuthContext';
+import {useNavigation} from '@react-navigation/native';
+import {deleteUser} from '../GeneralUtils/GenUtils';
 const Settings = () => {
+  const {userAttributes} = useAuth();
+  const userId = userAttributes?.sub;
+  const navigation = useNavigation();
+
   const [highContrast, setHighContrast] = useState(false);
   const [showPaymentInfo, setShowPaymentInfo] = useState(true);
+
+  const handleDeleteAccount = () => {
+    navigation.navigate('login/loginScreen');
+    deleteUser(userId, navigation);
+  };
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -48,6 +60,16 @@ const Settings = () => {
             value={showPaymentInfo}
           />
         </View>
+
+        {/* Delete Account Option */}
+        <TouchableOpacity
+          style={[styles.listItem, {backgroundColor: '#ffe6e6'}]}
+          onPress={handleDeleteAccount}>
+          <Text style={[styles.listItemText, {color: 'red'}]}>
+            Delete Account
+          </Text>
+          <MaterialIcons name="delete" size={22} color="red" />
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

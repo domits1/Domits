@@ -6,7 +6,7 @@ import RevenueOverview from './HostRevenueCards/RevenueOverview.jsx';
 import axios from "axios";
 import MonthlyComparison from './HostRevenueCards/MonthlyComparison.jsx';
 import OccupancyRateCard from './HostRevenueCards/OccupancyRate.jsx';
-import RevPARCard from './HostRevenueCards/RevPAR.jsx';
+import RevPARCard from './HostRevenueCards/RevPAR.jsx'; // Import RevPARCard
 import ADRCard from './HostRevenueCards/ADRCard.jsx';
 import { Auth } from 'aws-amplify';
 
@@ -62,17 +62,19 @@ const HostRevenues = () => {
                 setUserEmail(userInfo.attributes.email);
                 setCognitoUserId(userInfo.attributes.sub);
 
-                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+                const response = await fetch(`https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`, {
                     method: 'POST',
                     headers: { 'Content-type': 'application/json; charset=UTF-8' },
                     body: JSON.stringify({ sub: userInfo.attributes.sub }),
                 });
 
                 const data = await response.json();
-                if (data.hasStripeAccount) {
-                    setStripeLoginUrl(data.loginLinkUrl);
-                    setBankDetailsProvided(data.bankDetailsProvided);
-                    setStripeStatus(data.bankDetailsProvided ? 'complete' : 'incomplete');
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
+                    setStripeLoginUrl(parsedBody.loginLinkUrl);
+                    setBankDetailsProvided(parsedBody.bankDetailsProvided);
+                    setStripeStatus(parsedBody.bankDetailsProvided ? 'complete' : 'incomplete');
                 } else {
                     setStripeStatus('none');
                 }
@@ -145,11 +147,9 @@ const HostRevenues = () => {
                                 </div>
                             </div>
 
-
                             <div className="hr-monthly-comparison">
                                 <MonthlyComparison data={monthlyRevenueData} />
                             </div>
-
 
                             {occupancyData ? (
                                 <OccupancyRateCard
@@ -160,8 +160,10 @@ const HostRevenues = () => {
                                 <p>Loading Occupancy Data...</p>
                             )}
 
-
-                            <ADRCard hostId={cognitoUserId} />  {/* New ADR Card */}
+                            <div className="hr-card-grid">
+                                <ADRCard hostId={cognitoUserId} />  {/* ADR Card */}
+                                <RevPARCard />  {/* New RevPAR Card */}
+                            </div>
                         </div>
                     )}
                 </div>

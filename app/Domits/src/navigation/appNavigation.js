@@ -1,6 +1,6 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import HomeScreen from '../screens/homeScreen';
 import Messages from '../screens/messages';
@@ -10,7 +10,7 @@ import Scan from '../header/scan';
 import Pay from '../header/pay';
 import Bookings from '../header/bookings';
 import Pocket from '../header/pocket';
-import { View, Text } from 'react-native';
+import {View, Text} from 'react-native';
 import profile from '../screens/guestdashboard/profile';
 import paymentMethods from '../screens/guestdashboard/paymentMethods';
 import reviews from '../screens/guestdashboard/reviews';
@@ -26,7 +26,7 @@ import HostListings from '../screens/hostdashboard/listings';
 import OnboardingHost from '../screens/hostdashboard/OnboardingHost';
 import HostSettings from '../screens/hostdashboard/settings';
 import Landing from '../screens/Landing';
-import emailSettings from '../screens/hostdashboard/emailSettings'
+// import emailSettings from '../screens/hostdashboard/emailSettings';
 import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingprocess/bookingProcess';
@@ -46,7 +46,7 @@ import Register from '../screens/login/register';
 import ConfirmMail from '../screens/login/confirmMail';
 import HostDetailPage from '../screens/hostdashboard/HostDetailPage';
 import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
-import MessagesStackNavigator from './messagesStackNavigator'; 
+import MessagesStackNavigator from './messagesStackNavigator';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -98,7 +98,7 @@ function HomeStack() {
       <Stack.Screen name="HostPayments" component={HostPayments} />
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
-      <Stack.Screen name="emailSettings" component={emailSettings} />
+      {/*<Stack.Screen name="emailSettings" component={emailSettings} />*/}
       <Stack.Screen name="HostRevenue" component={HostRevenue} />
       <Stack.Screen name="ListProperty" component={ListProperty} />
       <Stack.Screen name="LocationFillIn" component={LocationFillIn} />
@@ -118,7 +118,7 @@ function HomeStack() {
 function BottomTabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={({route}) => ({
         tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: '#f0f0f0',
@@ -126,7 +126,7 @@ function BottomTabNavigator() {
           height: 60,
           paddingBottom: 10,
         },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({focused, color, size}) => {
           let iconName;
           switch (route.name) {
             case 'Home':
@@ -143,14 +143,14 @@ function BottomTabNavigator() {
           }
 
           return (
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{alignItems: 'center', justifyContent: 'center'}}>
               <MaterialIcons
                 name={iconName}
                 size={30}
                 color={focused ? '#007AFF' : '#8e8e93'}
               />
               <Text
-                style={{ color: focused ? '#007AFF' : '#8e8e93', fontSize: 12 }}>
+                style={{color: focused ? '#007AFF' : '#8e8e93', fontSize: 12}}>
                 {route.name}
               </Text>
             </View>
@@ -160,12 +160,12 @@ function BottomTabNavigator() {
       <Tab.Screen
         name="Home"
         component={HomeStack}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Tab.Screen
         name="Messages"
         component={MessagesStackNavigator}
-        options={{ headerShown: false }} 
+        options={{headerShown: false}}
       />
       <Tab.Screen name="Account" component={AccountPage} />
     </Tab.Navigator>

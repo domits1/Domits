@@ -135,7 +135,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: 'black',
   },
-  labelText:{
+  labelText: {
     fontWeight: 'bold',
     marginLeft: 1,
   },
@@ -214,4 +214,3 @@ const styles = StyleSheet.create({
 });
 
 export default LoginScreen;
-

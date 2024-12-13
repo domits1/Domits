@@ -36,7 +36,7 @@ function HostCalendar() {
 
     try {
       const response = await fetch(
-        "https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation",
+        "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation",
         {
           method: "POST",
           body: JSON.stringify({ OwnerId: userId }),

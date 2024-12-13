@@ -22,64 +22,9 @@ function Pages() {
   const location = useLocation();
 
   useEffect(() => {
-    const setUserEmailAsync = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        setUserEmail(userInfo.attributes.email);
-        setCognitoUserId(userInfo.attributes.sub);
-        const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
-          method: 'POST',
-          headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-          },
-          body: JSON.stringify({ sub: userInfo.attributes.sub }),
-        });
-        const data = await response.json();
-        if (data.hasStripeAccount) {
-          setStripeLoginUrl(data.loginLinkUrl);
-        }
-      } catch (error) {
-        console.error("Error fetching user data or Stripe status:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    setUserEmailAsync();
-  }, []);
-
-  useEffect(() => {
     setActiveTab(location.pathname);
   }, [location.pathname]);
 
-  async function handleStripeAction() {
-    if (stripeLoginUrl) {
-      window.open(stripeLoginUrl, '_blank');
-    } else if (userEmail && cognitoUserId) {
-      const options = {
-        userEmail: userEmail,
-        cognitoUserId: cognitoUserId
-      };
-      try {
-        const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
-          method: 'POST',
-          body: JSON.stringify(options),
-          headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-          },
-        });
-        if (!result.ok) {
-          throw new Error(`HTTP error! Status: ${result.status}`);
-        }
-        const data = await result.json();
-
-        window.location.replace(data.url);
-      } catch (error) {
-        console.log(error);
-      }
-    } else {
-      console.error('User email or cognitoUserId is not defined.');
-    }
-  }
 
   const handleNavigation = (value) => {
     if (value === 'stripe') {
