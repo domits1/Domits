@@ -225,3 +225,57 @@
   z-index: 9999; 
   background-color: none;
 }
+
+@media (max-width: 450px) {
+  .fixed-search-bar {
+    position: fixed;
+    left: 50%;
+    top: 12vh !important;
+    transform: translateX(-50%);
+    width: 43.5rem;
+    z-index: 9999;
+    background-color: none;
+}
+.my-searchbar{
+  width: 26.5rem;
+}
+
+
+.DatePicker__input {
+  width: 100%;
+}
+
+.Search-button-section, .searchInputContainer, .Search-check-in{
+  background-color: white;
+}
+}
+
+@media (max-width: 768px) {
+  .fixed-search-bar {
+    position: fixed;
+    left: 50%;
+    top: 10vh;
+    transform: translateX(-50%);
+    width: 43.5rem;
+    z-index: 9999;
+    background-color: none;
+}
+
+.DatePicker__input {
+  width: 100%;
+}
+
+.Search-button-section, .searchInputContainer, .Search-check-in{
+  background-color: white;
+}
+}
+
+
+
+
+@media (max-width: 375px) {
+  .my-searchbar{
+    width: 22.5rem;
+  }
+}
+
