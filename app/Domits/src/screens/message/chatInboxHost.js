@@ -32,7 +32,7 @@ const InboxHost = ({ user }) => {
   const [chatMessages, setChatMessages] = useState({});
 
   const fetchHostContacts = async () => {
-    setLoading(true);
+    // setLoading(true);
     try {
       const requestData = {
         hostID: userId
@@ -55,56 +55,32 @@ const InboxHost = ({ user }) => {
     } catch (error) {
       console.error('Error fetching host contacts:', error);
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
-
-  const fetchChatUsers = async () => {
-    if (!userId) return;
+  const fetchOrderedChatUsers = async () => {
     try {
-
-      const response = await client.graphql(graphqlOperation(queries.listChats));
-
-      const allChats = response.data.listChats.items;
-
-      // console.log("All Chats Fetched:", allChats);
-
-      const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.userId, chat.recipientId]))]
-        .filter(id => id && id !== userId && id !== '7e50fbfa-3b06-486d-a96c-21a3a93b1647' && id !== '383e96b7-7cd1-4377-83a4-5454ed9c9374');
-
-      const usersWithData = [];
-
-      uniqueUsers.forEach(id => {
-        const userChats = allChats.filter(chat =>
-          (chat.userId === id && chat.recipientId === userId) ||
-          (chat.recipientId === id && chat.userId === userId)
-        );
-
-        if (userChats.length > 0) {
-          const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
-          usersWithData.push({
-            userId: id,
-            lastMessageTimestamp
-          });
-        }
+      const response = await fetch('https://97dww4xncg.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-ContactsSorted', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
       });
-
-      const filteredUsersData = usersWithData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-      setChatUsers(filteredUsersData);
-      setItemsDisplay(filteredUsersData);
-      // console.log('fecthchat: ', chatUsers);
-      // console.log('itemsdispl', itemsDisplay);
-      // console.log('userid:', userId);
+      if (!response.ok) throw new Error('Failed to fetch chat users');
+      const data = await response.json();
+      setChatUsers(data);
+      setItemsDisplay(data);
+      console.log(data)
     } catch (error) {
-      console.error("Error fetching chat users:", error);
+      console.error('Error fetching ordered chat users:', error);
     }
   };
+
   const fetchLatestChat = async (recipientId) => {
     if (!recipientId) {
       console.error('No valid recipient ID provided');
       return;
     }
-    setLoading(true); // Show loading spinner
+    // setLoading(true); // Show loading spinner
     try {
       const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages', {
         method: 'POST',
@@ -152,7 +128,7 @@ const InboxHost = ({ user }) => {
     } catch (error) {
       console.error('Error fetching latest chat:', error);
     } finally {
-      setLoading(false); // Hide loading spinner
+      // setLoading(false); // Hide loading spinner
     }
   };
   // useEffect(() => {
@@ -175,7 +151,8 @@ const InboxHost = ({ user }) => {
   useEffect(() => {
     if (userId) {
       fetchHostContacts();
-      fetchChatUsers();
+      fetchOrderedChatUsers();
+      // fetchChatUsers();
     }
   }, [userId]);
 
