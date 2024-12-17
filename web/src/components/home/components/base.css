@@ -161,7 +161,6 @@
     .header-nav, 
     .header-right {
         flex-direction: row;
-        justify-content: center;
         width: 100%;
     }
 

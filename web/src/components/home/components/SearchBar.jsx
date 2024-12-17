@@ -34,6 +34,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
   const [isMobile, setIsMobile] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
   const [scriptLoaded, setScriptLoaded] = useState(false);
+  const [isBarActive, setIsBarActive] = useState(false);
 
   const handleScriptLoad = () => {
     setScriptLoaded(true);
@@ -63,6 +64,25 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 480);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  const toggleSearchBar = () => {
+    setShowSearchBar(!showSearchBar);
+    setIsBarActive(!isBarActive);
+    toggleBar(!isBarActive);
+  };
+  
 
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
@@ -150,7 +170,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
   useEffect(() => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
-    } else if (location.pathname === '/' && location.state && location.state.searchParams) {
+    } else if (location.pathname === '/home' && location.state && location.state.searchParams) {
       const { accommodation, address, totalGuests } = location.state.searchParams;
       setTimeout(() => {
         performSearch(accommodation, address, totalGuests);
@@ -204,10 +224,10 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
   };
 
   const handleSearch = () => {
-    const shouldNavigate = location.pathname !== '/';
+    const shouldNavigate = location.pathname !== '/home';
     if (shouldNavigate) {
       setSearchResults([]);
-      navigate('/', {
+      navigate('/home', {
         state: {
           searchParams: { accommodation, address, totalGuests }
         }
@@ -297,13 +317,13 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
       className={`my-searchbar-container ${isFixed ? "fixed-search-bar" : ""}`}
     >
       {isMobile && (
-        <button className="my-searchbar-mobile-button">
+                  <button className="my-mobile-search-button" onClick={toggleSearchBar}>
           <FaSearchLocation size={15} /> Search & Filter Accommodations
         </button>
       )}
 
         {(showSearchBar || !isMobile) && (
-            <div className={`SearchBarContainer`}>
+            <div className={`SearchBarContainer ${isBarActive ? 'active' : 'inactive'}`}>
               <div className="my-searchbar">
                 <div className="my-searchbar-location">
 
@@ -322,11 +342,11 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                           }}
                       >
                         {({getInputProps, suggestions, getSuggestionItemProps, loading}) => (
-                            <div className="autocomplete-container"
+                            <div className=".my-autocomplete-container"
                                  style={{marginTop: '10px', position: 'relative'}}>
                               <input
                                   {...getInputProps({
-                                    className: 'searchBar_inputfield',
+                                    className: 'my-searchbar_inputfield',
                                     type: 'search',
                                     placeholder: 'Search Destination',
                                     onKeyDown: handleKeyDown
@@ -335,7 +355,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
 
                               {suggestions.length > 0 && (
                                   <div
-                                      className="suggestions-container"
+                                      className=".my-suggestions-container "
                                       style={{
                                         position: 'absolute',
                                         top: isMobile ? '120%' : '150%',
@@ -415,7 +435,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                   )}
                 </div>
 
-                <div className="searchInputContainer">
+                <div className="my-searchbar-search-input-container">
                   <Select
                       value={accommodation ? {label: accommodation, value: accommodation} : null}
                       onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
@@ -433,7 +453,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                       placeholder={<span className="searchTitle">Accommodation</span>}
                       styles={{
                         control: (provided) => {
-                          const isMobile = window.innerWidth <= 768;
+                          const isMobile = window.innerWidth <= 425;
                           return {
                             ...provided,
                             border: 'none',
@@ -448,7 +468,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                           };
                         },
                         menu: (provided, state) => {
-                          const isMobile = window.innerWidth <= 768;
+                          const isMobile = window.innerWidth <= 425;
                           return {
                             ...provided,
                             backgroundColor: 'white',
@@ -509,9 +529,9 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
 
                 </div>
 
-                <div className={`Search-button-section ${showGuestDropdown ? 'active' : ''}`}
+                <div className={`my-button-section ${showGuestDropdown ? 'active' : ''}`}
                      onClick={toggleGuestDropdown}>
-                  <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests • Rooms</p>
+                  <p className={`my-searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests • Rooms</p>
                   {totalGuests > 0 && (
                       <button
                           className="Search-clear-guests"
@@ -531,14 +551,14 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                       </button>
                   )}
 
-                  <p className={`Search-guestP ${hasTwoGuests ? 'nowrap' : ''}`}>
+                  <p className={`my-Search-guestP ${hasTwoGuests ? 'nowrap' : ''}`}>
                     {totalGuestsDescription}
                   </p>
-                  <div className={`Search-guest-dropdown ${showGuestDropdown ? 'active' : ''}`}
+                  <div className={`my-searchbar-guest-dropdown ${showGuestDropdown ? 'active' : ''}`}
                        ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
                     {isMobile && (
                         <button
-                            className="Search-close-guest-dropdown"
+                            className="my-Search-close-guest-dropdown"
                             onClick={closeGuestDropdown}
                             style={{
                               position: 'absolute',
@@ -594,9 +614,9 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                 </div>
 
 
-                <div className="Search-check-in" style={{position: 'relative'}}>
+                <div className=".my-check-in" style={{position: 'relative'}}>
                   <input
-                      className="input-calendar"
+                      className="my-input-calendar"
                       type="text"
                       value={startDate && endDate
                           ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`
@@ -631,14 +651,14 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                       minimumDate={utils("en").getToday()}
                       shouldHighlightWeekends
                       format="MMM DD, YYYY"
-                      calendarClassName="responsive-calendar"
+                      calendarClassName="responsives-calendar"
                   />
                 </div>
 
-                <button className={`my-searchbar-button `} type="button" onClick={handleSearch}>
+                <button className={`my-searchbar-button`} type="button" onClick={handleSearch}>
                   <FaSearchLocation size={15} style={{position: 'relative', right: '2px'}}
                                     className="search-icon"/>
-                  <span className="search-text">Search</span>
+                  <span className="my-search-text">Search</span>
                 </button>
 
               </div>
