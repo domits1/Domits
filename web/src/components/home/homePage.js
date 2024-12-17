@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef  } from "react";
+import React, { useState, useEffect, useRef, toggleBar  } from "react";
 import { useNavigate } from "react-router-dom";
 import "./homePage.css";
 import verifiedLogo from "../../images/icons/verify-icon.png";
@@ -23,6 +23,16 @@ const Homepage = () => {
   const [camperAccommodations, setCamperAccommodations] = useState([]);
   const [accommodationImages, setAccommodationImages] = useState([]);
   const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
+  const [isBarActive, setIsBarActive] = useState(false);
+
+  const toggleBar = (isActive) => {
+    setIsBarActive(isActive);
+  };
+
+  useEffect(() => {
+    console.log("Is Bar Active:", isBarActive);
+  }, [isBarActive]);
+  
 
   useEffect(() => {
     document.body.classList.add("hide-header");
@@ -223,13 +233,23 @@ const Homepage = () => {
         </div>
         <div className="domits-searchbarCon">
 
-        <MySearchBar
+        {/* <MySearchBar
           setSearchResults={setSearchResults}
           setLoading={setLoading}
           isFixed={isFixed} 
           searchBarRef={searchBarRef}
           placeholderText="Search for holiday homes, boats, or campers..."
-        />
+        /> */}
+
+      <MySearchBar
+        setSearchResults={setSearchResults}
+        setLoading={setLoading}
+        toggleBar={toggleBar} 
+        isFixed={isFixed}
+        searchBarRef={searchBarRef}
+        placeholderText="Search for holiday homes, boats, or campers..."
+      />
+
 
 
        </div> 
