@@ -30,12 +30,12 @@ const GuestDashboard = ({navigation}) => {
           <Text style={styles.listItemText}>Profile</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.listItem}
-          onPress={() => navigateTo('PaymentMethods')}>
-          <Text style={styles.listItemText}>Payment methods</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
+        {/*<TouchableOpacity*/}
+        {/*  style={styles.listItem}*/}
+        {/*  onPress={() => navigateTo('PaymentMethods')}>*/}
+        {/*  <Text style={styles.listItemText}>Payment methods</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigateTo('Reviews')}>
