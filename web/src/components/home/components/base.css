@@ -1,0 +1,211 @@
+.header-app-header {
+    box-shadow: 0 2px 6px 0 #0d1a2626;
+    padding: 20px 50px 5px 50px;
+    text-align: center;
+    background-color: white;
+    position: fixed;
+    width: 100%;
+    z-index: 1000;
+}
+
+.header-trustpilot-bar {
+    display: flex;
+    justify-content: center;
+    margin-top: 2px;
+}
+
+.header-nav {
+    height: 8vh;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 95%;
+}
+
+.header-right {
+    float: right;
+    display: flex;
+    align-items: center;
+}
+
+.header-buttons, 
+.header-personal-menu {
+    float: left;
+    color: black;
+    text-align: center;
+    padding: 12px;
+    font-size: 18px;
+    border-radius: 10px;
+    margin-top: 0;
+    display: inline-flex;
+    font-family: Kanit, sans-serif;
+    cursor: pointer;
+    width: auto;
+    box-shadow: 0 0 5px hsl(0 0% 78%);
+}
+
+.header-personal-menu {
+    border: none;
+    background-color: var(--primary-color);
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    display: flex;
+}
+
+.header-host-button, 
+.header-buttons {
+    border: none;
+    background: none;
+    box-shadow: none;
+    margin-right: 10px;
+}
+
+.header-personal-menu-dropdown {
+    position: relative;
+    display: inline-block;
+    z-index: 2;
+}
+
+.header-personal-menu-dropdown-content {
+    display: none;
+}
+
+.header-personal-menu-dropdown-content.show {
+    display: block;
+}
+
+.header-personal-menu-dropdown .header-personal-menu-dropdown-content {
+    padding: 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: auto;
+    min-width: 240px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    top: calc(100% + 5px);
+    right: 0;
+    border-radius: 10px;
+}
+
+.header-personal-menu-dropdown-content button {
+    padding: 8px 15px;
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
+    width: 100%;
+    color: white;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+.header-dropdown-login-button {
+    margin-top: 0;
+    margin-bottom: 10px;
+    background: var(--primary-color);
+    border: none;
+    box-shadow: none;
+}
+
+.header-dropdown-register-button, 
+.header-dropdown-logout-button {
+    margin-top: 10px;
+    background-color: var(--secondary-color);
+    border: none;
+    box-shadow: none;
+}
+
+.header-dropdown-logout-button {
+    margin-top: 20px;
+}
+
+.header-personal-menu-dropdown .header-personal-menu-dropdown-content button:hover {
+    opacity: 90%;
+}
+
+.header-buttons:hover {
+    background: #3fb3663a;
+    padding: 12px;
+}
+
+.header-personal-menu:hover {
+    opacity: 90%;
+}
+
+.header-hello-username {
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
+}
+
+/* Media Queries */
+@media screen and (max-width: 768px) {
+    .header-trustpilot-bar {
+        margin: 0 auto;
+        padding-bottom: 10px;
+    }
+
+    .header-app-header {
+        height: 10vh;
+    }
+
+    .header-nav, 
+    .header-right {
+        flex-direction: row;
+        width: 100%;
+    }
+
+    .header-right {
+        width: 69%;
+        margin-top: 20px;
+    }
+
+    .header-buttons, 
+    .header-personal-menu {
+        width: 100%;
+        margin-top: 10px;
+        margin-right: 0;
+        justify-content: center;
+        float: none;
+    }
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+    .header-nav {
+        flex-wrap: nowrap;
+    }
+
+    .header-right {
+        margin-left: 3vw;
+    }
+
+    .header-buttons.header-host-button {
+        margin-left: -15%;
+        font-size: 13px;
+    }
+
+    .header-personal-menu {
+        margin-left: -15%;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-app-header {
+        height: 15vh;
+    }
+}
+
+@media (max-width: 1024px) {
+    .header-app-header {
+        height: 15vh;
+    }
+}
