@@ -32,7 +32,7 @@
   top: 50%;
   transform: translateY(-50%);
   width: 0.05rem;
-  height: 60%;
+  height: 40%;
   background: rgb(88, 153, 22);
 }
 
@@ -441,11 +441,6 @@
     text-overflow: ellipsis;
   }
 
-
-  .my-searchbar {
-    display: none;
-  }
-
   .my-searchbar-container .my-searchbar {
     display: block;
     align-items: center;
@@ -500,16 +495,16 @@
   transform: translateX(-50%);
   width: 95%;
   z-index: 9999;
-  top: 22vh;
+  top: 10vh;
   background-color: none;
 }
 
-@media (min-width: 1024px) and (max-width: 1439px) {
+/* @media (min-width: 1024px) and (max-width: 1439px) {
   .fixed-search-bar {
       top: 10vh; 
       width: 60%;
   }
-}
+} */
 
 @media (min-width: 1440px) {
   .fixed-search-bar {
@@ -522,12 +517,23 @@
   .fixed-search-bar {
       top: 22vh;
   }
+  .my-searchbar-guest-dropdown {
+    width: 17.125rem;
+    margin-right: 0;
+    left: 47%;
+}
 }
 
 @media (max-width: 425px) {
   .fixed-search-bar {
       top: 22vh;
   }
+
+  .my-searchbar-guest-dropdown {
+    width: 17.125rem;
+    margin-right: 0;
+    left: 47%;
+}
 }
 
 @media (min-width: 1024px) {
@@ -543,7 +549,7 @@
   }
 
   .my-searchbar-button {
-    width: 5.5rem;  
+    width: 6.5rem;  
   }
 
   .my-button-section{
