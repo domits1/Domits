@@ -223,10 +223,10 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
   };
 
   const handleSearch = () => {
-    const shouldNavigate = location.pathname !== '/';
+    const shouldNavigate = location.pathname !== '/home';
     if (shouldNavigate) {
       setSearchResults([]);
-      navigate('/', {
+      navigate('/home', {
         state: {
           searchParams: { accommodation, address, totalGuests }
         }
@@ -649,7 +649,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                   />
                 </div>
 
-                <button className={`searchbar-button `} type="button" onClick={handleSearch}>
+                <button className={`searchbar-button`} type="button" onClick={handleSearch}>
                   <FaSearchLocation size={15} style={{position: 'relative', right: '2px'}}
                                     className="search-icon"/>
                   <span className="search-text">Search</span>
