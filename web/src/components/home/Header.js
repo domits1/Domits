@@ -8,7 +8,7 @@ import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
 import FlowContext from '../../FlowContext';
 import { Auth } from 'aws-amplify';
-import './components/base.css';
+import './components/bases.css';
 
 function Header({ setSearchResults, setLoading }) {
     const navigate = useNavigate();
