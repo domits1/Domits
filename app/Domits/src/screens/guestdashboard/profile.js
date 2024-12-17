@@ -1,52 +1,65 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from "react-native-safe-area-context";
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useAuth} from '../../context/AuthContext';
 
-const SettingsScreen = ({navigation}) => {
-  const navigateTo = screen => {
-    navigation.navigate(screen);
-  };
+const Profile = () => {
+  const {userAttributes} = useAuth();
+  const [firstName, setFirstName] = useState('');
+  const [emailAddress, setEmailAddress] = useState('');
+
+  useEffect(() => {
+    const fetchUserAttributes = async () => {
+      try {
+        setFirstName(userAttributes?.given_name);
+        setEmailAddress(userAttributes?.email);
+      } catch (error) {
+        console.error('Error fetching user attributes:', error);
+      }
+    };
+
+    fetchUserAttributes();
+  }, [userAttributes]);
 
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Profile</Text>
-          <Text style={styles.headerSubText}>
-            Change your profile settings.
-          </Text>
         </View>
-        <TouchableOpacity
-          style={styles.avatarContainer}
-          onPress={() => navigateTo('EditAvatar')}>
-          <Text style={styles.listItemText}>Avatar</Text>
-          <Image source={{uri: 'avatar_url'}} style={styles.avatar} />
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        {['Email address', 'Password', 'Logout'].map((item, index) => (
-          <TouchableOpacity
-            key={index}
-            style={styles.listItem}
-            onPress={() => navigateTo(item.replace(/\s+/g, ''))}>
-            <Text style={styles.listItemText}>{item}</Text>
-            <MaterialIcons name="chevron-right" size={22} color="#000" />
-          </TouchableOpacity>
-        ))}
-        <TouchableOpacity
-          style={styles.deactivateButton}
-          onPress={() => navigateTo('DeactivateAccount')}>
-          <Text style={styles.deactivateButtonText}>
-            Deactivate account for 30 days
-          </Text>
-        </TouchableOpacity>
+
+        <View>
+          <View style={styles.avatarContainer}>
+            <View style={styles.listItem}>
+              <Text style={styles.listItemText}>Name: {firstName}</Text>
+            </View>
+          </View>
+          <View style={styles.listItem}>
+            <Text style={styles.listItemText}>Email: {emailAddress}</Text>
+          </View>
+        </View>
+        {/*  <View style={styles.listItem}>*/}
+        {/*    <Text style={styles.listItemText}>Logout</Text>*/}
+        {/*    <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*  </View>*/}
+        {/*</View>*/}
+
+        {/*<View>*/}
+        {/*  <Text style={styles.listItemTitle}>*/}
+        {/*    Deactivate your account for 30 days*/}
+        {/*  </Text>*/}
+        {/*  <TouchableOpacity style={styles.listItem}>*/}
+        {/*    <Text style={styles.deactivateText}>Deactivate Account</Text>*/}
+        {/*    <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*  </TouchableOpacity>*/}
+        {/*</View>*/}
       </ScrollView>
     </SafeAreaView>
   );
@@ -55,62 +68,44 @@ const SettingsScreen = ({navigation}) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: 'white',
   },
   header: {
-    paddingVertical: 16,
-    paddingHorizontal: 20,
+    alignItems: 'center',
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
+    marginBottom: 30,
+    marginTop: 10,
   },
   headerText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 4,
-  },
-  headerSubText: {
-    fontSize: 14,
-    color: 'gray',
   },
   listItem: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    margin: 10,
   },
   listItemText: {
-    fontSize: 16,
+    fontSize: 18,
+  },
+  listItemTitle: {
+    fontSize: 15,
+    margin: 10,
   },
   avatarContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  deactivateButton: {
-    marginTop: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  deactivateButtonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#FF3B30',
+  deactivateText: {
+    fontSize: 18,
+    color: 'red',
   },
 });
 
-export default SettingsScreen;
+export default Profile;

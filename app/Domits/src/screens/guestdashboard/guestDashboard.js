@@ -8,17 +8,19 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useAuth} from '../../context/AuthContext';
 
 const GuestDashboard = ({navigation}) => {
   const navigateTo = screen => {
     navigation.navigate(screen);
   };
-
+  const {userAttributes} = useAuth();
+  const firstName = userAttributes?.given_name || 'N/A';
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome Lotte Summer!</Text>
+          <Text style={styles.welcomeText}>Welcome {firstName}</Text>
           <Text style={styles.descriptionText}>
             Manage your profile, see your payments, add or remove reviews and
             change app settings.
