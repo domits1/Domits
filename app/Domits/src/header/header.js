@@ -14,7 +14,7 @@ import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import SearchBarApp from '../header/SearchBarApp';
-import Settings from '../screens/pictures/settings-icon.png';
+// import Settings from '../screens/pictures/settings-icon.png';
 function Header() {
   const navigation = useNavigation();
 
