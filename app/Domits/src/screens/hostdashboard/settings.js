@@ -46,7 +46,9 @@ const HostSettings = () => {
         {/*  <Text style={styles.listItemText}>Set profile to private</Text>*/}
         {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
         {/*</TouchableOpacity>*/}
-        <TouchableOpacity style={styles.listItem}>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('helpDesk')}>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -65,6 +67,7 @@ const HostSettings = () => {
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: -30,
     flex: 1,
     backgroundColor: 'white',
   },

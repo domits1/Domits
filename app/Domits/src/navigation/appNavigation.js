@@ -27,6 +27,7 @@ import OnboardingHost from '../screens/hostdashboard/OnboardingHost';
 import HostSettings from '../screens/hostdashboard/settings';
 import Landing from '../screens/Landing';
 import emailSettings from '../screens/hostdashboard/emailSettings';
+import helpDesk from '../screens/hostdashboard/helpDesk';
 import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingprocess/bookingProcess';
@@ -99,6 +100,7 @@ function HomeStack() {
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
       <Stack.Screen name="emailSettings" component={emailSettings} />
+      <Stack.Screen name="helpDesk" component={helpDesk} />
       <Stack.Screen name="HostRevenue" component={HostRevenue} />
       <Stack.Screen name="ListProperty" component={ListProperty} />
       <Stack.Screen name="LocationFillIn" component={LocationFillIn} />
