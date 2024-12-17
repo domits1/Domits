@@ -1,6 +1,6 @@
 .header-app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
-    padding: 20px 50px 5px 50px;
+    padding: 20px 1% 5px 1%; 
     text-align: center;
     background-color: white;
     position: fixed;
@@ -120,6 +120,9 @@
     border: none;
     box-shadow: none;
 }
+.swiper-button-prev.swiper-button-disabled{
+    opacity: 0;
+}
 
 .header-dropdown-logout-button {
     margin-top: 20px;
@@ -165,8 +168,8 @@
     }
 
     .header-right {
-        width: 69%;
-        margin-top: 20px;
+        width: 97%;
+        margin-top: -32px;
     }
 
     .header-buttons, 
