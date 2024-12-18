@@ -165,7 +165,15 @@ function HostCalendar() {
             <div className={styles.dashboardHost}>
                 <Pages/>
                 {isLoading ? (
-                    <div>
+                    <div
+                        style={{
+                            display: 'flex',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            height: '42vh',
+                            width: '72.5%',
+                        }}
+                    >
                         <img src={spinner}/>
                     </div>
                 ) : accommodations.length < 1 ? (
@@ -200,7 +208,9 @@ function HostCalendar() {
                                     </p>
                                     <div className={calenderStyles.locationBox}>
                                         <CalendarComponent passedProp={selectedAccommodation} isNew={false}
-                                                           updateDates={updateDates}/>
+                                                           updateDates={updateDates}
+                                                           componentView={true}
+                                        />
                                     </div>
                                 </div>
                             ) : (

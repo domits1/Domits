@@ -6,6 +6,7 @@ import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
 import Home from './components/home/Accommodations';
+import Homepage from './components/home/homePage.js';
 import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomitstwo.js";
 import Release from "./components/about/release.js";
@@ -146,10 +147,10 @@ function App() {
                     <AuthProvider>
                         <UserProvider>
                             <div className="App">
-                                {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
-
+                            {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
                                 <Routes>
-                                    <Route path="/" element={<Home searchResults={searchResults} />} />
+                                    <Route path="/home" element={<Home searchResults={searchResults} />} />
+                                    <Route path="/" element={<Homepage />} />
                                     <Route path="/about" element={<About />} />
                                     {/* <Route path="/release" element={<Release />} /> */}
                                     <Route path="/releaseTwo" element={<ReleaseTwo />} />

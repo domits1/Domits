@@ -89,7 +89,7 @@ function HostDistribution() {
                     const ownerId = userId;
 
                     try {
-                        const response = await fetch('https://boovagkg50.execute-api.eu-north-1.amazonaws.com/default/getAccommodationByOwner', {
+                        const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Read-AccommodationByOwner', {
                             method: 'POST',
                             body: JSON.stringify({id: ownerId}),
                             headers: {
@@ -120,7 +120,7 @@ function HostDistribution() {
     const asyncRetrieveChannelData = async () => {
         if (!userId) return;
         try {
-            const response = await fetch('https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/retrieveChannelsData', {
+            const response = await fetch('https://9uv5o7aiz6.execute-api.eu-north-1.amazonaws.com/dev/Host-ChannelManagement-Production-Read-AllChannels', {
                 method: 'POST',
                 body: JSON.stringify({
                     UserId: userId
@@ -311,7 +311,7 @@ function HostDistribution() {
         }
 
         try {
-            const response = await fetch('https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/CreateChannel', {
+            const response = await fetch('https://9uv5o7aiz6.execute-api.eu-north-1.amazonaws.com/dev/Host-ChannelManagement-Production-Create-Channel', {
                 method: 'POST',
                 body: JSON.stringify({
                     id: id,
@@ -658,7 +658,7 @@ function HostDistribution() {
 
         if (accommodationsToSync.length === 0) {
             try {
-                const response = await fetch('https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/EditSingleChannel', {
+                const response = await fetch('https://9uv5o7aiz6.execute-api.eu-north-1.amazonaws.com/dev/Host-ChannelManagement-Production-Update-Channel', {
                     method: 'PUT',
                     body: JSON.stringify({
                         id: channelId,
@@ -762,7 +762,7 @@ function HostDistribution() {
         if (!window.confirm('Are you sure you want to delete this channel?')) return;
 
         try {
-            const response = await fetch('https://9ejo73yw68.execute-api.eu-north-1.amazonaws.com/default/DeleteChannel', {
+            const response = await fetch('https://9uv5o7aiz6.execute-api.eu-north-1.amazonaws.com/dev/Host-ChannelManagement-Production-Delete-Channel', {
                 method: 'DELETE',
                 body: JSON.stringify({
                     id: channelId

@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from "react";
 import styles from './Calendar.module.css';
-import { isSameDay } from "date-fns";
+import {isSameDay} from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";
 
@@ -12,7 +12,7 @@ import {useNavigate} from "react-router-dom";
  * @returns {Element}
  * @constructor
  */
-function CalendarComponent({ passedProp, isNew, updateDates }) {
+function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     const navigate = useNavigate();
     const [month, setMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
@@ -21,8 +21,10 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
     const [originalRanges, setOriginalRanges] = useState([]);
     let [dateRange, setDateRange] = useState({
         startDate: null,
-        endDate:null
+        endDate: null
     });
+
+    const [showSection, setShowSection] = useState(componentView || false);
 
     const months = [
         'January', 'February', 'March', 'April',
@@ -30,31 +32,38 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
         'September', 'October', 'November', 'December'
     ];
 
-    const [minimumStay, setMinimumStay] = useState();
-    const [minimumBookingPeriod, setMinimumBookingPeriod] = useState();
-    const [maximumStay, setMaximumStay] = useState();
+    const [minimumStay, setMinimumStay] = useState(passedProp.MinimumStay || 0);
+    const [minimumAdvanceReservation, setMinimumAdvanceReservation] = useState(passedProp.MinimumAdvanceReservation || 0);
+    const [maximumStay, setMaximumStay] = useState(passedProp.MaximumStay || 0);
+    const [maximumAdvanceReservation, setMaximumAdvanceReservation] = useState(passedProp.MaximumAdvanceReservation || 0);
+    const [originalMinimumStay, setOriginalMinimumStay] = useState(passedProp.MinimumStay || 0);
+    const [originalMinimumAdvanceReservation, setOriginalMinimumAdvanceReservation] = useState(passedProp.MinimumAdvanceReservation || 0);
+    const [originalMaximumStay, setOriginalMaximumStay] = useState(passedProp.MaximumStay || 0);
+    const [originalMaximumAdvanceReservation, setOriginalMaximumAdvanceReservation] = useState(passedProp.MaximumAdvanceReservation || 0);
 
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setSelectedRanges(passedProp.DateRanges);
             setOriginalRanges(passedProp.DateRanges);
+            setMinimumStay(passedProp.MinimumStay || 0);
+            setMinimumAdvanceReservation(passedProp.MinimumAdvanceReservation || 0);
+            setMaximumStay(passedProp.MaximumStay || 0);
+            setMaximumAdvanceReservation(passedProp.MaximumAdvanceReservation || 0);
         }
-    }, [passedProp.ID, passedProp.DateRanges]);
+    }, [passedProp.ID, passedProp.DateRanges, passedProp.MinimumStay, passedProp.MinimumAdvanceReservation, passedProp.MaximumStay, passedProp.MaximumAdvanceReservation]);
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setOriginalRanges(passedProp.DateRanges);
         }
     }, [passedProp.ID]);
-    useEffect(() => {
-        if (passedProp &&
-            passedProp.MinimumStay !== undefined &&
-            passedProp.MinimumBookingPeriod !== undefined &&
-            passedProp.MaximumStay !== undefined){
-            setMinimumStay(passedProp.MinimumStay);
-            setMinimumBookingPeriod(passedProp.MinimumBookingPeriod);
-            setMaximumStay(passedProp.MaximumStay);
-        }
-    }, [passedProp.ID, passedProp.MinimumStay, passedProp.MinimumBookingPeriod, passedProp.MaximumStay]);
+
+    const incrementAmount = (setter, value, limit) => {
+        setter(prev => (prev < limit ? prev + 1 : prev));
+    };
+
+    const decrementAmount = (setter, value, minimum = 0) => {
+        setter(prev => (prev > minimum ? prev - 1 : prev));
+    };
 
     const renderDates = () => {
         const today = new Date();
@@ -109,8 +118,8 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
     };
 
     const dateRangesOverlap = (range1, range2) => {
-        const { startDate: start1, endDate: end1 } = range1;
-        const { startDate: start2, endDate: end2 } = range2;
+        const {startDate: start1, endDate: end1} = range1;
+        const {startDate: start2, endDate: end2} = range2;
 
         return (
             (start1 <= start2 && (end1 === null || start2 <= end1)) ||
@@ -121,10 +130,9 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
     };
 
 
-
     useEffect(() => {
         renderDates();
-    }, [month, year, selectedRanges, minimumStay]);
+    }, [month, year, selectedRanges]);
 
     const handleDateClick = (dateClicked) => {
         const clickedDate = new Date(dateClicked);
@@ -148,24 +156,6 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                         newDateRange = {
                             startDate: clickedDate,
                             endDate: newDateRange.startDate
-                        };
-                    }
-
-                    const normalizedStartDate = new Date(newDateRange.startDate);
-                    normalizedStartDate.setHours(0, 0, 0, 0);
-
-                    const normalizedEndDate = new Date(newDateRange.endDate);
-                    normalizedEndDate.setHours(0, 0, 0, 0);
-
-                    const daysSelected = Math.floor(
-                        (normalizedEndDate - normalizedStartDate) / (1000 * 60 * 60 * 24) + 1
-                    );
-
-                    if (daysSelected < minimumStay) {
-                        alert(`The selected range is too short. Minimum stay is ${minimumStay} days.`);
-                        return {
-                            startDate: null,
-                            endDate: null
                         };
                     }
 
@@ -224,18 +214,24 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
     const asyncSaveDates = async () => {
         const body = {
             DateRanges: selectedRanges,
+            MinimumStay: minimumStay,
+            MinimumAdvanceReservation: minimumAdvanceReservation,
+            MaximumStay: maximumStay,
+            MaximumAdvanceReservation: maximumAdvanceReservation,
             ID: passedProp.ID
-        }
+        };
+
         console.log(body);
         try {
-            const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/UpdateAccommodation', {
+            const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Update-AccommodationStayParameters', {
                 method: 'PUT',
                 body: JSON.stringify(body),
-                headers: {'Content-type': 'application/json; charset=UTF-8',
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
                 }
             });
             if (!response.ok) {
-                alert("Something went wrong, please try again later...")
+                alert("Something went wrong, please try again later...");
                 throw new Error('Failed to fetch');
             } else {
                 const data = await response.json();
@@ -243,9 +239,9 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                 if (jsonData.updatedAttributes) {
                     const updatedAttributes = jsonData.updatedAttributes;
                     passedProp.DateRanges = updatedAttributes.DateRanges;
-                    alert("Update successful!")
+                    alert("Update successful!");
                 } else {
-                    alert("Something went wrong, please try again later...")
+                    alert("Something went wrong, please try again later...");
                     console.log("updatedAttributes is missing in the response");
                 }
             }
@@ -264,6 +260,22 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
             return updatedRanges;
         });
     };
+
+    const handleUndo = () => {
+        setSelectedRanges(originalRanges);
+        setMinimumStay(originalMinimumStay);
+        setMinimumAdvanceReservation(originalMinimumAdvanceReservation);
+        setMaximumStay(originalMaximumStay);
+        setMaximumAdvanceReservation(originalMaximumAdvanceReservation);
+    }
+
+    useEffect(() => {
+        if (componentView === true) {
+         setShowSection(true);
+        } else {
+            setShowSection(false);
+        }
+    }, [componentView]);
 
     return (
         <main className={styles.body}>
@@ -305,9 +317,88 @@ function CalendarComponent({ passedProp, isNew, updateDates }) {
                         )) : <div>Start by selecting your date range</div>}
                     </section>
                 </div>
+                {showSection === true && (<section>
+                        <div className={styles.staying_nights}>
+                            <div className={styles.stayMinMaxBox}>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Minimum Stay (Days):</label>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setMinimumStay, minimumStay)}
+                                        >
+                                            -
+                                        </button>
+                                        {minimumStay}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setMinimumStay, minimumStay, 30)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Minimum Booking Period (Days):</label>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setMinimumAdvanceReservation, minimumAdvanceReservation)}
+                                        >
+                                            -
+                                        </button>
+                                        {minimumAdvanceReservation}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setMinimumAdvanceReservation, minimumAdvanceReservation, 30)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Maximum Stay (Days):</label>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setMaximumStay, maximumStay, minimumStay)}
+                                        >
+                                            -
+                                        </button>
+                                        {maximumStay}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setMaximumStay, maximumStay, 365)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Maximum Advance Reservation (Days):</label>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setMaximumAdvanceReservation, maximumAdvanceReservation, minimumAdvanceReservation)}
+                                        >
+                                            -
+                                        </button>
+                                        {maximumAdvanceReservation}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setMaximumAdvanceReservation, maximumAdvanceReservation, 365)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                )}
             </section>
             {!isNew && <section className={styles.buttonBox}>
-                <button className={styles.undo} onClick={() => setSelectedRanges(originalRanges)}>Undo</button>
+                <button className={styles.undo} onClick={() => handleUndo()}>Undo</button>
                 <button className={styles.save} onClick={() => asyncSaveDates()}>Save</button>
             </section>}
         </main>

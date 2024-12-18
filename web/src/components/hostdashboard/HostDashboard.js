@@ -25,7 +25,7 @@ function HostDashboard() {
                 const userInfo = await Auth.currentAuthenticatedUser();
                 const cognitoUserId = userInfo.attributes.sub;
 
-                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+                const response = await fetch(`https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`, {
                     method: 'POST',
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
@@ -33,8 +33,9 @@ function HostDashboard() {
                     body: JSON.stringify({ sub: cognitoUserId }),
                 });
                 const { hasStripeAccount } = await response.json();
+                const parsedBody = JSON.parse(hasStripeAccount.body);
 
-                setIsStripeModalOpen(!hasStripeAccount);
+                setIsStripeModalOpen(!parsedBody);
             } catch (error) {
                 console.error("Error fetching user's Stripe account status:", error);
             }

@@ -88,7 +88,7 @@ const BookingOverview = () => {
     useEffect(() => {
         const fetchOwnerStripeId = async (ownerId) => {
             try {
-                const response = await fetch('https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists', {
+                const response = await fetch('https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
@@ -96,7 +96,9 @@ const BookingOverview = () => {
                     body: JSON.stringify({ sub: ownerId }),
                 });
                 const data = await response.json();
-                setOwnerStripeId(data.accountId);
+                const parsedBody = JSON.parse(data.body);
+
+                setOwnerStripeId(parsedBody.accountId);
             } catch (error) {
                 console.error("Error fetching owner Stripe ID:", error);
                 setError("Error fetching owner Stripe ID. Please try again later.");
@@ -236,7 +238,6 @@ const BookingOverview = () => {
                         </div>
                     </div>
                 <div className="Bookingcontainer">
-                    
                 {/* Left Panel: Image and Cards */}
                 <div className="left-panel">
                     <ImageGallery images={Object.values(accommodation.Images)} />
@@ -260,19 +261,6 @@ const BookingOverview = () => {
 
                 {/* Right Panel */}
                 <div className="right-panel">
-                    <div className="progress-bar-container">
-                        <div className="circle completed">
-                            <span className="number-complete">1</span>
-                        </div>
-                        <div className="line completed"></div>
-                        <div className="circle half-completed">
-                            <span className="number">2</span>
-                        </div>
-                        <div className="line"></div>
-                        <div className="circle">
-                            <span className="number">3</span>
-                        </div>
-                    </div>
                     <h1>{accommodation.Title}</h1>
                     <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
                     <div className="main-card">
