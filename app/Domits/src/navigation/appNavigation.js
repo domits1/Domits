@@ -47,6 +47,7 @@ import ConfirmMail from '../screens/login/confirmMail';
 import HostDetailPage from '../screens/hostdashboard/HostDetailPage';
 import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
 import MessagesStackNavigator from './messagesStackNavigator';
+import InboxHost from '../screens/message/chatInboxHost';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();

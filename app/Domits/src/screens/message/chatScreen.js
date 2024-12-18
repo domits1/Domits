@@ -79,7 +79,8 @@ const ChatScreen = ({ }) => {
             graphqlOperation(subscriptions.onCreateChat)
         ).subscribe({
             next: ({ }) => {
-                fetchLatestChat(recipientId);
+                // fetchLatestChat(recipientId);
+                fetchChats(recipientId)
             },
             error: error => console.error("Subscription error:", error),
         });

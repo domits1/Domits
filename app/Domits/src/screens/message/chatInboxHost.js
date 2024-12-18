@@ -32,7 +32,7 @@ const InboxHost = ({ user }) => {
   const [chatMessages, setChatMessages] = useState({});
 
   const fetchHostContacts = async () => {
-    // setLoading(true);
+    setLoading(true);
     try {
       const requestData = {
         hostID: userId
@@ -55,7 +55,7 @@ const InboxHost = ({ user }) => {
     } catch (error) {
       console.error('Error fetching host contacts:', error);
     } finally {
-      // setLoading(false);
+      setLoading(false);
     }
   };
   const fetchOrderedChatUsers = async () => {
@@ -80,7 +80,7 @@ const InboxHost = ({ user }) => {
       console.error('No valid recipient ID provided');
       return;
     }
-    // setLoading(true); // Show loading spinner
+    setLoading(true); // Show loading spinner
     try {
       const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages', {
         method: 'POST',
@@ -108,7 +108,7 @@ const InboxHost = ({ user }) => {
           return updatedChats;
         });
 
-        // Update the last message information for the user
+        // Update the last message information for the specific recipient only
         setChatUsers((prevUsers) => {
           return prevUsers.map((user) => {
             if (user.userId === recipientId) {
@@ -128,9 +128,10 @@ const InboxHost = ({ user }) => {
     } catch (error) {
       console.error('Error fetching latest chat:', error);
     } finally {
-      // setLoading(false); // Hide loading spinner
+      setLoading(false); // Hide loading spinner
     }
   };
+
   // useEffect(() => {
   //   const subscription = client.graphql(
   //     graphqlOperation(subscriptions.onCreateChat)
