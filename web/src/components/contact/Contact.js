@@ -113,64 +113,96 @@ function Contact() {
 
     return (
         <div className="contact">
-            <h1>Contact our specialists</h1>
-            <p>
-                We are 24/7 available to ensure optimal reachability across all time zones. The more specific
-                you are in your reach out, the faster we can assist you! We always get back to you within 24
-                hours of reaching out. Not received any response from us yet? Check your spam inbox.
-            </p>
-            {feedbackMessage && (
-                <p className={`feedback ${feedbackMessage.includes("successfully") ? "success" : "error"}`}>
-                    {feedbackMessage}
+            <div className="contactFormContainer">
+                <h1>Contact Form</h1>
+                <p>
+                    We are 24/7 available to ensure optimal reachability across all time zones. The more specific
+                    you are in your reach out, the faster we can assist you! We always get back to you within 24
+                    hours of reaching out. Not received any response from us yet? Check your spam inbox.
                 </p>
-            )}
-            <form onSubmit={handleSubmit}>
-                <div className="contactform">
-                    <div className="namemessage">
-                        <label htmlFor="name">Name</label>
-                        <input type="text" id="name" placeholder="ex. Lotte Summer" />
+                {feedbackMessage && (
+                    <p className={`feedback ${feedbackMessage.includes("successfully") ? "success" : "error"}`}>
+                        {feedbackMessage}
+                    </p>
+                )}
+                <form onSubmit={handleSubmit}>
+                    <div className="contactform">
+                        <div className="namemessage">
+                            <label htmlFor="name">Name</label>
+                            <input type="text" id="name" placeholder="Your name" />
 
-                        <label htmlFor="subject">Subject</label>
-                        <input type="text" id="subject" placeholder="ex. Payment issues" />
+                            <label htmlFor="subject">Subject</label>
+                            <input type="text" id="subject" placeholder="Subject" />
 
-                        <label htmlFor="sourceEmail">Your Email</label>
-                        <input
-                            type="email"
-                            id="sourceEmail"
-                            placeholder="ex. lotte_summer@gmail.com"
-                            value={sourceEmail}
-                            onChange={(e) => setSourceEmail(e.target.value)}
-                        />
-                    </div>
-                    <div className="biginput">
-                        <label htmlFor="message">Your message</label>
-                        <textarea
-                            id="message"
-                            placeholder="ex. I am still waiting to get paid and would like a follow-up or open a dispute about this..."
-                        ></textarea>
-                        <div className="formbuttons">
+                            <label htmlFor="sourceEmail">Your Email</label>
                             <input
-                                type="file"
-                                id="fileInput"
-                                style={{ display: "none" }}
-                                multiple
-                                onChange={handleAttachmentChange}
+                                type="email"
+                                id="sourceEmail"
+                                placeholder="Your Mail"
+                                value={sourceEmail}
+                                onChange={(e) => setSourceEmail(e.target.value)}
                             />
-                            <button type="button" id="attachmentsbutton" onClick={handleAttachmentClick}>
-                                Add attachments
-                            </button>
-                            <button type="submit" id="sendbutton" disabled={isSubmitting}>
-                                {isSubmitting ? "Sending..." : "Send message"}
-                            </button>
-                            <ul>
-                                {attachmentNames.map((name, index) => (
-                                    <li key={index}>{name}</li>
-                                ))}
-                            </ul>
+                        </div>
+                        <div className="biginput">
+                            <label htmlFor="message">Message</label>
+                            <textarea
+                                id="message"
+                                placeholder="Your Message"
+                            ></textarea>
                         </div>
                     </div>
-                </div>
-            </form>
+                    <div className="formbuttons">
+                        <input
+                            type="file"
+                            id="fileInput"
+                            style={{ display: "none" }}
+                            multiple
+                            onChange={handleAttachmentChange}
+                        />
+                        <button type="button" id="attachmentsbutton" onClick={handleAttachmentClick}>
+                            Add attachments
+                        </button>
+                        <button type="submit" id="sendbutton" disabled={isSubmitting}>
+                            {isSubmitting ? "Sending..." : "Send message"}
+                        </button>
+                        <ul>
+                            {attachmentNames.map((name, index) => (
+                                <li key={index}>{name}</li>
+                            ))}
+                        </ul>
+                    </div>
+                </form>
+            </div>
+
+            <div className="questionsContainer">
+                <h1>Questions about a holiday home, boat or camper?</h1>
+                <p className="quistionText">
+                    Do you have a question about a holiday accommodation, booking, or payment? Check our Frequently Asked Questions (FAQ). Domits is an intermediary so you rent the holiday accommodation from the host.
+                </p>
+
+                <h1>Are you a host, property owner, or manager?</h1>
+                <p className="quistionText">
+                    We’re always open for new holiday homes, boats, and campers. See on our hosting page how you can start within a couple of minutes for free. Or check our FAQ for hosts.
+                </p>
+
+                <h1>Address</h1>
+                <p className="quistionText">
+                    Domits<br />
+                    Kinderhuissingel 6k<br />
+                    2013 AS, Haarlem
+                </p>
+
+                <h1>Opening hours</h1>
+                <p className="quistionText">
+                    Monday to Friday via mail, chat, and phone between 09:00 and 17:00
+                </p>
+
+                <h1>Contact</h1>
+                <p className="quistionText">
+                    We are available to ensure optimal reachability across all time zones. The more specific you are in your reach out, the faster we can assist you! We always get back to you as soon as possible. Not received any response from us yet? Check your spam inbox.
+                </p>
+                <p className="quistionText">Mail: teamdomits@gmail.com</p>
+            </div>
         </div>
     );
 }

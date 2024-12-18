@@ -88,7 +88,7 @@ const BookingOverview = () => {
     useEffect(() => {
         const fetchOwnerStripeId = async (ownerId) => {
             try {
-                const response = await fetch('https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists', {
+                const response = await fetch('https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
@@ -96,7 +96,9 @@ const BookingOverview = () => {
                     body: JSON.stringify({ sub: ownerId }),
                 });
                 const data = await response.json();
-                setOwnerStripeId(data.accountId);
+                const parsedBody = JSON.parse(data.body);
+
+                setOwnerStripeId(parsedBody.accountId);
             } catch (error) {
                 console.error("Error fetching owner Stripe ID:", error);
                 setError("Error fetching owner Stripe ID. Please try again later.");
