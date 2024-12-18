@@ -120,7 +120,7 @@ const ChatScreen = ({ }) => {
         } catch (error) {
             console.error('Error fetching chats:', error);
         } finally {
-            setLoading(false); // Hide loading spinner
+            setLoading(false); 
         }
     };
 
@@ -149,8 +149,7 @@ const ChatScreen = ({ }) => {
                 const latestChat = result;
 
                 setChatMessages((prevChats) => {
-                    const updatedChats = [latestChat, ...prevChats]; // Add the new chat at the beginning
-                    // Sort the updated chats by creation date in descending order
+                    const updatedChats = [latestChat, ...prevChats];
                     updatedChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                     return updatedChats;
                 });
@@ -191,12 +190,10 @@ const ChatScreen = ({ }) => {
             const result = await response.json();
 
             if (response.ok) {
-                // console.log("Message sent successfully:", result);
                 setNewMessage('');
                 setShowDate(true);
                 setLastMessageDate(new Date());
 
-                // Fetch updated chats
                 await fetchLatestChat(recipientIdToSend);
             } else {
                 console.error("Error sending message:", result);

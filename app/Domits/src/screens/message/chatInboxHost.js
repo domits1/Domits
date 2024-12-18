@@ -14,7 +14,6 @@ import { useAuth } from '../../context/AuthContext';
 import awsconfig from '../../aws-exports.js';
 import { useNavigation } from '@react-navigation/native';
 
-// console.log('AWS Config:', awsconfig);
 const client = generateClient();
 
 // console.log("graphqlOperation:", graphqlOperation);
@@ -22,7 +21,6 @@ const client = generateClient();
 const InboxHost = ({ user }) => {
   const [chatUsers, setChatUsers] = useState([]);
   const { isAuthenticated, userAttributes, checkAuth } = useAuth();
-  // const [userId, setUserId] = useState('');
   const [loading, setLoading] = useState(true);
   const [pendingContacts, setPendingContacts] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -50,7 +48,6 @@ const InboxHost = ({ user }) => {
       const responseData = await response.json();
       const JSONData = JSON.parse(responseData.body);
       setContacts(JSONData.accepted);
-      // console.log('all contacts: ', contacts)
 
     } catch (error) {
       console.error('Error fetching host contacts:', error);
@@ -80,7 +77,7 @@ const InboxHost = ({ user }) => {
       console.error('No valid recipient ID provided');
       return;
     }
-    setLoading(true); // Show loading spinner
+    setLoading(true);
     try {
       const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages', {
         method: 'POST',
@@ -101,14 +98,12 @@ const InboxHost = ({ user }) => {
 
         setChatMessages((prevChats) => {
           const updatedChats = { ...prevChats };
-          // Update the recipient's chat messages with the latest chat
           updatedChats[recipientId] = [latestChat, ...(prevChats[recipientId] || [])];
-          updatedChats[recipientId].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); // Sort by date
+          updatedChats[recipientId].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); 
 
           return updatedChats;
         });
 
-        // Update the last message information for the specific recipient only
         setChatUsers((prevUsers) => {
           return prevUsers.map((user) => {
             if (user.userId === recipientId) {
@@ -128,7 +123,7 @@ const InboxHost = ({ user }) => {
     } catch (error) {
       console.error('Error fetching latest chat:', error);
     } finally {
-      setLoading(false); // Hide loading spinner
+      setLoading(false);
     }
   };
 
@@ -164,15 +159,14 @@ const InboxHost = ({ user }) => {
 
       const fetchAllChats = async () => {
         try {
-          setLoading(true); // Set loading true while chats are being fetched
+          setLoading(true);
 
-          // Use Promise.all to fetch the latest chat for each contact concurrently
           await Promise.all(filteredContactIds.map(contactId => fetchLatestChat(contactId)));
 
         } catch (error) {
           console.error('Error fetching chats:', error);
         } finally {
-          setLoading(false); // Set loading false once all chats are fetched
+          setLoading(false); 
         }
       };
 
@@ -185,10 +179,6 @@ const InboxHost = ({ user }) => {
     setItemsDisplay(chatUsers)
 
   }, [chatUsers]);
-
-  // useEffect(() => {
-  //   console.log('Updated chatUsers:', chatUsers);
-  // }, [chatUsers]);
 
   const handleUserClick = (contactUserId) => {
     navigation.navigate('ChatScreen', { userId, recipientId: contactUserId });
