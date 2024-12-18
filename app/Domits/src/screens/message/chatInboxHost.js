@@ -66,7 +66,6 @@ const InboxHost = ({ user }) => {
       const data = await response.json();
       setChatUsers(data);
       setItemsDisplay(data);
-      console.log(data)
     } catch (error) {
       console.error('Error fetching ordered chat users:', error);
     }

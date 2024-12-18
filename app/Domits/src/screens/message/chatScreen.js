@@ -213,14 +213,6 @@ const ChatScreen = ({ }) => {
         });
     };
 
-    useEffect(() => {
-        if (channelUUID) {
-            console.log('Channel UUID is set:', channelUUID);
-        } else {
-            console.log('Channel UUID is not set or invalid.');
-        }
-    }, [channelUUID]);
-
     const handleKeyUp = (e) => {
         if (e.nativeEvent.key === 'Enter') {
             sendMessage();
