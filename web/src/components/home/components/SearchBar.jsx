@@ -67,7 +67,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMobile(window.innerWidth <= 480);
+      setIsMobile(window.innerWidth <= 768);
     };
 
     window.addEventListener('resize', handleResize);
@@ -453,7 +453,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                       placeholder={<span className="searchTitle">Accommodation</span>}
                       styles={{
                         control: (provided) => {
-                          const isMobile = window.innerWidth <= 425;
+                          const isMobile = window.innerWidth <= 768;
                           return {
                             ...provided,
                             border: 'none',
@@ -468,7 +468,7 @@ export const MySearchBar = ({ setSearchResults, setLoading, toggleBar, isFixed, 
                           };
                         },
                         menu: (provided, state) => {
-                          const isMobile = window.innerWidth <= 425;
+                          const isMobile = window.innerWidth <= 768;
                           return {
                             ...provided,
                             backgroundColor: 'white',
