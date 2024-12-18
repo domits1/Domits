@@ -59,8 +59,8 @@ const useFormStore = create((set) => ({
     availability: {
       MinimumStay: 1,
       MaximumStay: 30,
-      MinimumAdvancedReservation: 1,
-      MaximumAdvancedReservation: 1,
+      MinimumAdvanceReservation: 1,
+      MaximumAdvanceReservation: 1,
       selectedDates: [],
     },
     registrationNumber: "",

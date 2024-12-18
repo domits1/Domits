@@ -916,12 +916,17 @@ const ListingDetails = () => {
 
                 {accommodation && (
                     <aside className='detailSummary'>
+                        <div className="booking-info">
+                            <p>Booking Info</p>
+                            <div className="booking-info-tooltip">Stay
+                                for {accommodation.MinimumStay} – {accommodation.MaximumStay} nights.
+                                <br/>
+                                Book {accommodation.MinimumAdvanceReservation} – {accommodation.MaximumAdvanceReservation} days
+                                in
+                                advance.
+                            </div>
+                        </div>
                         <div className="summary-section">
-                            {checkIn && checkOut && (
-                                <div className="nights">
-                                    <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
-                                </div>
-                            )}
                             <h2>
                                 €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
                             </h2>
@@ -1037,12 +1042,6 @@ const ListingDetails = () => {
                                         </div>
                                     )}
                                 </div>
-                                <p>Minimum amount of days to stay: {accommodation.MinimumStay}</p>
-                                <p>Minimum amount of days to reservation in
-                                    advance: {accommodation.MinimumAdvanceReservation}</p>
-                                <p>Maximum amount of days to stay: {accommodation.MaximumStay}</p>
-                                <p>Maximum amount of days to reservation in
-                                    advance: {accommodation.MaximumAdvanceReservation}</p>
                                 <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                             </div>
 
