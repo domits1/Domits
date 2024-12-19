@@ -340,13 +340,20 @@ const ListingDetails = () => {
 
     const FeaturePopup = ({features, onClose}) => {
         const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
-
         const sortedCategories = Object.keys(features).sort((a, b) => {
-            const orderA = categoryOrder.indexOf(a) !== -1 ? categoryOrder.indexOf(a) : Infinity;
-            const orderB = categoryOrder.indexOf(b) !== -1 ? categoryOrder.indexOf(b) : Infinity;
-            return orderA - orderB;
+            const indexA = categoryOrder.indexOf(a);
+            const indexB = categoryOrder.indexOf(b);    
+            const orderA = indexA !== -1 ? indexA : categoryOrder.length;
+            const orderB = indexB !== -1 ? indexB : categoryOrder.length;
+    
+            if (orderA === categoryOrder.length && orderB === categoryOrder.length) {
+                return a.localeCompare(b); 
+            }
+            return orderA - orderB; 
         });
 
+        console.log('Sorted categories:', sortedCategories);
+    
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-contentPopUp" onClick={e => e.stopPropagation()}>
@@ -806,6 +813,9 @@ const ListingDetails = () => {
         return !(isOutsideAvailableRange || isBooked || isInThePast || !isAdvanceReserved);
     };
 
+    // useEffect(() => {
+    //     console.log('House Rules:', accommodation?.HouseRules);
+    // }, [accommodation]);
 
     return (
         <main className="container">
@@ -828,7 +838,7 @@ const ListingDetails = () => {
 
                                 <p className='details'>
                                     <p className="placeName">{accommodation.City}, {accommodation.Country} </p>
-                                    {`€ ${accommodation.Rent} per night • ${accommodation.GuestAmount} guests • 
+                                     {`€ ${accommodation.Rent} ${accommodation.AccommodationType === 'Boat' ? 'per day' : 'per night'} • ${accommodation.GuestAmount} guests • 
                                     ${accommodation.Beds} beds • 
                                     ${accommodation.Bedrooms} bedrooms • ${accommodation.Bathrooms} bathrooms`}
                                 </p>
@@ -839,6 +849,18 @@ const ListingDetails = () => {
                                 <h3>Calendar overview:</h3>
                                 <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
                             </div>
+                            <div>
+                            <hr className="pageDividerr" />
+                            <h3 className="houseRulesTitle">House rules</h3>
+                            <p className="houseRulesDetails">
+                                {accommodation.AllowParties ? 'Parties Allowed' : 'No Parties'} • {accommodation.AllowPets ? 'Pets Allowed' : 'No Pets'} • {accommodation.AllowSmoking ? 'Smoking Allowed' : 'No Smoking'}
+                            </p>
+                            <div className="checkInCheckOut">
+                                <div className="checkIn">Check-in From: {accommodation.CheckIn?.From} To: {accommodation.CheckIn?.Til}</div>
+                                <div className="checkOut">Check-out From: {accommodation.CheckOut?.From} To: {accommodation.CheckOut?.Til}</div>
+                            </div>
+                        </div>
+
                             <div>
                                 <hr className="pageDividerr"/>
                                 <h3>This place offers the following:</h3>

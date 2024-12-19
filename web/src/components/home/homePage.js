@@ -30,11 +30,6 @@ const Homepage = () => {
   };
 
   useEffect(() => {
-    console.log("Is Bar Active:", isBarActive);
-  }, [isBarActive]);
-  
-
-  useEffect(() => {
     document.body.classList.add("hide-header");
 
     return () => {
@@ -73,7 +68,6 @@ const Homepage = () => {
   const fetchBoatAccommodations = async () => {
     try {
         setLoading(true);
-        console.log("Fetching boat accommodations...");
 
         const response = await fetch(
             "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Onboarding-Production-Read-AllBoatAccommodations"
@@ -105,7 +99,6 @@ const Homepage = () => {
       const data = await response.json();
  
       const accommodations = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-      console.log("Parsed Mixed Accommodations:", accommodations); 
       
       setByTypeAccommodations(accommodations);
     } catch (error) {
@@ -124,7 +117,6 @@ const Homepage = () => {
         if (!response.ok) throw new Error("Failed to fetch camper accommodations");
         const data = JSON.parse((await response.json()).body);
 
-        console.log("Fetched Camper Accommodations:", data);
         const limitedData = data.slice(0, 4);
 
         setCamperAccommodations(limitedData);
@@ -233,14 +225,6 @@ const Homepage = () => {
         </div>
         <div className="domits-searchbarCon">
 
-        {/* <MySearchBar
-          setSearchResults={setSearchResults}
-          setLoading={setLoading}
-          isFixed={isFixed} 
-          searchBarRef={searchBarRef}
-          placeholderText="Search for holiday homes, boats, or campers..."
-        /> */}
-
       <MySearchBar
         setSearchResults={setSearchResults}
         setLoading={setLoading}
@@ -249,8 +233,6 @@ const Homepage = () => {
         searchBarRef={searchBarRef}
         placeholderText="Search for holiday homes, boats, or campers..."
       />
-
-
 
        </div> 
       </div>
