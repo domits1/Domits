@@ -8,14 +8,15 @@ export const createChat = /* GraphQL */ `
   ) {
     createChat(input: $input, condition: $condition) {
       id
+      userId
+      recipientId
       text
       email
       recipientEmail
       isRead
       sortKey
       createdAt
-      updatedAt
-      __typename
+      channelID
     }
   }
 `;
