@@ -26,7 +26,8 @@ import HostListings from '../screens/hostdashboard/listings';
 import OnboardingHost from '../screens/hostdashboard/OnboardingHost';
 import HostSettings from '../screens/hostdashboard/settings';
 import Landing from '../screens/Landing';
-// import emailSettings from '../screens/hostdashboard/emailSettings';
+import emailSettings from '../screens/hostdashboard/emailSettings';
+import helpDesk from '../screens/hostdashboard/helpDesk';
 import HostRevenue from '../screens/hostonboarding/revenueTool';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingprocess/bookingProcess';
@@ -47,6 +48,7 @@ import ConfirmMail from '../screens/login/confirmMail';
 import HostDetailPage from '../screens/hostdashboard/HostDetailPage';
 import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
 import MessagesStackNavigator from './messagesStackNavigator';
+import InboxHost from '../screens/message/chatInboxHost';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -57,7 +59,7 @@ function HomeStack() {
       screenOptions={{
         headerShown: false,
       }}>
-      <Stack.Screen name="Home" component={HomeScreen} />
+      {/*<Stack.Screen name="Home" component={HomeScreen} />*/}
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
@@ -98,7 +100,8 @@ function HomeStack() {
       <Stack.Screen name="HostPayments" component={HostPayments} />
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
-      {/*<Stack.Screen name="emailSettings" component={emailSettings} />*/}
+      <Stack.Screen name="emailSettings" component={emailSettings} />
+      <Stack.Screen name="helpDesk" component={helpDesk} />
       <Stack.Screen name="HostRevenue" component={HostRevenue} />
       <Stack.Screen name="ListProperty" component={ListProperty} />
       <Stack.Screen name="LocationFillIn" component={LocationFillIn} />
@@ -107,6 +110,7 @@ function HomeStack() {
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="ConfirmEmail" component={ConfirmMail} />
       <Stack.Screen name="HostDetailPage" component={HostDetailPage} />
+      <Stack.Screen name="HostInbox" component={InboxHost} />
       <Stack.Screen
         name="ReviewAndSubmitScreen"
         component={ReviewAndSubmitScreen}
