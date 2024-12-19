@@ -7,7 +7,7 @@ import {signOut} from '@aws-amplify/auth';
 const Account = () => {
   const navigation = useNavigation();
   const {isAuthenticated, user, userAttributes, checkAuth} = useAuth();
-  const [firstName, setFirstName] = useState(''); // Add firstName state
+  const [firstName, setFirstName] = useState('');
   const [customUsername, setCustomUsername] = useState('');
   const [email, setEmail] = useState('');
   const [hostGuest, setHostGuest] = useState('');

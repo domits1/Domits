@@ -31,22 +31,24 @@ const HostSettings = () => {
         <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigation.navigate('emailSettings')}>
-          <Text style={styles.listItemText}>Change mail settings</Text>
+          <Text style={styles.listItemText}>Change email/name</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Change region and language</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Change global currency</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Set profile to private</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
+        {/*<TouchableOpacity style={styles.listItem}>*/}
+        {/*  <Text style={styles.listItemText}>Change region and language</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
+        {/*<TouchableOpacity style={styles.listItem}>*/}
+        {/*  <Text style={styles.listItemText}>Change global currency</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
+        {/*<TouchableOpacity style={styles.listItem}>*/}
+        {/*  <Text style={styles.listItemText}>Set profile to private</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('helpDesk')}>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -65,6 +67,7 @@ const HostSettings = () => {
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: -30,
     flex: 1,
     backgroundColor: 'white',
   },
