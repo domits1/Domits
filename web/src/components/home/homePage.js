@@ -5,7 +5,7 @@ import verifiedLogo from "../../images/icons/verify-icon.png";
 import checkMark from "../../images/icons/checkMark.png";
 import question from "../../images/icons/question.png";
 import bill from "../../images/icons/bill.png";
-import { MySearchBar } from './components/SearchBar';
+import { SearchBar } from '../base/SearchBar';
 import SkeletonLoader from "../base/SkeletonLoader";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -25,14 +25,10 @@ const Homepage = () => {
   const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
   const [isBarActive, setIsBarActive] = useState(false);
 
+
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
   };
-
-  useEffect(() => {
-    console.log("Is Bar Active:", isBarActive);
-  }, [isBarActive]);
-  
 
   useEffect(() => {
     document.body.classList.add("hide-header");
@@ -73,7 +69,6 @@ const Homepage = () => {
   const fetchBoatAccommodations = async () => {
     try {
         setLoading(true);
-        console.log("Fetching boat accommodations...");
 
         const response = await fetch(
             "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Onboarding-Production-Read-AllBoatAccommodations"
@@ -105,7 +100,6 @@ const Homepage = () => {
       const data = await response.json();
  
       const accommodations = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-      console.log("Parsed Mixed Accommodations:", accommodations); 
       
       setByTypeAccommodations(accommodations);
     } catch (error) {
@@ -124,7 +118,6 @@ const Homepage = () => {
         if (!response.ok) throw new Error("Failed to fetch camper accommodations");
         const data = JSON.parse((await response.json()).body);
 
-        console.log("Fetched Camper Accommodations:", data);
         const limitedData = data.slice(0, 4);
 
         setCamperAccommodations(limitedData);
@@ -233,24 +226,7 @@ const Homepage = () => {
         </div>
         <div className="domits-searchbarCon">
 
-        {/* <MySearchBar
-          setSearchResults={setSearchResults}
-          setLoading={setLoading}
-          isFixed={isFixed} 
-          searchBarRef={searchBarRef}
-          placeholderText="Search for holiday homes, boats, or campers..."
-        /> */}
-
-      <MySearchBar
-        setSearchResults={setSearchResults}
-        setLoading={setLoading}
-        toggleBar={toggleBar} 
-        isFixed={isFixed}
-        searchBarRef={searchBarRef}
-        placeholderText="Search for holiday homes, boats, or campers..."
-      />
-
-
+      <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} placeholderText="Search for holiday homes, boats, or campers..."/>
 
        </div> 
       </div>

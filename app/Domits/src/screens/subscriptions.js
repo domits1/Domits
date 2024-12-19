@@ -5,6 +5,8 @@ export const onCreateChat = /* GraphQL */ `
   subscription OnCreateChat($filter: ModelSubscriptionChatFilterInput) {
     onCreateChat(filter: $filter) {
       id
+      userId
+      recipientId
       text
       email
       recipientEmail
@@ -12,6 +14,8 @@ export const onCreateChat = /* GraphQL */ `
       sortKey
       createdAt
       channelID
+      updatedAt
+      __typename
     }
   }
 `;

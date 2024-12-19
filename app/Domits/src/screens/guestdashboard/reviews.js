@@ -40,14 +40,14 @@ const Reviews = () => {
           <Text style={styles.reviewText}>{review.details}</Text>
           <Text style={styles.viewsText}>{review.views}</Text>
           <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionText}>Change</Text>
-              <MaterialIcons name="chevron-right" size={22} color="#000" />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
-              <Text style={styles.actionText}>Delete</Text>
-              <MaterialIcons name="chevron-right" size={22} color="#000" />
-            </TouchableOpacity>
+            {/*<TouchableOpacity style={styles.actionButton}>*/}
+            {/*  <Text style={styles.actionText}>Change</Text>*/}
+            {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+            {/*</TouchableOpacity>*/}
+            {/*<TouchableOpacity style={styles.actionButton}>*/}
+            {/*  <Text style={styles.actionText}>Delete</Text>*/}
+            {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+            {/*</TouchableOpacity>*/}
           </View>
         </View>
 

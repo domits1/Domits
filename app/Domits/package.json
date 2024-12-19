@@ -39,6 +39,7 @@
     "react-native": "^0.73.10",
     "react-native-calendars": "^1.1307.0",
     "react-native-camera": "^4.2.1",
+    "react-native-document-picker": "^9.3.1",
     "react-native-dropdown-picker": "^5.4.6",
     "react-native-gesture-handler": "^2.15.0",
     "react-native-get-random-values": "^1.11.0",

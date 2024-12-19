@@ -7,6 +7,11 @@
   display: flex;
   height: 3.43rem;
   box-sizing: border-box;
+  background-color: white;
+}
+
+.css-h3fyes-control {
+ text-align: center;
 }
 
 .Search-bar .Search-searchInputContainer {
@@ -673,8 +678,7 @@
 
 @media screen and (min-width: 769px) and (max-width: 1024px) {
   .Search-bar {
-    width: 100%;
-    margin-right: 35vw;
+    width: 85%;
   }
 
   .Search-location {

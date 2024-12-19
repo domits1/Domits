@@ -1,495 +1,581 @@
 .detailContainer {
-  flex: 1;
-  display: flex;
-  justify-content: space-between;
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
 }
 
 .detailInfo {
-  width: 69%;
+    width: 69%;
 }
 
 .detailSummary {
-  box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
-  margin: 146px 20px 40px 20px;
-  padding: 1.25rem;
-  border-radius: 0.625rem;
-  position: sticky;
-  top: 5%;
-  max-height: 45.313rem;
+    box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+    margin: 146px 20px 40px 20px;
+    padding: 1.25rem;
+    border-radius: 0.625rem;
+    position: sticky;
+    top: 5%;
+    max-height: 45.313rem;
 }
+
 .guests {
-  position: relative;
-  display: flex;
-  flex-direction: column;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
 }
 
 .modal-contentPopUp {
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  width: 100%;
-  max-width: 600px;
-  max-height: 80vh;
-  overflow-y: auto;
-  position: relative;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 80vh;
+    overflow-y: auto;
+    position: relative;
 }
 
 .close-button {
-  position: absolute;
-  top: 10px;
-  left: 10px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  z-index: 10;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
 }
 
 
 .popup {
-  position: absolute;
-  background-color: white;
-  border: 1px solid #ddd;
-  padding: 0.625rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  border-radius: 8px;
-  width: 15.625rem;
+    position: absolute;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 0.625rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    border-radius: 8px;
+    width: 15.625rem;
 }
 
 .counter {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.625rem;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.625rem;
 }
 
 .counter span {
-  font-weight: bold;
+    font-weight: bold;
 }
 
 .counter button {
-  background: #f0f0f0;
-  border: 1px solid #ccc;
-  padding: 0.313rem;
-  cursor: pointer;
+    background: #f0f0f0;
+    border: 1px solid #ccc;
+    padding: 0.313rem;
+    cursor: pointer;
 }
 
 
 .closeButtonContainer {
-  margin-top: 0.625rem;
-  border-top: 1px solid #ddd;
-  padding-top: 0.625rem;
-  text-align: right;
+    margin-top: 0.625rem;
+    border-top: 1px solid #ddd;
+    padding-top: 0.625rem;
+    text-align: right;
 }
-
 
 
 .dates {
-  display: flex;
-  justify-content: space-between;
+    display: flex;
+    justify-content: space-between;
 }
+
 .dateInput {
-  flex: 1;
-  margin-right: 10px;
-  position: relative;
+    flex: 1;
+    margin-right: 10px;
+    position: relative;
 }
 
 .dateInput input {
-  padding-right: 30px;
+    padding-right: 30px;
 }
 
 .dateInput .clear-button {
-  position: absolute;
-  right: 0.625rem;
-  top: 50%;
-  transform: translateY(-50%);
-  cursor: pointer;
+    position: absolute;
+    right: 0.625rem;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
 }
-.travelersTitle{
-  display: flex;
-  flex-direction: column;
-  gap: 0.625rem;
+
+.travelersTitle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
 }
 
 /* Dropdown styling */
 .dropdown {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
 }
 
 .dropdown-button {
-  cursor: pointer;
-  padding: 0.625rem;
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-top: 5px;
+    cursor: pointer;
+    padding: 0.625rem;
+    background-color: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-top: 5px;
 }
 
 .dropdown-content {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 100;
-  background-color: white;
-  border: 1px solid #ddd;
-  padding: 0.625rem;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  border-radius: 8px;
-  min-width: 200px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 100;
+    background-color: white;
+    border: 1px solid #ddd;
+    padding: 0.625rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    min-width: 200px;
 }
 
 
-
 .counter {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.625rem;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.625rem;
 
 }
 
 .counter span {
-  font-weight: bold;
+    font-weight: bold;
 }
 
 .counter button {
-  width: 1.5em;
-  height: 1.5em;
-  border-radius: 50%;
-  border: 1px solid #003366;
-  background-color: white;
-  color: #003366;
-  text-align: center;
-  line-height: 0.75em;
-  font-size: 1rem;
-  cursor: pointer;
-  outline: none;
-  transition: background-color 0.3s;
-  font-weight: bold;
+    width: 1.5em;
+    height: 1.5em;
+    border-radius: 50%;
+    border: 1px solid #003366;
+    background-color: white;
+    color: #003366;
+    text-align: center;
+    line-height: 0.75em;
+    font-size: 1rem;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.3s;
+    font-weight: bold;
 }
 
 .counter button:hover {
-  background-color: #e0e0e0;
+    background-color: #e0e0e0;
 }
 
 .closeButtonContainer {
-  margin-top: 0.625rem;
-  border-top: 1px solid #ddd;
-  padding-top: 0.625rem;
-  text-align: right;
+    margin-top: 0.625rem;
+    border-top: 1px solid #ddd;
+    padding-top: 0.625rem;
+    text-align: right;
 }
 
 .closeButton {
-  background: none;
-  border: none;
-  color: blue;
-  cursor: pointer;
+    background: none;
+    border: none;
+    color: blue;
+    cursor: pointer;
 }
 
 .closeButton:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
-.button__box{
-  align-self: center;
-  display: flex;
-  flex-direction: row;
-  justify-content: space-between;
-  gap: 1vw;
-  width: 110px;
+.button__box {
+    align-self: center;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 1vw;
+    width: 110px;
 }
 
-.amountNights{
-  margin: 0;
+.amountNights {
+    margin: 0;
 }
-
-
 
 
 .summaryBlock {
-  display: flex;
-  flex-direction: column;
-  .dateInput {
     display: flex;
-    flex-direction: row;
-    justify-content: space-around;
-    .disabled {
-      background: gray;
-      cursor: not-allowed;
+    flex-direction: column;
+
+    .dateInput {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+
+        .disabled {
+            background: gray;
+            cursor: not-allowed;
+        }
+
+        .disabled:hover {
+            opacity: 100%;
+        }
+
+        button {
+            align-self: center;
+            height: 10%;
+            border: none;
+            border-radius: 2rem;
+            background: var(--primary-color);
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            opacity: 50%;
+        }
     }
-    .disabled:hover {
-      opacity: 100%;
-    }
-    button {
-      align-self: center;
-      height: 10%;
-      border: none;
-      border-radius: 2rem;
-      background: var(--primary-color);
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      opacity: 50%;
-    }
-  }
 }
+
 .summary-section {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
 }
 
 .summary-section h2 {
-  font-size: 1.5em;
-  margin-bottom: 10px;
+    font-size: 1.5em;
+    margin-bottom: 10px;
 }
 
 .reserve-button {
-  background-color: var(--primary-color);
-  color: white;
-  padding: 10px;
-  border: none;
-  border-radius: 5px;
-  font-size: 1em;
-  cursor: pointer;
-  margin-top: 10px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    margin-top: 10px;
 }
 
 .detailSummary .datePickerLD, input[type="number"], select {
-  padding: 8px;
-  margin-top: 5px;
-  margin-bottom: 15px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 15px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
 }
 
 .extraDetails {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 10px;
-  margin-top: 20px;
-  margin-bottom: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin-top: 20px;
+    margin-bottom: 20px;
 }
 
 .details {
-  margin-bottom: 5px;
-  color: black;
-  font-size: medium;
+    margin-bottom: 5px;
+    color: black;
+    font-size: medium;
 }
 
 .price {
-  color: var(--primary-color);
+    color: var(--primary-color);
 }
 
-.placeName{
-  font-size: xx-large;
-  color: black;
-  margin:0;
+.placeName {
+    font-size: xx-large;
+    color: black;
+    margin: 0;
 
 }
 
 .pageDividerr {
-  border: none;
-  border-top: 2px solid #ddd;
-  width: 100%;
-  margin: 20px 0;
+    border: none;
+    border-top: 2px solid #ddd;
+    width: 100%;
+    margin: 20px 0;
 }
 
 
-
-.showMore{
-  background-color: white;
-  text-decoration: underline;
-  margin-top: 1rem;
+.showMore {
+    background-color: white;
+    text-decoration: underline;
+    margin-top: 1rem;
 }
-.showMore:hover{
-  color: var(--primary-color);
+
+.showMore:hover {
+    color: var(--primary-color);
 }
 
 /* Stijl voor de beschrijving */
 .description {
-  margin-top: 20px;
-  font-size: 18px;
-  color: #333;
-  line-height: 1.5;
+    margin-top: 20px;
+    font-size: 18px;
+    color: #333;
+    line-height: 1.5;
 }
+
+
+.houseRulesTitle {
+    color: #333;
+    font-size: 24px;
+    margin-top: 10px;
+}
+
+.houseRulesDetails {
+    font-size: 16px;
+    color: #666;
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+.checkInCheckOut {
+    margin-top: 15px;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.checkIn, .checkOut {
+    color: #444;
+    font-size: 16px;
+}
+
+.checkIn {
+    margin-bottom: 10px; 
+}
+
 
 /* Stijl voor de sectie met functies */
 .features {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 20px;
-  list-style-type: none;
-  padding: 0;
-  margin-top: 20px;
-}
-.features-category {
-  font-weight: bold;
-  ul {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    grid-gap: 2%;
-  }
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.features-category {
+    font-weight: bold;
+
+    ul {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 2%;
+    }
 }
 
 
 .category-item {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  margin-bottom: 10px;
-  gap: 1.5%;
-  span {
-    font-weight: lighter;
-    font-size: 1rem;
-  }
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    margin-bottom: 10px;
+    gap: 1.5%;
+
+    span {
+        font-weight: lighter;
+        font-size: 1rem;
+    }
 }
 
 .features-category ul {
-  list-style: none; /* Verwijder standaard opsommingstekens */
-  padding: 0; /* Geen extra padding rondom de lijst */
-  margin: 0; /* Geen extra marge rondom de lijst */
+    list-style: none; /* Verwijder standaard opsommingstekens */
+    padding: 0; /* Geen extra padding rondom de lijst */
+    margin: 0; /* Geen extra marge rondom de lijst */
 }
 
 .acco-feature-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 10px;
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-  text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
 }
 
 .feature-item:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
 .feature-item.feature-absent {
-  opacity: 0.5;
-  box-shadow: 0px 0px 0px;
+    opacity: 0.5;
+    box-shadow: 0px 0px 0px;
 }
 
 .feature-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  margin-right: 10px;
-  align-self: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    margin-right: 10px;
+    align-self: center;
 }
 
 .feature-item span {
-  font-size: 16px;
-  color: #555;
+    font-size: 16px;
+    color: #555;
 }
 
-.backButton{
-  text-decoration: underline;
+.backButton {
+    text-decoration: underline;
 }
 
-.backButton:hover{
-  color: var(--primary-color);
+.backButton:hover {
+    color: var(--primary-color);
 }
 
 .disclaimer {
-  font-size: 14px;
-  color: #888;
-  margin-top: 20px;
-  margin-bottom: 10px;
-  text-align: center;
+    font-size: 14px;
+    color: #888;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.booking-info {
+    background-color: #f9f9f9;
+    border-bottom: gray 1px solid;
+    border-right: gray 1px solid;
+    margin-top: -2.7vh;
+    margin-left: -1.35vw;
+    width: 5.5vw;
+    padding: 10px;
+}
+
+.booking-info:hover {
+    background-color: #f0f0f0;
+    cursor: pointer;
+}
+
+.booking-info-tooltip {
+    visibility: hidden;
+    background-color: rgb(185, 185, 185);
+    color: #fff;
+    text-align: left;
+    border-radius: 4px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 101%;
+    left: 23.5%;
+    transform: translateX(-50%);
+    white-space: wrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    max-width: 15vw;
+    max-height: 10vw;
+}
+
+.booking-info:hover .booking-info-tooltip {
+    visibility: visible;
+    opacity: 1;
 }
 
 .price-details {
-  padding: 20px;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  margin-top: 20px;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    margin-top: 20px;
 }
 
 .price-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 16px;
-  color: #333;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
 }
 
 .total {
-  display: flex;
-  justify-content: space-between;
-  font-size: 18px;
-  font-weight: bold;
-  color: #333;
-  border-top: 2px solid #ddd;
-  padding-top: 10px;
-  margin-top: 10px;
-}
-.listing-reviews {
-  display: flex;
-  flex-direction: column;
-}
-.review-card {
-  padding: 1.5em;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  .stars-div {
     display: flex;
-    flex-direction: row;
-    justify-content: center;
-    span {
-      color: gold;
-      font-size: 1.5rem;
-    }
-  }
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    border-top: 2px solid #ddd;
+    padding-top: 10px;
+    margin-top: 10px;
 }
+
+.listing-reviews {
+    display: flex;
+    flex-direction: column;
+}
+
+.review-card {
+    padding: 1.5em;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+    .stars-div {
+        display: flex;
+        flex-direction: row;
+        justify-content: center;
+
+        span {
+            color: gold;
+            font-size: 1.5rem;
+        }
+    }
+}
+
 .error {
-  border: 1px solid red !important;
+    border: 1px solid red !important;
 }
 
 .error-text {
-  color: red;
+    color: red;
 }
+
 /* Aanpassing voor mobiele weergave */
 @media (max-width: 600px) {
-  .price-item, .total {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+    .price-item, .total {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 
-  .price-item p, .total p {
-    margin: 5px 0;
-  }
+    .price-item p, .total p {
+        margin: 5px 0;
+    }
 }
 
 
 @media (max-width: 1000px) {
-  .detailContainer {
-    display: flex;
-    flex-direction: column;
-  }
+    .detailContainer {
+        display: flex;
+        flex-direction: column;
+    }
 
-  .detailInfo {
-    width: 100%;
-  }
-  .detailSummary {
-    width: 90%;
-    margin: auto;
+    .detailInfo {
+        width: 100%;
+    }
 
-  }
+    .detailSummary {
+        width: 90%;
+        margin: auto;
+
+    }
 }
