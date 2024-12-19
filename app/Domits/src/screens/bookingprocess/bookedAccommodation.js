@@ -9,6 +9,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import {useAuth} from '../../context/AuthContext';
 
 const ProfileScreen = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
@@ -17,7 +18,8 @@ const ProfileScreen = ({navigation, route}) => {
   const kids = route.params.kids;
   const pets = route.params.pets;
   const nights = route.params.nights;
-
+  const {userAttributes} = useAuth();
+  const firstName = userAttributes?.given_name || 'N/A';
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollContainer}>
@@ -93,7 +95,7 @@ const ProfileScreen = ({navigation, route}) => {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal details</Text>
-          <Text style={styles.personalInfo}>Lotte Summer</Text>
+          <Text style={styles.personalInfo}>{firstName}</Text>
           <Text style={styles.personalInfo}>+31 6 09877890</Text>
           <Text style={styles.personalInfoEmail}>Lotte_summer@gmail.com</Text>
           <Text style={styles.personalInfoAddress}>
