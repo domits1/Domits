@@ -8,6 +8,19 @@
     z-index: 1000;
 }
 
+.search-bar-hidden {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+
+.search-bar-hidden.visible {
+    display: block;
+    opacity: 1;
+}
+
+
 .header-trustpilot-bar {
     display: flex;
     justify-content: center;
@@ -156,6 +169,13 @@
         margin: 0 auto;
         padding-bottom: 10px;
     }
+    .bar-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 10px 20px;
+    }
 
     .header-app-header {
         height: 10vh;
@@ -167,10 +187,14 @@
         width: 100%;
     }
 
-    .header-right {
-        width: 97%;
-        margin-top: -32px;
-    }
+    /* .header-right {
+        /* width: 97%;
+        margin-top: -32px; */
+    
+        .headerRight {
+            width: 69%;
+            margin-top: 20px;
+        }
 
     .header-buttons, 
     .header-personal-menu {
