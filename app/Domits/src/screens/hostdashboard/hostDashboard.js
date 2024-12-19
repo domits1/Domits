@@ -50,12 +50,12 @@ const HostDashboard = () => {
           <Text style={styles.listItemText}>Profile</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.listItem}
-          onPress={() => navigation.navigate('HostPayments')}>
-          <Text style={styles.listItemText}>Payments</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
+        {/*<TouchableOpacity*/}
+        {/*  style={styles.listItem}*/}
+        {/*  onPress={() => navigation.navigate('HostPayments')}>*/}
+        {/*  <Text style={styles.listItemText}>Payments</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigation.navigate('HostListings')}>
@@ -85,7 +85,9 @@ const HostDashboard = () => {
             Do you have trouble with using our app?{'\n'}Please send a support
             request to Domits.
           </Text>
-          <TouchableOpacity style={styles.helpButton}>
+          <TouchableOpacity
+            style={styles.helpButton}
+            onPress={() => navigation.navigate('helpDesk')}>
             <Text style={styles.helpButtonText}>Help and feedback</Text>
           </TouchableOpacity>
         </View>

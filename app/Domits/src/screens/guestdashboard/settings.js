@@ -61,12 +61,14 @@ const Settings = () => {
         {/*  />*/}
         {/*</View>*/}
         <TouchableOpacity
-            style={styles.listItem}
-            onPress={() => navigation.navigate('emailSettings')}>
+          style={styles.listItem}
+          onPress={() => navigation.navigate('emailSettings')}>
           <Text style={styles.listItemText}>Change email/name</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('helpDesk')}>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>

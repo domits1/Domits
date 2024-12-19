@@ -58,7 +58,7 @@ const GuestDashboard = ({navigation}) => {
           </Text>
           <TouchableOpacity
             style={styles.helpButton}
-            onPress={() => navigateTo('HelpAndFeedback')}>
+            onPress={() => navigateTo('helpDesk')}>
             <Text style={styles.helpButtonText}>Help and feedback</Text>
           </TouchableOpacity>
         </View>

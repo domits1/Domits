@@ -8,8 +8,9 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
-import DocumentPicker from 'react-native-document-picker';
+// import DocumentPicker from 'react-native-document-picker';
 
 const API_BASE_URL =
   'https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail';
@@ -19,44 +20,44 @@ export default function Contact() {
   const [name, setName] = useState('');
   const [subject, setSubject] = useState('');
   const [message, setMessage] = useState('');
-  const [attachments, setAttachments] = useState([]);
+  // const [attachments, setAttachments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState('');
 
   const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const pickAttachments = async () => {
-    try {
-      const results = await DocumentPicker.pickMultiple({
-        type: [DocumentPicker.types.allFiles],
-      });
-
-      const maxFiles = 5;
-      const maxFileSize = 5 * 1024 * 1024; // 5MB
-
-      if (results.length > maxFiles) {
-        Alert.alert('Error', 'You can upload a maximum of 5 files.');
-        return;
-      }
-
-      for (let file of results) {
-        if (file.size > maxFileSize) {
-          Alert.alert(
-            'Error',
-            `File "${file.name}" exceeds the 5 MB size limit.`,
-          );
-          return;
-        }
-      }
-
-      setAttachments(results);
-    } catch (err) {
-      if (!DocumentPicker.isCancel(err)) {
-        console.error(err);
-        Alert.alert('Error', 'Failed to pick files.');
-      }
-    }
-  };
+  // const pickAttachments = async () => {
+  //   try {
+  //     const results = await DocumentPicker.pickMultiple({
+  //       type: [DocumentPicker.types.allFiles],
+  //     });
+  //
+  //     const maxFiles = 5;
+  //     const maxFileSize = 5 * 1024 * 1024; // 5MB
+  //
+  //     if (results.length > maxFiles) {
+  //       Alert.alert('Error', 'You can upload a maximum of 5 files.');
+  //       return;
+  //     }
+  //
+  //     for (let file of results) {
+  //       if (file.size > maxFileSize) {
+  //         Alert.alert(
+  //           'Error',
+  //           `File "${file.name}" exceeds the 5 MB size limit.`,
+  //         );
+  //         return;
+  //       }
+  //     }
+  //
+  //     setAttachments(results);
+  //   } catch (err) {
+  //     if (!DocumentPicker.isCancel(err)) {
+  //       console.error(err);
+  //       Alert.alert('Error', 'Failed to pick files.');
+  //     }
+  //   }
+  // };
 
   const handleSubmit = async () => {
     if (!name || !subject || !sourceEmail || !message) {
@@ -79,16 +80,16 @@ export default function Contact() {
       attachments: [],
     };
 
-    if (attachments.length > 0) {
-      for (let file of attachments) {
-        const fileData = await fetch(file.uri).then(res => res.blob());
-        payload.attachments.push({
-          filename: file.name,
-          content: await fileData.text(),
-          contentType: file.type,
-        });
-      }
-    }
+    // if (attachments.length > 0) {
+    //   for (let file of attachments) {
+    //     const fileData = await fetch(file.uri).then(res => res.blob());
+    //     payload.attachments.push({
+    //       filename: file.name,
+    //       content: await fileData.text(),
+    //       contentType: file.type,
+    //     });
+    //   }
+    // }
 
     try {
       const response = await fetch(API_BASE_URL, {
@@ -107,7 +108,7 @@ export default function Contact() {
         setSubject('');
         setSourceEmail('');
         setMessage('');
-        setAttachments([]);
+        // setAttachments([]);
       } else {
         setFeedbackMessage(
           `Failed to send message: ${data.error || 'Unknown error'}`,
@@ -122,82 +123,87 @@ export default function Contact() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Contact Form</Text>
-      <Text style={styles.description}>
-        We are 24/7 available to ensure optimal reachability across all time
-        zones. The more specific you are in your reach out, the faster we can
-        assist you! Check your spam inbox if you don't receive a response within
-        24 hours.
-      </Text>
-
-      {feedbackMessage ? (
-        <Text
-          style={[
-            styles.feedback,
-            feedbackMessage.includes('successfully')
-              ? styles.success
-              : styles.error,
-          ]}>
-          {feedbackMessage}
+    <SafeAreaView style={styles.mainContainer}>
+      <ScrollView style={styles.container}>
+        <Text style={styles.title}>Contact Form</Text>
+        <Text style={styles.description}>
+          We are 24/7 available to ensure optimal reachability across all time
+          zones. The more specific you are in your reach out, the faster we can
+          assist you! Check your spam inbox if you don't receive a response
+          within 24 hours.
         </Text>
-      ) : null}
 
-      <TextInput
-        style={styles.input}
-        placeholder="Your Name"
-        value={name}
-        onChangeText={setName}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Subject"
-        value={subject}
-        onChangeText={setSubject}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Your Email"
-        value={sourceEmail}
-        onChangeText={setSourceEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={[styles.input, styles.textArea]}
-        placeholder="Your Message"
-        value={message}
-        onChangeText={setMessage}
-        multiline
-      />
+        {feedbackMessage ? (
+          <Text
+            style={[
+              styles.feedback,
+              feedbackMessage.includes('successfully')
+                ? styles.success
+                : styles.error,
+            ]}>
+            {feedbackMessage}
+          </Text>
+        ) : null}
 
-      <TouchableOpacity
-        style={styles.attachmentButton}
-        onPress={pickAttachments}>
-        <Text style={styles.attachmentButtonText}>Add Attachments</Text>
-      </TouchableOpacity>
+        <TextInput
+          style={styles.input}
+          placeholder="Your Name"
+          value={name}
+          onChangeText={setName}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Subject"
+          value={subject}
+          onChangeText={setSubject}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder="Your Email"
+          value={sourceEmail}
+          onChangeText={setSourceEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+        <TextInput
+          style={[styles.input, styles.textArea]}
+          placeholder="Your Message"
+          value={message}
+          onChangeText={setMessage}
+          multiline
+        />
 
-      {attachments.map((file, index) => (
-        <Text key={index} style={styles.attachmentName}>
-          {file.name}
-        </Text>
-      ))}
+        {/*<TouchableOpacity*/}
+        {/*  style={styles.attachmentButton}*/}
+        {/*  onPress={pickAttachments}>*/}
+        {/*  <Text style={styles.attachmentButtonText}>Add Attachments</Text>*/}
+        {/*</TouchableOpacity>*/}
 
-      <TouchableOpacity
-        style={styles.submitButton}
-        onPress={handleSubmit}
-        disabled={isSubmitting}>
-        {isSubmitting ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.submitButtonText}>Send Message</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
+        {/*{attachments.map((file, index) => (*/}
+        {/*  <Text key={index} style={styles.attachmentName}>*/}
+        {/*    {file.name}*/}
+        {/*  </Text>*/}
+        {/*))}*/}
+
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={handleSubmit}
+          disabled={isSubmitting}>
+          {isSubmitting ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.submitButtonText}>Send Message</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  mainContainer: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     padding: 20,
