@@ -5,7 +5,7 @@ import verifiedLogo from "../../images/icons/verify-icon.png";
 import checkMark from "../../images/icons/checkMark.png";
 import question from "../../images/icons/question.png";
 import bill from "../../images/icons/bill.png";
-import { MySearchBar } from './components/SearchBar';
+import { SearchBar } from '../base/SearchBar';
 import SkeletonLoader from "../base/SkeletonLoader";
 import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
@@ -24,6 +24,7 @@ const Homepage = () => {
   const [accommodationImages, setAccommodationImages] = useState([]);
   const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
   const [isBarActive, setIsBarActive] = useState(false);
+
 
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
@@ -225,14 +226,7 @@ const Homepage = () => {
         </div>
         <div className="domits-searchbarCon">
 
-      <MySearchBar
-        setSearchResults={setSearchResults}
-        setLoading={setLoading}
-        toggleBar={toggleBar} 
-        isFixed={isFixed}
-        searchBarRef={searchBarRef}
-        placeholderText="Search for holiday homes, boats, or campers..."
-      />
+      <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} placeholderText="Search for holiday homes, boats, or campers..."/>
 
        </div> 
       </div>
