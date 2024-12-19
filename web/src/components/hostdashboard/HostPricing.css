@@ -165,18 +165,24 @@
     border-radius: 15px;
     border-collapse: collapse;
     border-spacing: 0;
-}
-
-.pricing-table table {
-    width: 100%;
-    border-collapse: collapse;
+    table-layout: fixed; /* Ensures consistent column widths */
 }
 
 .pricing-table th, .pricing-table td {
+    width: 25%; /* Consistent column widths */
     padding: 12px 15px;
     border: 1px solid #ddd;
     text-align: left;
-    border-spacing: 0;
+    vertical-align: middle; /* Aligns content properly */
+}
+
+.pricing-table td input {
+    width: 100%; /* Matches cell width */
+    max-width: 150px; /* Prevents overly large inputs */
+    box-sizing: border-box; /* Includes padding and border in width */
+    padding: 5px;
+    margin: 0;
+    text-align: left; /* Aligns input text */
 }
 
 .pricing-table th {
@@ -191,7 +197,8 @@
 
 /*navigation buttons*/
 .pricing-bottom-buttons {
-
+    display: flex;
+    flex-direction: row;
 }
 
 .pricing-navigation-buttons {
@@ -200,7 +207,7 @@
     align-items: center;
     margin-inline: auto;
     padding-top: 2.5%;
-    margin-right: 16vw;
+    margin-left: 21vw;
 }
 
 .pricing-navigation-buttons button {
@@ -228,4 +235,30 @@
 
 .pricing-navigation-buttons button:hover:not(:disabled) {
     background-color: #ddd;
+}
+
+.pricing-action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-inline: auto;
+    padding-top: 2.5%;
+    margin-right: 16vw;
+    gap: 1.5vw;
+}
+
+.pricing-action-buttons button {
+    width: 4vw;
+    height: 4vh;
+    border-radius: 5px;
+    border: none;
+}
+
+.pricing-action-buttons button:hover {
+    opacity: 80%;
+    cursor: pointer;
+}
+
+.pricing-action-save {
+    background-color: #4A77FC;
 }

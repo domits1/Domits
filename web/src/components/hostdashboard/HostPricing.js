@@ -19,7 +19,7 @@ const HostPricing = () => {
     const [originalRates, setOriginalRates] = useState([]);
 
     const itemsPerPageDetails = 3;
-    const itemsPerPageTable = 6;
+    const itemsPerPageTable = 8;
 
     const activeItemsPerPage = viewMode === 'details' ? itemsPerPageDetails : itemsPerPageTable;
 
@@ -290,7 +290,7 @@ const HostPricing = () => {
                         <div className="pricing-action-buttons">
                             <button onClick={handleEditMode}>Edit</button>
                             <button onClick={handleUndo}>Undo</button>
-                            <button onClick={handleSaveRates}>Save</button>
+                            <button className="pricing-action-save" onClick={handleSaveRates}>Save</button>
                         </div>
                     </div>
                 </div>
