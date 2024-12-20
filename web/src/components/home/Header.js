@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext, useRef } from 'react';
+import React, { useEffect, useState, useContext, useRef, toggleBar } from 'react';
 import { Link,  useNavigate, useLocation } from 'react-router-dom';
 import logo from '../../logo.svg';
 import nineDots from '../../images/dots-grid.svg';
@@ -21,6 +21,8 @@ function Header({ setSearchResults, setLoading }) {
     const [username, setUsername] = useState('');
     const [dropdownVisible, setDropdownVisible] = useState(false);
     const [currentView, setCurrentView] = useState('guest'); 
+    const [isBarActive, setIsBarActive] = useState(false);
+
 
     const searchBarRef = useRef(null);
     useEffect(() => {
@@ -29,7 +31,7 @@ function Header({ setSearchResults, setLoading }) {
         const handleScroll = () => {
             if (!searchBarRef.current) return; 
 
-            const scrollPosition = window.scrollY;
+            const scrollPosition = window.scrollY;  
 
             if (scrollPosition > SCROLL_TRIGGER) {
                 searchBarRef.current.classList.add('visible');
@@ -59,6 +61,11 @@ function Header({ setSearchResults, setLoading }) {
     useEffect(() => {
         checkAuthentication();
     }, []);
+
+    
+    const toggleBar = (isActive) => {
+        setIsBarActive(isActive); 
+    };
 
     useEffect(() => {
         setDropdownVisible(false);
@@ -111,22 +118,22 @@ function Header({ setSearchResults, setLoading }) {
 
     return (
         <header className="header-app-header">
-            <nav className="header-nav">
+            <nav className={`header-nav ${isBarActive ? "hide-other-content" : ""}`}>
                 <div className="header-logo">
                     <a href="/home">
                         <img src={logo} width={150} alt="Logo" />
                     </a>
                 </div>
                 <div ref={searchBarRef} className="App search-bar-hidden">
-                    <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} />
+                    <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} toggleBar={toggleBar}  />
                 </div>             
                 <div className="header-right">
-                    {/* <button className="header-buttons header-host-button" onClick={() => navigate('/landing')}>
+                    <button className="header-buttons header-host-button" onClick={() => navigate('/landing')}>
                         Become a Host
                     </button>
                     <button className="header-buttons" onClick={() => navigate('/travelinnovation')}>
                         <img src={nineDots} alt="Nine Dots" />
-                    </button> */}
+                    </button> 
                     <div className="header-personal-menu-dropdown">
                         <button className="header-personal-menu" onClick={toggleDropdown}>
                             <img src={profile} alt="Profile Icon" />
