@@ -35,7 +35,7 @@ const HostChatbot = () => {
   const {messageAudios, fetchPollySpeech} = usePollySpeech();
   const {userId, username} = useUserDetails(setMessages, fetchPollySpeech);
   const {isChatOpen, toggleChat} = useChatToggle(role, location);
-  const {accommodations, faqList, fetchAccommodations, fetchFAQ} = useFetchData();
+  const {accommodations, faqList, fetchAccommodations, fetchFAQ, fetchAllAccommodations} = useFetchData();
   const {isRecording, handleVoiceInput, stopRecording} = useVoiceInput(setUserInput);
   const {downloadChatHistory, printChatHistory} = useChatHistory(messages);
 
@@ -75,25 +75,62 @@ const HostChatbot = () => {
 
   const handleAccommodationQuery = async (userInput) => {
     const messageId = Date.now();
-    if (userInput.toLowerCase().includes('show all accommodations')) {
-      await fetchAccommodations();
+    const normalizedInput = userInput.toLowerCase().trim();
+
+    setLoading(true); // Start loading
+
+    try {
+      // Fetch accommodations based on user input
+      if (normalizedInput.includes("show all accommodations") || normalizedInput.includes("list all accommodations")) {
+        await fetchAllAccommodations();
+      } else {
+        await fetchAccommodations(userId);
+      }
+
+      // Check if accommodations data is empty
+      if (accommodations.length === 0) {
+        const noDataMessage = "Sorry, there is no accommodation data available right now.";
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: messageId, text: noDataMessage, sender: 'bot', contentType: 'text' },
+        ]);
+        fetchPollySpeech(noDataMessage, messageId);
+        return; // Exit early since there's no data
+      }
+
+      // Format the response message
+      const responseMessage = accommodations.map((acc) => `
+            Title: ${acc.title || 'Accommodation'}
+            City: ${acc.city || 'Not specified'}
+            Country: ${acc.country || 'Not specified'}
+            Bathrooms: ${acc.bathrooms || 'Not specified'}
+            Guest Capacity: ${acc.guestAmount || 'Not specified'}
+        `).join('\n\n');
+
+      const fullMessage = `Here are the accommodations:\n${responseMessage}`;
+
+      // Set the bot response
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: messageId, text: fullMessage, sender: 'bot', contentType: 'text' },
+      ]);
+      fetchPollySpeech(fullMessage, messageId);
+    } catch (error) {
+      // Handle errors during fetch
+      const errorMessage = "Sorry, I couldn't process your request at the moment.";
+      console.error('Error fetching accommodations:', error);
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        { id: messageId, text: errorMessage, sender: 'bot', contentType: 'text' },
+      ]);
+      fetchPollySpeech(errorMessage, messageId);
+    } finally {
+      setLoading(false); // Stop loading
     }
-
-    const responseMessage = accommodations.length
-        ? `Here are the accommodations:\n${accommodations
-            .map((acc) => `
-        Title: ${acc.title}
-        City: ${acc.city}
-      `)
-            .join('\n\n')}`
-        : 'Sorry, there is no accommodation data available right now.';
-
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      {id: messageId, text: responseMessage, sender: 'bot', contentType: 'text'},
-    ]);
-    fetchPollySpeech(responseMessage, messageId);
   };
+
+
+
 
 
   const handleFAQQuery = (userInput) => {
@@ -335,6 +372,15 @@ const HostChatbot = () => {
                   )}
                 </div>
             ))}
+
+            {/* Render accommodation tiles if accommodations exist */}
+            {accommodations.length > 0 && (
+                <div className="hostchatbot-accommodations">
+                  {accommodations.map((accommodation, index) => (
+                      <AccommodationTile key={index} accommodation={accommodation} />
+                  ))}
+                </div>
+            )}
 
             {awaitingUserChoice && (
                 <div className="hostchatbot-option-buttons">
