@@ -79,10 +79,6 @@ const HostPricing = () => {
     }, [userId]);
 
     useEffect(() => {
-        console.log('accommodations:', accommodations);
-    }, [accommodations]);
-
-    useEffect(() => {
         if (accommodations.length > 0) {
             const initialRates = accommodations.map(acc => acc.Rent.N || acc.Rent.S || '');
             setEditedRates(initialRates);
