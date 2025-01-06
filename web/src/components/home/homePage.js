@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, toggleBar  } from "react";
+import React, { useState, useEffect, useRef  } from "react";
 import { useNavigate } from "react-router-dom";
 import "./homePage.css";
 import verifiedLogo from "../../images/icons/verify-icon.png";
@@ -28,8 +28,8 @@ const Homepage = () => {
 
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
-  };
-
+};
+  
   useEffect(() => {
     document.body.classList.add("hide-header");
 
@@ -226,7 +226,13 @@ const Homepage = () => {
         </div>
         <div className="domits-searchbarCon">
 
-      <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} placeholderText="Search for holiday homes, boats, or campers..."/>
+        <SearchBar
+          setSearchResults={setSearchResults}
+          setLoading={setLoading}
+          placeholderText="Search for holiday homes, boats, or campers..."
+          toggleBar={toggleBar} 
+        />
+
 
        </div> 
       </div>
