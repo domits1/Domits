@@ -274,7 +274,7 @@
     margin-top: 10px;
 }
 
-.detailSummary .datePickerLD, input[type="number"], select {
+.detailSummary .datePickerLD {
     padding: 8px;
     margin-top: 5px;
     margin-bottom: 15px;
@@ -361,7 +361,7 @@
 }
 
 .checkIn {
-    margin-bottom: 10px; 
+    margin-bottom: 10px;
 }
 
 
