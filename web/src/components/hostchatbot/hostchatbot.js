@@ -18,7 +18,7 @@ import stringSimilarity from 'string-similarity';
 
 
 const HostChatbot = () => {
-  const { role, isLoading: userLoading } = useUser();
+  const {role, isLoading: userLoading} = useUser();
   const location = useLocation();
 
   const [isUnsupportedBrowser, setIsUnsupportedBrowser] = useState(false);
@@ -32,12 +32,12 @@ const HostChatbot = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
 
-  const { messageAudios, fetchPollySpeech } = usePollySpeech();
-  const { userId, username } = useUserDetails(setMessages, fetchPollySpeech);
-  const { isChatOpen, toggleChat } = useChatToggle(role, location);
-  const { accommodations, faqList, fetchAccommodations, fetchFAQ } = useFetchData();
-  const { isRecording, handleVoiceInput, stopRecording } = useVoiceInput(setUserInput);
-  const { downloadChatHistory, printChatHistory } = useChatHistory(messages);
+  const {messageAudios, fetchPollySpeech} = usePollySpeech();
+  const {userId, username} = useUserDetails(setMessages, fetchPollySpeech);
+  const {isChatOpen, toggleChat} = useChatToggle(role, location);
+  const {accommodations, faqList, fetchAccommodations, fetchFAQ} = useFetchData();
+  const {isRecording, handleVoiceInput, stopRecording} = useVoiceInput(setUserInput);
+  const {downloadChatHistory, printChatHistory} = useChatHistory(messages);
 
   useEffect(() => {
     if (!userLoading && role === 'Host') {
@@ -90,7 +90,7 @@ const HostChatbot = () => {
 
     setMessages((prevMessages) => [
       ...prevMessages,
-      { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
+      {id: messageId, text: responseMessage, sender: 'bot', contentType: 'text'},
     ]);
     fetchPollySpeech(responseMessage, messageId);
   };
@@ -98,12 +98,12 @@ const HostChatbot = () => {
 
   const handleFAQQuery = (userInput) => {
     const messageId = Date.now();
-    console.log(faqList);
+
     if (faqList.length === 0) {
       const noFaqMessage = "Sorry, I don't have any FAQs available at the moment.";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: messageId, text: noFaqMessage, sender: 'bot', contentType: 'text' }
+        { id: messageId, text: noFaqMessage, sender: 'bot', contentType: 'text' },
       ]);
       fetchPollySpeech(noFaqMessage, messageId);
       return;
@@ -116,22 +116,25 @@ const HostChatbot = () => {
 
     if (bestMatch.bestMatch.rating > 0.5) {
       const matchedFAQ = faqList[bestMatch.bestMatchIndex];
-      const faqResponse = `Q: ${matchedFAQ.question}\nA: ${matchedFAQ.answer}`;
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: messageId, text: faqResponse, sender: 'bot', contentType: 'faq' }
+        {
+          id: messageId,
+          sender: 'bot',
+          contentType: 'faq', // Indicate it's an FAQ for custom rendering
+          data: matchedFAQ,   // Pass the full FAQ object for rendering
+        },
       ]);
-      fetchPollySpeech(faqResponse, messageId);
+      fetchPollySpeech(matchedFAQ.answer, messageId);
     } else {
       const notFoundMessage = "Sorry, I couldn't find an answer to your question.";
       setMessages((prevMessages) => [
         ...prevMessages,
-        { id: messageId, text: notFoundMessage, sender: 'bot', contentType: 'text' }
+        { id: messageId, text: notFoundMessage, sender: 'bot', contentType: 'text' },
       ]);
       fetchPollySpeech(notFoundMessage, messageId);
     }
   };
-
 
 
 
@@ -160,7 +163,7 @@ const HostChatbot = () => {
         }
 
         // Replace greeting with the selected choice message
-        setMessages([{ id: messageId, text: newMessage, sender: 'bot', contentType: 'text' }]);
+        setMessages([{id: messageId, text: newMessage, sender: 'bot', contentType: 'text'}]);
         fetchPollySpeech(newMessage, messageId);
       },
       [fetchPollySpeech]
@@ -180,7 +183,6 @@ const HostChatbot = () => {
   );
 
 
-
   const handleSubmit = useCallback(
       (e) => {
         e.preventDefault();
@@ -189,7 +191,7 @@ const HostChatbot = () => {
           const messageId = Date.now();
           setMessages((prevMessages) => [
             ...prevMessages,
-            { id: messageId, text: userInput, sender: 'user', contentType: 'text' },
+            {id: messageId, text: userInput, sender: 'user', contentType: 'text'},
           ]);
           fetchPollySpeech(userInput, messageId);
           setUserInput('');
@@ -212,7 +214,7 @@ const HostChatbot = () => {
     const messageId = Date.now();
     setMessages((prevMessages) => [
       ...prevMessages,
-      { id: messageId, text: expertMessage, sender: 'bot', contentType: 'text' },
+      {id: messageId, text: expertMessage, sender: 'bot', contentType: 'text'},
     ]);
     fetchPollySpeech(expertMessage, messageId);
   };
@@ -272,7 +274,7 @@ const HostChatbot = () => {
     const messageId = Date.now();
 
     // Clear previous messages and add only the greeting
-    setMessages([{ id: messageId, text: message, sender: 'bot', contentType: 'text' }]);
+    setMessages([{id: messageId, text: message, sender: 'bot', contentType: 'text'}]);
     fetchPollySpeech(message, messageId);
   }, [username, fetchPollySpeech]);
 
@@ -296,15 +298,15 @@ const HostChatbot = () => {
           <div className="hostchatbot-header">
             <span>Chat with us</span>
             <button className="hamburger-menu" onClick={toggleMenu}>
-              <FiMenu />
+              <FiMenu/>
             </button>
             {isMenuOpen && (
                 <div className="hamburger-dropdown">
                   <button onClick={downloadChatHistory}>
-                    <FiDownload /> Download Chat
+                    <FiDownload/> Download Chat
                   </button>
                   <button onClick={printChatHistory}>
-                    <FiPrinter /> Print Chat
+                    <FiPrinter/> Print Chat
                   </button>
                 </div>
             )}
@@ -315,7 +317,14 @@ const HostChatbot = () => {
           <div className="hostchatbot-window">
             {messages.map((message) => (
                 <div key={`${message.id}-${message.sender}`} className={`hostchatbot-message ${message.sender}`}>
-                  <p>{message.text}</p>
+                  {message.contentType === 'faq' ? (
+                      <div className="faq-layout">
+                        <div className="faq-question">{message.data.question}</div>
+                        <div className="faq-answer">{message.data.answer}</div>
+                      </div>
+                  ) : (
+                      <p>{message.text}</p>
+                  )}
                   {messageAudios[message.id] && (
                       <button
                           onClick={() => new Audio(messageAudios[message.id]).play()}
@@ -335,27 +344,26 @@ const HostChatbot = () => {
                   <button onClick={() => handleButtonClick('2')}>
                     2. I want to learn about Domits
                   </button>
-                  <button onClick={() => handleButtonClick('3')}>3. Connect me with an expert</button>
+                  <button onClick={() => handleButtonClick('3')}>
+                    3. Connect me with an expert
+                  </button>
                 </div>
             )}
-
-
 
             {suggestions.length > 0 && (
                 <div className="hostchatbot-suggestions">
                   <p>Suggestions:</p>
                   {suggestions.map((suggestion, index) => (
                       <p
-                          key={`${index}-${suggestion}`} // Ensures unique key using index and suggestion
+                          key={`${index}-${suggestion}`}
                           className="hostchatbot-suggestion"
-                          onClick={() => setUserInput(suggestion)} // Optional: Allow suggestion click to set input
+                          onClick={() => setUserInput(suggestion)}
                       >
                         {suggestion}
                       </p>
                   ))}
                 </div>
             )}
-
 
             {loading && <div className="hostchatbot-message bot">Loading...</div>}
             {!awaitingUserChoice && (
@@ -378,16 +386,16 @@ const HostChatbot = () => {
                 disabled={awaitingUserChoice || pdfMode}
                 className={`icon-button ${isRecording ? 'active' : ''}`}
             >
-              <FiMic />
+              <FiMic/>
             </button>
             {!isRecording ? (
                 <>
                   <label
                       htmlFor="pdf-upload"
                       className="icon-button"
-                      style={{ pointerEvents: awaitingUserChoice ? 'none' : 'auto' }}
+                      style={{pointerEvents: awaitingUserChoice ? 'none' : 'auto'}}
                   >
-                    <FiPaperclip />
+                    <FiPaperclip/>
                     <input
                         id="pdf-upload"
                         type="file"
@@ -409,4 +417,4 @@ const HostChatbot = () => {
   );
 };
 
-export default HostChatbot;
+  export default HostChatbot;
