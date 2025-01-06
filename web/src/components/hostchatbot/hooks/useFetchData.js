@@ -10,7 +10,7 @@ const useFetchData = () => {
         setLoading(true);
         try {
             const response = await fetch(
-                'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
+                'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
                 {
                     method: 'POST',
                     body: JSON.stringify({ OwnerId: userId }),
@@ -19,6 +19,7 @@ const useFetchData = () => {
             );
             const data = await response.json();
             const accommodationsArray = data.body ? JSON.parse(data.body) : [];
+            console.log(accommodationsArray);
             const formattedAccommodations = accommodationsArray.map((acc) => ({
                 id: acc.ID,
                 title: acc.Title || 'Accommodation',
@@ -33,8 +34,37 @@ const useFetchData = () => {
         } finally {
             setLoading(false);
         }
-    }, []); // St
+    }, []);
 
+    // New function: Fetch all accommodations
+    const fetchAllAccommodations = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await fetch(
+                'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation',
+                {
+                    method: 'GET',
+                    headers: { 'Content-type': 'application/json' },
+                }
+            );
+
+            const responseData = await response.json();
+            const data = responseData.body ? JSON.parse(responseData.body) : [];
+            const formattedAccommodations = data.map((acc) => ({
+                id: acc.ID,
+                title: acc.Title || 'Accommodation',
+                city: acc.City,
+                bathrooms: acc.Bathrooms,
+                guestAmount: acc.GuestAmount,
+                images: acc.Images || {},
+            }));
+            setAccommodations(formattedAccommodations);
+        } catch (error) {
+            console.error('Error fetching all accommodations:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
 
     const fetchFAQ = useCallback(async () => {
         try {
@@ -53,17 +83,21 @@ const useFetchData = () => {
             const responseData = await response.json();
             console.log('Raw API response:', responseData);
 
-            // Directly use the data as it is already an array
             setFaqList(responseData);
-            console.log('Parsed FAQ data:', responseData); // Verify the final state update
         } catch (error) {
             console.error('Error fetching FAQ data:', error.message);
-            setFaqList([]); // Ensure faqList is cleared on error
+            setFaqList([]);
         }
     }, []);
 
-
-    return { accommodations, faqList, loading, fetchAccommodations, fetchFAQ };
+    return {
+        accommodations,
+        faqList,
+        loading,
+        fetchAccommodations,
+        fetchAllAccommodations, // Return the new function
+        fetchFAQ,
+    };
 };
 
 export default useFetchData;
