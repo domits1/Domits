@@ -19,7 +19,7 @@ const HostPricing = () => {
     const [originalRates, setOriginalRates] = useState([]);
 
     const itemsPerPageDetails = 3;
-    const itemsPerPageTable = 8;
+    const itemsPerPageTable = 7;
 
     const activeItemsPerPage = viewMode === 'details' ? itemsPerPageDetails : itemsPerPageTable;
 
@@ -77,6 +77,10 @@ const HostPricing = () => {
     useEffect(() => {
         fetchAccommodationsRates();
     }, [userId]);
+
+    useEffect(() => {
+        console.log('accommodations:', accommodations);
+    }, [accommodations]);
 
     useEffect(() => {
         if (accommodations.length > 0) {
@@ -152,12 +156,13 @@ const HostPricing = () => {
             if (parsedBody && typeof parsedBody === 'object') {
                 const updatedRates = parsedBody.map(acc => acc.Rent.N || acc.Rent.S || '');
                 setOriginalRates(updatedRates);
-
+                alert('Rates updated successfully');
             } else {
                 console.error('Rates update failed:', parsedBody);
             }
         } catch
             (error) {
+            alert('Rates update failed');
             console.error("Error updating rates:", error);
         }
     };
@@ -203,22 +208,28 @@ const HostPricing = () => {
                                                     alt="Accommodation Image"
                                                 />
                                                 <div className="accommodation-card-details">
-                                                    <p>{accommodation.Title.S}</p>
-                                                    <p>Guests: {accommodation.GuestAmount.N}</p>
-                                                    <p>
-                                                        Rate:{' '}
-                                                        {editMode ? (
-                                                            <input
-                                                                type="number"
-                                                                step="0.1"
-                                                                value={editedRates[globalIndex] || ''}
-                                                                onChange={(e) => handleRateChange(e, globalIndex)}
-                                                            />
-                                                        ) : (
-                                                            editedRates[globalIndex] || (accommodation.Rent.N || accommodation.Rent.S)
-                                                        )}
-                                                    </p>
-                                                    <p>Availability: {accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</p>
+                                                    <div className="pricing-column">
+                                                        <p className="pricing-title">{accommodation.Title.S}</p>
+                                                        <p>{accommodation.Country.S}</p>
+                                                        <p>{accommodation.City.S}, {accommodation.Street.S}</p>
+                                                    </div>
+                                                    <div className="pricing-column">
+                                                        <p>Guests: {accommodation.GuestAmount.N}</p>
+                                                        <p className="pricing-rate-input">
+                                                            Rate:{' '}
+                                                            {editMode ? (
+                                                                <input
+                                                                    type="number"
+                                                                    step="0.1"
+                                                                    value={editedRates[globalIndex] || ''}
+                                                                    onChange={(e) => handleRateChange(e, globalIndex)}
+                                                                />
+                                                            ) : (
+                                                                editedRates[globalIndex] || (accommodation.Rent.N || accommodation.Rent.S)
+                                                            )}
+                                                        </p>
+                                                        <p>Availability: {accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</p>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
@@ -230,8 +241,10 @@ const HostPricing = () => {
                                 <table className="pricing-table">
                                     <thead>
                                     <tr>
-                                        <th>Title</th>
-                                        <th>Guests</th>
+                                        <th className="pricing-table-title">Title</th>
+                                        <th>Country</th>
+                                        <th>Address</th>
+                                        <th className="pricing-table-guestAmount">Guests</th>
                                         <th>Rate</th>
                                         <th>Availability</th>
                                     </tr>
@@ -241,7 +254,9 @@ const HostPricing = () => {
                                         const globalIndex = startIndex + index;
                                         return (
                                             <tr key={globalIndex}>
-                                                <td>{accommodation.Title.S}</td>
+                                                <td className="pricing-table-title">{accommodation.Title.S}</td>
+                                                <td>{accommodation.Country.S}</td>
+                                                <td>{accommodation.City.S}, {accommodation.Street.S}</td>
                                                 <td>{accommodation.GuestAmount.N}</td>
                                                 <td>
                                                     {editMode ? (
