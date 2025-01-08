@@ -4,9 +4,9 @@ import { isSameDay } from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import { useNavigate } from "react-router-dom";
 
-function BookingCalendar({ passedProp, checkIn, checkOut }) {
+function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onCheckOutChange }) {
     const [month1, setMonth1] = useState(new Date().getMonth());
-    const [month2, setMonth2] = useState(new Date().getMonth() + 1); // Set the second calendar's initial month to next month
+    const [month2, setMonth2] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
     const [dates1, setDates1] = useState([]);
     const [dates2, setDates2] = useState([]);
@@ -17,6 +17,28 @@ function BookingCalendar({ passedProp, checkIn, checkOut }) {
         'September', 'October', 'November', 'December'
     ];
 
+    const isDateInRange = (date, startDate, endDate) => {
+        const selectedDate = new Date(date);
+        const rangeStart = new Date(startDate);
+        const rangeEnd = new Date(endDate);
+        return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
+    };
+
+    const handleDateClick = (date) => {
+        if (!checkIn || (checkIn && checkOut)) {
+            // Reset selection or start a new range
+            onCheckInChange(date);
+            onCheckOutChange(null);
+        } else if (checkIn && !checkOut && date > checkIn) {
+            // Set checkOut if valid
+            onCheckOutChange(date);
+        } else {
+            // If invalid date clicked, reset range
+            onCheckInChange(date);
+            onCheckOutChange(null);
+        }
+    };
+
     const renderDates = (month, setDates) => {
         const today = new Date();
         const start = new Date(year, month, 1).getDay();
@@ -26,11 +48,10 @@ function BookingCalendar({ passedProp, checkIn, checkOut }) {
         const newDates = [];
 
         for (let i = start; i > 0; i--) {
-            const date = new Date(year, month - 1, endDatePrev - i + 1);
             newDates.push(
                 <li
                     key={`inactive-prev-${endDatePrev - i + 1}`}
-                    className={`${styles.date} ${styles.inactive} ${date < today ? styles.disabled : ''}`}
+                    className={`${styles.date} ${styles.inactive}`}
                 >
                     {`${endDatePrev - i + 1}`}
                 </li>
@@ -39,21 +60,22 @@ function BookingCalendar({ passedProp, checkIn, checkOut }) {
 
         for (let i = 1; i <= endDate; i++) {
             const currentDate = new Date(year, month, i);
-            const isActiveDay = isSameDay(currentDate, new Date());
-            const isSelected = passedProp.DateRanges.some(range => isDateInRange(currentDate, range.startDate, range.endDate));
+            const isSelected = passedProp.DateRanges.some(range =>
+                isDateInRange(currentDate, range.startDate, range.endDate)
+            );
             const isStartDate = isSameDay(checkIn, currentDate);
             const isEndDate = isSameDay(checkOut, currentDate);
             const isWithinRange = isDateInRange(currentDate, checkIn, checkOut);
+
             newDates.push(
                 <li
-                    key={`inactive-${i}`}
+                    key={`date-${i}`}
                     className={`${styles.date} 
-           ${!isSelected ? styles.inactive : ''} 
-           ${isActiveDay ? styles.today : ''} 
-           ${isWithinRange ? styles.selected : ''} 
-           ${isStartDate ? styles.startDate : ''} 
-           ${isEndDate ? styles.endDate : ''} 
-           ${currentDate < today ? styles.disabled : ''}`}
+                        ${!isSelected ? styles.inactive : ''} 
+                        ${isStartDate ? styles.startDate : ''} 
+                        ${isEndDate ? styles.endDate : ''} 
+                        ${isWithinRange ? styles.selected : ''}`}
+                    onClick={() => handleDateClick(currentDate)}
                 >
                     {`${i}`}
                 </li>
@@ -78,14 +100,6 @@ function BookingCalendar({ passedProp, checkIn, checkOut }) {
     useEffect(() => {
         renderDates(month2, setDates2);
     }, [month2, year, checkIn, checkOut]);
-
-
-    const isDateInRange = (date, startDate, endDate) => {
-        const selectedDate = new Date(date);
-        const rangeStart = new Date(startDate);
-        const rangeEnd = new Date(endDate);
-        return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
-    };
 
     const navigateDates = (nav) => {
         let newMonth1 = month1;

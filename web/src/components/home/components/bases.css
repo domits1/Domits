@@ -17,6 +17,7 @@
 .search-bar-hidden.visible {
     display: block;
     opacity: 1;
+    padding-left: 8vw;
 }
 
 .header-trustpilot-bar {
@@ -250,6 +251,10 @@
 @media screen and (max-width: 480px) {
     .header-app-header {
         height: 10vh;
+    }
+
+    .search-bar-hidden.visible {
+        padding-left: 0vw;
     }
 
     .header-logo{
