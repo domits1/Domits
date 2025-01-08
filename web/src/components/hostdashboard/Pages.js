@@ -42,11 +42,11 @@ function Pages() {
     <main>
       <div className="host-dropdown">
         <br />
-        {loading ? (
-          <div>
-            <img src={spinner} alt="Loading" />
-          </div>
-        ) : (
+        {/*{loading ? (*/}
+        {/*  <div>*/}
+        {/*    <img src={spinner} alt="Loading" />*/}
+        {/*  </div>*/}
+        {/*) : (*/}
           <div className="dropdown-section">
             <div>
               <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Management">
@@ -79,7 +79,7 @@ function Pages() {
               </select>
             </div> */}
           </div>
-        )}
+        {/*)}*/}
       </div>
       <div className="dashboardSection section-1 host-navigation">
         <div

@@ -81,8 +81,10 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     setShowSearchBar(!showSearchBar);
     setIsBarActive(!isBarActive);
     toggleBar(!isBarActive);
-  };
+};
 
+
+  
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
     if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);

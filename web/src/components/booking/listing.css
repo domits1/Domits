@@ -274,7 +274,7 @@
     margin-top: 10px;
 }
 
-.detailSummary .datePickerLD, input[type="number"], select {
+.detailSummary .datePickerLD {
     padding: 8px;
     margin-top: 5px;
     margin-bottom: 15px;
@@ -332,6 +332,38 @@
     color: #333;
     line-height: 1.5;
 }
+
+
+.houseRulesTitle {
+    color: #333;
+    font-size: 24px;
+    margin-top: 10px;
+}
+
+.houseRulesDetails {
+    font-size: 16px;
+    color: #666;
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+.checkInCheckOut {
+    margin-top: 15px;
+    background-color: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.checkIn, .checkOut {
+    color: #444;
+    font-size: 16px;
+}
+
+.checkIn {
+    margin-bottom: 10px;
+}
+
 
 /* Stijl voor de sectie met functies */
 .features {

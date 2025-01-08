@@ -15,7 +15,7 @@ body.hide-header .app-header {
   margin: 1%;
   box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
   cursor: pointer;
-  width: 20%; 
+  width: clamp(150px, 20vw, 300px); 
   aspect-ratio: 1 / 1; 
   display: flex;
   flex-direction: column;
@@ -50,7 +50,6 @@ body.hide-header .app-header {
   text-overflow: ellipsis;
   line-height: 1.2;
 }
-
 
 .domits-accocard:hover {
   transform: translateY(-10px);
@@ -258,7 +257,6 @@ body.hide-header .app-header {
 
 @media (max-width: 1440px) {
   .domits-accocard {
-    width: 40%;
     height: auto;
   }
 
@@ -273,7 +271,7 @@ body.hide-header .app-header {
 
 @media (max-width: 1024px) {
   .domits-accocard {
-    width: 45%;
+    width: clamp(220px, 20vw, 300px);
   }
 
   .domits-searchTextCon {
@@ -286,6 +284,93 @@ body.hide-header .app-header {
 }
 
 @media (max-width: 768px) {
+    .domits-accocard {
+      width: 40%;
+      height: auto;
+    }
+  
+    .domits-searchText {
+      font-size: 0.6em;
+    }
+    .domits-accommodationGroup {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+  }
+  
+    .domits-accocard {
+      background-color: #f9f9f9;
+      border-radius: 15px;
+      margin: 1%;
+      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
+      width: clamp(350px, 20vw, 300px);
+      aspect-ratio: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 1;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      overflow: hidden;
+  }
+  
+  .domits-accocard img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+  
+  .domits-accocard-title {
+    position: absolute;
+    bottom: 22%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.6);
+    padding: 6px 8px;
+    border-radius: 10px;
+    text-align: center;
+    color: white;
+    font-size: clamp(10px, 4vw, 14px);
+    font-weight: 600;
+    z-index: 2;
+    max-width: 90%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
+  }
+  
+  .domits-accocard:hover {
+    transform: translateY(-10px);
+    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+  }
+  
+  .domits-accocard:hover .domits-accocard-title {
+    background: rgba(13, 152, 20, 0.8);
+  }
+  
+  .domits-accocard-content {
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  
+  .domits-accocard-price {
+    font-size: 18px;
+    color: #0d9814;
+    font-weight: bold;
+    margin-top: 5px;
+  }
+  
+  .domits-accocard-specs {
+    font-size: 14px;
+    color: #555;
+    margin-top: 5px;
+  }  
+   
   .domits-accocard-title {
     font-size: clamp(10px, 4vw, 14px);
     bottom: 22%;
@@ -303,16 +388,10 @@ body.hide-header .app-header {
   .domits-communityButtons {
     flex-direction: column;
     gap: 1rem;
-  }
+  } 
 }
 
 @media (max-width: 768px) {
-  .domits-accocard {
-    width: 60%;
-    height: auto;
-    margin: 10px auto;
-  }
-
   .domits-accocard-title {
     font-size: 14px;
   }
@@ -324,12 +403,6 @@ body.hide-header .app-header {
 
   .domits-accocard-specs {
     font-size: 12px;
-  }
-
-  .domits-accommodationGroup {
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
   }
 
   .domits-subHead {
@@ -357,7 +430,7 @@ body.hide-header .app-header {
   }
 
   .domits-searchText {
-    font-size: 1.5em;
+    font-size: 1em;
   }
 
   .domits-communityContainer {

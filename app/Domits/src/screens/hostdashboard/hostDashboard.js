@@ -9,15 +9,18 @@ import {
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {useNavigation} from '@react-navigation/native';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useAuth} from '../../context/AuthContext';
 
 const HostDashboard = () => {
   const navigation = useNavigation();
+  const {userAttributes} = useAuth();
+  const firstName = userAttributes?.given_name || 'N/A';
 
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Welcome :HOST:</Text>
+          <Text style={styles.welcomeText}>Welcome: {firstName}</Text>
           <Text style={styles.descriptionText}>
             Manage your profile, see your payments, add or remove reviews and
             change app settings.
@@ -47,12 +50,12 @@ const HostDashboard = () => {
           <Text style={styles.listItemText}>Profile</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.listItem}
-          onPress={() => navigation.navigate('HostPayments')}>
-          <Text style={styles.listItemText}>Payments</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
+        {/*<TouchableOpacity*/}
+        {/*  style={styles.listItem}*/}
+        {/*  onPress={() => navigation.navigate('HostPayments')}>*/}
+        {/*  <Text style={styles.listItemText}>Payments</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigation.navigate('HostListings')}>
@@ -82,7 +85,9 @@ const HostDashboard = () => {
             Do you have trouble with using our app?{'\n'}Please send a support
             request to Domits.
           </Text>
-          <TouchableOpacity style={styles.helpButton}>
+          <TouchableOpacity
+            style={styles.helpButton}
+            onPress={() => navigation.navigate('helpDesk')}>
             <Text style={styles.helpButtonText}>Help and feedback</Text>
           </TouchableOpacity>
         </View>

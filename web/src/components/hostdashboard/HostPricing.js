@@ -12,11 +12,20 @@ const HostPricing = () => {
     const [accommodations, setAccommodations] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPannel, setCurrentPannel] = useState(1);
-    const itemsPerPage = 3;
     const accommodationsLength = accommodations.length;
     const pricingPannel = (pannelNumber) => setCurrentPannel(pannelNumber);
     const [editMode, setEditMode] = useState(false);
     const [editedRates, setEditedRates] = useState([]);
+    const [originalRates, setOriginalRates] = useState([]);
+
+    const itemsPerPageDetails = 3;
+    const itemsPerPageTable = 7;
+
+    const activeItemsPerPage = viewMode === 'details' ? itemsPerPageDetails : itemsPerPageTable;
+
+    const startIndex = (currentPannel - 1) * activeItemsPerPage;
+    const endIndex = currentPannel * activeItemsPerPage;
+    const currentAccommodations = accommodations.slice(startIndex, endIndex);
 
     useEffect(() => {
         const setUserIdAsync = async () => {
@@ -52,7 +61,6 @@ const HostPricing = () => {
                 if (data.body && typeof data.body === 'string') {
                     const parsedBody = JSON.parse(data.body);
                     if (Array.isArray(parsedBody)) {
-                        console.log('Retrieved data:', parsedBody);
                         setAccommodations(parsedBody);
                     } else {
                         console.error('Retrieved data is not an array:', parsedBody);
@@ -74,11 +82,12 @@ const HostPricing = () => {
         if (accommodations.length > 0) {
             const initialRates = accommodations.map(acc => acc.Rent.N || acc.Rent.S || '');
             setEditedRates(initialRates);
+            setOriginalRates(initialRates);
         }
     }, [accommodations]);
 
     const handlePageRange = () => {
-        const totalPages = Math.ceil(accommodationsLength / itemsPerPage);
+        const totalPages = Math.ceil(accommodationsLength / activeItemsPerPage);
         let startPage = currentPannel - 2;
 
         if (startPage < 1) {
@@ -98,6 +107,7 @@ const HostPricing = () => {
 
     const toggleView = (mode) => {
         setViewMode(mode);
+        setCurrentPannel(1);
     };
 
     const handleDetailsView = () => {
@@ -116,6 +126,45 @@ const HostPricing = () => {
         const updatedRates = [...editedRates];
         updatedRates[index] = e.target.value;
         setEditedRates(updatedRates);
+    };
+
+    const handleSaveRates = async () => {
+        const updatedAccommodations = accommodations.map((acc, i) => ({
+            AccommodationId: acc.ID.S,
+            OwnerId: userId,
+            Rent: editedRates[i]
+        }));
+
+        try {
+            const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Update-AccommodationRates', {
+                method: 'PUT',
+                body: JSON.stringify({
+                    Accommodations: updatedAccommodations
+                }),
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                }
+            });
+
+            const data = await response.json();
+            const parsedBody = JSON.parse(data.body);
+
+            if (parsedBody && typeof parsedBody === 'object') {
+                const updatedRates = parsedBody.map(acc => acc.Rent.N || acc.Rent.S || '');
+                setOriginalRates(updatedRates);
+                alert('Rates updated successfully');
+            } else {
+                console.error('Rates update failed:', parsedBody);
+            }
+        } catch
+            (error) {
+            alert('Rates update failed');
+            console.error("Error updating rates:", error);
+        }
+    };
+
+    const handleUndo = () => {
+        setEditedRates([...originalRates]);
     };
 
     return (
@@ -145,21 +194,24 @@ const HostPricing = () => {
                         viewMode === 'details' ? (
                             <div className="pricing-details-view">
                                 <div className="accommodation-cards">
-                                    {accommodations
-                                        .slice((currentPannel - 1) * itemsPerPage, currentPannel * itemsPerPage)
-                                        .map((accommodation, index) => {
-                                            const globalIndex = (currentPannel - 1) * itemsPerPage + index;
-                                            return (
-                                                <div key={globalIndex} className="accommodation-card">
-                                                    <img
-                                                        className="accommodation-card-img"
-                                                        src={accommodation.Images.M.image1.S}
-                                                        alt="Accommodation Image"
-                                                    />
-                                                    <div className="accommodation-card-details">
-                                                        <p>{accommodation.Title.S}</p>
+                                    {currentAccommodations.map((accommodation, index) => {
+                                        const globalIndex = startIndex + index;
+                                        return (
+                                            <div key={globalIndex} className="accommodation-card">
+                                                <img
+                                                    className="accommodation-card-img"
+                                                    src={accommodation.Images.M.image1.S}
+                                                    alt="Accommodation Image"
+                                                />
+                                                <div className="accommodation-card-details">
+                                                    <div className="pricing-column">
+                                                        <p className="pricing-title">{accommodation.Title.S}</p>
+                                                        <p>{accommodation.Country.S}</p>
+                                                        <p>{accommodation.City.S}, {accommodation.Street.S}</p>
+                                                    </div>
+                                                    <div className="pricing-column">
                                                         <p>Guests: {accommodation.GuestAmount.N}</p>
-                                                        <p>
+                                                        <p className="pricing-rate-input">
                                                             Rate:{' '}
                                                             {editMode ? (
                                                                 <input
@@ -175,8 +227,9 @@ const HostPricing = () => {
                                                         <p>Availability: {accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</p>
                                                     </div>
                                                 </div>
-                                            );
-                                        })}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         ) : (
@@ -184,21 +237,39 @@ const HostPricing = () => {
                                 <table className="pricing-table">
                                     <thead>
                                     <tr>
-                                        <th>Title</th>
-                                        <th>Guests</th>
+                                        <th className="pricing-table-title">Title</th>
+                                        <th>Country</th>
+                                        <th>Address</th>
+                                        <th className="pricing-table-guestAmount">Guests</th>
                                         <th>Rate</th>
                                         <th>Availability</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {accommodations.map((accommodation, index) => (
-                                        <tr key={index}>
-                                            <td>{accommodation.Title.S}</td>
-                                            <td>{accommodation.GuestAmount.N}</td>
-                                            <td>{accommodation.Rent.N || accommodation.Rent.S}</td>
-                                            <td>{accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</td>
-                                        </tr>
-                                    ))}
+                                    {currentAccommodations.map((accommodation, index) => {
+                                        const globalIndex = startIndex + index;
+                                        return (
+                                            <tr key={globalIndex}>
+                                                <td className="pricing-table-title">{accommodation.Title.S}</td>
+                                                <td>{accommodation.Country.S}</td>
+                                                <td>{accommodation.City.S}, {accommodation.Street.S}</td>
+                                                <td>{accommodation.GuestAmount.N}</td>
+                                                <td>
+                                                    {editMode ? (
+                                                        <input
+                                                            type="number"
+                                                            step="0.1"
+                                                            value={editedRates[globalIndex] || ''}
+                                                            onChange={(e) => handleRateChange(e, globalIndex)}
+                                                        />
+                                                    ) : (
+                                                        editedRates[globalIndex] || (accommodation.Rent.N || accommodation.Rent.S)
+                                                    )}
+                                                </td>
+                                                <td>{accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</td>
+                                            </tr>
+                                        );
+                                    })}
                                     </tbody>
                                 </table>
                             </div>
@@ -222,15 +293,15 @@ const HostPricing = () => {
                                 );
                             })}
                             <button className="pricing-next-nav-button"
-                                    onClick={() => pricingPannel(currentPannel < Math.ceil(accommodationsLength / itemsPerPage) ? currentPannel + 1 : currentPannel)}
-                                    disabled={currentPannel === Math.ceil(accommodationsLength / itemsPerPage)}>
+                                    onClick={() => pricingPannel(currentPannel < Math.ceil(accommodationsLength / activeItemsPerPage) ? currentPannel + 1 : currentPannel)}
+                                    disabled={currentPannel === Math.ceil(accommodationsLength / activeItemsPerPage)}>
                                 Next
                             </button>
                         </div>
                         <div className="pricing-action-buttons">
                             <button onClick={handleEditMode}>Edit</button>
-                            <button>Undo</button>
-                            <button>Save</button>
+                            <button onClick={handleUndo}>Undo</button>
+                            <button className="pricing-action-save" onClick={handleSaveRates}>Save</button>
                         </div>
                     </div>
                 </div>
