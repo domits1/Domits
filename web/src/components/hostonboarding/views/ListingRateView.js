@@ -4,7 +4,7 @@ import PricingRow from "../components/PricingRow";
 import { usePricing } from "../hooks/usePricing";
 import Button from "../components/button";
 
-function PricingView() {
+function ListingRateView() {
   const { type: accommodationType } = useParams();
   const { pricing, updatePricing, calculateServiceFee } = usePricing();
 
@@ -55,7 +55,7 @@ function PricingView() {
 
       <nav className="onboarding-button-box">
         <Button
-          routePath={`/hostonboarding/${accommodationType}/description`}
+          routePath={`/hostonboarding/${accommodationType}/photos`}
           btnText="Go back"
         />
         <Button
@@ -67,4 +67,4 @@ function PricingView() {
   );
 }
 
-export default PricingView;
+export default ListingRateView;

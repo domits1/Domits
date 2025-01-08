@@ -6,7 +6,7 @@ import { useAvailability } from "../hooks/useAvailability";
 import Button from "../components/button";
 import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
 
-function AvailabilityView() {
+function ListingCalendarAvailabilityView() {
     const { type: accommodationType } = useParams();
   const {
     availability,
@@ -67,4 +67,4 @@ function AvailabilityView() {
   );
 }
 
-export default AvailabilityView;
+export default ListingCalendarAvailabilityView;

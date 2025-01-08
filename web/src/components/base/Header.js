@@ -181,10 +181,9 @@ function Header({ setSearchResults, setLoading }) {
                             <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>
-                    <div className='App'>
-                        <SearchBar setSearchResults={setSearchResults} setLoading={setLoading}
-                            toggleBar={toggleSearchBar} />
-                    </div>
+                        <div className='App'>
+                            <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} toggleBar={toggleSearchBar} />
+                        </div>
                     <div className='headerRight'>
                         <ul className='header-links'>
                             {!isLoggedIn ? (

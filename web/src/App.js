@@ -5,8 +5,8 @@ import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
 import Travelinnovation from "./components/ninedots/travelinnovation";
-import Home from './components/home/Accommodations';
-import Homepage from './components/home/homePage.js';
+import Home from "./components/home/Accommodations";
+import Homepage from "./components/home/homePage.js";
 import About from "./components/about/About";
 import Whydomits from "./components/about/Whydomitstwo.js";
 import Release from "./components/about/release.js";
@@ -71,22 +71,23 @@ import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
 // import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
 
-import AccommodationTypeView from "./components/hostonboarding/views/AccommodationTypeView.js";
-import GuestAccessView from "./components/hostonboarding/views/GuestAccessView.js";
+import AccommodationTypeView from "./components/hostonboarding/views/ListingTypeView.js";
+import GuestAccessView from "./components/hostonboarding/views/HouseTypeView.js";
 import BoatTypeView from "./components/hostonboarding/views/BoatTypeView.js";
 import CamperTypeView from "./components/hostonboarding/views/CamperTypeView.js";
-import AddressInputView from "./components/hostonboarding/views/AddressInputView.js";
-import CapacityView from "./components/hostonboarding/views/GuestAmountView.js";
-import AmenitiesView from "./components/hostonboarding/views/AmenitiesView.js";
-import HouseRulesView from "./components/hostonboarding/views/HouseRulesView.js";
-import PhotosView from "./components/hostonboarding/views/PhotosView.js";
-import AccommodationTitleView from "./components/hostonboarding/views/AccommodationTitleView.js";
-import DescriptionView from "./components/hostonboarding/views/DescriptionView.js";
-import PricingView from "./components/hostonboarding/views/PricingView.js";
-import AvailabilityView from "./components/hostonboarding/views/AvailabilityView.js";
-import RegistrationNumberView from "./components/hostverification/RegistrationNumberView.js";
-import SummaryView from "./components/hostonboarding/views/SummaryView.js";
+import AccommodationTitleView from "./components/hostonboarding/views/ListingNameView.js";
+import AddressInputView from "./components/hostonboarding/views/ListingLocationView.js";
+import DescriptionView from "./components/hostonboarding/views/ListingDescriptionView.js";
+import CapacityView from "./components/hostonboarding/views/ListingGuestAmountView.js";
+import AmenitiesView from "./components/hostonboarding/views/ListingAmenitiesView.js";
+import HouseRulesView from "./components/hostonboarding/views/ListingHouseRulesView.js";
+import PhotosView from "./components/hostonboarding/views/ListingPhotosView.js";
+import PricingView from "./components/hostonboarding/views/ListingRateView.js";
+import AvailabilityView from "./components/hostonboarding/views/ListingCalendarAvailabilityView.js";
+import RegistrationNumberView from "./components/hostverification/ListingRegistrationNumberView.js";
+import SummaryView from "./components/hostonboarding/views/ListingCheckCompletionView.js";
 import StepGuard from "./components/hostonboarding/hooks/StepGuard.js";
+import ListingsView from "./components/hostdashboard/Listings/ListingsView.js";
 
 import { Auth } from "aws-amplify";
 import GuestProtectedRoute from "./GuestProtectedRoute";
@@ -138,37 +139,57 @@ function App() {
 
   const [flowState, setFlowState] = useState({ isHost: false });
 
-    return (
-        <ApolloProvider client={client}> {/* ApolloProvider */}
-            <FlowContext.Provider value={{ flowState, setFlowState }}>
-                <Router>
-                    <ScrollToTop />
-                    <AuthProvider>
-                        <UserProvider>
-                            <div className="App">
-                            {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
-                                <Routes>
-                                    <Route path="/home" element={<Home searchResults={searchResults} />} />
-                                    <Route path="/" element={<Homepage />} />
-                                    <Route path="/about" element={<About />} />
-                                    {/* <Route path="/release" element={<Release />} /> */}
-                                    <Route path="/releaseTwo" element={<ReleaseTwo />} />
-                                    <Route path="/data-safety" element={<Datasafety />} />
-                                    <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
-                                    <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
-                                    <Route path="/how-it-works" element={<Howitworks />} />
-                                    <Route path="/why-domits" element={<Whydomits />} />
-                                    <Route path="/contact" element={<Contact />} />
-                                    <Route path="/travelinnovation" element={<Travelinnovation />} />
-                                    <Route path="/release" element={<ReleaseUpdates />} />
-                                    <Route path="/landing" element={<Landing />} />
-                                    <Route path="/login" element={<Login />} />
-                                    <Route path="/register" element={<Register />} />
-                                    <Route path="/confirm-email" element={<ConfirmRegister />} />
-                                    <Route path="/listingdetails" element={<ListingDetails />} />
-                                    <Route path="/bookingoverview" element={<BookingOverview />} />
-                                    <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                                    {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
+  return (
+    <ApolloProvider client={client}>
+      {" "}
+      {/* ApolloProvider */}
+      <FlowContext.Provider value={{ flowState, setFlowState }}>
+        <Router>
+          <ScrollToTop />
+          <AuthProvider>
+            <UserProvider>
+              <div className="App">
+              {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
+                <Routes>
+                  <Route
+                    path="/home"
+                    element={<Home searchResults={searchResults} />}
+                  />
+                  <Route path="/" element={<Homepage />} />
+                  <Route path="/about" element={<About />} />
+                  {/* <Route path="/release" element={<Release />} /> */}
+                  <Route path="/releaseTwo" element={<ReleaseTwo />} />
+                  <Route path="/data-safety" element={<Datasafety />} />
+                  <Route
+                    path="/helpdesk-guest"
+                    element={<Helpdesk category="guest" />}
+                  />
+                  <Route
+                    path="/helpdesk-host"
+                    element={<Helpdesk category="host" />}
+                  />
+                  <Route path="/how-it-works" element={<Howitworks />} />
+                  <Route path="/why-domits" element={<Whydomits />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route
+                    path="/travelinnovation"
+                    element={<Travelinnovation />}
+                  />
+                  <Route path="/release" element={<ReleaseUpdates />} />
+                  <Route path="/landing" element={<Landing />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/confirm-email" element={<ConfirmRegister />} />
+                  <Route path="/listingdetails" element={<ListingDetails />} />
+                  <Route
+                    path="/bookingoverview"
+                    element={<BookingOverview />}
+                  />
+                  <Route
+                    path="/bookingconfirmation"
+                    element={<BookingConfirmation />}
+                  />
+                  {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
 
                   {/* Chat */}
                   <Route path="/chat" element={<Chat />} />
@@ -203,15 +224,17 @@ function App() {
                   <Route path="/enlist" element={<HostOnboarding />} />
 
                   {/* Verification */}
-                  <Route path="/verify" element={<HostVerificationView />} />
-                  <Route
-                    path="/verify/phonenumber"
-                    element={<PhoneNumberView />}
-                  />
-                  <Route
-                    path="/verify/phonenumber/confirm"
-                    element={<PhoneNumberConfirmView />}
-                  />
+                  <Route 
+                  path="/verify" 
+                  element={
+                    <GuestProtectedRoute>
+                        <Routes>
+                            <Route path="/" element={<HostVerificationView />}/>
+                            <Route path="/verify/phonenumber" element={<PhoneNumberView />}/>
+                            <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />}/>
+                        </Routes>
+                    </GuestProtectedRoute>
+                } />
 
                   <Route
                     path="/hostdashboard"
@@ -226,6 +249,7 @@ function App() {
                     element={
                       <HostProtectedRoute>
                         <Routes>
+                          <Route path="listings2" element={<ListingsView />} />
                           <Route path="listings" element={<HostListings />} />
                           <Route path="calendar" element={<HostCalendar />} />
                           <Route path="messages" element={<HostMessages />} />

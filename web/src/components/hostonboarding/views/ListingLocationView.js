@@ -5,7 +5,7 @@ import AddressFormFields from "../components/AddressFormFields";
 import Button from "../components/button";
 import { useAddressInput } from "../hooks/useAddressInput";
 
-function AddressInputView() {
+function ListingLocationView() {
   const { type: accommodationType } = useParams();
 
   const { options, details, handleChange } = useAddressInput(accommodationType);
@@ -38,11 +38,11 @@ function AddressInputView() {
       </section>
 
       <nav className="onboarding-button-box">
-        <Button routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
-        <Button routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Proceed" />
+        <Button routePath={`/hostonboarding/${accommodationType}/title`} btnText="Go back" />
+        <Button routePath={`/hostonboarding/${accommodationType}/description`} btnText="Proceed" />
       </nav>
     </main>
   );
 }
 
-export default AddressInputView;
+export default ListingLocationView;

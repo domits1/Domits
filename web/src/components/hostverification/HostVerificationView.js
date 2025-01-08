@@ -6,7 +6,7 @@ import Toast from "../toast/Toast";
 
 const HostVerificationView = () => {
   const userData = {
-    userId: "100f12f1-244a-494b-9eb0-2cd3d25e47bg5",
+    userId: "100f12f1-244a-494b-9eb0-2cd3d25e47bg6",
     firstName: "John",
     lastName: "Doe",
   };
@@ -48,15 +48,13 @@ const HostVerificationView = () => {
           disabled={isVerificationDisabled}
         />
         <hr></hr>
-        <Option option="Connect with stripe to receive payments" />
-        <hr></hr>
         <Option
           option="Confirm your phone number"
           subtext="We will text to confirm your number."
         />
       </div>
       <div className={styles["right-container"]}>
-        {/* <Listing data={data}/> */}
+        <Listing data={data}/>
       </div>
       <hr></hr>
       <div className={styles["bottom-container"]}>

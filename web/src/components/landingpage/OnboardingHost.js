@@ -26,7 +26,7 @@ import ElectricBoat from "../../images/boat_types/electric-boat.png";
 import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png";
 import CalendarComponent from "../hostdashboard/CalendarComponent";
 import imageCompression from 'browser-image-compression';
-import RegistrationNumber from "../hostverification/RegistrationNumberView";
+import RegistrationNumber from "../hostverification/ListingRegistrationNumberView";
 
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';

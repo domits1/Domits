@@ -4,7 +4,7 @@ import useFormStore from "../stores/formStore";
 import { useParams } from "react-router-dom";
 import Button from "../components/button";
 
-function AmenitiesView() {
+function ListingAmenitiesView() {
   const { type: accommodationType } = useParams();
 
   const selectedAmenities = useFormStore(
@@ -48,4 +48,4 @@ function AmenitiesView() {
   );
 }
 
-export default AmenitiesView;
+export default ListingAmenitiesView;

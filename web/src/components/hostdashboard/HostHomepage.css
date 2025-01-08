@@ -61,22 +61,24 @@
 .wijzer {
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+  /* justify-content: space-between; */
   cursor: pointer;
   margin-bottom: 10px;
   align-items: center;
   width: 200px;
-  border: 0.1px solid black;
+  /* border: 0.1px solid black; */
   border-radius: 15px;
-  padding: 5px;
+  /* padding: 5px; */
   box-sizing: border-box;
   transition: all 0.3s ease;
-  font-size: 0.75em;
   text-align: center;
+  gap: 5px;
 }
 
 .wijzer img {
   object-fit: cover;
+  margin-top: 3px;
+  width: 32px;
 }
 
 .wijzer:hover {

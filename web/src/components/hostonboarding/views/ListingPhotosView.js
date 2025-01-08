@@ -3,7 +3,7 @@ import ImagePreview from "../components/ImagePreview";
 import { usePhotos } from "../hooks/usePhotos";
 import Button from "../components/button";
 
-function PhotosView() {
+function ListingPhotosView() {
   const { type: accommodationType } = useParams();
   const { images, handleFileChange, deleteImage } = usePhotos();
 
@@ -31,7 +31,7 @@ function PhotosView() {
           btnText="Go back"
         />
         <Button
-          routePath={`/hostonboarding/${accommodationType}/title`}
+          routePath={`/hostonboarding/${accommodationType}/pricing`}
           btnText="Proceed"
         />
       </nav>
@@ -39,4 +39,4 @@ function PhotosView() {
   );
 }
 
-export default PhotosView;
+export default ListingPhotosView;

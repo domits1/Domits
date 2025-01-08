@@ -5,7 +5,7 @@ import TextAreaField from "../components/TextAreaField";
 import SpecificationForm from "../components/SpecificationForm";
 import Button from "../components/button";
 
-function DescriptionView() {
+function ListingDescriptionView() {
   const { type: accommodationType } = useParams();
   const {
     description,
@@ -49,11 +49,11 @@ function DescriptionView() {
       />
       <nav className="onboarding-button-box">
         <Button
-          routePath={`/hostonboarding/${accommodationType}/title`}
+          routePath={`/hostonboarding/${accommodationType}/address`}
           btnText="Go back"
         />
         <Button
-          routePath={`/hostonboarding/${accommodationType}/pricing`}
+          routePath={`/hostonboarding/${accommodationType}/capacity`}
           btnText="Proceed"
         />
       </nav>
@@ -61,4 +61,4 @@ function DescriptionView() {
   );
 }
 
-export default DescriptionView;
+export default ListingDescriptionView;

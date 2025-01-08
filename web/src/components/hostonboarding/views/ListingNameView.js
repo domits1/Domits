@@ -3,7 +3,7 @@ import TextAreaField from "../components/TextAreaField";
 import { useAccommodationTitle } from "../hooks/useAccommodationTitle";
 import Button from "../components/button";
 
-function AccommodationTitleView() {
+function ListingNameView() {
   const { type: accommodationType } = useParams();
   const { title, subtitle, handleInputChange } = useAccommodationTitle();
 
@@ -34,11 +34,11 @@ function AccommodationTitleView() {
 
       <nav className="onboarding-button-box">
         <Button
-          routePath={`/hostonboarding/${accommodationType}/photos`}
+          routePath={`/hostonboarding/${accommodationType}`}
           btnText="Go back"
         />
         <Button
-          routePath={`/hostonboarding/${accommodationType}/description`}
+          routePath={`/hostonboarding/${accommodationType}/address`}
           btnText="Proceed"
         />
       </nav>
@@ -46,4 +46,4 @@ function AccommodationTitleView() {
   );
 }
 
-export default AccommodationTitleView;
+export default ListingNameView;

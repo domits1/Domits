@@ -5,7 +5,7 @@ import SpecificationsTable from "../components/SpecificationsTable";
 import FeatureTable from "../components/FeatureTable";
 import DeclarationSection from "../components/DeclarationSection";
 
-function SummaryView() {
+function ListingCheckCompletionView() {
   const { data, toggleDrafted } = useSummary();
   const type = data.Type || "Accommodation";
 
@@ -34,4 +34,4 @@ function SummaryView() {
   );
 }
 
-export default SummaryView;
+export default ListingCheckCompletionView;

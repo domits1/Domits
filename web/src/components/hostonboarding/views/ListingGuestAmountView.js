@@ -6,7 +6,7 @@ import useFormStore from "../stores/formStore";
 import { accommodationFields } from "../constants/guestAmountFields";
 import Button from "../components/button";
 
-function GuestAmountView() {
+function ListingGuestAmountView() {
   const { type: accommodationType } = useParams();
 
   const accommodationCapacity = useFormStore(
@@ -45,11 +45,11 @@ function GuestAmountView() {
         ))}
       </section>
       <nav className="onboarding-button-box">
-      <Button routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
+      <Button routePath={`/hostonboarding/${accommodationType}/description`} btnText="Go back" />
       <Button routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" />
       </nav>
     </main>
   );
 }
 
-export default GuestAmountView;
+export default ListingGuestAmountView;

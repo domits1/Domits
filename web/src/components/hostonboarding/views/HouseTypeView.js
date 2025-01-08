@@ -3,7 +3,7 @@
 import GuestAccessTypeSelector from "../components/GuestAccessTypeSelector";
 import Button from "../components/button";
 
-function GuestAccessView() {
+function HouseTypeView() {
   return (
     <main className="container">
       <section className="guest-access">
@@ -26,10 +26,10 @@ function GuestAccessView() {
 
       <nav className="onboarding-button-box">
         <Button routePath="/hostonboarding" btnText="Go back" />
-        <Button routePath="/hostonboarding/accommodation/address" btnText="Proceed" />
+        <Button routePath="/hostonboarding/accommodation/title" btnText="Proceed" />
       </nav>
     </main>
   );
 }
 
-export default GuestAccessView;
+export default HouseTypeView;

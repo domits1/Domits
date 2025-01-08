@@ -4,7 +4,7 @@ import TimeSelector from "../components/TimeSelector";
 import { useHouseRules } from "../hooks/useHouseRules";
 import Button from "../components/button";
 
-function HouseRulesView() {
+function ListingHouseRules() {
   const { type: accommodationType } = useParams();
   const { houseRules, handleCheckboxChange, handleTimeChange } =
     useHouseRules();
@@ -66,4 +66,4 @@ function HouseRulesView() {
   );
 }
 
-export default HouseRulesView;
+export default ListingHouseRules;

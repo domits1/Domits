@@ -6,7 +6,7 @@ import { useHandleAccommodationTypeProceed } from "../hooks/useHandleAccommodati
 import { accommodationData } from "../constants/accommodationData";
 import useFormStore from "../stores/formStore";
 
-function AccommodationTypeView() {
+function ListingTypeView() {
   const selectedAccommodationType = useFormStore(
     (state) => state.accommodationDetails.type
   );
@@ -35,4 +35,4 @@ function AccommodationTypeView() {
   );
 }
 
-export default AccommodationTypeView;
+export default ListingTypeView;
