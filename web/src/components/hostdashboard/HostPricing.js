@@ -5,6 +5,8 @@ import detailsIcon from "../../images/icons/content-view-detail-list-icon.svg";
 import tableIcon from "../../images/icons/content-view-table-list-icon.svg";
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
+import taxFeeIcon from "../../images/icons/tax-fee-icon.png";
+import {vatRates, touristTaxRates} from "../utils/CountryVATRatesAndTouristTaxes";
 
 const HostPricing = () => {
     const [viewMode, setViewMode] = useState('details');
@@ -17,6 +19,8 @@ const HostPricing = () => {
     const [editMode, setEditMode] = useState(false);
     const [editedRates, setEditedRates] = useState([]);
     const [originalRates, setOriginalRates] = useState([]);
+    const [editedCleaningFees, setEditedCleaningFees] = useState([]);
+    const [originalCleaningFees, setOriginalCleaningFees] = useState([]);
 
     const itemsPerPageDetails = 3;
     const itemsPerPageTable = 7;
@@ -26,6 +30,9 @@ const HostPricing = () => {
     const startIndex = (currentPannel - 1) * activeItemsPerPage;
     const endIndex = currentPannel * activeItemsPerPage;
     const currentAccommodations = accommodations.slice(startIndex, endIndex);
+
+    const [taxFeePopup, setTaxFeePopup] = useState(false);
+    const [selectedAccommodation, setSelectedAccommodation] = useState(null);
 
     useEffect(() => {
         const setUserIdAsync = async () => {
@@ -81,8 +88,11 @@ const HostPricing = () => {
     useEffect(() => {
         if (accommodations.length > 0) {
             const initialRates = accommodations.map(acc => acc.Rent.N || acc.Rent.S || '');
+            const initialCleaningFees = accommodations.map(acc => acc.CleaningFee.N || acc.CleaningFee.S || '');
             setEditedRates(initialRates);
             setOriginalRates(initialRates);
+            setEditedCleaningFees(initialCleaningFees);
+            setOriginalCleaningFees(initialCleaningFees);
         }
     }, [accommodations]);
 
@@ -118,6 +128,81 @@ const HostPricing = () => {
         toggleView('table');
     }
 
+    const toggleTaxFeePopup = (accommodation) => {
+        setSelectedAccommodation(accommodation)
+        setTaxFeePopup(!taxFeePopup);
+    }
+
+    const handleClosePopUp = () => {
+        setTaxFeePopup(false);
+    }
+
+    const handleTaxFeePopup = (details, globalIndex) => {
+        const countryVAT = vatRates.find(rate => rate.country === details.Country?.S)?.vat || "0";
+        const vatRate = parseFloat(countryVAT) / 100;
+
+        const countryTouristTax = touristTaxRates.find(rate => rate.country === details.Country?.S)?.touristTax || "0";
+
+        const rent = parseFloat(
+            editedRates[globalIndex] || details.Rent.N || details.Rent.S || 0
+        ).toFixed(2);
+
+        const cleaningFee = parseFloat(
+            editedCleaningFees[globalIndex] || details.CleaningFee?.N || details.CleaningFee?.S || 0
+        ).toFixed(2);
+
+        const domitsFee = (parseFloat(
+            editedRates[globalIndex] ||
+            details.CleaningFee?.N ||
+            details.CleaningFee?.S ||
+            0) * 0.15).toFixed(2);
+
+        const vatTax = (parseFloat(
+            editedRates[globalIndex] ||
+            details.CleaningFee?.N ||
+            details.CleaningFee?.S ||
+            0) * vatRate).toFixed(2);
+
+        let touristTax;
+        if (countryTouristTax.includes('%')) {
+            const taxRate = parseFloat(countryTouristTax.replace('%', '')) / 100;
+            touristTax = (parseFloat(rent) * taxRate).toFixed(2);
+        } else if (countryTouristTax.includes('EUR') || countryTouristTax.includes('USD') || countryTouristTax.includes('GBP')) {
+            touristTax = parseFloat(countryTouristTax.replace(/[^\d.]/g, '') || 0).toFixed(2);
+        } else {
+            touristTax = "0.00";
+        }
+
+        const totalCost = (
+            parseFloat(rent) +
+            parseFloat(cleaningFee) +
+            parseFloat(domitsFee) +
+            parseFloat(vatTax) +
+            parseFloat(touristTax)
+        ).toFixed(2);
+
+        return (
+            <div className="pricing-taxFee-popup-container">
+                <div className="pricing-taxFee-popup-overlay" onClick={handleClosePopUp}></div>
+                <div className="pricing-taxFee-popup-content">
+                    <div className="pricing-taxFee-popup-header">
+                        <h3>Estimate Costs</h3>
+                        <button className="pricing-taxFee-popup-close-button" onClick={handleClosePopUp}>✖</button>
+                    </div>
+                    <div className="pricing-taxFee-popup-body">
+                        <p>Rates per night: <span>€{rent}</span></p>
+                        <p>Cleaning fee: <span>€{cleaningFee}</span></p>
+                        <p>Domits Service fee 15%: <span>€{domitsFee}</span></p>
+                        <p>VAT Tax ({countryVAT}%): <span>€{vatTax}</span></p>
+                        <p>Tourist Tax: <span>€{touristTax}</span></p>
+                        <hr/>
+                        <p>Total Cost: <span>€{totalCost}</span></p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     const handleEditMode = () => {
         setEditMode(!editMode);
     }
@@ -128,12 +213,27 @@ const HostPricing = () => {
         setEditedRates(updatedRates);
     };
 
+    const handleCleaningFeeChange = (e, index) => {
+        const updatedCleaningFees = [...editedCleaningFees];
+        updatedCleaningFees[index] = e.target.value;
+        setEditedCleaningFees(updatedCleaningFees);
+    }
+
     const handleSaveRates = async () => {
-        const updatedAccommodations = accommodations.map((acc, i) => ({
-            AccommodationId: acc.ID.S,
-            OwnerId: userId,
-            Rent: editedRates[i]
-        }));
+        const updatedAccommodations = accommodations.map((acc, i) => {
+            const extraServices = acc.Features?.M?.ExtraServices?.L || [];
+            const cleaningFeeIncluded = extraServices.some(service => service.S === 'Cleaning service (add service fee manually)');
+
+            return {
+                AccommodationId: acc.ID.S,
+                OwnerId: userId,
+                Rent: parseFloat(editedRates[i] || acc.Rent.N || acc.Rent.S).toFixed(2),
+                CleaningFee: cleaningFeeIncluded
+                    ? parseFloat(editedCleaningFees[i] || acc.CleaningFee.N || acc.CleaningFee.S).toFixed(2)
+                    : "0.00",
+                ServiceFee: (0.15 * parseFloat(editedRates[i] || acc.Rent.N || acc.Rent.S)).toFixed(2),
+            };
+        });
 
         try {
             const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Update-AccommodationRates', {
@@ -151,8 +251,12 @@ const HostPricing = () => {
 
             if (parsedBody && typeof parsedBody === 'object') {
                 const updatedRates = parsedBody.map(acc => acc.Rent.N || acc.Rent.S || '');
+                const updatedCleaningFees = parsedBody.map(acc => acc.CleaningFee.N || acc.CleaningFee.S || '');
                 setOriginalRates(updatedRates);
+                setOriginalCleaningFees(updatedCleaningFees)
+                setEditMode(false);
                 alert('Rates updated successfully');
+                fetchAccommodationsRates();
             } else {
                 console.error('Rates update failed:', parsedBody);
             }
@@ -165,6 +269,7 @@ const HostPricing = () => {
 
     const handleUndo = () => {
         setEditedRates([...originalRates]);
+        setEditedCleaningFees([...originalCleaningFees]);
     };
 
     return (
@@ -175,20 +280,20 @@ const HostPricing = () => {
                     <button className="refresh-accommodation-button" onClick={fetchAccommodationsRates}>Refresh</button>
                     <div className="pricing-switch-layout-button">
                         <button className="details-switch-button" onClick={handleDetailsView}>
-                            <img src={detailsIcon} alt="detailsView"/>
+                            <img src={detailsIcon} alt="detailsView" />
                         </button>
                         <button className="table-switch-button" onClick={handleTableView}>
-                            <img src={tableIcon} alt="tableView"/>
+                            <img src={tableIcon} alt="tableView" />
                         </button>
                     </div>
                 </div>
             </div>
             <div className="hostdashboard-container">
-                <Pages/>
+                <Pages />
                 <div className="host-pricing-container">
                     {isLoading ? (
                         <div>
-                            <img src={spinner}/>
+                            <img src={spinner} />
                         </div>
                     ) : (
                         viewMode === 'details' ? (
@@ -196,6 +301,9 @@ const HostPricing = () => {
                                 <div className="accommodation-cards">
                                     {currentAccommodations.map((accommodation, index) => {
                                         const globalIndex = startIndex + index;
+                                        const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
+                                        const cleaningFeeIncluded = extraServices.some(service => service.S === 'Cleaning service (add service fee manually)');
+
                                         return (
                                             <div key={globalIndex} className="accommodation-card">
                                                 <img
@@ -207,10 +315,9 @@ const HostPricing = () => {
                                                     <div className="pricing-column">
                                                         <p className="pricing-title">{accommodation.Title.S}</p>
                                                         <p>{accommodation.Country.S}</p>
-                                                        <p>{accommodation.City.S}, {accommodation.Street.S}</p>
+                                                        <p>Guests: {accommodation.GuestAmount.N}</p>
                                                     </div>
                                                     <div className="pricing-column">
-                                                        <p>Guests: {accommodation.GuestAmount.N}</p>
                                                         <p className="pricing-rate-input">
                                                             Rate:{' '}
                                                             {editMode ? (
@@ -224,8 +331,33 @@ const HostPricing = () => {
                                                                 editedRates[globalIndex] || (accommodation.Rent.N || accommodation.Rent.S)
                                                             )}
                                                         </p>
+                                                        <p className="pricing-rate-input">
+                                                            Cleaning Fee: {' '}
+                                                            {cleaningFeeIncluded ? (
+                                                                editMode ? (
+                                                                    <input
+                                                                        type="number"
+                                                                        step="0.1"
+                                                                        value={editedCleaningFees[globalIndex] || ''}
+                                                                        onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
+                                                                    />
+                                                                ) : (
+                                                                    editedCleaningFees[globalIndex] || (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
+                                                                )
+                                                            ) : (
+                                                                0
+                                                            )}
+                                                        </p>
                                                         <p>Availability: {accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</p>
                                                     </div>
+                                                </div>
+                                                <div className="pricing-taxFee-container">
+                                                    <img
+                                                        className="pricing-taxFee-icon-details"
+                                                        src={taxFeeIcon}
+                                                        alt="Tax & Fee Button"
+                                                        onClick={() => toggleTaxFeePopup(accommodation)}
+                                                    />
                                                 </div>
                                             </div>
                                         );
@@ -239,20 +371,23 @@ const HostPricing = () => {
                                     <tr>
                                         <th className="pricing-table-title">Title</th>
                                         <th>Country</th>
-                                        <th>Address</th>
                                         <th className="pricing-table-guestAmount">Guests</th>
                                         <th>Rate</th>
+                                        <th>Cleaning Fee</th>
                                         <th>Availability</th>
+                                        <th>Tax & Fees</th>
                                     </tr>
                                     </thead>
                                     <tbody>
                                     {currentAccommodations.map((accommodation, index) => {
                                         const globalIndex = startIndex + index;
+                                        const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
+                                        const cleaningFeeIncluded = extraServices.some(service => service.S === 'Cleaning service (add service fee manually)');
+
                                         return (
                                             <tr key={globalIndex}>
                                                 <td className="pricing-table-title">{accommodation.Title.S}</td>
                                                 <td>{accommodation.Country.S}</td>
-                                                <td>{accommodation.City.S}, {accommodation.Street.S}</td>
                                                 <td>{accommodation.GuestAmount.N}</td>
                                                 <td>
                                                     {editMode ? (
@@ -266,7 +401,31 @@ const HostPricing = () => {
                                                         editedRates[globalIndex] || (accommodation.Rent.N || accommodation.Rent.S)
                                                     )}
                                                 </td>
+                                                <td>
+                                                    {cleaningFeeIncluded ? (
+                                                        editMode ? (
+                                                            <input
+                                                                type="number"
+                                                                step="0.1"
+                                                                value={editedCleaningFees[globalIndex] || ''}
+                                                                onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
+                                                            />
+                                                        ) : (
+                                                            editedCleaningFees[globalIndex] || (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
+                                                        )
+                                                    ) : (
+                                                        0
+                                                    )}
+                                                </td>
                                                 <td>{accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</td>
+                                                <td>
+                                                    <img
+                                                        className="pricing-taxFee-icon-table"
+                                                        src={taxFeeIcon}
+                                                        alt="Tax & Fee Button"
+                                                        onClick={() => toggleTaxFeePopup(accommodation)}
+                                                    />
+                                                </td>
                                             </tr>
                                         );
                                     })}
@@ -275,6 +434,11 @@ const HostPricing = () => {
                             </div>
                         )
                     )}
+                    <div>
+                        {taxFeePopup && selectedAccommodation && (
+                            handleTaxFeePopup(selectedAccommodation, accommodations.indexOf(selectedAccommodation))
+                        )}
+                    </div>
                     <div className="pricing-bottom-buttons">
                         <div className="pricing-navigation-buttons">
                             <button className="pricing-prev-nav-button"
