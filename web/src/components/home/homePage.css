@@ -29,6 +29,8 @@ body.hide-header .app-header {
   width: 100%;
   height: auto;
   object-fit: cover;
+  aspect-ratio: 1;
+  display: block;
 }
 
 .domits-accocard-title {

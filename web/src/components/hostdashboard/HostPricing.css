@@ -141,10 +141,45 @@
 
 .accommodation-card-details {
     display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    flex-wrap: wrap;
+    overflow: hidden;
+}
+
+.pricing-column {
+    display: flex;
     flex-direction: column;
-    justify-content: space-around;
-    width: 45vw;
-    height: 20vh;
+    gap: 5px;
+    width: 45%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.pricing-column p {
+    margin: 0;
+    height: 8vh;
+    line-height: 1.5;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.pricing-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    max-height: 33%;
+}
+
+.pricing-rate-input input {
+    padding: 0;
+    width: 3vw;
+    max-width: 100%;
+    vertical-align: middle;
 }
 
 /*table view*/
@@ -164,19 +199,22 @@
     padding: 10px;
     border-radius: 15px;
     border-collapse: collapse;
-    border-spacing: 0;
-}
-
-.pricing-table table {
+    table-layout: fixed;
     width: 100%;
-    border-collapse: collapse;
 }
 
-.pricing-table th, .pricing-table td {
+.pricing-table .pricing-table-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pricing-table th,
+.pricing-table td {
     padding: 12px 15px;
     border: 1px solid #ddd;
     text-align: left;
-    border-spacing: 0;
+    vertical-align: middle;
 }
 
 .pricing-table th {
@@ -185,13 +223,24 @@
     text-transform: uppercase;
 }
 
+.pricing-table td input {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    background-color: transparent;
+    font: inherit;
+    text-align: left;
+    height: auto;
+}
+
 .pricing-table tr:hover {
     background-color: #f1f1f1;
 }
 
 /*navigation buttons*/
 .pricing-bottom-buttons {
-
+    display: flex;
+    flex-direction: row;
 }
 
 .pricing-navigation-buttons {
@@ -200,7 +249,7 @@
     align-items: center;
     margin-inline: auto;
     padding-top: 2.5%;
-    margin-right: 16vw;
+    margin-left: 21vw;
 }
 
 .pricing-navigation-buttons button {
@@ -228,4 +277,989 @@
 
 .pricing-navigation-buttons button:hover:not(:disabled) {
     background-color: #ddd;
+}
+
+.pricing-action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-inline: auto;
+    padding-top: 2.5%;
+    margin-right: 16vw;
+    gap: 1.5vw;
+}
+
+.pricing-action-buttons button {
+    width: 4vw;
+    height: 4vh;
+    border-radius: 5px;
+    border: none;
+}
+
+.pricing-action-buttons button:hover {
+    opacity: 80%;
+    cursor: pointer;
+}
+
+.pricing-action-save {
+    background-color: #4A77FC;
+}
+
+/*mobile view*/
+@media (max-width: 320px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: column;
+        margin-top: 5vh;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .refresh-accommodation-button {
+        width: 50px;
+        height: 40px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 40px;
+        height: 30px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        padding-left: 10px;
+        padding-right: 10px;
+        width: 100%;
+        height: auto;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 17rem;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 10px;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+        padding: 10px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 5px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.2;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 14px;
+    }
+
+    .pricing-rate-input input {
+        width: 50px;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        width: 94%;
+        height: 100%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 10px 0;
+        padding: 5px;
+        font-size: 12px;
+        border-spacing: 0;
+        width: 100vw;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 8px;
+        word-break: break-word;
+        text-align: left;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 9.5px;
+    }
+
+    .pricing-table td {
+        font-size: 10px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        margin-left: 0;
+        margin-right: 1.5rem;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 5px;
+        font-size: 12px;
+        width: 4rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 10px;
+    }
+
+    .pricing-action-buttons button {
+        width: 40px;
+        height: 30px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 12px;
+    }
+}
+
+@media (min-width: 321px) and (max-width: 376px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: column;
+        margin-top: 5vh;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .refresh-accommodation-button {
+        width: 50px;
+        height: 40px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 40px;
+        height: 30px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        padding-left: 10px;
+        padding-right: 10px;
+        width: 100%;
+        height: auto;
+        align-self: center;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 18rem;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 10px;
+        align-self: center;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+        padding: 10px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 5px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.2;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 14px;
+    }
+
+    .pricing-rate-input input {
+        width: 50px;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        margin-left: 5vw;
+        width: 90%;
+        height: 100%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 10px 0;
+        padding: 5px;
+        font-size: 12px;
+        border-spacing: 0;
+        width: 100vw;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 8px;
+        word-break: break-word;
+        text-align: left;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 9.5px;
+    }
+
+    .pricing-table td {
+        font-size: 10px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        margin-left: 1.5rem;
+        margin-right: 1.5rem;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 5px;
+        font-size: 12px;
+        width: 4rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 10px;
+    }
+
+    .pricing-action-buttons button {
+        width: 40px;
+        height: 30px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 12px;
+    }
+}
+
+@media (min-width: 376px) and (max-width: 426px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: column;
+        margin-top: 5vh;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .refresh-accommodation-button {
+        width: 60px;
+        height: 45px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        width: 100%;
+        height: auto;
+        align-self: center;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 71vw;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 15px;
+        align-self: center;
+        margin-right: 3vw;
+        align-items: center;
+        align-content: center;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+        padding: 15px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.4;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .pricing-rate-input input {
+        width: 60px;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        margin-left: 1vw;
+        width: 93%;
+        height: 110%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 14px;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 20px;
+        word-break: break-word;
+        text-align: left;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 13px;
+    }
+
+    .pricing-table td {
+        font-size: 12px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        margin-left: 3rem;
+        margin-right: 4rem;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 8px;
+        font-size: 14px;
+        width: 5rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 15px;
+    }
+
+    .pricing-action-buttons button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 426px) and (max-width: 481px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: row;
+        margin-top: 5vh;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .refresh-accommodation-button {
+        width: 60px;
+        height: 45px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        width: 100%;
+        height: auto;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 71vw;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 15px;
+        align-self: center;
+        margin-right: 9vw;
+        align-content: center;
+        align-items: center;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+        padding: 15px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.4;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .pricing-rate-input input {
+        width: 60px;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        width: 90%;
+        height: 110%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 14px;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 20px;
+        word-break: break-word;
+        text-align: left;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 13px;
+    }
+
+    .pricing-table td {
+        font-size: 12px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        margin-left: 2rem;
+        margin-right: 4rem;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 8px;
+        font-size: 14px;
+        width: 5rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 15px;
+    }
+
+    .pricing-action-buttons button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 769px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: row;
+        margin-top: 5vh;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .refresh-accommodation-button {
+        width: 60px;
+        height: 45px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        width: 100%;
+        height: auto;
+        padding: 0;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 73vw;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 15px;
+        align-self: center;
+        margin-right: 3vw;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+        padding: 15px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.4;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .pricing-rate-input input {
+        width: 60px;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        margin-left: 6.75vw;
+        width: 87%;
+        height: 110%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 14px;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 20px;
+        word-break: break-word;
+        text-align: left;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 13px;
+    }
+
+    .pricing-table td {
+        font-size: 12px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 8px;
+        font-size: 14px;
+        width: 5rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 15px;
+    }
+
+    .pricing-action-buttons button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 14px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1025px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        margin-top: 5vh;
+        width: 71%;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .refresh-accommodation-button {
+        width: 60px;
+        height: 45px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: row;
+    }
+
+    .host-pricing-container {
+        width: 100%;
+        height: auto;
+        padding: 0;
+        margin-left: 2vw;    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 70vw;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 15px;
+        align-self: center;
+        margin-right: 3vw;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        gap: 2vw;
+    }
+
+    .accommodation-card-img {
+        width: 30vw;
+        height: 20vh;
+        object-fit: cover;
+        border-radius: 15px;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-column {
+        height: 100%;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.5;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .pricing-rate-input input {
+        width: 60px;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        margin-left: 2vw;
+        width: 72%;
+        height: 65%;
+        overflow-x: auto;
+        margin-top: -1vw;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 14px;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 20px;
+        word-break: break-word;
+        text-align: left;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 13px;
+    }
+
+    .pricing-table td {
+        font-size: 12px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pricing-navigation-buttons {
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 8px;
+        font-size: 14px;
+        width: 5rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 15px;
+    }
+
+    .pricing-action-buttons button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 14px;
+    }
 }

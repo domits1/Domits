@@ -604,6 +604,14 @@ const ListingDetails = () => {
         restrictCheckInToDateRange();
     }, [checkOut]);
 
+    const handleCheckInChange = (date) => {
+        setCheckIn(date);
+    };
+    
+    const handleCheckOutChange = (date) => {
+        setCheckOut(date);
+    };
+
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
             if (new Date(checkOut) > new Date(checkIn)) {
@@ -813,10 +821,6 @@ const ListingDetails = () => {
         return !(isOutsideAvailableRange || isBooked || isInThePast || !isAdvanceReserved);
     };
 
-    // useEffect(() => {
-    //     console.log('House Rules:', accommodation?.HouseRules);
-    // }, [accommodation]);
-
     return (
         <main className="container">
             <section className="detailContainer">
@@ -824,10 +828,10 @@ const ListingDetails = () => {
                     {accommodation && (
                         <div>
                             <div>
-                                <Link to="/">
+                                <Link to="/home">
                                     <p className="backButton">Go Back</p>
                                 </Link>
-                                <h1>
+                                <h1 className='accommodationTitle'>
                                     {accommodation.Title} {isDemo && "(DEMO)"}
                                 </h1>
                             </div>
@@ -847,7 +851,15 @@ const ListingDetails = () => {
                             <div>
                                 <hr className="pageDividerr"/>
                                 <h3>Calendar overview:</h3>
-                                <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
+                                {/* <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/> */}
+
+                                <BookingCalendar
+                                passedProp={accommodation}
+                                checkIn={checkIn}
+                                checkOut={checkOut}
+                                onCheckInChange={handleCheckInChange}
+                                onCheckOutChange={handleCheckOutChange}
+                            />
                             </div>
                             <div>
                             <hr className="pageDividerr" />
@@ -925,7 +937,7 @@ const ListingDetails = () => {
                                             </section>
                                             <section className="card-bottom">
                                                 <div>
-                                                    <button className='button'>Contact host</button>
+                                                    <button className='hostButton'>Contact host</button>
                                                 </div>
                                             </section>
                                         </div>
@@ -949,7 +961,7 @@ const ListingDetails = () => {
                             </div>
                         </div>
                         <div className="summary-section">
-                            <h2>
+                            <h2 className='price-per-night'>
                                 €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
                             </h2>
 
@@ -967,6 +979,7 @@ const ListingDetails = () => {
                                         maxDate={maxStart && new Date(maxStart)}
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
+                                        placeholderText="DD/MM/YYYY" 
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
                                                          style={{
@@ -995,6 +1008,7 @@ const ListingDetails = () => {
                                         }
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
+                                        placeholderText="DD/MM/YYYY"   
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
                                                           style={{
