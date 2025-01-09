@@ -806,21 +806,23 @@ function OnboardingHost() {
         return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/${folder}Image-${index + 1}.webp`;
     };
 
-
     const uploadImagesInDifferentSizes = async (file, userId, accommodationId, index) => {
         const sizes = {
-            mobile: {maxWidthOrHeight: 300, maxSizeMB: 0.1},  // ~100kB
-            homepage: {maxWidthOrHeight: 800, maxSizeMB: 0.2},  // ~200kB
-            detail: {maxWidthOrHeight: 1200, maxSizeMB: 0.5}  // ~500kB
+            mobile: {maxWidthOrHeight: 300, maxSizeMB: 0.1, quality: 0.85}, // Higher compression for mobile ~100kb
+            homepage: {maxWidthOrHeight: 800, maxSizeMB: 0.3, quality: 0.9}, // Balanced quality for homepage ~200kb
+            detail: {maxWidthOrHeight: 1200, maxSizeMB: 0.5, quality: 0.95} // Priority on quality for detail ~500kb
         };
 
         for (const [key, sizeOptions] of Object.entries(sizes)) {
             try {
                 console.log(`Uploading image for size: ${key}, index: ${index}`);
+
                 const compressedFile = await imageCompression(file, {
                     ...sizeOptions,
-                    fileType: 'image/webp'
+                    fileType: 'image/webp',
+                    initialQuality: sizeOptions.quality
                 });
+
                 const keyPath = `images/${userId}/${accommodationId}/${key}/Image-${index + 1}.webp`;
 
                 await Storage.put(keyPath, compressedFile, {
