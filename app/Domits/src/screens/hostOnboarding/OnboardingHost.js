@@ -35,6 +35,14 @@ import Boat_Without_License from '../pictures/BoatTypes/boat-without-license.png
 import {Picker} from '@react-native-picker/picker';
 
 const OnboardingHost = () => {
+  const listingType = 0;
+  const listingSpaceType = 1;
+  const listingLocation = 2;
+  const listingAmountOfGuests = 3;
+  const listingAmenities = 4;
+  const listingHouseRules = 5;
+  const listingName = 6;
+  const listingDescription = 7;
   const navigation = useNavigation();
   const [page, setPage] = useState(0);
   const [selectedAccoType, setSelectedAccoType] = useState(null);
@@ -52,6 +60,8 @@ const OnboardingHost = () => {
     AllowParties: false,
     CheckIn: {From: '00:00', Til: '00:00'},
     CheckOut: {From: '00:00', Til: '00:00'},
+    AccommodationTitle: '', // For listingName
+    AccommodationDescription: '', // For listingDescription
   });
   const [errors, setErrors] = useState({});
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -331,7 +341,7 @@ const OnboardingHost = () => {
   };
   const renderPageContent = page => {
     switch (page) {
-      case 0:
+      case listingType:
         return (
           <SafeAreaView style={styles.container}>
             <View style={styles.imagesContainer}>
@@ -372,7 +382,7 @@ const OnboardingHost = () => {
             </View>
           </SafeAreaView>
         );
-      case 1:
+      case listingSpaceType:
         return (
           <ScrollView>
             <SafeAreaView style={styles.container}>
@@ -527,7 +537,7 @@ const OnboardingHost = () => {
             </SafeAreaView>
           </ScrollView>
         );
-      case 2:
+      case listingLocation:
         return (
           <SafeAreaView style={styles.container}>
             <Text style={styles.title}>
@@ -626,7 +636,7 @@ const OnboardingHost = () => {
             </View>
           </SafeAreaView>
         );
-      case 3:
+      case listingAmountOfGuests:
         return (
           <SafeAreaView style={styles.container}>
             <Text style={styles.title}>How many people can stay here?</Text>
@@ -741,7 +751,7 @@ const OnboardingHost = () => {
             </ScrollView>
           </SafeAreaView>
         );
-      case 4:
+      case listingAmenities:
         return (
           <SafeAreaView style={styles.aminityContainer}>
             <ScrollView>
@@ -790,7 +800,7 @@ const OnboardingHost = () => {
             </View>
           </SafeAreaView>
         );
-      case 5:
+      case listingHouseRules:
         return (
           <View style={styles.pageBody}>
             <Text style={styles.title}>House rules</Text>
@@ -804,7 +814,6 @@ const OnboardingHost = () => {
                   }
                 />
               </View>
-
               <View style={styles.toggle}>
                 <Text style={styles.toggleLabel}>Allow Pets</Text>
                 <Switch
@@ -814,7 +823,6 @@ const OnboardingHost = () => {
                   }
                 />
               </View>
-
               <View style={styles.toggle}>
                 <Text style={styles.toggleLabel}>Allow Parties/Events</Text>
                 <Switch
@@ -828,78 +836,81 @@ const OnboardingHost = () => {
 
             {/* Check-In Time */}
             <View style={styles.checkContainer}>
-              <Text style={styles.checkLabel}>Check-In</Text>
-              <Text>From</Text>
-              <Picker
-                selectedValue={formData.CheckIn.From}
-                onValueChange={value =>
-                  handleHouseRulesChange('CheckIn', value, 'From')
-                }
-                style={styles.picker}>
-                {Array.from({length: 24}, (_, i) => {
-                  const time = `${i.toString().padStart(2, '0')}:00`;
-                  return <Picker.Item key={time} label={time} value={time} />;
-                })}
-              </Picker>
-              <Text>Til</Text>
-              <Picker
-                selectedValue={formData.CheckIn.Til}
-                onValueChange={value =>
-                  handleHouseRulesChange('CheckIn', value, 'Til')
-                }
-                style={styles.picker}>
-                {Array.from({length: 24}, (_, i) => {
-                  const time = `${i.toString().padStart(2, '0')}:00`;
-                  return <Picker.Item key={time} label={time} value={time} />;
-                })}
-              </Picker>
+              <Text style={styles.checkInLabel}>Check-In</Text>
+              <View style={styles.timePickerRow}>
+                <Text style={styles.timePickerLabel}>From:</Text>
+                <Picker
+                  selectedValue={formData.CheckIn.From}
+                  onValueChange={value =>
+                    handleHouseRulesChange('CheckIn', value, 'From')
+                  }
+                  style={styles.picker}>
+                  {Array.from({length: 24}, (_, i) => {
+                    const time = `${i.toString().padStart(2, '0')}:00`;
+                    return <Picker.Item key={time} label={time} value={time} />;
+                  })}
+                </Picker>
+                <Text style={styles.timePickerLabel}>Til:</Text>
+                <Picker
+                  selectedValue={formData.CheckIn.Til}
+                  onValueChange={value =>
+                    handleHouseRulesChange('CheckIn', value, 'Til')
+                  }
+                  style={styles.picker}>
+                  {Array.from({length: 24}, (_, i) => {
+                    const time = `${i.toString().padStart(2, '0')}:00`;
+                    return <Picker.Item key={time} label={time} value={time} />;
+                  })}
+                </Picker>
+              </View>
             </View>
 
             {/* Check-Out Time */}
             <View style={styles.checkContainer}>
               <Text style={styles.checkLabel}>Check-Out</Text>
-              <Text>From</Text>
-              <Picker
-                selectedValue={formData.CheckOut.From}
-                onValueChange={value =>
-                  handleHouseRulesChange('CheckOut', value, 'From')
-                }
-                style={styles.picker}>
-                {Array.from({length: 24}, (_, i) => {
-                  const time = `${i.toString().padStart(2, '0')}:00`;
-                  return <Picker.Item key={time} label={time} value={time} />;
-                })}
-              </Picker>
-              <Text>Til</Text>
-              <Picker
-                selectedValue={formData.CheckOut.Til}
-                onValueChange={value =>
-                  handleHouseRulesChange('CheckOut', value, 'Til')
-                }
-                style={styles.picker}>
-                {Array.from({length: 24}, (_, i) => {
-                  const time = `${i.toString().padStart(2, '0')}:00`;
-                  return <Picker.Item key={time} label={time} value={time} />;
-                })}
-              </Picker>
+              <View style={styles.timePickerRow}>
+                <Text style={styles.timePickerLabel}>From:</Text>
+                <Picker
+                  selectedValue={formData.CheckOut.From}
+                  onValueChange={value =>
+                    handleHouseRulesChange('CheckOut', value, 'From')
+                  }
+                  style={styles.picker}>
+                  {Array.from({length: 24}, (_, i) => {
+                    const time = `${i.toString().padStart(2, '0')}:00`;
+                    return <Picker.Item key={time} label={time} value={time} />;
+                  })}
+                </Picker>
+                <Text style={styles.timePickerLabel}>Til:</Text>
+                <Picker
+                  selectedValue={formData.CheckOut.Til}
+                  onValueChange={value =>
+                    handleHouseRulesChange('CheckOut', value, 'Til')
+                  }
+                  style={styles.picker}>
+                  {Array.from({length: 24}, (_, i) => {
+                    const time = `${i.toString().padStart(2, '0')}:00`;
+                    return <Picker.Item key={time} label={time} value={time} />;
+                  })}
+                </Picker>
+              </View>
             </View>
 
-            {/* Navigation Buttons */}
-            <View style={styles.buttonContainer}>
+            <View style={styles.buttonContainerRules}>
               <TouchableOpacity
-                style={[styles.backButton, {opacity: 1}]}
+                style={styles.backButton}
                 onPress={() => setPage(page - 1)}>
                 <Text style={styles.buttonText}>Go Back</Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
                   styles.nextButton,
-                  formData.CheckIn?.From &&
-                  formData.CheckIn?.Til &&
-                  formData.CheckOut?.From &&
-                  formData.CheckOut?.Til
-                    ? null
-                    : styles.disabledButton,
+                  !(
+                    formData.CheckIn?.From &&
+                    formData.CheckIn?.Til &&
+                    formData.CheckOut?.From &&
+                    formData.CheckOut?.Til
+                  ) && styles.disabledButton,
                 ]}
                 disabled={
                   !(
@@ -914,6 +925,195 @@ const OnboardingHost = () => {
               </TouchableOpacity>
             </View>
           </View>
+        );
+      case listingName:
+        return (
+          <SafeAreaView style={styles.container}>
+            <Text style={styles.title}>
+              Provide a Title for Your Accommodation
+            </Text>
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Accommodation Title*</Text>
+              <TextInput
+                placeholder="Enter a title (e.g., Cozy Beachfront Villa)"
+                value={formData.AccommodationTitle}
+                onChangeText={value =>
+                  handleInputChange('AccommodationTitle', value)
+                }
+                style={[
+                  styles.input,
+                  errors.AccommodationTitle && styles.errorInput,
+                ]}
+              />
+              {errors.AccommodationTitle && (
+                <Text style={styles.errorText}>
+                  {errors.AccommodationTitle}
+                </Text>
+              )}
+            </View>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setPage(page - 1)}>
+                <Text style={styles.buttonText}>Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  !formData.AccommodationTitle && styles.disabledButton,
+                ]}
+                onPress={() => {
+                  if (formData.AccommodationTitle) {
+                    setPage(page + 1);
+                  } else {
+                    setErrors(prevErrors => ({
+                      ...prevErrors,
+                      AccommodationTitle: 'Title is required',
+                    }));
+                  }
+                }}
+                disabled={!formData.AccommodationTitle}>
+                <Text style={styles.buttonText}>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        );
+      case listingDescription:
+        return (
+          <SafeAreaView style={styles.container}>
+            <Text style={styles.title}>Provide a Description</Text>
+            <Text style={styles.subtitle}>
+              Share what makes your accommodation special.
+            </Text>
+            <TextInput
+              style={styles.textArea}
+              placeholder="Enter your description here..."
+              multiline
+              maxLength={500}
+              value={formData.AccommodationDescription}
+              onChangeText={value =>
+                handleInputChange('AccommodationDescription', value)
+              }
+            />
+            <Text style={styles.charCounter}>
+              {formData.AccommodationDescription.length}/500
+            </Text>
+            <View style={styles.buttonContainer}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setPage(page - 1)}>
+                <Text style={styles.buttonText}>Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.nextButton,
+                  !formData.AccommodationDescription && styles.disabledButton,
+                ]}
+                onPress={() => {
+                  if (formData.AccommodationDescription) {
+                    setPage(page + 1);
+                  } else {
+                    setErrors(prevErrors => ({
+                      ...prevErrors,
+                      AccommodationDescription: 'Description is required',
+                    }));
+                  }
+                }}
+                disabled={!formData.AccommodationDescription}>
+                <Text style={styles.buttonText}>Next</Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+        );
+      case 8:
+        return (
+          <SafeAreaView style={styles.container}>
+            <ScrollView>
+              <Text style={styles.title}>Overview</Text>
+
+              {/* Display selected accommodation type */}
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewLabel}>Accommodation Type:</Text>
+                <Text style={styles.overviewValue}>
+                  {selectedAccoType || 'N/A'}
+                </Text>
+              </View>
+
+              {/* Display guest access or other related details */}
+              {formData.GuestAccess && (
+                <View style={styles.overviewItem}>
+                  <Text style={styles.overviewLabel}>Guest Access:</Text>
+                  <Text style={styles.overviewValue}>
+                    {formData.GuestAccess}
+                  </Text>
+                </View>
+              )}
+
+              {/* Display guest amount */}
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewLabel}>Guest Amount:</Text>
+                <Text style={styles.overviewValue}>{formData.GuestAmount}</Text>
+              </View>
+
+              {/* Display check-in and check-out times */}
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewLabel}>Check-In:</Text>
+                <Text style={styles.overviewValue}>
+                  From {formData.CheckIn?.From} to {formData.CheckIn?.Til}
+                </Text>
+              </View>
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewLabel}>Check-Out:</Text>
+                <Text style={styles.overviewValue}>
+                  From {formData.CheckOut?.From} to {formData.CheckOut?.Til}
+                </Text>
+              </View>
+
+              {/* Display amenities if any */}
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewLabel}>Selected Amenities:</Text>
+                <Text style={styles.overviewValue}>
+                  {Object.entries(selectedAmenities)
+                    .flatMap(([category, amenities]) =>
+                      Object.entries(amenities)
+                        .filter(([amenity, isSelected]) => isSelected)
+                        .map(([amenity]) => amenity),
+                    )
+                    .join(', ') || 'None'}
+                </Text>
+              </View>
+
+              {/* Display the entered accommodation title */}
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewLabel}>Accommodation Title:</Text>
+                <Text style={styles.overviewValue}>
+                  {formData.AccommodationTitle || 'N/A'}
+                </Text>
+              </View>
+
+              {/* Display the description */}
+              <View style={styles.overviewItem}>
+                <Text style={styles.overviewLabel}>Description:</Text>
+                <Text style={styles.overviewValue}>
+                  {formData.AccommodationDescription || 'N/A'}
+                </Text>
+              </View>
+            </ScrollView>
+
+            {/* Finish Button */}
+            <View style={styles.buttonContainerOverview}>
+              <TouchableOpacity
+                style={styles.backButton}
+                onPress={() => setPage(page - 1)}>
+                <Text style={styles.buttonText}>Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.finishButton}
+                onPress={() => navigation.navigate('HostDashboard')}>
+                <Text style={styles.buttonText}>Finish</Text>
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
         );
       default:
         return null;
@@ -1105,7 +1305,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF',
     marginHorizontal: 10,
   },
-  aminityContainer: {
+  amenityContainer: {
     backgroundColor: 'white',
     flex: 1,
     justifyContent: 'center',
@@ -1151,6 +1351,7 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     backgroundColor: '#fff',
+    marginTop: 40,
   },
   sectionTitle: {
     fontSize: 24,
@@ -1170,16 +1371,95 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   checkContainer: {
-    marginVertical: 16,
+    marginVertical: 3,
   },
   checkLabel: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 8,
+    marginTop: 150,
+  },
+  checkInLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: -10,
   },
   picker: {
+    flex: 1,
     height: 50,
+  },
+  timePickerLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginHorizontal: 10,
+    marginTop: 150,
+  },
+  timePickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: -120,
     width: '100%',
+  },
+  buttonContainerRules: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 150,
+    marginLeft: '10%',
+    width: '80%',
+  },
+  textArea: {
+    width: '90%',
+    height: 150,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 10,
+    padding: 10,
+    fontSize: 16,
+    backgroundColor: '#f9f9f9',
+    textAlignVertical: 'top', // Ensures the text starts at the top
+  },
+  charCounter: {
+    alignSelf: 'flex-end',
+    marginRight: '5%',
+    fontSize: 14,
+    color: '#666',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#555',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
+  overviewItem: {
+    marginBottom: 15,
+    marginRight: '40%',
+  },
+  overviewLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#555',
+    marginBottom: 5,
+  },
+  overviewValue: {
+    fontSize: 16,
+    color: '#333',
+  },
+  finishButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    backgroundColor: '#28a745',
+    borderRadius: 8,
+    width: '50%',
+    alignItems: 'center',
+    alignSelf: 'center',
+    marginBottom: 1,
+  },
+  buttonContainerOverview: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    marginLeft: '10%',
+    width: '80%',
   },
 });
 

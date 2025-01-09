@@ -10,7 +10,7 @@ import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../context/AuthContext';
 
-const Profile = () => {
+const GuestProfileTab = () => {
   const {userAttributes} = useAuth();
   const [firstName, setFirstName] = useState('');
   const [emailAddress, setEmailAddress] = useState('');
@@ -108,4 +108,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Profile;
+export default GuestProfileTab;

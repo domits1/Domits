@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 
-const Payments = () => {
+const HostPaymentsTab = () => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
@@ -95,4 +95,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Payments;
+export default HostPaymentsTab;

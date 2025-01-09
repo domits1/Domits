@@ -9,7 +9,7 @@ import {
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from "react-native-safe-area-context";
 
-const Reviews = () => {
+const GuestReviewsTab = () => {
   // Dummy data for the example
   const review = {
     place: 'Kinderhuisssingel 6k',
@@ -136,4 +136,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Reviews;
+export default GuestReviewsTab;

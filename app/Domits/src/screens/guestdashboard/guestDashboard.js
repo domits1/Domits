@@ -28,25 +28,25 @@ const GuestDashboard = ({navigation}) => {
         </View>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigateTo('Profile')}>
+          onPress={() => navigateTo('GuestProfileTab')}>
           <Text style={styles.listItemText}>Profile</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         {/*<TouchableOpacity*/}
         {/*  style={styles.listItem}*/}
-        {/*  onPress={() => navigateTo('PaymentMethods')}>*/}
+        {/*  onPress={() => navigateTo('HostPaymentsTab')}>*/}
         {/*  <Text style={styles.listItemText}>Payment methods</Text>*/}
         {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
         {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigateTo('Reviews')}>
+          onPress={() => navigateTo('GuestReviewsTab')}>
           <Text style={styles.listItemText}>Reviews</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigateTo('Settings')}>
+          onPress={() => navigateTo('GuestSettingsTab')}>
           <Text style={styles.listItemText}>Settings</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -58,7 +58,7 @@ const GuestDashboard = ({navigation}) => {
           </Text>
           <TouchableOpacity
             style={styles.helpButton}
-            onPress={() => navigateTo('helpDesk')}>
+            onPress={() => navigateTo('HostHelpDesk')}>
             <Text style={styles.helpButtonText}>Help and feedback</Text>
           </TouchableOpacity>
         </View>

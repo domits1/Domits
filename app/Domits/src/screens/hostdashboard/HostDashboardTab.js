@@ -14,7 +14,7 @@ import {useNavigation} from '@react-navigation/native';
 import ImageSlider from '../../components/utils/ImageSlider';
 import DateFormatterDD_MM_YYYY from '../../components/utils/DateFormatterDD_MM_YYYY';
 
-const Dashboard = () => {
+const HostDashboardTab = () => {
   const {userAttributes} = useAuth();
   const firstName = userAttributes?.given_name || 'N/A';
   const email = userAttributes?.email || 'N/A';
@@ -70,7 +70,7 @@ const Dashboard = () => {
             <Text style={styles.infoText}>Refresh</Text>
           </Button>
           <Button
-            onPress={() => navigation.navigate('HostListings')}
+            onPress={() => navigation.navigate('HostListingsTab')}
             style={styles.sectionButton}>
             <Text style={styles.infoText}>Go to listing</Text>
           </Button>
@@ -284,4 +284,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Dashboard;
+export default HostDashboardTab;

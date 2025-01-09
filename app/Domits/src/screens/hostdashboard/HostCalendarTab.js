@@ -5,7 +5,7 @@ import { useAuth } from "../../context/AuthContext";
 import CalendarComponent from "./CalendarComponent";
 
 
-function HostCalendar() {
+function HostCalendarTab() {
   const { userAttributes, isAuthenticated, checkAuth } = useAuth();
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,7 +135,7 @@ function HostCalendar() {
 const styles = StyleSheet.create({
   body: {
     flex: 1,
-    backgroundColor: "#f9f9f9", 
+    backgroundColor: "#f9f9f9",
     paddingHorizontal: 16,
     paddingVertical: 8,
   },
@@ -148,7 +148,7 @@ const styles = StyleSheet.create({
   noAccommodationsText: {
     textAlign: "center",
     fontSize: 18,
-    color: "#7f8c8d", 
+    color: "#7f8c8d",
     marginTop: 20,
   },
   calendarContent: {
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     marginBottom: 20,
-    backgroundColor: "#fefefe", 
+    backgroundColor: "#fefefe",
     borderRadius: 8,
     borderWidth: 1,
     borderColor: "#dcdcdc",
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   picker: {
     height: 50,
     width: "100%",
-    color: "#34495e", 
+    color: "#34495e",
     marginBottom: 8,
   },
   calendarContainer: {
@@ -206,6 +206,6 @@ const styles = StyleSheet.create({
   },
 });
 
-  
 
-export default HostCalendar;
+
+export default HostCalendarTab;

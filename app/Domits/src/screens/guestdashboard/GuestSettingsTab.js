@@ -13,7 +13,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../context/AuthContext';
 import {useNavigation} from '@react-navigation/native';
 import {deleteUser} from '../GeneralUtils/GenUtils';
-const Settings = () => {
+const GuestSettingsTab = () => {
   const {userAttributes} = useAuth();
   const userId = userAttributes?.sub;
   const navigation = useNavigation();
@@ -68,7 +68,7 @@ const Settings = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('helpDesk')}>
+          onPress={() => navigation.navigate('HostHelpDesk')}>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -126,4 +126,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Settings;
+export default GuestSettingsTab;

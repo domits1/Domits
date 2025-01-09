@@ -9,7 +9,7 @@ import {
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from "react-native-safe-area-context";
 
-const PaymentMethods = () => {
+const GuestPaymentsTab = () => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
@@ -110,4 +110,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default PaymentMethods;
+export default GuestPaymentsTab;

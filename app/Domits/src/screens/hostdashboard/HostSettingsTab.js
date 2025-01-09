@@ -48,7 +48,7 @@ const HostSettings = () => {
         {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('helpDesk')}>
+          onPress={() => navigation.navigate('HostHelpDesk')}>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>

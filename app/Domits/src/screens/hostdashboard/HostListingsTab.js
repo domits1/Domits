@@ -14,7 +14,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../../context/AuthContext';
 
-const Listings = () => {
+const HostListingsTab = () => {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const navigation = useNavigation();
@@ -262,4 +262,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Listings;
+export default HostListingsTab;

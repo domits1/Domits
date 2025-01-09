@@ -34,37 +34,37 @@ const HostDashboard = () => {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('HostDashboard')}>
+          onPress={() => navigation.navigate('HostDashboardTab')}>
           <Text style={styles.listItemText}>Dashboard</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('HostCalendar')}>
+          onPress={() => navigation.navigate('HostCalendarTab')}>
           <Text style={styles.listItemText}>Calendar</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('HostProfile')}>
+          onPress={() => navigation.navigate('HostProfileTab')}>
           <Text style={styles.listItemText}>Profile</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         {/*<TouchableOpacity*/}
         {/*  style={styles.listItem}*/}
         {/*  onPress={() => navigation.navigate('HostPayments')}>*/}
-        {/*  <Text style={styles.listItemText}>Payments</Text>*/}
+        {/*  <Text style={styles.listItemText}>HostPaymentsTab</Text>*/}
         {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
         {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('HostListings')}>
+          onPress={() => navigation.navigate('HostListingsTab')}>
           <Text style={styles.listItemText}>Listings</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('HostSettings')}>
+          onPress={() => navigation.navigate('GuestSettingsTab')}>
           <Text style={styles.listItemText}>Settings</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -76,7 +76,7 @@ const HostDashboard = () => {
         {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
-          onPress={() => navigation.navigate('HostReviews')}>
+          onPress={() => navigation.navigate('GuestReviewsTab')}>
           <Text style={styles.listItemText}>Reviews</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
@@ -87,7 +87,7 @@ const HostDashboard = () => {
           </Text>
           <TouchableOpacity
             style={styles.helpButton}
-            onPress={() => navigation.navigate('helpDesk')}>
+            onPress={() => navigation.navigate('HostHelpDesk')}>
             <Text style={styles.helpButtonText}>Help and feedback</Text>
           </TouchableOpacity>
         </View>
