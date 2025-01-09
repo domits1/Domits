@@ -1,8 +1,9 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import styles from './Calendar.module.css';
 import {isSameDay} from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";
+import HostCalendar from "./HostCalendar";
 
 /**
  * TEST
@@ -73,6 +74,8 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         const endDatePrev = new Date(year, month, 0).getDate();
         const newDates = [];
 
+        const safeSelectedRanges = Array.isArray(selectedRanges) ? selectedRanges : [];
+
         for (let i = start; i > 0; i--) {
             const date = new Date(year, month - 1, endDatePrev - i + 1);
             newDates.push(
@@ -88,17 +91,17 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         for (let i = 1; i <= endDate; i++) {
             const currentDate = new Date(year, month, i);
             const isActiveDay = isSameDay(currentDate, new Date());
-            const isSelected = selectedRanges.some(range => isDateInRange(currentDate, range.startDate, range.endDate));
-            const isStartDate = selectedRanges.some(range => isSameDay(range.startDate, currentDate));
-            const isEndDate = selectedRanges.some(range => isSameDay(range.endDate, currentDate));
+            const isSelected = safeSelectedRanges.some(range => isDateInRange(currentDate, range.startDate, range.endDate));
+            const isStartDate = safeSelectedRanges.some(range => isSameDay(range.startDate, currentDate));
+            const isEndDate = safeSelectedRanges.some(range => isSameDay(range.endDate, currentDate));
             newDates.push(
                 <li
                     key={`active-${i}`}
                     className={`${styles.date} ${isActiveDay ? styles.today : ''} 
-                            ${isSelected ? styles.selected : ''} 
-                            ${isStartDate ? styles.startDate : ''} 
-                            ${isEndDate ? styles.endDate : ''} 
-                            ${currentDate < today ? styles.disabled : ''}`}
+                        ${isSelected ? styles.selected : ''} 
+                        ${isStartDate ? styles.startDate : ''} 
+                        ${isEndDate ? styles.endDate : ''} 
+                        ${currentDate < today ? styles.disabled : ''}`}
                     onClick={() => handleDateClick(currentDate)}
                 >
                     {`${i}`}
@@ -128,7 +131,6 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             (start2 <= end1 && (end2 === null || end1 <= end2))
         );
     };
-
 
     useEffect(() => {
         renderDates();
@@ -186,7 +188,6 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             });
         }
     };
-
 
     const isDateInRange = (date, startDate, endDate) => {
         const selectedDate = new Date(date);
@@ -248,7 +249,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         } catch (error) {
             console.error("Unexpected error:", error);
         } finally {
-            navigate("/hostdashboard/listings");
+            navigate(0);
         }
     };
 
@@ -271,7 +272,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
 
     useEffect(() => {
         if (componentView === true) {
-         setShowSection(true);
+            setShowSection(true);
         } else {
             setShowSection(false);
         }

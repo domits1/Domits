@@ -340,13 +340,20 @@ const ListingDetails = () => {
 
     const FeaturePopup = ({features, onClose}) => {
         const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
-
         const sortedCategories = Object.keys(features).sort((a, b) => {
-            const orderA = categoryOrder.indexOf(a) !== -1 ? categoryOrder.indexOf(a) : Infinity;
-            const orderB = categoryOrder.indexOf(b) !== -1 ? categoryOrder.indexOf(b) : Infinity;
-            return orderA - orderB;
+            const indexA = categoryOrder.indexOf(a);
+            const indexB = categoryOrder.indexOf(b);    
+            const orderA = indexA !== -1 ? indexA : categoryOrder.length;
+            const orderB = indexB !== -1 ? indexB : categoryOrder.length;
+    
+            if (orderA === categoryOrder.length && orderB === categoryOrder.length) {
+                return a.localeCompare(b); 
+            }
+            return orderA - orderB; 
         });
 
+        console.log('Sorted categories:', sortedCategories);
+    
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-contentPopUp" onClick={e => e.stopPropagation()}>
@@ -597,6 +604,14 @@ const ListingDetails = () => {
         restrictCheckInToDateRange();
     }, [checkOut]);
 
+    const handleCheckInChange = (date) => {
+        setCheckIn(date);
+    };
+    
+    const handleCheckOutChange = (date) => {
+        setCheckOut(date);
+    };
+
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
             if (new Date(checkOut) > new Date(checkIn)) {
@@ -806,7 +821,6 @@ const ListingDetails = () => {
         return !(isOutsideAvailableRange || isBooked || isInThePast || !isAdvanceReserved);
     };
 
-
     return (
         <main className="container">
             <section className="detailContainer">
@@ -814,10 +828,10 @@ const ListingDetails = () => {
                     {accommodation && (
                         <div>
                             <div>
-                                <Link to="/">
+                                <Link to="/home">
                                     <p className="backButton">Go Back</p>
                                 </Link>
-                                <h1>
+                                <h1 className='accommodationTitle'>
                                     {accommodation.Title} {isDemo && "(DEMO)"}
                                 </h1>
                             </div>
@@ -828,7 +842,7 @@ const ListingDetails = () => {
 
                                 <p className='details'>
                                     <p className="placeName">{accommodation.City}, {accommodation.Country} </p>
-                                    {`€ ${accommodation.Rent} per night • ${accommodation.GuestAmount} guests • 
+                                     {`€ ${accommodation.Rent} ${accommodation.AccommodationType === 'Boat' ? 'per day' : 'per night'} • ${accommodation.GuestAmount} guests • 
                                     ${accommodation.Beds} beds • 
                                     ${accommodation.Bedrooms} bedrooms • ${accommodation.Bathrooms} bathrooms`}
                                 </p>
@@ -837,8 +851,28 @@ const ListingDetails = () => {
                             <div>
                                 <hr className="pageDividerr"/>
                                 <h3>Calendar overview:</h3>
-                                <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
+                                {/* <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/> */}
+
+                                <BookingCalendar
+                                passedProp={accommodation}
+                                checkIn={checkIn}
+                                checkOut={checkOut}
+                                onCheckInChange={handleCheckInChange}
+                                onCheckOutChange={handleCheckOutChange}
+                            />
                             </div>
+                            <div>
+                            <hr className="pageDividerr" />
+                            <h3 className="houseRulesTitle">House rules</h3>
+                            <p className="houseRulesDetails">
+                                {accommodation.AllowParties ? 'Parties Allowed' : 'No Parties'} • {accommodation.AllowPets ? 'Pets Allowed' : 'No Pets'} • {accommodation.AllowSmoking ? 'Smoking Allowed' : 'No Smoking'}
+                            </p>
+                            <div className="checkInCheckOut">
+                                <div className="checkIn">Check-in From: {accommodation.CheckIn?.From} To: {accommodation.CheckIn?.Til}</div>
+                                <div className="checkOut">Check-out From: {accommodation.CheckOut?.From} To: {accommodation.CheckOut?.Til}</div>
+                            </div>
+                        </div>
+
                             <div>
                                 <hr className="pageDividerr"/>
                                 <h3>This place offers the following:</h3>
@@ -903,7 +937,7 @@ const ListingDetails = () => {
                                             </section>
                                             <section className="card-bottom">
                                                 <div>
-                                                    <button className='button'>Contact host</button>
+                                                    <button className='hostButton'>Contact host</button>
                                                 </div>
                                             </section>
                                         </div>
@@ -916,13 +950,18 @@ const ListingDetails = () => {
 
                 {accommodation && (
                     <aside className='detailSummary'>
+                        <div className="booking-info">
+                            <p>Booking Info</p>
+                            <div className="booking-info-tooltip">Stay
+                                for {accommodation.MinimumStay} – {accommodation.MaximumStay} nights.
+                                <br/>
+                                Book {accommodation.MinimumAdvanceReservation} – {accommodation.MaximumAdvanceReservation} days
+                                in
+                                advance.
+                            </div>
+                        </div>
                         <div className="summary-section">
-                            {checkIn && checkOut && (
-                                <div className="nights">
-                                    <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
-                                </div>
-                            )}
-                            <h2>
+                            <h2 className='price-per-night'>
                                 €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
                             </h2>
 
@@ -940,6 +979,7 @@ const ListingDetails = () => {
                                         maxDate={maxStart && new Date(maxStart)}
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
+                                        placeholderText="DD/MM/YYYY" 
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
                                                          style={{
@@ -968,6 +1008,7 @@ const ListingDetails = () => {
                                         }
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
+                                        placeholderText="DD/MM/YYYY"   
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
                                                           style={{
@@ -1037,12 +1078,6 @@ const ListingDetails = () => {
                                         </div>
                                     )}
                                 </div>
-                                <p>Minimum amount of days to stay: {accommodation.MinimumStay}</p>
-                                <p>Minimum amount of days to reservation in
-                                    advance: {accommodation.MinimumAdvanceReservation}</p>
-                                <p>Maximum amount of days to stay: {accommodation.MaximumStay}</p>
-                                <p>Maximum amount of days to reservation in
-                                    advance: {accommodation.MaximumAdvanceReservation}</p>
                                 <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                             </div>
 

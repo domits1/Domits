@@ -1,11 +1,23 @@
 .header-app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
-    padding: 20px 1% 5px 1%; 
+    padding: 20px 1% 5px 1%;
     text-align: center;
     background-color: white;
     position: fixed;
     width: 100%;
     z-index: 1000;
+}
+
+.search-bar-hidden {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.search-bar-hidden.visible {
+    display: block;
+    opacity: 1;
+    padding-left: 8vw;
 }
 
 .header-trustpilot-bar {
@@ -15,16 +27,14 @@
 }
 
 .header-nav {
-    height: 8vh;
     display: flex;
-    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
     width: 95%;
 }
 
 .header-right {
-    float: right;
     display: flex;
     align-items: center;
 }
@@ -46,12 +56,14 @@
 }
 
 .header-personal-menu {
-    border: none;
-    background-color: var(--primary-color);
-    justify-content: center;
+    display: flex;
     align-items: center;
     gap: 10px;
-    display: flex;
+    padding: 12px;
+    background-color: var(--primary-color);
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
 }
 
 .header-host-button, 
@@ -70,6 +82,14 @@
 
 .header-personal-menu-dropdown-content {
     display: none;
+    position: absolute;
+    right: 0;
+    background-color: white;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 20px 15px;
+    width: auto;
+    z-index: 10;
 }
 
 .header-personal-menu-dropdown-content.show {
@@ -150,39 +170,11 @@
     word-wrap: break-word;
 }
 
-/* Media Queries */
-@media screen and (max-width: 768px) {
-    .header-trustpilot-bar {
-        margin: 0 auto;
-        padding-bottom: 10px;
-    }
-
+@media screen and (max-width: 1024px) {
     .header-app-header {
-        height: 10vh;
+        height: 15vh;
     }
 
-    .header-nav, 
-    .header-right {
-        flex-direction: row;
-        width: 100%;
-    }
-
-    .header-right {
-        width: 97%;
-        margin-top: -32px;
-    }
-
-    .header-buttons, 
-    .header-personal-menu {
-        width: 100%;
-        margin-top: 10px;
-        margin-right: 0;
-        justify-content: center;
-        float: none;
-    }
-}
-
-@media screen and (min-width: 769px) and (max-width: 1024px) {
     .header-nav {
         flex-wrap: nowrap;
     }
@@ -201,14 +193,85 @@
     }
 }
 
-@media (max-width: 480px) {
+@media screen and (max-width: 768px) {
     .header-app-header {
-        height: 15vh;
+        height: auto;
+    }
+
+    .hide-other-content .header-logo,
+    .hide-other-content .header-right {
+    display: none;
+    }
+
+    .header-nav {
+        width: 100%;
+    }
+
+    .header-right {
+        width: 100%;
+    }
+
+    .header-personal-menu {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .header-personal-menu-dropdown-content {
+        right: auto;
+    }
+
+    .header-trustpilot-bar {
+        margin: 0 auto;
+        padding-bottom: 10px;
+    }
+
+    .bar-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 10px 20px;
+    }
+
+    .header-buttons, 
+    .header-personal-menu {
+        width: 100%;
+        margin-top: 10px;
+        margin-right: 0;
+        justify-content: center;    
+        float: none;
+    }
+
+    .headerRight {
+        width: 69%;
+        margin-top: 20px;
     }
 }
 
-@media (max-width: 1024px) {
+@media screen and (max-width: 480px) {
     .header-app-header {
-        height: 15vh;
+        height: 10vh;
+    }
+
+    .search-bar-hidden.visible {
+        padding-left: 0vw;
+    }
+
+    .header-logo{
+        display: none;
+    }
+
+    .header-right{
+        display: none;
+    }
+
+    .header-nav {
+        flex-direction: column;
+    }
+
+    .header-buttons {
+        width: 100%;
+        margin-bottom: 10px;
     }
 }
+
