@@ -9,6 +9,8 @@ import { EffectFade, Navigation, Pagination } from 'swiper/modules';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
+import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
+import BedOutlinedIcon from '@mui/icons-material/BedOutlined';
 
 const AccommodationCard = ({ accommodation, images = [], onClick, onShare }) => {
     const [liked, setLiked] = useState(false);
@@ -66,7 +68,9 @@ const AccommodationCard = ({ accommodation, images = [], onClick, onShare }) => 
           <div className="accocard-price">€{accommodation.Rent || "N/A"} per night</div>
           <div className="accocard-detail">{accommodation.Description || "No description available"}</div>
           <div className="accocard-specs">
+          <BedOutlinedIcon/>
             <div>{accommodation.Bedrooms || 0} Bedroom(s)</div>
+            <PeopleOutlinedIcon/>
             <div>{accommodation.GuestAmount || 0} Guest(s)</div>
           </div>
         </div>
