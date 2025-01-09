@@ -7,12 +7,8 @@ import question from "../../images/icons/question.png";
 import bill from "../../images/icons/bill.png";
 import { SearchBar } from '../base/SearchBar';
 import SkeletonLoader from "../base/SkeletonLoader";
-import { Swiper, SwiperSlide } from "swiper/react";
-import "swiper/css";
-import "swiper/css/effect-fade";
-import "swiper/css/navigation";
+import AccommodationCard from "./AccommodationCard";
 import "swiper/css/pagination";
-import { EffectFade, Navigation, Pagination } from "swiper/modules";
 import Header from "./Header";
 
 const Homepage = () => {
@@ -24,7 +20,6 @@ const Homepage = () => {
   const [accommodationImages, setAccommodationImages] = useState([]);
   const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
   const [isBarActive, setIsBarActive] = useState(false);
-
 
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
@@ -41,7 +36,6 @@ const Homepage = () => {
   const [isFixed, setIsFixed] = useState(false);
   const searchBarRef = useRef(null);
   
-
   const handleScroll = () => {
     if (!searchBarRef.current) return;
 
@@ -62,8 +56,6 @@ const Homepage = () => {
     };
   }, [isFixed]);
   
-
-
   const navigate = useNavigate();
 
   const fetchBoatAccommodations = async () => {
@@ -175,47 +167,6 @@ const Homepage = () => {
     );
   }
 
-  const AccommodationCard = ({ accommodation }) => {
-    const images =
-      accommodationImages.find((img) => img.ID === accommodation.ID)?.Images || [];
-    const imageArray = Object.values(images);
-
-    return (
-      <div
-        className="domits-accocard"
-        key={accommodation.ID}
-        onClick={(e) => handleClick(e, accommodation.ID)}
-      >
-        <Swiper
-          spaceBetween={30}
-          effect={"fade"}
-          navigation={true}
-          pagination={{ clickable: true }}
-          modules={[EffectFade, Navigation, Pagination]}
-          className="domits-mySwiper"
-        >
-          {imageArray.map((img, index) => (
-            <SwiperSlide key={index}>
-              <img src={img} alt={`Accommodation ${accommodation.ID} - Image ${index + 1}`} />
-            </SwiperSlide>
-          ))}
-        </Swiper>
-        <div className="domits-accocard-content">
-          <div className="domits-accocard-title">
-            {accommodation.City || "Unknown City"}, {accommodation.Country || "Unknown Country"}
-          </div>
-          <div className="domits-accocard-price">
-            €{accommodation.Rent || "N/A"} per night
-          </div>
-          <div className="domits-accocard-specs">
-            <div>{accommodation.Bedrooms || 0} Bedroom(s)</div>
-            <div>{accommodation.GuestAmount || 0} Guest(s)</div>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <>
       <Header />
@@ -232,8 +183,6 @@ const Homepage = () => {
           placeholderText="Search for holiday homes, boats, or campers..."
           toggleBar={toggleBar} 
         />
-
-
        </div> 
       </div>
 
@@ -258,7 +207,7 @@ const Homepage = () => {
         </div>
       </div>
 
-      <div className="domits-boatContainer">
+       <div className="domits-boatContainer">
         <div className="domits-boatText">
           <h3 className="domits-subHead">Trending accommodations this month</h3>
 
@@ -275,44 +224,68 @@ const Homepage = () => {
       </div>
         </div>
         <div className="domits-accommodationGroup">
-          {byTypeAccommodations.length > 0 ? (
-            byTypeAccommodations.map((accommodation, index) => (
-              <AccommodationCard key={index} accommodation={accommodation} />
-            ))
-          ) : (
-            <div>No accommodations available.</div>
-          )}
+            {byTypeAccommodations.length > 0 ? (
+              byTypeAccommodations.map((accommodation) => {
+                const images =
+                  accommodationImages.find((img) => img.ID === accommodation.ID)?.Images || [];
+                return (
+                  <AccommodationCard
+                    key={accommodation.ID}
+                    accommodation={accommodation}
+                    images={Object.values(images)}
+                    onClick={handleClick}
+                  />
+                );
+              })
+            ) : (
+              <div>No accommodations available.</div>
+            )}
         </div>
-      </div>
+      </div> 
 
-      <div className="domits-boatContainer">
-        <div className="domits-boatText">
-          <h3 className="domits-subHead">Rent a boat for any occasion</h3>
+        <div className="domits-boatContainer">
+          <div className="domits-boatText">
+            <h3 className="domits-subHead">Rent a boat for any occasion</h3>
+          </div>
+          <div className="domits-accommodationGroup">
+            {boatAccommodations.length > 0 ? (
+              boatAccommodations.map((boat) => {
+                const images =
+                  accommodationImages.find((img) => img.ID === boat.ID)?.Images || [];
+                return (
+                  <AccommodationCard
+                    key={boat.ID}
+                    accommodation={boat}
+                    images={Object.values(images)}
+                    onClick={handleClick}
+                  />
+                );
+              })
+            ) : (
+              <div>No boats available.</div>
+            )}
+          </div>
         </div>
-        <div className="domits-accommodationGroup">
-          {boatAccommodations.length > 0 ? (
-            boatAccommodations.map((boat) => (
-              <AccommodationCard key={boat.ID} accommodation={boat} />
-            ))
-          ) : (
-            <div>No boats available.</div>
-          )}
-        </div>
-      </div>
 
-      <div className="domits-boatContainer">
-        <div className="domits-boatText">
-          <h3 className="domits-subHead">Discover beautiful campers</h3>
-        </div>
+        <div className="domits-boatContainer">
+        <h3 className="domits-subHead">Discover Beautiful Campers</h3>
         <div className="domits-accommodationGroup">
         {camperAccommodations.length > 0 ? (
-          camperAccommodations.map((camper) => (
-            <AccommodationCard key={camper.ID} accommodation={camper} />
-          ))
+          camperAccommodations.map((camper) => {
+            const images = accommodationImages.find((img) => img.ID === camper.ID)?.Images || [];
+            return (
+              <AccommodationCard
+                key={camper.ID}
+                accommodation={camper}
+                images={Object.values(images)}
+                onClick={handleClick}
+              />
+            );
+          })
         ) : (
           <div>No campers available.</div>
         )}
-        </div>
+      </div>
       </div>
       
       <div className="domits-communityContainer">
