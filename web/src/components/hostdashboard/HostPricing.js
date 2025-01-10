@@ -225,13 +225,21 @@ const HostPricing = () => {
                 const extraServices = acc.Features?.M?.ExtraServices?.L || [];
                 const cleaningFeeIncluded = extraServices.some(service => service.S === 'Cleaning service (add service fee manually)');
 
-                const rent = parseFloat(editedRates[i] || acc.Rent.N || acc.Rent.S || 0);
+                if (editedRates[i] === undefined || editedRates[i] === '') {
+                    throw new Error(`Rent is missing or empty for accommodation at index ${i}.`);
+                }
+
+                if (cleaningFeeIncluded && (editedCleaningFees[i] === undefined || editedCleaningFees[i] === '')) {
+                    throw new Error(`CleaningFee is missing or empty for accommodation at index ${i}.`);
+                }
+
+                const rent = parseFloat(editedRates[i]);
                 const cleaningFee = cleaningFeeIncluded
-                    ? parseFloat(editedCleaningFees[i] || acc.CleaningFee.N || acc.CleaningFee.S || 0)
+                    ? parseFloat(editedCleaningFees[i])
                     : 0;
 
                 if (rent < 0 || cleaningFee < 0) {
-                    throw new Error(`Invalid negative value detected for accommodation at index ${i}. Rent: ${rent}, CleaningFee: ${cleaningFee}`);
+                    throw new Error(`Negative value detected for accommodation at index ${i}. Rent: ${rent}, CleaningFee: ${cleaningFee}`);
                 }
 
                 const roundedRent = Math.max(0, rent).toFixed(2);
