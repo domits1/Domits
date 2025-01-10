@@ -5,7 +5,7 @@ function Option({
   option,
   onClick,
   subtext,
-  statusText = "Required",
+  statusText,
   disabled = false,
   statusIcon,
 }) {

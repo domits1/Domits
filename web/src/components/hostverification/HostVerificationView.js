@@ -3,10 +3,14 @@ import Option from "./components/Option";
 import useStripeVerification from "./hooks/useStripeVerification";
 import Loading from "./components/Loading";
 import Toast from "../toast/Toast";
+import { useLocation } from "react-router-dom";
 
 const HostVerificationView = () => {
+  const location = useLocation();
+  const { userId, accommodationId } = location.state || {};
+
   const userData = {
-    userId: "100f12f1-244a-494b-9eb0-2cd3d25e47bg6",
+    userId: userId,
     firstName: "John",
     lastName: "Doe",
   };
@@ -19,6 +23,9 @@ const HostVerificationView = () => {
     toastConfig,
     setToastConfig,
   } = useStripeVerification(userData);
+
+  console.log("User ID:", userId);
+  console.log("Accommodation ID:", accommodationId);
 
   if (stripeLoading) {
     return <Loading />;
@@ -51,10 +58,8 @@ const HostVerificationView = () => {
         <Option
           option="Confirm your phone number"
           subtext="We will text to confirm your number."
+          statusText = "Optional"
         />
-      </div>
-      <div className={styles["right-container"]}>
-        <Listing data={data}/>
       </div>
       <hr></hr>
       <div className={styles["bottom-container"]}>
