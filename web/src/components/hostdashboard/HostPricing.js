@@ -220,22 +220,41 @@ const HostPricing = () => {
     }
 
     const handleSaveRates = async () => {
-        const updatedAccommodations = accommodations.map((acc, i) => {
-            const extraServices = acc.Features?.M?.ExtraServices?.L || [];
-            const cleaningFeeIncluded = extraServices.some(service => service.S === 'Cleaning service (add service fee manually)');
-
-            return {
-                AccommodationId: acc.ID.S,
-                OwnerId: userId,
-                Rent: parseFloat(editedRates[i] || acc.Rent.N || acc.Rent.S).toFixed(2),
-                CleaningFee: cleaningFeeIncluded
-                    ? parseFloat(editedCleaningFees[i] || acc.CleaningFee.N || acc.CleaningFee.S).toFixed(2)
-                    : "0.00",
-                ServiceFee: (0.15 * parseFloat(editedRates[i] || acc.Rent.N || acc.Rent.S)).toFixed(2),
-            };
-        });
-
         try {
+            const updatedAccommodations = accommodations.map((acc, i) => {
+                const extraServices = acc.Features?.M?.ExtraServices?.L || [];
+                const cleaningFeeIncluded = extraServices.some(service => service.S === 'Cleaning service (add service fee manually)');
+
+                if (editedRates[i] === undefined || editedRates[i] === '') {
+                    throw new Error(`Rent is missing or empty for accommodation.`);
+                }
+
+                if (cleaningFeeIncluded && (editedCleaningFees[i] === undefined || editedCleaningFees[i] === '')) {
+                    throw new Error(`CleaningFee is missing or empty for accommodation.`);
+                }
+
+                const rent = parseFloat(editedRates[i]);
+                const cleaningFee = cleaningFeeIncluded
+                    ? parseFloat(editedCleaningFees[i])
+                    : 0;
+
+                if (rent < 0 || cleaningFee < 0) {
+                    throw new Error(`Negative value detected for accommodation. Rent: ${rent}, CleaningFee: ${cleaningFee}`);
+                }
+
+                const roundedRent = Math.max(0, rent).toFixed(2);
+                const roundedCleaningFee = Math.max(0, cleaningFee).toFixed(2);
+                const serviceFee = Math.max(0, (0.15 * parseFloat(rent))).toFixed(2);
+
+                return {
+                    AccommodationId: acc.ID.S,
+                    OwnerId: userId,
+                    Rent: roundedRent,
+                    CleaningFee: roundedCleaningFee,
+                    ServiceFee: serviceFee,
+                };
+            });
+
             const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Update-AccommodationRates', {
                 method: 'PUT',
                 body: JSON.stringify({
