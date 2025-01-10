@@ -220,22 +220,33 @@ const HostPricing = () => {
     }
 
     const handleSaveRates = async () => {
-        const updatedAccommodations = accommodations.map((acc, i) => {
-            const extraServices = acc.Features?.M?.ExtraServices?.L || [];
-            const cleaningFeeIncluded = extraServices.some(service => service.S === 'Cleaning service (add service fee manually)');
-
-            return {
-                AccommodationId: acc.ID.S,
-                OwnerId: userId,
-                Rent: parseFloat(editedRates[i] || acc.Rent.N || acc.Rent.S).toFixed(2),
-                CleaningFee: cleaningFeeIncluded
-                    ? parseFloat(editedCleaningFees[i] || acc.CleaningFee.N || acc.CleaningFee.S).toFixed(2)
-                    : "0.00",
-                ServiceFee: (0.15 * parseFloat(editedRates[i] || acc.Rent.N || acc.Rent.S)).toFixed(2),
-            };
-        });
-
         try {
+            const updatedAccommodations = accommodations.map((acc, i) => {
+                const extraServices = acc.Features?.M?.ExtraServices?.L || [];
+                const cleaningFeeIncluded = extraServices.some(service => service.S === 'Cleaning service (add service fee manually)');
+
+                const rent = parseFloat(editedRates[i] || acc.Rent.N || acc.Rent.S || 0);
+                const cleaningFee = cleaningFeeIncluded
+                    ? parseFloat(editedCleaningFees[i] || acc.CleaningFee.N || acc.CleaningFee.S || 0)
+                    : 0;
+
+                if (rent < 0 || cleaningFee < 0) {
+                    throw new Error(`Invalid negative value detected for accommodation at index ${i}. Rent: ${rent}, CleaningFee: ${cleaningFee}`);
+                }
+
+                const roundedRent = Math.max(0, rent).toFixed(2);
+                const roundedCleaningFee = Math.max(0, cleaningFee).toFixed(2);
+                const serviceFee = Math.max(0, (0.15 * parseFloat(rent))).toFixed(2);
+
+                return {
+                    AccommodationId: acc.ID.S,
+                    OwnerId: userId,
+                    Rent: roundedRent,
+                    CleaningFee: roundedCleaningFee,
+                    ServiceFee: serviceFee,
+                };
+            });
+
             const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Update-AccommodationRates', {
                 method: 'PUT',
                 body: JSON.stringify({
