@@ -120,6 +120,7 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
+    const [amountOfGuest, setAmountOfGuest] = useState(0);
     const [hostID, setHostID] = useState();
     const [showAll, setShowAll] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -676,6 +677,11 @@ const ListingDetails = () => {
         }
     }
 
+    useEffect(() => {
+        const totalGuests = adults + children + pets;
+        setAmountOfGuest(totalGuests);
+    }, [adults, children, pets]);
+
     const handleBooking = () => {
         const details = {
             id,
@@ -684,7 +690,8 @@ const ListingDetails = () => {
             adults,
             kids: children,
             pets,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);

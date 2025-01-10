@@ -18,6 +18,8 @@ const PaymentConfirm = () => {
         const startDate = queryParams.get('startDate');
         const endDate = queryParams.get('endDate');
         const cleaningFee = queryParams.get('cleaningFee');
+        const amountOfGuest = queryParams.get('amountOfGuest');
+
 
         // Decode the accommodationTitle
         const decodedAccommodationTitle = decodeURIComponent(rawAccommodationTitle);
@@ -33,7 +35,9 @@ const PaymentConfirm = () => {
             price,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest
+
         };
 
         const storeData = async () => {
@@ -47,7 +51,7 @@ const PaymentConfirm = () => {
                 });
                 console.log(payload)
                 if (response.ok) {
-                    navigate('/guestdashboard/bookings');
+                    navigate('/bookingconfirmationoverview');
                 } else {
                     console.error('Failed to store data:', response.statusText);
                 }

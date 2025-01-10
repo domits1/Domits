@@ -39,6 +39,8 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
     const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100;
+    const amountOfGuest = searchParams.get('amountOfGuest');
+
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
@@ -58,7 +60,7 @@ const BookingOverview = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets });
+                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets, amountOfGuest });
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -158,7 +160,8 @@ const BookingOverview = () => {
             price: totalAmount / 100,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
@@ -170,7 +173,8 @@ const BookingOverview = () => {
             price: totalAmount / 100,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest
         }).toString();
 
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
