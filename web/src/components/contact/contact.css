@@ -93,6 +93,30 @@
   cursor: pointer;
 }
 
+.Contact-button{
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 1vh;
+  border: none;
+  height: 5vh;
+  width: 15vh;
+}
+
+.Contact-button a{
+  text-decoration: none;
+}
+
+.Contact-button:hover {
+  background: #3aab3f;
+  cursor: pointer;
+}
+
+.buttonContactContainer{
+  gap: 1%;
+  display: flex;
+  flex-direction: row;
+}
+
 .questionsContainer {
   width: 100%;
   margin-top: 50px;

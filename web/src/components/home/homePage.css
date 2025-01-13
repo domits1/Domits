@@ -18,8 +18,8 @@ padding-left: 10vh;
 }
 
 .domits-searchContainer {
-  height: 75vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/houseBoat.png");
+  height: 87vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/villaHomepage.jpg");
   background-size: cover;
   background-position: 70% 100%;
   background-repeat: no-repeat;
@@ -27,22 +27,22 @@ padding-left: 10vh;
 }
 
 .domits-searchTextCon {
-  padding-top: 20vh;
+  padding-top: 32vh;
   color: white;
   text-align: center;
-  font-size: 8em;
+  font-size: 4em;
   height: 15vh;
   width: 100%;
   font-weight: 100;
 }
 
 .domits-searchText {
-  font-size: 4rem;
+  font-size: 3rem;
   padding-bottom: 2vh;
 }
 
 .domits-searchbarCon {
-  padding-top: 4vw;
+  padding-top: 1vw;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -178,23 +178,13 @@ padding-left: 10vh;
 }
 
 @media (max-width: 1024px) {
-  .domits-searchText {
-    font-size: 1em;
-  }
+
 }
 
 @media (max-width: 1440px) {
   .domits-accocard {
     height: auto;
   }
-
-  .domits-searchText {
-    font-size: 0.6em;
-  }
-
-  /* .domits-accommodationGroup {
-    gap: 15px;
-  } */
 }
 
 @media (max-width: 1024px) {
@@ -241,6 +231,10 @@ padding-left: 10vh;
     margin-left: 2vw;
     text-align: center;
   }
+
+  .domits-accommodationGroup {
+    padding-left: 0vh;
+}
 
   .domits-trendingContainer {
     flex-direction: column;
