@@ -69,7 +69,7 @@ import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
-// import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
+import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
 
 
 import AccommodationTypeView from './components/hostonboarding/views/AccommodationTypeView.js';
@@ -169,7 +169,7 @@ function App() {
                                     <Route path="/listingdetails" element={<ListingDetails />} />
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                                    {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
+                                    <Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />
@@ -269,7 +269,7 @@ function App() {
                                     <Route path='/hostonboarding/:type/availability' element={<AvailabilityView/>} />
                                     <Route path='/hostonboarding/legal/registrationnumber' element={<RegistrationNumberView/>} />
                                     <Route path='/hostonboarding/summary' element={<SummaryView/>} />
-                                    
+
 
 
 
@@ -278,7 +278,7 @@ function App() {
                                 {currentPath !== '/admin' && <MenuBar />}
                                 {renderChatWidget()}
                                 <Hostchatbot />
-                               
+
 
                             </div>
                         </UserProvider>
