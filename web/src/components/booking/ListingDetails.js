@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useRef} from 'react';
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import {Link, useLocation, useNavigate} from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
@@ -10,7 +10,7 @@ import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import HighChair from "../../images/high-chair.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
-import { FaTimes } from 'react-icons/fa';
+import {FaTimes} from 'react-icons/fa';
 import DemoValidator from './DemoValidator';
 import ChairIcon from '@mui/icons-material/Chair';
 import LocalLaundryServiceIcon from '@mui/icons-material/LocalLaundryService';
@@ -96,6 +96,7 @@ import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import SevereColdIcon from '@mui/icons-material/SevereCold';
 import ChairAltIcon from '@mui/icons-material/ChairAlt';
+import {vatRates, touristTaxRates} from "../utils/CountryVATRatesAndTouristTaxes";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -120,6 +121,8 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
+    const [taxes, setTaxes] = useState(0);
+    const [amountOfGuest, setAmountOfGuest] = useState(0);
     const [hostID, setHostID] = useState();
     const [showAll, setShowAll] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -139,166 +142,166 @@ const ListingDetails = () => {
 
     const featureIcons = {
         // Essentials
-        'Wi-Fi': <WifiIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Air conditioning': <AcUnitIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Heating': <HvacIcon sx={{ color: 'var(--primary-color)' }} />,
-        'TV with cable/satellite': <TvIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Hot water': <WhatshotIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Towels': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bed linens': <BedIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Extra pillows and blankets': <BedIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Toilet paper': <WcIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Soap and shampoo': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Wi-Fi': <WifiIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Air conditioning': <AcUnitIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Heating': <HvacIcon sx={{color: 'var(--primary-color)'}}/>,
+        'TV with cable/satellite': <TvIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Hot water': <WhatshotIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Towels': <CheckroomIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Bed linens': <BedIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Extra pillows and blankets': <BedIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Toilet paper': <WcIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Soap and shampoo': <SoapIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Kitchen
-        'Refrigerator': <KitchenIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Microwave': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Oven': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Stove': <MicrowaveIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Dishwasher': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Coffee maker': <CoffeeMakerIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Toaster': <BreakfastDiningIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Basic cooking essentials': <FlatwareIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Dishes and silverware': <FlatwareIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Glasses and mugs': <FreeBreakfastIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Cutting board and knives': <FoodBankIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Blender': <BlenderIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Kettle': <EmojiFoodBeverageIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Refrigerator': <KitchenIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Microwave': <MicrowaveIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Oven': <MicrowaveIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Stove': <MicrowaveIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Dishwasher': <LocalLaundryServiceIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Coffee maker': <CoffeeMakerIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Toaster': <BreakfastDiningIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Basic cooking essentials': <FlatwareIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Dishes and silverware': <FlatwareIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Glasses and mugs': <FreeBreakfastIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Cutting board and knives': <FoodBankIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Blender': <BlenderIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Kettle': <EmojiFoodBeverageIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Bathroom
-        'Hair dryer': <AirIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Shower gel': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Conditioner': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Body lotion': <SoapIcon sx={{ color: 'var(--primary-color)' }} />,
-        'First aid kit': <MedicalServicesIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Hair dryer': <AirIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Shower gel': <SoapIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Conditioner': <SoapIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Body lotion': <SoapIcon sx={{color: 'var(--primary-color)'}}/>,
+        'First aid kit': <MedicalServicesIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Bedroom
-        'Hangers': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Iron and ironing board': <IronIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Closet/drawers': <CheckroomIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Alarm clock': <AccessAlarmIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Hangers': <CheckroomIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Iron and ironing board': <IronIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Closet/drawers': <CheckroomIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Alarm clock': <AccessAlarmIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // LivingArea
-        'Sofa': <WeekendIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Armchairs': <ChairIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Coffee table': <TableBarIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Books and magazines': <LibraryBooksIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Board games': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Sofa': <WeekendIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Armchairs': <ChairIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Coffee table': <TableBarIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Books and magazines': <LibraryBooksIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Board games': <ExtensionIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Technology
-        'Smart TV': <TvIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Streaming services': <CastIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bluetooth speaker': <BluetoothIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Universal chargers': <ElectricalServicesIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Work desk and chair': <DeskIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Smart TV': <TvIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Streaming services': <CastIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Bluetooth speaker': <BluetoothIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Universal chargers': <ElectricalServicesIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Work desk and chair': <DeskIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Safety
-        'Smoke detector': <SmokeFreeIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Carbon monoxide detector': <RadarIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Fire extinguisher': <FireExtinguisherIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Lock on bedroom door': <LockPersonIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Smoke detector': <SmokeFreeIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Carbon monoxide detector': <RadarIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Fire extinguisher': <FireExtinguisherIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Lock on bedroom door': <LockPersonIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // FamilyFriendly
-        'High chair': <ChairAltIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Crib': <CribIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Children’s books and toys': <ToysIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Baby safety gates': <FenceIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Baby bath': <BathtubIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Baby monitor': <LiveTvIcon sx={{ color: 'var(--primary-color)' }} />,
+        'High chair': <ChairAltIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Crib': <CribIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Children’s books and toys': <ToysIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Baby safety gates': <FenceIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Baby bath': <BathtubIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Baby monitor': <LiveTvIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Laundry
-        'Washer and dryer': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Laundry detergent': <LocalLaundryServiceIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Clothes drying rack': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Washer and dryer': <LocalLaundryServiceIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Laundry detergent': <LocalLaundryServiceIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Clothes drying rack': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Convenience
-        'Keyless entry': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Self-check-in': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Local maps and guides': <MapIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Luggage drop-off allowed': <LuggageIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Parking space': <LocalParkingIcon sx={{ color: 'var(--primary-color)' }} />,
-        'EV charger': <EvStationIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Keyless entry': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Self-check-in': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Local maps and guides': <MapIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Luggage drop-off allowed': <LuggageIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Parking space': <LocalParkingIcon sx={{color: 'var(--primary-color)'}}/>,
+        'EV charger': <EvStationIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Accessibility
-        'Step-free access': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Wide doorways': <DoorSlidingIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Accessible-height bed': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Accessible-height toilet': <AccessibleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Shower chair': <BathtubIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Step-free access': <AccessibleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Wide doorways': <DoorSlidingIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Accessible-height bed': <AccessibleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Accessible-height toilet': <AccessibleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Shower chair': <BathtubIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // ExtraServices
-        'Cleaning service (add service fee manually)': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Concierge service': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Housekeeping': <CleaningServicesIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Grocery delivery': <LocalGroceryStoreIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Airport shuttle': <AirportShuttleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Private chef': <RamenDiningIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Personal trainer': <DirectionsRunIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Massage therapist': <SpaIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Cleaning service (add service fee manually)': <CleaningServicesIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Concierge service': <CleaningServicesIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Housekeeping': <CleaningServicesIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Grocery delivery': <LocalGroceryStoreIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Airport shuttle': <AirportShuttleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Private chef': <RamenDiningIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Personal trainer': <DirectionsRunIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Massage therapist': <SpaIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // EcoFriendly
-        'Recycling bins': <RecyclingIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Energy-efficient appliances': <EnergySavingsLeafIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Solar panels': <SolarPowerIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Composting bin': <DeleteIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Recycling bins': <RecyclingIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Energy-efficient appliances': <EnergySavingsLeafIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Solar panels': <SolarPowerIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Composting bin': <DeleteIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Outdoor
-        'Patio or balcony': <BalconyIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Outdoor furniture': <OutdoorGrillIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Grill': <OutdoorGrillIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Fire pit': <FireplaceIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Pool': <PoolIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Hot tub': <HotTubIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Garden or backyard': <GrassIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bicycle': <DirectionsBikeIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Patio or balcony': <BalconyIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Outdoor furniture': <OutdoorGrillIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Grill': <OutdoorGrillIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Fire pit': <FireplaceIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Pool': <PoolIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Hot tub': <HotTubIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Garden or backyard': <GrassIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Bicycle': <DirectionsBikeIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Boat-specific
-        'Bimini': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Outdoor shower': <ShowerIcon sx={{ color: 'var(--primary-color)' }} />,
-        'External table': <TableRestaurantIcon sx={{ color: 'var(--primary-color)' }} />,
-        'External speakers': <SpeakerIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Teak deck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bow sundeck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Aft sundeck': <DeckIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bathing Platform': <ShowerIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bathing ladder': <PoolIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bimini': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Outdoor shower': <ShowerIcon sx={{color: 'var(--primary-color)'}}/>,
+        'External table': <TableRestaurantIcon sx={{color: 'var(--primary-color)'}}/>,
+        'External speakers': <SpeakerIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Teak deck': <DeckIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Bow sundeck': <DeckIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Aft sundeck': <DeckIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Bathing Platform': <ShowerIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Bathing ladder': <PoolIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // NavigationalEquipment
-        'Bow thruster': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Electric windlass': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Autopilot': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'GPS': <LocationOnIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Depth sounder': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'VHF': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Guides & Maps': <MapIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Bow thruster': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Electric windlass': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Autopilot': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'GPS': <LocationOnIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Depth sounder': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'VHF': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Guides & Maps': <MapIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // LeisureActivities
-        'Snorkeling equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Fishing equipment': <PhishingIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Diving equipment': <ScubaDivingIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Snorkeling equipment': <ScubaDivingIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Fishing equipment': <PhishingIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Diving equipment': <ScubaDivingIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // WaterSports
-        'Water skis': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Monoski': <DownhillSkiingIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Wakeboard': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Towable Tube': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Inflatable banana': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Kneeboard': <ExtensionIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Water skis': <DownhillSkiingIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Monoski': <DownhillSkiingIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Wakeboard': <ExtensionIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Towable Tube': <ExtensionIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Inflatable banana': <ExtensionIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Kneeboard': <ExtensionIcon sx={{color: 'var(--primary-color)'}}/>,
 
         // Camper-specific
-        'Baby seat': <ChildCareIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Bicycle carrier': <PedalBikeIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Reversing camera': <ControlCameraIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Airbags': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Cruise control': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Imperial': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Navigation': <NavigationIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Awning': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Parking sensors': <ControlCameraIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Power steering': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Tow bar': <CheckCircleIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Snow chains': <SevereColdIcon sx={{ color: 'var(--primary-color)' }} />,
-        'Winter tires': <SevereColdIcon sx={{ color: 'var(--primary-color)' }} />,
+        'Baby seat': <ChildCareIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Bicycle carrier': <PedalBikeIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Reversing camera': <ControlCameraIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Airbags': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Cruise control': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Imperial': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Navigation': <NavigationIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Awning': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Parking sensors': <ControlCameraIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Power steering': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Tow bar': <CheckCircleIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Snow chains': <SevereColdIcon sx={{color: 'var(--primary-color)'}}/>,
+        'Winter tires': <SevereColdIcon sx={{color: 'var(--primary-color)'}}/>,
     };
 
     useEffect(() => {
@@ -338,16 +341,21 @@ const ListingDetails = () => {
         setShowModal(!showModal);
     };
 
-    const FeaturePopup = ({ features, onClose }) => {
-        // Bepaal de gewenste volgorde van categorieën
+    const FeaturePopup = ({features, onClose}) => {
         const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
-
-        // Sorteer de categorieën op basis van de gewenste volgorde
         const sortedCategories = Object.keys(features).sort((a, b) => {
-            const orderA = categoryOrder.indexOf(a) !== -1 ? categoryOrder.indexOf(a) : Infinity;
-            const orderB = categoryOrder.indexOf(b) !== -1 ? categoryOrder.indexOf(b) : Infinity;
+            const indexA = categoryOrder.indexOf(a);
+            const indexB = categoryOrder.indexOf(b);
+            const orderA = indexA !== -1 ? indexA : categoryOrder.length;
+            const orderB = indexB !== -1 ? indexB : categoryOrder.length;
+
+            if (orderA === categoryOrder.length && orderB === categoryOrder.length) {
+                return a.localeCompare(b);
+            }
             return orderA - orderB;
         });
+
+        console.log('Sorted categories:', sortedCategories);
 
         return (
             <div className="modal-overlay" onClick={onClose}>
@@ -365,7 +373,8 @@ const ListingDetails = () => {
                                         {categoryItems.map((item, index) => (
                                             <li key={index} className='category-item'>
                                                 {typeof featureIcons[item] === 'string' ? (
-                                                    <img src={featureIcons[item]} className='feature-icon' alt={`${item} icon`} />
+                                                    <img src={featureIcons[item]} className='feature-icon'
+                                                         alt={`${item} icon`}/>
                                                 ) : (
                                                     featureIcons[item] && React.isValidElement(featureIcons[item]) ? (
                                                         <span className='feature-icon'>{featureIcons[item]}</span>
@@ -404,7 +413,7 @@ const ListingDetails = () => {
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -598,6 +607,14 @@ const ListingDetails = () => {
         restrictCheckInToDateRange();
     }, [checkOut]);
 
+    const handleCheckInChange = (date) => {
+        setCheckIn(date);
+    };
+
+    const handleCheckOutChange = (date) => {
+        setCheckOut(date);
+    };
+
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
             if (new Date(checkOut) > new Date(checkIn)) {
@@ -618,11 +635,32 @@ const ListingDetails = () => {
             const basePrice = nights * accommodation.Rent * 100;
             const cleaningFee = accommodation.CleaningFee ? parseFloat(accommodation.CleaningFee * 100) : 0;
             const calculatedServiceFee = basePrice * 0.15;
-            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee;
+
+            const countryVAT = vatRates.find(rate => rate.country === accommodation?.Country)?.vat || "0";
+            const vatRate = parseFloat(countryVAT);
+
+            const countryTouristTax = touristTaxRates.find(rate => rate.country === accommodation?.Country)?.touristTax || "0";
+
+
+            const calculatedVatRate = parseFloat(basePrice * vatRate / 100);
+
+            let calculatedTouristTaxRate;
+            if (countryTouristTax.includes('%')) {
+                const taxRate = parseFloat(countryTouristTax.replace('%', ''));
+                calculatedTouristTaxRate = parseFloat(basePrice * taxRate / 100);
+            } else if (countryTouristTax.includes('EUR') || countryTouristTax.includes('USD') || countryTouristTax.includes('GBP')) {
+                calculatedTouristTaxRate = parseFloat((countryTouristTax.replace(/[^\d.]/g, '') || 0) * basePrice / 100);
+            } else {
+                calculatedTouristTaxRate = 0;
+            }
+
+            const calculatedTaxes = calculatedVatRate + calculatedTouristTaxRate;
+            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee + calculatedVatRate + calculatedTouristTaxRate;
 
             setServiceFee(calculatedServiceFee / 100);
-            setTotalPrice(calculatedTotalPrice / 100);
+            setTotalPrice((calculatedTotalPrice / 100));
             setCleaningFee(cleaningFee / 100);
+            setTaxes(calculatedTaxes / 100);
         };
 
         calculateTotal();
@@ -662,6 +700,11 @@ const ListingDetails = () => {
         }
     }
 
+    useEffect(() => {
+        const totalGuests = adults + children + pets;
+        setAmountOfGuest(totalGuests);
+    }, [adults, children, pets]);
+
     const handleBooking = () => {
         const details = {
             id,
@@ -670,7 +713,9 @@ const ListingDetails = () => {
             adults,
             kids: children,
             pets,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
@@ -693,7 +738,8 @@ const ListingDetails = () => {
                                     <li key={index} className='category-item'>
 
                                         {typeof featureIcons[feature] === 'string' ? (
-                                            <img src={featureIcons[feature]} className='feature-icon' alt={`${feature} icon`} />
+                                            <img src={featureIcons[feature]} className='feature-icon'
+                                                 alt={`${feature} icon`}/>
                                         ) : (
                                             featureIcons[feature] && React.isValidElement(featureIcons[feature]) ? (
                                                 <span className='feature-icon'>{featureIcons[feature]}</span>
@@ -778,18 +824,34 @@ const ListingDetails = () => {
         }
     };
 
+    const filterAdvanceReservedDates = (date) => {
+        const selectedDate = new Date(date);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const minAdvanceReservation = new Date();
+        minAdvanceReservation.setDate(today.getDate() + accommodation.MinimumAdvanceReservation);
+        minAdvanceReservation.setHours(0, 0, 0, 0);
+        const maxAdvanceReservation = new Date();
+        maxAdvanceReservation.setDate(today.getDate() + accommodation.MaximumAdvanceReservation);
+
+        if (accommodation.MaximumAdvanceReservation === 0) {
+            return selectedDate >= minAdvanceReservation;
+        } else {
+            return selectedDate >= minAdvanceReservation && selectedDate <= maxAdvanceReservation;
+        }
+    };
+
     const combinedDateFilter = (date) => {
         const selectedDate = new Date(date);
         const today = new Date();
 
         const isInThePast = selectedDate < today;
-
         const isOutsideAvailableRange = filterDisabledDays(date);
         const isBooked = filterBookedDates(date);
+        const isAdvanceReserved = filterAdvanceReservedDates(date);
 
-        return !(isOutsideAvailableRange || isBooked || isInThePast);
+        return !(isOutsideAvailableRange || isBooked || isInThePast || !isAdvanceReserved);
     };
-
 
     return (
         <main className="container">
@@ -798,10 +860,10 @@ const ListingDetails = () => {
                     {accommodation && (
                         <div>
                             <div>
-                                <Link to="/">
+                                <Link to="/home">
                                     <p className="backButton">Go Back</p>
                                 </Link>
-                                <h1>
+                                <h1 className='accommodationTitle'>
                                     {accommodation.Title} {isDemo && "(DEMO)"}
                                 </h1>
                             </div>
@@ -812,7 +874,7 @@ const ListingDetails = () => {
 
                                 <p className='details'>
                                     <p className="placeName">{accommodation.City}, {accommodation.Country} </p>
-                                    {`€ ${accommodation.Rent} per night • ${accommodation.GuestAmount} guests • 
+                                     {`€ ${accommodation.Rent} ${accommodation.AccommodationType === 'Boat' ? 'per day' : 'per night'} • ${accommodation.GuestAmount} guests • 
                                     ${accommodation.Beds} beds • 
                                     ${accommodation.Bedrooms} bedrooms • ${accommodation.Bathrooms} bathrooms`}
                                 </p>
@@ -821,8 +883,29 @@ const ListingDetails = () => {
                             <div>
                                 <hr className="pageDividerr"/>
                                 <h3>Calendar overview:</h3>
-                                <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
+                                {/* <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/> */}
+
+                                <BookingCalendar
+                                passedProp={accommodation}
+                                checkIn={checkIn}
+                                checkOut={checkOut}
+                                onCheckInChange={handleCheckInChange}
+                                onCheckOutChange={handleCheckOutChange}
+                                filter={combinedDateFilter}
+                            />
                             </div>
+                            <div>
+                            <hr className="pageDividerr" />
+                            <h3 className="houseRulesTitle">House rules</h3>
+                            <p className="houseRulesDetails">
+                                {accommodation.AllowParties ? 'Parties Allowed' : 'No Parties'} • {accommodation.AllowPets ? 'Pets Allowed' : 'No Pets'} • {accommodation.AllowSmoking ? 'Smoking Allowed' : 'No Smoking'}
+                            </p>
+                            <div className="checkInCheckOut">
+                                <div className="checkIn">Check-in From: {accommodation.CheckIn?.From} To: {accommodation.CheckIn?.Til}</div>
+                                <div className="checkOut">Check-out From: {accommodation.CheckOut?.From} To: {accommodation.CheckOut?.Til}</div>
+                            </div>
+                        </div>
+
                             <div>
                                 <hr className="pageDividerr"/>
                                 <h3>This place offers the following:</h3>
@@ -887,7 +970,7 @@ const ListingDetails = () => {
                                             </section>
                                             <section className="card-bottom">
                                                 <div>
-                                                    <button className='button'>Contact host</button>
+                                                    <button className='hostButton'>Contact host</button>
                                                 </div>
                                             </section>
                                         </div>
@@ -900,13 +983,18 @@ const ListingDetails = () => {
 
                 {accommodation && (
                     <aside className='detailSummary'>
+                        <div className="booking-info">
+                            <p>Booking Info</p>
+                            <div className="booking-info-tooltip">Stay
+                                for {accommodation.MinimumStay} – {accommodation.MaximumStay} nights.
+                                <br/>
+                                Book {accommodation.MinimumAdvanceReservation} – {accommodation.MaximumAdvanceReservation} days
+                                in
+                                advance.
+                            </div>
+                        </div>
                         <div className="summary-section">
-                            {checkIn && checkOut && (
-                                <div className="nights">
-                                    <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
-                                </div>
-                            )}
-                            <h2>
+                            <h2 className='price-per-night'>
                                 €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
                             </h2>
 
@@ -924,6 +1012,7 @@ const ListingDetails = () => {
                                         maxDate={maxStart && new Date(maxStart)}
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
+                                        placeholderText="DD/MM/YYYY"
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
                                                          style={{
@@ -940,10 +1029,19 @@ const ListingDetails = () => {
                                         selected={checkOut}
                                         className='datePickerLD'
                                         onChange={(date) => setCheckOut(date)}
-                                        minDate={minEnd && new Date(minEnd)}
-                                        maxDate={maxEnd && new Date(maxEnd)}
+                                        minDate={
+                                            checkIn
+                                                ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
+                                                : (minEnd && new Date(minEnd))
+                                        }
+                                        maxDate={
+                                            checkIn
+                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay * 24 * 60 * 60 * 1000)
+                                                : (maxEnd && new Date(maxEnd))
+                                        }
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
+                                        placeholderText="DD/MM/YYYY"
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
                                                           style={{
@@ -991,22 +1089,24 @@ const ListingDetails = () => {
                                             </div>
                                             <div className="counter">
                                                 <span>Children</span>
-                                                <div className= "button__box">
-                                                <button onClick={() => setChildren(Math.max(children - 1, 0))}>-</button>
-                                                {children}
-                                                <button onClick={() => setChildren(children + 1)}>+</button>
+                                                <div className="button__box">
+                                                    <button onClick={() => setChildren(Math.max(children - 1, 0))}>-
+                                                    </button>
+                                                    {children}
+                                                    <button onClick={() => setChildren(children + 1)}>+</button>
                                                 </div>
                                             </div>
                                             <div className="counter">
                                                 <span>Pets</span>
-                                                <div className= "button__box">
-                                                <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
-                                                {pets}
-                                                <button onClick={() => setPets(pets + 1)}>+</button>
+                                                <div className="button__box">
+                                                    <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
+                                                    {pets}
+                                                    <button onClick={() => setPets(pets + 1)}>+</button>
                                                 </div>
                                             </div>
                                             <div className="closeButtonContainer">
-                                                <p onClick={() => setShowGuestPopup(false)} className="closeButton">Close</p>
+                                                <p onClick={() => setShowGuestPopup(false)}
+                                                   className="closeButton">Close</p>
                                             </div>
                                         </div>
                                     )}
@@ -1017,14 +1117,14 @@ const ListingDetails = () => {
 
                             {/* Price and Reserve Section */}
                             <button className="reserve-button" onClick={handleBooking}
-                                    // disabled={
-                                    //     !isFormValid || accommodation.Drafted === true || isDemo
-                                    // }
-                                    // style={{
-                                    //     backgroundColor: isFormValid ? 'green' : 'green',
-                                    //     cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
-                                    //     opacity: isFormValid && !isDemo ? 1 : 0.5
-                                    // }}
+                                // disabled={
+                                //     !isFormValid || accommodation.Drafted === true || isDemo
+                                // }
+                                // style={{
+                                //     backgroundColor: isFormValid ? 'green' : 'green',
+                                //     cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
+                                //     opacity: isFormValid && !isDemo ? 1 : 0.5
+                                // }}
                             >
                                 Reserve
                             </button>
@@ -1047,6 +1147,10 @@ const ListingDetails = () => {
                                     <div className="price-item">
                                         <p>Domits service fee</p>
                                         <p>€{serviceFee.toFixed(2)}</p>
+                                    </div>
+                                    <div className="price-item">
+                                        <p>Taxes</p>
+                                        <p>€{taxes.toFixed(2)}</p>
                                     </div>
                                     <div className="total">
                                         <p>Total</p>

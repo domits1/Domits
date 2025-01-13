@@ -5,14 +5,26 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
   Switch,
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from "react-native-safe-area-context";
-
+import {SafeAreaView} from 'react-native-safe-area-context';
+import {useAuth} from '../../context/AuthContext';
+import {useNavigation} from '@react-navigation/native';
+import {deleteUser} from '../GeneralUtils/GenUtils';
 const Settings = () => {
+  const {userAttributes} = useAuth();
+  const userId = userAttributes?.sub;
+  const navigation = useNavigation();
+
   const [highContrast, setHighContrast] = useState(false);
   const [showPaymentInfo, setShowPaymentInfo] = useState(true);
+
+  const handleDeleteAccount = () => {
+    navigation.navigate('login/loginScreen');
+    deleteUser(userId, navigation);
+  };
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -20,34 +32,54 @@ const Settings = () => {
         <Text style={styles.header}>Settings</Text>
         <Text style={styles.subHeader}>Change app settings</Text>
 
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>App language</Text>
+        {/*<TouchableOpacity style={styles.listItem}>*/}
+        {/*  <Text style={styles.listItemText}>App language</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
+        {/*<TouchableOpacity style={styles.listItem}>*/}
+        {/*  <Text style={styles.listItemText}>Search history</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
+        {/*<View style={styles.switchItem}>*/}
+        {/*  <Text style={styles.listItemText}>High contrast</Text>*/}
+        {/*  <Switch*/}
+        {/*    trackColor={{false: '#767577', true: '#81b0ff'}}*/}
+        {/*    thumbColor={highContrast ? '#f5dd4b' : '#f4f3f4'}*/}
+        {/*    ios_backgroundColor="#3e3e3e"*/}
+        {/*    onValueChange={setHighContrast}*/}
+        {/*    value={highContrast}*/}
+        {/*  />*/}
+        {/*</View>*/}
+        {/*<View style={styles.switchItem}>*/}
+        {/*  <Text style={styles.listItemText}>Show payment info</Text>*/}
+        {/*  <Switch*/}
+        {/*    trackColor={{false: '#767577', true: '#81b0ff'}}*/}
+        {/*    thumbColor={showPaymentInfo ? '#f5dd4b' : '#f4f3f4'}*/}
+        {/*    ios_backgroundColor="#3e3e3e"*/}
+        {/*    onValueChange={setShowPaymentInfo}*/}
+        {/*    value={showPaymentInfo}*/}
+        {/*  />*/}
+        {/*</View>*/}
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('emailSettings')}>
+          <Text style={styles.listItemText}>Change email/name</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Search history</Text>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('helpDesk')}>
+          <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <View style={styles.switchItem}>
-          <Text style={styles.listItemText}>High contrast</Text>
-          <Switch
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={highContrast ? '#f5dd4b' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
-            onValueChange={setHighContrast}
-            value={highContrast}
-          />
-        </View>
-        <View style={styles.switchItem}>
-          <Text style={styles.listItemText}>Show payment info</Text>
-          <Switch
-            trackColor={{false: '#767577', true: '#81b0ff'}}
-            thumbColor={showPaymentInfo ? '#f5dd4b' : '#f4f3f4'}
-            ios_backgroundColor="#3e3e3e"
-            onValueChange={setShowPaymentInfo}
-            value={showPaymentInfo}
-          />
-        </View>
+        <TouchableOpacity
+          style={[styles.listItem, {backgroundColor: '#ffe6e6'}]}
+          onPress={handleDeleteAccount}>
+          <Text style={[styles.listItemText, {color: 'red'}]}>
+            Delete Account
+          </Text>
+          <MaterialIcons name="delete" size={22} color="red" />
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

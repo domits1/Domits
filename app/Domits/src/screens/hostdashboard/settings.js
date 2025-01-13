@@ -8,33 +8,57 @@ import {
 } from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {useNavigation} from '@react-navigation/native';
+import {deleteUser} from '../GeneralUtils/GenUtils';
+import {useAuth} from '../../context/AuthContext';
 
-const Settings = () => {
+const HostSettings = () => {
+  const navigation = useNavigation();
+  const {userAttributes} = useAuth();
+  const userId = userAttributes?.sub;
+
+  const handleDeleteAccount = () => {
+    navigation.navigate('login/loginScreen');
+    deleteUser(userId, navigation);
+  };
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
         <View style={styles.header}>
           <Text style={styles.headerText}>Settings</Text>
         </View>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Change mail settings</Text>
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('emailSettings')}>
+          <Text style={styles.listItemText}>Change email/name</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Change region and language</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Change global currency</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
-          <Text style={styles.listItemText}>Set profile to private</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.listItem}>
+        {/*<TouchableOpacity style={styles.listItem}>*/}
+        {/*  <Text style={styles.listItemText}>Change region and language</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
+        {/*<TouchableOpacity style={styles.listItem}>*/}
+        {/*  <Text style={styles.listItemText}>Change global currency</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
+        {/*<TouchableOpacity style={styles.listItem}>*/}
+        {/*  <Text style={styles.listItemText}>Set profile to private</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
+        <TouchableOpacity
+          style={styles.listItem}
+          onPress={() => navigation.navigate('helpDesk')}>
           <Text style={styles.listItemText}>Q&A Helpdesk</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.listItem, {backgroundColor: '#ffe6e6'}]}
+          onPress={handleDeleteAccount}>
+          <Text style={[styles.listItemText, {color: 'red'}]}>
+            Delete Account
+          </Text>
+          <MaterialIcons name="delete" size={22} color="red" />
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
@@ -43,6 +67,7 @@ const Settings = () => {
 
 const styles = StyleSheet.create({
   container: {
+    marginBottom: -30,
     flex: 1,
     backgroundColor: 'white',
   },
@@ -77,4 +102,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Settings;
+export default HostSettings;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
@@ -39,13 +39,16 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
     const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100;
+    const amountOfGuest = searchParams.get('amountOfGuest');
+    const taxes = parseFloat(searchParams.get('taxes')) * 100;
+
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
     useEffect(() => {
         const fetchAccommodation = async () => {
             try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -58,7 +61,7 @@ const BookingOverview = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets });
+                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets, amountOfGuest });
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -88,7 +91,7 @@ const BookingOverview = () => {
     useEffect(() => {
         const fetchOwnerStripeId = async (ownerId) => {
             try {
-                const response = await fetch('https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists', {
+                const response = await fetch('https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json; charset=UTF-8',
@@ -96,7 +99,9 @@ const BookingOverview = () => {
                     body: JSON.stringify({ sub: ownerId }),
                 });
                 const data = await response.json();
-                setOwnerStripeId(data.accountId);
+                const parsedBody = JSON.parse(data.body);
+
+                setOwnerStripeId(parsedBody.accountId);
             } catch (error) {
                 console.error("Error fetching owner Stripe ID:", error);
                 setError("Error fetching owner Stripe ID. Please try again later.");
@@ -142,7 +147,7 @@ const BookingOverview = () => {
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
-        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee);
+        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee + taxes);
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -156,7 +161,9 @@ const BookingOverview = () => {
             price: totalAmount / 100,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
@@ -168,7 +175,9 @@ const BookingOverview = () => {
             price: totalAmount / 100,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes
         }).toString();
 
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
@@ -236,10 +245,14 @@ const BookingOverview = () => {
                         </div>
                     </div>
                 <div className="Bookingcontainer">
-                    
                 {/* Left Panel: Image and Cards */}
-                <div className="left-panel">
-                    <ImageGallery images={Object.values(accommodation.Images)} />
+                    <div>
+                        <Link to={`/listingdetails?ID=${accommodation.ID}`}>
+                            <p className="backButton">Go Back</p>
+                        </Link>
+                    </div>
+                    <div className="left-panel">
+                        <ImageGallery images={Object.values(accommodation.Images)}/>
 
                     {/* Card Container under Image */}
                     <div className="card-container">
@@ -260,19 +273,6 @@ const BookingOverview = () => {
 
                 {/* Right Panel */}
                 <div className="right-panel">
-                    <div className="progress-bar-container">
-                        <div className="circle completed">
-                            <span className="number-complete">1</span>
-                        </div>
-                        <div className="line completed"></div>
-                        <div className="circle half-completed">
-                            <span className="number">2</span>
-                        </div>
-                        <div className="line"></div>
-                        <div className="circle">
-                            <span className="number">3</span>
-                        </div>
-                    </div>
                     <h1>{accommodation.Title}</h1>
                     <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
                     <div className="main-card">

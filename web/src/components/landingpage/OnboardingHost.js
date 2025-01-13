@@ -56,7 +56,7 @@ function OnboardingHost() {
         const fetchAccommodation = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -164,7 +164,7 @@ function OnboardingHost() {
     useEffect(() => {
         const checkHostStripeAcc = async (hostID) => {
             try {
-                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+                const response = await fetch(`https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`, {
                     method: 'POST',
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
@@ -172,7 +172,9 @@ function OnboardingHost() {
                     body: JSON.stringify({sub: hostID}),
                 });
                 const data = await response.json();
-                if (data.hasStripeAccount) {
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
                     setHostStripe(true);
                 }
             } catch (error) {
@@ -235,8 +237,9 @@ function OnboardingHost() {
         OwnerId: existingData.OwnerId || userId,
         GuestAmount: isNew ? 0 : formData.GuestAmount,
         MinimumStay: isNew ? 0 : (Number.isFinite(existingData.MinimumStay) ? existingData.MinimumStay : 0),
-        MinimumBookingPeriod: isNew ? 0 : (Number.isFinite(existingData.MinimumBookingPeriod) ? existingData.MinimumBookingPeriod : 0),
+        MinimumAdvanceReservation: isNew ? 0 : (Number.isFinite(existingData.MinimumAdvanceReservation) ? existingData.MinimumAdvanceReservation : 0),
         MaximumStay: isNew ? 0 : (Number.isFinite(existingData.MaximumStay) ? existingData.MaximumStay : 0),
+        MaximumAdvanceReservation: isNew ? 0 : (Number.isFinite(existingData.MaximumAdvanceReservation) ? existingData.MaximumAdvanceReservation : 0),
     });
 
     const generateNormalAccommodationFormData = () => ({
@@ -803,21 +806,23 @@ function OnboardingHost() {
         return `https://${S3_BUCKET_NAME}.s3.${region}.amazonaws.com/images/${userId}/${accommodationId}/${folder}Image-${index + 1}.webp`;
     };
 
-
     const uploadImagesInDifferentSizes = async (file, userId, accommodationId, index) => {
         const sizes = {
-            mobile: {maxWidthOrHeight: 300, maxSizeMB: 0.1},  // ~100kB
-            homepage: {maxWidthOrHeight: 800, maxSizeMB: 0.2},  // ~200kB
-            detail: {maxWidthOrHeight: 1200, maxSizeMB: 0.5}  // ~500kB
+            mobile: {maxWidthOrHeight: 300, maxSizeMB: 0.1, quality: 0.85}, // Higher compression for mobile ~100kb
+            homepage: {maxWidthOrHeight: 800, maxSizeMB: 0.3, quality: 0.9}, // Balanced quality for homepage ~200kb
+            detail: {maxWidthOrHeight: 1200, maxSizeMB: 0.5, quality: 0.95} // Priority on quality for detail ~500kb
         };
 
         for (const [key, sizeOptions] of Object.entries(sizes)) {
             try {
                 console.log(`Uploading image for size: ${key}, index: ${index}`);
+
                 const compressedFile = await imageCompression(file, {
                     ...sizeOptions,
-                    fileType: 'image/webp'
+                    fileType: 'image/webp',
+                    initialQuality: sizeOptions.quality
                 });
+
                 const keyPath = `images/${userId}/${accommodationId}/${key}/Image-${index + 1}.webp`;
 
                 await Storage.put(keyPath, compressedFile, {
@@ -876,7 +881,7 @@ function OnboardingHost() {
                 }
             }
 
-            const response = await fetch('https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
+            const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation', {
                 method: 'PUT',
                 body: JSON.stringify(updatedFormData),
                 headers: {
@@ -920,7 +925,7 @@ function OnboardingHost() {
             const endpoint = isNew ? 'CreateAccomodation' : 'EditAccommodation';
             const method = isNew ? 'POST' : 'PUT';
 
-            const response = await fetch(`https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`, {
+            const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`, {
                 method: method,
                 body: JSON.stringify(updatedFormData),
                 headers: {
@@ -1375,7 +1380,7 @@ function OnboardingHost() {
                                     />
                                     <div className="toggle-switch"></div>
                                 </label>
-                                
+
                                 <label className="toggle">
                                     <span className="toggle-label">Allow pets</span>
                                     <input
@@ -1399,73 +1404,73 @@ function OnboardingHost() {
                                 </label>
                             </div>
                             <hr/>
-                        <label className="Check">
-                        <div className="Check-label">Check-in</div>
-                        <span>From</span>
-                        <select
-                            className="Check-checkbox"
-                            value={formData.CheckIn.From}
-                            onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const time = i.toString().padStart(2, '0') + ':00';
-                                return (
-                                    <option key={i} value={time}>
-                                        {time}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        <span>Til</span>
-                        <select
-                            className="Check-checkbox"
-                            value={formData.CheckIn.Til}
-                            onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'Til')}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const time = i.toString().padStart(2, '0') + ':00';
-                                return (
-                                    <option key={i} value={time}>
-                                        {time}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                    </label>
+                            <label className="Check">
+                                <div className="Check-label">Check-in</div>
+                                <span>From</span>
+                                <select
+                                    className="Check-checkbox"
+                                    value={formData.CheckIn.From}
+                                    onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'From')}
+                                >
+                                    {Array.from({length: 24}, (_, i) => {
+                                        const time = i.toString().padStart(2, '0') + ':00';
+                                        return (
+                                            <option key={i} value={time}>
+                                                {time}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                                <span>Til</span>
+                                <select
+                                    className="Check-checkbox"
+                                    value={formData.CheckIn.Til}
+                                    onChange={(e) => handleHouseRulesChange('CheckIn', e.target.value, 'Til')}
+                                >
+                                    {Array.from({length: 24}, (_, i) => {
+                                        const time = i.toString().padStart(2, '0') + ':00';
+                                        return (
+                                            <option key={i} value={time}>
+                                                {time}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </label>
 
-                    <label className="Check">
-                        <div className="Check-label">Check-out</div>
-                        <span>From</span>
-                        <select
-                            className="Check-checkbox"
-                            value={formData.CheckOut.From}
-                            onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'From')}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const time = i.toString().padStart(2, '0') + ':00';
-                                return (
-                                    <option key={i} value={time}>
-                                        {time}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                        <span>Til</span>
-                        <select
-                            className="Check-checkbox"
-                            value={formData.CheckOut.Til}
-                            onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'Til')}
-                        >
-                            {Array.from({ length: 24 }, (_, i) => {
-                                const time = i.toString().padStart(2, '0') + ':00';
-                                return (
-                                    <option key={i} value={time}>
-                                        {time}
-                                    </option>
-                                );
-                            })}
-                        </select>
-                    </label>
+                            <label className="Check">
+                                <div className="Check-label">Check-out</div>
+                                <span>From</span>
+                                <select
+                                    className="Check-checkbox"
+                                    value={formData.CheckOut.From}
+                                    onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'From')}
+                                >
+                                    {Array.from({length: 24}, (_, i) => {
+                                        const time = i.toString().padStart(2, '0') + ':00';
+                                        return (
+                                            <option key={i} value={time}>
+                                                {time}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                                <span>Til</span>
+                                <select
+                                    className="Check-checkbox"
+                                    value={formData.CheckOut.Til}
+                                    onChange={(e) => handleHouseRulesChange('CheckOut', e.target.value, 'Til')}
+                                >
+                                    {Array.from({length: 24}, (_, i) => {
+                                        const time = i.toString().padStart(2, '0') + ':00';
+                                        return (
+                                            <option key={i} value={time}>
+                                                {time}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </label>
                         </div>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}
@@ -2077,56 +2082,8 @@ function OnboardingHost() {
                             <CalendarComponent passedProp={formData}
                                                isNew={true}
                                                updateDates={updateDates}
+                                               componentView={false}
                             />
-                            <div className="staying_nights">
-                                <div className="stayMinMaxBox">
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Minimum Stay (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MinimumStay')}>-
-                                            </button>
-                                            {formData.MinimumStay}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MinimumStay')}
-                                                disabled={formData.MinimumStay >= 30}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Minimum booking period (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MinimumBookingPeriod')}>-
-                                            </button>
-                                            {formData.MinimumBookingPeriod}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MinimumBookingPeriod')}
-                                                disabled={formData.MinimumBookingPeriod >= 30}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="stayMinMaxField">
-                                        <label className="minMaxLabel">Maximum Stay (Days):</label>
-                                        <div className="minMaxButtons">
-                                            <button className="round-button"
-                                                    onClick={() => decrementAmount('MaximumStay')}>-
-                                            </button>
-                                            {formData.MaximumStay}
-                                            <button
-                                                className="round-button"
-                                                onClick={() => incrementAmount('MaximumStay')}
-                                                disabled={formData.MaximumStay >= 365}
-                                            >+
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </section>
                         <nav className="onboarding-button-box">
                             <button className='onboarding-button' onClick={() => pageUpdater(page - 1)}

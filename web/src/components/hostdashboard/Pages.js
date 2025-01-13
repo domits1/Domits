@@ -22,64 +22,9 @@ function Pages() {
   const location = useLocation();
 
   useEffect(() => {
-    const setUserEmailAsync = async () => {
-      try {
-        const userInfo = await Auth.currentUserInfo();
-        setUserEmail(userInfo.attributes.email);
-        setCognitoUserId(userInfo.attributes.sub);
-        const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
-          method: 'POST',
-          headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-          },
-          body: JSON.stringify({ sub: userInfo.attributes.sub }),
-        });
-        const data = await response.json();
-        if (data.hasStripeAccount) {
-          setStripeLoginUrl(data.loginLinkUrl);
-        }
-      } catch (error) {
-        console.error("Error fetching user data or Stripe status:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    setUserEmailAsync();
-  }, []);
-
-  useEffect(() => {
     setActiveTab(location.pathname);
   }, [location.pathname]);
 
-  async function handleStripeAction() {
-    if (stripeLoginUrl) {
-      window.open(stripeLoginUrl, '_blank');
-    } else if (userEmail && cognitoUserId) {
-      const options = {
-        userEmail: userEmail,
-        cognitoUserId: cognitoUserId
-      };
-      try {
-        const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
-          method: 'POST',
-          body: JSON.stringify(options),
-          headers: {
-            'Content-type': 'application/json; charset=UTF-8',
-          },
-        });
-        if (!result.ok) {
-          throw new Error(`HTTP error! Status: ${result.status}`);
-        }
-        const data = await result.json();
-
-        window.location.replace(data.url);
-      } catch (error) {
-        console.log(error);
-      }
-    } else {
-      console.error('User email or cognitoUserId is not defined.');
-    }
-  }
 
   const handleNavigation = (value) => {
     if (value === 'stripe') {
@@ -97,35 +42,35 @@ function Pages() {
     <main>
       <div className="host-dropdown">
         <br />
-        {loading ? (
-          <div>
-            <img src={spinner} alt="Loading" />
-          </div>
-        ) : (
+        {/*{loading ? (*/}
+        {/*  <div>*/}
+        {/*    <img src={spinner} alt="Loading" />*/}
+        {/*  </div>*/}
+        {/*) : (*/}
           <div className="dropdown-section">
             <div>
-              <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Management">
-                <option disabled>Host Options</option>
-                <option value="/hostdashboard">Dashboard</option>
-                <option value="/hostdashboard/calendar">Calendar</option>
-                <option value="/hostdashboard/calendar">Reservations</option>
-                <option value="/hostdashboard/chat">Messages</option>
-                <option value="/hostdashboard/reporting">Revenues</option>
-                <option value="/hostdashboard/reviews">Reviews</option>
-                <option value="/hostdashboard/calendar">Property care</option>
-                <option value="/hostdashboard/calendar">Finance</option>
-                <option value="/hostdashboard/listings">Listing</option>
-                <option value="/hostdashboard/settings">Settings</option>
-              </select>
+                <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Management">
+                    <option disabled>Host Options</option>
+                    <option value="/hostdashboard">Dashboard</option>
+                    <option value="/hostdashboard/calendar">Calendar</option>
+                    <option value="/hostdashboard/calendar">Reservations</option>
+                    <option value="/hostdashboard/chat">Messages</option>
+                    <option value="/hostdashboard/reporting">Revenues</option>
+                    <option value="/hostdashboard/reviews">Reviews</option>
+                    <option value="/hostdashboard/calendar">Property care</option>
+                    <option value="/hostdashboard/calendar">Finance</option>
+                    <option value="/hostdashboard/pricing">Pricing</option>
+                    <option value="/hostdashboard/listings">Listing</option>
+                    <option value="/hostdashboard/settings">Settings</option>
+                </select>
             </div>
-            {/* <div>
+              {/* <div>
               <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Growth">
                 <option disabled>Growth</option>
                 <option value="/hostdashboard/reservations">Reservations</option>
                 <option value="/hostdashboard/revenues">Revenues</option>
                 <option value="/hostdashboard/property-care">Property Care</option>
                 <option value="/hostdashboard/iot-hub">IoT Hub</option>
-                <option value="/hostdashboard/pricing">Pricing</option>
                 <option value="/hostdashboard/distribution">Distribution</option>
                 <option value="/hostdashboard/monitoring">Monitoring</option>
                 <option value="/hostdashboard/screening">Screening</option>
@@ -134,7 +79,7 @@ function Pages() {
               </select>
             </div> */}
           </div>
-        )}
+        {/*)}*/}
       </div>
       <div className="dashboardSection section-1 host-navigation">
         <div
@@ -218,13 +163,13 @@ function Pages() {
         {/*  <img src={dashboard} alt="Dashboard" />*/}
         {/*  <p>IoT Hub</p>*/}
         {/*</div>*/}
-        {/*<div*/}
-        {/*  className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}*/}
-        {/*  onClick={() => handleNavigation("/hostdashboard/pricing")}*/}
-        {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
-        {/*  <p>Pricing</p>*/}
-        {/*</div>*/}
+        <div
+          className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/pricing")}
+        >
+          <img src={dashboard} alt="Dashboard" />
+          <p>Pricing</p>
+        </div>
         {/*<div*/}
         {/*  className={`wijzer ${activeTab === "/hostdashboard/distribution" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/distribution")}*/}

@@ -1,128 +1,160 @@
-.namemessage input[type="text"]{
-  width: 10px;
-  margin-right: 20px;
+.contact {
+  width: 93%;
+  margin: 50px auto;
 }
 
 .contact {
-    width: 93%;
-    margin: 50px auto;
-  }
+  width: 95%;
+  color: #1a1a1a;
+  font-size: 1.1em;
+  margin-bottom: 50px;
+}
 
-  .contact p {
-    width: 95%;
-    color: #1a1a1a;
-    font-size: 1.1em;
-    margin-bottom: 50px;
-  }
-  
-  .contactform {
-    display: flex;
-    flex-wrap: wrap;
-    margin-top: 25px;
-  }
+.quistionText{
+  width: 45vw;
+}
 
-  .contact h1 {
-    font-family: 'Kanit', sans-serif;
-    font-weight: 500;
-  }
+.contactform {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 25px;
+}
 
-  .namemessage,
-  .biginput {
-    flex: 1 1 45%; 
-    margin-right: 34px; 
-    width: 20%;
-  }
+.contact {
+  font-weight: 500;
+}
 
-  .biginput textarea {
-    width: 100%;
-    height: 240px;
-    margin-top: 10px;
-    box-sizing: border-box;
-    text-align: left;
-    padding: 10px;
-    border-radius: 10px;
-  }
+.namemessage,
+.biginput {
+  flex: 1 1 45%;
+  margin-right: 34px;
+  width: 100%;
+}
 
-  .contactform input::placeholder,
-  .contactform textarea::placeholder {
-     text-align: left;
-  }
-  
-  .contactform input:not(.biginput input) {
-    border-radius: 10px;
-    background: #FFF;
-    padding: 10px;
-    width: 100%;
-    margin: 15px 0 10px 0; 
-  }
-  
-  .formbuttons {
-    border: 0;
-    display: flex;
-    justify-content: flex-start;
-    flex-wrap: wrap; 
-  }
-  
-  #attachmentsbutton,
-  #sendbutton {
-    width: 47%;
-    height: 40px;
-    padding: 8px 15px;
-    margin-bottom: 20px;
-    flex-shrink: 0;
-    color: #FFF;
-    border-radius: 10px;
-    border: none;
-    box-shadow: none;
-  }
-  
-  #attachmentsbutton {
-    background: var(--secondary-color);
-  }
-  
-  #sendbutton {
-    background: var(--primary-color);
-    margin-left: auto;
-  }
-  
-  #attachmentsbutton:hover {
-    background: #3e85cb;
-    cursor: pointer;
-  }
-  
-  #sendbutton:hover {
-    background: #46c54c;
-    cursor: pointer;
-  }
-  
-  /* Media query for phone screens */
-  @media screen and (max-width: 930px) {
-    .contact {
+.biginput textarea {
+  width: 100%;
+  height: 240px;
+  margin-top: 10px;
+  box-sizing: border-box;
+  text-align: left;
+  padding: 10px;
+  border-radius: 10px;
+}
+
+.contactform input::placeholder,
+.contactform textarea::placeholder {
+  text-align: left;
+}
+
+.contactform input:not(.biginput input) {
+  border-radius: 10px;
+  background: #FFF;
+  padding: 10px;
+  width: 100%;
+  margin: 15px 0 10px 0;
+}
+
+.formbuttons {
+  border: 0;
+  display: flex;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+#attachmentsbutton,
+#sendbutton {
+  width: 47%;
+  height: 40px;
+  padding: 8px 15px;
+  margin-bottom: 20px;
+  flex-shrink: 0;
+  color: #FFF;
+  border-radius: 10px;
+  border: none;
+  box-shadow: none;
+}
+
+#attachmentsbutton {
+  background: var(--secondary-color);
+}
+
+#sendbutton {
+  background: var(--primary-color);
+  margin-left: auto;
+}
+
+#attachmentsbutton:hover {
+  background: #3e85cb;
+  cursor: pointer;
+}
+
+#sendbutton:hover {
+  background: #46c54c;
+  cursor: pointer;
+}
+
+.Contact-button{
+  background-color: var(--primary-color);
+  color: white;
+  border-radius: 1vh;
+  border: none;
+  height: 5vh;
+  width: 15vh;
+}
+
+.Contact-button a{
+  text-decoration: none;
+}
+
+.Contact-button:hover {
+  background: #3aab3f;
+  cursor: pointer;
+}
+
+.buttonContactContainer{
+  gap: 1%;
+  display: flex;
+  flex-direction: row;
+}
+
+.questionsContainer {
+  width: 100%;
+  margin-top: 50px;
+  background-color: #f9f9f9;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.questionsContainer h1,
+.questionsContainer p {
+  margin: 15px 0;
+}
+
+@media screen and (max-width: 930px) {
+  .contact {
       padding: 10px;
       margin: 10px auto;
       font-size: 14px;
-    }
-  
-    .contactform {
+  }
+
+  .contactform {
       padding: 10px;
-    }
-  
-    .contactform h2 {
-      font-size: 18px;
-    }
-  
-    .namemessage,
-    .biginput,
-    .formbuttons {
+  }
+
+  .namemessage,
+  .biginput,
+  .formbuttons {
       flex: 100%;
-      width: 103%;
-    }
-  
-    .biginput textarea {
+      width: 100%;
+  }
+
+  .biginput textarea {
       height: 100px;
       padding: 8px;
-      width: 103%;
-    }
-  
+      width: 100%;
   }
-  
+
+  .questionsContainer {
+      width: 100%;
+  }
+}
