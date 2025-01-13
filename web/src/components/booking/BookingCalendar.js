@@ -4,7 +4,7 @@ import { isSameDay } from "date-fns";
 import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import { useNavigate } from "react-router-dom";
 
-function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onCheckOutChange }) {
+function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onCheckOutChange, filter }) {
     const [month1, setMonth1] = useState(new Date().getMonth());
     const [month2, setMonth2] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
@@ -25,6 +25,7 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
     };
 
     const handleDateClick = (date) => {
+        if (!filter(date)) return; // If date is not selectable, return
         if (!checkIn || (checkIn && checkOut)) {
             // Reset selection or start a new range
             onCheckInChange(date);
@@ -60,6 +61,8 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
 
         for (let i = 1; i <= endDate; i++) {
             const currentDate = new Date(year, month, i);
+            const isPastDate = currentDate < today;
+            const isFiltered = isPastDate || !filter(currentDate);
             const isSelected = passedProp.DateRanges.some(range =>
                 isDateInRange(currentDate, range.startDate, range.endDate)
             );
@@ -71,11 +74,13 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
                 <li
                     key={`date-${i}`}
                     className={`${styles.date} 
-                        ${!isSelected ? styles.inactive : ''} 
-                        ${isStartDate ? styles.startDate : ''} 
-                        ${isEndDate ? styles.endDate : ''} 
-                        ${isWithinRange ? styles.selected : ''}`}
-                    onClick={() => handleDateClick(currentDate)}
+                    ${!isSelected ? styles.inactive : ''} 
+                    ${isPastDate ? styles.past : ''}
+                    ${isFiltered ? styles.filtered : ''} 
+                    ${isStartDate ? styles.startDate : ''} 
+                    ${isEndDate ? styles.endDate : ''} 
+                    ${isWithinRange ? styles.selected : ''}`}
+                    onClick={() => !isFiltered && handleDateClick(currentDate)} // Prevent clicks on filtered dates
                 >
                     {`${i}`}
                 </li>

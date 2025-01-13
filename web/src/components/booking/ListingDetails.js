@@ -343,18 +343,18 @@ const ListingDetails = () => {
         const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
         const sortedCategories = Object.keys(features).sort((a, b) => {
             const indexA = categoryOrder.indexOf(a);
-            const indexB = categoryOrder.indexOf(b);    
+            const indexB = categoryOrder.indexOf(b);
             const orderA = indexA !== -1 ? indexA : categoryOrder.length;
             const orderB = indexB !== -1 ? indexB : categoryOrder.length;
-    
+
             if (orderA === categoryOrder.length && orderB === categoryOrder.length) {
-                return a.localeCompare(b); 
+                return a.localeCompare(b);
             }
-            return orderA - orderB; 
+            return orderA - orderB;
         });
 
         console.log('Sorted categories:', sortedCategories);
-    
+
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-contentPopUp" onClick={e => e.stopPropagation()}>
@@ -608,7 +608,7 @@ const ListingDetails = () => {
     const handleCheckInChange = (date) => {
         setCheckIn(date);
     };
-    
+
     const handleCheckOutChange = (date) => {
         setCheckOut(date);
     };
@@ -806,6 +806,7 @@ const ListingDetails = () => {
         today.setHours(0, 0, 0, 0);
         const minAdvanceReservation = new Date();
         minAdvanceReservation.setDate(today.getDate() + accommodation.MinimumAdvanceReservation);
+        minAdvanceReservation.setHours(0, 0, 0, 0);
         const maxAdvanceReservation = new Date();
         maxAdvanceReservation.setDate(today.getDate() + accommodation.MaximumAdvanceReservation);
 
@@ -866,6 +867,7 @@ const ListingDetails = () => {
                                 checkOut={checkOut}
                                 onCheckInChange={handleCheckInChange}
                                 onCheckOutChange={handleCheckOutChange}
+                                filter={combinedDateFilter}
                             />
                             </div>
                             <div>
@@ -986,7 +988,7 @@ const ListingDetails = () => {
                                         maxDate={maxStart && new Date(maxStart)}
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
-                                        placeholderText="DD/MM/YYYY" 
+                                        placeholderText="DD/MM/YYYY"
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
                                                          style={{
@@ -1015,7 +1017,7 @@ const ListingDetails = () => {
                                         }
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
-                                        placeholderText="DD/MM/YYYY"   
+                                        placeholderText="DD/MM/YYYY"
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
                                                           style={{
