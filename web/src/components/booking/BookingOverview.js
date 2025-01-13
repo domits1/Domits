@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
@@ -39,6 +39,9 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
     const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100;
+    const amountOfGuest = searchParams.get('amountOfGuest');
+    const taxes = parseFloat(searchParams.get('taxes')) * 100;
+
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
@@ -58,7 +61,7 @@ const BookingOverview = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets });
+                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets, amountOfGuest });
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -144,7 +147,7 @@ const BookingOverview = () => {
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
-        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee);
+        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee + taxes);
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -158,7 +161,9 @@ const BookingOverview = () => {
             price: totalAmount / 100,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
@@ -170,7 +175,9 @@ const BookingOverview = () => {
             price: totalAmount / 100,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes
         }).toString();
 
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
@@ -239,8 +246,13 @@ const BookingOverview = () => {
                     </div>
                 <div className="Bookingcontainer">
                 {/* Left Panel: Image and Cards */}
-                <div className="left-panel">
-                    <ImageGallery images={Object.values(accommodation.Images)} />
+                    <div>
+                        <Link to={`/listingdetails?ID=${accommodation.ID}`}>
+                            <p className="backButton">Go Back</p>
+                        </Link>
+                    </div>
+                    <div className="left-panel">
+                        <ImageGallery images={Object.values(accommodation.Images)}/>
 
                     {/* Card Container under Image */}
                     <div className="card-container">
