@@ -38,12 +38,12 @@ const HostDashboard = () => {
           <Text style={styles.listItemText}>Dashboard</Text>
           <MaterialIcons name="chevron-right" size={22} color="#000" />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.listItem}
-          onPress={() => navigation.navigate('HostCalendarTab')}>
-          <Text style={styles.listItemText}>Calendar</Text>
-          <MaterialIcons name="chevron-right" size={22} color="#000" />
-        </TouchableOpacity>
+        {/*<TouchableOpacity*/}
+        {/*  style={styles.listItem}*/}
+        {/*  onPress={() => navigation.navigate('HostCalendarTab')}>*/}
+        {/*  <Text style={styles.listItemText}>Calendar</Text>*/}
+        {/*  <MaterialIcons name="chevron-right" size={22} color="#000" />*/}
+        {/*</TouchableOpacity>*/}
         <TouchableOpacity
           style={styles.listItem}
           onPress={() => navigation.navigate('HostProfileTab')}>

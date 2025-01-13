@@ -13,6 +13,7 @@ import {SafeAreaView} from 'react-native-safe-area-context';
 import {useAuth} from '../../context/AuthContext';
 import {useNavigation} from '@react-navigation/native';
 import {deleteUser} from '../GeneralUtils/GenUtils';
+
 const GuestSettingsTab = () => {
   const {userAttributes} = useAuth();
   const userId = userAttributes?.sub;
@@ -21,9 +22,34 @@ const GuestSettingsTab = () => {
   const [highContrast, setHighContrast] = useState(false);
   const [showPaymentInfo, setShowPaymentInfo] = useState(true);
 
-  const handleDeleteAccount = () => {
-    navigation.navigate('login/loginScreen');
-    deleteUser(userId, navigation);
+
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+        'Delete Account',
+        'Are you sure you want to delete your account? This action cannot be undone.',
+        [
+          {
+            text: 'Cancel',
+            onPress: () => console.log('Cancel Pressed'),
+            style: 'cancel',
+          },
+          {
+            text: 'Delete',
+            onPress: async () => {
+              try {
+                await deleteUser(userId); // Ensure account deletion completes
+                navigation.navigate('LoginScreen'); // Navigate to LoginScreen after success
+              } catch (error) {
+                console.error('Failed to delete account:', error);
+                alert('Error deleting account. Please try again.');
+              }
+            },
+            style: 'destructive', // Makes the button appear as a destructive action on iOS
+          },
+        ],
+        {cancelable: true} // Allows tapping outside to cancel
+    );
   };
 
   return (
