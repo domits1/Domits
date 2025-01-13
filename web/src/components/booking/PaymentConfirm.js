@@ -19,6 +19,7 @@ const PaymentConfirm = () => {
         const endDate = queryParams.get('endDate');
         const cleaningFee = queryParams.get('cleaningFee');
         const amountOfGuest = queryParams.get('amountOfGuest');
+        const taxes = queryParams.get('taxes');
 
 
         // Decode the accommodationTitle
@@ -36,8 +37,8 @@ const PaymentConfirm = () => {
             startDate,
             endDate,
             cleaningFee,
-            amountOfGuest
-
+            amountOfGuest,
+            taxes
         };
 
         const storeData = async () => {

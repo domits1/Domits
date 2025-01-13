@@ -96,6 +96,7 @@ import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import SevereColdIcon from '@mui/icons-material/SevereCold';
 import ChairAltIcon from '@mui/icons-material/ChairAlt';
+import {vatRates, touristTaxRates} from "../utils/CountryVATRatesAndTouristTaxes";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -120,6 +121,7 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
+    const [taxes, setTaxes] = useState(0);
     const [amountOfGuest, setAmountOfGuest] = useState(0);
     const [hostID, setHostID] = useState();
     const [showAll, setShowAll] = useState(false);
@@ -633,11 +635,32 @@ const ListingDetails = () => {
             const basePrice = nights * accommodation.Rent * 100;
             const cleaningFee = accommodation.CleaningFee ? parseFloat(accommodation.CleaningFee * 100) : 0;
             const calculatedServiceFee = basePrice * 0.15;
-            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee;
+
+            const countryVAT = vatRates.find(rate => rate.country === accommodation?.Country)?.vat || "0";
+            const vatRate = parseFloat(countryVAT);
+
+            const countryTouristTax = touristTaxRates.find(rate => rate.country === accommodation?.Country)?.touristTax || "0";
+
+
+            const calculatedVatRate = parseFloat(basePrice * vatRate / 100);
+
+            let calculatedTouristTaxRate;
+            if (countryTouristTax.includes('%')) {
+                const taxRate = parseFloat(countryTouristTax.replace('%', ''));
+                calculatedTouristTaxRate = parseFloat(basePrice * taxRate / 100);
+            } else if (countryTouristTax.includes('EUR') || countryTouristTax.includes('USD') || countryTouristTax.includes('GBP')) {
+                calculatedTouristTaxRate = parseFloat((countryTouristTax.replace(/[^\d.]/g, '') || 0) * basePrice / 100);
+            } else {
+                calculatedTouristTaxRate = 0;
+            }
+
+            const calculatedTaxes = calculatedVatRate + calculatedTouristTaxRate;
+            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee + calculatedVatRate + calculatedTouristTaxRate;
 
             setServiceFee(calculatedServiceFee / 100);
-            setTotalPrice(calculatedTotalPrice / 100);
+            setTotalPrice((calculatedTotalPrice / 100));
             setCleaningFee(cleaningFee / 100);
+            setTaxes(calculatedTaxes / 100);
         };
 
         calculateTotal();
@@ -691,7 +714,8 @@ const ListingDetails = () => {
             kids: children,
             pets,
             cleaningFee,
-            amountOfGuest
+            amountOfGuest,
+            taxes
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
@@ -1123,6 +1147,10 @@ const ListingDetails = () => {
                                     <div className="price-item">
                                         <p>Domits service fee</p>
                                         <p>€{serviceFee.toFixed(2)}</p>
+                                    </div>
+                                    <div className="price-item">
+                                        <p>Taxes</p>
+                                        <p>€{taxes.toFixed(2)}</p>
                                     </div>
                                     <div className="total">
                                         <p>Total</p>

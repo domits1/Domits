@@ -31,8 +31,15 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
             onCheckInChange(date);
             onCheckOutChange(null);
         } else if (checkIn && !checkOut && date > checkIn) {
-            // Set checkOut if valid
-            onCheckOutChange(date);
+            const minStayDate = new Date(checkIn);
+            minStayDate.setDate(minStayDate.getDate() + passedProp.MinimumStay);
+
+            if (date >= minStayDate) {
+                onCheckOutChange(date);
+            } else {
+                // Optionally show a message or feedback
+                console.warn(`Minimum stay is ${passedProp.MinimumStay} nights.`);
+            }
         } else {
             // If invalid date clicked, reset range
             onCheckInChange(date);
@@ -63,6 +70,9 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
             const currentDate = new Date(year, month, i);
             const isPastDate = currentDate < today;
             const isFiltered = isPastDate || !filter(currentDate);
+            const isBeforeMinStay = checkIn
+                ? currentDate < new Date(checkIn.getTime() + passedProp.MinimumStay * 24 * 60 * 60 * 1000)
+                : false;
             const isSelected = passedProp.DateRanges.some(range =>
                 isDateInRange(currentDate, range.startDate, range.endDate)
             );
@@ -76,11 +86,12 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
                     className={`${styles.date} 
                     ${!isSelected ? styles.inactive : ''} 
                     ${isPastDate ? styles.past : ''}
+                    ${isBeforeMinStay ? styles.minStay : ''}
                     ${isFiltered ? styles.filtered : ''} 
                     ${isStartDate ? styles.startDate : ''} 
                     ${isEndDate ? styles.endDate : ''} 
                     ${isWithinRange ? styles.selected : ''}`}
-                    onClick={() => !isFiltered && handleDateClick(currentDate)} // Prevent clicks on filtered dates
+                    onClick={() => !(isFiltered || isBeforeMinStay) && handleDateClick(currentDate)} // Prevent clicks on filtered dates
                 >
                     {`${i}`}
                 </li>
