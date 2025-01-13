@@ -175,6 +175,18 @@ function Contact() {
             </div>
 
             <div className="questionsContainer">
+                <h1>Frequently Asked Questions (FAQ)</h1>
+            <div className="buttonContactContainer">                
+            <button className="Contact-button">
+                <a href="/helpdesk-guest">Guest</a>
+            </button>
+      
+
+            <button className="Contact-button">
+                <a href="/helpdesk-host">Host</a>
+            </button>
+            </div>
+
                 <h1>Questions about a holiday home, boat or camper?</h1>
                 <p className="quistionText">
                     Do you have a question about a holiday accommodation, booking, or payment? Check our Frequently Asked Questions (FAQ). Domits is an intermediary so you rent the holiday accommodation from the host.
@@ -182,7 +194,7 @@ function Contact() {
 
                 <h1>Are you a host, property owner, or manager?</h1>
                 <p className="quistionText">
-                    We’re always open for new holiday homes, boats, and campers. See on our hosting page how you can start within a couple of minutes for free. Or check our FAQ for hosts.
+                    We're always open for new holiday homes, boats, and campers. See on our hosting page how you can start within a couple of minutes for free. Or check our FAQ for hosts.
                 </p>
 
                 <h1>Address</h1>
