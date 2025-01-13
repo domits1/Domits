@@ -406,6 +406,10 @@
   height: 0.1%;
 }
 
+.DatePicker__calendarContainer.-top{
+  height: 4vh;
+}
+
 .DatePicker__input {
   position: relative;
   background: transparent;
