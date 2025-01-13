@@ -66,7 +66,6 @@ function Howitworks() {
 
 
             <article className="howitworks__titles-container">
-                {/* <div> */}
                 <h3 className="howitworks__title">Feature overview for hosts</h3>
                     <h4>Increase revenue, reduce workload, deliver beautiful experiences</h4> 
 
@@ -115,7 +114,6 @@ function Howitworks() {
                             
 
                     </div>
-                {/* </div> */}
             </article>
             
         </section>
