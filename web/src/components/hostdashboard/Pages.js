@@ -49,28 +49,28 @@ function Pages() {
         {/*) : (*/}
           <div className="dropdown-section">
             <div>
-              <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Management">
-                <option disabled>Host Options</option>
-                <option value="/hostdashboard">Dashboard</option>
-                <option value="/hostdashboard/calendar">Calendar</option>
-                <option value="/hostdashboard/calendar">Reservations</option>
-                <option value="/hostdashboard/chat">Messages</option>
-                <option value="/hostdashboard/reporting">Revenues</option>
-                <option value="/hostdashboard/reviews">Reviews</option>
-                <option value="/hostdashboard/calendar">Property care</option>
-                <option value="/hostdashboard/calendar">Finance</option>
-                <option value="/hostdashboard/listings">Listing</option>
-                <option value="/hostdashboard/settings">Settings</option>
-              </select>
+                <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Management">
+                    <option disabled>Host Options</option>
+                    <option value="/hostdashboard">Dashboard</option>
+                    <option value="/hostdashboard/calendar">Calendar</option>
+                    <option value="/hostdashboard/calendar">Reservations</option>
+                    <option value="/hostdashboard/chat">Messages</option>
+                    <option value="/hostdashboard/reporting">Revenues</option>
+                    <option value="/hostdashboard/reviews">Reviews</option>
+                    <option value="/hostdashboard/calendar">Property care</option>
+                    <option value="/hostdashboard/calendar">Finance</option>
+                    <option value="/hostdashboard/pricing">Pricing</option>
+                    <option value="/hostdashboard/listings">Listing</option>
+                    <option value="/hostdashboard/settings">Settings</option>
+                </select>
             </div>
-            {/* <div>
+              {/* <div>
               <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Growth">
                 <option disabled>Growth</option>
                 <option value="/hostdashboard/reservations">Reservations</option>
                 <option value="/hostdashboard/revenues">Revenues</option>
                 <option value="/hostdashboard/property-care">Property Care</option>
                 <option value="/hostdashboard/iot-hub">IoT Hub</option>
-                <option value="/hostdashboard/pricing">Pricing</option>
                 <option value="/hostdashboard/distribution">Distribution</option>
                 <option value="/hostdashboard/monitoring">Monitoring</option>
                 <option value="/hostdashboard/screening">Screening</option>
@@ -163,13 +163,13 @@ function Pages() {
         {/*  <img src={dashboard} alt="Dashboard" />*/}
         {/*  <p>IoT Hub</p>*/}
         {/*</div>*/}
-        {/*<div*/}
-        {/*  className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}*/}
-        {/*  onClick={() => handleNavigation("/hostdashboard/pricing")}*/}
-        {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
-        {/*  <p>Pricing</p>*/}
-        {/*</div>*/}
+        <div
+          className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/pricing")}
+        >
+          <img src={dashboard} alt="Dashboard" />
+          <p>Pricing</p>
+        </div>
         {/*<div*/}
         {/*  className={`wijzer ${activeTab === "/hostdashboard/distribution" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/distribution")}*/}
