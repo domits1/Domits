@@ -5,11 +5,14 @@
   padding-left: 5rem;
   padding-right: 5rem;
   display: flex;
-  /* align-items: center; */
   justify-content: center;
   box-sizing: border-box;
   flex-direction: column;
 }
+
+/* *{
+  border: 1px solid red;
+} */
 
 .span{
   font-weight: bold;
@@ -19,8 +22,6 @@
   width: 100%;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 18rem;
-  padding-right: 5rem;
   display: flex;
   justify-content: center;
   box-sizing: border-box;
@@ -30,12 +31,10 @@
 }
 
 .Container{
-  width: 100%;
+  width: 25%;
   margin-top: 1rem;
   margin-left: auto;
   margin-right: auto;
-  padding-left: 25rem;
-  padding-right: 25rem;
   display: flex;
   justify-content: center;
   box-sizing: border-box;
@@ -72,8 +71,6 @@
 }
 
 .howitworks__section-title-container {
-  /* width: 90%; */
-  /* width: 84.12rem; */
   margin-top: 1.4rem;
   margin-bottom: 0.6rem;
 }
@@ -275,3 +272,30 @@
     padding: 0;
   }
 }
+
+@media (max-width: 768px) {
+  .howitworks__titles-container {
+    width: 80%;
+  }
+
+  .Container{
+    width: 30%;
+  }
+
+  .howitworks__info-item {
+    width: 90%;
+    margin: 0.5rem auto;
+  }
+}
+
+@media (max-width: 475px) {
+  .howitworks__title{
+    font-size: 1.9em;
+  }
+  
+  .Container{
+    width: 100%;
+  }
+}
+
+
