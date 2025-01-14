@@ -22,7 +22,7 @@ const BookingOverview = () => {
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userData, setUserData] = useState({ username: "", email: "" });
+    const [userData, setUserData] = useState({ username: "", email: "", phone_number: "" });
     const [cognitoUserId, setCognitoUserId] = useState(null);
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -78,6 +78,7 @@ const BookingOverview = () => {
                 setUserData({
                     username: userAttributes['custom:username'],
                     email: userAttributes['email'],
+                    phone_number: userAttributes['phone_number'],
                 });
                 setCognitoUserId(userAttributes.sub);
             } catch (error) {
