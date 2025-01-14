@@ -439,12 +439,13 @@ const Register = () => {
                             onChange={handleChange}
                         />
                         <label>Phone Number:</label>
-                        <div style={{display: 'flex', gap: '5px', alignItems: 'center'}}>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '5px' }}>
                             <select
                                 name="countryCode"
                                 value={formData.countryCode}
                                 onChange={handleCountryCodeChange}
                                 className="countryCodeDropdown"
+                                style={{ width: '110%' }}
                             >
                                 {countryCodes.map((country, index) => (
                                     <option key={index} value={country.code}>
@@ -459,9 +460,10 @@ const Register = () => {
                                 placeholder="Phone Number"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                style={{flex: '1'}}
+                                style={{ width: '100%' }} 
                             />
                         </div>
+
                         <label>Password:</label>
                         <div className="passwordContainer">
                             <input
@@ -474,7 +476,7 @@ const Register = () => {
                                 onChange={handleChange}
                                 onFocus={() => {
                                     if (strengthContainerRef.current) {
-                                        strengthContainerRef.current.style.display = 'block'; // Show on focus
+                                        strengthContainerRef.current.style.display = 'block'; 
                                     }
                                 }}
                                 style={{borderColor: errorMessage.includes('Password') ? 'red' : 'var(--secondary-color)'}}

@@ -16,6 +16,34 @@
     cursor: pointer;
 }
 
+.countryCodeDropdown {
+    width: 40%; 
+    padding: 8px 12px;
+    border: 1px solid var(--secondary-color); 
+    border-radius: 5px;
+    background-color: white; 
+    font-size: 14px; 
+    color: black; 
+    outline: none; 
+    appearance: none; 
+    background-image: url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxNiIgaGVpZ2h0PSIxNiIgdmlld0JveD0iMCAwIDE2IDE2Ij48cGF0aCBkPSJNNC42NyA2bDUuMzMgNS4zMyA1LjMzLTUuMzNhLjUuNSAwIDAwLS43MDcuNzE2bC01LjY3IDUuNjctNS42Ny01LjY3YS41LjUgMCAwMC43MDctLjcwN3oiIGZpbGw9IiMzMzMiLz48L3N2Zz4='); 
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    position: relative;
+    z-index: 1000;
+}
+
+.countryCodeDropdown:focus {
+    border-color: #4a86c3; 
+    box-shadow: 0 0 5px rgba(74, 134, 195, 0.5); 
+}
+
+.countryCodeDropdown:hover {
+    border-color: #4a86c3; 
+    cursor: pointer; 
+}
+
 .registerButton:hover {
     background: #4a86c3;
 }
@@ -51,20 +79,20 @@ label {
     font-size: 18px;
 }
 
-.registerInput {
-    width: 100%;
-    height: auto;
-    padding: 8px 15px;
-    margin-top: 5px;
-    margin-bottom: 5px;
-    background: white;
-    box-shadow: none;
-    border-radius: 5px;
-    border: 1px solid var(--secondary-color);
-    justify-content: flex-start;
-    align-items: center;
-    display: inline-flex;
-}
+    .registerInput {
+        width: 100%;
+        height: auto;
+        padding: 8px 15px;
+        margin-top: 5px;
+        margin-bottom: 5px;
+        background: white;
+        box-shadow: none;
+        border-radius: 5px;
+        border: 1px solid var(--secondary-color);
+        justify-content: flex-start;
+        align-items: center;
+        display: inline-flex;
+    }
 
 .alreadyAccountText {
     color: black;
