@@ -75,7 +75,7 @@ function Pages() {
                 <option disabled>Growth</option>
                 <option value="/hostdashboard/reservations">Reservations</option>
                 <option value="/hostdashboard/revenues">Revenues</option>
-                <option value="/hostdashboard/property-care">Property Care</option>
+                <option value="/hostdashboard/housekeeping">Property Care</option>
                 <option value="/hostdashboard/iot-hub">IoT Hub</option>
                 <option value="/hostdashboard/distribution">Distribution</option>
                 <option value="/hostdashboard/monitoring">Monitoring</option>
@@ -165,8 +165,8 @@ function Pages() {
           <p>Reviews</p>
         </div>
         <div
-          className={`wijzer ${activeTab === "/hostdashboard/property-care" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/property-care")}
+          className={`wijzer ${activeTab === "/hostdashboard/housekeeping" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/housekeeping")}
         >
           {/* <img src={dashboard} alt="Dashboard" /> */}
 
