@@ -96,7 +96,7 @@ function Pages() {
           {/* <img src={add} alt="add"></img> */}
           <div className="Mui">
           <AddIcon/></div>
-          <p>Add new accommodation</p>
+          <p>List your property</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard" ? "active" : ""}`}
