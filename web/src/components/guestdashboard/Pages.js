@@ -46,7 +46,6 @@ function Pages() {
           className={`wijzers ${activeTab === "/guestdashboard" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard")}
         >
-          {/* <img src={dashboard} alt="Profile"></img> */}
           <div className="Mui">
           <DashboardIcon/></div>
           <p>Dashboard</p>
@@ -55,7 +54,6 @@ function Pages() {
           className={`wijzers ${activeTab === "/guestdashboard/bookings" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/bookings")}
         >
-          {/* <img src={booking} alt="Booking"></img> */}
           <div className="Mui">
           <BookingIcon/></div>
           <p>Bookings</p>
@@ -64,7 +62,6 @@ function Pages() {
           className={`wijzers ${activeTab === "/guestdashboard/chat" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/chat")}
         >
-          {/* <img src={message} alt="Messages"></img> */}
           <div className="Mui">
           <MessageIcon/></div>
           <p>Messages</p>
@@ -73,7 +70,6 @@ function Pages() {
           className={`wijzers ${activeTab === "/guestdashboard/payments" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/payments")}
         >
-          {/* <img src={payment} alt="Booking"></img> */}
           <div className="Mui">
           <FinanceIcon/></div>
           <p>Payments</p>
@@ -82,7 +78,6 @@ function Pages() {
           className={`wijzers ${activeTab === "/guestdashboard/reviews" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/reviews")}
         >
-          {/* <img src={listings} alt="Listing"></img> */}
           <div className="Mui">
           <RevieuwsIcon/></div>
           <p>Reviews</p>
@@ -91,7 +86,6 @@ function Pages() {
           className={`wijzers ${activeTab === "/guestdashboard/settings" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/settings")}
         >
-          {/* <img src={settings} alt="Settings"></img> */}
           <div className="Mui">
           <Settings/></div>
           <p>Settings</p>

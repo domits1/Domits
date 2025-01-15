@@ -75,7 +75,7 @@ function Pages() {
                 <option disabled>Growth</option>
                 <option value="/hostdashboard/reservations">Reservations</option>
                 <option value="/hostdashboard/revenues">Revenues</option>
-                <option value="/hostdashboard/property-care">Property Care</option>
+                <option value="/hostdashboard/housekeeping">Property Care</option>
                 <option value="/hostdashboard/iot-hub">IoT Hub</option>
                 <option value="/hostdashboard/distribution">Distribution</option>
                 <option value="/hostdashboard/monitoring">Monitoring</option>
@@ -96,16 +96,13 @@ function Pages() {
           {/* <img src={add} alt="add"></img> */}
           <div className="Mui">
           <AddIcon/></div>
-          <p>Add new accommodation</p>
+          <p>List your property</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard")}
         >
-          {/* <img src={dashboard} alt="Dashboard"></img> */}
           <div className="Mui">
-          {/* <div className="line under"></div>
-          <div className="line right"></div> */}
           <DashboardIcon/></div>
           <p>Dashboard</p> 
         </div>
@@ -113,7 +110,6 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/calendar" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/calendar")}
         >
-          {/* <img src={calendar} alt="Calendar"></img> */}
           <div className="Mui">
           <CalendarIcon/></div>
           <p>Calendar</p>
@@ -122,7 +118,6 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/reservations" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/reservations")}
         >
-          {/* <img src={dashboard} alt="Dashboard" /> */}
           <div className="Mui">
           <ReservationIcon/></div>
           <p>Reservations</p>
@@ -131,8 +126,6 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/chat" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/chat")}
         >
-          {/* <img src={message} alt="Messages"></img> */}
-
           <div className="Mui">
           <MessageIcon/></div>
           <p>Messages</p>
@@ -142,33 +135,23 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/revenues")}
         >
-          {/* <img src={dashboard} alt="Dashboard" /> */}
           <div className="Mui">
           <RevenueIcon/></div>
           <p>Revenues</p>
         </div>
-        {/*<div*/}
-        {/*  className={`wijzer ${activeTab === "/hostdashboard/reporting" ? "active" : ""}`}*/}
-        {/*  onClick={() => handleNavigation("/hostdashboard/reporting")}*/}
-        {/*>*/}
-        {/*  <img src={payment} alt="Payments"></img>*/}
-        {/*  <p>Reporting</p>*/}
-        {/*</div>*/}
         <div
           className={`wijzer ${activeTab === "/hostdashboard/reviews" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/reviews")}
         >
-          {/* <img src={listings} alt="Reviews"></img> */}
 
           <div className="Mui">
           <RevieuwsIcon/></div>
           <p>Reviews</p>
         </div>
         <div
-          className={`wijzer ${activeTab === "/hostdashboard/property-care" ? "active" : ""}`}
-          onClick={() => handleNavigation("/hostdashboard/property-care")}
+          className={`wijzer ${activeTab === "/hostdashboard/housekeeping" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/housekeeping")}
         >
-          {/* <img src={dashboard} alt="Dashboard" /> */}
 
           <div className="Mui">
           <CleanIcon/></div>
@@ -178,7 +161,6 @@ function Pages() {
             className={`wijzer ${activeTab === "/hostdashboard/finance" ? "active" : ""}`}
             onClick={() => handleNavigation("/hostdashboard/finance")}
         >
-          {/* <img src={payment} alt="Dashboard" /> */}
           <div className="Mui">
           <FinanceIcon/></div>
           <p>Finance</p>
@@ -196,7 +178,6 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/pricing")}
         >
-          {/* <img src={dashboard} alt="Dashboard" /> */}
           <div className="Mui">
           <PriceChangeIcon/></div>
           <p>Pricing</p>
@@ -227,7 +208,6 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/listings" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/listings")}
         >
-          {/* <img src={listings} alt="Listing"></img> */}
           <div className="Mui">
           <ListingIcon/></div>
           <p>Listing</p>
@@ -236,7 +216,6 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/settings" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/settings")}
         >
-          {/* <img src={settings} alt="Settings"></img> */}
           <div className="Mui">
           <SettingsIcon/></div>
           <p>Settings</p>
