@@ -1,11 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from 'react-router-dom';
-import dashboard from "../../images/icons/dashboard-icon.png";
-import message from "../../images/icons/message-icon.png";
-import payment from "../../images/icons/payment-icon.png";
-import listings from "../../images/icons/listings-icon.png";
-import calendar from "../../images/icons/calendar-icon.png";
-import settings from "../../images/icons/settings-icon.png";
+import AddIcon from '@mui/icons-material/Add';
+import DashboardIcon from '@mui/icons-material/DashboardCustomizeRounded';
+import CalendarIcon from '@mui/icons-material/CalendarTodayOutlined';
+import ReservationIcon from '@mui/icons-material/Event';
+import MessageIcon from '@mui/icons-material/QuestionAnswerOutlined';
+import RevenueIcon from '@mui/icons-material/ShowChart';
+import RevieuwsIcon from '@mui/icons-material/StarBorderOutlined';
+import CleanIcon from '@mui/icons-material/CleaningServicesOutlined';
+import FinanceIcon from '@mui/icons-material/CreditScoreOutlined';
+import PriceChangeIcon from '@mui/icons-material/PriceChange';
+import ListingIcon from '@mui/icons-material/OtherHousesOutlined';
+import SettingsIcon from '@mui/icons-material/Settings';
 import stripe from "../../images/icons/stripe-icon.png";
 import spinner from "../../images/spinnner.gif";
 import { Auth } from "aws-amplify";
@@ -87,35 +93,48 @@ function Pages() {
           onClick={() => handleNavigation("/enlist")}
           style={{ maxWidth: 250 }}
         >
-          <img src={add} alt="add"></img>
+          {/* <img src={add} alt="add"></img> */}
+          <div className="Mui">
+          <AddIcon/></div>
           <p>Add new accommodation</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard")}
         >
-          <img src={dashboard} alt="Dashboard"></img>
-          <p>Dashboard</p>
+          {/* <img src={dashboard} alt="Dashboard"></img> */}
+          <div className="Mui">
+          {/* <div className="line under"></div>
+          <div className="line right"></div> */}
+          <DashboardIcon/></div>
+          <p>Dashboard</p> 
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard/calendar" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/calendar")}
         >
-          <img src={calendar} alt="Calendar"></img>
+          {/* <img src={calendar} alt="Calendar"></img> */}
+          <div className="Mui">
+          <CalendarIcon/></div>
           <p>Calendar</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard/reservations" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/reservations")}
         >
-          <img src={dashboard} alt="Dashboard" />
+          {/* <img src={dashboard} alt="Dashboard" /> */}
+          <div className="Mui">
+          <ReservationIcon/></div>
           <p>Reservations</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard/chat" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/chat")}
         >
-          <img src={message} alt="Messages"></img>
+          {/* <img src={message} alt="Messages"></img> */}
+
+          <div className="Mui">
+          <MessageIcon/></div>
           <p>Messages</p>
         </div>
         {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
@@ -123,7 +142,9 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/revenues")}
         >
-          <img src={dashboard} alt="Dashboard" />
+          {/* <img src={dashboard} alt="Dashboard" /> */}
+          <div className="Mui">
+          <RevenueIcon/></div>
           <p>Revenues</p>
         </div>
         {/*<div*/}
@@ -137,21 +158,29 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/reviews" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/reviews")}
         >
-          <img src={listings} alt="Reviews"></img>
+          {/* <img src={listings} alt="Reviews"></img> */}
+
+          <div className="Mui">
+          <RevieuwsIcon/></div>
           <p>Reviews</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard/property-care" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/property-care")}
         >
-          <img src={dashboard} alt="Dashboard" />
+          {/* <img src={dashboard} alt="Dashboard" /> */}
+
+          <div className="Mui">
+          <CleanIcon/></div>
           <p>Property care</p>
         </div>
         <div
             className={`wijzer ${activeTab === "/hostdashboard/finance" ? "active" : ""}`}
             onClick={() => handleNavigation("/hostdashboard/finance")}
         >
-          <img src={payment} alt="Dashboard" />
+          {/* <img src={payment} alt="Dashboard" /> */}
+          <div className="Mui">
+          <FinanceIcon/></div>
           <p>Finance</p>
         </div>
 
@@ -167,7 +196,9 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/pricing")}
         >
-          <img src={dashboard} alt="Dashboard" />
+          {/* <img src={dashboard} alt="Dashboard" /> */}
+          <div className="Mui">
+          <PriceChangeIcon/></div>
           <p>Pricing</p>
         </div>
         {/*<div*/}
@@ -196,14 +227,18 @@ function Pages() {
           className={`wijzer ${activeTab === "/hostdashboard/listings" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/listings")}
         >
-          <img src={listings} alt="Listing"></img>
+          {/* <img src={listings} alt="Listing"></img> */}
+          <div className="Mui">
+          <ListingIcon/></div>
           <p>Listing</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard/settings" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/settings")}
         >
-          <img src={settings} alt="Settings"></img>
+          {/* <img src={settings} alt="Settings"></img> */}
+          <div className="Mui">
+          <SettingsIcon/></div>
           <p>Settings</p>
         </div>
         {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
