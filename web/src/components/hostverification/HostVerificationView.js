@@ -10,9 +10,9 @@ const HostVerificationView = () => {
   const { userId, accommodationId } = location.state || {};
 
   const userData = {
-    userId: userId,
-    firstName: "John",
-    lastName: "Doe",
+    userId: "100f12f1-244a-494b-9eb0-2cd3d25e47bg2",
+    firstName: "undefined",
+    lastName: "undefined",
   };
 
   const {
