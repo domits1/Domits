@@ -1477,7 +1477,7 @@ function OnboardingHost() {
                                     style={{opacity: "75%"}}>
                                 Go back
                             </button>
-                            <button
+                            {/* <button
                                 className={
                                     formData.CheckIn?.From && formData.CheckIn?.Til && formData.CheckOut?.From && formData.CheckOut?.Til
                                         ? 'onboarding-button'
@@ -1488,6 +1488,11 @@ function OnboardingHost() {
                                 }
                                 onClick={() => pageUpdater(page + 1)}
                             >
+                                Confirm and proceed
+                            </button> */}
+
+                            <button className="onboarding-button"
+                                    onClick={() => pageUpdater(page + 1)}>
                                 Confirm and proceed
                             </button>
                         </nav>
