@@ -228,19 +228,6 @@ const BookingOverview = () => {
 
     return (
             <main style={{ cursor: isProcessing ? 'wait' : 'default' }}>
-                <div className="progress-bar-container">
-                        <div className="circle completed">
-                            <span className="number-complete">1</span>
-                        </div>
-                        <div className="line completed"></div>
-                        <div className="circle half-completed">
-                            <span className="number">2</span>
-                        </div>
-                        <div className="line"></div>
-                        <div className="circle">
-                            <span className="number">3</span>
-                        </div>
-                    </div>
                 <div className="Bookingcontainer">
                 {/* Left Panel: Image and Cards */}
                 <div className="left-panel">
@@ -304,17 +291,6 @@ const BookingOverview = () => {
                             )}
                         </div>
                         <span onClick={handleEditClick} style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}>Change</span>
-
-                        <div className="checkbox-container">
-                            <label>
-                                <input type="checkbox" />
-                                I have read and accept the <a href="#" style={{ color: 'green' }}>accommodation rules</a>
-                            </label>
-                            <label>
-                                <input type="checkbox" />
-                                I have read and accept the <a href="#" style={{ color: 'green' }}>privacy agreement and terms and conditions</a>
-                            </label>
-                        </div>
 
                         <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
                             {loading ? 'Loading...' : 'Confirm & Pay'}
