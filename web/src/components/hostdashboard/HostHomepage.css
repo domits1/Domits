@@ -73,10 +73,20 @@
   transition: all 0.3s ease;
   font-size: 0.75em;
   text-align: center;
+  height: 8vh;
+  padding-left: 1vh;  
 }
 
-.wijzer img {
-  object-fit: cover;
+.Mui {
+  width: 5vh;
+  height: 5vh;
+  background-color: #fff;
+  border: 2px solid black;
+  border-radius: 2vh;
+  display: flex;
+  align-items: center;
+  color: black !important; 
+  justify-content: space-around;
 }
 
 .wijzer:hover {

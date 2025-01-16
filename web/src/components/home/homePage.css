@@ -3,95 +3,23 @@ body.hide-header .app-header {
   visibility: hidden;
 }
 
+.domits-homepage .accocard-content {
+  background-color: #f9f9f9;
+}
+
 .domits-homepage {
   background-color: #f9f9f9;
   position: relative; 
   z-index: auto; 
 }
 
-.domits-accocard {
-  background-color: #f9f9f9;
-  border-radius: 15px;
-  margin: 1%;
-  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
-  cursor: pointer;
-  width: clamp(150px, 20vw, 300px); 
-  aspect-ratio: 1 / 1; 
-  display: flex;
-  flex-direction: column;
-  position: relative;
-  z-index: 1;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  overflow: hidden;
-}
-
-.domits-accocard img {
-  width: 100%;
-  height: auto;
-  object-fit: cover;
-}
-
-.domits-accocard-title {
-  position: absolute;
-  bottom: 37%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.6);
-  padding: 8px 10px;
-  border-radius: 10px;
-  text-align: center;
-  color: white;
-  font-size: clamp(12px, 3vw, 18px);
-  font-weight: 600;
-  z-index: 2;
-  max-width: 90%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-}
-
-.domits-accocard:hover {
-  transform: translateY(-10px);
-  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
-}
-
-.domits-accocard:hover .domits-accocard-title {
-  background: rgba(13, 152, 20, 0.8);
-}
-
-.domits-accocard-content {
-  padding: 15px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.domits-accocard-price {
-  font-size: 18px;
-  color: #0d9814;
-  font-weight: bold;
-  margin-top: 5px;
-}
-
-.domits-accocard-specs {
-  font-size: 14px;
-  color: #555;
-  margin-top: 5px;
-}
-
 .domits-accommodationGroup {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 20px;
+padding-left: 10vh;
 }
-
 
 .domits-searchContainer {
-  height: 75vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/houseBoat.png");
+  height: 87vh;
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/villaHomepage.jpg");
   background-size: cover;
   background-position: 70% 100%;
   background-repeat: no-repeat;
@@ -99,22 +27,22 @@ body.hide-header .app-header {
 }
 
 .domits-searchTextCon {
-  padding-top: 20vh;
+  padding-top: 32vh;
   color: white;
   text-align: center;
-  font-size: 8em;
+  font-size: 4em;
   height: 15vh;
   width: 100%;
   font-weight: 100;
 }
 
 .domits-searchText {
-  font-size: 4rem;
+  font-size: 3rem;
   padding-bottom: 2vh;
 }
 
 .domits-searchbarCon {
-  padding-top: 4vw;
+  padding-top: 1vw;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -250,22 +178,12 @@ body.hide-header .app-header {
 }
 
 @media (max-width: 1024px) {
-  .domits-searchText {
-    font-size: 1em;
-  }
+
 }
 
 @media (max-width: 1440px) {
   .domits-accocard {
     height: auto;
-  }
-
-  .domits-searchText {
-    font-size: 0.6em;
-  }
-
-  .domits-accommodationGroup {
-    gap: 15px;
   }
 }
 
@@ -292,90 +210,6 @@ body.hide-header .app-header {
     .domits-searchText {
       font-size: 0.6em;
     }
-    .domits-accommodationGroup {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-  }
-  
-    .domits-accocard {
-      background-color: #f9f9f9;
-      border-radius: 15px;
-      margin: 1%;
-      box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
-      cursor: pointer;
-      width: clamp(350px, 20vw, 300px);
-      aspect-ratio: 1 / 1;
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      z-index: 1;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      overflow: hidden;
-  }
-  
-  .domits-accocard img {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-  }
-  
-  .domits-accocard-title {
-    position: absolute;
-    bottom: 22%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.6);
-    padding: 6px 8px;
-    border-radius: 10px;
-    text-align: center;
-    color: white;
-    font-size: clamp(10px, 4vw, 14px);
-    font-weight: 600;
-    z-index: 2;
-    max-width: 90%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    line-height: 1.2;
-  }
-  
-  .domits-accocard:hover {
-    transform: translateY(-10px);
-    box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
-  }
-  
-  .domits-accocard:hover .domits-accocard-title {
-    background: rgba(13, 152, 20, 0.8);
-  }
-  
-  .domits-accocard-content {
-    padding: 15px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-  }
-  
-  .domits-accocard-price {
-    font-size: 18px;
-    color: #0d9814;
-    font-weight: bold;
-    margin-top: 5px;
-  }
-  
-  .domits-accocard-specs {
-    font-size: 14px;
-    color: #555;
-    margin-top: 5px;
-  }  
-   
-  .domits-accocard-title {
-    font-size: clamp(10px, 4vw, 14px);
-    bottom: 22%;
-    padding: 6px 8px;
-  }
 
   .domits-searchTextCon {
     font-size: 3em;
@@ -392,24 +226,15 @@ body.hide-header .app-header {
 }
 
 @media (max-width: 768px) {
-  .domits-accocard-title {
-    font-size: 14px;
-  }
-
-  .domits-accocard-price {
-    font-size: 16px;
-    margin-top: 5px;
-  }
-
-  .domits-accocard-specs {
-    font-size: 12px;
-  }
-
   .domits-subHead {
     font-size: 2rem;
     margin-left: 2vw;
     text-align: center;
   }
+
+  .domits-accommodationGroup {
+    padding-left: 0vh;
+}
 
   .domits-trendingContainer {
     flex-direction: column;
@@ -484,14 +309,6 @@ body.hide-header .app-header {
   }
 }
 
-@media (max-width: 425px) {
-  .domits-accocard-title {
-    font-size: clamp(8px, 5vw, 12px);
-    bottom: 40%;
-    padding: 4px 6px;
-  }
-}
-
 @media (max-width: 480px) {
   .domits-searchTextCon {
     font-size: 2em;
@@ -499,16 +316,6 @@ body.hide-header .app-header {
 
   .domits-searchText {
     font-size: 1em;
-  }
-
-  .domits-accocard-title {
-    font-size: clamp(8px, 5vw, 12px);
-    bottom: 40%;
-    padding: 4px 6px;
-  }
-
-  .domits-accocard-price {
-    font-size: 14px;
   }
 
   .domits-subHead {

@@ -228,7 +228,7 @@ function App() {
                                                     <Route path="chat" element={<Hostchat />} />
                                                     <Route path="reservations" element={<HostReservations />} />
                                                     <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
-                                                    <Route path="property-care" element={<HostPropertyCare />} />
+                                                    <Route path="housekeeping" element={<HostPropertyCare />} />
                                                     <Route path="iot-hub" element={<HostIoTHub />} />
                                                     <Route path="pricing" element={<HostPricing />} />
                                                     <Route path="distribution" element={<HostDistribution />} />

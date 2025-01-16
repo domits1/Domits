@@ -94,26 +94,87 @@ function Header({ setSearchResults, setLoading }) {
         }
     };
 
+    const navigateToDashboard = () => {
+        if (!isLoggedIn) {
+            setFlowState({ isHost: true });
+            navigate('/landing');
+        } else {
+            if (currentView === 'host') {
+                navigateToGuestDashboard();
+            } else {
+                navigateToHostDashboard();
+            }
+        }
+    };
+
+    const navigateToLanding = () => {
+        navigate('/landing');
+    };
+    const navigateToGuestDashboard = () => {
+        setCurrentView('guest');
+        navigate('/guestdashboard');
+    };
+    const navigateToHostDashboard = () => {
+        setCurrentView('host');
+        navigate('/hostdashboard');
+    };
+    const navigateToNinedots = () => {
+        navigate('/travelinnovation');
+    };
+
     const toggleDropdown = () => setDropdownVisible(!dropdownVisible);
 
+
+    const getDropdownElement = () => document.querySelector('.header-personal-menu-dropdown');
+    const getDropdownContentElement = () => document.querySelector('.header-personal-menu-dropdown-content');
+
+    document.addEventListener('click', function (event) {
+        const dropdown = getDropdownElement(); 
+        const dropdownContent = getDropdownContentElement(); 
+
+        if (dropdown && dropdownContent) {
+            const isClickInside = dropdown.contains(event.target); 
+
+            if (!isClickInside) {
+                dropdownContent.classList.remove('show'); 
+            }
+        }
+    });
+
+    
+
     const renderDropdownMenu = () => {
-        return currentView === 'host' ? (
-            <>
-                <div className="header-hello-username">Hello {username}!</div>
-                <button onClick={() => navigate('/hostdashboard')} className="header-dropdown-login-button">Dashboard</button>
-                <button onClick={handleLogout} className="header-dropdown-logout-button">
-                    Log out<img src={logoutArrow} alt="Logout Arrow" />
-                </button>
-            </>
-        ) : (
-            <>
-                <div className="header-hello-username">Hello {username}!</div>
-                <button onClick={() => navigate('/guestdashboard')} className="header-dropdown-login-button">Profile</button>
-                <button onClick={handleLogout} className="header-dropdown-logout-button">
-                    Log out<img src={logoutArrow} alt="Logout Arrow" />
-                </button>
-            </>
-        );
+        if (currentView === 'host') {
+            return (
+                <>
+                    <div className="helloUsername">Hello {username}!</div>
+                    <button onClick={navigateToHostDashboard} className="dropdownLoginButton">Dashboard</button>
+                    <button onClick={() => navigate('/hostdashboard/calendar')}
+                        className="dropdownLoginButton">Calendar
+                    </button>
+                    <button onClick={() => navigate('/hostdashboard/reservations')}
+                        className="dropdownLoginButton">Reservations
+                    </button>
+                    <button onClick={() => navigate('/hostdashboard/chat')} className="dropdownLoginButton">Messages
+                    </button>
+                    <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
+                        src={logoutArrow} alt="Logout Arrow" /></button>
+                </>
+            );
+        } else {
+            return (
+                <>
+                    <div className="helloUsername">Hello {username}!</div>
+                    <button onClick={navigateToGuestDashboard} className="dropdownLoginButton">Profile</button>
+                    <button onClick={navigateToMessages} className="dropdownLoginButton">Messages</button>
+                    <button onClick={navigateToPayments} className="dropdownLoginButton">Payments</button>
+                    <button onClick={navigateToReviews} className="dropdownLoginButton">Reviews</button>
+                    <button onClick={navigateToSettings} className="dropdownLoginButton">Settings</button>
+                    <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
+                        src={logoutArrow} alt="Logout Arrow" /></button>
+                </>
+            );
+        }
     };
 
     return (
@@ -128,12 +189,33 @@ function Header({ setSearchResults, setLoading }) {
                     <SearchBar setSearchResults={setSearchResults} setLoading={setLoading} toggleBar={toggleBar}  />
                 </div>             
                 <div className="header-right">
-                    <button className="header-buttons header-host-button" onClick={() => navigate('/landing')}>
+
+                {/* <ul className='header-links'> */}
+                            {!isLoggedIn ? (
+                                <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                                    Become a Host
+                                </button>
+                            ) : group === 'Host' ? (
+                                <button className="headerButtons headerHostButton" onClick={navigateToDashboard}>
+                                    {currentView === 'guest' ? 'Switch to Host' : 'Switch to Guest'}
+                                </button>
+                            ) : (
+                                <button className="headerButtons headerHostButton" onClick={navigateToLanding}>
+                                    Become a Host
+                                </button>
+                            )}
+                            {isLoggedIn && group === 'Traveler' && (
+                                <button className="headerButtons" onClick={navigateToGuestDashboard}>
+                                    Go to Dashboard
+                                </button>
+                            )}
+                    {/* <button className="header-buttons header-host-button" onClick={() => navigate('/landing')}>
                         Become a Host
-                    </button>
-                    <button className="header-buttons" onClick={() => navigate('/travelinnovation')}>
-                        <img src={nineDots} alt="Nine Dots" />
-                    </button> 
+                    </button> */}
+                            <button className="headerButtons nineDotsButton" onClick={navigateToNinedots}>
+                                <img src={nineDots} alt="Nine Dots" />
+                            </button>
+                    {/* </ul> */}
                     <div className="header-personal-menu-dropdown">
                         <button className="header-personal-menu" onClick={toggleDropdown}>
                             <img src={profile} alt="Profile Icon" />
