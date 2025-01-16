@@ -124,6 +124,25 @@ function Header({ setSearchResults, setLoading }) {
 
     const toggleDropdown = () => setDropdownVisible(!dropdownVisible);
 
+
+    const getDropdownElement = () => document.querySelector('.header-personal-menu-dropdown');
+    const getDropdownContentElement = () => document.querySelector('.header-personal-menu-dropdown-content');
+
+    document.addEventListener('click', function (event) {
+        const dropdown = getDropdownElement(); 
+        const dropdownContent = getDropdownContentElement(); 
+
+        if (dropdown && dropdownContent) {
+            const isClickInside = dropdown.contains(event.target); 
+
+            if (!isClickInside) {
+                dropdownContent.classList.remove('show'); 
+            }
+        }
+    });
+
+    
+
     const renderDropdownMenu = () => {
         if (currentView === 'host') {
             return (
