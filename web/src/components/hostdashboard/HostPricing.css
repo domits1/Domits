@@ -129,11 +129,11 @@
     border-radius: 15px;
     padding: 1.2rem;
     justify-content: space-between;
-    gap: 10vw;
+    gap: 5vw;
 }
 
 .accommodation-card-img {
-    width: 30vw;
+    width: 14rem;
     height: 20vh;
     object-fit: cover;
     border-radius: 15px;
@@ -177,9 +177,20 @@
 
 .pricing-rate-input input {
     padding: 0;
-    width: 3vw;
+    width: 5vw;
     max-width: 100%;
     vertical-align: middle;
+}
+
+.pricing-taxFee-icon-details {
+    width: 2vw;
+    height: 2.5vw;
+    margin-top: -2vh;
+    margin-right: -1vw;
+}
+
+.pricing-taxFee-icon-details:hover {
+    cursor: pointer;
 }
 
 /*table view*/
@@ -211,9 +222,9 @@
 
 .pricing-table th,
 .pricing-table td {
-    padding: 12px 15px;
+    padding: 12px 3px;
     border: 1px solid #ddd;
-    text-align: left;
+    text-align: center;
     vertical-align: middle;
 }
 
@@ -221,10 +232,11 @@
     background-color: #f4f4f4;
     font-weight: bold;
     text-transform: uppercase;
+    text-align: center;
 }
 
 .pricing-table td input {
-    width: 100%;
+    width: 90%;
     box-sizing: border-box;
     border: 1px solid #ddd;
     background-color: transparent;
@@ -237,6 +249,83 @@
     background-color: #f1f1f1;
 }
 
+.pricing-taxFee-icon-table {
+    width: 2.5vw;
+    height: 5vh;
+    margin-left: 5%;
+}
+
+.pricing-taxFee-icon-table:hover {
+    cursor: pointer;
+}
+
+/*tax & fee popup*/
+.pricing-taxFee-popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+}
+
+.pricing-taxFee-popup-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.pricing-taxFee-popup-content {
+    position: relative;
+    background: #fff;
+    padding: 20px;
+    width: 300px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+}
+
+.pricing-taxFee-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+.pricing-taxFee-popup-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.pricing-taxFee-popup-close-button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #333;
+}
+
+.pricing-taxFee-popup-close-button:hover {
+    color: #ff0000;
+}
+
+.pricing-taxFee-popup-body p {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.pricing-taxFee-popup-body span {
+    font-weight: bold;
+}
+
 /*navigation buttons*/
 .pricing-bottom-buttons {
     display: flex;
@@ -247,7 +336,6 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    margin-inline: auto;
     padding-top: 2.5%;
     margin-left: 21vw;
 }
@@ -397,7 +485,7 @@
     }
 
     .pricing-rate-input input {
-        width: 50px;
+        width: 20vw;
     }
 
     /* Table view */
@@ -417,9 +505,9 @@
     }
 
     .pricing-table th, .pricing-table td {
-        padding: 8px;
+        padding: 6px;
         word-break: break-word;
-        text-align: left;
+        text-align: center;
     }
 
     .pricing-table th {
@@ -464,6 +552,18 @@
         color: white;
         font-size: 12px;
     }
+
+    .pricing-taxFee-icon-details,
+    .pricing-taxFee-icon-table {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        margin-left: 26%;
+    }
+
 }
 
 @media (min-width: 321px) and (max-width: 376px) {
@@ -559,7 +659,7 @@
     }
 
     .pricing-rate-input input {
-        width: 50px;
+        width: 20vw;
     }
 
     /* Table view */
@@ -582,7 +682,7 @@
     .pricing-table th, .pricing-table td {
         padding: 8px;
         word-break: break-word;
-        text-align: left;
+        text-align: center;
     }
 
     .pricing-table th {
@@ -626,6 +726,17 @@
         background-color: #4A77FC;
         color: white;
         font-size: 12px;
+    }
+
+    .pricing-taxFee-icon-details,
+    .pricing-taxFee-icon-table {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        margin-left: 12%;
     }
 }
 
@@ -723,7 +834,7 @@
     }
 
     .pricing-rate-input input {
-        width: 60px;
+        width: 20vw;
     }
 
     /* Table view */
@@ -744,9 +855,9 @@
     }
 
     .pricing-table th, .pricing-table td {
-        padding: 20px;
+        padding: 7px;
         word-break: break-word;
-        text-align: left;
+        text-align: center;
     }
 
     .pricing-table th {
@@ -790,6 +901,17 @@
         background-color: #4A77FC;
         color: white;
         font-size: 14px;
+    }
+
+    .pricing-taxFee-icon-details,
+    .pricing-taxFee-icon-table {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        margin-left: 26%;
     }
 }
 
@@ -884,7 +1006,7 @@
     }
 
     .pricing-rate-input input {
-        width: 60px;
+        width: 15vw;
     }
 
     /* Table view */
@@ -904,9 +1026,9 @@
     }
 
     .pricing-table th, .pricing-table td {
-        padding: 20px;
+        padding: 7px;
         word-break: break-word;
-        text-align: left;
+        text-align: center;
     }
 
     .pricing-table th {
@@ -950,6 +1072,17 @@
         background-color: #4A77FC;
         color: white;
         font-size: 14px;
+    }
+
+    .pricing-taxFee-icon-details,
+    .pricing-taxFee-icon-table {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        margin-left: 12%;
     }
 }
 
@@ -1043,7 +1176,7 @@
     }
 
     .pricing-rate-input input {
-        width: 60px;
+        width: 10vw;
     }
 
     /* Table view */
@@ -1064,9 +1197,9 @@
     }
 
     .pricing-table th, .pricing-table td {
-        padding: 20px;
+        padding: 8px;
         word-break: break-word;
-        text-align: left;
+        text-align: center;
     }
 
     .pricing-table th {
@@ -1108,6 +1241,17 @@
         background-color: #4A77FC;
         color: white;
         font-size: 14px;
+    }
+
+    .pricing-taxFee-icon-details {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        width: 5vw;
+        height: 5vw;
     }
 }
 
@@ -1168,10 +1312,11 @@
 
     .accommodation-card {
         gap: 2vw;
+        width: 64vw;
     }
 
     .accommodation-card-img {
-        width: 30vw;
+        width: 15rem;
         height: 20vh;
         object-fit: cover;
         border-radius: 15px;
@@ -1187,7 +1332,6 @@
     }
 
     .pricing-column p {
-        height: auto;
         line-height: 1.5;
     }
 
@@ -1197,7 +1341,7 @@
     }
 
     .pricing-rate-input input {
-        width: 60px;
+        width: 6vw;
     }
 
     /* Table view */
@@ -1219,9 +1363,9 @@
     }
 
     .pricing-table th, .pricing-table td {
-        padding: 20px;
+        padding: 8px;
         word-break: break-word;
-        text-align: left;
+        text-align: center;
     }
 
     .pricing-table th {
@@ -1234,11 +1378,11 @@
     }
 
     .pricing-bottom-buttons {
-        flex-direction: column;
         gap: 15px;
     }
 
     .pricing-navigation-buttons {
+        margin-left: 14%;
     }
 
     .pricing-navigation-buttons button {
@@ -1261,5 +1405,15 @@
         background-color: #4A77FC;
         color: white;
         font-size: 14px;
+    }
+
+    .pricing-taxFee-icon-details {
+        width: 3.5vw;
+        height: 4vw;
+    }
+
+    .pricing-taxFee-icon-table {
+        width: 3.5vw;
+        height: 4vw;
     }
 }

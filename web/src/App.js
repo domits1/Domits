@@ -52,7 +52,7 @@ import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./components/hostdashboard/HostReservations";
 import HostRevenues from "./components/hostdashboard/HostRevenues";
-import HostPropertyCare from "./components/hostdashboard/HostPropertyCare";
+import HostHousekeeping from "./components/hostdashboard/Housekeeping.js";
 import HostIoTHub from "./components/hostdashboard/HostIoTHub";
 import HostPricing from "./components/hostdashboard/HostPricing";
 import HostDistribution from "./components/hostdashboard/HostDistribution";
@@ -69,7 +69,7 @@ import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
-// import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
+import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
 
 
 import AccommodationTypeView from './components/hostonboarding/views/AccommodationTypeView.js';
@@ -169,7 +169,7 @@ function App() {
                                     <Route path="/listingdetails" element={<ListingDetails />} />
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                                    {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
+                                    <Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />
@@ -228,7 +228,7 @@ function App() {
                                                     <Route path="chat" element={<Hostchat />} />
                                                     <Route path="reservations" element={<HostReservations />} />
                                                     <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
-                                                    <Route path="property-care" element={<HostPropertyCare />} />
+                                                    <Route path="housekeeping" element={<HostHousekeeping />} />
                                                     <Route path="iot-hub" element={<HostIoTHub />} />
                                                     <Route path="pricing" element={<HostPricing />} />
                                                     <Route path="distribution" element={<HostDistribution />} />
@@ -269,7 +269,7 @@ function App() {
                                     <Route path='/hostonboarding/:type/availability' element={<AvailabilityView/>} />
                                     <Route path='/hostonboarding/legal/registrationnumber' element={<RegistrationNumberView/>} />
                                     <Route path='/hostonboarding/summary' element={<SummaryView/>} />
-                                    
+
 
 
 
@@ -278,7 +278,7 @@ function App() {
                                 {currentPath !== '/admin' && <MenuBar />}
                                 {renderChatWidget()}
                                 <Hostchatbot />
-                               
+
 
                             </div>
                         </UserProvider>

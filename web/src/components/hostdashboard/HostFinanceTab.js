@@ -100,13 +100,13 @@ const HostFinanceTab = () => {
             <section className="host-pc-finance">
                 <div className="finance-content">
                     <h1>Finance</h1>
-                    <h2>Ready to receive payments?</h2>
+                    <h2>Receive payouts in 3 step.</h2>
                     <h3>
                         <ul>
                             <li>
-                                1. Create an accommodation first before you proceed to the next step:
+                                Step 1:{" "} 
                                 <span className="finance-span" onClick={handleEnlistNavigation}>
-                                    Create Accommodation
+                                 List your property.
                                 </span>
                             </li>
                             <br />
@@ -115,17 +115,17 @@ const HostFinanceTab = () => {
                                     bankDetailsProvided ? (
                                         <>2. You are connected to Stripe!</>
                                     ) : (
-                                        <>2. Your payment details are not provided yet, make sure to{" "}
+                                        <>Step 2: Connect your bank details with our payment partner{" "}
                                             <span
                                                 className="finance-span"
                                                 onClick={handleStripeAction}
                                             >
-                                                finish your Stripe onboarding
-                                            </span> before you proceed.
+                                                Stripe.
+                                            </span> 
                                         </>
                                     )
                                 ) : (
-                                    <>2. Once your accommodation is created, you can create a Stripe account to receive payments:
+                                    <>2: Once your accommodation is created, you can create a Stripe account to receive payments:
                                         <span className="finance-span" onClick={() => handleStripeAction()}>
                                             Domits Stripe
                                         </span>
@@ -134,10 +134,11 @@ const HostFinanceTab = () => {
                             </li>
                             <br />
                             <li>
-                                3. Set your accommodation live at
+                            Step 3: Set your property live{" "}  
                                 <span onClick={() => handleNavigation("/hostdashboard/listings")} className="finance-span">
-                                    listings!
+                                 here 
                                 </span>
+                                {" "}to receive payouts.
                             </li>
                         </ul>
                     </h3>

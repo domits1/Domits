@@ -1,13 +1,24 @@
-import useFormStore from "../stores/formStore";
+import { useState } from "react";
 
 export const usePhotos = () => {
-  const images = useFormStore((state) => state.accommodationDetails.images);
-  const updateImage = useFormStore((state) => state.updateImage);
-  const deleteImage = useFormStore((state) => state.deleteImage);
+  const [images, setImages] = useState({});
 
   const handleFileChange = (file, index) => {
-    const fileURL = URL.createObjectURL(file);
-    updateImage(index, fileURL);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImages((prev) => ({
+        ...prev,
+        [`image${index + 1}`]: reader.result,
+      }));
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const deleteImage = (index) => {
+    setImages((prev) => ({
+      ...prev,
+      [`image${index + 1}`]: null, // Replace the deleted image with null
+    }));
   };
 
   return { images, handleFileChange, deleteImage };
