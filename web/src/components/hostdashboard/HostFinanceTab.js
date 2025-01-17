@@ -104,7 +104,7 @@ const HostFinanceTab = () => {
                     <h3>
                         <ul>
                             <li>
-                                Step 1.{" "} 
+                                Step 1:{" "} 
                                 <span className="finance-span" onClick={handleEnlistNavigation}>
                                  List your property.
                                 </span>
@@ -115,7 +115,7 @@ const HostFinanceTab = () => {
                                     bankDetailsProvided ? (
                                         <>2. You are connected to Stripe!</>
                                     ) : (
-                                        <>Step 2. Connect your bank details with our payment partner{" "}
+                                        <>Step 2: Connect your bank details with our payment partner{" "}
                                             <span
                                                 className="finance-span"
                                                 onClick={handleStripeAction}
@@ -125,7 +125,7 @@ const HostFinanceTab = () => {
                                         </>
                                     )
                                 ) : (
-                                    <>2. Once your accommodation is created, you can create a Stripe account to receive payments:
+                                    <>2: Once your accommodation is created, you can create a Stripe account to receive payments:
                                         <span className="finance-span" onClick={() => handleStripeAction()}>
                                             Domits Stripe
                                         </span>
@@ -134,7 +134,7 @@ const HostFinanceTab = () => {
                             </li>
                             <br />
                             <li>
-                            Step 3. Set your property live{" "}  
+                            Step 3: Set your property live{" "}  
                                 <span onClick={() => handleNavigation("/hostdashboard/listings")} className="finance-span">
                                  here 
                                 </span>
