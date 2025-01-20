@@ -1,0 +1,127 @@
+.photo-gallery-container .images-container {
+    all: unset;
+    /* width: 300px; 
+    height: 300px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    margin-bottom: 15px;
+    position: relative; */
+}
+
+
+/* .photo-gallery-container .file-input  {
+    all: unset;
+} */
+
+.photo-gallery-container .placeholder {
+    all: unset;
+
+}
+
+
+.photo-gallery-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+
+.photo-gallery-title {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.photo-gallery-section {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 15px;
+    width: 80%;
+    max-width: 800px;
+}
+
+.accommodation-thumbnail {
+    width: 80vh;
+    height: 55vh;
+    object-fit: cover;
+}
+
+.file-image {
+    width: 39vh;
+    height: 24vh;
+    object-fit: cover;
+}
+
+.photo-gallery-images {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    justify-content: center;
+}
+
+.photo-gallery-images .large-photo {
+    grid-column: span 2;
+    width: 100%;
+    height: 55vh;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    position: relative;
+}
+
+.photo-gallery-images .small-photo {
+    width: 100%;
+    height: 200px;
+    background-color: #e0e0e0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    position: relative;
+}
+
+.photo-gallery-images .add-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    color: #888;
+    cursor: pointer;
+}
+
+.photo-gallery-navigation {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 800px;
+    margin-top: 20px;
+}
+
+.photo-gallery-images .large-photo,
+.photo-gallery-images .small-photo {
+    position: relative;
+    overflow: hidden; /* Ensure any excess image is cropped */
+}
+
+.photo-gallery-images .large-photo img,
+.photo-gallery-images .small-photo img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Ensures the image covers the container */
+    object-position: center; /* Centers the image within the container */
+}
+
+
+
+.large-photo, .small-photo {
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+  }
+  
+  .large-photo.dragging, .small-photo.dragging {
+    border-color: #007bff;
+  }
+  
+  .large-photo.over, .small-photo.over {
+    border-color: #28a745;
+  }
+  
