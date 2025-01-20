@@ -26,7 +26,7 @@ export const AuthProvider = ({ children }) => {
       setUser(userData);
       setUserAttributes(attributes);
     } catch (error) {
-      console.error('checkAuth error:', error); // Detailed logging of the error
+      // console.error('checkAuth error:', error); // Detailed logging of the error
       setUser(null);
       setUserAttributes(null);
     }
