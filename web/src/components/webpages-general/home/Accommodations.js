@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import './Accommodations.css';
-import PageSwitcher from '../utils/PageSwitcher.module.css';
+import PageSwitcher from '../../utils/PageSwitcher.module.css';
 
-import SkeletonLoader from '../base/SkeletonLoader';
+import SkeletonLoader from '../../base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
 
