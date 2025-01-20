@@ -63,13 +63,13 @@ const ContactItem = ({ item }) => {
     return (
         <View style={styles.content}>
             <Image
-                source={require('../../screens/pictures/domits-logo.jpg')}
+                source={require('../pictures/domits-logo.jpg')}
                 style={styles.profileImage}
                 resizeMode="cover"
             />
             <View style={styles.textContainer}>
                 <Text style={styles.fullName}>{givenName}</Text>
-                <Text style={styles.subtitle} numberOfLines={1} 
+                <Text style={styles.subtitle} numberOfLines={1}
                 // ellipsizeMode="tail"
                 >
                     {lastMessage}
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     subtitle: {
         fontSize: 15,
         color: '#555',
-        marginTop: 3, 
+        marginTop: 3,
 
     },
     loadingContainer: {

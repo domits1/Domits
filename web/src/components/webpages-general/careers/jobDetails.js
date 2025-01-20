@@ -2,8 +2,8 @@ import React, { useState } from "react";
 import Jobs from "./jobs.json";
 import { useNavigate, useParams } from 'react-router-dom';
 import "./jobDetails.css";
-import office from '../../images/office.jpg';
-import coWork from '../../images/co-work.jpg';
+import office from '../../../images/office.jpg';
+import coWork from '../../../images/co-work.jpg';
 
 function JobDetails() {
     const navigate = useNavigate();
@@ -59,7 +59,7 @@ function JobDetails() {
                         {/* {job.details.preferredExperience.map((exp, index) => (
                             <li key={index}>- {exp}</li>
                         ))} */}
-                        {job.details?.preferredExperience?.length > 0 ? 
+                        {job.details?.preferredExperience?.length > 0 ?
                             job.details.preferredExperience.map((exp, index) => (
                                 <li key={index}>{exp}</li>
                             )) : <li>No preferred experience specified</li>}
@@ -71,7 +71,7 @@ function JobDetails() {
                         {/* {job.details.requirements.map((requirement, index) => (
                         <li key={index}>- {requirement}</li>
                         ))} */}
-                        {job.details?.requirements?.length > 0 ? 
+                        {job.details?.requirements?.length > 0 ?
                             job.details.requirements.map((requirement, index) => (
                                 <li key={index}>{requirement}</li>
                             )) : <li>No requirements specified</li>}
@@ -90,18 +90,18 @@ function JobDetails() {
                     {/* {job.details.extraInformation.map((extra, index) => (
                         <li key={index}>- {extra}</li>
                     ))} */}
-                    {job.details?.extraInformation?.length > 0 ? 
+                    {job.details?.extraInformation?.length > 0 ?
                         job.details.extraInformation.map((extra, index) => (
                             <li key={index}>{extra}</li>
                         )) : <li>No extra information specified</li>}
                 </ul>
                 <h2 className="exp-heading">Apply now</h2>
                 <p>{job.details?.apply || "Application instructions not available"}</p>
-                
 
-                <button className="apply-button" onClick={navigateToContact}>Apply</button>                    
+
+                <button className="apply-button" onClick={navigateToContact}>Apply</button>
            </section>
-           
+
         </div>
     );
 };

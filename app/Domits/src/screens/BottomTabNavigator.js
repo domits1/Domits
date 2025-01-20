@@ -2,9 +2,9 @@ import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {View, Text, StyleSheet} from 'react-native';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import HomePage from '../screens/homeScreen';
-import Messages from '../screens/messages';
-import AccountPage from '../screens/account';
+import HomePage from './homeScreen';
+import Messages from './messages';
+import AccountPage from './account';
 
 const Tab = createBottomTabNavigator();
 
