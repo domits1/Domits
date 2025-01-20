@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef  } from "react";
 import { useNavigate } from "react-router-dom";
 import "./homePage.css";
-import verifiedLogo from "../../images/icons/verify-icon.png";
-import checkMark from "../../images/icons/checkMark.png";
-import question from "../../images/icons/question.png";
-import bill from "../../images/icons/bill.png";
-import { SearchBar } from '../base/SearchBar';
-import SkeletonLoader from "../base/SkeletonLoader";
+import verifiedLogo from "../../../images/icons/verify-icon.png";
+import checkMark from "../../../images/icons/checkMark.png";
+import question from "../../../images/icons/question.png";
+import bill from "../../../images/icons/bill.png";
+import { SearchBar } from '../../base/SearchBar';
+import SkeletonLoader from "../../base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import "swiper/css/pagination";
 import Header from "./Header";
@@ -24,7 +24,7 @@ const Homepage = () => {
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
 };
-  
+
   useEffect(() => {
     document.body.classList.add("hide-header");
 
@@ -35,17 +35,17 @@ const Homepage = () => {
 
   const [isFixed, setIsFixed] = useState(false);
   const searchBarRef = useRef(null);
-  
+
   const handleScroll = () => {
     if (!searchBarRef.current) return;
 
-    const offsetTop = searchBarRef.current.offsetTop; 
-    const scrollPosition = window.scrollY; 
+    const offsetTop = searchBarRef.current.offsetTop;
+    const scrollPosition = window.scrollY;
 
     if (scrollPosition > offsetTop && !isFixed) {
-      setIsFixed(true); 
+      setIsFixed(true);
     } else if (scrollPosition <= offsetTop && isFixed) {
-      setIsFixed(false); 
+      setIsFixed(false);
     }
   };
 
@@ -55,7 +55,7 @@ const Homepage = () => {
       window.removeEventListener("scroll", handleScroll);
     };
   }, [isFixed]);
-  
+
   const navigate = useNavigate();
 
   const fetchBoatAccommodations = async () => {
@@ -83,16 +83,16 @@ const Homepage = () => {
   const fetchAccommodationsByType = async () => {
     try {
       setLoading(true);
-  
+
       const response = await fetch(
         "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Onboarding-Production-Read-MixAccommodations"
       );
       if (!response.ok) throw new Error(`Failed to fetch accommodations: ${response.statusText}`);
-  
+
       const data = await response.json();
- 
+
       const accommodations = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
-      
+
       setByTypeAccommodations(accommodations);
     } catch (error) {
       console.error("Error fetching mixed accommodations:", error.message, error.stack);
@@ -100,7 +100,7 @@ const Homepage = () => {
       setLoading(false);
     }
   };
-  
+
   const fetchCamperAccommodations = async () => {
     try {
         setLoading(true);
@@ -181,9 +181,9 @@ const Homepage = () => {
           setSearchResults={setSearchResults}
           setLoading={setLoading}
           placeholderText="Search for holiday homes, boats, or campers..."
-          toggleBar={toggleBar} 
+          toggleBar={toggleBar}
         />
-       </div> 
+       </div>
       </div>
 
       <div className="domits-iconsContainer">
@@ -241,7 +241,7 @@ const Homepage = () => {
               <div>No accommodations available.</div>
             )}
         </div>
-      </div> 
+      </div>
 
         <div className="domits-boatContainer">
           <div className="domits-boatText">
@@ -287,7 +287,7 @@ const Homepage = () => {
         )}
       </div>
       </div>
-      
+
       <div className="domits-communityContainer">
         <h2 className="domits-communityHead">Need help? Join the community</h2>
         <p className="domits-communityGroup">
