@@ -14,7 +14,7 @@ import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import SearchBarApp from '../header/SearchBarApp';
-// import Settings from '../screens/pictures/settings-icon.png';
+// import GuestSettingsTab from '../screens/pictures/settings-icon.png';
 function Header() {
   const navigation = useNavigation();
 
@@ -35,24 +35,24 @@ function Header() {
   // };
 
   const handleSettingsPress = () => {
-    navigation.navigate('Settings');
+    navigation.navigate('HostSettingsTab');
   };
 
   return (
     <View style={styles.headerContainer}>
-      <SearchBarApp />
+      {/*<SearchBarApp />*/}
       <View style={styles.contentContainer}>
         <View style={styles.squareContainer}>
-          <TouchableOpacity
-            onPress={handleScanPress}
-            style={styles.itemContainer}>
-            <MaterialCommunityIconsIcon
-              name="qrcode-scan"
-              size={30}
-              color="black"
-            />
-            <Text style={styles.itemText}>Scan</Text>
-          </TouchableOpacity>
+          {/*<TouchableOpacity*/}
+          {/*  onPress={handleScanPress}*/}
+          {/*  style={styles.itemContainer}>*/}
+          {/*  <MaterialCommunityIconsIcon*/}
+          {/*    name="qrcode-scan"*/}
+          {/*    size={30}*/}
+          {/*    color="black"*/}
+          {/*  />*/}
+          {/*  <Text style={styles.itemText}>Scan</Text>*/}
+          {/*</TouchableOpacity>*/}
 
           {/*<TouchableOpacity*/}
           {/*  onPress={handlePayPress}*/}
