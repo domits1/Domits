@@ -1,8 +1,8 @@
 import React from "react";
 import "./whydomits.css"; // Ensure this file contains the necessary CSS for your BEM classes.
-import FAQ from "../landingpage/Faq";
-import barchart from "../../images/icons/bar-chart.png";
-import chartbreakout from "../../images/icons/chart-breakout-circle.png";
+import FAQ from "../../landingpage/Faq";
+import barchart from "../../../images/icons/bar-chart.png";
+import chartbreakout from "../../../images/icons/chart-breakout-circle.png";
 
 function Whydomits() {
 
@@ -30,7 +30,7 @@ function Whydomits() {
          campers and boats. 0% fee for property owners and managers. There are no hidden costs or percentage
           cuts. Save administrative time AI assistants and insights. Make use of our global secure payment
            methods. Enjoy our warmhearted customer centric approach and quick phone support.
-        </p>  
+        </p>
         <p className="why-domits__p"><a className="ref" href="/landing">Try it out for
         free</a>, discover more on <a className="ref" href="/how-it-works">how it works</a> or read more <a className="ref" href="/about">about us</a>.</p>
       </article>

@@ -1,5 +1,5 @@
 import React from "react";
-import './disclaimers.css'
+import '../disclaimers/disclaimers.css'
 
 const Terms = () =>{
     return(
@@ -14,14 +14,14 @@ const Terms = () =>{
 
             <p>General Terms and Conditions for Domits</p>
 
-            <p>These General Terms and Conditions outline the legal rights, responsibilities, and obligations of both the software company Domits 
+            <p>These General Terms and Conditions outline the legal rights, responsibilities, and obligations of both the software company Domits
                 (hereinafter referred to as "the Company") and the users (hereinafter referred to as "Users") who access or use the platform.
                  The platform provides services that facilitate online booking and rentals of accommodations (hereinafter referred to as "Services").
                   By using the platform, Users agree to comply with and be legally bound by these terms.</p>
             <hr/>
             <h4>1. Acceptance of Terms</h4>
             <p>By accessing or using the Company's platform, you agree to comply with and be bound by these Terms and Conditions. If you do not agree to these Terms, you must not use the platform.</p>
-         
+
             <h4>2. Modification of Terms</h4>
             <p>The Company reserves the right to modify these Terms and Conditions at any time without prior notice. Any changes will be effective upon posting to the platform.
                  Your continued use of the Services after changes are posted constitutes acceptance of the updated Terms.</p>
@@ -33,7 +33,7 @@ const Terms = () =>{
             <li><span className="bold">Account Termination</span>: The Company reserves the right to suspend or terminate your account if any breach of these Terms occurs.</li>
             </p>
             <br />
-            
+
             <h4>4. Services Provided</h4>
             <p>
             <li>The Company acts as an intermediary platform that facilitates transactions between Users (e.g., hosts and guests). The Company does not own, operate, or manage any accommodations or rental properties listed on the platform.</li>

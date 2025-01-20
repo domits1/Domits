@@ -28,7 +28,7 @@
 
 import React, { useState } from 'react';
 import './helpdesk.css';
-import FAQ from "../landingpage/Faq";
+import FAQ from "../../landingpage/Faq";
 
 const Helpdesk = ({ category }) => {
   const [searchQuery, setSearchQuery] = useState(""); // State voor de zoekterm

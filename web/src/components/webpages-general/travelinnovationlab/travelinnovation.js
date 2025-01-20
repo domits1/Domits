@@ -1,6 +1,6 @@
 import React from "react";
-import huis from "../../images/til-hero.png";
-import travel from "../../images/icons/Travel.png";
+import huis from "../../../images/til-hero.png";
+import travel from "../../../images/icons/Travel.png";
 import './ninedots.css';
 
 function TravelInnovation() {
@@ -14,8 +14,8 @@ function TravelInnovation() {
                 <div className="header-text">
                     <h2 className="text-h2">Travel Innovation Flywheel</h2>
                     <p className="text-description">
-                        The mission of Domits is to simplify travel. For sustainable value creation, 
-                        we have three innovation labs which come together in our flywheel. The labs 
+                        The mission of Domits is to simplify travel. For sustainable value creation,
+                        we have three innovation labs which come together in our flywheel. The labs
                         are travel finance, travel business, and travel & daily life.
                     </p>
                 </div>

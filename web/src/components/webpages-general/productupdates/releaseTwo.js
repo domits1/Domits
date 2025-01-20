@@ -1,13 +1,13 @@
 import React from 'react';
 import './releaseTwo.css';
-import note1 from '../../images/house.jpeg';
-import note2 from '../../images/phone1.webp';
-import search from '../../images/search.webp';
-import stripe from '../../images/Stripe.webp';
-import listings from '../../images/listings.webp';
-import UI from '../../images/userInterface.webp';
-import recommendations from '../../images/recommandations.webp';
-import customerSupport from '../../images/customerSupport.webp';
+import note1 from '../../../images/house.jpeg';
+import note2 from '../../../images/phone1.webp';
+import search from '../../../images/search.webp';
+import stripe from '../../../images/Stripe.webp';
+import listings from '../../../images/listings.webp';
+import UI from '../../../images/userInterface.webp';
+import recommendations from '../../../images/recommandations.webp';
+import customerSupport from '../../../images/customerSupport.webp';
 
 const ReadMore = () => {
   return (

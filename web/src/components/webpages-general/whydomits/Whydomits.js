@@ -1,7 +1,7 @@
 import React from "react";
-import './about.css'
-import FAQ from "../landingpage/Faq";
-import barchart from '../../images/icons/bar-chart.png';
+import '../about/about.css'
+import FAQ from "../../landingpage/Faq";
+import barchart from '../../../images/icons/bar-chart.png';
 
 function About() {
     return (

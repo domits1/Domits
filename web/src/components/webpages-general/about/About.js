@@ -1,19 +1,19 @@
 import React from "react";
 import './about.css'
-import FAQ from "../landingpage/Faq";
-import vision from '../../images/icons/vision.png';
-import whatwedo from '../../images/icons/route.png';
-import stefan from '../../images/stefan.jpeg';
-import tim from '../../images/tim.png';
-import chahid from '../../images/chahid.png';
-import leila from '../../images/leila.png';
-import muhammed from '../../images/Muhammed.png';
-import timE from '../../images/timE.png';
-import kacper from '../../images/kacper.png';
-import sebastiaan from '../../images/sebastiaan.png';
-import standard from '../../images/standard.png';
-import nick from '../../images/nick.png';
-import jiaming from '../../images/jiaming.png';
+import FAQ from "../../landingpage/Faq";
+import vision from '../../../images/icons/vision.png';
+import whatwedo from '../../../images/icons/route.png';
+import stefan from '../../../images/stefan.jpeg';
+import tim from '../../../images/tim.png';
+import chahid from '../../../images/chahid.png';
+import leila from '../../../images/leila.png';
+import muhammed from '../../../images/Muhammed.png';
+import timE from '../../../images/timE.png';
+import kacper from '../../../images/kacper.png';
+import sebastiaan from '../../../images/sebastiaan.png';
+import standard from '../../../images/standard.png';
+import nick from '../../../images/nick.png';
+import jiaming from '../../../images/jiaming.png';
 
 function About() {
     return (
@@ -28,11 +28,11 @@ function About() {
 
             <div className="about__text-container">
                 <p className="about__text about__text--margintop">
-                In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners. There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.  
-                </p> 
-                
+                In our growing traveltech network are young professionals, influencers, traveltechs, companies and partners. There are also talent pools with students from IT, Data Science, Cyber ​​Security, AI, ML, Marketing and IT law.
+                </p>
+
                 <p className="about__text about__text--margintop">Read here more about <a className="ref" href="/how-it-works">how Domits works</a> and <a className="ref" href="/why-domits">Why to choose Domits</a>.</p>
-     
+
             </div>
             <br />
             <div className="about__factsbox">
