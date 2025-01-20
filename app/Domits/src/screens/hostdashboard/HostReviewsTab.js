@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, Alert, SafeAreaView } from "react-native";
 import { useAuth } from "../../context/AuthContext";
-import DateFormatterDD_MM_YYYY from "../../components/utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 function HostReviews() {
   const { userAttributes, isAuthenticated, checkAuth } = useAuth();

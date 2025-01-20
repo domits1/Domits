@@ -2,7 +2,7 @@ import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import HomeScreen from '../screens/homeScreen';
+// import HomeScreen from '../components/homeScreen';
 import Messages from '../screens/messages';
 import AccountPage from '../screens/account';
 import GuestDashboard from '../screens/guestdashboard/guestDashboard';
@@ -50,6 +50,7 @@ import ReviewAndSubmitScreen from '../screens/oldHostonboarding/ReviewAndSubmitS
 import MessagesStackNavigator from './messagesStackNavigator';
 import InboxHost from '../screens/message/chatInboxHost';
 import HostDashboard from '../screens/hostdashboard/HostDashboard';
+import HomeScreen from "../screens/homeScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -61,7 +62,7 @@ function HomeStack() {
       screenOptions={{
         headerShown: false,
       }}>
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="homeScreen" component={HomeScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
       <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
