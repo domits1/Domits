@@ -8,6 +8,7 @@ import Register from "../base/Register";
 import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
 import ImageGallery from './ImageGallery';
 
+
 const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
 const BookingOverview = () => {
@@ -27,7 +28,7 @@ const BookingOverview = () => {
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [editMode, setEditMode] = useState(false); // New state for edit mode
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const [accommodation, setAccommodation] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -115,13 +116,25 @@ const BookingOverview = () => {
         }
     }, [accommodation]);
 
+    useEffect(() => {
+        const checkAuthentication = async () => {
+            try {
+                const user = await Auth.currentAuthenticatedUser();
+                setIsAuthenticated(true);
+            } catch {
+                setIsAuthenticated(false);
+            }
+        };
+        checkAuthentication();
+    }, []);
+
+
+
+
     if (!bookingDetails || !accommodation) {
         return <div>Loading...</div>;
     }
 
-    const handleEditClick = () => {
-        setEditMode(!editMode);
-    };
 
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
@@ -230,87 +243,87 @@ const BookingOverview = () => {
     };
 
     return (
-            <main style={{ cursor: isProcessing ? 'wait' : 'default' }}>
-                <div className="Bookingcontainer">
-                {/* Left Panel: Image and Cards */}
-                    <div>
-                        <Link to={`/listingdetails?ID=${accommodation.ID}`}>
-                            <p className="backButton">Go Back</p>
-                        </Link>
-                    </div>
-                    <div className="left-panel">
-                        <ImageGallery images={Object.values(accommodation.Images)}/>
-
-                    {/* Card Container under Image */}
-                    <div className="card-container">
-                        <div className="card">
-                            <h3>Guest</h3>
-                            <p>{adults} adults - {kids} kids</p>
-                        </div>
-                        <div className="card">
-                            <h3>Extra Cleaning</h3>
-                            <p>{pets ? "Selected" : "Not selected"}</p>
-                        </div>
-                        <div className="card">
-                            <h3>Dates</h3>
-                            <p>{DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}</p>
-                        </div>
-                    </div>
+        <main style={{ cursor: isProcessing ? 'wait' : 'default' }}>
+            <div className="Bookingcontainer">
+                {/* Go Back Link */}
+                <div className="goBackButton">
+                    <Link to={`/listingdetails?ID=${accommodation.ID}`}>
+                        <p className="backButton">Go Back</p>
+                    </Link>
                 </div>
 
                 {/* Right Panel */}
                 <div className="right-panel">
-                    <h1>{accommodation.Title}</h1>
-                    <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
-                    <div className="main-card">
-                        <h2>Booking Details </h2>
+                    {isAuthenticated ? (
+                        <>
+                            <h1>{accommodation.Title}</h1>
+                            <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
+                            <div className="main-card">
+                                <h2>Booking Details</h2>
 
-                        {/* Editable Fields */}
-                        <div className="detail-row">
-                            <span className="detail-label">Main Booker:</span>
-                            {editMode ? (
-                                <input className="text-field" type="text" defaultValue={userData.username} />
-                            ) : (
-                                <span className="detail-value">{userData.username || "Name missing"}</span>
-                            )}
+                                {/* Booking Date */}
+                                <div className="detail-row">
+                                    <span className="detail-label">Date:</span>
+                                    <span className="detail-value">
+                                {DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}
+                            </span>
+                                </div>
+
+                                {/* Guests */}
+                                <div className="detail-row">
+                                    <span className="detail-label">Amount of Guests:</span>
+                                    <span className="detail-value">{adults} adults - {kids} kids</span>
+                                </div>
+
+                                {/* Price Breakdown */}
+                                <div className="detail-row">
+                                    <span className="detail-label">Price:</span>
+                                    <span className="detail-value">€ {accommodationPrice.toFixed(2)}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Cleaning Fee:</span>
+                                    <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                                </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Taxes:</span>
+                                    <span className="detail-value">€ {(taxes / 100).toFixed(2)}</span>
+                                </div>
+
+                                {/* Total Price */}
+                                <div className="detail-row total-price">
+                                    <span className="detail-label">Total:</span>
+                                    <span className="detail-value">
+                                € {(accommodationPrice + cleaningFee/ 100 + taxes / 100).toFixed(2)}
+                            </span>
+                                </div>
+
+                                {/* Confirm and Pay Button */}
+                                <button
+                                    type="submit"
+                                    className="confirm-pay-button"
+                                    disabled={loading || !ownerStripeId}
+                                >
+                                    {loading ? 'Loading...' : 'Confirm & Pay'}
+                                </button>
+                            </div>
+                        </>
+                    ) : (
+                        <div>
+                            <h1>You must register or log in to access booking details</h1>
+                            <Register />
                         </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Amount of Guests:</span>
-                            {editMode ? (
-                                <input className="text-field" type="text" defaultValue={`${adults} adults - ${kids} kids`} />
-                            ) : (
-                                <span className="detail-value">{adults} adults - {kids} kids</span>
-                            )}
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Email Address:</span>
-                            {editMode ? (
-                                <input className="text-field" type="text" defaultValue={userData.email} />
-                            ) : (
-                                <span className="detail-value">{userData.email || "Email missing"}</span>
-                            )}
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Phone Number:</span>
-                            {editMode ? (
-                                <input className="text-field" type="text" defaultValue={userData.phone_number} />
-                            ) : (
-                                <span className="detail-value">{userData.phone_number || "Phone number missing"}</span>
-                            )}
-                        </div>
-                        <span onClick={handleEditClick} style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}>Change</span>
-
-                        <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
-                            {loading ? 'Loading...' : 'Confirm & Pay'}
-                        </button>
-                    </div>
-
-
-
+                    )}
                 </div>
+
+                {/* Left Panel */}
+                <div className="left-panel">
+                    <ImageGallery images={Object.values(accommodation.Images)} />
                 </div>
-            </main>
+            </div>
+        </main>
+
     );
+
 
 };
 

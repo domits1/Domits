@@ -1,13 +1,9 @@
 .Bookingcontainer {
-    height: 100%;
     display: flex;
-    gap: 20px;
-    width: 92%;
-    padding: 20px;
-    margin: 20px auto;
-    border-radius: 8px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+
+
 }
+
 
 .thumbnail-images {
     display: flex;
@@ -35,63 +31,14 @@
     margin: 20px auto;
 }
 
-.circle {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    border: 2px solid #4CAF50;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background-color: white;
-    color: #4CAF50;
-    font-weight: bold;
-    font-size: 16px;
-    position: relative;
-    z-index: 1;
-}
-
-.circle.completed {
-    background-color: #4CAF50;
-    color: white;
-}
-
-.circle.half-completed {
-    background-color: white;
-    color: #4CAF50;
-}
-
-.line {
-    height: 4px;
-    width: 100px;
-    background-color: #e0e0e0;
-    position: relative;
-    z-index: 0;
-    margin: 0 5px;
-    border-radius: 2px;
-}
-
-.line.completed {
-    background-color: #4CAF50;
-}
-
-.number {
-    font-size: 16px;
-    color: #4CAF50;
-}
-
-.number-complete{
-    font-size: 16px;
-    color: white;
-}
-
-
 .left-panel {
     flex: 0 0 25%;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    margin: 20px
+    margin: auto;
+    margin-top:5%
+
 }
 
 
@@ -103,8 +50,8 @@
 
 .card {
     flex: 1;
-    max-width: 40%; 
-    padding: 8px; 
+    max-width: 40%;
+    padding: 8px;
     border: 1px solid #ddd;
     border-radius: 8px;
     background-color: #f9f9f9;
@@ -113,24 +60,24 @@
 }
 
 .card h3 {
-    font-size: 1em; 
+    font-size: 1em;
     margin-bottom: 5px;
 }
 
 .card p, .card a {
-    font-size: 0.8em; 
+    font-size: 0.8em;
 }
 
+.goBackButton{
+    margin-left: 2%;
+    margin-top: 2%;
+}
 
 .main-card {
-    border: 1px solid #ddd;
-    padding: 20px 0 40px 20px;
-    border-radius: 5px;
-    background-color: #f9f9f9;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    border-top: 1px solid #ddd;
+    width: auto;
     margin-right: 15px;
 }
 
@@ -245,20 +192,12 @@
     display: flex;
     flex-direction: column;
     gap: 20px;
-}
-
-.progress-bar {
-    height: 8px;
-    background-color: #e0e0e0;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    overflow: hidden;
-    display: flex;
-}
-
-.progress-bar div {
-    width: 60%; /* Stel voortgangspercentage in */
-    background-color: green;
+    max-width: 30%;
+    margin: auto;
+    border: 1px solid #ddd;
+    padding: 20px 0 40px 20px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
 }
 
 .card-container {
@@ -406,4 +345,16 @@
     .detail-item span, .detail-item a {
         margin-bottom: 5px;
     }
+
+    .total-price {
+        font-weight: bold;
+        font-size: 1.2em;
+        margin-top: 10px;
+        border-top: 2px solid #ddd;
+        padding-top: 10px;
+        color: #333;
+    }
+
+
+
 }
