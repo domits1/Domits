@@ -715,7 +715,8 @@ const ListingDetails = () => {
             pets,
             cleaningFee,
             amountOfGuest,
-            taxes
+            taxes,
+            serviceFee
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
