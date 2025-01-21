@@ -9,7 +9,7 @@ import * as queries from "../queries";
 import * as subscriptions from '../subscriptions';
 import { onCreateChat } from '../subscriptions.js';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
-import ContactItem from '../../components/chat/contactItem_host';
+import ContactItem from '../chat/contactItem_host';
 import { useAuth } from '../../context/AuthContext';
 import awsconfig from '../../aws-exports.js';
 import { useNavigation } from '@react-navigation/native';
@@ -98,7 +98,7 @@ const InboxHost = ({ user }) => {
         setChatMessages((prevChats) => {
           const updatedChats = { ...prevChats };
           updatedChats[recipientId] = [latestChat, ...(prevChats[recipientId] || [])];
-          updatedChats[recipientId].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); 
+          updatedChats[recipientId].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
           return updatedChats;
         });
@@ -165,7 +165,7 @@ const InboxHost = ({ user }) => {
         } catch (error) {
           console.error('Error fetching chats:', error);
         } finally {
-          setLoading(false); 
+          setLoading(false);
         }
       };
 

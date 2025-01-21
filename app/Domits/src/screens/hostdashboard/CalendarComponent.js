@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView } from "react-native";
 import { isSameDay, isBefore, isAfter } from "date-fns";
-import DateFormatterDD_MM_YYYY from "../../components/utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 
 const CalendarComponent = ({ passedProp, isNew, updateDates }) => {
   const [month, setMonth] = useState(new Date().getMonth());
@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#74c878",
     borderColor: "#388e3c",
     shadowColor: "#1b5e20",
-    shadowOffset: { width: 0, height: 4 }, 
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     transform: [{ scale: 1.1 }],
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#74c878",
     borderColor: "#388e3c",
     shadowColor: "#1b5e20",
-    shadowOffset: { width: 0, height: 4 }, 
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 4,
     transform: [{ scale: 1.1 }],

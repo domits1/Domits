@@ -63,7 +63,7 @@ function Pages() {
                     <option value="/hostdashboard/chat">Messages</option>
                     <option value="/hostdashboard/reporting">Revenues</option>
                     <option value="/hostdashboard/reviews">Reviews</option>
-                    <option value="/hostdashboard/calendar">Property care</option>
+                    <option value="/hostdashboard/calendar">Housekeeping</option>
                     <option value="/hostdashboard/calendar">Finance</option>
                     <option value="/hostdashboard/pricing">Pricing</option>
                     <option value="/hostdashboard/listings">Listing</option>
@@ -75,7 +75,7 @@ function Pages() {
                 <option disabled>Growth</option>
                 <option value="/hostdashboard/reservations">Reservations</option>
                 <option value="/hostdashboard/revenues">Revenues</option>
-                <option value="/hostdashboard/housekeeping">Property Care</option>
+                <option value="/hostdashboard/housekeeping">Housekeeping</option>
                 <option value="/hostdashboard/iot-hub">IoT Hub</option>
                 <option value="/hostdashboard/distribution">Distribution</option>
                 <option value="/hostdashboard/monitoring">Monitoring</option>
@@ -155,7 +155,7 @@ function Pages() {
 
           <div className="Mui">
           <CleanIcon/></div>
-          <p>Property care</p>
+          <p>Housekeeping</p>
         </div>
         <div
             className={`wijzer ${activeTab === "/hostdashboard/finance" ? "active" : ""}`}
