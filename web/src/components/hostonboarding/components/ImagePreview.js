@@ -22,7 +22,7 @@ function ImagePreview({ image, index, onFileChange, onDelete, onDragStart, onDro
               className={index === 0 ? "accommodation-thumbnail" : "file-image"}
             />
             <button
-              className="delete-button"
+              className="image-delete-button"
               onClick={() => {
                 onDelete(index);
               }}
