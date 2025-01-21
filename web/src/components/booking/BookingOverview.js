@@ -260,7 +260,7 @@ const BookingOverview = () => {
                             <h1>{accommodation.Title}</h1>
                             <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
                             <div className="main-card">
-                                <h2>Booking Details</h2>
+                                <h2 className="bookingTitel">Booking Details</h2>
 
                                 {/* Booking Date */}
                                 <div className="detail-row">
@@ -289,21 +289,21 @@ const BookingOverview = () => {
                                     <span className="detail-label">Taxes:</span>
                                     <span className="detail-value">€ {(taxes / 100).toFixed(2)}</span>
                                 </div>
+                                <div className="detail-row">
+                                    <span className="detail-label">Domits fee:</span>
+                                    <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
+                                </div>
 
                                 {/* Total Price */}
                                 <div className="detail-row total-price">
                                     <span className="detail-label">Total:</span>
                                     <span className="detail-value">
-                                € {(accommodationPrice + cleaningFee/ 100 + taxes / 100).toFixed(2)}
+                                € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + serviceFee / 100).toFixed(2)}
                             </span>
                                 </div>
 
                                 {/* Confirm and Pay Button */}
-                                <button
-                                    type="submit"
-                                    className="confirm-pay-button"
-                                    disabled={loading || !ownerStripeId}
-                                >
+                                <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
                                     {loading ? 'Loading...' : 'Confirm & Pay'}
                                 </button>
                             </div>

@@ -4,6 +4,10 @@
 
 }
 
+.bookingTitel{
+    text-align: left;
+}
+
 
 .thumbnail-images {
     display: flex;
