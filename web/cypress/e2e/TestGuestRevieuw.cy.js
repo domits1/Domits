@@ -18,7 +18,7 @@ describe('Guest Reviews', () => {
       cy.get('.header-links > .headerHostButton').click();
       cy.wait(500); 
 
-      cy.get('.dashboardSections > :nth-child(5)').click(); 
+      cy.get('.dashboardSections > :nth-child(4)').click(); 
   
       cy.wait('@fetchReviews');
       cy.wait('@fetchReceivedReviews');
@@ -35,7 +35,7 @@ describe('Guest Reviews', () => {
       cy.get('.header-links > .headerHostButton').click();
       cy.wait(500); 
   
-      cy.get('.dashboardSections > :nth-child(5)').click(); 
+      cy.get('.dashboardSections > :nth-child(4)').click(); 
   
       cy.wait('@fetchReviews');
  
