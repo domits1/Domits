@@ -176,6 +176,7 @@ const BookingGuestDashboard = () => {
                     {loading ? (
                         <p>Loading...</p>
                     ) : (
+                        <div className="table-wrapper">
                             <table className="bookings-table">
                                 <thead>
                                 <tr>
@@ -206,6 +207,7 @@ const BookingGuestDashboard = () => {
                                 )}
                                 </tbody>
                             </table>
+                        </div>
                     )}
                     {showBookingListPopup ? handleBookingListPopup() : null}
                 </div>
