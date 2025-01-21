@@ -110,6 +110,17 @@
     border-color: #28a745;
 }
 
+.add-more-box{
+    align-items: center;
+    text-align: center;
+}
+
+
+.add-more-box p{
+    padding: 11.5vh;
+    text-align: center;
+}
+
 .image-delete-button{
     position: absolute;
     top: 5px;
