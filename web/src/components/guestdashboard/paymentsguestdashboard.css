@@ -6,6 +6,25 @@
     align-items: center;
 }
 
+.bookingContentHeader {
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 16rem;
+}
+
+.cancelBooking {
+    border: none;
+    border-radius: 5px;
+}
+
+.cancelBooking:hover {
+    cursor: pointer;
+    opacity: 70%;
+}
+
 .filterContainer {
     text-align: center;
 }
@@ -55,75 +74,302 @@
     color: white;
 }
 
-@media (max-width: 768px) {
-    .horizontalOptions {
-        flex-direction: column;
+.popup-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 101vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.popup-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    position: relative;
+}
+
+.popup-content h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    text-align: center;
+    font-size: 1.5em;
+    color: #333;
+}
+
+.popup-content .close-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    color: #888;
+}
+
+.popup-bookings-table {
+    width: 90%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    height: 100%;
+}
+
+.popup-bookings-table th, .popup-bookings-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+.popup-bookings-table th {
+    background-color: #f2f2f2;
+    color: black;
+}
+
+.popup-bookings-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+.popup-bookings-table tr:hover {
+    background-color: #ddd;
+    cursor: pointer;
+}
+
+.popup-bookings-table th {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    text-align: left;
+    background-color: #4CAF50;
+    color: white;
+}
+
+.popup-content .close-button:hover {
+    color: #000;
+}
+
+.cancelButtonCell {
+    display: flex;
+    justify-content: center;
+}
+
+.cancelBookingButtonCell {
+    border-radius: 25px;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    font-size: 1em;
+    font-weight: bold;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.cancelBookingButtonCell:hover {
+    cursor: pointer;
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 769px) and (max-width: 1025px) {
+    .popup-content {
+        width: 90%;
+        padding: 20px;
     }
 
-    .settingsOptions .settingsOption, 
-    .dataRemovalOption, 
-    .horizontalOptions .settingsOption {
+    .popup-content h3 {
+        font-size: 1.4em;
+    }
+
+    .popup-content th,
+    .popup-content td {
+        padding: 8px;
+        font-size: 1em;
+    }
+
+    .cancelBookingButtonCell {
+        font-size: 1em;
+        padding: 8px 10px;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 769px) {
+    .popup-content {
+        width: 95%;
         padding: 15px;
+    }
+
+    .popup-content h3 {
+        font-size: 1.2em;
+    }
+
+    .popup-content th,
+    .popup-content td {
+        padding: 6px;
         font-size: 0.9em;
-        margin-right: 0;
-        min-width: 100%;
     }
 
-    .dataRemovalSection {
-        flex-direction: column;
-        margin-top: 15px;
+    .cancelBookingButtonCell {
+        font-size: 0.95em;
+        padding: 7px 9px;
     }
 
-    .dataRemovalOption {
-        height: auto;
-        padding: 15px;
-        min-width: 100%;
+    .popup-content .close-button {
+        font-size: 1em;
+    }
+}
+
+@media (min-width: 426px) and (max-width: 481px) {
+    .popup-content {
+        width: 90%;
+        padding: 12px;
     }
 
-    .publicProfileContent .profileField input {
-        width: 100%;
-        margin: 5px 0;
+    .popup-content h3 {
+        font-size: 1.1em;
     }
 
-    .publicProfileContent .profilePicture .icon {
-        width: 80px;
-        height: 80px;
-    }
-
-    .InfoBox {
-        padding: 15px;
+    .popup-content th,
+    .popup-content td {
+        padding: 6px;
         font-size: 0.9em;
     }
 
-    .bookings-table {
-        width: 100%;
+    .cancelBookingButtonCell {
+        font-size: 0.9em;
+        padding: 5px 8px;
+    }
+
+    .popup-content table {
+        overflow-x: auto;
+        display: block;
+    }
+
+    .popup-content .close-button {
         font-size: 0.9em;
     }
 }
 
-@media (max-width: 480px) {
+@media (min-width: 376px) and (max-width: 426px) {
+    .popup-content {
+        width: 85%;
+        padding: 12px;
+    }
+
+    .popup-content h3 {
+        font-size: 1em;
+    }
+
+    .popup-content th,
+    .popup-content td {
+        padding: 5px;
+        font-size: 0.85em;
+    }
+
+    .cancelBookingButtonCell {
+        font-size: 0.85em;
+        padding: 4px 6px;
+    }
+
+    .popup-content table {
+        overflow-x: auto;
+        display: block;
+    }
+}
+
+@media (min-width: 321px) and (max-width: 376px) {
+    .popup-content {
+        width: 80%;
+        padding: 10px;
+    }
+
+    .popup-content h3 {
+        font-size: 0.9em;
+    }
+
+    .popup-content th,
+    .popup-content td {
+        padding: 5px;
+        font-size: 0.8em;
+    }
+
+    .cancelBookingButtonCell {
+        font-size: 0.8em;
+        padding: 4px 6px;
+    }
+
+    .popup-content table {
+        overflow-x: auto;
+        display: block;
+    }
+}
+
+@media (max-width: 320px) {
     .bookingContent {
-        width: 100%;
-        margin-left: 20px;
-        margin-right: 20px;
-        display: flex;
+    }
+
+    .bookingContentHeader {
         flex-direction: column;
-        align-items: center;
+        gap: 10px;
     }
 
     .bookings-table {
         width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        height: auto;
-        font-size: 0.8em;
-        overflow-x: auto;
-        display: block;
-        white-space: nowrap;
+        overflow: auto;
     }
 
-    .bookings-table th, .bookings-table td {
+    .popup-content {
+        width: 80%;
         padding: 8px;
-        text-align: left;
+    }
+
+    .popup-content h3 {
+        font-size: 0.8em;
+    }
+
+    .popup-content th,
+    .popup-content td {
+        padding: 4px;
+        font-size: 0.75em;
+    }
+
+    .cancelBookingButtonCell {
+        padding: 3px 5px;
+        font-size: 0.75em;
+    }
+
+    .popup-content table {
+        overflow-x: auto;
+        display: block;
+        justify-self: center;
+    }
+}
+
+@media (max-width: 1024px) and (min-width: 768px) {
+    .popup-content {
+        width: 80%;
+        padding: 20px;
+    }
+
+    .popup-content h3 {
+        font-size: 1.3em;
+    }
+
+    .popup-content th,
+    .popup-content td {
+        font-size: 1em;
+        padding: 8px;
+    }
+
+    .cancelBookingButtonCell {
+        font-size: 0.95em;
+        padding: 8px 10px;
     }
 }
