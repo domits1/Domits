@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styles from './BookingCalendar.module.css';
 import { isSameDay } from "date-fns";
-import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
-import { useNavigate } from "react-router-dom";
 
-function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onCheckOutChange, filter }) {
+function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onCheckOutChange, checkInFilter, checkOutFilter }) {
     const [month1, setMonth1] = useState(new Date().getMonth());
     const [month2, setMonth2] = useState(new Date().getMonth() + 1);
     const [year, setYear] = useState(new Date().getFullYear());
@@ -25,29 +23,29 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
     };
 
     const handleDateClick = (date) => {
-        if (!filter(date)) return; // If date is not selectable, return
         if (!checkIn || (checkIn && checkOut)) {
-            // Reset selection or start a new range
-            onCheckInChange(date);
-            onCheckOutChange(null);
+            if (checkInFilter(date)) {
+                onCheckInChange(date);
+                onCheckOutChange(null);
+            }
         } else if (checkIn && !checkOut && date > checkIn) {
             const minStayDate = new Date(checkIn);
             minStayDate.setDate(minStayDate.getDate() + passedProp.MinimumStay);
 
-            if (date >= minStayDate) {
+            if (checkOutFilter(date) && date >= minStayDate) {
                 onCheckOutChange(date);
             } else {
-                // Optionally show a message or feedback
                 console.warn(`Minimum stay is ${passedProp.MinimumStay} nights.`);
             }
         } else {
-            // If invalid date clicked, reset range
-            onCheckInChange(date);
-            onCheckOutChange(null);
+            if (checkInFilter(date)) {
+                onCheckInChange(date);
+                onCheckOutChange(null);
+            }
         }
     };
 
-    const renderDates = (month, setDates) => {
+    const renderDates = (month, setDates, filter) => {
         const today = new Date();
         const start = new Date(year, month, 1).getDay();
         const endDate = new Date(year, month + 1, 0).getDate();
@@ -69,13 +67,16 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
         for (let i = 1; i <= endDate; i++) {
             const currentDate = new Date(year, month, i);
             const isPastDate = currentDate < today;
-            const isFiltered = isPastDate || !filter(currentDate);
-            const isBeforeMinStay = checkIn
-                ? currentDate < new Date(checkIn.getTime() + passedProp.MinimumStay * 24 * 60 * 60 * 1000)
-                : false;
-            const isSelected = passedProp.DateRanges.some(range =>
-                isDateInRange(currentDate, range.startDate, range.endDate)
-            );
+
+            const minAdvanceReservation = new Date();
+            minAdvanceReservation.setDate(today.getDate() + passedProp.MinimumAdvanceReservation);
+
+            const maxAdvanceReservation = new Date();
+            maxAdvanceReservation.setDate(today.getDate() + passedProp.MaximumAdvanceReservation);
+
+            const isOutsideAdvanceRange = currentDate < minAdvanceReservation || currentDate > maxAdvanceReservation;
+
+            const isFiltered = isPastDate || !filter(currentDate) || isOutsideAdvanceRange;
             const isStartDate = isSameDay(checkIn, currentDate);
             const isEndDate = isSameDay(checkOut, currentDate);
             const isWithinRange = isDateInRange(currentDate, checkIn, checkOut);
@@ -84,14 +85,11 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
                 <li
                     key={`date-${i}`}
                     className={`${styles.date} 
-                    ${!isSelected ? styles.inactive : ''} 
-                    ${isPastDate ? styles.past : ''}
-                    ${isBeforeMinStay ? styles.minStay : ''}
-                    ${isFiltered ? styles.filtered : ''} 
-                    ${isStartDate ? styles.startDate : ''} 
-                    ${isEndDate ? styles.endDate : ''} 
-                    ${isWithinRange ? styles.selected : ''}`}
-                    onClick={() => !(isFiltered || isBeforeMinStay) && handleDateClick(currentDate)} // Prevent clicks on filtered dates
+                        ${isFiltered ? styles.inactive : ''} 
+                        ${isStartDate ? styles.startDate : ''} 
+                        ${isEndDate ? styles.endDate : ''} 
+                        ${isWithinRange ? styles.selected : ''}`}
+                    onClick={() => !isFiltered && handleDateClick(currentDate)}
                 >
                     {`${i}`}
                 </li>
@@ -110,12 +108,12 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
     };
 
     useEffect(() => {
-        renderDates(month1, setDates1);
-    }, [month1, year, checkIn, checkOut]);
+        renderDates(month1, setDates1, checkInFilter);
+    }, [month1, year, checkIn, checkOut, passedProp]);
 
     useEffect(() => {
-        renderDates(month2, setDates2);
-    }, [month2, year, checkIn, checkOut]);
+        renderDates(month2, setDates2, checkOutFilter);
+    }, [month2, year, checkIn, checkOut, passedProp]);
 
     const navigateDates = (nav) => {
         let newMonth1 = month1;
