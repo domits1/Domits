@@ -1,23 +1,10 @@
 .photo-gallery-container .images-container {
     all: unset;
-    /* width: 300px; 
-    height: 300px;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-    margin-bottom: 15px;
-    position: relative; */
 }
-
-
-/* .photo-gallery-container .file-input  {
-    all: unset;
-} */
 
 .photo-gallery-container .placeholder {
     all: unset;
-
 }
-
 
 .photo-gallery-container {
     display: flex;
@@ -99,29 +86,77 @@
 .photo-gallery-images .large-photo,
 .photo-gallery-images .small-photo {
     position: relative;
-    overflow: hidden; /* Ensure any excess image is cropped */
+    overflow: hidden;
 }
 
 .photo-gallery-images .large-photo img,
 .photo-gallery-images .small-photo img {
     width: 100%;
     height: 100%;
-    object-fit: cover; /* Ensures the image covers the container */
-    object-position: center; /* Centers the image within the container */
+    object-fit: cover;
+    object-position: center;
 }
-
-
 
 .large-photo, .small-photo {
     border: 2px solid transparent;
     transition: border-color 0.3s ease;
-  }
-  
-  .large-photo.dragging, .small-photo.dragging {
+}
+
+.large-photo.dragging, .small-photo.dragging {
     border-color: #007bff;
-  }
-  
-  .large-photo.over, .small-photo.over {
+}
+
+.large-photo.over, .small-photo.over {
     border-color: #28a745;
-  }
-  
+}
+
+.add-more-box{
+    align-items: center;
+    text-align: center;
+}
+
+
+.add-more-box p{
+    padding: 11.5vh;
+    text-align: center;
+}
+
+.image-delete-button{
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    color: black;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 1vh;
+    padding: 5px;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.image-delete-button:hover{
+    border-color: #007bff;
+    background-color: #f8fafb;
+    color: #007bff;
+
+}
+
+.drag-drop-area {
+    width: 30%;
+    height: 200px;
+    border: 2px dashed #ccc;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    color: #aaa;
+    cursor: pointer;
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+.drag-drop-area.drag-over {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+    color: #007bff;
+}
