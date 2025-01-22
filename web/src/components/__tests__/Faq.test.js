@@ -1,6 +1,6 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import Helpdesk from "../about/Helpdesk";
+import Helpdesk from "../webpages-general/helpdesk/Helpdesk";
 import Faq from '../landingpage/Faq';
 
 test.skip('shows search input and button', () => {
