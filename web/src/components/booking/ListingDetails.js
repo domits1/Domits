@@ -838,7 +838,6 @@ const ListingDetails = () => {
         const mergeDateRanges = (ranges) => {
             if (!ranges || ranges.length === 0) return [];
 
-            // Sort ranges by start date
             const sortedRanges = ranges.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
             const mergedRanges = [];
@@ -849,12 +848,9 @@ const ListingDetails = () => {
                 const currentEnd = new Date(currentRange.endDate);
                 const nextStart = new Date(range.startDate);
 
-                // Check if the ranges overlap or are contiguous
                 if (currentEnd >= nextStart || currentEnd.getTime() + 86400000 === nextStart.getTime()) {
-                    // Extend the current range
                     currentRange.endDate = new Date(Math.max(new Date(currentRange.endDate), new Date(range.endDate)));
                 } else {
-                    // Push the current range and move to the next
                     mergedRanges.push(currentRange);
                     currentRange = range;
                 }
@@ -874,27 +870,6 @@ const ListingDetails = () => {
             }));
         }
     }, [accommodation?.DateRanges]);
-
-
-    // const combinedDateFilter = (date) => {
-    //     const selectedDate = new Date(date);
-    //     const today = new Date();
-    //
-    //     const isInThePast = selectedDate < today;
-    //
-    //     const isOutsideMergedRanges =
-    //         accommodation?.MergedDateRanges &&
-    //         accommodation.MergedDateRanges.every((range) => {
-    //             const start = new Date(range.startDate);
-    //             const end = new Date(range.endDate);
-    //             return !(selectedDate >= start && selectedDate <= end);
-    //         });
-    //
-    //     const isBooked = filterBookedDates(date);
-    //     const isAdvanceReserved = filterAdvanceReservedDates(date);
-    //
-    //     return !isInThePast && !isOutsideMergedRanges && !isBooked && isAdvanceReserved;
-    // };
 
     const combinedCheckInDateFilter = (date) => {
         const selectedDate = new Date(date);
@@ -1127,7 +1102,11 @@ const ListingDetails = () => {
                                                 : maxEnd && new Date(maxEnd)
                                         }
                                         filterDate={(date) => {
-                                            return combinedCheckOutDateFilter(date);
+                                            if (checkIn) {
+                                                return combinedCheckOutDateFilter(date);
+                                            } else {
+                                                return combinedCheckInDateFilter(date);
+                                            }
                                         }}
                                         dateFormat="yyyy-MM-dd"
                                         placeholderText="DD/MM/YYYY"
