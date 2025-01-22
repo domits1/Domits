@@ -12,7 +12,7 @@ import {Button} from '@aws-amplify/ui-react-native/src/primitives';
 import {useAuth} from '../../context/AuthContext';
 import {useNavigation} from '@react-navigation/native';
 import ImageSlider from '../utils/ImageSlider';
-import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
+import DateFormatterDD_MM_YYYY from '../DateFormatterDD_MM_YYYY';
 
 const HostDashboardTab = () => {
   const {userAttributes} = useAuth();

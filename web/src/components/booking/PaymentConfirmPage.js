@@ -55,19 +55,7 @@ const PaymentConfirmPage = () => {
         </div>
 
         <div className="right-side">
-                <div className="progress-bar-container">
-                    <div className="circle completed">
-                        <span className="number-complete">1</span>
-                    </div>
-                    <div className="line completed"></div>
-                    <div className="circle completed">
-                        <span className="number-complete">2</span>
-                    </div>
-                    <div className="line completed"></div>
-                    <div className="circle completed">
-                        <span className="number-complete">3</span>
-                    </div>
-                </div>
+
         </div>
             <p>halllo0okdfpokdgosdgs</p>
             <h1>adsofvnkdijgvnjdsagvsadv</h1>
