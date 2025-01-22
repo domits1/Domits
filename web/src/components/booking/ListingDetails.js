@@ -973,8 +973,8 @@ const ListingDetails = () => {
                                 checkOut={checkOut}
                                 onCheckInChange={handleCheckInChange}
                                 onCheckOutChange={handleCheckOutChange}
-                                checkInFilter={combinedCheckInDateFilter()}
-                                checkOutFilter={combinedCheckOutDateFilter()}
+                                checkInFilter={combinedCheckInDateFilter}
+                                checkOutFilter={combinedCheckOutDateFilter}
                             />
                             </div>
                             <div>
