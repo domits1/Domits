@@ -7,14 +7,25 @@
     display: flex;
     flex-direction: row;
     margin-bottom: 20px;
-    gap: 5%;
+    gap: 2%;
+    align-items: center;
+    padding-left: 10vh;
+}
+
+.booking-header1 {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 20px;
+    gap: 2%;
     align-items: center;
 }
+
 
 .Bookingcontainer {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 20px;
+    gap: 15%;
+    padding-left: 15vh;
 }
 
 .left-panel {
@@ -99,9 +110,9 @@
     background-color: #45a049;
 }
 
-.goBackButton {
+/* .goBackButton {
     margin-bottom: 10px;
-}
+} */
 
 .right-panel {
     display: flex;
@@ -117,3 +128,73 @@
     flex-direction: column;
     gap: 15px;
 }
+
+
+
+.login-reserve-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .form-title {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 0;
+    color: #333;
+  }
+  
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: relative;
+  }
+  
+  .form-label {
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .dropdown-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    background-color: #f2f2f2;
+    border-radius: 8px;
+    padding: 10px;
+    border: 1px solid #ddd;
+  }
+  
+  .country-dropdown {
+    appearance: none;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    color: #333;
+    flex: 1;
+    outline: none;
+    cursor: pointer;
+  }
+  
+  .dropdown-icon {
+    margin-left: 8px;
+    font-size: 12px;
+    color: #333;
+  }
+  
+  .phone-input {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    background-color: #f2f2f2;
+    font-size: 14px;
+    color: #aaa;
+    outline: none;
+  }
+  
