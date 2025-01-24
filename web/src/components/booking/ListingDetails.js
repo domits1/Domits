@@ -773,14 +773,14 @@ const ListingDetails = () => {
     };
 
     const isDateInRange = (date, startDate, endDate) => {
-        const selectedDate = new Date(date);
-        const rangeStart = new Date(startDate);
-        const rangeEnd = new Date(endDate);
+        const selectedDate = normalizeDate(new Date(date));
+        const rangeStart = normalizeDate(new Date(startDate));
+        const rangeEnd = normalizeDate(new Date(endDate));
         return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
     };
 
     const filterBookedDates = (date) => {
-        const selectedDate = new Date(date);
+        const selectedDate = normalizeDate(new Date(date));
 
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0].S);
@@ -818,9 +818,9 @@ const ListingDetails = () => {
     };
 
     const filterAdvanceReservedDates = (date) => {
-        const selectedDate = new Date(date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
+
         const minAdvanceReservation = new Date();
         minAdvanceReservation.setDate(today.getDate() + accommodation.MinimumAdvanceReservation);
         minAdvanceReservation.setHours(0, 0, 0, 0);
@@ -871,17 +871,23 @@ const ListingDetails = () => {
         }
     }, [accommodation?.DateRanges]);
 
+    const normalizeDate = (date) => {
+        const normalized = new Date(date);
+        normalized.setHours(0, 0, 0, 0);
+        return normalized;
+    };
+
     const combinedCheckInDateFilter = (date) => {
-        const selectedDate = new Date(date);
-        const today = new Date();
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
 
         const isInThePast = selectedDate < today;
 
         const isOutsideMergedRanges =
             accommodation?.MergedDateRanges &&
             accommodation.MergedDateRanges.every((range) => {
-                const start = new Date(range.startDate);
-                const end = new Date(range.endDate);
+                const start = normalizeDate(new Date(range.startDate));
+                const end = normalizeDate(new Date(range.endDate));
                 return !(selectedDate >= start && selectedDate <= end);
             });
 
@@ -892,16 +898,16 @@ const ListingDetails = () => {
     }
 
     const combinedCheckOutDateFilter = (date) => {
-        const selectedDate = new Date(date);
-        const today = new Date();
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
 
         const isInThePast = selectedDate < today;
 
         const isOutsideMergedRanges =
             accommodation?.MergedDateRanges &&
             accommodation.MergedDateRanges.every((range) => {
-                const start = new Date(range.startDate);
-                const end = new Date(range.endDate);
+                const start = normalizeDate(new Date(range.startDate));
+                const end = normalizeDate(new Date(range.endDate));
                 return !(selectedDate >= start && selectedDate <= end);
             });
 

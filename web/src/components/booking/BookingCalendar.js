@@ -29,8 +29,9 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
                 onCheckOutChange(null);
             }
         } else if (checkIn && !checkOut && date > checkIn) {
-            const minStayDate = new Date(checkIn);
+            const minStayDate = normalizeDate(new Date(checkIn));
             minStayDate.setDate(minStayDate.getDate() + passedProp.MinimumStay);
+            minStayDate.setHours(0, 0, 0, 0);
 
             if (checkOutFilter(date) && date >= minStayDate) {
                 onCheckOutChange(date);
@@ -45,8 +46,14 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
         }
     };
 
-    const renderDates = (month, setDates, filter) => {
-        const today = new Date();
+    const normalizeDate = (date) => {
+        const normalized = new Date(date);
+        normalized.setHours(0, 0, 0, 0);
+        return normalized;
+    };
+
+    function renderDates(month, setDates, filter) {
+        const today = normalizeDate(new Date());
         const start = new Date(year, month, 1).getDay();
         const endDate = new Date(year, month + 1, 0).getDate();
         const end = new Date(year, month, endDate).getDay();
@@ -65,30 +72,140 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
         }
 
         for (let i = 1; i <= endDate; i++) {
-            const currentDate = new Date(year, month, i);
+            const currentDate = normalizeDate(new Date(year, month, i));
             const isPastDate = currentDate < today;
 
-            const minAdvanceReservation = new Date();
-            minAdvanceReservation.setDate(today.getDate() + passedProp.MinimumAdvanceReservation);
+            let isOutsideAdvanceRange = false;
 
-            const maxAdvanceReservation = new Date();
-            maxAdvanceReservation.setDate(today.getDate() + passedProp.MaximumAdvanceReservation);
+            if (checkIn === null && checkOut === null) {
+                const minAdvanceReservation = normalizeDate(new Date());
+                minAdvanceReservation.setDate(today.getDate() + passedProp.MinimumAdvanceReservation);
+                minAdvanceReservation.setHours(0, 0, 0, 0);
 
-            const isOutsideAdvanceRange = currentDate < minAdvanceReservation || currentDate > maxAdvanceReservation;
+                const maxAdvanceReservation = normalizeDate(new Date());
+                maxAdvanceReservation.setDate(today.getDate() + passedProp.MaximumAdvanceReservation);
+                maxAdvanceReservation.setHours(0, 0, 0, 0);
 
-            const isFiltered = isPastDate || !filter(currentDate) || isOutsideAdvanceRange;
-            const isStartDate = isSameDay(checkIn, currentDate);
-            const isEndDate = isSameDay(checkOut, currentDate);
-            const isWithinRange = isDateInRange(currentDate, checkIn, checkOut);
+                isOutsideAdvanceRange = currentDate < minAdvanceReservation || currentDate > maxAdvanceReservation;
+            } else if (checkIn !== null) {
+                const minStayDate = normalizeDate(new Date(checkIn));
+                minStayDate.setDate(minStayDate.getDate() + passedProp.MinimumStay);
+                minStayDate.setHours(0, 0, 0, 0);
+
+                const maxStayDate = normalizeDate(new Date(checkIn));
+                maxStayDate.setDate(maxStayDate.getDate() + passedProp.MaximumStay);
+                maxStayDate.setHours(0, 0, 0, 0);
+
+                isOutsideAdvanceRange = currentDate < minStayDate || currentDate > maxStayDate;
+            }
+
+            let isFiltered = false;
+            let isStartDate = false;
+            let isEndDate = false;
+            let isWithinRange = false;
+
+            if (passedProp.MinimumStay === 0 && passedProp.MaximumStay === 0 && passedProp.MinimumAdvanceReservation === 0 && passedProp.MaximumAdvanceReservation === 0) {
+                isFiltered = isPastDate || !filter(currentDate);
+                isStartDate = isSameDay(checkIn, currentDate);
+                isEndDate = isSameDay(checkOut, currentDate);
+                isWithinRange = checkIn && checkOut && isDateInRange(currentDate, checkIn, checkOut);
+            } else if (
+                passedProp.MinimumStay !== 0 &&
+                passedProp.MaximumStay === 0 &&
+                passedProp.MinimumAdvanceReservation === 0 &&
+                passedProp.MaximumAdvanceReservation === 0
+            ) {
+                const minStayDate = normalizeDate(new Date(checkIn));
+                minStayDate.setDate(minStayDate.getDate() + passedProp.MinimumStay);
+
+                isFiltered = isPastDate || currentDate < minStayDate || !filter(currentDate);
+                isStartDate = isSameDay(checkIn, currentDate);
+                isEndDate = isSameDay(checkOut, currentDate);
+                isWithinRange = checkIn && checkOut && isDateInRange(currentDate, checkIn, checkOut);
+            } else if (
+                passedProp.MinimumStay === 0 &&
+                passedProp.MaximumStay !== 0 &&
+                passedProp.MinimumAdvanceReservation === 0 &&
+                passedProp.MaximumAdvanceReservation === 0
+            ) {
+                const maxStayDate = normalizeDate(new Date(checkIn));
+                maxStayDate.setDate(maxStayDate.getDate() + passedProp.MaximumStay);
+
+                if (checkIn !== null) {
+                    isFiltered = isPastDate || currentDate > maxStayDate || !filter(currentDate) || checkIn > currentDate;
+                } else {
+                    isFiltered = isPastDate || currentDate < maxStayDate || !filter(currentDate);
+                }
+                isStartDate = isSameDay(checkIn, currentDate);
+                isEndDate = isSameDay(checkOut, currentDate);
+                isWithinRange = checkIn && checkOut && isDateInRange(currentDate, checkIn, checkOut);
+            } else if (
+                passedProp.MinimumStay !== 0 &&
+                passedProp.MaximumStay !== 0 &&
+                passedProp.MinimumAdvanceReservation === 0 &&
+                passedProp.MaximumAdvanceReservation === 0
+            ) {
+                const minStayDate = normalizeDate(new Date(checkIn));
+                minStayDate.setDate(minStayDate.getDate() + passedProp.MinimumStay);
+
+                const maxStayDate = normalizeDate(new Date(checkIn));
+                maxStayDate.setDate(maxStayDate.getDate() + passedProp.MaximumStay);
+
+                if (checkIn !== null) {
+                    isFiltered =
+                        isPastDate ||
+                        currentDate < minStayDate ||
+                        currentDate > maxStayDate ||
+                        !filter(currentDate) ||
+                        currentDate <= checkIn;
+                } else {
+                    isFiltered = isPastDate || !filter(currentDate);
+                }
+
+                isStartDate = isSameDay(checkIn, currentDate);
+                isEndDate = isSameDay(checkOut, currentDate);
+                isWithinRange = checkIn && checkOut && isDateInRange(currentDate, checkIn, checkOut);
+            } else if (
+                passedProp.MinimumStay === 0 &&
+                passedProp.MaximumStay === 0 &&
+                passedProp.MinimumAdvanceReservation !== 0 &&
+                passedProp.MaximumAdvanceReservation === 0
+            ) {
+                const minAdvanceDate = normalizeDate(new Date());
+                minAdvanceDate.setDate(today.getDate() + passedProp.MinimumAdvanceReservation);
+
+                isFiltered = isPastDate || currentDate < minAdvanceDate || !filter(currentDate);
+                isStartDate = isSameDay(checkIn, currentDate);
+                isEndDate = isSameDay(checkOut, currentDate);
+                isWithinRange = checkIn && checkOut && isDateInRange(currentDate, checkIn, checkOut);
+            } else if (
+                passedProp.MinimumStay === 0 &&
+                passedProp.MaximumStay === 0 &&
+                passedProp.MinimumAdvanceReservation === 0 &&
+                passedProp.MaximumAdvanceReservation !== 0
+            ) {
+                const maxAdvanceDate = normalizeDate(new Date());
+                maxAdvanceDate.setDate(today.getDate() + passedProp.MaximumAdvanceReservation);
+
+                isFiltered = isPastDate || currentDate > maxAdvanceDate || !filter(currentDate);
+                isStartDate = isSameDay(checkIn, currentDate);
+                isEndDate = isSameDay(checkOut, currentDate);
+                isWithinRange = checkIn && checkOut && isDateInRange(currentDate, checkIn, checkOut);
+            } else {
+                isFiltered = isPastDate || isOutsideAdvanceRange;
+                isStartDate = isSameDay(checkIn, currentDate);
+                isEndDate = isSameDay(checkOut, currentDate);
+                isWithinRange = checkIn && checkOut && isDateInRange(currentDate, checkIn, checkOut);
+            }
 
             newDates.push(
                 <li
                     key={`date-${i}`}
-                    className={`${styles.date} 
-                        ${isFiltered ? styles.inactive : ''} 
-                        ${isStartDate ? styles.startDate : ''} 
-                        ${isEndDate ? styles.endDate : ''} 
-                        ${isWithinRange ? styles.selected : ''}`}
+                    className={`${styles.date}
+                ${isFiltered ? styles.inactive : ''}
+                ${isStartDate ? styles.startDate : ''}
+                ${isEndDate ? styles.endDate : ''}
+                ${isWithinRange ? styles.selected : ''}`}
                     onClick={() => !isFiltered && handleDateClick(currentDate)}
                 >
                     {`${i}`}
@@ -105,15 +222,15 @@ function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onChe
         }
 
         setDates(newDates);
-    };
+    }
 
     useEffect(() => {
         renderDates(month1, setDates1, checkInFilter);
-    }, [month1, year, checkIn, checkOut, passedProp]);
+    }, [month1, year, checkIn, checkOut]);
 
     useEffect(() => {
         renderDates(month2, setDates2, checkOutFilter);
-    }, [month2, year, checkIn, checkOut, passedProp]);
+    }, [month2, year, checkIn, checkOut]);
 
     const navigateDates = (nav) => {
         let newMonth1 = month1;
