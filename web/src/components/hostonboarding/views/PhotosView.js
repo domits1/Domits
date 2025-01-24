@@ -1,9 +1,9 @@
 import { useParams } from "react-router-dom";
 import ImagePreview from "../components/ImagePreview";
-import usePhotos from "./usePhotos";
+import usePhotos from "../hooks/usePhotos";
 import Button from "../components/button";
 import { useRef, useState } from "react";
-import './PhotoVieuw.css';
+import "./PhotoVieuw.css";
 
 function PhotosView() {
   const { type: accommodationType } = useParams();
@@ -18,7 +18,8 @@ function PhotosView() {
   } = usePhotos();
 
   const [draggedIndex, setDraggedIndex] = useState(null);
-  const fileInputRef = useRef(null); 
+  const [imageCount, setImageCount] = useState(5); 
+  const fileInputRef = useRef(null);
 
   const handleDragStart = (index) => {
     setDraggedIndex(index);
@@ -33,8 +34,12 @@ function PhotosView() {
 
   const handleBoxClick = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.click(); 
+      fileInputRef.current.click();
     }
+  };
+
+  const handleAddMore = () => {
+    setImageCount((prev) => prev + 1);
   };
 
   return (
@@ -44,7 +49,7 @@ function PhotosView() {
       {!Object.keys(images).length ? (
         <div
           className={`drag-drop-area ${isDragOver ? "drag-over" : ""}`}
-          onClick={handleBoxClick} 
+          onClick={handleBoxClick}
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragOver(true);
@@ -58,17 +63,17 @@ function PhotosView() {
         >
           <p>Drag and drop your files here or click to upload</p>
           <input
-            ref={fileInputRef} 
+            ref={fileInputRef}
             type="file"
             multiple
             onChange={(e) => handleDropFiles(e.target.files)}
-            style={{ display: "none" }} 
+            style={{ display: "none" }}
           />
         </div>
       ) : (
         <section className="photo-gallery-section">
           <section className="photo-gallery-images">
-            {[...Array(5)].map((_, index) => (
+            {[...Array(imageCount)].map((_, index) => (
               <ImagePreview
                 key={index}
                 image={images[`image${index + 1}`] || null}
@@ -80,6 +85,10 @@ function PhotosView() {
                 onDragOver={(e) => e.preventDefault()}
               />
             ))}
+            {/* Add More Box */}
+            <div className="small-photo add-more-box" onClick={handleAddMore}>
+              <p>Add More +</p>
+            </div>
           </section>
         </section>
       )}
