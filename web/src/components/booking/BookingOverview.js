@@ -371,17 +371,22 @@ const BookingOverview = () => {
     ];
 
     return (
-        <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
-        <div className="booking-header">
-
-        <div className="goBackButton">
+        <main className="booking-container">
+            <div className="booking-header">
+                <div className="goBackButton">
                     <Link to={`/listingdetails?ID=${accommodation.ID}`}>
-                        {/* <p className="backButton">Go Back</p> */}
                         <Back />
                     </Link>
                 </div>
-            <h1>Booking Overview</h1>
-        </div>
+                <h1>Booking Overview</h1>
+            </div>
+
+            {/* {!isLoggedIn ? (
+                <div className="register-container">
+                    <h2>You must register or log in to access booking details</h2>
+                    <Register />
+                </div>
+            ) : ( */}
     
         <div className="Bookingcontainer">
             {/* Right Panel */}
@@ -408,7 +413,7 @@ const BookingOverview = () => {
 
 
 
-                <div className="login-reserve-form">
+                {/* <div className="login-reserve-form">
                     <h2 className="form-title">Log in or sign up to reserve</h2>
                     <div className="form-group">
                         <label className="form-label">Country/region</label>
@@ -434,7 +439,7 @@ const BookingOverview = () => {
                         placeholder="Phone number"
                         />
                     </div>
-                </div>
+                </div> */}
     
                 <button
                     type="submit"
@@ -488,6 +493,7 @@ const BookingOverview = () => {
                 </div>
                 </div>
         </div>
+              {/* )} */}
     </main>
     
 
