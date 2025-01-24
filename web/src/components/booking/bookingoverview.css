@@ -198,3 +198,165 @@
     outline: none;
   }
   
+
+  @media (max-width: 768px) {
+    .booking-container {
+        padding: 10px;
+    }
+
+    .booking-header {
+        flex-direction: column;
+        text-align: center;
+        padding-left: 0;
+    }
+
+    .Bookingcontainer {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-left: 0;
+    }
+
+    .left-panel,
+    .right-panel {
+        width: 100%;
+        max-width: none;
+        box-shadow: none;
+        padding: 10px;
+    }
+
+    .booking-details-name {
+        flex-direction: column;
+        align-items: center;
+        padding-left: 0;
+    }
+
+    .bookingDetailsImage {
+        width: 100px;
+        height: 100px;
+    }
+
+    .booking-title {
+        font-size: 16px;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .confirm-pay-button {
+        font-size: 14px;
+        padding: 10px;
+    }
+
+    .login-reserve-form {
+        padding: 10px;
+    }
+
+    .form-group {
+        gap: 10px;
+    }
+
+    .dropdown-wrapper {
+        padding: 8px;
+    }
+
+    .country-dropdown {
+        font-size: 12px;
+    }
+
+    .phone-input {
+        font-size: 12px;
+    }
+}
+
+/* For screens smaller than 375px */
+@media (max-width: 375px) {
+    .booking-container {
+        padding: 8px;
+    }
+
+    .booking-header {
+        flex-direction: column;
+        text-align: center;
+        padding-left: 0;
+    }
+
+    .Bookingcontainer {
+        flex-direction: column;
+        gap: 15px;
+        padding-left: 0;
+    }
+
+    .left-panel,
+    .right-panel {
+        width: 100%;
+        padding: 8px;
+        box-shadow: none;
+    }
+
+    .booking-details-name {
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .bookingDetailsImage {
+        width: 80px;
+        height: 80px;
+    }
+
+    .booking-title {
+        font-size: 14px;
+    }
+
+    .acco-title-span {
+        font-size: 12px;
+    }
+
+    .detail-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .confirm-pay-button {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .login-reserve-form {
+        padding: 8px;
+    }
+
+    .form-title {
+        font-size: 14px;
+    }
+
+    .form-group {
+        gap: 8px;
+    }
+
+    .dropdown-wrapper {
+        padding: 6px;
+    }
+
+    .country-dropdown {
+        font-size: 12px;
+    }
+
+    .phone-input {
+        font-size: 12px;
+        padding: 8px;
+    }
+
+    .booking-details {
+        gap: 10px;
+    }
+
+    .total-price {
+        font-size: 14px;
+        padding-top: 8px;
+    }
+}
