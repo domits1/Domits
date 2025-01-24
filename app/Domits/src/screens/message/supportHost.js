@@ -4,11 +4,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import Sound from 'react-native-sound';
 import RNFetchBlob from 'rn-fetch-blob';
 
-import usePollySpeech from '../../components/chat/chatbotHooks/usePollySpeech';
-import useUserDetails from '../../components/chat/chatbotHooks/useUserDetails';
-import useFetchData from '../../components/chat/chatbotHooks/useFetchData';
-import useChatHistory from '../../components/chat/chatbotHooks/useChatHistory';
-import useVoiceInput from '../../components/chat/chatbotHooks/useVoiceInput';
+import usePollySpeech from './Hooks/usePollySpeech';
+import useUserDetails from './Hooks/useUserDetails';
+import useFetchData from './Hooks/useFetchData';
+import useChatHistory from './Hooks/useChatHistory';
+import useVoiceInput from './Hooks/useVoiceInput';
 
 const Support = () => {
   const [messages, setMessages] = useState([]);
@@ -67,7 +67,7 @@ const Support = () => {
 
 
   const handleSubmit = useCallback(() => {
-    if (userInput.trim() && currentOption) { // Ensure user selected an option
+    if (userInput.trim() && currentOption) {
       const messageId = Date.now();
       setMessages((prevMessages) => [
         ...prevMessages,
@@ -134,11 +134,10 @@ const Support = () => {
   };
 
   const goBackToOptions = () => {
-    setAwaitingUserChoice(true); // Set the state to show suggestions again
-    setSuggestions([]); // Clear current suggestions
-    setCurrentOption(null); // Reset the currently selected option
+    setAwaitingUserChoice(true);
+    setSuggestions([]);
+    setCurrentOption(null);
 
-    // Add a message to reset the conversation
     const message = `Hello again, ${username}! Please choose an option:`;
     const messageId = Date.now();
     setMessages([{ id: messageId, text: message, sender: 'bot', contentType: 'text' }]);
@@ -356,7 +355,6 @@ const Support = () => {
               <TouchableOpacity
                 style={styles.dropdownItem}
                 onPress={() => {
-                  // Handle share chat
                   console.log('share Chat');
                   shareChatHistory();
                   setIsDropdownVisible(false);
@@ -367,6 +365,7 @@ const Support = () => {
                   <Text style={styles.dropdownItemText}> Share Chat</Text>
                 </View>
               </TouchableOpacity>
+              {/* speech to text  */}
               {/* <View style={styles.divider} /> */}
 
               {/* <TouchableOpacity

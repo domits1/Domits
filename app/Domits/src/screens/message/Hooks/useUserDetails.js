@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-// import { fetchUserAttributes, getCurrentUser } from '@aws-amplify/auth';
 import { useAuth } from '../../../context/AuthContext';
 
 const useUserDetails = (setMessages, fetchPollySpeech) => {
@@ -26,7 +25,7 @@ const useUserDetails = (setMessages, fetchPollySpeech) => {
         };
 
         setUserDetails();
-    }, []); // Only runs on mount
+    }, []);
 
     return { userId, username };
 };
