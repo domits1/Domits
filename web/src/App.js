@@ -4,19 +4,19 @@ import { UserProvider } from './UserContext';
 import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./components/landingpage/Landing";
-import Travelinnovation from "./components/ninedots/travelinnovation";
-import Home from './components/home/Accommodations';
-import Homepage from './components/home/homePage.js';
-import About from "./components/about/About";
-import Whydomits from "./components/about/Whydomitstwo.js";
-import Release from "./components/about/release.js";
-import ReleaseTwo from "./components/about/releaseTwo.js";
-import Datasafety from "./components/about/datasafety.js";
-import Helpdesk from "./components/about/Helpdesk.js";
-import Howitworks from "./components/about/Howitworks.js";
-import Careers from "./components/careers/Careers";
-import JobDetails from "./components/careers/jobDetails.js";
-import Contact from "./components/contact/Contact";
+import Travelinnovation from "./components/webpages-general/travelinnovationlab/travelinnovation";
+import Home from './components/webpages-general/home/Accommodations';
+import Homepage from './components/webpages-general/home/homePage.js';
+import About from "./components/webpages-general/about/About";
+import Whydomits from "./components/webpages-general/whydomits/Whydomitstwo.js";
+import Release from "./components/webpages-general/productupdates/release.js";
+import ReleaseTwo from "./components/webpages-general/productupdates/releaseTwo.js";
+import Datasafety from "./components/webpages-general/datasafety/datasafety.js";
+import Helpdesk from "./components/webpages-general/helpdesk/Helpdesk.js";
+import Howitworks from "./components/webpages-general/howitworks/Howitworks.js";
+import Careers from "./components/webpages-general/careers/Careers";
+import JobDetails from "./components/webpages-general/careers/jobDetails.js";
+import Contact from "./components/webpages-general/contact/Contact";
 import HostOnboarding from "./components/landingpage/OnboardingHost";
 import HostDashboard from "./components/hostdashboard/HostDashboard";
 import HostMessages from "./components/hostdashboard/HostMessages";
@@ -31,9 +31,9 @@ import BookingConfirmation from "./components/booking/PaymentConfirm";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import Disclaimers from "./components/disclaimers/Disclaimers";
-import Policy from "./components/disclaimers/Policy";
-import Terms from "./components/disclaimers/Terms";
+import Disclaimers from "./components/webpages-general/disclaimers/Disclaimers";
+import Policy from "./components/webpages-general/policy/Policy";
+import Terms from "./components/webpages-general/terms/Terms";
 import Login from "./components/base/Login";
 import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/confirmEmail/ConfirmEmailView.js";
@@ -52,7 +52,7 @@ import Hostchat from './components/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./components/hostdashboard/HostReservations";
 import HostRevenues from "./components/hostdashboard/HostRevenues";
-import HostPropertyCare from "./components/hostdashboard/HostPropertyCare";
+import HostHousekeeping from "./components/hostdashboard/Housekeeping.js";
 import HostIoTHub from "./components/hostdashboard/HostIoTHub";
 import HostPricing from "./components/hostdashboard/HostPricing";
 import HostDistribution from "./components/hostdashboard/HostDistribution";
@@ -69,7 +69,7 @@ import StripeCallback from "./components/stripe/StripeCallback";
 import ReviewPage from "./components/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
-// import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
+import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
 
 
 import AccommodationTypeView from './components/hostonboarding/views/AccommodationTypeView.js';
@@ -94,7 +94,7 @@ import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./GuestProtectedRoute";
 import Hostchatbot from "./components/hostchatbot/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-import ReleaseUpdates from './components/about/ReleaseUpdates.js'
+import ReleaseUpdates from './components/webpages-general/productupdates/ReleaseUpdates.js'
 
 
 Modal.setAppElement('#root');
@@ -169,7 +169,7 @@ function App() {
                                     <Route path="/listingdetails" element={<ListingDetails />} />
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                                    {/*<Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />*/}
+                                    <Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />
@@ -228,7 +228,7 @@ function App() {
                                                     <Route path="chat" element={<Hostchat />} />
                                                     <Route path="reservations" element={<HostReservations />} />
                                                     <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
-                                                    <Route path="property-care" element={<HostPropertyCare />} />
+                                                    <Route path="housekeeping" element={<HostHousekeeping />} />
                                                     <Route path="iot-hub" element={<HostIoTHub />} />
                                                     <Route path="pricing" element={<HostPricing />} />
                                                     <Route path="distribution" element={<HostDistribution />} />
@@ -269,7 +269,7 @@ function App() {
                                     <Route path='/hostonboarding/:type/availability' element={<AvailabilityView/>} />
                                     <Route path='/hostonboarding/legal/registrationnumber' element={<RegistrationNumberView/>} />
                                     <Route path='/hostonboarding/summary' element={<SummaryView/>} />
-                                    
+
 
 
 
@@ -278,7 +278,7 @@ function App() {
                                 {currentPath !== '/admin' && <MenuBar />}
                                 {renderChatWidget()}
                                 <Hostchatbot />
-                               
+
 
                             </div>
                         </UserProvider>

@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import personalDetailsForm from './personalDetailsForm';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import {Calendar} from 'react-native-calendars';
-import DateFormatterYYYY_MM_DD from '../../components/utils/DateFormatterYYYY_MM_DD';
+import DateFormatterYYYY_MM_DD from '../DateFormatterYYYY_MM_DD';
 
 const OnBoarding1 = ({navigation, route}) => {
   const accommodation = route.params.accommodation;

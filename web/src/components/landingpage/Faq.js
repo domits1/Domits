@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './Faq.css';
-import Helpdesk from '../about/Helpdesk';
+import Helpdesk from '../webpages-general/helpdesk/Helpdesk';
 import { useNavigate } from 'react-router-dom';
 
 const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
@@ -32,7 +32,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
     guest: {
       aboutDomits: [
         {
-          question: "What is Domits and how does it work?",          
+          question: "What is Domits and how does it work?",
           answer: (
             <>
               Domits is a platform where you can rent out your property for guests to book. As a host, you list your property on Domits, and guests can book it for short or long-term stays. A full explanation about how Domits works can be found on{" "}
@@ -48,7 +48,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
 
           answer: (
             <>
-              Domits offers a unique experience for both Hosts and Guests by using innovative ideas that enhance the booking and hosting experience. We prioritize ease of use, security, and transparency for all users. More about why Domits can be found on{" "} 
+              Domits offers a unique experience for both Hosts and Guests by using innovative ideas that enhance the booking and hosting experience. We prioritize ease of use, security, and transparency for all users. More about why Domits can be found on{" "}
               <a href="https://www.domits.com/why-domits" target="_blank" rel="noopener noreferrer">
                 here
               </a>.
@@ -272,7 +272,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
           answer: "If you wish to extend your stay, contact the host directly to discuss availability and payment. Any extensions must be agreed upon by both parties.",
           isOpen: false
         },
-        
+
         {
           question: "Can I ask the host a question?",
           answer: "You can always contact the host through our messaging channels. You only need to press 'chat' on one of their accommodations.",
@@ -325,7 +325,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
           answer: "Yes, we value your feedback. After your support issue is resolved, you will receive an email with a link to provide feedback on your experience. Your input helps us improve our services.",
           isOpen: false
         }
-      ]      
+      ]
     },
 
     host: {
@@ -341,7 +341,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
           isOpen: false
         }
       ],
-      
+
       hosting: [
         {
           question: "How to list my holiday rental?",
@@ -369,7 +369,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
           isOpen: false
         }
       ],
-      
+
       payment: [
         {
           question: "How do payments work?",
@@ -392,7 +392,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
           isOpen: false
         }
       ],
-      
+
       cancellations: [
         {
           question: "Does Domits have a cancellation policy?",
@@ -410,7 +410,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
           isOpen: false
         }
       ],
-      
+
       yourAccommodations: [
         {
           question: "When do I know that my accommodation has been approved?",
@@ -468,7 +468,7 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
           isOpen: false
         }
       ],
-      
+
       bookings: [
         {
           question: "How do I manage my bookings?",
@@ -481,14 +481,14 @@ const FaqItem = ({ question, answer, toggleOpen, isOpen }) => {
           isOpen: false
         }
       ],
-      
+
       manageReservations: [
         {
           question: "How do I see, change, or cancel my reservations?",
           answer: "Log in to your account, navigate to 'Bookings', and select the reservation you want to view, change, or cancel. Make sure to confirm any changes to keep your records updated.",
           isOpen: false
         }
-      ]      
+      ]
     }
   };
 
@@ -549,7 +549,7 @@ Object.keys(faqs).forEach((subcategory) => {
   return (
     <div className="faq-container">
       <h3 className="faqHeader3">FAQ - Frequently Asked Questions</h3>
-  
+
       <div className="faq-button-container">
         <button className="faqButton" onClick={() => handleNavigation('host')}>Host</button>
         <button className="faqButton" onClick={() => handleNavigation('guest')}>Guest</button>
@@ -560,11 +560,11 @@ Object.keys(faqs).forEach((subcategory) => {
           {Object.keys(filteredFaqs).reduce((total, subcategory) => total + filteredFaqs[subcategory].length, 0)} results found for "{searchQuery}"
         </p>
       )}
-      
+
       {Object.keys(filteredFaqs).length === 0 && searchQuery && (
         <p>No results found for "{searchQuery}". Try searching for something else or check your spelling.</p>
       )}
-  
+
       {Object.keys(filteredFaqs).map((subcategory) => (
         <div key={subcategory} className="faq-category">
           <h4 className="faqHeader4">
@@ -582,7 +582,7 @@ Object.keys(faqs).forEach((subcategory) => {
           ))}
         </div>
       ))}
-  
+
       {Object.keys(filteredFaqs).length === 0 && !searchQuery && (
         <>
           {category === 'guest' && (
@@ -599,7 +599,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Manage your account</h4>
                 {faqs.manageAccount?.map((faq, index) => (
@@ -612,7 +612,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Search And Book</h4>
                 {faqs.searchAndBook?.map((faq, index) => (
@@ -625,7 +625,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Cancellations</h4>
                 {faqs.cancellations?.map((faq, index) => (
@@ -638,7 +638,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Payments</h4>
                 {faqs.payments?.map((faq, index) => (
@@ -651,7 +651,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Your stay</h4>
                 {faqs.yourStay?.map((faq, index) => (
@@ -664,7 +664,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Support</h4>
                 {faqs.support?.map((faq, index) => (
@@ -694,7 +694,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Getting started as a host</h4>
                 {faqs.hosting?.map((faq, index) => (
@@ -707,7 +707,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Payment</h4>
                 {faqs.payment?.map((faq, index) => (
@@ -720,7 +720,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Cancellations</h4>
                 {faqs.cancellations?.map((faq, index) => (
@@ -733,7 +733,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Your Accommodations</h4>
                 {faqs.yourAccommodations?.map((faq, index) => (
@@ -746,7 +746,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Bookings</h4>
                 {faqs.bookings?.map((faq, index) => (
@@ -759,7 +759,7 @@ Object.keys(faqs).forEach((subcategory) => {
                   />
                 ))}
               </div>
-  
+
               <div className="faq-category">
                 <h4 className="faqHeader4">Manage Reservations</h4>
                 {faqs.manageReservations?.map((faq, index) => (
@@ -778,7 +778,7 @@ Object.keys(faqs).forEach((subcategory) => {
       )}
     </div>
   );
-  
+
 };
 
 export default Faq;

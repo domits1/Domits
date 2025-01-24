@@ -238,7 +238,7 @@ const ChatScreen = ({ }) => {
 
                                 <View style={styles.senderHeader}>
                                     <Image
-                                        source={require('../../screens/pictures/domits-logo.jpg')}
+                                        source={require('../pictures/domits-logo.jpg')}
                                         style={styles.senderImage}
                                     />
                                     <Text style={styles.senderName}>{givenName}</Text>
@@ -258,7 +258,7 @@ const ChatScreen = ({ }) => {
                                     </Text>
                                     <Text style={styles.youLabel}>YOU</Text>
                                     <Image
-                                        source={require('../../screens/pictures/domits-logo.jpg')}
+                                        source={require('../pictures/domits-logo.jpg')}
                                         style={styles.youImage}
                                     />
                                 </View>

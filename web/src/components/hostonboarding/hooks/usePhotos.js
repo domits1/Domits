@@ -1,14 +1,63 @@
-import useFormStore from "../stores/formStore";
+import { useState } from "react";
 
-export const usePhotos = () => {
-  const images = useFormStore((state) => state.accommodationDetails.images);
-  const updateImage = useFormStore((state) => state.updateImage);
-  const deleteImage = useFormStore((state) => state.deleteImage);
+export default function usePhotos() {
+  const [images, setImages] = useState({});
+  const [isDragOver, setIsDragOver] = useState(false);
 
   const handleFileChange = (file, index) => {
-    const fileURL = URL.createObjectURL(file);
-    updateImage(index, fileURL);
+    const reader = new FileReader();
+    reader.onload = () => {
+      setImages((prev) => ({
+        ...prev,
+        [`image${index + 1}`]: reader.result,
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
-  return { images, handleFileChange, deleteImage };
-};
+  const deleteImage = (index) => {
+    setImages((prev) => {
+      const updated = { ...prev };
+      delete updated[`image${index + 1}`];
+      return updated;
+    });
+  };
+
+  const reorderImages = (fromIndex, toIndex) => {
+    setImages((prev) => {
+      const entries = Object.entries(prev);
+      const [movedImage] = entries.splice(fromIndex, 1);
+      entries.splice(toIndex, 0, movedImage);
+      const reorderedImages = {};
+      entries.forEach(([_, value], i) => {
+        reorderedImages[`image${i + 1}`] = value;
+      });
+      return reorderedImages;
+    });
+  };
+
+  const handleDropFiles = (files) => {
+    const newImages = {};
+    Array.from(files).forEach((file, i) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        newImages[`image${Object.keys(images).length + i + 1}`] = reader.result;
+        setImages((prev) => ({
+          ...prev,
+          ...newImages,
+        }));
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  return {
+    images,
+    handleFileChange,
+    deleteImage,
+    reorderImages,
+    isDragOver,
+    setIsDragOver,
+    handleDropFiles,
+  };
+}

@@ -9,7 +9,7 @@ import * as queries from "../queries";
 import * as subscriptions from '../subscriptions';
 import { onCreateChat } from '../subscriptions.js';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, FlatList, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
-import ContactItem from '../../components/chat/contactItem_host';
+import ContactItem from '../chat/contactItem_host';
 import { useAuth } from '../../context/AuthContext';
 import awsconfig from '../../aws-exports.js';
 import { useNavigation } from '@react-navigation/native';

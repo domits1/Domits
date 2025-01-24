@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from "react";
 import './guestdashboard.css';
 import { useLocation, useNavigate } from 'react-router-dom';
-
-import dashboard from "../../images/icons/dashboard-icon.png";
-import message from "../../images/icons/message-icon.png";
-import booking from "../../images/icons/booking-icon.png";
-import payment from "../../images/icons/payment-icon.png";
-import listings from "../../images/icons/listings-icon.png";
-import settings from "../../images/icons/settings-icon.png";
+import DashboardIcon from '@mui/icons-material/DashboardCustomizeRounded';
+import BookingIcon from '@mui/icons-material/LanguageOutlined';
+import MessageIcon from '@mui/icons-material/QuestionAnswerOutlined';
+import FinanceIcon from '@mui/icons-material/CreditScoreOutlined';
+import RevieuwsIcon from '@mui/icons-material/StarBorderOutlined';
+import Settings from '@mui/icons-material/Settings';
 
 function Pages() {
   const [activeTab, setActiveTab] = useState('/guestdashboard');
@@ -35,7 +34,7 @@ function Pages() {
               <option value="/guestdashboard">Dashboard</option>
               <option value="/guestdashboard/bookings">Bookings</option>
               <option value="/guestdashboard/chat">Messages</option>
-              <option value="/guestdashboard/payments">Payments</option>
+              {/* <option value="/guestdashboard/payments">Payments</option> */}
               <option value="/guestdashboard/reviews">Reviews</option>
               <option value="/guestdashboard/settings">Settings</option>
             </select>
@@ -47,42 +46,48 @@ function Pages() {
           className={`wijzers ${activeTab === "/guestdashboard" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard")}
         >
-          <img src={dashboard} alt="Profile"></img>
+          <div className="Mui">
+          <DashboardIcon/></div>
           <p>Dashboard</p>
         </div>
         <div
           className={`wijzers ${activeTab === "/guestdashboard/bookings" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/bookings")}
         >
-          <img src={booking} alt="Booking"></img>
+          <div className="Mui">
+          <BookingIcon/></div>
           <p>Bookings</p>
         </div>
         <div
           className={`wijzers ${activeTab === "/guestdashboard/chat" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/chat")}
         >
-          <img src={message} alt="Messages"></img>
+          <div className="Mui">
+          <MessageIcon/></div>
           <p>Messages</p>
         </div>
-        <div
+        {/* <div
           className={`wijzers ${activeTab === "/guestdashboard/payments" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/payments")}
         >
-          <img src={payment} alt="Booking"></img>
+          <div className="Mui">
+          <FinanceIcon/></div>
           <p>Payments</p>
-        </div>
+        </div> */}
         <div
           className={`wijzers ${activeTab === "/guestdashboard/reviews" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/reviews")}
         >
-          <img src={listings} alt="Listing"></img>
+          <div className="Mui">
+          <RevieuwsIcon/></div>
           <p>Reviews</p>
         </div>
         <div
           className={`wijzers ${activeTab === "/guestdashboard/settings" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/settings")}
         >
-          <img src={settings} alt="Settings"></img>
+          <div className="Mui">
+          <Settings/></div>
           <p>Settings</p>
         </div>
       </div>

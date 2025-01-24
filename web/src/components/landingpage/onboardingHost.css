@@ -109,7 +109,7 @@ h2{
   color: black;
   background-color: #fff;
   border: 1px solid #ccc;
-  border-radius: 50%;
+  border-radius: 1vh;
   padding: 5px;
   cursor: pointer;
 }

@@ -89,7 +89,13 @@
     margin-bottom: 10px;
     display: flex;
     align-items: center;
-    width: auto;
+    justify-content: space-between; 
+    width: 40%;
+}
+
+.InfoBox span {
+    flex-grow: 1;
+    text-align: left; 
 }
 
 .host-icon-background {

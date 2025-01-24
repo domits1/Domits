@@ -96,6 +96,7 @@ import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import SevereColdIcon from '@mui/icons-material/SevereCold';
 import ChairAltIcon from '@mui/icons-material/ChairAlt';
+import {vatRates, touristTaxRates} from "../utils/CountryVATRatesAndTouristTaxes";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -120,6 +121,8 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
+    const [taxes, setTaxes] = useState(0);
+    const [amountOfGuest, setAmountOfGuest] = useState(0);
     const [hostID, setHostID] = useState();
     const [showAll, setShowAll] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -342,18 +345,18 @@ const ListingDetails = () => {
         const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
         const sortedCategories = Object.keys(features).sort((a, b) => {
             const indexA = categoryOrder.indexOf(a);
-            const indexB = categoryOrder.indexOf(b);    
+            const indexB = categoryOrder.indexOf(b);
             const orderA = indexA !== -1 ? indexA : categoryOrder.length;
             const orderB = indexB !== -1 ? indexB : categoryOrder.length;
-    
+
             if (orderA === categoryOrder.length && orderB === categoryOrder.length) {
-                return a.localeCompare(b); 
+                return a.localeCompare(b);
             }
-            return orderA - orderB; 
+            return orderA - orderB;
         });
 
         console.log('Sorted categories:', sortedCategories);
-    
+
         return (
             <div className="modal-overlay" onClick={onClose}>
                 <div className="modal-contentPopUp" onClick={e => e.stopPropagation()}>
@@ -607,7 +610,7 @@ const ListingDetails = () => {
     const handleCheckInChange = (date) => {
         setCheckIn(date);
     };
-    
+
     const handleCheckOutChange = (date) => {
         setCheckOut(date);
     };
@@ -632,11 +635,32 @@ const ListingDetails = () => {
             const basePrice = nights * accommodation.Rent * 100;
             const cleaningFee = accommodation.CleaningFee ? parseFloat(accommodation.CleaningFee * 100) : 0;
             const calculatedServiceFee = basePrice * 0.15;
-            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee;
+
+            const countryVAT = vatRates.find(rate => rate.country === accommodation?.Country)?.vat || "0";
+            const vatRate = parseFloat(countryVAT);
+
+            const countryTouristTax = touristTaxRates.find(rate => rate.country === accommodation?.Country)?.touristTax || "0";
+
+
+            const calculatedVatRate = parseFloat(basePrice * vatRate / 100);
+
+            let calculatedTouristTaxRate;
+            if (countryTouristTax.includes('%')) {
+                const taxRate = parseFloat(countryTouristTax.replace('%', ''));
+                calculatedTouristTaxRate = parseFloat(basePrice * taxRate / 100);
+            } else if (countryTouristTax.includes('EUR') || countryTouristTax.includes('USD') || countryTouristTax.includes('GBP')) {
+                calculatedTouristTaxRate = parseFloat((countryTouristTax.replace(/[^\d.]/g, '') || 0) * basePrice / 100);
+            } else {
+                calculatedTouristTaxRate = 0;
+            }
+
+            const calculatedTaxes = calculatedVatRate + calculatedTouristTaxRate;
+            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee + calculatedVatRate + calculatedTouristTaxRate;
 
             setServiceFee(calculatedServiceFee / 100);
-            setTotalPrice(calculatedTotalPrice / 100);
+            setTotalPrice((calculatedTotalPrice / 100));
             setCleaningFee(cleaningFee / 100);
+            setTaxes(calculatedTaxes / 100);
         };
 
         calculateTotal();
@@ -676,6 +700,11 @@ const ListingDetails = () => {
         }
     }
 
+    useEffect(() => {
+        const totalGuests = adults + children + pets;
+        setAmountOfGuest(totalGuests);
+    }, [adults, children, pets]);
+
     const handleBooking = () => {
         const details = {
             id,
@@ -684,7 +713,10 @@ const ListingDetails = () => {
             adults,
             kids: children,
             pets,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes,
+            serviceFee
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
@@ -799,6 +831,7 @@ const ListingDetails = () => {
         today.setHours(0, 0, 0, 0);
         const minAdvanceReservation = new Date();
         minAdvanceReservation.setDate(today.getDate() + accommodation.MinimumAdvanceReservation);
+        minAdvanceReservation.setHours(0, 0, 0, 0);
         const maxAdvanceReservation = new Date();
         maxAdvanceReservation.setDate(today.getDate() + accommodation.MaximumAdvanceReservation);
 
@@ -859,6 +892,7 @@ const ListingDetails = () => {
                                 checkOut={checkOut}
                                 onCheckInChange={handleCheckInChange}
                                 onCheckOutChange={handleCheckOutChange}
+                                filter={combinedDateFilter}
                             />
                             </div>
                             <div>
@@ -979,7 +1013,7 @@ const ListingDetails = () => {
                                         maxDate={maxStart && new Date(maxStart)}
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
-                                        placeholderText="DD/MM/YYYY" 
+                                        placeholderText="DD/MM/YYYY"
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
                                                          style={{
@@ -1008,7 +1042,7 @@ const ListingDetails = () => {
                                         }
                                         filterDate={combinedDateFilter}
                                         dateFormat="yyyy-MM-dd"
-                                        placeholderText="DD/MM/YYYY"   
+                                        placeholderText="DD/MM/YYYY"
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
                                                           style={{
@@ -1114,6 +1148,10 @@ const ListingDetails = () => {
                                     <div className="price-item">
                                         <p>Domits service fee</p>
                                         <p>€{serviceFee.toFixed(2)}</p>
+                                    </div>
+                                    <div className="price-item">
+                                        <p>Taxes</p>
+                                        <p>€{taxes.toFixed(2)}</p>
                                     </div>
                                     <div className="total">
                                         <p>Total</p>
