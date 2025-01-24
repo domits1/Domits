@@ -120,7 +120,7 @@ const ChatScreen = ({ }) => {
         } catch (error) {
             console.error('Error fetching chats:', error);
         } finally {
-            setLoading(false); 
+            setLoading(false);
         }
     };
 
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 15,
         marginRight: 10,
         marginLeft: 10,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: 'white',
     },
     icon: {
         marginLeft: 10,

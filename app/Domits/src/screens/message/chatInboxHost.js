@@ -98,7 +98,7 @@ const InboxHost = ({ user }) => {
         setChatMessages((prevChats) => {
           const updatedChats = { ...prevChats };
           updatedChats[recipientId] = [latestChat, ...(prevChats[recipientId] || [])];
-          updatedChats[recipientId].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)); 
+          updatedChats[recipientId].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
           return updatedChats;
         });
@@ -165,7 +165,7 @@ const InboxHost = ({ user }) => {
         } catch (error) {
           console.error('Error fetching chats:', error);
         } finally {
-          setLoading(false); 
+          setLoading(false);
         }
       };
 

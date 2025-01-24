@@ -1,39 +1,181 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, ActivityIndicator } from 'react-native';
+import { useAuth } from '../../context/AuthContext';
 
 const Notifications = () => {
-  // Placeholder data for notifications
-  const notificationData = [
-    { id: 1, type: 'request', message: 'Jackson has sent a request.', action: true },
-    { id: 2, type: 'info', message: 'Your reservation at Mulah has been canceled.', action: true },
-    { id: 3, type: 'info', message: 'Price drop for Mulah, Maldives!', action: false },
-    { id: 4, type: 'info', message: 'Welcome to Domits', action: false },
+  const [notificationData, setNotificationData] = useState([])
+  const [pendingContacts, setPendingContacts] = useState([]);
+  const { isAuthenticated, userAttributes, checkAuth } = useAuth();
+  const userId = userAttributes?.sub;
+  const [fullName, setFullName] = useState(null);
+  const [givenName, setGivenName] = useState(null);
+  const [contactUserId, setContactUserID] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  ];
+
+  useEffect(() => {
+    if (userId) {
+      fetchHostContacts();
+    }
+  }, [userId]);
+
+  const fetchHostContacts = async () => {
+    setLoading(true);
+    setPendingContacts([]);
+    const notifications = [];
+
+    try {
+      const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ hostID: userId })
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch host information');
+
+      const { pending } = await response.json().then(data => JSON.parse(data.body));
+      setPendingContacts(pending);
+
+      console.log(pending);
+
+      // Fetch user info for each pending contact and build notification messages
+      await Promise.all(pending.map(async (item) => {
+        const attributes = await fetchUserInfo(item.userId);
+        if (attributes && attributes['given_name']) {
+          const message = `${attributes['given_name']} has sent you a request.`;
+          notifications.push({
+            id: item.ID,
+            type: 'request',
+            message,
+            action: true,
+          });
+        }
+      }));
+
+      // Set the notification data
+      setNotificationData(notifications);
+    } catch (error) {
+      console.error('Error fetching host contacts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const fetchUserInfo = async (userId) => {
+    try {
+      const requestData = { OwnerId: userId };
+
+      const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user information');
+      }
+
+      const responseData = await response.json();
+      const parsedData = JSON.parse(responseData.body)[0];
+      const attributes = parsedData.Attributes.reduce((acc, attribute) => {
+        acc[attribute.Name] = attribute.Value;
+        return acc;
+      }, {});
+
+      // console.log(`Fetching user info for userId: ${userId}`);
+      // console.log("Fetched Attributes:", attributes);
+
+      // Log the userId being set to the state
+      setGivenName(attributes['given_name']);
+      setContactUserID(parsedData.Attributes[2].Value);  // Assuming it's always at index 2
+      // console.log(`User ID set to Contact User ID: ${parsedData.Attributes[2].Value}`);
+
+      return attributes;
+    } catch (error) {
+      console.error('Error fetching user info:', error);
+    }
+  };
+
+  const updateContactRequest = async (id, status) => {
+    try {
+      const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Id: id, Status: status }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update contact request');
+
+      const data = await response.json();
+      const parsedData = JSON.parse(data.body);
+      console.log(`Request ${status}:`, parsedData);
+      if (parsedData.isAccepted) {
+        const result = await API.graphql({
+          query: mutations.createChat,
+          variables: {
+            input: {
+              text: '',
+              userId: userId,
+              recipientId: origin,
+              isRead: false,
+              createdAt: new Date().toISOString(),
+              channelID: channelUUID
+            },
+          },
+
+        });
+        console.log(result);
+      }
+
+      // Update the pending contacts state after accepting or rejecting a request
+      setPendingContacts((prev) => prev.filter((contact) => contact.userId !== id));
+      setNotificationData((prev) =>
+        prev.filter((notification) => notification.id !== id)
+      );
+
+      return data;
+    } catch (error) {
+      console.error('Error updating contact request:', error);
+      Alert.alert('Error', 'Failed to update the contact request. Please try again.');
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {notificationData.map((notification) => (
-        <NotificationItem key={notification.id} notification={notification} />
-      ))}
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="grey" />
+          {/* <Text style={styles.loadingText}>Loading Notifications...</Text> */}
+        </View>
+      ) : (
+        notificationData.map((notification) => (
+          <NotificationItem
+            key={notification.id}
+            notification={notification}
+            updateContactRequest={updateContactRequest}
+          />
+        ))
+      )}
     </View>
   );
 };
 
-const NotificationItem = ({ notification }) => {
+const NotificationItem = ({ notification, updateContactRequest }) => {
   const [expanded, setExpanded] = useState(notification.type === 'request');
   const [showAlert, setShowAlert] = useState(false);
 
   const handleToggleExpand = () => {
     setExpanded(!expanded);
   };
-
+  const handleAcceptPress = async () => {
+    await updateContactRequest(notification.id, 'accepted');
+  };
   const handleDenyPress = () => {
     setShowAlert(true);
   };
-
-  const handleConfirmDeny = () => {
-    console.log('Request Denied');
+  const handleConfirmDeny = async () => {
+    await updateContactRequest(notification.id, 'rejected');
     setShowAlert(false);
   };
 
@@ -44,11 +186,11 @@ const NotificationItem = ({ notification }) => {
           <Text style={styles.message} numberOfLines={expanded ? undefined : 1}>
             {notification.message}
           </Text>
-          <Text style={styles.time}>19:40pm</Text>
+          <Text style={styles.time}></Text>
         </View>
         {expanded && (
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.acceptButton}>
+            <TouchableOpacity style={styles.acceptButton} onPress={handleAcceptPress}>
               <Text style={styles.buttonText}>Accept</Text>
             </TouchableOpacity>
             <View style={{ width: 15 }} />
@@ -100,7 +242,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 10,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: 'white',
   },
   requestItem: {
     padding: 15,
