@@ -6,8 +6,10 @@ import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
-import ImageGallery from './ImageGallery';
-
+import Calender from '@mui/icons-material/CalendarTodayOutlined';
+import People from '@mui/icons-material/PeopleAltOutlined';
+import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
+import Back from '@mui/icons-material/KeyboardBackspace';
 
 const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
@@ -245,84 +247,107 @@ const BookingOverview = () => {
     };
 
     return (
-        <main style={{ cursor: isProcessing ? 'wait' : 'default' }}>
-            <div className="Bookingcontainer">
-                {/* Go Back Link */}
-                <div className="goBackButton">
-                    <Link to={`/listingdetails?ID=${accommodation.ID}`}>
-                        <p className="backButton">Go Back</p>
-                    </Link>
+        <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
+        <div className="booking-header">
+            <div className="goBackButton">
+                <Link to={`/listingdetails?ID=${accommodation.ID}`}>
+                    <Back />
+                </Link>
+            </div>
+            <h1>Booking Overview</h1>
+        </div>
+    
+        <div className="Bookingcontainer">
+            {/* Right Panel */}
+            <div className="right-panel">
+                <div>Your journey</div>
+                <div className="booking-details">
+                    <div className="detail-row">
+                        <span className="detail-label"><Calender /> Date:</span>
+                        <span className="detail-value">
+                            {DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}
+                        </span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="detail-label"><People /> Guests:</span>
+                        <span className="detail-value">{adults} adults - {kids} kids</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="detail-label"><Cleaning /> Cleaning Fee:</span>
+                        <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                    </div>
                 </div>
-
-                {/* Right Panel */}
-                <div className="right-panel">
-                    {isAuthenticated ? (
-                        <>
-                            <h1>{accommodation.Title}</h1>
-                            <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
-                            <div className="main-card">
-                                <h2 className="bookingTitel">Booking Details</h2>
-
-                                {/* Booking Date */}
-                                <div className="detail-row">
-                                    <span className="detail-label">Date:</span>
-                                    <span className="detail-value">
-                                {DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}
-                            </span>
-                                </div>
-
-                                {/* Guests */}
-                                <div className="detail-row">
-                                    <span className="detail-label">Amount of Guests:</span>
-                                    <span className="detail-value">{adults} adults - {kids} kids</span>
-                                </div>
-
-                                {/* Price Breakdown */}
-                                <div className="detail-row">
-                                    <span className="detail-label">Price:</span>
-                                    <span className="detail-value">€ {accommodationPrice.toFixed(2)}</span>
-                                </div>
-                                <div className="detail-row">
-                                    <span className="detail-label">Cleaning Fee:</span>
-                                    <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
-                                </div>
-                                <div className="detail-row">
-                                    <span className="detail-label">Taxes:</span>
-                                    <span className="detail-value">€ {(taxes / 100).toFixed(2)}</span>
-                                </div>
-                                <div className="detail-row">
-                                    <span className="detail-label">Domits fee:</span>
-                                    <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
-                                </div>
-
-                                {/* Total Price */}
-                                <div className="detail-row total-price">
-                                    <span className="detail-label">Total:</span>
-                                    <span className="detail-value">
-                                € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + serviceFee / 100).toFixed(2)}
-                            </span>
-                                </div>
-
-                                {/* Confirm and Pay Button */}
-                                <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
-                                    {loading ? 'Loading...' : 'Confirm & Pay'}
-                                </button>
-                            </div>
-                        </>
-                    ) : (
-                        <div>
-                            <h1>You must register or log in to access booking details</h1>
-                            <Register />
-                        </div>
-                    )}
-                </div>
-
-                {/* Left Panel */}
+    
+                {!isLoggedIn ? (
+                    <div>
+                        <h2>Please Register or Log In to Continue</h2>
+                        <Register />
+                    </div>
+                ) : (
+                    <button
+                        type="submit"
+                        className="confirm-pay-button"
+                        onClick={handleConfirmAndPay}
+                        disabled={loading || !ownerStripeId}>
+                        {loading ? 'Loading...' : 'Confirm & Pay'}
+                    </button>
+                )}
+            </div>
+    
+            {/* Left Panel */}
+            <div className="booking-details-container">
+                <div className="booking-header1">Booking Details</div>
                 <div className="left-panel">
-                    <ImageGallery images={Object.values(accommodation.Images)} />
+                    <div className="booking-details-name">
+                        <img
+                            className="bookingDetailsImage"
+                            src={accommodation.Images && Object.values(accommodation.Images)[0]}
+                            alt="Accommodation"
+                        />
+                        <div>
+                            <h1 className="booking-title">{accommodation.Title}</h1>
+                            <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
+                        </div>
+                    </div>
+                    <hr />
+
+                    <div className="detail-row">
+                        <span className="detail-label">Price:</span>
+                        <span className="detail-value">€ {accommodationPrice.toFixed(2)}</span>
+                    </div>
+    
+                    <div className="detail-row">
+                        <span className="detail-label">Taxes:</span>
+                        <span className="detail-value">€ {(taxes / 100).toFixed(2)}</span>
+                    </div>
+
+                    <div className="detail-row">
+                        <span className="detail-label">Cleaning Fee:</span>
+                        <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                    </div>
+                    
+                    <div className="detail-row">
+                        <span className="detail-label">Service Fee:</span>
+                        <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="detail-label">Domits fee:</span>
+                        <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
+                    </div>
+
+                    <div className="detail-row total-price">
+                        <span className="detail-label">Total:</span>
+                        <span className="detail-value">
+                        € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + serviceFee / 100).toFixed(2)}
+                        </span>
+                    </div>
                 </div>
             </div>
-        </main>
+        </div>
+    </main>
+    
+    
+
 
     );
 

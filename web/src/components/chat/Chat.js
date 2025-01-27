@@ -4,7 +4,7 @@ import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
 import * as queries from "../../graphql/queries";
-import Pages from "../guestdashboard/Pages";
+import Pages from "../../features/guestdashboard/Pages";
 import * as subscriptions from "../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -325,9 +325,9 @@ const Chat = ({ user }) => {
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !selectedUser || !selectedUser.userId) return;
-    
+
         const recipientIdToSend = selectedUser.userId;
-    
+
         try {
             const result = await API.graphql({
                 query: mutations.createChat,
@@ -342,13 +342,13 @@ const Chat = ({ user }) => {
                     },
                 },
             });
-    
+
             console.log("Message sent successfully:", result);
-    
+
             setNewMessage('');
             setShowDate(true);
             setLastMessageDate(new Date());
-    
+
             await fetchChats(recipientIdToSend);
             await fetchChatUsers();
         } catch (error) {
@@ -484,9 +484,9 @@ const Chat = ({ user }) => {
                                                     listing details
                                                 </button>
                                             </div>
-                                        ) : ( 
+                                        ) : (
                                             <div className={styles.textDisplay}>
-                                                <h3>This accommodation is currently unavailable</h3> 
+                                                <h3>This accommodation is currently unavailable</h3>
                                             </div>
                                         )}
                                     </article>
