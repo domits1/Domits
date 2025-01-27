@@ -12,7 +12,7 @@ import django from './django.png';
 import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
-import Pages from "../guestdashboard/Pages";
+import Pages from "../../features/guestdashboard/Pages";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
@@ -38,7 +38,7 @@ const Chat = ({ user }) => {
     const [newMessage, setNewMessage] = useState('');
     const [messageSent, setMessageSent] = useState(false);
     const [showDate, setShowDate] = useState(false);
-    const [unreadMessages, setUnreadMessages] = useState({}); 
+    const [unreadMessages, setUnreadMessages] = useState({});
     const [lastMessageDate, setLastMessageDate] = useState(null);
     const [selectedImage, setSelectedImage] = useState(null); // State to store the selected image file
     const [imageUrl, setImageUrl] = useState("");
@@ -46,7 +46,7 @@ const Chat = ({ user }) => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [chatUsers, setChatUsers] = useState([]);
 
-    
+
     useEffect(() => {
     const subscription = API.graphql(
         graphqlOperation(subscriptions.onCreateChat)
@@ -62,14 +62,14 @@ const Chat = ({ user }) => {
     return () => subscription.unsubscribe();
 }, []);
 
-    
+
     const navigate = useNavigate(); // Get the navigate function
     const location = useLocation();
     const recipientEmailFromUrl = new URLSearchParams(location.search).get('recipient');
     const channelUUID = new URLSearchParams(location.search).get('channel');
 
     // Function to update the URL with the recipient's email
-    
+
 
     const updateRecipientEmailInUrl = (email) => {
         const uuid = generateUUID();
@@ -116,7 +116,7 @@ const chatContainerRef = useRef(null);
 
     const signOut = async () => {
         try {
-            await Auth.signOut(); 
+            await Auth.signOut();
         } catch (error) {
             console.error("Error signing out:", error);
         }
@@ -124,12 +124,12 @@ const chatContainerRef = useRef(null);
 
     const signUp = async () => {
         try {
-         
+
             const { user } = await Auth.signUp({
-                username: 'username', 
-                password: 'password', 
+                username: 'username',
+                password: 'password',
                 attributes: {
-                  
+
                     email: 'email@example.com'
                 }
             });
@@ -139,7 +139,7 @@ const chatContainerRef = useRef(null);
         }
     };
 
-  
+
     useEffect(() => {
         fetchChats();
         fetchChatUsers();
@@ -157,7 +157,7 @@ const chatContainerRef = useRef(null);
                     }
                 }
             });
-    
+
             const receivedMessages = await API.graphql({
                 query: queries.listChats,
                 variables: {
@@ -167,38 +167,38 @@ const chatContainerRef = useRef(null);
                     }
                 }
             });
-    
+
             const allSentChats = sentMessages.data.listChats.items.map(chat => ({
                 ...chat,
                 isSent: true
             }));
-    
+
             const allReceivedChats = receivedMessages.data.listChats.items.map(chat => ({
                 ...chat,
                 isSent: false
             }));
-    
+
             const allChats = [...allSentChats, ...allReceivedChats];
-    
+
             console.log("Sent messages:", allSentChats);
             console.log("Received messages:", allReceivedChats);
-    
+
             setChats(allChats);
         } catch (error) {
             console.error("Error fetching messages:", error);
         }
     };
-    
-    
+
+
     const fetchChatUsers = async () => {
         try {
             const response = await API.graphql({ query: queries.listChats });
             const allChats = response.data.listChats.items;
             const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
-    
+
             // Filter out null or undefined values
             const filteredUsers = uniqueUsers.filter(email => email && email !== user.attributes.email);
-    
+
             const usersData = filteredUsers.map(email => {
                 const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
                 const lastMessageTimestamp = Math.max(...userChats.map(chat => new Date(chat.createdAt).getTime()));
@@ -207,24 +207,24 @@ const chatContainerRef = useRef(null);
                     lastMessageTimestamp,
                 };
             });
-    
+
             // Filter out users who haven't exchanged messages with you
             const filteredUsersData = usersData.filter(userData => {
                 const userChats = allChats.filter(chat => chat.email === userData.email || chat.recipientEmail === userData.email);
                 return userChats.some(chat => chat.email === user.attributes.email || chat.recipientEmail === user.attributes.email);
             });
-    
+
             const sortedUsersData = filteredUsersData.sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
-    
+
             setChatUsers(sortedUsersData);
         } catch (error) {
             console.error("Error fetching chat users:", error);
         }
     };
-    
-    
-    
-    
+
+
+
+
     const fetchUnreadMessages = async () => {
         try {
             const unreadMessagesResponse = await API.graphql({
@@ -236,30 +236,30 @@ const chatContainerRef = useRef(null);
                     }
                 }
             });
-    
+
             const unreadMessagesByEmail = unreadMessagesResponse.data.listChats.items.reduce((acc, chat) => {
                 const { email } = chat;
                 acc[email] = (acc[email] || 0) + 1;
                 return acc;
             }, {});
-    
+
             setUnreadMessages(unreadMessagesByEmail);
         } catch (error) {
             console.error("Error fetching unread messages:", error);
         }
     };
-    
+
     const handleUserClick = async (email) => {
         setRecipientEmail(email);
         setSelectedUser(chatUsers.find(user => user.email === email));
         fetchChats(email);
         updateRecipientEmailInUrl(email);
-    
+
         try {
             const unreadMessagesIds = chats
                 .filter(chat => chat.recipientEmail === user.attributes.email && chat.isRead === false)
                 .map(chat => chat.id);
-    
+
             await Promise.all(unreadMessagesIds.map(async id => {
                 try {
                     await API.graphql({
@@ -275,21 +275,21 @@ const chatContainerRef = useRef(null);
                     console.error("Error updating read status:", error);
                 }
             }));
-    
+
             setUnreadMessages(prevState => ({
                 ...prevState,
-                [email]: 0 
+                [email]: 0
             }));
         } catch (error) {
             console.error("Error updating read status:", error);
         } finally {
-            
+
             fetchChats(email);
         }
     };
-    
-    
-     
+
+
+
 
     const sendMessage = async () => {
         if (!newMessage.trim() || !recipientEmail) return;
@@ -324,13 +324,13 @@ const chatContainerRef = useRef(null);
 
 
 
-  
+
 
 
     useEffect(() => {
         console.log("Unread messages:", unreadMessages);
     }, [unreadMessages]);
-    
+
     const isToday = (date) => {
         const today = new Date();
         return date.getDate() === today.getDate() &&
@@ -343,21 +343,21 @@ const chatContainerRef = useRef(null);
             // Force re-render by updating state
             setShowDate(prevState => !prevState);
         }, 24 * 60 * 60 * 1000); // 24 hours
-    
+
         return () => clearInterval(interval);
     }, []);
-    
+
 
 
     return (
         <main className="chat">
             <div className="chat__headerWrapper">
-         
+
                 <h2 className="chat__heading">Message dashboard</h2>
             </div>
             <section className="chat__container">
                <Pages/>
-              
+
 
                 <article className="chat__message">
                     <article className="chat__figure">
@@ -441,8 +441,8 @@ const chatContainerRef = useRef(null);
                         placeholder="Recipient's email..."
                     /> */}
                                         <button onClick={sendMessage}>Send</button>
-                            
-                        
+
+
                     </article>
                     <nav className="chat__nav">
                     <ul className="chat__controls">
@@ -457,7 +457,7 @@ const chatContainerRef = useRef(null);
                     <button className="chat__button chat__button--file">add files
                     <input type="file" onChange={handleImageUpload} /></button>
                     <button className="chat__button chat__button--review">Send review link</button>
-                        
+
                     </div>
                     </nav>
                 </article>
