@@ -16,6 +16,7 @@
     "ip": "^2.0.1",
     "lodash": "^4.17.21",
     "node-fetch": "^3.3.2",
+    "pdfjs-dist": "^4.10.38",
     "react-icons": "^5.4.0",
     "react-load-script": "^0.0.6",
     "react-native-elements": "^3.4.3",
