@@ -2,6 +2,7 @@ import React from 'react';
 import Slider from 'react-slick';
 
 const AccommodationTile = ({ accommodation }) => {
+    console.log('Accommodation data:', accommodation);
     const images = Object.values(accommodation.images);
 
     const sliderSettings = {
@@ -15,10 +16,17 @@ const AccommodationTile = ({ accommodation }) => {
 
     const accommodationUrl = `/listingdetails?ID=${accommodation.id}`;
 
+    console.log('Generated Accommodation URL:', accommodationUrl); // Debugging
+
     return (
         <div className="hostchatbot-accommodation-tile">
-            {/* Make the entire image slider clickable */}
-            <a href={accommodationUrl} target="_blank" rel="noopener noreferrer">
+            {/* Stop event bubbling */}
+            <a
+                href={accommodationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()} // Prevent interference from parent events
+            >
                 <Slider {...sliderSettings}>
                     {images.map((image, index) => (
                         <div key={index}>
@@ -41,5 +49,6 @@ const AccommodationTile = ({ accommodation }) => {
         </div>
     );
 };
+
 
 export default AccommodationTile;
