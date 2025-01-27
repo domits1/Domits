@@ -4,7 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
 import * as pdfjsLib from 'pdfjs-dist';
 import { FiMenu, FiDownload, FiPrinter, FiMic, FiPaperclip } from 'react-icons/fi';
-
+import axios from "axios";
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js`;
 
 import AccommodationTile from './AccommodationTile';
@@ -60,11 +60,15 @@ const HostChatbot = () => {
 
 
   useEffect(() => {
-    const isChromiumBased = !!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime);
+    const isChromiumBased = !!navigator.userAgent.match(/Chrome|Chromium|Edg|Brave/);
+    console.log('Browser detected:', navigator.userAgent); // Debugging line
+    console.log('Is Chromium-based:', isChromiumBased);    // Debugging line
     if (!isChromiumBased) {
       setIsUnsupportedBrowser(true);
     }
   }, []);
+
+
 
 
   const handleButtonClick = useCallback((choice) => {
@@ -76,18 +80,23 @@ const HostChatbot = () => {
   const handleAccommodationQuery = async (userInput) => {
     const messageId = Date.now();
     const normalizedInput = userInput.toLowerCase().trim();
-
-    setLoading(true); // Start loading
+    setLoading(true);
 
     try {
-      // Fetch accommodations based on user input
-      if (normalizedInput.includes("show all accommodations") || normalizedInput.includes("list all accommodations")) {
+      if (normalizedInput.includes('show all accommodations')) {
         await fetchAllAccommodations();
-      } else {
+      } else if (normalizedInput.includes('list my accommodations')) {
         await fetchAccommodations(userId);
+      } else {
+        const noUnderstandMessage = "Sorry, I didn't understand your question about accommodations.";
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: messageId, text: noUnderstandMessage, sender: 'bot', contentType: 'text' },
+        ]);
+        fetchPollySpeech(noUnderstandMessage, messageId);
+        return;
       }
 
-      // Check if accommodations data is empty
       if (accommodations.length === 0) {
         const noDataMessage = "Sorry, there is no accommodation data available right now.";
         setMessages((prevMessages) => [
@@ -95,39 +104,25 @@ const HostChatbot = () => {
           { id: messageId, text: noDataMessage, sender: 'bot', contentType: 'text' },
         ]);
         fetchPollySpeech(noDataMessage, messageId);
-        return; // Exit early since there's no data
+      } else {
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          { id: messageId, text: 'Here are your accommodations:', sender: 'bot', contentType: 'text' },
+        ]);
       }
-
-      // Format the response message
-      const responseMessage = accommodations.map((acc) => `
-            Title: ${acc.title || 'Accommodation'}
-            City: ${acc.city || 'Not specified'}
-            Country: ${acc.country || 'Not specified'}
-            Bathrooms: ${acc.bathrooms || 'Not specified'}
-            Guest Capacity: ${acc.guestAmount || 'Not specified'}
-        `).join('\n\n');
-
-      const fullMessage = `Here are the accommodations:\n${responseMessage}`;
-
-      // Set the bot response
-      setMessages((prevMessages) => [
-        ...prevMessages,
-        { id: messageId, text: fullMessage, sender: 'bot', contentType: 'text' },
-      ]);
-      fetchPollySpeech(fullMessage, messageId);
     } catch (error) {
-      // Handle errors during fetch
-      const errorMessage = "Sorry, I couldn't process your request at the moment.";
       console.error('Error fetching accommodations:', error);
+      const errorMessage = "Sorry, I couldn't fetch the accommodations at this moment.";
       setMessages((prevMessages) => [
         ...prevMessages,
         { id: messageId, text: errorMessage, sender: 'bot', contentType: 'text' },
       ]);
       fetchPollySpeech(errorMessage, messageId);
     } finally {
-      setLoading(false); // Stop loading
+      setLoading(false);
     }
   };
+
 
 
 
@@ -376,11 +371,13 @@ const HostChatbot = () => {
             {/* Render accommodation tiles if accommodations exist */}
             {accommodations.length > 0 && (
                 <div className="hostchatbot-accommodations">
-                  {accommodations.map((accommodation, index) => (
-                      <AccommodationTile key={index} accommodation={accommodation} />
+                  {accommodations.map((accommodation) => (
+                      <AccommodationTile key={accommodation.id} accommodation={accommodation} />
                   ))}
                 </div>
             )}
+
+
 
             {awaitingUserChoice && (
                 <div className="hostchatbot-option-buttons">
