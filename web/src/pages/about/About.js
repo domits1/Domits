@@ -71,105 +71,100 @@ function About() {
                         <div className="about__avatar">
                             <img className="about__avatar-image" src={stefan} alt="Stefan Hopman" />
                         </div>
-                        <p className="about__member-name">Stefan Hopman</p>
-                        <p className="about__member-role">Founder and CEO</p>
+                        <p className="about__member-name">Stefan</p>
+                        <p className="about__member-role">Founder</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Robert Hopman" />
+                        </div>
+                        <p className="about__member-name">Robert</p>
+                        <p className="about__member-role">Engineering manager</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
                             <img className="about__avatar-image" src={tim} alt="Tim Hart" />
                         </div>
-                        <p className="about__member-name">Tim Hart</p>
+                        <p className="about__member-name">Tim H.</p>
                         <p className="about__member-role">Product Owner</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
-                            <img className="about__avatar-image" src={standard} alt="Hamza Zaraoui" />
+                            <img className="about__avatar-image" src={standard} alt="Developer" />
                         </div>
-                        <p className="about__member-name">Hamza Zaraoui</p>
-                        <p className="about__member-role">Fullstack developer</p>
+                        <p className="about__member-name">Bekir </p>
+                        <p className="about__member-role">Developer</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
-                            <img className="about__avatar-image" src={sebastiaan} alt="Sebastiaan van der Wilt" />
+                            <img className="about__avatar-image" src={standard} alt="Kacper Flak" />
                         </div>
-                        <p className="about__member-name">Sebastiaan van der Wilt</p>
-                        <p className="about__member-role">Fullstack developer</p>
-                    </div>
-                    <div className="about__member">
-                        <div className="about__avatar">
-                            <img className="about__avatar-image" src={muhammed} alt="Muhammed Çetinkaya" />
-                        </div>
-                        <p className="about__member-name">Muhammed Çetinkaya</p>
-                        <p className="about__member-role">Back-end developer</p>
+                        <p className="about__member-name">Mortada </p>
+                        <p className="about__member-role">Developer Revenue</p>
                     </div>
                 </div>
 
                 <div className="about__team">
-                    <div className="about__member">
-                        <div className="about__avatar">
-                            <img className="about__avatar-image" src={kacper} alt="Kacper Flak" />
-                        </div>
-                        <p className="about__member-name">Kacper Flak</p>
-                        <p className="about__member-role">Back-end developer</p>
-                    </div>
                     <div className="about__member">
                         <div className="about__avatar">
                             <img className="about__avatar-image" src={standard} alt="Tim Seijlhouwer" />
                         </div>
-                        <p className="about__member-name">Tim Seijlhouwer</p>
-                        <p className="about__member-role">Fullstack developer</p>
+                        <p className="about__member-name">Roozbeh </p>
+                        <p className="about__member-role">Developer Revenue</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
-                            <img className="about__avatar-image" src={chahid} alt="Chahid Laaouar" />
+                            <img className="about__avatar-image" src={standard} alt="Chahid Laaouar" />
                         </div>
-                        <p className="about__member-name">Chahid Laaouar</p>
-                        <p className="about__member-role">Fullstack developer</p>
+                        <p className="about__member-name">Chant</p>
+                        <p className="about__member-role">Developer</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
-                            <img className="about__avatar-image" src={jiaming} alt="Jiaming Yan" />
+                            <img className="about__avatar-image" src={standard} alt="Jiaming Yan" />
                         </div>
-                        <p className="about__member-name">Jiaming Yan</p>
-                        <p className="about__member-role">Back-end developer</p>
+                        <p className="about__member-name">Justin</p>
+                        <p className="about__member-role">Developer Distribution</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
-                            <img className="about__avatar-image" src={leila} alt="Leila Boutkabout" />
+                            <img className="about__avatar-image" src={standard} alt="Leila Boutkabout" />
                         </div>
-                        <p className="about__member-name">Leila Boutkabout</p>
-                        <p className="about__member-role">UX/UI Designer</p>
+                        <p className="about__member-name">Randy</p>
+                        <p className="about__member-role">Developer Distribution</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="This can be you!" />
+                            </div>
+                        <p className="about__member-name">Sam</p>
+                        <p className="about__member-role">Developer</p>
                     </div>
                 </div>
 
                 <div className="about__team">
                     <div className="about__member">
                         <div className="about__avatar">
-                            <img className="about__avatar-image" src={standard} alt="Aniss Bouabdallah" />
+                            <img className="about__avatar-image" src={standard} alt="Tim Eerdmans" />
                         </div>
-                        <p className="about__member-name">Aniss Bouabdallah</p>
-                        <p className="about__member-role">Business developer</p>
+                        <p className="about__member-name">Martijn</p>
+                        <p className="about__member-role">Developer</p>
                     </div>
+
+                    <div className="about__member">
+                    <div className="about__avatar">
+                            <img className="about__avatar-image" src={muhammed} alt="Muhammed" />
+                        </div>
+                        <p className="about__member-name">Muhammed</p>
+                        <p className="about__member-role">Developer</p>
+                    </div>
+                    
                     <div className="about__member">
                         <div className="about__avatar">
-                            <img className="about__avatar-image" src={timE} alt="Tim Eerdmans" />
+                            <img className="about__avatar-image" src={standard} alt="Nick Ryan" />
                         </div>
-                        <p className="about__member-name">Tim Eerdmans</p>
-                        <p className="about__member-role">Business developer</p>
-                    </div>
-                    <div className="about__member">
-                        <div className="about__avatar">
-                            <img className="about__avatar-image" src={nick} alt="Nick Ryan" />
-                        </div>
-                        <p className="about__member-name">Nick Ryan</p>
-                        <p className="about__member-role">Back-end developer</p>
-                    </div>
-                    <div className="about__member">
-                        <div className="about__avatar">
-                            <img className="about__avatar-image" src={standard} alt="This can be you!" />
-                        </div>
-                        <p className="about__member-name">This can be you!</p>
-                        <p className="about__member-role">We're hiring!</p>
+                        <p className="about__member-name">Etka</p>
+                        <p className="about__member-role">Developer</p>
                     </div>
                     <div className="about__member">
                         <div className="about__avatar">
@@ -177,8 +172,123 @@ function About() {
                         </div>
                         <p className="about__member-name">This can be you!</p>
                         <p className="about__member-role">We're hiring!</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Sem" />
+                        </div>
+                        <p className="about__member-name">Sem</p>
+                        <p className="about__member-role">Developer</p>
+                    </div>
+
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Sander" />
+                        </div>
+                        <p className="about__member-name">Sander </p>
+                        <p className="about__member-role">Developer</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Developer" />
+                        </div>
+                        <p className="about__member-name">Ales </p>
+                        <p className="about__member-role">Developer</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Developer" />
+                        </div>
+                        <p className="about__member-name">Ryan</p>
+                        <p className="about__member-role">Developer</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Developer" />
+                        </div>
+                        <p className="about__member-name">Sebastiaan</p>
+                        <p className="about__member-role">Developer</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Developer" />
+                        </div>
+                        <p className="about__member-name">Hamza H.</p>
+                        <p className="about__member-role">Developer AI Agents</p>
                     </div>
                 </div>
+
+
+                <div className="about__team">
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Developer" />
+                        </div>
+                        <p className="about__member-name">Hamza Z.</p>
+                        <p className="about__member-role">Developer</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Developer" />
+                        </div>
+                        <p className="about__member-name">Nick Ryan</p>
+                        <p className="about__member-role">Developer</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Developer" />
+                        </div>
+                        <p className="about__member-name">Robin</p>
+                        <p className="about__member-role">Security</p>
+                    </div>                    
+                </div>
+
+                <div className="about__team">
+                <div className="about__member">
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Growth" />
+                        </div>
+                        <p className="about__member-name">Thijmen</p>
+                        <p className="about__member-role">Growth</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Growth" />
+                        </div>
+                        <p className="about__member-name">Santiago</p>
+                        <p className="about__member-role">Growth</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Growth" />
+                        </div>
+                        <p className="about__member-name">Maroan</p>
+                        <p className="about__member-role">Growth</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Growth" />
+                        </div>
+                        <p className="about__member-name">Lisa</p>
+                        <p className="about__member-role">Growth</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Growth" />
+                        </div>
+                        <p className="about__member-name">Jared</p>
+                        <p className="about__member-role">Growth</p>
+                    </div>
+                    <div className="about__member">
+                        <div className="about__avatar">
+                            <img className="about__avatar-image" src={standard} alt="Growth" />
+                        </div>
+                        <p className="about__member-name">Vic</p>
+                        <p className="about__member-role">Growth</p>
+                    </div>
+                </div>
+            </div>
 
                 <div className="about__footer">
                     <p className="about__footer-text">
