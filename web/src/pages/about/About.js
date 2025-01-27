@@ -15,6 +15,7 @@ import Robert from '../../images/about-img/Robert.jpg';
 import Robin from '../../images/about-img/Robin.jpg';
 import Roozbeh from '../../images/about-img/Roozbeh.jpg';
 import Sam from '../../images/about-img/Sam.jpg';
+import Jared from '../../images/about-img/Jared.jpg';
 
 function About() {
     return (
@@ -132,7 +133,7 @@ function About() {
                 <h2>Marketing</h2>
                 <div className="about__team">
                     {[
-                        { name: 'Jared', src: standard, role: 'Growth' },
+                        { name: 'Jared', src: Jared, role: 'Growth' },
                         { name: 'Lisa', src: standard, role: 'Growth' },
                         { name: 'Maroan', src: standard, role: 'Growth' },
                         { name: 'Santiago', src: standard, role: 'Growth' },
