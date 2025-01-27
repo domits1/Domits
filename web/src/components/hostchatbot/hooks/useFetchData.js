@@ -41,15 +41,16 @@ const useFetchData = () => {
         setLoading(true);
         try {
             const response = await fetch(
-                'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation',
+                'https://cbh7zhdwt9.execute-api.eu-north-1.amazonaws.com/default/General-Messaging-AiAssistent-Production-Read-AllAccomodations',
                 {
-                    method: 'GET',
+                    method: 'POST',
                     headers: { 'Content-type': 'application/json' },
                 }
             );
 
             const responseData = await response.json();
             const data = responseData.body ? JSON.parse(responseData.body) : [];
+            console.log(data);
             const formattedAccommodations = data.map((acc) => ({
                 id: acc.ID,
                 title: acc.Title || 'Accommodation',
