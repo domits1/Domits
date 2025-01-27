@@ -62,7 +62,7 @@ const ChatWidget = () => {
             const accommodations = await Promise.all(
               accommodationIds.map(async (id) => {
                 const { data } = await axios.post(
-                  'https://7onjvhdxsl.execute-api.eu-north-1.amazonaws.com/default/GetAccommodation',
+                  'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation',
                   { ID: id }
                 );
                 return JSON.parse(data.body); // Parse the body to get the accommodation object

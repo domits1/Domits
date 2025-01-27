@@ -26,17 +26,26 @@ const HostFinanceTab = () => {
                 const userInfo = await Auth.currentUserInfo();
                 setUserEmail(userInfo.attributes.email);
                 setCognitoUserId(userInfo.attributes.sub);
-                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+
+                const response = await fetch(`https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`, {
                     method: 'POST',
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
                     },
                     body: JSON.stringify({ sub: userInfo.attributes.sub }),
                 });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
                 const data = await response.json();
-                if (data.hasStripeAccount) {
-                    setStripeLoginUrl(data.loginLinkUrl);
-                    setBankDetailsProvided(data.bankDetailsProvided);
+
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
+                    setStripeLoginUrl(parsedBody.loginLinkUrl);
+                    setBankDetailsProvided(parsedBody.bankDetailsProvided);
                 }
             } catch (error) {
                 console.error("Error fetching user data or Stripe status:", error);
@@ -48,33 +57,40 @@ const HostFinanceTab = () => {
     }, []);
 
     async function handleStripeAction() {
-        if (stripeLoginUrl) {
-            window.open(stripeLoginUrl, '_blank');
-        } else if (userEmail && cognitoUserId) {
+        if (userEmail && cognitoUserId) {
             const options = {
                 userEmail: userEmail,
-                cognitoUserId: cognitoUserId
+                cognitoUserId: cognitoUserId,
             };
             try {
-                const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
+                const response = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
                     method: 'POST',
                     body: JSON.stringify(options),
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
                     },
                 });
-                if (!result.ok) {
-                    throw new Error(`HTTP error! Status: ${result.status}`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                const data = await result.json();
+
+                const data = await response.json();
                 window.location.replace(data.url);
             } catch (error) {
-                console.error(error);
+                console.error("Error during Stripe action:", error);
             }
         } else {
             console.error('User email or cognitoUserId is not defined.');
         }
     }
+
+    if (loading) {
+        return <div>Loading...</div>;
+    }
+
+    console.log("Stripe Login URL:", stripeLoginUrl);
+    console.log("Bank Details Provided:", bankDetailsProvided);
 
     return (
         <main className="page-Host">
@@ -84,11 +100,14 @@ const HostFinanceTab = () => {
             <section className="host-pc-finance">
                 <div className="finance-content">
                     <h1>Finance</h1>
-                    <h2>Ready to receive payments?</h2>
+                    <h2>Receive payouts in 3 step.</h2>
                     <h3>
                         <ul>
-                            <li>1. Create an accommodation first before you proceed to the next step: <span
-                                className="finance-span" onClick={handleEnlistNavigation}> Create Accommodation </span>
+                            <li>
+                                Step 1:{" "} 
+                                <span className="finance-span" onClick={handleEnlistNavigation}>
+                                 List your property.
+                                </span>
                             </li>
                             <br />
                             <li className="finance-li">
@@ -96,25 +115,31 @@ const HostFinanceTab = () => {
                                     bankDetailsProvided ? (
                                         <>2. You are connected to Stripe!</>
                                     ) : (
-                                        <>2. Your payment details are not provided yet, make sure to{" "}
+                                        <>Step 2: Connect your bank details with our payment partner{" "}
                                             <span
                                                 className="finance-span"
                                                 onClick={handleStripeAction}
                                             >
-                                                finish your Stripe onboarding
-                                            </span> before you proceed.
+                                                Stripe.
+                                            </span> 
                                         </>
                                     )
                                 ) : (
-                                    <>2. Once your accommodation is created, you can create a Stripe account to receive payments: 
-                                        <span className="finance-span" onClick={handleStripeAction}> Domits Stripe</span>
+                                    <>2: Once your accommodation is created, you can create a Stripe account to receive payments:
+                                        <span className="finance-span" onClick={() => handleStripeAction()}>
+                                            Domits Stripe
+                                        </span>
                                     </>
                                 )}
                             </li>
                             <br />
-                            <li>3. Set your accommodation live at <span
-                                onClick={() => handleNavigation("/hostdashboard/listings")}
-                                className="finance-span">listings! </span></li>
+                            <li>
+                            Step 3: Set your property live{" "}  
+                                <span onClick={() => handleNavigation("/hostdashboard/listings")} className="finance-span">
+                                 here 
+                                </span>
+                                {" "}to receive payouts.
+                            </li>
                         </ul>
                     </h3>
                 </div>

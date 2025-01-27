@@ -62,17 +62,19 @@ const HostRevenues = () => {
                 setUserEmail(userInfo.attributes.email);
                 setCognitoUserId(userInfo.attributes.sub);
 
-                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+                const response = await fetch(`https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`, {
                     method: 'POST',
                     headers: { 'Content-type': 'application/json; charset=UTF-8' },
                     body: JSON.stringify({ sub: userInfo.attributes.sub }),
                 });
 
                 const data = await response.json();
-                if (data.hasStripeAccount) {
-                    setStripeLoginUrl(data.loginLinkUrl);
-                    setBankDetailsProvided(data.bankDetailsProvided);
-                    setStripeStatus(data.bankDetailsProvided ? 'complete' : 'incomplete');
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
+                    setStripeLoginUrl(parsedBody.loginLinkUrl);
+                    setBankDetailsProvided(parsedBody.bankDetailsProvided);
+                    setStripeStatus(parsedBody.bankDetailsProvided ? 'complete' : 'incomplete');
                 } else {
                     setStripeStatus('none');
                 }
@@ -119,7 +121,6 @@ const HostRevenues = () => {
                     <Pages />
                 </div>
                 <div className="hr-content">
-                    <h1>Revenue Dashboard</h1>
                     {stripeStatus === 'none' && (
                         <div>
                             <h3>No Stripe Account Found</h3>
@@ -135,39 +136,34 @@ const HostRevenues = () => {
                         </div>
                     )}
                     {stripeStatus === 'complete' && (
-                        <div>
+                        <>
                             <div className="hr-revenue-overview">
                                 <h3>Revenue Overview</h3>
-                                <div className="hr-card-grid">
-                                    {revenueData.map((item, index) => (
-                                        <RevenueOverview key={index} title={item.title} value={item.value} />
-                                    ))}
-                                </div>
+                                {revenueData.map((item, index) => (
+                                    <RevenueOverview key={index} title={item.title} value={item.value} />
+                                ))}
                             </div>
-
+    
                             <div className="hr-monthly-comparison">
+                                <h3>Monthly Comparison</h3>
                                 <MonthlyComparison data={monthlyRevenueData} />
                             </div>
-
-                            {occupancyData ? (
+    
+                            <div className="hr-cards">
                                 <OccupancyRateCard
-                                    occupancyRate={occupancyData.combinedOccupancyRate}
-                                    numberOfProperties={occupancyData.totalProperties}
+                                    occupancyRate={occupancyData?.combinedOccupancyRate || "N/A"}
+                                    numberOfProperties={occupancyData?.totalProperties || 0}
+                                    className="hr-card"
                                 />
-                            ) : (
-                                <p>Loading Occupancy Data...</p>
-                            )}
-
-                            <div className="hr-card-grid">
-                                <ADRCard hostId={cognitoUserId} />  {/* ADR Card */}
-                                <RevPARCard />  {/* New RevPAR Card */}
+                                <ADRCard hostId={cognitoUserId} className="hr-card" />
+                                <RevPARCard className="hr-card" />
                             </div>
-                        </div>
+                        </>
                     )}
                 </div>
             </section>
         </main>
-    );
+    );    
 };
 
 export default HostRevenues;

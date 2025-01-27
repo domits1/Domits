@@ -71,6 +71,22 @@ function Header({ setSearchResults, setLoading }) {
         }
     };
 
+const getDropdownElement = () => document.querySelector('.header-personal-menu-dropdown');
+const getDropdownContentElement = () => document.querySelector('.header-personal-menu-dropdown-content');
+
+document.addEventListener('click', function (event) {
+    const dropdown = getDropdownElement(); 
+    const dropdownContent = getDropdownContentElement(); 
+
+    if (dropdown && dropdownContent) {
+        const isClickInside = dropdown.contains(event.target); 
+
+        if (!isClickInside) {
+            dropdownContent.classList.remove('show'); 
+        }
+    }
+});
+
     const toggleDropdown = () => {
         setDropdownVisible(!dropdownVisible);
     };
@@ -177,7 +193,7 @@ function Header({ setSearchResults, setLoading }) {
                 <nav
                     className={`header-nav ${isActiveSearchBar ? 'active' : 'inactive'} ${isActiveSearchBar ? 'no-scroll' : ''}`}>
                     <div className="logo">
-                        <a href="/">
+                        <a href="/home">
                             <img src={logo} width={150} alt="Logo" />
                         </a>
                     </div>

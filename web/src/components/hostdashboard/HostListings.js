@@ -28,7 +28,7 @@ function HostListings() {
     useEffect(() => {
         const checkHostStripeAcc = async (hostID) => {
             try {
-                const response = await fetch(`https://2n7strqc40.execute-api.eu-north-1.amazonaws.com/dev/CheckIfStripeExists`, {
+                const response = await fetch(`https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`, {
                     method: 'POST',
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8',
@@ -36,8 +36,10 @@ function HostListings() {
                     body: JSON.stringify({ sub: hostID }),
                 });
                 const data = await response.json();
-                if (data.hasStripeAccount) {
-                    setBankDetailsProvided(data.bankDetailsProvided);
+                const parsedBody = JSON.parse(data.body);
+
+                if (parsedBody.hasStripeAccount) {
+                    setBankDetailsProvided(parsedBody.bankDetailsProvided);
                 }
             } catch (error) {
                 console.error("Error fetching user data or Stripe status:", error);
@@ -58,7 +60,7 @@ function HostListings() {
             return;
         } else {
             try {
-                const response = await fetch('https://kd929sivhg.execute-api.eu-north-1.amazonaws.com/default/FetchAccommodation', {
+                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
                     method: 'POST',
                     body: JSON.stringify({ OwnerId: userId }),
                     headers: {'Content-type': 'application/json; charset=UTF-8',
@@ -100,7 +102,7 @@ function HostListings() {
             };
 
             try {
-                const response = await fetch('https://0mgd6vf5q5.execute-api.eu-north-1.amazonaws.com/default/ChangeAccommodationStatues', {
+                const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ChangeAccommodationStatues', {
                     method: 'PUT',
                     body: JSON.stringify(options),
                     headers: {'Content-type': 'application/json; charset=UTF-8',

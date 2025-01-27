@@ -11,13 +11,17 @@ const PaymentConfirm = () => {
         const ID = queryParams.get('paymentID');
         const userId = queryParams.get('userId');
         const accommodationId = queryParams.get('accommodationId');
-        const rawAccommodationTitle = queryParams.get('accommodationTitle'); 
+        const rawAccommodationTitle = queryParams.get('accommodationTitle');
         const ownerId = queryParams.get('ownerId');
         const State = queryParams.get('State');
         const price = queryParams.get('price');
         const startDate = queryParams.get('startDate');
         const endDate = queryParams.get('endDate');
-        
+        const cleaningFee = queryParams.get('cleaningFee');
+        const amountOfGuest = queryParams.get('amountOfGuest');
+        const taxes = queryParams.get('taxes');
+
+
         // Decode the accommodationTitle
         const decodedAccommodationTitle = decodeURIComponent(rawAccommodationTitle);
         setAccommodationTitle(decodedAccommodationTitle);
@@ -31,7 +35,10 @@ const PaymentConfirm = () => {
             State,
             price,
             startDate,
-            endDate
+            endDate,
+            cleaningFee,
+            amountOfGuest,
+            taxes
         };
 
         const storeData = async () => {
@@ -43,9 +50,9 @@ const PaymentConfirm = () => {
                     },
                     body: JSON.stringify(payload)
                 });
-
+                console.log(payload)
                 if (response.ok) {
-                    navigate('/guestdashboard/bookings');
+                    navigate('/bookingconfirmationoverview');
                 } else {
                     console.error('Failed to store data:', response.statusText);
                 }

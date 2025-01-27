@@ -3,26 +3,26 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 
 import Notifications from '../screens/message/notifications';
-import Inbox from '../screens/message/chatInbox';
+import InboxHost from '../screens/message/chatInboxHost';
 import SupportHost from '../screens/message/supportHost';
 import SupportGuest from '../screens/message/supportGuest';
+import InboxGuest from '../screens/message/chatInboxGuest';
 
 const MessagesTab = () => {
     const [activeTab, setActiveTab] = useState('Notifications');
-    const {user, userAttributes, checkAuth} = useAuth();
+    const { user, userAttributes } = useAuth();
     const [userGroup, setUserGroup] = useState('');
 
     useEffect(() => {
         if (user) {
-          setUserGroup(userAttributes?.['custom:group'] || 'N/A');
+            setUserGroup(userAttributes?.['custom:group'] || 'N/A');
         } else {
             setUserGroup('');
         }
-      }, [user, userAttributes]);
-      
+    }, [user, userAttributes]);
+
     return (
         <View style={styles.tabAll}>
-            {/* Tab Buttons */}
             <View style={styles.tabBar}>
                 <TouchableOpacity onPress={() => setActiveTab('Notifications')}>
                     <Text style={[styles.tabText, activeTab === 'Notifications' && styles.activeTabText]}>
@@ -40,11 +40,9 @@ const MessagesTab = () => {
                     </Text>
                 </TouchableOpacity>
             </View>
-
-            {/* Active Tab Content */}
             <View style={styles.screenContainer}>
                 {activeTab === 'Notifications' && <Notifications />}
-                {activeTab === 'Inbox' && <Inbox />}
+                {activeTab === 'Inbox' && (userGroup === 'Host' ? <InboxHost /> : <InboxGuest />)}
                 {activeTab === 'Support' && (userGroup === 'Host' ? <SupportHost /> : <SupportGuest />)}
             </View>
         </View>
@@ -69,7 +67,7 @@ const styles = StyleSheet.create({
     },
     activeTabText: {
         color: '#0fa616',
-        
+
     },
     screenContainer: {
         flex: 1,
