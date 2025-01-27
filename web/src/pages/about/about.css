@@ -135,7 +135,7 @@
 
 .about__team {
     display: flex;
-    justify-content: space-between;
+    justify-content: left;
     align-items: center;
     flex-wrap: wrap;
     margin-top: 20px;
