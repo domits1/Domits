@@ -1,20 +1,20 @@
 import React from "react";
 import './about.css';
-import FAQ from "../../landingpage/Faq";
-import vision from '../../../images/icons/vision.png';
-import whatwedo from '../../../images/icons/route.png';
-import stefan from '../../../images/about-img/stefan.jpeg';
-import tim from '../../../images/about-img/tim.png';
-import muhammed from '../../../images/about-img/Muhammed.png';
-import standard from '../../../images/standard.png';
-import nick from '../../../images/nick.png';
-import Ales from '../../../images/about-img/Ales.jpg';
-import Chant from '../../../images/about-img/Chant.jpg';
-import Justin from '../../../images/about-img/Justin.jpg';
-import Robert from '../../../images/about-img/Robert.jpg';
-import Robin from '../../../images/about-img/Robin.jpg';
-import Roozbeh from '../../../images/about-img/Roozbeh.jpg';
-import Sam from '../../../images/about-img/Sam.jpg';
+import FAQ from "../landingpage/Faq";
+import vision from '../../images/icons/vision.png';
+import whatwedo from '../../images/icons/route.png';
+import stefan from '../../images/about-img/stefan.jpeg';
+import tim from '../../images/about-img/tim.png';
+import muhammed from '../../images/about-img/Muhammed.png';
+import standard from '../../images/standard.png';
+import nick from '../../images/nick.png';
+import Ales from '../../images/about-img/Ales.jpg';
+import Chant from '../../images/about-img/Chant.jpg';
+import Justin from '../../images/about-img/Justin.jpg';
+import Robert from '../../images/about-img/Robert.jpg';
+import Robin from '../../images/about-img/Robin.jpg';
+import Roozbeh from '../../images/about-img/Roozbeh.jpg';
+import Sam from '../../images/about-img/Sam.jpg';
 
 function About() {
     return (
