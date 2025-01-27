@@ -10,8 +10,6 @@ const ContactItem = ({ item }) => {
     const { contactId, lastMessage } = item;
     const [loading, setLoading] = useState(true);
 
-    // console.log("Rendering ContactItem for contact:", contactId, "Last message:", lastMessage);
-
     useEffect(() => {
 
 
@@ -36,7 +34,6 @@ const ContactItem = ({ item }) => {
                     acc[attribute.Name] = attribute.Value;
                     return acc;
                 }, {});
-
                 // const fullName = `${attributes['given_name']} ${attributes['family_name']}`;
                 // setFullName(fullName);
                 setGivenName(attributes['given_name']);
@@ -52,7 +49,6 @@ const ContactItem = ({ item }) => {
     }, [item]);
 
     if (loading) {
-        // Show a loading spinner while data is being fetched
         return (
             <View style={styles.content}>
                 <ActivityIndicator size="large" color="grey" marginTop="3" />
