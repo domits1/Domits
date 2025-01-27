@@ -3,9 +3,12 @@ import './hostchatbot.css';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../../UserContext';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.entry'; // Import worker entry
 import { FiMenu, FiDownload, FiPrinter, FiMic, FiPaperclip } from 'react-icons/fi';
 import axios from "axios";
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.worker.min.js`;
+
+// Set the correct worker source
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorker;
 
 import AccommodationTile from './AccommodationTile';
 import useChatToggle from './hooks/useChatToggle';
@@ -266,35 +269,70 @@ const HostChatbot = () => {
 
     try {
       const fileReader = new FileReader();
+
       fileReader.onload = async (e) => {
         try {
           const typedArray = new Uint8Array(e.target.result);
+
+          // Load the PDF document
           const pdf = await pdfjsLib.getDocument(typedArray).promise;
 
           let extractedText = '';
-          const numPagesToProcess = Math.min(pdf.numPages, 5);
+          const numPagesToProcess = Math.min(pdf.numPages, 5); // Process up to 5 pages
           for (let i = 1; i <= numPagesToProcess; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map((item) => item.str).join(' ');
-            extractedText += pageText + '\n';
+            try {
+              const page = await pdf.getPage(i); // Get the page
+              const textContent = await page.getTextContent(); // Extract text content
+
+              // Combine the text items into a single string
+              const pageText = textContent.items.map((item) => item.str).join(' ');
+              extractedText += pageText + '\n';
+            } catch (pageError) {
+              console.error(`Error processing page ${i}:`, pageError);
+              alert(`Failed to process page ${i} in the PDF.`);
+              return;
+            }
           }
 
+          // Check if the extracted text exceeds the limit
           if (extractedText.length > 200) {
             alert('Error: The PDF content exceeds the 200-character limit.');
             return;
           }
 
+          // Update the user input and switch to PDF mode
           setUserInput(extractedText);
           setPdfMode(true);
-        } catch {
-          alert('Failed to process the PDF file.');
+        } catch (pdfError) {
+          console.error('Error processing the PDF file:', pdfError);
+          alert('Failed to process the PDF file. Please try again.');
         }
       };
+
+      // Check for valid file type and size
+      if (!file) {
+        alert('No file selected!');
+        return;
+      }
+
+      if (file.type !== 'application/pdf') {
+        alert('Please upload a valid PDF file.');
+        return;
+      }
+
+      if (file.size > 5 * 1024 * 1024) { // 5 MB limit
+        alert('The file is too large. Please select a smaller file.');
+        return;
+      }
+
+      // Read the file as ArrayBuffer
       fileReader.readAsArrayBuffer(file);
-    } catch {
-      alert('An error occurred while reading the file.');
+
+    } catch (error) {
+      console.error('Error reading the file:', error);
+      alert('An error occurred while reading the file. Please try again.');
     }
+
   };
 
   const goBackToOptions = useCallback(() => {
