@@ -1,6 +1,6 @@
 import React from "react";
 import DigitInputs from "../../ui/DigitsInputs/DigitsInputs";
-import styles from "../../hostverification/hostverification.module.css";
+import styles from "../../../features/verification/hostverification/hostverification.module.css";
 import confirmEmailStyles from "./confirmEmail.module.css";
 import Toast from "../../toast/Toast";
 import { useConfirmEmailLogic } from "./ConfirmEmailLogic.js";

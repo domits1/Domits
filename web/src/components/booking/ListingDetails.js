@@ -1,13 +1,11 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
-import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
-import HighChair from "../../images/high-chair.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
 import {FaTimes} from 'react-icons/fa';
@@ -23,21 +21,16 @@ import FireExtinguisherIcon from '@mui/icons-material/FireExtinguisher';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import KitchenIcon from '@mui/icons-material/Kitchen';
-import ChildFriendlyIcon from '@mui/icons-material/ChildFriendly';
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import GrassIcon from '@mui/icons-material/Grass';
 import BlenderIcon from '@mui/icons-material/Blender';
 import ExtensionIcon from '@mui/icons-material/Extension';
-import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import ChargingStationIcon from '@mui/icons-material/ChargingStation';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import TableBarIcon from '@mui/icons-material/TableBar';
 import CribIcon from '@mui/icons-material/Crib';
 import HvacIcon from '@mui/icons-material/Hvac';
-import FastfoodIcon from '@mui/icons-material/Fastfood';
 import FenceIcon from '@mui/icons-material/Fence';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import BedIcon from '@mui/icons-material/Bed';
@@ -96,7 +89,7 @@ import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import SevereColdIcon from '@mui/icons-material/SevereCold';
 import ChairAltIcon from '@mui/icons-material/ChairAlt';
-import {vatRates, touristTaxRates} from "../utils/CountryVATRatesAndTouristTaxes";
+import {touristTaxRates, vatRates} from "../utils/CountryVATRatesAndTouristTaxes";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -781,14 +774,14 @@ const ListingDetails = () => {
     };
 
     const isDateInRange = (date, startDate, endDate) => {
-        const selectedDate = new Date(date);
-        const rangeStart = new Date(startDate);
-        const rangeEnd = new Date(endDate);
+        const selectedDate = normalizeDate(new Date(date));
+        const rangeStart = normalizeDate(new Date(startDate));
+        const rangeEnd = normalizeDate(new Date(endDate));
         return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
     };
 
     const filterBookedDates = (date) => {
-        const selectedDate = new Date(date);
+        const selectedDate = normalizeDate(new Date(date));
 
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0].S);
@@ -826,9 +819,9 @@ const ListingDetails = () => {
     };
 
     const filterAdvanceReservedDates = (date) => {
-        const selectedDate = new Date(date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
+
         const minAdvanceReservation = new Date();
         minAdvanceReservation.setDate(today.getDate() + accommodation.MinimumAdvanceReservation);
         minAdvanceReservation.setHours(0, 0, 0, 0);
@@ -842,17 +835,87 @@ const ListingDetails = () => {
         }
     };
 
-    const combinedDateFilter = (date) => {
-        const selectedDate = new Date(date);
-        const today = new Date();
+    useEffect(() => {
+        const mergeDateRanges = (ranges) => {
+            if (!ranges || ranges.length === 0) return [];
+
+            const sortedRanges = ranges.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+            const mergedRanges = [];
+            let currentRange = sortedRanges[0];
+
+            for (let i = 1; i < sortedRanges.length; i++) {
+                const range = sortedRanges[i];
+                const currentEnd = new Date(currentRange.endDate);
+                const nextStart = new Date(range.startDate);
+
+                if (currentEnd >= nextStart || currentEnd.getTime() + 86400000 === nextStart.getTime()) {
+                    currentRange.endDate = new Date(Math.max(new Date(currentRange.endDate), new Date(range.endDate)));
+                } else {
+                    mergedRanges.push(currentRange);
+                    currentRange = range;
+                }
+            }
+
+            // Push the last range
+            mergedRanges.push(currentRange);
+            return mergedRanges;
+        };
+
+        // Merge the date ranges from the accommodation
+        if (accommodation?.DateRanges) {
+            const mergedRanges = mergeDateRanges(accommodation.DateRanges);
+            setAccommodation((prev) => ({
+                ...prev,
+                MergedDateRanges: mergedRanges,
+            }));
+        }
+    }, [accommodation?.DateRanges]);
+
+    const normalizeDate = (date) => {
+        const normalized = new Date(date);
+        normalized.setHours(0, 0, 0, 0);
+        return normalized;
+    };
+
+    const combinedCheckInDateFilter = (date) => {
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
 
         const isInThePast = selectedDate < today;
-        const isOutsideAvailableRange = filterDisabledDays(date);
+
+        const isOutsideMergedRanges =
+            accommodation?.MergedDateRanges &&
+            accommodation.MergedDateRanges.every((range) => {
+                const start = normalizeDate(new Date(range.startDate));
+                const end = normalizeDate(new Date(range.endDate));
+                return !(selectedDate >= start && selectedDate <= end);
+            });
+
         const isBooked = filterBookedDates(date);
         const isAdvanceReserved = filterAdvanceReservedDates(date);
 
-        return !(isOutsideAvailableRange || isBooked || isInThePast || !isAdvanceReserved);
-    };
+        return !isInThePast && !isOutsideMergedRanges && !isBooked && isAdvanceReserved;
+    }
+
+    const combinedCheckOutDateFilter = (date) => {
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
+
+        const isInThePast = selectedDate < today;
+
+        const isOutsideMergedRanges =
+            accommodation?.MergedDateRanges &&
+            accommodation.MergedDateRanges.every((range) => {
+                const start = normalizeDate(new Date(range.startDate));
+                const end = normalizeDate(new Date(range.endDate));
+                return !(selectedDate >= start && selectedDate <= end);
+            });
+
+        const isBooked = filterBookedDates(date);
+
+        return !isInThePast && !isOutsideMergedRanges && !isBooked;
+    }
 
     return (
         <main className="container">
@@ -892,7 +955,8 @@ const ListingDetails = () => {
                                 checkOut={checkOut}
                                 onCheckInChange={handleCheckInChange}
                                 onCheckOutChange={handleCheckOutChange}
-                                filter={combinedDateFilter}
+                                checkInFilter={combinedCheckInDateFilter}
+                                checkOutFilter={combinedCheckOutDateFilter}
                             />
                             </div>
                             <div>
@@ -1011,7 +1075,7 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={minStart && new Date(minStart)}
                                         maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={combinedDateFilter}
+                                        filterDate={combinedCheckInDateFilter}
                                         dateFormat="yyyy-MM-dd"
                                         placeholderText="DD/MM/YYYY"
                                     />
@@ -1028,19 +1092,29 @@ const ListingDetails = () => {
                                     <DatePicker
                                         id="checkOut"
                                         selected={checkOut}
-                                        className='datePickerLD'
+                                        className="datePickerLD"
                                         onChange={(date) => setCheckOut(date)}
                                         minDate={
                                             checkIn
-                                                ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
-                                                : (minEnd && new Date(minEnd))
+                                                ? accommodation.MinimumStay > 0
+                                                    ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
+                                                    : minEnd && new Date(minEnd)
+                                                : minEnd && new Date(minEnd)
                                         }
                                         maxDate={
                                             checkIn
-                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay * 24 * 60 * 60 * 1000)
-                                                : (maxEnd && new Date(maxEnd))
+                                                ? accommodation.MaximumStay > 0
+                                                    ? new Date(checkIn.getTime() + accommodation.MaximumStay * 24 * 60 * 60 * 1000)
+                                                    : maxEnd && new Date(maxEnd)
+                                                : maxEnd && new Date(maxEnd)
                                         }
-                                        filterDate={combinedDateFilter}
+                                        filterDate={(date) => {
+                                            if (checkIn) {
+                                                return combinedCheckOutDateFilter(date);
+                                            } else {
+                                                return combinedCheckInDateFilter(date);
+                                            }
+                                        }}
                                         dateFormat="yyyy-MM-dd"
                                         placeholderText="DD/MM/YYYY"
                                     />
