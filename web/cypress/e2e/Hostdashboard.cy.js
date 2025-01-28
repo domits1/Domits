@@ -1,111 +1,120 @@
-// import '../support/commands'
+import '../support/commands';
 
-// describe('LoginGuest dashboard testing', () => {
-//     beforeEach(() => {
-//         cy.loginAsGuest();
-//         cy.get('.personalMenu').first().click();
-//         cy.contains('button', 'Profile').click();
+describe('Landing Page and HostDashboard Tests', () => {
+  beforeEach(() => {
+    cy.viewport(1920, 1080);
+
+    cy.loginAsGuest();
+
+    // Mock API responses for the dashboard
+    cy.intercept('POST', '**/General-Payments-Production-Read-CheckIfStripeExists', {
+      statusCode: 200,
+      body: {
+        hasStripeAccount: JSON.stringify({ body: false }),
+      },
+    }).as('checkStripeAccount');
+
+    cy.intercept('POST', '**/FetchRecentAccommodations', {
+      statusCode: 200,
+      body: {
+        body: JSON.stringify([
+          {
+            ID: '1',
+            Title: 'Cozy Apartment',
+            AccommodationType: 'Apartment',
+            City: 'New York',
+            Street: 'Main St',
+            PostalCode: '12345',
+            Images: ['image1.jpg', 'image2.jpg'],
+            Drafted: false,
+            createdAt: '2023-01-01T12:00:00Z',
+            DateRanges: [
+              { startDate: '2023-02-01T00:00:00Z', endDate: '2023-02-10T00:00:00Z' },
+            ],
+          },
+          {
+            ID: '2',
+            Title: 'Luxury Boat',
+            AccommodationType: 'Boat',
+            City: 'Miami',
+            Harbour: 'Central Harbour',
+            Images: ['boat1.jpg', 'boat2.jpg'],
+            Drafted: true,
+            createdAt: '2023-01-05T12:00:00Z',
+            DateRanges: [],
+          },
+        ]),
+      },
+    }).as('fetchRecentAccommodations');
+
+    cy.stub(window, 'fetch')
+      .resolves({
+        json: () =>
+          Promise.resolve({
+            attributes: {
+              sub: 'user123',
+              email: 'testuser@example.com',
+              given_name: 'John Doe',
+              address: '123 Test Address',
+              phone_number: '+123456789',
+            },
+          }),
+      })
+      .as('mockAuth');
+  });
+
+  it('should load and display user information', () => {
+    cy.wait('@checkStripeAccount');
+
+    cy.contains('Welcome adaswrrwdadadsa').should('be.visible');
+    cy.contains('Email: kacperfl29@gmail.com').should('be.visible');
+    cy.contains('Name: adaswrrwdadadsa').should('be.visible');
+  });
+
+  it('should fetch and display recent accommodations', () => {
+    cy.wait('@fetchRecentAccommodations');
+
+    cy.contains('My recent listings:').should('be.visible');
+    cy.contains('Cozy Apartment').should('be.visible');
+    cy.contains('New York').should('be.visible');
+    cy.contains('Main St').should('be.visible');
+    cy.contains('12345').should('be.visible');
+    cy.contains('Luxury Boat').should('be.visible');
+    cy.contains('Miami').should('be.visible');
+    cy.contains('Central Harbour').should('be.visible');
+  });
 
 
-//         it('1. Fills basic information about the listing and add photos 2. selects guest type, the price of listing type of listing and xxx amount of m2', () => {
-//             cy.get('.container > :nth-child(1) > :nth-child(2) > :nth-child(2)').click();
-    
-//             cy.get(':nth-child(2) > :nth-child(1) > :nth-child(1) > .radioInput').click();
-//             cy.get(':nth-child(2) > :nth-child(1) > :nth-child(2) > .radioInput').click();
-//             cy.get(':nth-child(2) > :nth-child(3) > .radioInput').click();
-//             cy.get(':nth-child(4) > .radioInput').click();
-    
-//             cy.get(':nth-child(4) > :nth-child(1) > :nth-child(1) > .radioInput').click();
-//             cy.get(':nth-child(4) > :nth-child(2) > label > .radioInput').click();
-    
-//             cy.get('#title').should('be.visible').click();
-//             cy.focused().type('Czeladz, Poland{enter}');
-    
-//             cy.get('#Subtitle').should('be.visible').click();
-//             cy.focused().type('A small town in south of Poland{enter}');
-    
-//             cy.get('#description').should('be.visible').click();
-//             cy.focused().type('Czeladź is a small city in Silesian Voivodeship, Poland, known for its historical significance in coal mining. Today, it blends its industrial heritage with modern developments, offering a mix of cultural and recreational activities.{enter}');
-    
-//             cy.get(':nth-child(2) > .nextButtons').click();
-//             cy.get('input[type="file"]').selectFile('cypress/e2e/PhotosTest/czeladz_home.jpg');
-    
-//             cy.get(':nth-child(2) > .nextButtons').click();
-//             cy.get('input[type="file"]').selectFile('cypress/e2e/PhotosTest/czeladz_inside.jpg');
-    
-//             cy.get(':nth-child(2) > .nextButtons').click();
-//             cy.get('input[type="file"]').selectFile('cypress/e2e/PhotosTest/czeladz_home.jpg');
-    
-//             cy.get(':nth-child(2) > .nextButtons').click();
-//             cy.get('input[type="file"]').selectFile('cypress/e2e/PhotosTest/czeladz_inside.jpg');
-    
-//             cy.get(':nth-child(2) > .nextButtons').click();
-//             cy.get('input[type="file"]').selectFile('cypress/e2e/PhotosTest/czeladz_home.jpg');
-    
-//             cy.get('.container > :nth-child(1) > :nth-child(3) > :nth-child(2)').click();
-       
-//             cy.get(':nth-child(1) > :nth-child(2) > .room-features > .configurations > :nth-child(2) > .radioInput').click();
-    
-//             cy.get('.priceSlider ')
-//                 .invoke('attr', 'value', 80);
-    
-//             cy.get('.priceSlider ')
-//                 .invoke('attr', 'value', 80)
-//                 .trigger('change');
-    
-//             cy.get('input.textInput').click();
-//             cy.focused().type('85{enter}');
-    
-//             cy.get('select.textInput').select('Villa');
-    
-//             cy.get(':nth-child(2) > .configurations > :nth-child(3) > .radioInput').click();
-    
-//             //currently its not working in /enlist
-//             // cy.get('[disabled=""]').click();
-//         });
+  it('should navigate to listing details when clicking a live accommodation', () => {
+    cy.wait('@fetchRecentAccommodations');
 
-//        cy.get('.headerHostButton').should('be.visible').click({ force: true });
+    cy.contains('Cozy Apartment').click();
+    cy.url().should('include', '/listingdetails?ID=1');
+  });
 
-//         cy.get('.dashboardSection > :nth-child(4)').should('be.visible').click();
-//         cy.get('.boxColumns > .wijzer').should('be.visible').click();
-//     });
+  it('should display an alert when clicking a drafted accommodation', () => {
+    cy.wait('@fetchRecentAccommodations');
 
-//     it('validates correct input for guests, bedrooms, bathrooms and beds', () => {
-//         cy.get('#guests').clear().type('214').should('have.value', '214');
-//         cy.get('#guests').should('have.value', '214');
-    
+    cy.contains('Luxury Boat').click();
+    cy.on('window:alert', (text) => {
+      expect(text).to.contains('This accommodation is drafted and cannot be viewed in listing details!');
+    });
+  });
 
-//         cy.get('#bedrooms').clear().type('abc').should('not.have.value', 'abc');
-//         cy.get('#bedrooms').type('1').should('have.value', '1');
-    
+  it('should refresh accommodations when clicking the "Refresh" button', () => {
+    cy.wait('@fetchRecentAccommodations');
 
-//         cy.get('#bathrooms').clear().type('1').should('have.value', '1');
-//         cy.get('#bathrooms').clear().type('0').should('have.value', '0');
-//         cy.get('#bathrooms').clear().type('10000').should('have.value', '10000');
-    
+    cy.contains('Refresh').click();
+    cy.wait('@fetchRecentAccommodations'); 
+  });
 
-//         cy.get('#beds').type('1').should('have.value', '1');
-//     });
+  it('should navigate to the listing page when clicking "Go to listing"', () => {
+    cy.contains('Go to listing').click();
+    cy.url().should('include', '/hostdashboard/listings');
+  });
 
-//     it('manages selection in dropdown for country selection', () => {
-//         cy.get('.css-19bb58m').should('be.visible').click();
-//         cy.focused().type('Netherlands{enter}');
-
-//         cy.get('.css-19bb58m').should('be.visible').click();
-//         cy.focused().clear();
-
-//         cy.get('.css-19bb58m').should('be.visible').click();
-//         cy.focused().type('Poland{enter}');
-
-//         cy.get('#city').should('be.visible').click();
-//         cy.focused().type('Czeladz{enter}');
-
-//         cy.get('#street').should('be.visible').click();
-//         cy.focused().type('Tuwima 16{enter}');
-
-//         cy.get('#postal').should('be.visible').click();
-//         cy.focused().type('1423AD{enter}');
-//     });
-
-    
-// });
+  it('should navigate to the "Add accommodation" page when clicking the button', () => {
+    cy.contains('Add accommodation').click();
+    cy.url().should('include', '/enlist');
+  });
+});

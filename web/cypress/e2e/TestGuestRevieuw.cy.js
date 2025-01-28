@@ -46,7 +46,7 @@ describe('Guest Reviews', () => {
       }).as('deleteReview');
   
       cy.get('button')
-      cy.get(':nth-child(2) > .HostReviews_reviewDelete__5f2tq > .cross').click();
+      cy.get(':nth-child(2) > .HostReviews_reviewDelete__hg2oT > .cross').click();
 
       cy.wait('@deleteReview');
       cy.wait(500); 
