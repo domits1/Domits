@@ -30,4 +30,3 @@ describe('Homepage', () => {
     cy.wait(1000);
   });
 });
-  
