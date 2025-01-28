@@ -4,7 +4,17 @@ const useVoiceInput = (setUserInput) => {
     const [isRecording, setIsRecording] = useState(false);
 
     const handleVoiceInput = useCallback(() => {
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        // Check if SpeechRecognition is supported
+        const SpeechRecognition =
+            window.SpeechRecognition || window.webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            alert(
+                'Voice input is not supported in your browser. Please use a Chromium-based browser like Google Chrome.'
+            );
+            return;
+        }
+
         const recognition = new SpeechRecognition();
         recognition.lang = 'en-US';
         recognition.continuous = false;
@@ -17,13 +27,21 @@ const useVoiceInput = (setUserInput) => {
             setIsRecording(false);
         };
 
-        recognition.onerror = () => setIsRecording(false);
+        recognition.onerror = () => {
+            alert('Error occurred during voice input. Please try again.');
+            setIsRecording(false);
+        };
+
         recognition.onend = () => setIsRecording(false);
 
         recognition.start();
     }, [setUserInput]);
 
-    return { isRecording, handleVoiceInput };
+    const stopRecording = useCallback(() => {
+        setIsRecording(false);
+    }, []);
+
+    return { isRecording, handleVoiceInput, stopRecording };
 };
 
 export default useVoiceInput;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import styles from ".././hostdashboard/HostDashboard.module.css";
+import styles from "../../features/hostdashboard/HostDashboard.module.css";
 
 /**
  * @param images = images you want to slide through

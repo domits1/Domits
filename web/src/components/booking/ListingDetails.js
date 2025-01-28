@@ -1,13 +1,11 @@
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
-import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
-import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
-import HighChair from "../../images/high-chair.png";
 import BookingCalendar from "./BookingCalendar";
 import {Auth} from "aws-amplify";
 import {FaTimes} from 'react-icons/fa';
@@ -23,21 +21,16 @@ import FireExtinguisherIcon from '@mui/icons-material/FireExtinguisher';
 import AcUnitIcon from '@mui/icons-material/AcUnit';
 import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import KitchenIcon from '@mui/icons-material/Kitchen';
-import ChildFriendlyIcon from '@mui/icons-material/ChildFriendly';
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import GrassIcon from '@mui/icons-material/Grass';
 import BlenderIcon from '@mui/icons-material/Blender';
 import ExtensionIcon from '@mui/icons-material/Extension';
-import DirectionsBusIcon from '@mui/icons-material/DirectionsBus';
-import DirectionsCarIcon from '@mui/icons-material/DirectionsCar';
-import ChargingStationIcon from '@mui/icons-material/ChargingStation';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import CheckroomIcon from '@mui/icons-material/Checkroom';
 import TableBarIcon from '@mui/icons-material/TableBar';
 import CribIcon from '@mui/icons-material/Crib';
 import HvacIcon from '@mui/icons-material/Hvac';
-import FastfoodIcon from '@mui/icons-material/Fastfood';
 import FenceIcon from '@mui/icons-material/Fence';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import BedIcon from '@mui/icons-material/Bed';
@@ -96,6 +89,7 @@ import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import SevereColdIcon from '@mui/icons-material/SevereCold';
 import ChairAltIcon from '@mui/icons-material/ChairAlt';
+import {touristTaxRates, vatRates} from "../utils/CountryVATRatesAndTouristTaxes";
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -120,6 +114,8 @@ const ListingDetails = () => {
     const [totalPrice, setTotalPrice] = useState(0);
     const [serviceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
+    const [taxes, setTaxes] = useState(0);
+    const [amountOfGuest, setAmountOfGuest] = useState(0);
     const [hostID, setHostID] = useState();
     const [showAll, setShowAll] = useState(false);
     const [showModal, setShowModal] = useState(false);
@@ -340,12 +336,19 @@ const ListingDetails = () => {
 
     const FeaturePopup = ({features, onClose}) => {
         const categoryOrder = ['Essentials', 'Convenience', 'Accessibility', 'Bedroom'];
-
         const sortedCategories = Object.keys(features).sort((a, b) => {
-            const orderA = categoryOrder.indexOf(a) !== -1 ? categoryOrder.indexOf(a) : Infinity;
-            const orderB = categoryOrder.indexOf(b) !== -1 ? categoryOrder.indexOf(b) : Infinity;
+            const indexA = categoryOrder.indexOf(a);
+            const indexB = categoryOrder.indexOf(b);
+            const orderA = indexA !== -1 ? indexA : categoryOrder.length;
+            const orderB = indexB !== -1 ? indexB : categoryOrder.length;
+
+            if (orderA === categoryOrder.length && orderB === categoryOrder.length) {
+                return a.localeCompare(b);
+            }
             return orderA - orderB;
         });
+
+        console.log('Sorted categories:', sortedCategories);
 
         return (
             <div className="modal-overlay" onClick={onClose}>
@@ -597,6 +600,14 @@ const ListingDetails = () => {
         restrictCheckInToDateRange();
     }, [checkOut]);
 
+    const handleCheckInChange = (date) => {
+        setCheckIn(date);
+    };
+
+    const handleCheckOutChange = (date) => {
+        setCheckOut(date);
+    };
+
     const checkFormValidity = () => {
         if (checkIn && checkOut && adults > 0 && !inputError) {
             if (new Date(checkOut) > new Date(checkIn)) {
@@ -617,11 +628,32 @@ const ListingDetails = () => {
             const basePrice = nights * accommodation.Rent * 100;
             const cleaningFee = accommodation.CleaningFee ? parseFloat(accommodation.CleaningFee * 100) : 0;
             const calculatedServiceFee = basePrice * 0.15;
-            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee;
+
+            const countryVAT = vatRates.find(rate => rate.country === accommodation?.Country)?.vat || "0";
+            const vatRate = parseFloat(countryVAT);
+
+            const countryTouristTax = touristTaxRates.find(rate => rate.country === accommodation?.Country)?.touristTax || "0";
+
+
+            const calculatedVatRate = parseFloat(basePrice * vatRate / 100);
+
+            let calculatedTouristTaxRate;
+            if (countryTouristTax.includes('%')) {
+                const taxRate = parseFloat(countryTouristTax.replace('%', ''));
+                calculatedTouristTaxRate = parseFloat(basePrice * taxRate / 100);
+            } else if (countryTouristTax.includes('EUR') || countryTouristTax.includes('USD') || countryTouristTax.includes('GBP')) {
+                calculatedTouristTaxRate = parseFloat((countryTouristTax.replace(/[^\d.]/g, '') || 0) * basePrice / 100);
+            } else {
+                calculatedTouristTaxRate = 0;
+            }
+
+            const calculatedTaxes = calculatedVatRate + calculatedTouristTaxRate;
+            const calculatedTotalPrice = basePrice + calculatedServiceFee + cleaningFee + calculatedVatRate + calculatedTouristTaxRate;
 
             setServiceFee(calculatedServiceFee / 100);
-            setTotalPrice(calculatedTotalPrice / 100);
+            setTotalPrice((calculatedTotalPrice / 100));
             setCleaningFee(cleaningFee / 100);
+            setTaxes(calculatedTaxes / 100);
         };
 
         calculateTotal();
@@ -661,6 +693,11 @@ const ListingDetails = () => {
         }
     }
 
+    useEffect(() => {
+        const totalGuests = adults + children + pets;
+        setAmountOfGuest(totalGuests);
+    }, [adults, children, pets]);
+
     const handleBooking = () => {
         const details = {
             id,
@@ -669,7 +706,10 @@ const ListingDetails = () => {
             adults,
             kids: children,
             pets,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes,
+            serviceFee
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
@@ -734,14 +774,14 @@ const ListingDetails = () => {
     };
 
     const isDateInRange = (date, startDate, endDate) => {
-        const selectedDate = new Date(date);
-        const rangeStart = new Date(startDate);
-        const rangeEnd = new Date(endDate);
+        const selectedDate = normalizeDate(new Date(date));
+        const rangeStart = normalizeDate(new Date(startDate));
+        const rangeEnd = normalizeDate(new Date(endDate));
         return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
     };
 
     const filterBookedDates = (date) => {
-        const selectedDate = new Date(date);
+        const selectedDate = normalizeDate(new Date(date));
 
         return bookedDates.some(bookedRange => {
             const start = new Date(bookedRange[0].S);
@@ -779,11 +819,12 @@ const ListingDetails = () => {
     };
 
     const filterAdvanceReservedDates = (date) => {
-        const selectedDate = new Date(date);
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
+
         const minAdvanceReservation = new Date();
         minAdvanceReservation.setDate(today.getDate() + accommodation.MinimumAdvanceReservation);
+        minAdvanceReservation.setHours(0, 0, 0, 0);
         const maxAdvanceReservation = new Date();
         maxAdvanceReservation.setDate(today.getDate() + accommodation.MaximumAdvanceReservation);
 
@@ -794,18 +835,87 @@ const ListingDetails = () => {
         }
     };
 
-    const combinedDateFilter = (date) => {
-        const selectedDate = new Date(date);
-        const today = new Date();
+    useEffect(() => {
+        const mergeDateRanges = (ranges) => {
+            if (!ranges || ranges.length === 0) return [];
+
+            const sortedRanges = ranges.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+            const mergedRanges = [];
+            let currentRange = sortedRanges[0];
+
+            for (let i = 1; i < sortedRanges.length; i++) {
+                const range = sortedRanges[i];
+                const currentEnd = new Date(currentRange.endDate);
+                const nextStart = new Date(range.startDate);
+
+                if (currentEnd >= nextStart || currentEnd.getTime() + 86400000 === nextStart.getTime()) {
+                    currentRange.endDate = new Date(Math.max(new Date(currentRange.endDate), new Date(range.endDate)));
+                } else {
+                    mergedRanges.push(currentRange);
+                    currentRange = range;
+                }
+            }
+
+            // Push the last range
+            mergedRanges.push(currentRange);
+            return mergedRanges;
+        };
+
+        // Merge the date ranges from the accommodation
+        if (accommodation?.DateRanges) {
+            const mergedRanges = mergeDateRanges(accommodation.DateRanges);
+            setAccommodation((prev) => ({
+                ...prev,
+                MergedDateRanges: mergedRanges,
+            }));
+        }
+    }, [accommodation?.DateRanges]);
+
+    const normalizeDate = (date) => {
+        const normalized = new Date(date);
+        normalized.setHours(0, 0, 0, 0);
+        return normalized;
+    };
+
+    const combinedCheckInDateFilter = (date) => {
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
 
         const isInThePast = selectedDate < today;
-        const isOutsideAvailableRange = filterDisabledDays(date);
+
+        const isOutsideMergedRanges =
+            accommodation?.MergedDateRanges &&
+            accommodation.MergedDateRanges.every((range) => {
+                const start = normalizeDate(new Date(range.startDate));
+                const end = normalizeDate(new Date(range.endDate));
+                return !(selectedDate >= start && selectedDate <= end);
+            });
+
         const isBooked = filterBookedDates(date);
         const isAdvanceReserved = filterAdvanceReservedDates(date);
 
-        return !(isOutsideAvailableRange || isBooked || isInThePast || !isAdvanceReserved);
-    };
+        return !isInThePast && !isOutsideMergedRanges && !isBooked && isAdvanceReserved;
+    }
 
+    const combinedCheckOutDateFilter = (date) => {
+        const selectedDate = normalizeDate(new Date(date));
+        const today = normalizeDate(new Date());
+
+        const isInThePast = selectedDate < today;
+
+        const isOutsideMergedRanges =
+            accommodation?.MergedDateRanges &&
+            accommodation.MergedDateRanges.every((range) => {
+                const start = normalizeDate(new Date(range.startDate));
+                const end = normalizeDate(new Date(range.endDate));
+                return !(selectedDate >= start && selectedDate <= end);
+            });
+
+        const isBooked = filterBookedDates(date);
+
+        return !isInThePast && !isOutsideMergedRanges && !isBooked;
+    }
 
     return (
         <main className="container">
@@ -814,10 +924,10 @@ const ListingDetails = () => {
                     {accommodation && (
                         <div>
                             <div>
-                                <Link to="/">
+                                <Link to="/home">
                                     <p className="backButton">Go Back</p>
                                 </Link>
-                                <h1>
+                                <h1 className='accommodationTitle'>
                                     {accommodation.Title} {isDemo && "(DEMO)"}
                                 </h1>
                             </div>
@@ -828,7 +938,7 @@ const ListingDetails = () => {
 
                                 <p className='details'>
                                     <p className="placeName">{accommodation.City}, {accommodation.Country} </p>
-                                    {`€ ${accommodation.Rent} per night • ${accommodation.GuestAmount} guests • 
+                                     {`€ ${accommodation.Rent} ${accommodation.AccommodationType === 'Boat' ? 'per day' : 'per night'} • ${accommodation.GuestAmount} guests • 
                                     ${accommodation.Beds} beds • 
                                     ${accommodation.Bedrooms} bedrooms • ${accommodation.Bathrooms} bathrooms`}
                                 </p>
@@ -837,8 +947,30 @@ const ListingDetails = () => {
                             <div>
                                 <hr className="pageDividerr"/>
                                 <h3>Calendar overview:</h3>
-                                <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/>
+                                {/* <BookingCalendar passedProp={accommodation} checkIn={checkIn} checkOut={checkOut}/> */}
+
+                                <BookingCalendar
+                                passedProp={accommodation}
+                                checkIn={checkIn}
+                                checkOut={checkOut}
+                                onCheckInChange={handleCheckInChange}
+                                onCheckOutChange={handleCheckOutChange}
+                                checkInFilter={combinedCheckInDateFilter}
+                                checkOutFilter={combinedCheckOutDateFilter}
+                            />
                             </div>
+                            <div>
+                            <hr className="pageDividerr" />
+                            <h3 className="houseRulesTitle">House rules</h3>
+                            <p className="houseRulesDetails">
+                                {accommodation.AllowParties ? 'Parties Allowed' : 'No Parties'} • {accommodation.AllowPets ? 'Pets Allowed' : 'No Pets'} • {accommodation.AllowSmoking ? 'Smoking Allowed' : 'No Smoking'}
+                            </p>
+                            <div className="checkInCheckOut">
+                                <div className="checkIn">Check-in From: {accommodation.CheckIn?.From} To: {accommodation.CheckIn?.Til}</div>
+                                <div className="checkOut">Check-out From: {accommodation.CheckOut?.From} To: {accommodation.CheckOut?.Til}</div>
+                            </div>
+                        </div>
+
                             <div>
                                 <hr className="pageDividerr"/>
                                 <h3>This place offers the following:</h3>
@@ -903,7 +1035,7 @@ const ListingDetails = () => {
                                             </section>
                                             <section className="card-bottom">
                                                 <div>
-                                                    <button className='button'>Contact host</button>
+                                                    <button className='hostButton'>Contact host</button>
                                                 </div>
                                             </section>
                                         </div>
@@ -916,13 +1048,18 @@ const ListingDetails = () => {
 
                 {accommodation && (
                     <aside className='detailSummary'>
+                        <div className="booking-info">
+                            <p>Booking Info</p>
+                            <div className="booking-info-tooltip">Stay
+                                for {accommodation.MinimumStay} – {accommodation.MaximumStay} nights.
+                                <br/>
+                                Book {accommodation.MinimumAdvanceReservation} – {accommodation.MaximumAdvanceReservation} days
+                                in
+                                advance.
+                            </div>
+                        </div>
                         <div className="summary-section">
-                            {checkIn && checkOut && (
-                                <div className="nights">
-                                    <p className="amountNights">{Math.round((new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24))} night(s)</p>
-                                </div>
-                            )}
-                            <h2>
+                            <h2 className='price-per-night'>
                                 €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
                             </h2>
 
@@ -938,8 +1075,9 @@ const ListingDetails = () => {
                                         onChange={(date) => setCheckIn(date)}
                                         minDate={minStart && new Date(minStart)}
                                         maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={combinedDateFilter}
+                                        filterDate={combinedCheckInDateFilter}
                                         dateFormat="yyyy-MM-dd"
+                                        placeholderText="DD/MM/YYYY"
                                     />
                                     {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
                                                          style={{
@@ -954,20 +1092,31 @@ const ListingDetails = () => {
                                     <DatePicker
                                         id="checkOut"
                                         selected={checkOut}
-                                        className='datePickerLD'
+                                        className="datePickerLD"
                                         onChange={(date) => setCheckOut(date)}
                                         minDate={
                                             checkIn
-                                                ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
-                                                : (minEnd && new Date(minEnd))
+                                                ? accommodation.MinimumStay > 0
+                                                    ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
+                                                    : minEnd && new Date(minEnd)
+                                                : minEnd && new Date(minEnd)
                                         }
                                         maxDate={
                                             checkIn
-                                                ? new Date(checkIn.getTime() + accommodation.MaximumStay * 24 * 60 * 60 * 1000)
-                                                : (maxEnd && new Date(maxEnd))
+                                                ? accommodation.MaximumStay > 0
+                                                    ? new Date(checkIn.getTime() + accommodation.MaximumStay * 24 * 60 * 60 * 1000)
+                                                    : maxEnd && new Date(maxEnd)
+                                                : maxEnd && new Date(maxEnd)
                                         }
-                                        filterDate={combinedDateFilter}
+                                        filterDate={(date) => {
+                                            if (checkIn) {
+                                                return combinedCheckOutDateFilter(date);
+                                            } else {
+                                                return combinedCheckInDateFilter(date);
+                                            }
+                                        }}
                                         dateFormat="yyyy-MM-dd"
+                                        placeholderText="DD/MM/YYYY"
                                     />
                                     {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
                                                           style={{
@@ -1037,12 +1186,6 @@ const ListingDetails = () => {
                                         </div>
                                     )}
                                 </div>
-                                <p>Minimum amount of days to stay: {accommodation.MinimumStay}</p>
-                                <p>Minimum amount of days to reservation in
-                                    advance: {accommodation.MinimumAdvanceReservation}</p>
-                                <p>Maximum amount of days to stay: {accommodation.MaximumStay}</p>
-                                <p>Maximum amount of days to reservation in
-                                    advance: {accommodation.MaximumAdvanceReservation}</p>
                                 <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                             </div>
 
@@ -1079,6 +1222,10 @@ const ListingDetails = () => {
                                     <div className="price-item">
                                         <p>Domits service fee</p>
                                         <p>€{serviceFee.toFixed(2)}</p>
+                                    </div>
+                                    <div className="price-item">
+                                        <p>Taxes</p>
+                                        <p>€{taxes.toFixed(2)}</p>
                                     </div>
                                     <div className="total">
                                         <p>Total</p>

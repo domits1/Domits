@@ -31,9 +31,9 @@ import BookingConfirmation from "./components/booking/PaymentConfirm";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
-import Disclaimers from "./components/disclaimers/Disclaimers";
-import Policy from "./components/disclaimers/Policy";
-import Terms from "./components/disclaimers/Terms";
+import Disclaimers from "./pages/disclaimers/Disclaimers";
+import Policy from "./pages/policy/Policy";
+import Terms from "./pages/terms/Terms";
 import Login from "./components/base/Login";
 import Register from "./components/base/Register";
 import ConfirmRegister from "./components/base/confirmEmail/ConfirmEmailView.js";
@@ -66,10 +66,10 @@ import PhoneNumberConfirmView from "./components/hostverification/PhoneNumberCon
 import { initializeUserAttributes } from "./components/utils/userAttributes";
 import PageNotFound from "./components/error/404NotFound";
 import StripeCallback from "./components/stripe/StripeCallback";
-import ReviewPage from "./components/review/ReviewPage";
+import ReviewPage from "./features/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
-import HostFinanceTab from "./components/hostdashboard/HostFinanceTab";
-// import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
+import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
+import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
 
 import AccommodationTypeView from "./components/hostonboarding/views/ListingTypeView.js";
 import GuestAccessView from "./components/hostonboarding/views/HouseTypeView.js";

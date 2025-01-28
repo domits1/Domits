@@ -1,7 +1,7 @@
 import React from 'react';
 import {View, ScrollView, StyleSheet, Button, SafeAreaView} from 'react-native';
 import Header from '../header/header';
-import Accommodations from '../components/Acommodations'; // Import the new component
+import Accommodations from './Acommodations'; // Import the new component
 
 function HomeScreen({navigation}) {
   return (

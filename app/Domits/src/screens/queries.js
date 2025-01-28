@@ -120,6 +120,8 @@ export const listChats = /* GraphQL */ `query ListChats(
   listChats(filter: $filter, limit: $limit, nextToken: $nextToken) {
     items {
       id
+      userId
+      recipientId
       text
       email
       recipientEmail

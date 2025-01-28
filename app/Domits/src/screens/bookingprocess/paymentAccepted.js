@@ -99,13 +99,13 @@ const BookingConfirmationPage = ({navigation, route}) => {
           </Text>
         </View>
 
-        <TouchableOpacity
-          style={styles.viewBookingButton}
-          onPress={() => {
-            handleButton();
-          }}>
-          <Text style={styles.viewBookingButtonText}>View booking</Text>
-        </TouchableOpacity>
+        {/*<TouchableOpacity*/}
+        {/*  style={styles.viewBookingButton}*/}
+        {/*  onPress={() => {*/}
+        {/*    handleButton();*/}
+        {/*  }}>*/}
+        {/*  <Text style={styles.viewBookingButtonText}>View booking</Text>*/}
+        {/*</TouchableOpacity>*/}
 
         <View style={styles.navbar}>
           {/* Place navigation bar icons here */}

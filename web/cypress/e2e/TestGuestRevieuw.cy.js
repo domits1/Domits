@@ -18,15 +18,17 @@ describe('Guest Reviews', () => {
       cy.get('.header-links > .headerHostButton').click();
       cy.wait(500); 
 
-      cy.get('.dashboardSections > :nth-child(5)').click(); 
+      cy.get('.dashboardSections > :nth-child(4)').click(); 
   
       cy.wait('@fetchReviews');
       cy.wait('@fetchReceivedReviews');
-  
+      cy.wait(500); 
+
       cy.contains('My reviews(2)').should('exist');
       cy.contains('Great service').should('exist');
       cy.contains('Good experience').should('exist');
-  
+      cy.wait(500); 
+
       cy.contains('Received reviews(1)').should('exist');
       cy.contains('Awesome customer').should('exist');
     });
@@ -35,7 +37,7 @@ describe('Guest Reviews', () => {
       cy.get('.header-links > .headerHostButton').click();
       cy.wait(500); 
   
-      cy.get('.dashboardSections > :nth-child(5)').click(); 
+      cy.get('.dashboardSections > :nth-child(4)').click(); 
   
       cy.wait('@fetchReviews');
  
@@ -47,7 +49,8 @@ describe('Guest Reviews', () => {
       cy.get(':nth-child(2) > .HostReviews_reviewDelete__5f2tq > .cross').click();
 
       cy.wait('@deleteReview');
-  
+      cy.wait(500); 
+
       cy.contains('Great service').should('not.exist');
     });
   });

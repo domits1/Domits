@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../base/Register";
 import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
-import ImageGallery from './ImageGallery';
+import Calender from '@mui/icons-material/CalendarTodayOutlined';
+import People from '@mui/icons-material/PeopleAltOutlined';
+import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
+import Back from '@mui/icons-material/KeyboardBackspace';
 
 const stripePromise = loadStripe('pk_live_51OAG6OGiInrsWMEcQy4ohaAZyT7tEMSEs23llcw2kr2XHdAWVcB6Tm8F71wsG8rB0AHgh4SJDkyBymhi82WABR6j00zJtMkpZ1');
 
@@ -22,12 +25,12 @@ const BookingOverview = () => {
     const navigate = useNavigate();
     const [bookingDetails, setBookingDetails] = useState(null);
     const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [userData, setUserData] = useState({ username: "", email: "" });
+    const [userData, setUserData] = useState({ username: "", email: "", phone_number: "" });
     const [cognitoUserId, setCognitoUserId] = useState(null);
     const [ownerStripeId, setOwnerStripeId] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [editMode, setEditMode] = useState(false); // New state for edit mode
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
     const [accommodation, setAccommodation] = useState(null);
     const [isProcessing, setIsProcessing] = useState(false);
@@ -39,6 +42,10 @@ const BookingOverview = () => {
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
     const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100;
+    const amountOfGuest = searchParams.get('amountOfGuest');
+    const taxes = parseFloat(searchParams.get('taxes')) * 100;
+    const serviceFee = parseFloat(searchParams.get('serviceFee')) * 100;
+
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
 
@@ -58,7 +65,7 @@ const BookingOverview = () => {
                 const responseData = await response.json();
                 const data = JSON.parse(responseData.body);
                 setAccommodation(data);
-                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets });
+                setBookingDetails({ accommodation: data, checkIn, checkOut, adults, kids, pets, amountOfGuest });
             } catch (error) {
                 console.error('Error fetching accommodation data:', error);
             }
@@ -75,6 +82,7 @@ const BookingOverview = () => {
                 setUserData({
                     username: userAttributes['custom:username'],
                     email: userAttributes['email'],
+                    phone_number: userAttributes['phone_number'],
                 });
                 setCognitoUserId(userAttributes.sub);
             } catch (error) {
@@ -112,13 +120,25 @@ const BookingOverview = () => {
         }
     }, [accommodation]);
 
+    useEffect(() => {
+        const checkAuthentication = async () => {
+            try {
+                const user = await Auth.currentAuthenticatedUser();
+                setIsAuthenticated(true);
+            } catch {
+                setIsAuthenticated(false);
+            }
+        };
+        checkAuthentication();
+    }, []);
+
+
+
+
     if (!bookingDetails || !accommodation) {
         return <div>Loading...</div>;
     }
 
-    const handleEditClick = () => {
-        setEditMode(!editMode);
-    };
 
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
@@ -144,7 +164,7 @@ const BookingOverview = () => {
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
-        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee);
+        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee + taxes);
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -158,7 +178,9 @@ const BookingOverview = () => {
             price: totalAmount / 100,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
@@ -170,7 +192,9 @@ const BookingOverview = () => {
             price: totalAmount / 100,
             startDate,
             endDate,
-            cleaningFee
+            cleaningFee,
+            amountOfGuest,
+            taxes
         }).toString();
 
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
@@ -223,106 +247,110 @@ const BookingOverview = () => {
     };
 
     return (
-            <main style={{ cursor: isProcessing ? 'wait' : 'default' }}>
-                <div className="progress-bar-container">
-                        <div className="circle completed">
-                            <span className="number-complete">1</span>
-                        </div>
-                        <div className="line completed"></div>
-                        <div className="circle half-completed">
-                            <span className="number">2</span>
-                        </div>
-                        <div className="line"></div>
-                        <div className="circle">
-                            <span className="number">3</span>
-                        </div>
+        <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
+        <div className="booking-header">
+            <div className="goBackButton">
+                <Link to={`/listingdetails?ID=${accommodation.ID}`}>
+                    <Back />
+                </Link>
+            </div>
+            <h1>Booking Overview</h1>
+        </div>
+    
+        <div className="Bookingcontainer">
+            {/* Right Panel */}
+            <div className="right-panel">
+                <div>Your journey</div>
+                <div className="booking-details">
+                    <div className="detail-row">
+                        <span className="detail-label"><Calender /> Date:</span>
+                        <span className="detail-value">
+                            {DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}
+                        </span>
                     </div>
-                <div className="Bookingcontainer">
-                {/* Left Panel: Image and Cards */}
+                    <div className="detail-row">
+                        <span className="detail-label"><People /> Guests:</span>
+                        <span className="detail-value">{adults} adults - {kids} kids</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="detail-label"><Cleaning /> Cleaning Fee:</span>
+                        <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                    </div>
+                </div>
+    
+                {!isLoggedIn ? (
+                    <div>
+                        <h2>Please Register or Log In to Continue</h2>
+                        <Register />
+                    </div>
+                ) : (
+                    <button
+                        type="submit"
+                        className="confirm-pay-button"
+                        onClick={handleConfirmAndPay}
+                        disabled={loading || !ownerStripeId}>
+                        {loading ? 'Loading...' : 'Confirm & Pay'}
+                    </button>
+                )}
+            </div>
+    
+            {/* Left Panel */}
+            <div className="booking-details-container">
+                <div className="booking-header1">Booking Details</div>
                 <div className="left-panel">
-                    <ImageGallery images={Object.values(accommodation.Images)} />
-
-                    {/* Card Container under Image */}
-                    <div className="card-container">
-                        <div className="card">
-                            <h3>Guest</h3>
-                            <p>{adults} adults - {kids} kids</p>
-                        </div>
-                        <div className="card">
-                            <h3>Extra Cleaning</h3>
-                            <p>{pets ? "Selected" : "Not selected"}</p>
-                        </div>
-                        <div className="card">
-                            <h3>Dates</h3>
-                            <p>{DateFormatterDD_MM_YYYY(checkIn)} - {DateFormatterDD_MM_YYYY(checkOut)}</p>
+                    <div className="booking-details-name">
+                        <img
+                            className="bookingDetailsImage"
+                            src={accommodation.Images && Object.values(accommodation.Images)[0]}
+                            alt="Accommodation"
+                        />
+                        <div>
+                            <h1 className="booking-title">{accommodation.Title}</h1>
+                            <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
                         </div>
                     </div>
-                </div>
+                    <hr />
 
-                {/* Right Panel */}
-                <div className="right-panel">
-                    <h1>{accommodation.Title}</h1>
-                    <span className="acco-title-span">{accommodation.City}, {accommodation.Country}</span>
-                    <div className="main-card">
-                        <h2>Booking Details </h2>
-
-                        {/* Editable Fields */}
-                        <div className="detail-row">
-                            <span className="detail-label">Main Booker:</span>
-                            {editMode ? (
-                                <input className="text-field" type="text" defaultValue={userData.username} />
-                            ) : (
-                                <span className="detail-value">{userData.username || "Name missing"}</span>
-                            )}
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Amount of Guests:</span>
-                            {editMode ? (
-                                <input className="text-field" type="text" defaultValue={`${adults} adults - ${kids} kids`} />
-                            ) : (
-                                <span className="detail-value">{adults} adults - {kids} kids</span>
-                            )}
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Email Address:</span>
-                            {editMode ? (
-                                <input className="text-field" type="text" defaultValue={userData.email} />
-                            ) : (
-                                <span className="detail-value">{userData.email || "Email missing"}</span>
-                            )}
-                        </div>
-                        <div className="detail-row">
-                            <span className="detail-label">Phone Number:</span>
-                            {editMode ? (
-                                <input className="text-field" type="text" defaultValue={userData.phone_number} />
-                            ) : (
-                                <span className="detail-value">{userData.phone_number || "Phone number missing"}</span>
-                            )}
-                        </div>
-                        <span onClick={handleEditClick} style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline' }}>Change</span>
-
-                        <div className="checkbox-container">
-                            <label>
-                                <input type="checkbox" />
-                                I have read and accept the <a href="#" style={{ color: 'green' }}>accommodation rules</a>
-                            </label>
-                            <label>
-                                <input type="checkbox" />
-                                I have read and accept the <a href="#" style={{ color: 'green' }}>privacy agreement and terms and conditions</a>
-                            </label>
-                        </div>
-
-                        <button type="submit" className="confirm-pay-button" onClick={handleConfirmAndPay} disabled={loading || !ownerStripeId}>
-                            {loading ? 'Loading...' : 'Confirm & Pay'}
-                        </button>
+                    <div className="detail-row">
+                        <span className="detail-label">Price:</span>
+                        <span className="detail-value">€ {accommodationPrice.toFixed(2)}</span>
+                    </div>
+    
+                    <div className="detail-row">
+                        <span className="detail-label">Taxes:</span>
+                        <span className="detail-value">€ {(taxes / 100).toFixed(2)}</span>
                     </div>
 
+                    <div className="detail-row">
+                        <span className="detail-label">Cleaning Fee:</span>
+                        <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                    </div>
+                    
+                    <div className="detail-row">
+                        <span className="detail-label">Service Fee:</span>
+                        <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
+                    </div>
+                    <div className="detail-row">
+                        <span className="detail-label">Domits fee:</span>
+                        <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
+                    </div>
+
+                    <div className="detail-row total-price">
+                        <span className="detail-label">Total:</span>
+                        <span className="detail-value">
+                        € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + serviceFee / 100).toFixed(2)}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    
 
 
-                </div>
-                </div>
-            </main>
     );
+
 
 };
 
