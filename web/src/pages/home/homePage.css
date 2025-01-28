@@ -51,9 +51,9 @@ body.hide-header .app-header {
 }
 
 .domits-subHead {
-  margin-left: 5vw;
   font-size: 2.5rem;
   font-weight: bold;
+  padding-left: 9.5rem;
 }
 
 .domits-iconsContainer {
@@ -128,7 +128,7 @@ body.hide-header .app-header {
   flex-direction: row;
   align-items: flex-start;
   gap: 25px;
-  margin-left: 1vw;
+  margin-left: 7vw;
   padding-bottom: 2vh;
 }
 
