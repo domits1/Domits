@@ -224,17 +224,9 @@ function App() {
                   <Route path="/enlist" element={<HostOnboarding />} />
 
                   {/* Verification */}
-                  <Route 
-                  path="/verify" 
-                  element={
-                    <GuestProtectedRoute>
-                        <Routes>
-                            <Route path="/" element={<HostVerificationView />}/>
-                            <Route path="/verify/phonenumber" element={<PhoneNumberView />}/>
-                            <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />}/>
-                        </Routes>
-                    </GuestProtectedRoute>
-                } />
+                  <Route path="/verify" element={<HostVerificationView />}/>
+                  <Route path="/verify/phonenumber" element={<PhoneNumberView />}/>
+                  <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />}/>
 
                   <Route
                     path="/hostdashboard"

@@ -31,8 +31,8 @@ function useStripeVerification(userData) {
       }
       if (status.verificationStatus === "verified") {
         setVerificationStatus({
-          Image: <img width='16px' height='16px'  src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Eo_circle_green_checkmark.svg/2048px-Eo_circle_green_checkmark.svg.png"/>,
           status: "Completed",
+          Image: <img width='16px' height='16px'  src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Eo_circle_green_checkmark.svg/2048px-Eo_circle_green_checkmark.svg.png"/>,
         });
       }
       setStripeLoading(false);
