@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
 const useFormStore = create((set) => ({
+  completedSteps: [],
   accommodationDetails: {
     type: "",
     title: "",
@@ -59,8 +60,8 @@ const useFormStore = create((set) => ({
     availability: {
       MinimumStay: 1,
       MaximumStay: 30,
-      MinimumAdvanceReservation: 1,
-      MaximumAdvanceReservation: 1,
+      MinimumAdvancedReservation: 1,
+      MaximumAdvancedReservation: 1,
       selectedDates: [],
     },
     registrationNumber: "",
@@ -249,13 +250,17 @@ const useFormStore = create((set) => ({
         },
       },
     })),
-    setRegistrationNumber: (registrationNumber) =>
-      set((state) => ({
-        accommodationDetails: {
-          ...state.accommodationDetails,
-          registrationNumber: registrationNumber,
-        },
-      })),
+  setRegistrationNumber: (registrationNumber) =>
+    set((state) => ({
+      accommodationDetails: {
+        ...state.accommodationDetails,
+        registrationNumber: registrationNumber,
+      },
+    })),
+  markStepComplete: (step) =>
+    set((state) => ({
+      completedSteps: [...state.completedSteps, step],
+    })),
   resetAccommodationDetails: () =>
     set({
       accommodationDetails: { type: "" },
