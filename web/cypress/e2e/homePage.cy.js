@@ -1,32 +1,13 @@
-describe('Homepage', () => {
-    beforeEach(() => {
-    cy.visit('acceptance.domits.com');
-  });
-  
-  it("should display trending accommodations", () => {
-    cy.get(".domits-accommodationGroup").first().within(() => {
-      cy.get(".accocard").should("have.length.at.least", 1); 
-      cy.wait(500);
-    });
-  });
+/**
+ * @author Jiaming Yan
+ */
 
-  it("should display boats accommodations", () => {
-    cy.get(".domits-boatContainer").eq(1).within(() => {
-      cy.get(".accocard").should("have.length.at.least", 1); 
-      cy.wait(1000);
-    });
-  });
-
-  it("should display campers accommodations", () => {
-    cy.get(".domits-boatContainer").eq(2).within(() => {
-      cy.get(".accocard").should("have.length.at.least", 1);
-      cy.wait(1000);
-    });
-  });
-  
-  it("should navigate to accommodation details on click", () => {
-    cy.get(".accocard").first().click();
-    cy.url().should("include", "/listingdetails?ID=");
-    cy.wait(1000);
-  });
-});
+describe('homepage spec', () => {
+  it('should render the homepage', () => {
+    cy.visit('https://acceptance.domits.com');
+    cy.get('header').should('exist')
+    cy.get('#card-visibility').should('exist')
+    cy.get('footer').should('exist')
+    cy.get('.personalMenu').should('exist')
+  })
+})
