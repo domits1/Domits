@@ -14,7 +14,9 @@ body.hide-header .app-header {
 }
 
 .domits-accommodationGroup {
-padding-left: 10vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .domits-searchContainer {
