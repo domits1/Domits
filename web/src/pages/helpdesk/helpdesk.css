@@ -1,0 +1,39 @@
+.helpContainer {
+  width: 93%;
+  margin: 50px auto 0 auto;
+}
+
+.helpSearchWrapper {
+  position: relative;
+  width: 40%;
+  max-width: 100%;
+}
+
+.helpSearchInput {
+  width: 100%;
+  padding: 15px 10px;
+  border: 2px solid var(--primary-color);
+  border-radius: 5px;
+}
+
+.helpSearchButton {
+  position: absolute;
+  border-radius: 5px;
+  border: none;
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 500;
+  right: 1px;
+  top: 5px;
+  padding: 7px 15px;
+}
+
+.helpSearchButton:hover {
+  background-color: #367a4a;
+}
+
+@media (max-width: 900px) {
+  .helpSearchWrapper {
+    width: 100%;
+  }
+}

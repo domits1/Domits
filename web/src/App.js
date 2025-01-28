@@ -12,7 +12,7 @@ import Whydomits from "./pages/whydomits/Whydomitstwo.js";
 import Release from "./pages/productupdates/release.js";
 import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import Datasafety from "./pages/datasafety/datasafety.js";
-import Helpdesk from "./pages/whydomits/Whydomits";
+import Helpdesk from "./pages/helpdesk/Helpdesk.js";
 import Howitworks from "./pages/howitworks/Howitworks.js";
 import Careers from "./pages/careers/Careers";
 import JobDetails from "./pages/careers/jobDetails.js";
