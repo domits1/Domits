@@ -72,19 +72,19 @@ import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
 
 
-import AccommodationTypeView from './features/hostonboarding/views/AccommodationTypeView.js';
-import GuestAccessView from './features/hostonboarding/views/GuestAccessView.js';
+import AccommodationTypeView from './features/hostonboarding/views/ListingTypeView.js';
+import GuestAccessView from './features/hostonboarding/views/HouseTypeView.js';
 import BoatTypeView from './features/hostonboarding/views/BoatTypeView.js';
 import CamperTypeView from './features/hostonboarding/views/CamperTypeView.js';
-import AddressInputView from './features/hostonboarding/views/AddressInputView.js';
-import CapacityView from './features/hostonboarding/views/GuestAmountView.js';
-import AmenitiesView from './features/hostonboarding/views/AmenitiesView.js';
-import HouseRulesView from './features/hostonboarding/views/HouseRulesView.js';
-import PhotosView from './features/hostonboarding/views/PhotosView.js';
-import AccommodationTitleView from './features/hostonboarding/views/AccommodationTitleView.js';
-import DescriptionView from './features/hostonboarding/views/DescriptionView.js';
-import PricingView from './features/hostonboarding/views/PricingView.js';
-import AvailabilityView from './features/hostonboarding/views/AvailabilityView.js';
+import AddressInputView from './features/hostonboarding/views/ListingLocationView.js';
+import CapacityView from './features/hostonboarding/views/ListingGuestAmountView.js';
+import AmenitiesView from './features/hostonboarding/views/ListingAmenitiesView.js';
+import HouseRulesView from './features/hostonboarding/views/ListingHouseRulesView.js';
+import PhotosView from './features/hostonboarding/views/ListingPhotosView.js';
+import AccommodationTitleView from './features/hostonboarding/views/ListingNameView.js';
+import DescriptionView from './features/hostonboarding/views/ListingDescriptionView.js';
+import PricingView from './features/hostonboarding/views/ListingRateView.js';
+import AvailabilityView from './features/hostonboarding/views/ListingCalendarAvailabilityView.js';
 import RegistrationNumberView from './features/verification/hostverification/RegistrationNumberView.js';
 import SummaryView from './features/hostonboarding/views/SummaryView.js';
 
