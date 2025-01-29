@@ -11,23 +11,23 @@ import Pay from '../header/pay';
 import Bookings from '../header/bookings';
 import Pocket from '../header/pocket';
 import { View, Text } from 'react-native';
-import profile from '../screens/guestdashboard/profile';
-import paymentMethods from '../screens/guestdashboard/paymentMethods';
-import reviews from '../screens/guestdashboard/reviews';
-import settings from '../screens/guestdashboard/settings';
-import helpAndFeedback from '../screens/guestdashboard/helpAndFeedback';
-import HostHomepage from '../screens/hostdashboard/hostDashboard';
-import HostDashboard from '../screens/hostdashboard/dashboard';
-import HostCalendar from '../screens/hostdashboard/HostCalendar';
-import HostReviews from '../screens/hostdashboard/HostRevieuws';
-import HostProfile from '../screens/hostdashboard/profile';
-import HostPayments from '../screens/hostdashboard/payments';
-import HostListings from '../screens/hostdashboard/listings';
-import OnboardingHost from '../screens/hostdashboard/OnboardingHost';
-import HostSettings from '../screens/hostdashboard/settings';
+import profile from '../screens/guestdashboard/GuestProfileTab';
+import paymentMethods from '../screens/guestdashboard/GuestPaymentsTab';
+import reviews from '../screens/guestdashboard/GuestReviewsTab';
+import settings from '../screens/guestdashboard/GuestSettingsTab';
+import helpAndFeedback from '../screens/guestdashboard/GuestHelpAndFeedbackTab';
+// import HostHomepage from '../screens/hostdashboard/hostDashboard';
+import HostDashboard from '../screens/hostdashboard/HostDashboard';
+import HostCalendar from '../screens/hostdashboard/HostCalendarTab';
+import HostReviews from '../screens/hostdashboard/HostReviewsTab';
+import HostProfile from '../screens/hostdashboard/HostProfileTab';
+import HostPayments from '../screens/hostdashboard/HostPaymentsTab';
+import HostListings from '../screens/hostdashboard/HostListingsTab';
+import OnboardingHost from '../screens/hostOnboarding/OnboardingHost';
+import HostSettings from '../screens/hostdashboard/HostSettingsTab';
 import Landing from '../screens/Landing';
-import emailSettings from '../screens/hostdashboard/emailSettings'
-import HostRevenue from '../screens/hostonboarding/revenueTool';
+import emailSettings from '../screens/hostdashboard/emailSettings';
+// import HostRevenue from '../screens/hostdashboard/HostRevenueTab';
 import Detailpage from '../screens/detailpage';
 import onBoarding1 from '../screens/bookingprocess/bookingProcess';
 import personalDetailsForm from '../screens/bookingprocess/personalDetailsForm';
@@ -36,16 +36,16 @@ import simulateStripe from '../screens/bookingprocess/simulateStripe';
 import paymentAccepted from '../screens/bookingprocess/paymentAccepted';
 import paymentDeclined from '../screens/bookingprocess/paymentDeclined';
 import bookedAccommodation from '../screens/bookingprocess/bookedAccommodation';
-import ListProperty from '../screens/hostonboarding/listProperty';
-import LocationFillIn from '../screens/hostonboarding/LocationFillIn';
-import selectAmenities from '../screens/hostonboarding/selectAmenities';
-import PriceProperty from '../screens/hostonboarding/PriceProperty';
+import ListProperty from '../screens/hostdashboard/HostListingsTab';
+// import LocationFillIn from '../screens/hostonboarding/LocationFillIn';
+// import selectAmenities from '../screens/hostonboarding/selectAmenities';
+// import PriceProperty from '../screens/hostonboarding/PriceProperty';
 import SignupScreen from '../screens/login/signup';
 import LoginScreen from '../screens/login/loginScreen';
 import Register from '../screens/login/register';
 import ConfirmMail from '../screens/login/confirmMail';
 import HostDetailPage from '../screens/hostdashboard/HostDetailPage';
-import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
+// import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
 import MessagesStackNavigator from './messagesStackNavigator';
 
 const Tab = createBottomTabNavigator();
@@ -89,7 +89,7 @@ function HomeStack() {
       <Stack.Screen name="Reviews" component={reviews} />
       <Stack.Screen name="Settings" component={settings} />
       <Stack.Screen name="HelpAndFeedback" component={helpAndFeedback} />
-      <Stack.Screen name="HostHomepage" component={HostHomepage} />
+      {/*<Stack.Screen name="HostHomepage" component={HostHomepage} />*/}
       <Stack.Screen name="HostDashboard" component={HostDashboard} />
       <Stack.Screen name="HostCalendar" component={HostCalendar} />
       <Stack.Screen name="HostReviews" component={HostReviews} />
@@ -99,18 +99,18 @@ function HomeStack() {
       <Stack.Screen name="HostListings" component={HostListings} />
       <Stack.Screen name="HostSettings" component={HostSettings} />
       <Stack.Screen name="emailSettings" component={emailSettings} />
-      <Stack.Screen name="HostRevenue" component={HostRevenue} />
+      {/*<Stack.Screen name="HostRevenue" component={HostRevenue} />*/}
       <Stack.Screen name="ListProperty" component={ListProperty} />
-      <Stack.Screen name="LocationFillIn" component={LocationFillIn} />
-      <Stack.Screen name="selectAmenities" component={selectAmenities} />
-      <Stack.Screen name="PriceProperty" component={PriceProperty} />
+      {/*<Stack.Screen name="LocationFillIn" component={LocationFillIn} />*/}
+      {/*<Stack.Screen name="selectAmenities" component={selectAmenities} />*/}
+      {/*<Stack.Screen name="PriceProperty" component={PriceProperty} />*/}
       <Stack.Screen name="Register" component={Register} />
       <Stack.Screen name="ConfirmEmail" component={ConfirmMail} />
       <Stack.Screen name="HostDetailPage" component={HostDetailPage} />
-      <Stack.Screen
-        name="ReviewAndSubmitScreen"
-        component={ReviewAndSubmitScreen}
-      />
+      {/*<Stack.Screen*/}
+      {/*  name="ReviewAndSubmitScreen"*/}
+      {/*  component={ReviewAndSubmitScreen}*/}
+      {/*/>*/}
     </Stack.Navigator>
   );
 }
