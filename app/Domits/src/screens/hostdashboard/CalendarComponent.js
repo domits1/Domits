@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import {isSameDay, isBefore, isAfter} from 'date-fns';
-import DateFormatterDD_MM_YYYY from '../DateFormatterDD_MM_YYYY';
+import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
 
 const CalendarComponent = ({passedProp, isNew, updateDates}) => {
   const [month, setMonth] = useState(new Date().getMonth());
