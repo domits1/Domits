@@ -1,8 +1,8 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { FlowContext } from '../../FlowContext.js';
-import Register from '../base/Register';
+import { FlowContext } from '../../services/FlowContext.js';
+import Register from '../../features/auth/Register';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 

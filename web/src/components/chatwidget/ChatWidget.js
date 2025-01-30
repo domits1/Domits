@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { ResizableBox } from 'react-resizable';
 import './ChatWidget.css';
-import { useUser } from '../../UserContext';
+import { useUser } from '../../features/auth/UserContext';
 import Slider from 'react-slick';
 
 const ChatWidget = () => {
@@ -51,14 +51,14 @@ const ChatWidget = () => {
     try {
       const sanitizedChatID = chatID?.replace(/^CHAT#/, '');
       const params = user ? { chatID: user.username } : { chatID: sanitizedChatID };
-      
+
       const response = await axios.get('https://clmba23cj1.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
-      
+
       if (response.data.messages) {
         const updatedMessages = await Promise.all(response.data.messages.map(async (msg) => {
           if (msg.role === "function" && Array.isArray(JSON.parse(msg.content))) {
             const accommodationIds = JSON.parse(msg.content);
-            
+
             const accommodations = await Promise.all(
               accommodationIds.map(async (id) => {
                 const { data } = await axios.post(
@@ -68,7 +68,7 @@ const ChatWidget = () => {
                 return JSON.parse(data.body); // Parse the body to get the accommodation object
               })
             );
-  
+
             return {
               text: "Here are your accommodations:",
               sender: "ai",
@@ -82,14 +82,14 @@ const ChatWidget = () => {
             };
           }
         }));
-  
+
         setMessages(updatedMessages);
       }
     } catch (error) {
       //console.error('Error loading chat history:', error);
     }
   };
-  
+
 
 
   const handleTileClick = (id) => {
@@ -196,7 +196,7 @@ const ChatWidget = () => {
         setMessages(prevMessages => [...prevMessages, { text: 'Connecting you to an agent...', sender: 'system' }]);
 
         const ws = new WebSocket(`wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${user?.id || 'anon'}&userName=${user?.attributes?.given_name || userName}`);
-        
+
         ws.onopen = () => {
           setIsConnected(true);
           setSocket(ws);
@@ -208,7 +208,7 @@ const ChatWidget = () => {
           if (!employeeName && incomingMessage.userName){
             //console.log(incomingMessage.userName)
             setEmployeeName(incomingMessage.userName);
-          } 
+          }
 
           setMessages(prevMessages => [
             ...prevMessages,
@@ -255,7 +255,7 @@ const ChatWidget = () => {
         recipientConnectionId: employeeConnectionId,
         message: message,
         userName: userName,
-        liveChatId: liveChatId 
+        liveChatId: liveChatId
       };
       //console.log("Sending message:", payload);
       socket.send(JSON.stringify(payload));
@@ -284,7 +284,7 @@ const ChatWidget = () => {
         } else {
           //console.warn("No liveChatId found in response data:", data);
         }
-        
+
       } catch (error) {
         //console.error("Error generating liveChatId:", error);
       }

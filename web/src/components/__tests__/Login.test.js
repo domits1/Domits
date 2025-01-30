@@ -2,7 +2,7 @@
 import React from 'react';
 import { render, fireEvent, waitFor, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import Login from '../base/Login.js';
+import Login from '../../features/auth/Login.js';
 import { Auth } from 'aws-amplify';
 import { MemoryRouter } from 'react-router-dom';
 import { createMemoryHistory } from 'history';

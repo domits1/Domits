@@ -1,6 +1,6 @@
 import './App.css';
-import HostProtectedRoute from './HostProtectedRoute';
-import { UserProvider } from './UserContext';
+import HostProtectedRoute from './features/auth/hostauth/HostProtectedRoute';
+import { UserProvider } from './features/auth/UserContext';
 import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./pages/landingpage/Landing";
@@ -25,29 +25,29 @@ import HostListings from "./features/hostdashboard/HostListings";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
 import HostSettings from "./features/hostdashboard/HostSettings";
 import HostReviews from "./features/hostdashboard/HostReviews";
-import ListingDetails from './components/booking/ListingDetails';
-import BookingOverview from './components/booking/BookingOverview';
-import BookingConfirmation from "./components/booking/PaymentConfirm";
+import ListingDetails from './features/bookingengine/ListingDetails';
+import BookingOverview from './features/bookingengine/BookingOverview';
+import BookingConfirmation from "./features/bookingengine/PaymentConfirm";
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
 import Disclaimers from "./pages/disclaimers/Disclaimers";
 import Policy from "./pages/policy/Policy";
 import Terms from "./pages/terms/Terms";
-import Login from "./components/base/Login";
-import Register from "./components/base/Register";
-import ConfirmRegister from "./components/base/confirmEmail/ConfirmEmailView.js";
-import { AuthProvider } from './components/base/AuthContext';
+import Login from "./features/auth/Login";
+import Register from "./features/auth/Register";
+import ConfirmRegister from "./features/auth/confirmEmail/ConfirmEmailView.js";
+import { AuthProvider } from './features/auth/AuthContext';
 import GuestDashboard from './features/guestdashboard/GuestDashboard';
 import GuestBooking from './features/guestdashboard/GuestBooking';
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
-import Chat from "./components/chat/Chat.js";
-import Chatbot from "./components/chatbot/chatbot";
+import Chat from "./features/guestdashboard/chat/Chat.js";
+import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./components/chatwidget/ChatWidget";
-import EmployeeChat from './components/employee/EmployeeChat';
-import FlowContext from './FlowContext';
+import EmployeeChat from './features/guestaiagent/EmployeeChat';
+import FlowContext from './services/FlowContext';
 import Hostchat from './features/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./features/hostdashboard/HostReservations";
@@ -64,12 +64,12 @@ import HostVerificationView from "./features/verification/hostverification/HostV
 import PhoneNumberView from './features/verification/hostverification/PhoneNumberView.js';
 import PhoneNumberConfirmView from './features/verification/hostverification/PhoneNumberConfirmView.js';
 import { initializeUserAttributes } from './components/utils/userAttributes';
-import PageNotFound from "./components/error/404NotFound";
-import StripeCallback from "./components/stripe/StripeCallback";
+import PageNotFound from "./utils/error/404NotFound";
+import StripeCallback from "./features/stripe/StripeCallback";
 import ReviewPage from "./features/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
-import PaymentConfirmPage from "./components/booking/PaymentConfirmPage";
+import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
 
 
 import AccommodationTypeView from './features/hostonboarding/views/AccommodationTypeView.js';
@@ -91,7 +91,7 @@ import SummaryView from './features/hostonboarding/views/SummaryView.js';
 
 
 import { Auth } from 'aws-amplify';
-import GuestProtectedRoute from "./GuestProtectedRoute";
+import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./components/hostchatbot/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import ReleaseUpdates from './pages/productupdates/ReleaseUpdates.js'

@@ -1,18 +1,16 @@
 import React, { useEffect, useState, useRef } from "react";
-import "../guestdashboard/chat/chat.css";
-import styles from "../guestdashboard/chat/ChatPage.module.css";
+import "./chat.css";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
-import * as mutations from "../../graphql/mutations";
-import * as queries from "../../graphql/queries";
-import Pages from "./Pages";
-import * as subscriptions from "../../graphql/subscriptions";
+import * as mutations from "../../../graphql/mutations";
+import * as queries from "../../../graphql/queries";
+import Pages from "../Pages";
+import * as subscriptions from "../../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
-import ContactItem from "../guestdashboard/chat/ContactItem";
-import spinner from "../../images/spinnner.gif";
-import ContactModal from "./contactModal";
-
+import styles from './ChatPage.module.css';
+import spinner from "../../../images/spinnner.gif";
+import ContactItem from "./ContactItem_Guest";
 
 const Chat = ({ user }) => {
     const [chats, setChats] = useState([]);
@@ -36,10 +34,9 @@ const Chat = ({ user }) => {
     const [accoId, setAccoId] = useState('');
     const [accommodation, setAccommodation] = useState(null);
     const userId = user.attributes.sub;
+
     const navigate = useNavigate();
     const chatContainerRef = useRef(null);
-    const [isContactModalOpen, setContactModalOpen] = useState(false);
-    const [pendingRequest, setPendingRequest] = useState(null);
 
     const getUUIDForUser = (userId) => {
         let uuid = localStorage.getItem(`${userId}_uuid`);
@@ -55,64 +52,6 @@ const Chat = ({ user }) => {
         return sortedIds.join('_');
     };
 
-    useEffect(() => {
-        if (userId) {
-            fetchHostContacts();
-        }
-    }, [userId]);
-
-
-    useEffect(() => {
-        if (displayType) {
-            if (displayType === 'My contacts') {
-                setItemsDisplay(chatUsers);
-            } else {
-                setItemsDisplay(pendingContacts);
-            }
-        }
-    }, [displayType]);
-
-    const fetchHostContacts = async () => {
-        setLoading(true);
-        setPendingContacts([]);
-        try {
-            const requestData = {
-                hostID: userId
-            };
-            const response = await fetch(`https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestData)
-            });
-            if (!response.ok) {
-                throw new Error('Failed to fetch host information');
-            }
-            const responseData = await response.json();
-            const JSONData = JSON.parse(responseData.body);
-            setPendingContacts(JSONData.pending);
-            setContacts(JSONData.accepted);
-        } catch (error) {
-            console.error('Error fetching host contacts:', error);
-        } finally {
-            setLoading(false);
-        }
-    }
-
-    useEffect(() => {
-        contacts.map((contact, index)=> {
-            if (contact.userId === selectedUser.userId) {
-                setAccoId(contact.AccoId);
-            }
-        })
-    }, [selectedUser]);
-
-    useEffect(() => {
-        if (accoId) {
-            fetchAccommodation(accoId);
-        }
-    }, [accoId]);
     useEffect(() => {
         const subscription = API.graphql(
             graphqlOperation(subscriptions.onCreateChat)
@@ -136,6 +75,63 @@ const Chat = ({ user }) => {
             fetchChats(recipientId);
         }
     }, [recipientId]);
+
+    useEffect(() => {
+        if (userId) {
+            fetchGuestContacts();
+        }
+    }, [userId]);
+
+    useEffect(() => {
+        contacts.map((contact, index)=> {
+            if (contact.hostId === selectedUser.userId) {
+                setAccoId(contact.AccoId);
+            }
+        })
+    }, [selectedUser]);
+
+    useEffect(() => {
+        if (accoId) {
+            fetchAccommodation(accoId);
+        }
+    }, [accoId]);
+
+    useEffect(() => {
+        if (displayType) {
+            if (displayType === 'My contacts') {
+                setItemsDisplay(chatUsers);
+            } else {
+                setItemsDisplay(pendingContacts);
+            }
+        }
+    }, [displayType]);
+
+    const fetchGuestContacts = async () => {
+        setLoading(true);
+        try {
+            const requestData = {
+                userID: userId
+            };
+            const response = await fetch(`https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts_Guest`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(requestData)
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch host information');
+            }
+            const responseData = await response.json();
+            const JSONData = JSON.parse(responseData.body);
+            setPendingContacts(JSONData.pending);
+            setContacts(JSONData.accepted);
+        } catch (error) {
+            console.error('Error fetching host contacts:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
 
     useEffect(() => {
         if (selectedUser) {
@@ -172,7 +168,6 @@ const Chat = ({ user }) => {
             console.error("Recipient ID is undefined");
             return;
         }
-
         try {
             const sentMessagesResponse = await API.graphql({
                 query: queries.listChats,
@@ -270,6 +265,26 @@ const Chat = ({ user }) => {
         }
     };
 
+    const fetchAccommodation = async (id) => {
+        try {
+            const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ ID: id }),
+            });
+            if (!response.ok) {
+                throw new Error('Failed to fetch accommodation data');
+            }
+            const responseData = await response.json();
+            const data = JSON.parse(responseData.body);
+            setAccommodation(data);
+        } catch (error) {
+            console.error('Error fetching accommodation data:', error);
+        }
+    }
+
     const handleUserClick = async (userId) => {
         setSelectedUser({ userId });
         const channelName = generateChannelName(userId, userId);
@@ -308,26 +323,6 @@ const Chat = ({ user }) => {
         }
     };
 
-    const fetchAccommodation = async (id) => {
-        try {
-            const response = await fetch(`https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ ID: id }),
-            });
-            if (!response.ok) {
-                throw new Error('Failed to fetch accommodation data');
-            }
-            const responseData = await response.json();
-            const data = JSON.parse(responseData.body);
-            setAccommodation(data);
-        } catch (error) {
-            console.error('Error fetching accommodation data:', error);
-        }
-    }
-
     const sendMessage = async () => {
         if (!newMessage.trim() || !selectedUser || !selectedUser.userId) return;
 
@@ -347,6 +342,8 @@ const Chat = ({ user }) => {
                     },
                 },
             });
+
+            console.log("Message sent successfully:", result);
 
             setNewMessage('');
             setShowDate(true);
@@ -382,110 +379,12 @@ const Chat = ({ user }) => {
             setSelectedUserName(user);
         }
     }
-    const acceptOrDenyRequest = async (status, id, origin) => {
-        console.log("acceptOrDenyRequest called with:", status, id, origin);
-        if (status === 'rejected') {
-            setPendingRequest({ status, id, origin });
-            setContactModalOpen(true);
-            return;
-        }
-        if (status && id) {
-            const body = {
-                Status: status,
-                Id: id
-            };
-            console.log(body);
-            try {
-                const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
-                    method: 'PUT',
-                    body: JSON.stringify(body),
-                    headers: {'Content-type': 'application/json; charset=UTF-8',
-                    }
-                });
-                if (!response.ok) {
-                    throw new Error('Failed to update');
-                }
-                const data = await response.json();
-                const parsedData = JSON.parse(data.body);
-                console.log(parsedData);
-                if (parsedData.isAccepted) {
-                    const result = await API.graphql({
-                        query: mutations.createChat,
-                        variables: {
-                            input: {
-                                text: '',
-                                userId: userId,
-                                recipientId: origin,
-                                isRead: false,
-                                createdAt: new Date().toISOString(),
-                                channelID: channelUUID
-                            },
-                        },
-                    });
-                    console.log(result);
-                }
-            } catch (error) {
-                console.error("Unexpected error:", error);
-            } finally {
-                fetchHostContacts();
-                fetchChats(origin);
-                fetchChatUsers();
-            }
-        }
-    };
-    const handleConfirmReject = async () => {
-        if (pendingRequest) {
-            const { status, id, origin } = pendingRequest;
 
-            const body = { Status: status, Id: id };
-            console.log(body);
-            try {
-                const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
-                    method: 'PUT',
-                    body: JSON.stringify(body),
-                    headers: { 'Content-type': 'application/json; charset=UTF-8' }
-                });
-                if (!response.ok) throw new Error('Failed to update');
-
-                const data = await response.json();
-                const parsedData = JSON.parse(data.body);
-                console.log(parsedData);
-                if (parsedData.isAccepted) {
-                    const result = await API.graphql({
-                        query: mutations.createChat,
-                        variables: {
-                            input: {
-                                text: '',
-                                userId: userId,
-                                recipientId: origin,
-                                isRead: false,
-                                createdAt: new Date().toISOString(),
-                                channelID: channelUUID
-                            },
-                        },
-                    });
-                    console.log(result);
-                }
-            } catch (error) {
-                console.error("Unexpected error:", error);
-            } finally {
-                fetchHostContacts();
-                fetchChats(origin);
-                fetchChatUsers();
-            }
-        }
-        setPendingRequest(null);
-        setContactModalOpen(false);
-    };
-    const handleCloseContactModal = () => {
-        setContactModalOpen(false);
-        setPendingRequest(null);
-    };
     return (
         <main className="page-body">
             <h2 className="chat__heading">Messages</h2>
             <section className="chat__container">
-                <Pages />
+                <Pages/>
                 <section className={styles.chat__body}>
                     <div className={styles.contactList}>
                         <section className={styles.switcher}>
@@ -495,7 +394,7 @@ const Chat = ({ user }) => {
                             </button>
                             <button
                                 className={`${styles.switchButton} ${(displayType === 'Pending contacts') ? styles.selected : styles.disabled}`}
-                                onClick={() => setDisplayType('Pending contacts')}>Incoming requests
+                                onClick={() => setDisplayType('Pending contacts')}>Requested
                                 ({pendingContacts.length})
                             </button>
                         </section>
@@ -508,18 +407,16 @@ const Chat = ({ user }) => {
                                 itemsDisplay.length > 0 ? (
                                     itemsDisplay.map((item, index) => (
                                             <ContactItem item={item} index={index} type={displayType}
-                                                         acceptOrDenyRequest={acceptOrDenyRequest} selectUser={selectUser}
-                                                         unreadMessages={unreadMessages}
-                                                         setPendingRequest={setPendingRequest}
-                                                         setContactModalOpen={setContactModalOpen}
-                                            selectedUser={selectedUserName}/>
+                                                         selectUser={selectUser}
+                                                         selectedUser={selectedUserName}
+                                                         unreadMessages={unreadMessages}/>
                                         )
                                     )
                                 ) : (
                                     <div>
                                         <p>This is empty for now...</p>
                                         <button className={styles.mainButton}
-                                                onClick={() => fetchHostContacts()}>Refresh
+                                                onClick={() => fetchGuestContacts()}>Refresh
                                         </button>
                                     </div>
                                 ))
@@ -579,20 +476,17 @@ const Chat = ({ user }) => {
                                     <article className={styles.accoDisplay}>
                                         <h4>Referenced accommodation:</h4>
                                         {accommodation === 'Accommodation not found' ? (
-                                            console.log(accommodation),
                                             <div className={styles.textDisplay}>
                                                 <h3>{accommodation.Title}</h3>
                                                 <p>{`${accommodation.Country}, ${accommodation.City}, ${accommodation.Street}, ${accommodation.PostalCode}`}</p>
-                                                <button className={styles.mainButton} onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>View listing details</button>
+                                                <button className={styles.mainButton}
+                                                        onClick={() => navigate(`/listingdetails?ID=${accommodation.ID}`)}>View
+                                                    listing details
+                                                </button>
                                             </div>
                                         ) : (
                                             <div className={styles.textDisplay}>
-                                                <h3>This accommodation is unavailable</h3>
-                                                {accoId !== '' && (
-                                                    <button className={styles.hostButton} onClick={() => navigate(`/enlist`)}>
-                                                        List accommodation
-                                                    </button>
-                                                )}
+                                                <h3>This accommodation is currently unavailable</h3>
                                             </div>
                                         )}
                                     </article>
@@ -607,13 +501,6 @@ const Chat = ({ user }) => {
                     )}
                 </section>
             </section>
-            <ContactModal
-                show={isContactModalOpen}
-                onClose={handleCloseContactModal}
-                onConfirm={handleConfirmReject}
-                title="Confirm Rejection"
-                message="Are you sure you want to reject this contact request?"
-            />
         </main>
     );
 };
