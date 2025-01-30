@@ -82,7 +82,7 @@ describe.skip('BookingOverview Component', () => {
         );
 
         await waitFor(() => expect(screen.getByText('Hello TestUser!')).toBeInTheDocument());
-        
+
         fireEvent.click(screen.getByText(/Confirm & Pay/i));
         expect(console.log).toHaveBeenCalledWith('Payment confirmed');
     });

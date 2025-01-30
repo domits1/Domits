@@ -9,13 +9,11 @@ import * as React from "react";
 import { Button, Flex, Grid, TextField } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { getAccommodation } from "../graphql/queries";
-import { updateAccommodation } from "../graphql/mutations";
+import { createAccommodation } from "../../graphql/mutations";
 const client = generateClient();
-export default function AccommodationUpdateForm(props) {
+export default function AccommodationCreateForm(props) {
   const {
-    id: idProp,
-    accommodation: accommodationModelProp,
+    clearOnSuccess = true,
     onSuccess,
     onError,
     onSubmit,
@@ -36,31 +34,10 @@ export default function AccommodationUpdateForm(props) {
   );
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
-    const cleanValues = accommodationRecord
-      ? { ...initialValues, ...accommodationRecord }
-      : initialValues;
-    setAccommodation(cleanValues.accommodation);
-    setDescription(cleanValues.description);
+    setAccommodation(initialValues.accommodation);
+    setDescription(initialValues.description);
     setErrors({});
   };
-  const [accommodationRecord, setAccommodationRecord] = React.useState(
-    accommodationModelProp
-  );
-  React.useEffect(() => {
-    const queryData = async () => {
-      const record = idProp
-        ? (
-            await client.graphql({
-              query: getAccommodation.replaceAll("__typename", ""),
-              variables: { id: idProp },
-            })
-          )?.data?.getAccommodation
-        : accommodationModelProp;
-      setAccommodationRecord(record);
-    };
-    queryData();
-  }, [idProp, accommodationModelProp]);
-  React.useEffect(resetStateValues, [accommodationRecord]);
   const validations = {
     accommodation: [],
     description: [],
@@ -91,8 +68,8 @@ export default function AccommodationUpdateForm(props) {
       onSubmit={async (event) => {
         event.preventDefault();
         let modelFields = {
-          accommodation: accommodation ?? null,
-          description: description ?? null,
+          accommodation,
+          description,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -123,16 +100,18 @@ export default function AccommodationUpdateForm(props) {
             }
           });
           await client.graphql({
-            query: updateAccommodation.replaceAll("__typename", ""),
+            query: createAccommodation.replaceAll("__typename", ""),
             variables: {
               input: {
-                id: accommodationRecord.id,
                 ...modelFields,
               },
             },
           });
           if (onSuccess) {
             onSuccess(modelFields);
+          }
+          if (clearOnSuccess) {
+            resetStateValues();
           }
         } catch (err) {
           if (onError) {
@@ -141,7 +120,7 @@ export default function AccommodationUpdateForm(props) {
           }
         }
       }}
-      {...getOverrideProps(overrides, "AccommodationUpdateForm")}
+      {...getOverrideProps(overrides, "AccommodationCreateForm")}
       {...rest}
     >
       <TextField
@@ -199,14 +178,13 @@ export default function AccommodationUpdateForm(props) {
         {...getOverrideProps(overrides, "CTAFlex")}
       >
         <Button
-          children="Reset"
+          children="Clear"
           type="reset"
           onClick={(event) => {
             event.preventDefault();
             resetStateValues();
           }}
-          isDisabled={!(idProp || accommodationModelProp)}
-          {...getOverrideProps(overrides, "ResetButton")}
+          {...getOverrideProps(overrides, "ClearButton")}
         ></Button>
         <Flex
           gap="15px"
@@ -216,10 +194,7 @@ export default function AccommodationUpdateForm(props) {
             children="Submit"
             type="submit"
             variation="primary"
-            isDisabled={
-              !(idProp || accommodationModelProp) ||
-              Object.values(errors).some((e) => e?.hasError)
-            }
+            isDisabled={Object.values(errors).some((e) => e?.hasError)}
             {...getOverrideProps(overrides, "SubmitButton")}
           ></Button>
         </Flex>

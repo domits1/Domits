@@ -9,13 +9,13 @@ import * as React from "react";
 import { Button, Flex, Grid, TextField } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { getUser } from "../graphql/queries";
-import { updateUser } from "../graphql/mutations";
+import { getAccommodation } from "../../graphql/queries";
+import { updateAccommodation } from "../../graphql/mutations";
 const client = generateClient();
-export default function UserUpdateForm(props) {
+export default function AccommodationUpdateForm(props) {
   const {
     id: idProp,
-    user: userModelProp,
+    accommodation: accommodationModelProp,
     onSuccess,
     onError,
     onSubmit,
@@ -25,39 +25,45 @@ export default function UserUpdateForm(props) {
     ...rest
   } = props;
   const initialValues = {
-    email: "",
-    password: "",
+    accommodation: "",
+    description: "",
   };
-  const [email, setEmail] = React.useState(initialValues.email);
-  const [password, setPassword] = React.useState(initialValues.password);
+  const [accommodation, setAccommodation] = React.useState(
+    initialValues.accommodation
+  );
+  const [description, setDescription] = React.useState(
+    initialValues.description
+  );
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
-    const cleanValues = userRecord
-      ? { ...initialValues, ...userRecord }
+    const cleanValues = accommodationRecord
+      ? { ...initialValues, ...accommodationRecord }
       : initialValues;
-    setEmail(cleanValues.email);
-    setPassword(cleanValues.password);
+    setAccommodation(cleanValues.accommodation);
+    setDescription(cleanValues.description);
     setErrors({});
   };
-  const [userRecord, setUserRecord] = React.useState(userModelProp);
+  const [accommodationRecord, setAccommodationRecord] = React.useState(
+    accommodationModelProp
+  );
   React.useEffect(() => {
     const queryData = async () => {
       const record = idProp
         ? (
             await client.graphql({
-              query: getUser.replaceAll("__typename", ""),
+              query: getAccommodation.replaceAll("__typename", ""),
               variables: { id: idProp },
             })
-          )?.data?.getUser
-        : userModelProp;
-      setUserRecord(record);
+          )?.data?.getAccommodation
+        : accommodationModelProp;
+      setAccommodationRecord(record);
     };
     queryData();
-  }, [idProp, userModelProp]);
-  React.useEffect(resetStateValues, [userRecord]);
+  }, [idProp, accommodationModelProp]);
+  React.useEffect(resetStateValues, [accommodationRecord]);
   const validations = {
-    email: [{ type: "Required" }],
-    password: [{ type: "Required" }],
+    accommodation: [],
+    description: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -85,8 +91,8 @@ export default function UserUpdateForm(props) {
       onSubmit={async (event) => {
         event.preventDefault();
         let modelFields = {
-          email,
-          password,
+          accommodation: accommodation ?? null,
+          description: description ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -117,10 +123,10 @@ export default function UserUpdateForm(props) {
             }
           });
           await client.graphql({
-            query: updateUser.replaceAll("__typename", ""),
+            query: updateAccommodation.replaceAll("__typename", ""),
             variables: {
               input: {
-                id: userRecord.id,
+                id: accommodationRecord.id,
                 ...modelFields,
               },
             },
@@ -135,58 +141,58 @@ export default function UserUpdateForm(props) {
           }
         }
       }}
-      {...getOverrideProps(overrides, "UserUpdateForm")}
+      {...getOverrideProps(overrides, "AccommodationUpdateForm")}
       {...rest}
     >
       <TextField
-        label="Email"
-        isRequired={true}
+        label="Accommodation"
+        isRequired={false}
         isReadOnly={false}
-        value={email}
+        value={accommodation}
         onChange={(e) => {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
-              email: value,
-              password,
+              accommodation: value,
+              description,
             };
             const result = onChange(modelFields);
-            value = result?.email ?? value;
+            value = result?.accommodation ?? value;
           }
-          if (errors.email?.hasError) {
-            runValidationTasks("email", value);
+          if (errors.accommodation?.hasError) {
+            runValidationTasks("accommodation", value);
           }
-          setEmail(value);
+          setAccommodation(value);
         }}
-        onBlur={() => runValidationTasks("email", email)}
-        errorMessage={errors.email?.errorMessage}
-        hasError={errors.email?.hasError}
-        {...getOverrideProps(overrides, "email")}
+        onBlur={() => runValidationTasks("accommodation", accommodation)}
+        errorMessage={errors.accommodation?.errorMessage}
+        hasError={errors.accommodation?.hasError}
+        {...getOverrideProps(overrides, "accommodation")}
       ></TextField>
       <TextField
-        label="Password"
-        isRequired={true}
+        label="Description"
+        isRequired={false}
         isReadOnly={false}
-        value={password}
+        value={description}
         onChange={(e) => {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
-              email,
-              password: value,
+              accommodation,
+              description: value,
             };
             const result = onChange(modelFields);
-            value = result?.password ?? value;
+            value = result?.description ?? value;
           }
-          if (errors.password?.hasError) {
-            runValidationTasks("password", value);
+          if (errors.description?.hasError) {
+            runValidationTasks("description", value);
           }
-          setPassword(value);
+          setDescription(value);
         }}
-        onBlur={() => runValidationTasks("password", password)}
-        errorMessage={errors.password?.errorMessage}
-        hasError={errors.password?.hasError}
-        {...getOverrideProps(overrides, "password")}
+        onBlur={() => runValidationTasks("description", description)}
+        errorMessage={errors.description?.errorMessage}
+        hasError={errors.description?.hasError}
+        {...getOverrideProps(overrides, "description")}
       ></TextField>
       <Flex
         justifyContent="space-between"
@@ -199,7 +205,7 @@ export default function UserUpdateForm(props) {
             event.preventDefault();
             resetStateValues();
           }}
-          isDisabled={!(idProp || userModelProp)}
+          isDisabled={!(idProp || accommodationModelProp)}
           {...getOverrideProps(overrides, "ResetButton")}
         ></Button>
         <Flex
@@ -211,7 +217,7 @@ export default function UserUpdateForm(props) {
             type="submit"
             variation="primary"
             isDisabled={
-              !(idProp || userModelProp) ||
+              !(idProp || accommodationModelProp) ||
               Object.values(errors).some((e) => e?.hasError)
             }
             {...getOverrideProps(overrides, "SubmitButton")}
