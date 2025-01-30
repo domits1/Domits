@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./listing.module.css";
 import ImageGallery from './ImageGallery';
-import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
-import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterYYYY_MM_DD from "../../utils/DateFormatterYYYY_MM_DD";
+import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 const ListingDetails = () => {
     const {search} = useLocation();
@@ -38,7 +38,7 @@ const ListingDetails = () => {
                     throw new Error('Failed to fetch accommodation data');
                 }
                 const responseData = await response.json();
-                
+
                 const data = JSON.parse(responseData.body);
                 setUserID(data.user_id)
 

@@ -1,24 +1,34 @@
 import React, {useEffect, useState} from 'react';
-import Pages from "./Pages.js";
-import './HostDistribution.css';
-import airbnb_logo from "../../images/icon-airbnb.png";
-import booking_logo from "../../images/icon-booking.png";
-import expedia_logo from "../../images/icon-expedia.png";
-import homeaway_logo from "../../images/icon-homeaway.png";
-import tripadvisor_logo from "../../images/icon-tripadvisor.png";
-import vrbo_logo from "../../images/icon-vrbo.png";
-import three_dots from "../../images/three-dots-grid.svg";
+import Pages from "../../Pages.js";
+import '../styles/HostDistribution.css';
+import airbnb_logo from "../../../../images/icon-airbnb.png";
+import booking_logo from "../../../../images/icon-booking.png";
+import expedia_logo from "../../../../images/icon-expedia.png";
+import homeaway_logo from "../../../../images/icon-homeaway.png";
+import tripadvisor_logo from "../../../../images/icon-tripadvisor.png";
+import vrbo_logo from "../../../../images/icon-vrbo.png";
+import three_dots from "../../../../images/three-dots-grid.svg";
 import {Auth} from "aws-amplify";
-import {formatDate, uploadICalToS3} from "../../components/utils/iCalFormatHost.js";
+import allChannels from "../store/channelData.js";
+import {generateUUID} from "../../../../utils/generateUUID.js";
+import {getChannelLogo} from "../utils/getChannelLogo.js"
+import {handleICal} from "../utils/iCalHandler.js";
+import {handlePageRange} from "../utils/handlePageRange.js";
+import {renderAddChannelButtonMenu} from "../components/renderAddChannelButtonMenu"
+import {deleteChannelService} from "../services/deleteChannelService.js";
+import {fetchChannels} from "../services/fetchChannelsService.js"
+import {handleAddChannelService} from "../services/addChannelService.js";
+import useFetchUser from "../../../../hooks/useFetchUser.js";
+import useFetchChannels from "../hooks/useFetchChannels.js";
+import useFetchAccommodations from "../hooks/useFetchAccommodations.js";
 
 function HostDistribution() {
-    const [userId, setUserId] = useState(null);
-    const [accommodations, setAccommodations] = useState([]);
-    const [bookings, setBookings] = useState([]);
+    const userId = useFetchUser();
+    const accommodations = useFetchAccommodations(userId);
     const [dropdownAddChannelsVisible, setDropdownAddChannelsVisible] = useState(false);
     const [activeManageDropdown, setActiveManageDropdown] = useState(null);
     const [activeThreeDotsDropdown, setActiveThreeDotsDropdown] = useState(null);
-    const [channelData, setChannelData] = useState([]);
+    const channelData = useFetchChannels(userId);
     const [activeAddAccommodationsView, setActiveAddAccommodationsView] = useState(null);
     const [tempListedAccommodations, setTempListedAccommodations] = useState([]);
     const [activeRemoveAccommodationsView, setActiveRemoveAccommodationsView] = useState(null);
@@ -30,246 +40,9 @@ function HostDistribution() {
 
     const [selectedChannel, setSelectedChannel] = useState("Select Channel");
     const [apiKey, setApiKey] = useState("");
-    const addedChannels = channelData.map(channel => channel.ChannelName.S);
+    const addedChannels = channelData.map(channel => channel.ChannelName);
 
-    useEffect(() => {
-        const asyncSetUserId = async () => {
-            try {
-                const userInfo = await Auth.currentUserInfo();
-                setUserId(userInfo.attributes.sub);
-            } catch (error) {
-                console.error("Error setting user id:", error);
-            }
-        };
-
-        asyncSetUserId();
-    }, []);
-
-    useEffect(() => {
-            if (!userId) return;
-            const asyncRetrieveBookingData = async () => {
-                try {
-                    const response = await fetch('https://fqujcw5loe.execute-api.eu-north-1.amazonaws.com/default/retrieveBookingsDataByUserId', {
-                        method: 'POST',
-                        body: JSON.stringify({
-                            GuestID: userId,
-                            Status: 'Accepted'
-                        }),
-                        headers: {
-                            'Content-type': 'application/json; charset=UTF-8',
-                        }
-                    });
-                    if (!response.ok) {
-                        throw new Error('Failed to fetch');
-                    }
-                    const data = await response.json();
-
-                    if (data.body && typeof data.body === 'string') {
-                        const retrievedBookingDataArray = JSON.parse(data.body);
-
-                        if (Array.isArray(retrievedBookingDataArray)) {
-                            setBookings(retrievedBookingDataArray);
-                        } else {
-                            console.error('Retrieved data is not an array:', retrievedBookingDataArray);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Failed to fetch booking data:', error);
-                }
-            }
-            asyncRetrieveBookingData();
-        }, [userId]
-    );
-
-    useEffect(() => {
-            const handleGetAccomodations = async () => {
-                if (!userId) return;
-
-                else {
-                    const ownerId = userId;
-
-                    try {
-                        const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Read-AccommodationByOwner', {
-                            method: 'POST',
-                            body: JSON.stringify({id: ownerId}),
-                            headers: {
-                                'Content-type': 'application/json; charset=UTF-8',
-                            }
-                        });
-                        if (!response.ok) {
-                            throw new Error('Failed to fetch');
-                        }
-                        const data = await response.json();
-
-                        if (data.body && typeof data.body === 'string') {
-                            const accommodationsArray = JSON.parse(data.body);
-                            if (Array.isArray(accommodationsArray)) {
-                                setAccommodations(accommodationsArray);
-                            }
-                        }
-                    } catch (error) {
-                        console.error('Failed to fetch accommodations:', error);
-                    }
-                }
-            };
-
-            handleGetAccomodations();
-        }, [userId]
-    );
-
-    const asyncRetrieveChannelData = async () => {
-        if (!userId) return;
-        try {
-            const response = await fetch('https://9uv5o7aiz6.execute-api.eu-north-1.amazonaws.com/dev/Host-ChannelManagement-Production-Read-AllChannels', {
-                method: 'POST',
-                body: JSON.stringify({
-                    UserId: userId
-                }),
-                headers: {
-                    'Content-type': 'application/json; charset=UTF-8',
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch');
-            }
-            const data = await response.json();
-
-            if (data.body && typeof data.body === 'string') {
-                const retrievedChannelDataArray = JSON.parse(data.body);
-                if (Array.isArray(retrievedChannelDataArray)) {
-                    setChannelData(retrievedChannelDataArray);
-                } else {
-                    console.error('Retrieved data is not an array:', retrievedChannelDataArray);
-                }
-            }
-        } catch (error) {
-            console.error('Failed to fetch channel data:', error);
-        }
-    }
-
-    useEffect(() => {
-        asyncRetrieveChannelData();
-    }, [userId]);
-
-    const getChannelLogo = (channelName) => {
-        switch (channelName) {
-            case 'Airbnb':
-                return airbnb_logo;
-            case 'Booking.com':
-                return booking_logo;
-            case 'Expedia':
-                return expedia_logo;
-            case 'HomeAway':
-                return homeaway_logo;
-            case 'TripAdvisor':
-                return tripadvisor_logo;
-            case 'Vrbo':
-                return vrbo_logo;
-            default:
-                return '';
-        }
-    };
-
-    const generateUUID = () => {
-        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-            var r = Math.random() * 16 | 0,
-                v = c == 'x' ? r : (r & 0x3 | 0x8);
-            return v.toString(16);
-        });
-    }
-
-    const copyToClipboard = (text) => {
-        navigator.clipboard.writeText(text).then(() => {
-            alert("The URL has been copied to your clipboard: " + text);
-        }).catch(err => {
-            console.error('Could not copy text: ', err);
-        });
-    };
-
-    const handleICal = async (e) => {
-        e.preventDefault();
-
-        let uid;
-        let dtStamp;
-        let dtStart;
-        let dtEnd;
-        let accommodationId;
-        let street;
-        let city;
-        let country;
-        let location;
-        let status;
-        let summary;
-        let ownerId;
-
-        let params;
-
-        let listOfAccommodations = [];
-
-        for (let i = 0; i < accommodations.length; i++) {
-            for (let j = 0; j < accommodations[i].DateRanges.L.length; j++) {
-                uid = generateUUID();
-                dtStamp = formatDate(new Date());
-                dtStart = formatDate(new Date(accommodations[i].DateRanges.L[j].M.startDate.S));
-                dtEnd = formatDate(new Date(accommodations[i].DateRanges.L[j].M.endDate.S));
-                accommodationId = accommodations[i].ID.S;
-                street = accommodations[i].Street.S;
-                city = accommodations[i].City.S;
-                country = accommodations[i].Country.S;
-                location = street + ', ' + city + ', ' + country;
-                if (accommodations[i].Drafted.BOOL === true) {
-                    status = 'Unavailable';
-                } else if (accommodations[i].Drafted.BOOL === false) {
-                    status = 'Available';
-                }
-                summary = accommodations[i].Title.S + ' - ' + status;
-                ownerId = accommodations[i].OwnerId.S;
-
-                params = {
-                    UID: uid,
-                    Dtstamp: dtStamp,
-                    Dtstart: dtStart,
-                    Dtend: dtEnd,
-                    Summary: summary,
-                    Location: location,
-                    AccommodationId: accommodationId,
-                    OwnerId: ownerId,
-                }
-                listOfAccommodations.push(params);
-            }
-        }
-
-        try {
-            const uploadURL = await uploadICalToS3(listOfAccommodations, userId);
-            if (uploadURL) {
-                copyToClipboard(uploadURL);
-            } else {
-                console.error('Failed to POST iCal data');
-            }
-        } catch (error) {
-            console.error('Failed to POST iCal data:', error);
-        }
-    }
-
-    const handlePageRange = () => {
-        const totalPages = Math.ceil(channelLength / itemsPerPage);
-        let startPage = currentPannel - 2;
-
-        if (startPage < 1) {
-            startPage = 1;
-        }
-
-        let endPage = startPage + 4;
-        if (endPage > totalPages) {
-            endPage = totalPages;
-            startPage = Math.max(endPage - 4, 1);
-        }
-
-        return {startPage, endPage};
-    };
-
-    const {startPage, endPage} = handlePageRange();
+    const {startPage, endPage} = handlePageRange(channelLength, itemsPerPage, currentPannel);
 
     const toggleAddChannelButtonMenu = () => {
         setDropdownAddChannelsVisible(!dropdownAddChannelsVisible);
@@ -287,72 +60,31 @@ function HostDistribution() {
     };
 
     const handleCancelAddChannel = () => {
-        // Reset state to default values
         setSelectedChannel("Select Channel");
         setApiKey("");
 
-        // Close the dropdown
         setDropdownAddChannelsVisible(false);
     };
 
     const handleAddChannel = async (e) => {
         e.preventDefault();
-        // Add channel to the database
-        let id = generateUUID();
-        let ChannelName = selectedChannel;
-        let APIKey = apiKey;
-        let UserId = userId;
-        let ListedAccommodations = [];
-        let Status = false;
 
-        if (selectedChannel === "Select Channel" && apiKey === "" || selectedChannel === "Select Channel" || apiKey === "") {
-            alert('Please fill in all fields');
-            return;
+        const result = await handleAddChannelService(userId, selectedChannel, apiKey);
+
+        if (result.success) {
+            alert('Channel added successfully');
+            setSelectedChannel("Select Channel");
+            setApiKey("");
+            setDropdownAddChannelsVisible(false);
+
+            const updatedChannels = await fetchChannels(userId);
+            setChannelData(updatedChannels);
+        } else {
+            alert(result.error || 'Failed to add channel');
         }
-
-        try {
-            const response = await fetch('https://9uv5o7aiz6.execute-api.eu-north-1.amazonaws.com/dev/Host-ChannelManagement-Production-Create-Channel', {
-                method: 'POST',
-                body: JSON.stringify({
-                    id: id,
-                    ChannelName: ChannelName,
-                    APIKey: APIKey,
-                    UserId: UserId,
-                    ListedAccommodations: ListedAccommodations,
-                    Status: Status
-                }),
-                headers: {
-                    'Content-type': 'application/json; charset=UTF-8',
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.statusCode === 200) {
-                alert('Channel added successfully');
-                // Reset state to default values
-                setSelectedChannel("Select Channel");
-                setApiKey("");
-                setDropdownAddChannelsVisible(false);
-
-                await asyncRetrieveChannelData();
-            } else {
-                alert('Failed to add channel');
-            }
-        } catch (error) {
-            console.error('Failed to add channel:', error);
-        }
-    }
+    };
 
     const renderAddChannelButtonMenu = () => {
-        const allChannels = [
-            'Airbnb',
-            'Booking.com',
-            'Expedia',
-            'HomeAway',
-            'TripAdvisor',
-            'Vrbo'
-        ];
 
         const availableChannels = allChannels.filter(channel => !addedChannels.includes(channel));
 
@@ -410,7 +142,7 @@ function HostDistribution() {
 
     const handleEnableButton = (channelId) => {
         setChannelData(prevState => {
-            const channelIndex = prevState.findIndex(channel => channel.id.S === channelId);
+            const channelIndex = prevState.findIndex(channel => channel.id === channelId);
 
             if (channelIndex === -1) {
                 console.error(`Channel with ID ${channelId} not found`);
@@ -418,7 +150,7 @@ function HostDistribution() {
             }
 
             const updatedChannels = [...prevState];
-            updatedChannels[channelIndex].Status.BOOL = true;
+            updatedChannels[channelIndex].Status = true;
 
             return updatedChannels;
         });
@@ -426,7 +158,7 @@ function HostDistribution() {
 
     const handleDisableButton = (channelId) => {
         setChannelData(prevState => {
-            const channelIndex = prevState.findIndex(channel => channel.id.S === channelId);
+            const channelIndex = prevState.findIndex(channel => channel.id === channelId);
 
             if (channelIndex === -1) {
                 console.error(`Channel with ID ${channelId} not found`);
@@ -434,7 +166,7 @@ function HostDistribution() {
             }
 
             const updatedChannels = [...prevState];
-            updatedChannels[channelIndex].Status.BOOL = false;
+            updatedChannels[channelIndex].Status = false;
 
             return updatedChannels;
         });
@@ -461,7 +193,7 @@ function HostDistribution() {
     };
 
     const handleAddAccommodationButton = (channelId, accommodationId) => {
-        const accommodationToAdd = accommodations.find(acc => acc.ID.S === accommodationId);
+        const accommodationToAdd = accommodations.find(acc => acc.ID === accommodationId);
 
         if (!accommodationToAdd) {
             console.error('Accommodation not found');
@@ -469,16 +201,16 @@ function HostDistribution() {
         }
 
         const newAccommodation = {
-            AccommodationId: {S: accommodationToAdd.ID.S},
+            AccommodationId: {S: accommodationToAdd.ID},
             Title: {S: accommodationToAdd.Title.S},
             GuestAmount: {N: accommodationToAdd.GuestAmount.N},
             Rent: {S: accommodationToAdd.Rent.S},
-            Availability: {S: accommodationToAdd.Drafted.BOOL ? 'Unavailable' : 'Available'}
+            Availability: {S: accommodationToAdd.Drafted ? 'Unavailable' : 'Available'}
         };
 
         setTempListedAccommodations(prevState => {
             const existingAccommodations = prevState[channelId] || [];
-            const isAlreadyAdded = existingAccommodations.some(acc => acc.AccommodationId.S === newAccommodation.AccommodationId.S);
+            const isAlreadyAdded = existingAccommodations.some(acc => acc.AccommodationId === newAccommodation.AccommodationId);
 
             if (!isAlreadyAdded) {
                 return {
@@ -496,18 +228,18 @@ function HostDistribution() {
             const existingAccommodations = prevState[channelId] || [];
             return {
                 ...prevState,
-                [channelId]: existingAccommodations.filter(acc => acc.AccommodationId.S !== accommodationId)
+                [channelId]: existingAccommodations.filter(acc => acc.AccommodationId !== accommodationId)
             };
         });
 
         setChannelData(prevState => {
-            const channelIndex = prevState.findIndex(channel => channel.id.S === channelId);
+            const channelIndex = prevState.findIndex(channel => channel.id === channelId);
             if (channelIndex !== -1) {
                 const updatedChannels = [...prevState];
                 const existingListedAccommodations = updatedChannels[channelIndex].ListedAccommodations.L || [];
 
                 updatedChannels[channelIndex].ListedAccommodations.L = existingListedAccommodations.filter(
-                    acc => acc.M.AccommodationId.S !== accommodationId
+                    acc => acc.M.AccommodationId !== accommodationId
                 );
 
                 return updatedChannels;
@@ -519,12 +251,12 @@ function HostDistribution() {
     const renderAddAccommodationsView = (id) => {
         const channelId = id;
 
-        const listedAccommodations = channelData.find(channel => channel.id.S === channelId)?.ListedAccommodations.L || [];
+        const listedAccommodations = channelData.find(channel => channel.id === channelId)?.ListedAccommodations.L || [];
         const tempAccommodations = tempListedAccommodations[channelId] || [];
 
         const listedAccommodationIds = [
-            ...listedAccommodations.map(acc => acc.M.AccommodationId.S),
-            ...tempAccommodations.map(acc => acc.AccommodationId.S),
+            ...listedAccommodations.map(acc => acc.M.AccommodationId),
+            ...tempAccommodations.map(acc => acc.AccommodationId),
         ];
 
         return (
@@ -546,15 +278,15 @@ function HostDistribution() {
                     </thead>
                     <tbody>
                     {accommodations
-                        .filter(accommodation => !listedAccommodationIds.includes(accommodation.ID.S))
+                        .filter(accommodation => !listedAccommodationIds.includes(accommodation.ID))
                         .map((accommodation) => (
-                            <tr key={accommodation.ID.S}>
+                            <tr key={accommodation.ID}>
                                 <td>{accommodation.Title.S}</td>
                                 <td>{accommodation.GuestAmount.N}</td>
                                 <td>{accommodation.Rent.S}</td>
-                                <td>{accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</td>
+                                <td>{accommodation.Drafted ? 'Unavailable' : 'Available'}</td>
                                 <td>
-                                    <button onClick={() => handleAddAccommodationButton(channelId, accommodation.ID.S)}>
+                                    <button onClick={() => handleAddAccommodationButton(channelId, accommodation.ID)}>
                                         Add
                                     </button>
                                 </td>
@@ -569,12 +301,12 @@ function HostDistribution() {
     const renderRemoveAccommodationsView = (id) => {
         const channelId = id;
 
-        const listedAccommodations = channelData.find(channel => channel.id.S === channelId)?.ListedAccommodations.L || [];
+        const listedAccommodations = channelData.find(channel => channel.id === channelId)?.ListedAccommodations.L || [];
         const tempAccommodations = tempListedAccommodations[channelId] || [];
 
         const combinedAccommodations = [
-            ...listedAccommodations.map(acc => ({...acc.M, id: {S: acc.M.AccommodationId.S}})),
-            ...tempAccommodations.map(acc => ({...acc, id: {S: acc.AccommodationId.S}}))
+            ...listedAccommodations.map(acc => ({...acc.M, id: {S: acc.M.AccommodationId}})),
+            ...tempAccommodations.map(acc => ({...acc, id: {S: acc.AccommodationId}}))
         ];
 
         return (
@@ -596,14 +328,14 @@ function HostDistribution() {
                     </thead>
                     <tbody>
                     {combinedAccommodations.map((accommodation) => (
-                        <tr key={accommodation.AccommodationId.S}>
+                        <tr key={accommodation.AccommodationId}>
                             <td>{accommodation.Title.S}</td>
                             <td>{accommodation.GuestAmount.N}</td>
                             <td>{accommodation.Rent.S}</td>
                             <td>{accommodation.Availability.S}</td>
                             <td>
                                 <button
-                                    onClick={() => handleRemoveAccommodationButton(channelId, accommodation.AccommodationId.S)}>
+                                    onClick={() => handleRemoveAccommodationButton(channelId, accommodation.AccommodationId)}>
                                     Remove
                                 </button>
                             </td>
@@ -647,7 +379,7 @@ function HostDistribution() {
     };
 
     const handelSingleChannelSave = async (channelId) => {
-        const channel = channelData.find(channel => channel.id.S === channelId);
+        const channel = channelData.find(channel => channel.id === channelId);
 
         if (!channel) {
             console.error(`Channel with ID ${channelId} not found`);
@@ -664,9 +396,9 @@ function HostDistribution() {
                         id: channelId,
                         APIKey: channel.APIKey.S,
                         ChannelName: channel.ChannelName.S,
-                        ListedAccommodations: channel.ListedAccommodations || { L: [] },
-                        Status: channel.Status.BOOL,
-                        UserId: channel.UserId.S
+                        ListedAccommodations: channel.ListedAccommodations || {L: []},
+                        Status: channel.Status,
+                        UserId: channel.UserId
                     }),
                     headers: {
                         'Content-type': 'application/json; charset=UTF-8'
@@ -692,11 +424,11 @@ function HostDistribution() {
             ...currentListedAccommodations,
             ...accommodationsToSync.map(acc => ({
                 M: {
-                    AccommodationId: { S: acc.AccommodationId.S },
-                    Title: { S: acc.Title.S },
-                    GuestAmount: { N: acc.GuestAmount.N },
-                    Rent: { S: acc.Rent.S },
-                    Availability: { S: acc.Availability.S }
+                    AccommodationId: {S: acc.AccommodationId},
+                    Title: {S: acc.Title.S},
+                    GuestAmount: {N: acc.GuestAmount.N},
+                    Rent: {S: acc.Rent.S},
+                    Availability: {S: acc.Availability.S}
                 }
             }))
         ];
@@ -708,9 +440,9 @@ function HostDistribution() {
                     id: channelId,
                     APIKey: channel.APIKey.S,
                     ChannelName: channel.ChannelName.S,
-                    ListedAccommodations: { L: updatedListedAccommodations },
-                    Status: channel.Status.BOOL,
-                    UserId: channel.UserId.S
+                    ListedAccommodations: {L: updatedListedAccommodations},
+                    Status: channel.Status,
+                    UserId: channel.UserId
                 }),
                 headers: {
                     'Content-type': 'application/json; charset=UTF-8'
@@ -723,14 +455,14 @@ function HostDistribution() {
                 alert('Accommodations synced successfully!');
 
                 setTempListedAccommodations(prevState => {
-                    const newState = { ...prevState };
+                    const newState = {...prevState};
                     delete newState[channelId];
                     return newState;
                 });
 
                 setChannelData(prevState => {
                     const updatedChannels = [...prevState];
-                    const channelIndex = updatedChannels.findIndex(ch => ch.id.S === channelId);
+                    const channelIndex = updatedChannels.findIndex(ch => ch.id === channelId);
                     if (channelIndex !== -1) {
                         updatedChannels[channelIndex].ListedAccommodations.L = updatedListedAccommodations;
                     }
@@ -758,40 +490,11 @@ function HostDistribution() {
         }
     }
 
-    const handleDeleteChannel = async (channelId) => {
-        if (!window.confirm('Are you sure you want to delete this channel?')) return;
-
-        try {
-            const response = await fetch('https://9uv5o7aiz6.execute-api.eu-north-1.amazonaws.com/dev/Host-ChannelManagement-Production-Delete-Channel', {
-                method: 'DELETE',
-                body: JSON.stringify({
-                    id: channelId
-                }),
-                headers: {
-                    'Content-type': 'application/json; charset=UTF-8',
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.statusCode === 200) {
-                alert('Channel deleted successfully');
-                setChannelData(prevData => prevData.filter(channel => channel.id.S !== channelId));
-                setCurrentPannel(1);
-                setActiveThreeDotsDropdown(null);
-            } else {
-                alert('Failed to delete channel');
-            }
-        } catch (error) {
-            console.error('Failed to delete channel:', error);
-        }
-    };
-
     const renderThreeDotsMenu = (channelId) => {
         return (
             <div className="threeDotsMenuContent">
                 <button className="threeDotsButtonMenu delete"
-                        onClick={() => handleDeleteChannel(channelId)}>
+                        onClick={() => deleteChannelService(channelId, setChannelData, setCurrentPannel, setActiveThreeDotsDropdown)}>
                     Delete
                 </button>
                 <button className="threeDotsButtonMenu"
@@ -814,7 +517,7 @@ function HostDistribution() {
                         + Add channel
                     </button>
                     <div className={`addChannelButtonMenu ${dropdownAddChannelsVisible ? 'visible' : ''}`}>
-                        {renderAddChannelButtonMenu()}
+                        {renderAddChannelButtonMenu(addedChannels)}
                     </div>
                 </div>
             </div>
@@ -824,50 +527,50 @@ function HostDistribution() {
                     <div className="contentContainer-channel">
                         {channelData
                             .sort((a, b) => {
-                                const nameA = a.ChannelName.S.toLowerCase();
-                                const nameB = b.ChannelName.S.toLowerCase();
+                                const nameA = a.ChannelName;
+                                const nameB = b.ChannelName;
                                 if (nameA < nameB) return -1;
                                 if (nameA > nameB) return 1;
                                 return 0;
                             })
                             .slice((currentPannel - 1) * itemsPerPage, currentPannel * itemsPerPage)
                             .map((channel) => (
-                                <div className="host-dist-box-container" key={channel.id.S}>
+                                <div className="host-dist-box-container" key={channel.id}>
                                     <div className="host-dist-box-row">
                                         <img className="channelLogo"
-                                             src={getChannelLogo(channel.ChannelName.S)}
-                                             alt={`${channel.ChannelName.S} Logo`}
+                                             src={getChannelLogo(channel.ChannelName)}
+                                             alt={`${channel.ChannelName} Logo`}
                                         />
-                                        <p className="channelFont">{channel.ChannelName.S || 'Channel'}</p>
+                                        <p className="channelFont">{channel.ChannelName || 'Channel'}</p>
                                         <p>
                                             <label className="toggle-status-switch">
                                                 <input
                                                     type="checkbox"
-                                                    checked={channel.Status.BOOL === true}
-                                                    onChange={() => channel.Status.BOOL ? handleDisableButton(channel.id.S) : handleEnableButton(channel.id.S)}
+                                                    checked={channel.Status === true}
+                                                    onChange={() => channel.Status ? handleDisableButton(channel.id) : handleEnableButton(channel.id)}
                                                 />
                                                 <span className="slider"></span>
                                             </label>
                                         </p>
-                                        <p className="totalListedAccommodations">{channel.ListedAccommodations.L.length || '0'} Listed
+                                        <p className="totalListedAccommodations">{channel.ListedAccommodations || '0'} Listed
                                             Accommodations
                                         </p>
                                         <button className="channelManageButton"
-                                                onClick={() => toggleChannelManageMenu(channel.id.S)}>
+                                                onClick={() => toggleChannelManageMenu(channel.id)}>
                                             Manage
                                         </button>
-                                        {activeManageDropdown === channel.id.S && (
+                                        {activeManageDropdown === channel.id && (
                                             <div className="channelManageContainer visible">
-                                                {renderChannelManageMenu(channel.id.S)}
+                                                {renderChannelManageMenu(channel.id)}
                                             </div>
                                         )}
                                         <button className="threeDotsButton"
-                                                onClick={() => toggleThreeDotsMenu(channel.id.S)}>
+                                                onClick={() => toggleThreeDotsMenu(channel.id)}>
                                             <img src={three_dots} alt="Three Dots"/>
                                         </button>
-                                        {activeThreeDotsDropdown === channel.id.S && (
+                                        {activeThreeDotsDropdown === channel.id && (
                                             <div className="threeDotsContainer visible">
-                                                {renderThreeDotsMenu(channel.id.S)}
+                                                {renderThreeDotsMenu(channel.id)}
                                             </div>
                                         )}
                                     </div>
