@@ -40,9 +40,13 @@ function HostDistribution() {
 
     const [selectedChannel, setSelectedChannel] = useState("Select Channel");
     const [apiKey, setApiKey] = useState("");
-    const addedChannels = channelData.map(channel => channel.ChannelName);
+    const addedChannels = channelData.map(channel => channel.ChannelName.S);
 
     const {startPage, endPage} = handlePageRange(channelLength, itemsPerPage, currentPannel);
+
+    useEffect(() => {
+        console.log(channelData[0]);
+    }, [channelData]);
 
     const toggleAddChannelButtonMenu = () => {
         setDropdownAddChannelsVisible(!dropdownAddChannelsVisible);
@@ -142,7 +146,7 @@ function HostDistribution() {
 
     const handleEnableButton = (channelId) => {
         setChannelData(prevState => {
-            const channelIndex = prevState.findIndex(channel => channel.id === channelId);
+            const channelIndex = prevState.findIndex(channel => channel.id.S === channelId);
 
             if (channelIndex === -1) {
                 console.error(`Channel with ID ${channelId} not found`);
@@ -158,7 +162,7 @@ function HostDistribution() {
 
     const handleDisableButton = (channelId) => {
         setChannelData(prevState => {
-            const channelIndex = prevState.findIndex(channel => channel.id === channelId);
+            const channelIndex = prevState.findIndex(channel => channel.id.S === channelId);
 
             if (channelIndex === -1) {
                 console.error(`Channel with ID ${channelId} not found`);
@@ -233,7 +237,7 @@ function HostDistribution() {
         });
 
         setChannelData(prevState => {
-            const channelIndex = prevState.findIndex(channel => channel.id === channelId);
+            const channelIndex = prevState.findIndex(channel => channel.id.S === channelId);
             if (channelIndex !== -1) {
                 const updatedChannels = [...prevState];
                 const existingListedAccommodations = updatedChannels[channelIndex].ListedAccommodations.L || [];
@@ -251,7 +255,7 @@ function HostDistribution() {
     const renderAddAccommodationsView = (id) => {
         const channelId = id;
 
-        const listedAccommodations = channelData.find(channel => channel.id === channelId)?.ListedAccommodations.L || [];
+        const listedAccommodations = channelData.find(channel => channel.id.S === channelId)?.ListedAccommodations.L || [];
         const tempAccommodations = tempListedAccommodations[channelId] || [];
 
         const listedAccommodationIds = [
@@ -301,7 +305,7 @@ function HostDistribution() {
     const renderRemoveAccommodationsView = (id) => {
         const channelId = id;
 
-        const listedAccommodations = channelData.find(channel => channel.id === channelId)?.ListedAccommodations.L || [];
+        const listedAccommodations = channelData.find(channel => channel.id.S === channelId)?.ListedAccommodations.L || [];
         const tempAccommodations = tempListedAccommodations[channelId] || [];
 
         const combinedAccommodations = [
@@ -379,7 +383,7 @@ function HostDistribution() {
     };
 
     const handelSingleChannelSave = async (channelId) => {
-        const channel = channelData.find(channel => channel.id === channelId);
+        const channel = channelData.find(channel => channel.id.S === channelId);
 
         if (!channel) {
             console.error(`Channel with ID ${channelId} not found`);
@@ -396,7 +400,7 @@ function HostDistribution() {
                         id: channelId,
                         APIKey: channel.APIKey.S,
                         ChannelName: channel.ChannelName.S,
-                        ListedAccommodations: channel.ListedAccommodations || {L: []},
+                        ListedAccommodations: channel.ListedAccommodations.L || {L: []},
                         Status: channel.Status,
                         UserId: channel.UserId
                     }),
@@ -440,7 +444,7 @@ function HostDistribution() {
                     id: channelId,
                     APIKey: channel.APIKey.S,
                     ChannelName: channel.ChannelName.S,
-                    ListedAccommodations: {L: updatedListedAccommodations},
+                    ListedAccommodations: {L: updatedListedAccommodations.L},
                     Status: channel.Status,
                     UserId: channel.UserId
                 }),
@@ -478,23 +482,15 @@ function HostDistribution() {
     };
 
     const toggleThreeDotsMenu = (channelId) => {
-        if (activeThreeDotsDropdown === channelId) {
-            setActiveThreeDotsDropdown(null);
-            setDropdownAddChannelsVisible(false);
-            setActiveManageDropdown(null);
-            setActiveAddAccommodationsView(null);
-        } else {
-            setActiveThreeDotsDropdown(channelId);
-            setDropdownAddChannelsVisible(false);
-            setActiveManageDropdown(null);
-        }
-    }
+        setActiveThreeDotsDropdown((prev) => (prev === channelId ? null : channelId));
+    };
 
     const renderThreeDotsMenu = (channelId) => {
+        console.log(channelId);
         return (
             <div className="threeDotsMenuContent">
                 <button className="threeDotsButtonMenu delete"
-                        onClick={() => deleteChannelService(channelId, setChannelData, setCurrentPannel, setActiveThreeDotsDropdown)}>
+                        onClick={() => deleteChannelService(channelId, channelData, setCurrentPannel, setActiveThreeDotsDropdown)}>
                     Delete
                 </button>
                 <button className="threeDotsButtonMenu"
@@ -527,50 +523,53 @@ function HostDistribution() {
                     <div className="contentContainer-channel">
                         {channelData
                             .sort((a, b) => {
-                                const nameA = a.ChannelName;
-                                const nameB = b.ChannelName;
+                                console.log(channelData);
+                                const nameA = a.ChannelName.S;
+                                const nameB = b.ChannelName.S;
                                 if (nameA < nameB) return -1;
                                 if (nameA > nameB) return 1;
                                 return 0;
                             })
                             .slice((currentPannel - 1) * itemsPerPage, currentPannel * itemsPerPage)
-                            .map((channel) => (
-                                <div className="host-dist-box-container" key={channel.id}>
+                            .map((channel, index) => (
+                                <div className="host-dist-box-container" key={channel.id.S || `channel-${index}`}>
                                     <div className="host-dist-box-row">
                                         <img className="channelLogo"
-                                             src={getChannelLogo(channel.ChannelName)}
-                                             alt={`${channel.ChannelName} Logo`}
+                                             src={getChannelLogo(channel.ChannelName.S)}
+                                             alt={`${channel.ChannelName.S} Logo`}
                                         />
-                                        <p className="channelFont">{channel.ChannelName || 'Channel'}</p>
+                                        <p className="channelFont">{channel.ChannelName.S || 'Channel'}</p>
                                         <p>
                                             <label className="toggle-status-switch">
                                                 <input
                                                     type="checkbox"
                                                     checked={channel.Status === true}
-                                                    onChange={() => channel.Status ? handleDisableButton(channel.id) : handleEnableButton(channel.id)}
+                                                    onChange={() => channel.Status ? handleDisableButton(channel.id.S) : handleEnableButton(channel.id.S)}
                                                 />
                                                 <span className="slider"></span>
                                             </label>
                                         </p>
-                                        <p className="totalListedAccommodations">{channel.ListedAccommodations || '0'} Listed
-                                            Accommodations
-                                        </p>
+                                        <p className="totalListedAccommodations">{channel.ListedAccommodations.L || '0'} Listed
+                                            Accommodations</p>
+
                                         <button className="channelManageButton"
-                                                onClick={() => toggleChannelManageMenu(channel.id)}>
+                                                onClick={() => toggleChannelManageMenu(channel.id.S)}>
                                             Manage
                                         </button>
-                                        {activeManageDropdown === channel.id && (
+                                        {activeManageDropdown === channel.id.S && (
                                             <div className="channelManageContainer visible">
-                                                {renderChannelManageMenu(channel.id)}
+                                                {renderChannelManageMenu(channel.id.S)}
                                             </div>
                                         )}
+
                                         <button className="threeDotsButton"
-                                                onClick={() => toggleThreeDotsMenu(channel.id)}>
+                                                onClick={() => toggleThreeDotsMenu(channel.id.S)}>
                                             <img src={three_dots} alt="Three Dots"/>
                                         </button>
-                                        {activeThreeDotsDropdown === channel.id && (
+
+                                        {activeThreeDotsDropdown === channel.id.S && (
                                             <div className="threeDotsContainer visible">
-                                                {renderThreeDotsMenu(channel.id)}
+                                                {renderThreeDotsMenu(channel.id.S)}
                                             </div>
                                         )}
                                     </div>

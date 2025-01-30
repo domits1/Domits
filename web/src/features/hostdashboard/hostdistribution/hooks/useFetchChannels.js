@@ -13,7 +13,7 @@ const useFetchChannels = (userId) => {
         loadChannels();
     }, [userId]);
 
-    return [channelData, setChannelData];
+    return channelData;
 };
 
 export default useFetchChannels;
