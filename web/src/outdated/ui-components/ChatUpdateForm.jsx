@@ -15,11 +15,13 @@ import {
 } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { createChat } from "../graphql/mutations";
+import { getChat } from "../../graphql/queries";
+import { updateChat } from "../../graphql/mutations";
 const client = generateClient();
-export default function ChatCreateForm(props) {
+export default function ChatUpdateForm(props) {
   const {
-    clearOnSuccess = true,
+    id: idProp,
+    chat: chatModelProp,
     onSuccess,
     onError,
     onSubmit,
@@ -54,17 +56,36 @@ export default function ChatCreateForm(props) {
   const [channelID, setChannelID] = React.useState(initialValues.channelID);
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
-    setUserId(initialValues.userId);
-    setRecipientId(initialValues.recipientId);
-    setText(initialValues.text);
-    setEmail(initialValues.email);
-    setRecipientEmail(initialValues.recipientEmail);
-    setIsRead(initialValues.isRead);
-    setSortKey(initialValues.sortKey);
-    setCreatedAt(initialValues.createdAt);
-    setChannelID(initialValues.channelID);
+    const cleanValues = chatRecord
+      ? { ...initialValues, ...chatRecord }
+      : initialValues;
+    setUserId(cleanValues.userId);
+    setRecipientId(cleanValues.recipientId);
+    setText(cleanValues.text);
+    setEmail(cleanValues.email);
+    setRecipientEmail(cleanValues.recipientEmail);
+    setIsRead(cleanValues.isRead);
+    setSortKey(cleanValues.sortKey);
+    setCreatedAt(cleanValues.createdAt);
+    setChannelID(cleanValues.channelID);
     setErrors({});
   };
+  const [chatRecord, setChatRecord] = React.useState(chatModelProp);
+  React.useEffect(() => {
+    const queryData = async () => {
+      const record = idProp
+        ? (
+            await client.graphql({
+              query: getChat.replaceAll("__typename", ""),
+              variables: { id: idProp },
+            })
+          )?.data?.getChat
+        : chatModelProp;
+      setChatRecord(record);
+    };
+    queryData();
+  }, [idProp, chatModelProp]);
+  React.useEffect(resetStateValues, [chatRecord]);
   const validations = {
     userId: [],
     recipientId: [],
@@ -102,15 +123,15 @@ export default function ChatCreateForm(props) {
       onSubmit={async (event) => {
         event.preventDefault();
         let modelFields = {
-          userId,
-          recipientId,
+          userId: userId ?? null,
+          recipientId: recipientId ?? null,
           text,
-          email,
-          recipientEmail,
-          isRead,
-          sortKey,
-          createdAt,
-          channelID,
+          email: email ?? null,
+          recipientEmail: recipientEmail ?? null,
+          isRead: isRead ?? null,
+          sortKey: sortKey ?? null,
+          createdAt: createdAt ?? null,
+          channelID: channelID ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -141,18 +162,16 @@ export default function ChatCreateForm(props) {
             }
           });
           await client.graphql({
-            query: createChat.replaceAll("__typename", ""),
+            query: updateChat.replaceAll("__typename", ""),
             variables: {
               input: {
+                id: chatRecord.id,
                 ...modelFields,
               },
             },
           });
           if (onSuccess) {
             onSuccess(modelFields);
-          }
-          if (clearOnSuccess) {
-            resetStateValues();
           }
         } catch (err) {
           if (onError) {
@@ -161,7 +180,7 @@ export default function ChatCreateForm(props) {
           }
         }
       }}
-      {...getOverrideProps(overrides, "ChatCreateForm")}
+      {...getOverrideProps(overrides, "ChatUpdateForm")}
       {...rest}
     >
       <TextField
@@ -457,13 +476,14 @@ export default function ChatCreateForm(props) {
         {...getOverrideProps(overrides, "CTAFlex")}
       >
         <Button
-          children="Clear"
+          children="Reset"
           type="reset"
           onClick={(event) => {
             event.preventDefault();
             resetStateValues();
           }}
-          {...getOverrideProps(overrides, "ClearButton")}
+          isDisabled={!(idProp || chatModelProp)}
+          {...getOverrideProps(overrides, "ResetButton")}
         ></Button>
         <Flex
           gap="15px"
@@ -473,7 +493,10 @@ export default function ChatCreateForm(props) {
             children="Submit"
             type="submit"
             variation="primary"
-            isDisabled={Object.values(errors).some((e) => e?.hasError)}
+            isDisabled={
+              !(idProp || chatModelProp) ||
+              Object.values(errors).some((e) => e?.hasError)
+            }
             {...getOverrideProps(overrides, "SubmitButton")}
           ></Button>
         </Flex>

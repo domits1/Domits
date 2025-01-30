@@ -2,8 +2,8 @@ import React, {useEffect, useRef, useState} from 'react';
 import {Link, useLocation, useNavigate} from "react-router-dom";
 import "./listing.css";
 import ImageGallery from './ImageGallery';
-import DateFormatterYYYY_MM_DD from "../utils/DateFormatterYYYY_MM_DD";
-import dateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterYYYY_MM_DD from "../../components/utils/DateFormatterYYYY_MM_DD";
+import dateFormatterDD_MM_YYYY from "../../components/utils/DateFormatterDD_MM_YYYY";
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import BookingCalendar from "./BookingCalendar";
@@ -89,7 +89,7 @@ import ControlCameraIcon from '@mui/icons-material/ControlCamera';
 import NavigationIcon from '@mui/icons-material/Navigation';
 import SevereColdIcon from '@mui/icons-material/SevereCold';
 import ChairAltIcon from '@mui/icons-material/ChairAlt';
-import {touristTaxRates, vatRates} from "../utils/CountryVATRatesAndTouristTaxes";
+import {touristTaxRates, vatRates} from "../../components/utils/CountryVATRatesAndTouristTaxes";
 
 const ListingDetails = () => {
     const navigate = useNavigate();

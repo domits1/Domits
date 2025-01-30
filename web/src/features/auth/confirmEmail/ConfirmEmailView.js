@@ -1,8 +1,8 @@
 import React from "react";
-import DigitInputs from "../../ui/DigitsInputs/DigitsInputs";
-import styles from "../../../features/verification/hostverification/hostverification.module.css";
+import DigitInputs from "../../../components/ui/DigitsInputs/DigitsInputs";
+import styles from "../../verification/hostverification/hostverification.module.css";
 import confirmEmailStyles from "./confirmEmail.module.css";
-import Toast from "../../toast/Toast";
+import Toast from "../../../components/toast/Toast";
 import { useConfirmEmailLogic } from "./ConfirmEmailLogic.js";
 
 function ConfirmEmailView() {
