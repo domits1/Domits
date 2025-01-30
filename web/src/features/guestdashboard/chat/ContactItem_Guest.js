@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../../components/utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
-import spinner from "../../images/spinnner.gif";
+import spinner from "../../../images/spinnner.gif";
 
 const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessages }) => {
     console.log('Item data:', item);
@@ -9,7 +9,7 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
     const [FullName, setFullName] = useState(null);
     const [hostName, setHostName] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    
+
     useEffect(() => {
         const fetchUserInfo = async () => {
             setIsLoading(true);
@@ -52,9 +52,9 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
         const fetchHostName = async () => {
             try {
                 const requestData = {
-                    OwnerId: item.hostId  
+                    OwnerId: item.hostId
                 };
-                
+
                 const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
                     method: 'POST',
                     headers: {
@@ -62,11 +62,11 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
                     },
                     body: JSON.stringify(requestData)
                 });
-                
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch host information');
                 }
-                
+
                 const responseData = await response.json();
                 const parsedData = JSON.parse(responseData.body)[0];
 
@@ -76,7 +76,7 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
                 }, {});
 
                 const fullName = `${attributes['given_name']} ${attributes['family_name']}`;
-                setHostName(fullName); 
+                setHostName(fullName);
             } catch (error) {
                 console.error('Error fetching host info:', error);
             }
@@ -94,7 +94,7 @@ const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessag
             </div>
         );
     }
-    
+
     if (type === 'My contacts') {
         return (
             <div className={`${styles.displayItem} ${(selectedUser === user) ? styles.selectedUser : ''}`}

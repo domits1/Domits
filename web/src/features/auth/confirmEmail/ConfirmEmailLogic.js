@@ -1,7 +1,7 @@
 import { useRef, useState, useContext } from "react";
 import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
-import FlowContext from "../../../FlowContext";
+import FlowContext from "../../../services/FlowContext";
 
 
 export function useConfirmEmailLogic() {

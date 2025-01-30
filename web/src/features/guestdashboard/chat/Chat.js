@@ -1,15 +1,15 @@
 import React, { useEffect, useState, useRef } from "react";
-import "../../components/chat/chat.css";
+import "./chat.css";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
-import * as mutations from "../../graphql/mutations";
-import * as queries from "../../graphql/queries";
-import Pages from "../../features/guestdashboard/Pages";
-import * as subscriptions from "../../graphql/subscriptions";
+import * as mutations from "../../../graphql/mutations";
+import * as queries from "../../../graphql/queries";
+import Pages from "../Pages";
+import * as subscriptions from "../../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styles from './ChatPage.module.css';
-import spinner from "../../images/spinnner.gif";
+import spinner from "../../../images/spinnner.gif";
 import ContactItem from "./ContactItem_Guest";
 
 const Chat = ({ user }) => {

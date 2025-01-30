@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './chatbot.css';
-import { useUser } from '../../UserContext';
+import { useUser } from '../auth/UserContext';
 import { Auth } from 'aws-amplify';
 
 const Chat = () => {
@@ -279,7 +279,7 @@ const Chat = () => {
   return (
     <div className="cbc-chat-center">
       <div className="cbc-chat-container">
-        
+
         {/* Text field for showing chat status and Close Chat button */}
         <div className="cbc-chat-status">
           <p>Currently chatting with: {isAIChat ? 'Sophia (AI)' : 'Employee'}</p>

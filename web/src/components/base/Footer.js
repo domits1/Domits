@@ -1,5 +1,5 @@
 import React from 'react';
-import logo from "../../logo.svg";
+import logo from "../../images/logo.svg";
 import Appstorebadge from '../../images/assets/appstorebadge.svg';
 import Playstorebadge from '../../images/assets/playstorebadge.svg';
 import Instagram from '../../images/icons/Instagram.jpg'

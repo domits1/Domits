@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import DateFormatterDD_MM_YYYY from "../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../../components/utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
-import spinner from "../../images/spinnner.gif";
+import spinner from "../../../images/spinnner.gif";
 
 const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selectedUser, unreadMessages, setPendingRequest, setContactModalOpen }) => {
     const [user, setUser] = useState(null);
@@ -34,7 +34,7 @@ const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selec
                 }, {});
                 const fullName = `${attributes['given_name']} ${attributes['family_name']}`;
                 setFullName(fullName);
-                setUser(parsedData.Attributes[2].Value);                
+                setUser(parsedData.Attributes[2].Value);
             } catch (error) {
                 console.error('Error fetching guest info:', error);
             } finally {
@@ -53,7 +53,7 @@ const ContactItem = ({ item, type, index, acceptOrDenyRequest, selectUser, selec
     }
 
     if (!user) {
-        return null; 
+        return null;
     }
 
     switch (type) {

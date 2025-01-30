@@ -1,6 +1,6 @@
 import './App.css';
-import HostProtectedRoute from './HostProtectedRoute';
-import { UserProvider } from './UserContext';
+import HostProtectedRoute from './features/auth/hostauth/HostProtectedRoute';
+import { UserProvider } from './features/auth/UserContext';
 import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./pages/landingpage/Landing";
@@ -43,11 +43,11 @@ import GuestBooking from './features/guestdashboard/GuestBooking';
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
-import Chat from "./components/chat/Chat.js";
+import Chat from "./features/guestdashboard/chat/Chat.js";
 import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./components/chatwidget/ChatWidget";
 import EmployeeChat from './features/guestaiagent/EmployeeChat';
-import FlowContext from './FlowContext';
+import FlowContext from './services/FlowContext';
 import Hostchat from './features/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./features/hostdashboard/HostReservations";
@@ -91,7 +91,7 @@ import SummaryView from './features/hostonboarding/views/SummaryView.js';
 
 
 import { Auth } from 'aws-amplify';
-import GuestProtectedRoute from "./GuestProtectedRoute";
+import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./components/hostchatbot/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import ReleaseUpdates from './pages/productupdates/ReleaseUpdates.js'

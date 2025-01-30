@@ -1,6 +1,6 @@
 import React from 'react';
 import {Navigate} from 'react-router-dom';
-import { useUser } from './UserContext';
+import { useUser } from '../UserContext';
 
 const GuestProtectedRoute = ({ children }) => {
     const { role, isLoading } = useUser();

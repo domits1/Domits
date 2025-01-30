@@ -208,7 +208,7 @@ p{
     color: white;
     font-family: "Kanit";
     src: local("KanitRegular"),
-     url("../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
+     url("../../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
 }
 
 .chat__user--selected{
@@ -279,19 +279,19 @@ p{
 .chat__dialog {
     max-width: 35vw;
     height: auto;
-    padding: 10px; 
-    margin: 5px; 
+    padding: 10px;
+    margin: 5px;
     background: red;
     border-radius: 20px;
     font-size: 0.9rem;
     color: #1E1E1E;
     font-family: "Kanit";
     src: local("KanitLight"),
-     url("../../fonts/kanit/Kanit-Light.ttf") format("truetype");
+     url("../../../fonts/kanit/Kanit-Light.ttf") format("truetype");
 }
 
 .chat__dialog--user {
-    margin-left: auto; 
+    margin-left: auto;
     display: flex;
     justify-content: flex-end;
     background: #28a745;
@@ -304,7 +304,7 @@ p{
 }
 
 .chat__dialog--guest {
-    margin-right: auto; 
+    margin-right: auto;
     background: #eee;
     color: black;
     border-bottom-left-radius: 0;
@@ -424,7 +424,7 @@ p{
 .chat__controls{
     height: 100%;
     width: 100%;
-   
+
     display: flex;
     justify-content: flex-start;
     align-items: center;
@@ -517,16 +517,16 @@ p{
 }
 
 .chat__date{
-    width: 50%; 
-    text-align: center; 
-    border-bottom: 1px solid #bdbdbd; 
+    width: 50%;
+    text-align: center;
+    border-bottom: 1px solid #bdbdbd;
     line-height: 0.1em;
     margin: 10px 0 20px;
 }
 
 .chat__date span{
-    background:#fff; 
-    padding:0 10px; 
+    background:#fff;
+    padding:0 10px;
 }
 
 .chat__default{
@@ -561,11 +561,11 @@ a{
     .chat{
         padding: 0rem;
         height: 100%;
-        
+
     }
 
     .chat__notification {
-        right: -2.5%; 
+        right: -2.5%;
     }
 
     .chat__topUl,
@@ -584,7 +584,7 @@ a{
 
     }
 
-   
+
     .chat__container{
         width: 100%;
         height: 100%;
@@ -596,7 +596,7 @@ a{
     .chat__bottomLi--text{
         display: none;
     }
-    
+
     .chat__sidebar{
         height: auto;
         width: 100%;
@@ -609,20 +609,20 @@ a{
         width: 100%;
         height: 100%;
         margin-bottom: 200px;
-        display: flex; 
+        display: flex;
       }
-    
+
       .chat__message {
-        display: none; 
+        display: none;
       }
-    
+
       .chat__people {
-        display: none; 
+        display: none;
       }
-    
+
       .chat__message.active {
         display: flex;
-        width: 100%; 
+        width: 100%;
         flex-direction: column;
         height: 80vh;
         justify-content: center;
@@ -640,7 +640,7 @@ a{
 
      .chat__aside{
         height: 180px;
-    } 
+    }
 
     .chat__nav{
         flex-wrap: wrap;
@@ -663,7 +663,7 @@ a{
         background: none;
         width: auto;
     }
- 
+
 }
 
 
@@ -675,7 +675,7 @@ a{
 
 
     .chat__notification {
-        right: -10%; 
+        right: -10%;
     }
 }
 
@@ -703,7 +703,7 @@ a{
         display: flex;
     }
 
- 
+
 
     .chat__message--open,
     .chat__people--hidden {
