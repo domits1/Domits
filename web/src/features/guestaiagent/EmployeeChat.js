@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './EmployeeChat.css';
-import { useUser } from '../../UserContext';
+import { useUser } from '../auth/UserContext';
 import { Auth } from 'aws-amplify';
 
 const EmployeeChat = () => {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './hostchatbot.css';
 import { useLocation } from 'react-router-dom';
-import { useUser } from '../../UserContext';
+import { useUser } from '../../features/auth/UserContext';
 import * as pdfjsLib from 'pdfjs-dist';
 import { FiMenu, FiDownload, FiPrinter, FiMic, FiPaperclip } from 'react-icons/fi';
 import axios from "axios";

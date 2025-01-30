@@ -12,12 +12,12 @@ import django from './django.png';
 import jan from './jan.png';
 import eye from './eye.png';
 import alert from './alert.png';
-import Pages from "../../features/guestdashboard/Pages";
+import Pages from "../Pages";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
-import * as mutations from "../../graphql/mutations";
-import * as queries from "../../graphql/queries";
-import * as subscriptions from "../../graphql/subscriptions";
+import * as mutations from "../../../graphql/mutations";
+import * as queries from "../../../graphql/queries";
+import * as subscriptions from "../../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 
