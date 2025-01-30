@@ -4,8 +4,8 @@ import {Link, useNavigate} from 'react-router-dom';
 import { FlowProvider } from '../../FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
-import Register from "../base/Register";
-import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
+import Register from "../auth/Register";
+import DateFormatterDD_MM_YYYY from '../../components/utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
 import People from '@mui/icons-material/PeopleAltOutlined';
 import Cleaning from '@mui/icons-material/CleaningServicesOutlined';
@@ -256,7 +256,7 @@ const BookingOverview = () => {
             </div>
             <h1>Booking Overview</h1>
         </div>
-    
+
         <div className="Bookingcontainer">
             {/* Right Panel */}
             <div className="right-panel">
@@ -277,7 +277,7 @@ const BookingOverview = () => {
                         <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
                     </div>
                 </div>
-    
+
                 {!isLoggedIn ? (
                     <div>
                         <h2>Please Register or Log In to Continue</h2>
@@ -293,7 +293,7 @@ const BookingOverview = () => {
                     </button>
                 )}
             </div>
-    
+
             {/* Left Panel */}
             <div className="booking-details-container">
                 <div className="booking-header1">Booking Details</div>
@@ -315,7 +315,7 @@ const BookingOverview = () => {
                         <span className="detail-label">Price:</span>
                         <span className="detail-value">€ {accommodationPrice.toFixed(2)}</span>
                     </div>
-    
+
                     <div className="detail-row">
                         <span className="detail-label">Taxes:</span>
                         <span className="detail-value">€ {(taxes / 100).toFixed(2)}</span>
@@ -325,7 +325,7 @@ const BookingOverview = () => {
                         <span className="detail-label">Cleaning Fee:</span>
                         <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
                     </div>
-                    
+
                     <div className="detail-row">
                         <span className="detail-label">Service Fee:</span>
                         <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
@@ -345,8 +345,8 @@ const BookingOverview = () => {
             </div>
         </div>
     </main>
-    
-    
+
+
 
 
     );
