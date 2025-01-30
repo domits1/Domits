@@ -5,7 +5,7 @@ import './Login.css';
 import logo from "../../logo.svg";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import FlowContext from '../../FlowContext';
-import DigitInputs from "../ui/DigitsInputs/DigitsInputs";
+import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
 
 const Login = () => {
     const navigate = useNavigate();

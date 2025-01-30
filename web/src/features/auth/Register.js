@@ -460,7 +460,7 @@ const Register = () => {
                                 placeholder="Phone Number"
                                 value={formData.phone}
                                 onChange={handleChange}
-                                style={{ width: '100%' }} 
+                                style={{ width: '100%' }}
                             />
                         </div>
 
@@ -476,7 +476,7 @@ const Register = () => {
                                 onChange={handleChange}
                                 onFocus={() => {
                                     if (strengthContainerRef.current) {
-                                        strengthContainerRef.current.style.display = 'block'; 
+                                        strengthContainerRef.current.style.display = 'block';
                                     }
                                 }}
                                 style={{borderColor: errorMessage.includes('Password') ? 'red' : 'var(--secondary-color)'}}
@@ -512,7 +512,7 @@ const Register = () => {
                             /> Become a Host
                         </label>
                         <div className="alreadyAccountText">
-                            Already have an account? <a href="/login">Log in here</a>
+                            Already have an account? <a href="/web/src/features/auth/Login">Log in here</a>
                         </div>
                         {errorMessage && <div className="errorText">{errorMessage}</div>}
                         <button type="submit" className="registerButton" onClick={() => setShouldShake(true)}>Sign Up

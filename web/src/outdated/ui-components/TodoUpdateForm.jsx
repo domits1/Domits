@@ -9,11 +9,13 @@ import * as React from "react";
 import { Button, Flex, Grid, TextField } from "@aws-amplify/ui-react";
 import { fetchByPath, getOverrideProps, validateField } from "./utils";
 import { generateClient } from "aws-amplify/api";
-import { createUser } from "../graphql/mutations";
+import { getTodo } from "../../graphql/queries";
+import { updateTodo } from "../../graphql/mutations";
 const client = generateClient();
-export default function UserCreateForm(props) {
+export default function TodoUpdateForm(props) {
   const {
-    clearOnSuccess = true,
+    id: idProp,
+    todo: todoModelProp,
     onSuccess,
     onError,
     onSubmit,
@@ -23,20 +25,41 @@ export default function UserCreateForm(props) {
     ...rest
   } = props;
   const initialValues = {
-    email: "",
-    password: "",
+    name: "",
+    description: "",
   };
-  const [email, setEmail] = React.useState(initialValues.email);
-  const [password, setPassword] = React.useState(initialValues.password);
+  const [name, setName] = React.useState(initialValues.name);
+  const [description, setDescription] = React.useState(
+    initialValues.description
+  );
   const [errors, setErrors] = React.useState({});
   const resetStateValues = () => {
-    setEmail(initialValues.email);
-    setPassword(initialValues.password);
+    const cleanValues = todoRecord
+      ? { ...initialValues, ...todoRecord }
+      : initialValues;
+    setName(cleanValues.name);
+    setDescription(cleanValues.description);
     setErrors({});
   };
+  const [todoRecord, setTodoRecord] = React.useState(todoModelProp);
+  React.useEffect(() => {
+    const queryData = async () => {
+      const record = idProp
+        ? (
+            await client.graphql({
+              query: getTodo.replaceAll("__typename", ""),
+              variables: { id: idProp },
+            })
+          )?.data?.getTodo
+        : todoModelProp;
+      setTodoRecord(record);
+    };
+    queryData();
+  }, [idProp, todoModelProp]);
+  React.useEffect(resetStateValues, [todoRecord]);
   const validations = {
-    email: [{ type: "Required" }],
-    password: [{ type: "Required" }],
+    name: [{ type: "Required" }],
+    description: [],
   };
   const runValidationTasks = async (
     fieldName,
@@ -64,8 +87,8 @@ export default function UserCreateForm(props) {
       onSubmit={async (event) => {
         event.preventDefault();
         let modelFields = {
-          email,
-          password,
+          name,
+          description: description ?? null,
         };
         const validationResponses = await Promise.all(
           Object.keys(validations).reduce((promises, fieldName) => {
@@ -96,18 +119,16 @@ export default function UserCreateForm(props) {
             }
           });
           await client.graphql({
-            query: createUser.replaceAll("__typename", ""),
+            query: updateTodo.replaceAll("__typename", ""),
             variables: {
               input: {
+                id: todoRecord.id,
                 ...modelFields,
               },
             },
           });
           if (onSuccess) {
             onSuccess(modelFields);
-          }
-          if (clearOnSuccess) {
-            resetStateValues();
           }
         } catch (err) {
           if (onError) {
@@ -116,71 +137,72 @@ export default function UserCreateForm(props) {
           }
         }
       }}
-      {...getOverrideProps(overrides, "UserCreateForm")}
+      {...getOverrideProps(overrides, "TodoUpdateForm")}
       {...rest}
     >
       <TextField
-        label="Email"
+        label="Name"
         isRequired={true}
         isReadOnly={false}
-        value={email}
+        value={name}
         onChange={(e) => {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
-              email: value,
-              password,
+              name: value,
+              description,
             };
             const result = onChange(modelFields);
-            value = result?.email ?? value;
+            value = result?.name ?? value;
           }
-          if (errors.email?.hasError) {
-            runValidationTasks("email", value);
+          if (errors.name?.hasError) {
+            runValidationTasks("name", value);
           }
-          setEmail(value);
+          setName(value);
         }}
-        onBlur={() => runValidationTasks("email", email)}
-        errorMessage={errors.email?.errorMessage}
-        hasError={errors.email?.hasError}
-        {...getOverrideProps(overrides, "email")}
+        onBlur={() => runValidationTasks("name", name)}
+        errorMessage={errors.name?.errorMessage}
+        hasError={errors.name?.hasError}
+        {...getOverrideProps(overrides, "name")}
       ></TextField>
       <TextField
-        label="Password"
-        isRequired={true}
+        label="Description"
+        isRequired={false}
         isReadOnly={false}
-        value={password}
+        value={description}
         onChange={(e) => {
           let { value } = e.target;
           if (onChange) {
             const modelFields = {
-              email,
-              password: value,
+              name,
+              description: value,
             };
             const result = onChange(modelFields);
-            value = result?.password ?? value;
+            value = result?.description ?? value;
           }
-          if (errors.password?.hasError) {
-            runValidationTasks("password", value);
+          if (errors.description?.hasError) {
+            runValidationTasks("description", value);
           }
-          setPassword(value);
+          setDescription(value);
         }}
-        onBlur={() => runValidationTasks("password", password)}
-        errorMessage={errors.password?.errorMessage}
-        hasError={errors.password?.hasError}
-        {...getOverrideProps(overrides, "password")}
+        onBlur={() => runValidationTasks("description", description)}
+        errorMessage={errors.description?.errorMessage}
+        hasError={errors.description?.hasError}
+        {...getOverrideProps(overrides, "description")}
       ></TextField>
       <Flex
         justifyContent="space-between"
         {...getOverrideProps(overrides, "CTAFlex")}
       >
         <Button
-          children="Clear"
+          children="Reset"
           type="reset"
           onClick={(event) => {
             event.preventDefault();
             resetStateValues();
           }}
-          {...getOverrideProps(overrides, "ClearButton")}
+          isDisabled={!(idProp || todoModelProp)}
+          {...getOverrideProps(overrides, "ResetButton")}
         ></Button>
         <Flex
           gap="15px"
@@ -190,7 +212,10 @@ export default function UserCreateForm(props) {
             children="Submit"
             type="submit"
             variation="primary"
-            isDisabled={Object.values(errors).some((e) => e?.hasError)}
+            isDisabled={
+              !(idProp || todoModelProp) ||
+              Object.values(errors).some((e) => e?.hasError)
+            }
             {...getOverrideProps(overrides, "SubmitButton")}
           ></Button>
         </Flex>
