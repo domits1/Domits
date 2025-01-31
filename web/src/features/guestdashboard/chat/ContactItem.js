@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
 import spinner from "../../../images/spinnner.gif";
 
