@@ -1,7 +1,9 @@
 import React from 'react';
 import { render, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom';
-import PageNotFound from "../../../../src/utils/error/404NotFound";
+import '@testing-library/jest-dom'
+import PageNotFound from "../../../src/utils/error/404NotFound";
+
+
 import { useNavigate } from 'react-router-dom';
 
 jest.mock('aws-amplify');
