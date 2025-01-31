@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import Pages from "./Pages.js";
 import styles from './HostReservations.module.css';
-import pageSwitcherStyling from "../../components/utils/PageSwitcher.module.css";
+import pageSwitcherStyling from "../../utils/PageSwitcher.module.css";
 import info from "../../images/icons/info.png";
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
-import ReservationItem from "../../components/utils/ReservationItem";
+import ReservationItem from "../../utils/ReservationItem";
 import chevron from "../../images/icons/sort-solid.svg";
 
 const HostReservations = () => {
