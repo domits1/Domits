@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react';
 import {Auth} from 'aws-amplify';
 import {useNavigate} from 'react-router-dom';
-import dateFormatterDD_MM_YYYY from "../../components/utils/DateFormatterDD_MM_YYYY";
+import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import Pages from './Pages.js';
 import './paymentsguestdashboard.css';

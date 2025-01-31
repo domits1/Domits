@@ -5,7 +5,7 @@ import { FlowProvider } from '../../services/FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
 import Register from "../auth/Register";
-import DateFormatterDD_MM_YYYY from '../../components/utils/DateFormatterDD_MM_YYYY';
+import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
 import People from '@mui/icons-material/PeopleAltOutlined';
 import Cleaning from '@mui/icons-material/CleaningServicesOutlined';

@@ -8,9 +8,9 @@ import { Auth } from 'aws-amplify';
 import {useNavigate} from "react-router-dom";
 import spinner from "../../images/spinnner.gif";
 import info from "../../images/icons/info.png";
-import ImageSlider from "../../components/utils/ImageSlider";
+import ImageSlider from "../../utils/ImageSlider";
 import editIcon from "../../images/icons/edit-05.png";
-import DateFormatterDD_MM_YYYY from "../../components/utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 function HostDashboard() {
     const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
