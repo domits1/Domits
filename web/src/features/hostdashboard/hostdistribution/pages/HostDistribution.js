@@ -21,6 +21,9 @@ import {handleAddChannelService} from "../services/addChannelService.js";
 import useFetchUser from "../../../../hooks/useFetchUser.js";
 import useFetchChannels from "../hooks/useFetchChannels.js";
 import useFetchAccommodations from "../hooks/useFetchAccommodations.js";
+import {toggleAddChannelButtonMenu} from "../utils/toggleAddChannelButtonMenu.js"
+import {toggleChannelManageMenu} from "../utils/toggleChannelManageMenu.js"
+import {toggleThreeDotsMenu} from "../utils/toggleThreeDotsMenu";
 
 function HostDistribution() {
     const userId = useFetchUser();
@@ -48,12 +51,9 @@ function HostDistribution() {
         console.log(channelData[0]);
     }, [channelData]);
 
-    const toggleAddChannelButtonMenu = () => {
-        setDropdownAddChannelsVisible(!dropdownAddChannelsVisible);
-        setActiveManageDropdown(null);
-        setActiveThreeDotsDropdown(null);
-        setActiveRemoveAccommodationsView(null);
-    }
+    const handleToggleAddChannel = () => {
+        toggleAddChannelButtonMenu(setDropdownAddChannelsVisible, setActiveManageDropdown, setActiveThreeDotsDropdown, setActiveRemoveAccommodationsView);
+    };
 
     const handleSelectChange = (event) => {
         setSelectedChannel(event.target.value);
@@ -128,21 +128,9 @@ function HostDistribution() {
         );
     };
 
-    const toggleChannelManageMenu = (channelId) => {
-        if (activeManageDropdown === channelId) {
-            setActiveManageDropdown(null);
-            setDropdownAddChannelsVisible(false);
-            setActiveThreeDotsDropdown(null);
-            setActiveAddAccommodationsView(null);
-            setActiveRemoveAccommodationsView(null);
-        } else {
-            setActiveManageDropdown(channelId);
-            setDropdownAddChannelsVisible(false);
-            setActiveThreeDotsDropdown(null);
-            setActiveAddAccommodationsView(null);
-            setActiveRemoveAccommodationsView(null);
-        }
-    }
+    const handleToggleManageMenu = (channelId) => {
+        toggleChannelManageMenu(channelId, activeManageDropdown, setActiveManageDropdown, setDropdownAddChannelsVisible, setActiveThreeDotsDropdown, setActiveAddAccommodationsView, setActiveRemoveAccommodationsView);
+    };
 
     const handleEnableButton = (channelId) => {
         setChannelData(prevState => {
@@ -481,8 +469,8 @@ function HostDistribution() {
         }
     };
 
-    const toggleThreeDotsMenu = (channelId) => {
-        setActiveThreeDotsDropdown((prev) => (prev === channelId ? null : channelId));
+    const handleToggleThreeDots = (channelId) => {
+        toggleThreeDotsMenu(channelId, setActiveThreeDotsDropdown);
     };
 
     const renderThreeDotsMenu = (channelId) => {
@@ -509,7 +497,7 @@ function HostDistribution() {
                     Export to calender
                 </button>
                 <div className="addChannelButtonMenuContainer">
-                    <button className="addChannelButton" onClick={toggleAddChannelButtonMenu}>
+                    <button className="addChannelButton" onClick={handleToggleAddChannel}>
                         + Add channel
                     </button>
                     <div className={`addChannelButtonMenu ${dropdownAddChannelsVisible ? 'visible' : ''}`}>
@@ -553,7 +541,7 @@ function HostDistribution() {
                                             Accommodations</p>
 
                                         <button className="channelManageButton"
-                                                onClick={() => toggleChannelManageMenu(channel.id.S)}>
+                                                onClick={() => handleToggleManageMenu(channel.id.S)}>
                                             Manage
                                         </button>
                                         {activeManageDropdown === channel.id.S && (
@@ -563,7 +551,7 @@ function HostDistribution() {
                                         )}
 
                                         <button className="threeDotsButton"
-                                                onClick={() => toggleThreeDotsMenu(channel.id.S)}>
+                                                onClick={() => handleToggleThreeDots(channel.id.S)}>
                                             <img src={three_dots} alt="Three Dots"/>
                                         </button>
 
