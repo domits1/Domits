@@ -3,7 +3,7 @@ import Jobs from "./jobs.json";
 import JobDetails from "./jobDetails";
 import { useNavigate, useParams } from 'react-router-dom';
 import "./careers.css";
-import styles from '../../components/utils/PageSwitcher.module.css'
+import styles from '../../utils/PageSwitcher.module.css'
 
 
 function Career() {

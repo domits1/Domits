@@ -5,7 +5,7 @@ import add from "../../images/icons/host-add.png";
 import {useLocation, useNavigate} from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
-import PageSwitcher from "../../components/utils/PageSwitcher";
+import PageSwitcher from "../../utils/PageSwitcher";
 
 function HostListings() {
     const [accommodations, setAccommodations] = useState([]);

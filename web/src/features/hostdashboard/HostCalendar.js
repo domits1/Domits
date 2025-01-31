@@ -6,8 +6,8 @@ import spinner from "../../images/spinnner.gif";
 import CalendarComponent from "./CalendarComponent";
 import styles from "./HostDashboard.module.css";
 import calenderStyles from "./HostCalendar.module.css";
-import generateUUID from "../../components/utils/generateUUID";
-import {formatDate, uploadICalToS3} from "../../components/utils/iCalFormatHost";
+import {generateUUID} from "../../utils/generateUUID.js";
+import {formatDate, uploadICalToS3} from "../../utils/iCalFormatHost";
 
 
 function HostCalendar() {
