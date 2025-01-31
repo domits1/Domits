@@ -90,57 +90,60 @@ const ADRCard = () => {
 
     return (
         <div className="adr-card-container">
-            <div className="adr-card">
-                <h3>Average Daily Rate (ADR)</h3>
-                <div className="time-filter">
-                    <label htmlFor="timeFilter">Time Filter:</label>
-                    <select
-                        id="timeFilter"
-                        value={timeFilter}
-                        onChange={(e) => setTimeFilter(e.target.value)}
-                    >
-                        <option value="monthly">Monthly</option>
-                        <option value="custom">Custom</option>
-                    </select>
-                </div>
-                {timeFilter === "custom" && (
-                    <div className="custom-date-filter">
-                        <div>
-                            <label>Start Date:</label>
-                            <input
-                                type="date"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
-                            />
-                        </div>
-                        <div>
-                            <label>End Date:</label>
-                            <input
-                                type="date"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
-                            />
-                        </div>
+            <div>
+
+                <div className="adr-card">
+                    <h3>Average Daily Rate</h3>
+                    <div className="time-filter">
+                        <label htmlFor="timeFilter">Time Filter:</label>
+                        <select
+                            id="timeFilter"
+                            value={timeFilter}
+                            onChange={(e) => setTimeFilter(e.target.value)}
+                        >
+                            <option value="monthly">Monthly</option>
+                            <option value="custom">Custom</option>
+                        </select>
                     </div>
-                )}
-                <div className="adr-details">
-                    {loading ? (
-                        <p>Loading...</p>
-                    ) : error ? (
-                        <p style={{ color: "red" }}>Error: {error}</p>
-                    ) : (
-                        <>
-                            <p>
-                                <strong>ADR:</strong> ${adr}
-                            </p>
-                            <p>
-                                <strong>Total Revenue:</strong> ${totalRevenue}
-                            </p>
-                            <p>
-                                <strong>Rooms Sold:</strong> {roomsSold}
-                            </p>
-                        </>
+                    {timeFilter === "custom" && (
+                        <div className="custom-date-filter">
+                            <div>
+                                <label>Start Date : </label>
+                                <input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label>End Date : </label>
+                                <input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                />
+                            </div>
+                        </div>
                     )}
+                    <div className="adr-details">
+                        {loading ? (
+                            <p>Loading...</p>
+                        ) : error ? (
+                            <p style={{color: "red"}}>Error: {error}</p>
+                        ) : (
+                            <>
+                                <p>
+                                    <strong>ADR:</strong> ${adr}
+                                </p>
+                                <p>
+                                    <strong>Total Revenue:</strong> ${totalRevenue}
+                                </p>
+                                <p>
+                                    <strong>Rooms Sold:</strong> {roomsSold}
+                                </p>
+                            </>
+                        )}
+                    </div>
                 </div>
             </div>
             {chartData.length > 0 && (
@@ -148,10 +151,10 @@ const ADRCard = () => {
                     <h3>ADR Trend</h3>
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={chartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="date" />
-                            <YAxis />
-                            <Tooltip />
+                            <CartesianGrid strokeDasharray="3 3"/>
+                            <XAxis dataKey="date"/>
+                            <YAxis/>
+                            <Tooltip/>
                             <Line
                                 type="monotone"
                                 dataKey="adr"
