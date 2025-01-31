@@ -1,7 +1,7 @@
 import React from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
-import Helpdesk from "../../pages/helpdesk/Helpdesk";
-import Faq from '../../pages/landingpage/Faq';
+import Helpdesk from "../pages/helpdesk/Helpdesk";
+import Faq from '../pages/landingpage/Faq';
 
 test.skip('shows search input and button', () => {
     render(<Helpdesk category="guest" />);

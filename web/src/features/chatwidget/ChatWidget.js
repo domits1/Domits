@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { ResizableBox } from 'react-resizable';
 import './ChatWidget.css';
-import { useUser } from '../../features/auth/UserContext';
+import { useUser } from '../auth/UserContext';
 import Slider from 'react-slick';
 
 const ChatWidget = () => {
