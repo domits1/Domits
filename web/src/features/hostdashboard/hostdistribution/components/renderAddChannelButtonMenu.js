@@ -1,7 +1,15 @@
 import allChannels from "../store/channelData";
 import React from "react";
 
-export const renderAddChannelButtonMenu = (addedChannels) => {
+const AddChannelButtonMenu = ({
+                                  addedChannels,
+                                  selectedChannel,
+                                  handleSelectChange,
+                                  apiKey,
+                                  handleInputChange,
+                                  handleCancelAddChannel,
+                                  handleAddChannel
+                              }) => {
 
     const availableChannels = allChannels.filter(channel => !addedChannels.includes(channel));
 
@@ -25,18 +33,23 @@ export const renderAddChannelButtonMenu = (addedChannels) => {
                 </div>
                 <label className="channelLabel">API Key</label>
                 <input
-                    type={"text"}
-                    placeholder={"API Key"}
-                    className={"channelAPIKey"}
+                    type="text"
+                    placeholder="API Key"
+                    className="channelAPIKey"
                     value={apiKey}
                     onChange={handleInputChange}
                 />
             </div>
             <div className="addCancelButtonContainer">
-                <button className={"addChannelButtonMenuButton Cancel"} onClick={handleCancelAddChannel}>Cancel
+                <button className="addChannelButtonMenuButton Cancel" onClick={handleCancelAddChannel}>
+                    Cancel
                 </button>
-                <button className="addChannelButtonMenuButton Add" onClick={handleAddChannel}>Add</button>
+                <button className="addChannelButtonMenuButton Add" onClick={handleAddChannel}>
+                    Add
+                </button>
             </div>
         </div>
     );
 };
+
+export default AddChannelButtonMenu;
