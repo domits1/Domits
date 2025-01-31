@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../services/FlowContext';
 import './Register.css';
 
 const Register = () => {

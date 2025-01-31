@@ -3,7 +3,7 @@ import './MenuBar.css';
 import { HouseOutlined as HouseOutlinedIcon, ForumOutlined as ForumOutlinedIcon, AccountCircleOutlined as AccountCircleOutlinedIcon} from '@mui/icons-material';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../services/FlowContext';
 import {useNavigate, useLocation} from 'react-router-dom';
 import {Auth} from "aws-amplify";
 
@@ -43,10 +43,10 @@ function MenuBar() {
     const handleLogout = async () => {
         try {
             await Auth.signOut();
-            sessionStorage.removeItem('chatOpened'); 
+            sessionStorage.removeItem('chatOpened');
 
             setIsLoggedIn(false);
-            window.location.reload(); 
+            window.location.reload();
             console.log('User logged out successfully');
         } catch (error) {
             console.error('Error logging out:', error);
@@ -143,7 +143,7 @@ function MenuBar() {
                             Go to Dashboard
                         </button>
                     )}
-            
+
 
                     <button onClick={handleLogout} className="dropdownLogoutButton">Log out<img
                         src={logoutArrow} alt="Logout Arrow"/></button>
@@ -172,9 +172,9 @@ function MenuBar() {
                     <button className='headerButtons' onClick={Home}><HouseOutlinedIcon className='imgMenu'/><p className='textMenu'>Home</p></button>
                     <button className='headerButtons' onClick={navigateToMessages}><ForumOutlinedIcon className='imgMenu'/><p className='textMenu'>Messages</p></button>
 
-                   
+
                     <button className="headerButtons" onClick={toggleDropdown}>
-          <AccountCircleOutlinedIcon className='imgMenu'/><p className='textMenu'>Profile</p>  
+          <AccountCircleOutlinedIcon className='imgMenu'/><p className='textMenu'>Profile</p>
         </button>
 
         <div className={"bottomPersonalMenuDropdownContent" + (dropdownVisible ? ' show' : '')}>

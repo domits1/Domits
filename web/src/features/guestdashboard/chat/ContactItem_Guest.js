@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import styles from "./ChatPage.module.css";
-import spinner from "../../images/spinnner.gif";
+import spinner from "../../../images/spinnner.gif";
 
 const ContactItem = ({ item, type, index, selectUser, selectedUser, unreadMessages }) => {
     console.log('Item data:', item);

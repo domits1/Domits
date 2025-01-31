@@ -2,9 +2,9 @@ import React, {useState, useEffect, useRef} from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import './Login.css';
-import logo from "../../logo.svg";
+import logo from "../../images/logo.svg";
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../services/FlowContext';
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
 
 const Login = () => {
