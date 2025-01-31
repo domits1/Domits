@@ -40,7 +40,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test --transformIgnorePatterns 'node_modules/(?!axios)/'",
     "eject": "react-scripts eject",
-    "cypress:open": "cypress open"
+    "cypress:open": "src/tests/cypress open"
   },
   "devDependencies": {
     "@babel/core": "^7.24.5",

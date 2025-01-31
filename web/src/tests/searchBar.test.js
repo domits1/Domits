@@ -33,13 +33,13 @@ global.google = {
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { BrowserRouter } from 'react-router-dom'; 
-import { SearchBar } from '../base/SearchBar';
+import { BrowserRouter } from 'react-router-dom';
+import { SearchBar } from '../components/base/SearchBar';
 
 describe.skip('SearchBar Component', () => {
     test('laadt de autocomplete input', () => {
         render(
-            <BrowserRouter> 
+            <BrowserRouter>
                 <SearchBar />
             </BrowserRouter>
         );
@@ -49,11 +49,11 @@ describe.skip('SearchBar Component', () => {
 
     test.skip('controleert de lege toestand van het adresveld', () => {
         render(
-            <BrowserRouter> 
+            <BrowserRouter>
                 <SearchBar />
             </BrowserRouter>
         );
-        const inputElement = screen.getByPlaceholderText('Search Places ....'); 
+        const inputElement = screen.getByPlaceholderText('Search Places ....');
         expect(inputElement.value).toBe('');
     });
 });

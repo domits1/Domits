@@ -45,11 +45,11 @@ import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
 import Chat from "./features/guestdashboard/chat/Chat.js";
 import Chatbot from "./features/guestaiagent/chatbot";
-import ChatWidget from "./components/chatwidget/ChatWidget";
+import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from './features/guestaiagent/EmployeeChat';
 import FlowContext from './services/FlowContext';
-import Hostchat from './features/hostdashboard/Hostchat';
-import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
+import Hostchat from '../src/features/hostaiagent/hostchatbot';
+import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
 import HostHousekeeping from "./features/hostdashboard/Housekeeping.js";
@@ -92,7 +92,7 @@ import SummaryView from './features/hostonboarding/views/SummaryView.js';
 
 import { Auth } from 'aws-amplify';
 import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
-import Hostchatbot from "./components/hostchatbot/hostchatbot";
+import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import ReleaseUpdates from './pages/productupdates/ReleaseUpdates.js'
 
