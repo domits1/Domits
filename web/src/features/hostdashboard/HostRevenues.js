@@ -10,7 +10,7 @@ import RevPARCard from './HostRevenueCards/RevPAR.jsx';
 import ADRCard from './HostRevenueCards/ADRCard.jsx';
 import { Auth } from 'aws-amplify';
 import ClipLoader from 'react-spinners/ClipLoader';
-import BookingTrends from './HostRevenueCards/BookingTrends.jsx';
+//import BookingTrends from './HostDashboard/HostRevenueCards/BookingTrends.jsx';
 import BookedNights from './HostRevenueCards/BookedNights.jsx';
 
 const GET_REVENUE = gql`
@@ -28,12 +28,12 @@ const HostRevenues = () => {
     const [stripeStatus, setStripeStatus] = useState('');
     const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
     const [monthlyRevenueData, setMonthlyRevenueData] = useState([]);
-    const [occupancyData, setOccupancyData] = useState({
+    const [occupancyData] = useState({
         occupancyRate: 0,
         numberOfProperties: 0,
         vsLastMonth: 0,
     });
-    const [bookedNights, setBookedNights] = useState(null);
+    const [setBookedNights] = useState(null);
     const [loadingStates, setLoadingStates] = useState({
         user: true,
         occupancy: false,
@@ -81,36 +81,6 @@ const HostRevenues = () => {
         fetchUserInfo();
     }, []);
 
-    // Fetch Occupancy Data
-    const fetchOccupancyData = async () => {
-        if (!cognitoUserId) return console.error("Cognito User ID is missing.");
-
-        updateLoadingState('occupancy', true);
-        try {
-            const response = await axios.post(
-                'https://cui7ru7r87.execute-api.eu-north-1.amazonaws.com/prod/occupancy',
-                { hostId: cognitoUserId },
-                { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' } }
-            );
-
-            if (response.data?.data && Array.isArray(response.data.data)) {
-                const occupancy = response.data.data[0] || {};
-                setOccupancyData({
-                    occupancyRate: occupancy.combinedOccupancyRate
-                        ? occupancy.combinedOccupancyRate / 100
-                        : 0,
-                    numberOfProperties: occupancy.totalProperties || 0,
-                    vsLastMonth: response.data.vsLastMonth || 0,
-                });
-            } else {
-                throw new Error("Invalid API response structure.");
-            }
-        } catch (error) {
-            console.error("Error fetching occupancy data:", error);
-        } finally {
-            updateLoadingState('occupancy', false);
-        }
-    };
 
     // Fetch Booked Nights
     const fetchBookedNights = async () => {
@@ -153,7 +123,6 @@ const HostRevenues = () => {
     // Trigger data fetching when cognitoUserId is available
     useEffect(() => {
         if (cognitoUserId) {
-            fetchOccupancyData();
             fetchBookedNights();
             fetchMonthlyRevenueData();
         }
@@ -206,7 +175,7 @@ const HostRevenues = () => {
                                         <ADRCard hostId={cognitoUserId} />
                                         <RevPARCard />
                                         <BookedNights/>
-                                        <BookingTrends />
+                                        {/*<BookingTrends />*/}
                                     </div>
                                 </>
                             )}

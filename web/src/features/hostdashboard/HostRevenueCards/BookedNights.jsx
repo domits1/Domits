@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useUser } from "../../../UserContext";
+import { useUser } from '../../auth/UserContext';
 import "./BookedNights.css";
 
 const BookedNights = () => {
-    const { user, isLoading } = useUser(); // Access user and loading state from UserContext
+    const { user } = useUser(); // Access user and loading state from UserContext
     const [bookedNights, setBookedNights] = useState(null);
     const [periodType, setPeriodType] = useState("monthly"); // Default to "monthly"
     const [startDate, setStartDate] = useState("");
