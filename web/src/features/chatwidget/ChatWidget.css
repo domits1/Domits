@@ -1,6 +1,6 @@
 /* ChatWidget.css */
-@import "slick-carousel/slick/slick.css"; 
-@import "slick-carousel/slick/slick-theme.css";
+@import "../../../node_modules/slick-carousel/slick/slick.css";
+@import "../../../node_modules/slick-carousel/slick/slick-theme.css";
 
 
 .chatwidget-widget {
@@ -23,7 +23,7 @@
 
 
 @media screen and (max-width: 650px) {
-  .chatwidget-toggle{ 
+  .chatwidget-toggle{
     position: fixed;
     bottom: 100px;
     right: 20px;
@@ -46,7 +46,7 @@
 
 
 .chatwidget-header {
-  background-color: #28a745; 
+  background-color: #28a745;
   color: white;
   padding: 10px;
   font-weight: bold;
@@ -112,12 +112,12 @@
 }
 
 .chatwidget-message-content.employee {
-  background-color: #28a745; 
+  background-color: #28a745;
   color: white;
 }
 
 .chatwidget-message-content.system {
-  background-color: #ffc107; 
+  background-color: #ffc107;
 }
 
 .chatwidget-sender {
@@ -216,14 +216,14 @@
   padding: 10px 20px;
   border: none;
   border-radius: 5px;
-  background-color: #28a745; 
+  background-color: #28a745;
   color: white;
   cursor: pointer;
   margin-left: 10px;
 }
 
 .chatwidget-input button:disabled {
-  background-color: #28a745; 
+  background-color: #28a745;
   opacity: 0.6;
   cursor: not-allowed;
 }
@@ -263,20 +263,20 @@
 }
 
 .chatwidget-accommodation-tile .chatwidget-slider {
-  margin-bottom: 15px; 
+  margin-bottom: 15px;
 }
 
 .slick-dots {
-  bottom: -25px; 
+  bottom: -25px;
 }
 
 .slick-dots li button:before {
   font-size: 12px;
-  color: #28a745; 
+  color: #28a745;
 }
 
 .slick-dots li.slick-active button:before {
-  color: #1d6f34; 
+  color: #1d6f34;
 }
 
 
@@ -293,11 +293,11 @@
 }
 
 .slick-prev {
-  left: 5px; 
+  left: 5px;
 }
 
 .slick-next {
-  right: 5px; 
+  right: 5px;
 }
 
 .chatwidget-partner-indicator {

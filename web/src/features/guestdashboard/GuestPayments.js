@@ -4,7 +4,7 @@ import { Auth } from 'aws-amplify';
 import './guestdashboard.css';
 import Pages from './Pages.js';
 import './paymentsguestdashboard.css';
-import DateFormatterDD_MM_YYYY from '../../components/utils/DateFormatterDD_MM_YYYY.js';
+import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY.js';
 import spinner from '../../images/spinnner.gif';
 
 const PaymentsGuestDashboard = () => {

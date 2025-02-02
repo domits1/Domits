@@ -6,7 +6,7 @@ import tableIcon from "../../images/icons/content-view-table-list-icon.svg";
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import taxFeeIcon from "../../images/icons/tax-fee-icon.png";
-import {vatRates, touristTaxRates} from "../../components/utils/CountryVATRatesAndTouristTaxes";
+import {vatRates, touristTaxRates} from "../../utils/CountryVATRatesAndTouristTaxes";
 
 const HostPricing = () => {
     const [viewMode, setViewMode] = useState('details');

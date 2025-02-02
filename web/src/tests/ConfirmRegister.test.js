@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
-import FlowContext from '../../services/FlowContext';
+import FlowContext from '../services/FlowContext';
 
 // Mock the Auth module from AWS Amplify
 jest.mock('aws-amplify', () => ({
