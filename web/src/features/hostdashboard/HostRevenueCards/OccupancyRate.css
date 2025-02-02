@@ -7,41 +7,69 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background-color: #f9f9f9;
     text-align: center;
-    height: auto; 
+    height: 460px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.or-date-picker {
-    margin-bottom: 10px; 
-    font-size: 14px;
-    font-weight: bold;
+.or-occupancy-rate-card h3 {
+    font-size: 20px ;
+    font-weight: 400 ;
+    color: #333;
+    text-align: center;
+    margin-bottom: 20px;
+}
+.or-pie-chart-wrapper{
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 45px;
+}
+
+.occupancy-rate-card p{
+
+    margin: 20px 10px;
+    font-size: 20px;
+    font-weight: normal;
+    color: #444;
+}
+
+.or-custom-date-filter input {
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: normal;
+    color: #555;
+}
+.or-custom-date-filter label{
+    font-size: 15px;
+    font-weight: normal;
     color: #555;
 }
 
 .or-occupancy-rate-details {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    align-items: center;
+    margin: 20px 10px;
+    font-size: 15px;
+    font-weight: normal;
+    color: #444;
 }
 
 .or-gauge-wrapper {
-    width: 180px; 
-    height: 180px;
+    width: 150px;
+    height: 150px;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    margin-top: 5px;
+    margin-top: 20px;
 }
 
 .or-gauge-labels {
     display: flex;
     justify-content: space-between;
-    width: 80%; 
-    margin-top: -10px; 
+    width: 50%;
+    margin-top: 10px;
     font-size: 12px;
-    font-weight: bold;
+    font-weight: normal;
 }
 
 .or-icon {
@@ -50,11 +78,11 @@
     font-size: 14px;
 }
 
-.or-details-left p,
+/*.or-details-left p,
 .or-details-left strong {
     font-size: 13px; 
     font-weight: normal;
-}
+}*/
 
 .or-occupancy-rate-card:hover {
     transform: scale(1.02);

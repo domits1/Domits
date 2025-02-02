@@ -1,4 +1,4 @@
-.adr-card {
+.booked-nights-card {
     width: 320px;
     padding: 20px;
     margin: 20px auto;
@@ -12,21 +12,39 @@
 
 }
 
-.adr-card h3 {
-    font-size: 20px ;
-    font-weight: 400 ;
+.booked-nights-card-container{
+    margin: 0 auto;
+    padding: 20px;
+    flex: 1;
+}
+
+.booked-nights-card h3 {
+    font-size: 20px;
+    font-weight: 400;
     color: #333;
     text-align: center;
     margin-bottom: 20px;
 }
 
-.time-filter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    font-weight: normal;
+.booked-nights-card p {
+    margin: 20px 10px;
     font-size: 20px;
+    font-weight: normal;
+    color: #444;
+}
+
+.booked-nights-card p1 {
+    margin: 20px 10px;
+    font-size: 20px;
+    font-weight: normal;
+    color: #444;
+}
+
+.booked-nights-card p2 {
+    margin: 20px 10px;
+    font-size: 120px;
+    font-weight: normal;
+    color: #003366;
 }
 
 
@@ -44,33 +62,14 @@
     color: #555;
 }
 
-.adr-details p {
-    margin: 20px 10px;
-    font-size: 20px;
+.booked-nights-details {
+    font-size: 15px;
     font-weight: normal;
     color: #444;
-
+    margin-top: 70px;
 }
 
-.adr-details strong {
-    font-weight: normal;
-}
-
-.adr-card-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    border-radius: 30px;
-}
-
-.adr-graph {
-    width: 100%;
-    max-width: 600px;
-    margin-top: 20px;
-}
-
-.adr-card:hover {
+.booked-nights-card:hover {
     transform: scale(1.02);
     box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
