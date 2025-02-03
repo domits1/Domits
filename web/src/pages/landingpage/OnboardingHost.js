@@ -918,7 +918,7 @@ function OnboardingHost() {
                 }
             }
 
-            await setFormData(updatedFormData);
+            await setFormData(updatedFormData); 
             setImageFiles([]);
 
 

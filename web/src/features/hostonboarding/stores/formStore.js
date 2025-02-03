@@ -1,4 +1,9 @@
 import { create } from "zustand";
+import axios from "axios";
+import { generateUUID } from "../utils/generateAccomodationId";
+
+const API_BASE_URL =
+  "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation";
 
 const useFormStore = create((set) => ({
   completedSteps: [],
@@ -65,6 +70,31 @@ const useFormStore = create((set) => ({
       selectedDates: [],
     },
     registrationNumber: "",
+    category: "",
+    fuelTank: "",
+    fwd: "",
+    gpi: "",
+    harbor: "",
+    hasLicense: "",
+    height: "",
+    isPro: false,
+    length: "",
+    licensePlate: "",
+    manufacturer: "",
+    minimumBookingPeriod: "",
+    model: "",
+    postalCode: "",
+    renovated: "",
+    rentedWithSkipper: false,
+    requirement: "",
+    rooms: 0,
+    selfBuilt: false,
+    speed: "",
+    street: "",
+    transmission: "",
+    updatedAt: new Date().toISOString(),
+    yoc: "",
+    OwnerId: "",
   },
   setAccommodationType: (type) =>
     set((state) => ({
@@ -261,6 +291,13 @@ const useFormStore = create((set) => ({
     set((state) => ({
       completedSteps: [...state.completedSteps, step],
     })),
+  setOwnerId: (id) =>
+    set((state) => ({
+      accommodationDetails: {
+        ...state.accommodationDetails,
+        ownerId: id,
+      },
+    })),
   resetAccommodationDetails: () =>
     set({
       accommodationDetails: { type: "" },
@@ -292,6 +329,84 @@ const useFormStore = create((set) => ({
         Beds: 0,
       },
     }),
+  submitAccommodation: async (navigate) => {
+    const { accommodationDetails } = useFormStore.getState();
+
+    try {
+      const formattedData = {
+        ID: generateUUID(),
+        Title: accommodationDetails.title,
+        Subtitle: accommodationDetails.subtitle,
+        AccommodationType: accommodationDetails.type,
+        Address: accommodationDetails.address,
+        AllowParties: accommodationDetails.houseRules.AllowParties,
+        AllowPets: accommodationDetails.houseRules.AllowPets,
+        AllowSmoking: accommodationDetails.houseRules.AllowSmoking,
+        Availability: accommodationDetails.availability,
+        Bathrooms: accommodationDetails.accommodationCapacity.Bathrooms,
+        Bedrooms: accommodationDetails.accommodationCapacity.Bedrooms,
+        Beds: accommodationDetails.accommodationCapacity.Beds,
+        BookedDates: accommodationDetails.bookedDates || [],
+        Cabins: accommodationDetails.accommodationCapacity.Cabins,
+        CamperBrand:
+          accommodationDetails.camperSpecifications.CamperBrand || "",
+        Capacity: accommodationDetails.accommodationCapacity.GuestAmount,
+        Category: accommodationDetails.category,
+        CheckIn: accommodationDetails.houseRules.CheckIn,
+        CheckOut: accommodationDetails.houseRules.CheckOut,
+        CleaningFee: accommodationDetails.CleaningFee,
+        Country: accommodationDetails.address.country,
+        CreatedAt: new Date().toISOString(),
+        Description: accommodationDetails.description,
+        Drafted: false,
+        Features: accommodationDetails.Features,
+        FuelTank: accommodationDetails.fuelTank,
+        FWD: accommodationDetails.fwd,
+        GPI: accommodationDetails.gpi,
+        GuestAccess: accommodationDetails.guestAccessType,
+        Harbor: accommodationDetails.harbor,
+        HasLicense: accommodationDetails.hasLicense,
+        Height: accommodationDetails.height,
+        HouseRules: accommodationDetails.houseRules,
+        Images: accommodationDetails.images,
+        IsPro: accommodationDetails.isPro,
+        Length: accommodationDetails.length,
+        LicensePlate: accommodationDetails.licensePlate,
+        Manufacturer: accommodationDetails.manufacturer,
+        MinimumAdvancedReservation:
+          accommodationDetails.availability.MinimumAdvancedReservation,
+        MinimumBookingPeriod: accommodationDetails.minimumBookingPeriod,
+        Model: accommodationDetails.model,
+        OwnerId: accommodationDetails.ownerId,
+        PostalCode: accommodationDetails.address.zipCode,
+        RegistrationNumber: accommodationDetails.registrationNumber,
+        Renovated: accommodationDetails.renovated,
+        Rent: accommodationDetails.Rent,
+        RentedWithSkipper: accommodationDetails.rentedWithSkipper,
+        Requirement: accommodationDetails.requirement,
+        Rooms: accommodationDetails.rooms,
+        SelfBuilt: accommodationDetails.selfBuilt,
+        ServiceFee: accommodationDetails.ServiceFee,
+        Speed: accommodationDetails.speed,
+        Street: accommodationDetails.address.street,
+        Transmission: accommodationDetails.transmission,
+        Type: accommodationDetails.type,
+        UpdatedAt: new Date().toISOString(),
+        YOC: accommodationDetails.yoc,
+      };
+
+      const response = await axios.post(API_BASE_URL, formattedData, {
+        headers: { "Content-Type": "application/json" },
+      });
+
+      console.log("Accommodation uploaded successfully:", response.data);
+      if (response.data.statusCode === 200){
+        navigate("/hostdashboard");
+      }
+    } catch (error) {
+      console.error("Error uploading accommodation:", error);
+    }
+  },
 }));
 
 export default useFormStore;
