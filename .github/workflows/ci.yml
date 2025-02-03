@@ -13,10 +13,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install NPM dependencies, cache them correctly
+    # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
-          cd web/src
+          cd web/src/tests
           npm ci --verbose
 
       # Run your Cypress tests
