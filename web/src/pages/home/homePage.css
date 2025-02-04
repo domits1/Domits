@@ -236,6 +236,7 @@ body.hide-header .app-header {
 
   .domits-accommodationGroup {
     padding-left: 0vh;
+    flex-direction: column;
 }
 
   .domits-trendingContainer {
