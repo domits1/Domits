@@ -1,21 +1,24 @@
 import React from "react";
 
 function SummaryTable({ data, type }) {
+  console.log(data.selectedAmenities);
   const formatBoolean = (value) => (value ? "Yes" : "No");
 
   const DateFormatterDD_MM_YYYY = (dateString) => {
     if (!dateString) return "N/A";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB");
+    return date.toLocaleDateString("en-GB"); // Formats to dd/mm/yyyy
   };
 
+  // Extract startDate and endDate from selectedDates
+  const { startDate, endDate } = data.availability.selectedDates || {};
+
+  // Format the date range
   const dateRange =
-    data.availability.selectedDates.length > 0
+    startDate && endDate
       ? `Available from ${DateFormatterDD_MM_YYYY(
-          data.availability.selectedDates[0]
-        )} to ${DateFormatterDD_MM_YYYY(
-          data.availability.selectedDates[data.availability.selectedDates.length - 1]
-        )}`
+          startDate
+        )} to ${DateFormatterDD_MM_YYYY(endDate)}`
       : "Date range not set";
 
   return (
@@ -54,34 +57,128 @@ function SummaryTable({ data, type }) {
           <td>Number of Guests:</td>
           <td>{data.accommodationCapacity.GuestAmount || 0}</td>
         </tr>
-        <tr>
-          <td>Number of Bedrooms:</td>
-          <td>{data.accommodationCapacity.Bedrooms || 0}</td>
-        </tr>
-        <tr>
-          <td>Number of Bathrooms:</td>
-          <td>{data.accommodationCapacity.Bathrooms || 0}</td>
-        </tr>
-        <tr>
-          <td>Number of Fixed Beds:</td>
-          <td>{data.accommodationCapacity.Beds || 0}</td>
-        </tr>
-        <tr>
-          <td>Country:</td>
-          <td>{data.address.country || "N/A"}</td>
-        </tr>
-        <tr>
-          <td>City:</td>
-          <td>{data.address.city || "N/A"}</td>
-        </tr>
-        <tr>
-          <td>Postal Code:</td>
-          <td>{data.address.zipCode || "N/A"}</td>
-        </tr>
-        <tr>
-          <td>Street + House Nr.:</td>
-          <td>{data.address.street || "N/A"}</td>
-        </tr>
+
+        {/* Render details based on type */}
+        {type === "House" && (
+          <>
+            <tr>
+              <td>Number of Bedrooms:</td>
+              <td>{data.accommodationCapacity.Bedrooms || 0}</td>
+            </tr>
+            <tr>
+              <td>Number of Bathrooms:</td>
+              <td>{data.accommodationCapacity.Bathrooms || 0}</td>
+            </tr>
+            <tr>
+              <td>Country:</td>
+              <td>{data.address.country || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>City:</td>
+              <td>{data.address.city || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Postal Code:</td>
+              <td>{data.address.zipCode || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Street + House Nr.:</td>
+              <td>{data.address.street || "N/A"}</td>
+            </tr>
+          </>
+        )}
+
+        {type === "Camper" && (
+          <>
+            <tr>
+              <td>Country:</td>
+              <td>{data.camperDetails.country || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>City:</td>
+              <td>{data.camperDetails.city || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Postal Code:</td>
+              <td>{data.camperDetails.zipCode || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Street + House Nr.:</td>
+              <td>{data.camperDetails.street || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>License Plate:</td>
+              <td>{data.camperSpecifications.LicensePlate || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Brand:</td>
+              <td>{data.camperSpecifications.CamperBrand || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Model:</td>
+              <td>{data.camperSpecifications.Model || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Height:</td>
+              <td>{data.camperSpecifications.Height || "N/A"} meters</td>
+            </tr>
+            <tr>
+              <td>Length:</td>
+              <td>{data.camperSpecifications.Length || "N/A"} meters</td>
+            </tr>
+            <tr>
+              <td>Fuel Usage:</td>
+              <td>{data.camperSpecifications.FuelTank || "N/A"} Liters/hour</td>
+            </tr>
+            <tr>
+              <td>Transmission:</td>
+              <td>{data.camperSpecifications.Transmission || "N/A"}</td>
+            </tr>
+          </>
+        )}
+
+        {type === "Boat" && (
+          <>
+            <tr>
+              <td>Country:</td>
+              <td>{data.boatDetails.country || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>City:</td>
+              <td>{data.boatDetails.city || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Harbor:</td>
+              <td>{data.boatDetails.harbor || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Number of Cabins:</td>
+              <td>{data.accommodationCapacity.Cabins || 0}</td>
+            </tr>
+            <tr>
+              <td>Manufacturer:</td>
+              <td>{data.boatSpecifications.Manufacturer || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Model:</td>
+              <td>{data.boatSpecifications.Model || "N/A"}</td>
+            </tr>
+            <tr>
+              <td>Fuel Usage:</td>
+              <td>{data.boatSpecifications.FuelTank || "N/A"} Liters/hour</td>
+            </tr>
+            <tr>
+              <td>Top Speed:</td>
+              <td>{data.boatSpecifications.Speed || "N/A"} km/h</td>
+            </tr>
+            <tr>
+              <td>Length:</td>
+              <td>{data.boatSpecifications.Length || "N/A"} meters</td>
+            </tr>
+          </>
+        )}
+
+        {/* Common Fields */}
         <tr>
           <td>Smoking:</td>
           <td>{formatBoolean(data.houseRules.AllowSmoking)}</td>
@@ -97,15 +194,27 @@ function SummaryTable({ data, type }) {
         <tr>
           <td>Checkin:</td>
           <td>
-            From: {data.houseRules.CheckIn.From || "N/A"} Til: {data.houseRules.CheckIn.Til || "N/A"}
+            From: {data.houseRules.CheckIn.From || "N/A"} Til:{" "}
+            {data.houseRules.CheckIn.Til || "N/A"}
           </td>
         </tr>
         <tr>
           <td>Checkout:</td>
           <td>
-            From: {data.houseRules.CheckOut.From || "N/A"} Til: {data.houseRules.CheckOut.Til || "N/A"}
+            From: {data.houseRules.CheckOut.From || "N/A"} Til:{" "}
+            {data.houseRules.CheckOut.Til || "N/A"}
           </td>
         </tr>
+        {/* Display Selected Amenities */}
+        {data.selectedAmenities &&
+          Object.entries(data.selectedAmenities).map(
+            ([category, amenities]) => (
+              <tr key={category}>
+                <td>{category}:</td>
+                <td>{amenities.length > 0 ? amenities.join(", ") : "N/A"}</td>
+              </tr>
+            )
+          )}
       </tbody>
     </table>
   );

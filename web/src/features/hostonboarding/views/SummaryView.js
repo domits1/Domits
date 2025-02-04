@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 function SummaryView() {
   const { data, toggleDrafted } = useSummary();
-  const type = data.Type || "Accommodation";
+  const type = data.type;
   const navigate = useNavigate();
 
   const submitAccommodation = useFormStore((state) => state.submitAccommodation);
@@ -25,7 +25,7 @@ function SummaryView() {
       <h2>Please check if everything is correct</h2>
       <SummaryTable data={data} type={type} />
       <SpecificationsTable data={data} type={type} />
-      <FeatureTable features={data.Features} />
+      {/* <FeatureTable features={data.Features} /> */}
       <DeclarationSection
         drafted={data.Drafted}
         toggleDrafted={toggleDrafted}
