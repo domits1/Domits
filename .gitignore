@@ -26,11 +26,12 @@ amplifytools.xcconfig
 .env
 .env.*
 
-# IDE and Editor Configurations
+# IDE and Editor
 .idea/
 .idea/*
 .idea/sonarlint/
-.idea\*
-.idea\
-idea/
-.idea\sonarlint
+/.vscode/
+
+#amplify
+web/amplify/
+
