@@ -1,4 +1,5 @@
-node_modules
+# Node modules
+node_modules/
 
 #amplify-do-not-edit-begin
 amplify/\#current-cloud-backend
@@ -10,7 +11,6 @@ amplify/backend/amplify-meta.json
 amplify/backend/.temp
 build/
 dist/
-node_modules/
 aws-exports.js
 awsconfiguration.json
 amplifyconfiguration.json
@@ -30,8 +30,8 @@ amplifytools.xcconfig
 .idea/
 .idea/*
 .idea/sonarlint/
-/.vscode/
+.vscode/
 
-#amplify
+# Amplify folders
 web/amplify/
-
+app/Domits/amplify/
