@@ -2,7 +2,7 @@ import React, {useState, useEffect, useContext, useRef} from 'react';
 import { Auth } from 'aws-amplify';
 import { useNavigate } from 'react-router-dom';
 import styles from './landing.module.css';
-import Register from "../../components/base/Register";
+import Register from "../../features/auth/Register";
 import MainTextpicture from "../../images/host-landing-example.png";
 import whyHostpicture from "../../images/host-landing-example2.jpg";
 import verifiedLogo from "../../images/icons/verify-icon.png";

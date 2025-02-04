@@ -2,7 +2,8 @@ module.exports = {
   projectId: 'ooqckv',
   e2e: {
     setupNodeEvents(on, config) {
-      // implement node event listeners here
+      // Implement node event listeners here
     },
+    specPattern: "src/tests/cypress/**/*.cy.js" // Corrected to match your new path
   },
 };

@@ -14,7 +14,9 @@ body.hide-header .app-header {
 }
 
 .domits-accommodationGroup {
-padding-left: 10vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .domits-searchContainer {
@@ -49,9 +51,9 @@ padding-left: 10vh;
 }
 
 .domits-subHead {
-  margin-left: 5vw;
   font-size: 2.5rem;
   font-weight: bold;
+  padding-left: 9.5rem;
 }
 
 .domits-iconsContainer {
@@ -126,7 +128,7 @@ padding-left: 10vh;
   flex-direction: row;
   align-items: flex-start;
   gap: 25px;
-  margin-left: 1vw;
+  margin-left: 7vw;
   padding-bottom: 2vh;
 }
 
@@ -234,6 +236,7 @@ padding-left: 10vh;
 
   .domits-accommodationGroup {
     padding-left: 0vh;
+    flex-direction: column;
 }
 
   .domits-trendingContainer {

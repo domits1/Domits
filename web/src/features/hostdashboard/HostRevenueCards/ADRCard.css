@@ -1,18 +1,20 @@
 .adr-card {
-    background-color: #ffffff;
+    width: 320px;
+    padding: 20px;
+    margin: 20px auto;
+    border: 1px solid #ddd;
     border-radius: 12px;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    padding: 25px;
-    margin: 20px;
-    max-width: 350px;
-    font-family: "Arial", sans-serif;
-    text-align: left;
+    background-color: #f9f9f9;
+    text-align: center;
+    height: 460px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 
 }
 
 .adr-card h3 {
-    font-size: 20px;
-    font-weight: bold;
+    font-size: 20px ;
+    font-weight: 400 ;
     color: #333;
     text-align: center;
     margin-bottom: 20px;
@@ -23,39 +25,35 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
-    font-size: 16px;
+    font-weight: normal;
+    font-size: 20px;
 }
 
-.time-filter select {
-    padding: 6px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    font-size: 14px;
-    background-color: #f9f9f9;
-}
 
-.custom-date-filter {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 20px;
-}
 
 .custom-date-filter input {
-    padding: 8px;
-    border-radius: 5px;
-    border: 1px solid #ccc;
-    font-size: 14px;
+    margin-bottom: 10px;
+    font-size: 15px;
+    font-weight: normal;
+    color: #555;
+}
+
+.custom-date-filter label {
+    font-size: 15px;
+    font-weight: normal;
+    color: #555;
 }
 
 .adr-details p {
-    margin: 5px 0;
-    font-size: 16px;
+    margin: 20px 10px;
+    font-size: 20px;
+    font-weight: normal;
     color: #444;
+
 }
 
 .adr-details strong {
-    font-weight: bold;
+    font-weight: normal;
 }
 
 .adr-card-container {
@@ -63,10 +61,16 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
+    border-radius: 30px;
 }
 
 .adr-graph {
     width: 100%;
     max-width: 600px;
     margin-top: 20px;
+}
+
+.adr-card:hover {
+    transform: scale(1.02);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
