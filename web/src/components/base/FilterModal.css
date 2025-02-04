@@ -49,15 +49,15 @@
   }
   @media (max-width: 768px) {
     .modal-content {
-      width: 80vw; /* Breid de modal uit naar 80% van de breedte van het scherm */
-      height: 60vh; /* Verklein de hoogte van de modal */
-      padding: 15px; /* Verminder de padding om meer ruimte te maken */
+      width: 80vw; 
+      height: 60vh; 
+      padding: 15px; 
     }
   }
   
   @media (max-width: 480px) {
     .modal-content {
-      width: 90vw; /* Breid de modal verder uit op telefoons */
-      height: 50vh; /* Verklein de hoogte verder op mobiele telefoons */
+      width: 90vw; 
+      height: 50vh; 
     }
   }
