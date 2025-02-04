@@ -22,3 +22,15 @@ amplifytools.xcconfig
 **.sample
 #amplify-do-not-edit-end
 
+# Don't add .env (secret key) files:
+.env
+.env.*
+
+# IDE and Editor Configurations
+.idea/
+.idea/*
+.idea/sonarlint/
+.idea\*
+.idea\
+idea/
+.idea\sonarlint
