@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-    # Install NPM dependencies, cache them correctly
+      # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
           cd web/src
@@ -35,13 +35,13 @@ jobs:
       # Check for .env (secrets) files
       - name: Check for .env files
         run: |
-          if find . -name "*.env" -print | grep -q '.env'; then
-            echo "❌ .env file(s) found! Please remove them from the repository."
-# Causes build failure (exit 1)
-            exit 1
-          else
-            echo "✅ No .env files found."
-          fi
+               if find . -name "*.env" -print | grep -q '.env'; then
+               echo "❌ .env file(s) found! Please remove them from the repository."
+          # Causes build failure (exit 1)
+               exit 1
+               else
+               echo "✅ No .env files found."
+               fi
 
 env:
   REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}     
