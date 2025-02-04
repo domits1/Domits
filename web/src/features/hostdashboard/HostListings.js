@@ -6,6 +6,7 @@ import {useLocation, useNavigate} from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import PageSwitcher from "../../utils/PageSwitcher";
+import { useSetLiveEligibility } from "./hooks/useSetLiveEligibility";
 
 function HostListings() {
     const [accommodations, setAccommodations] = useState([]);

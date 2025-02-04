@@ -72,22 +72,22 @@ import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
 
 
-import AccommodationTypeView from './features/hostonboarding/views/AccommodationTypeView.js';
-import GuestAccessView from './features/hostonboarding/views/GuestAccessView.js';
+import AccommodationTypeView from './features/hostonboarding/views/PropertyTypeView.js';
+import GuestAccessView from './features/hostonboarding/views/HouseTypeView.js';
 import BoatTypeView from './features/hostonboarding/views/BoatTypeView.js';
 import CamperTypeView from './features/hostonboarding/views/CamperTypeView.js';
-import AddressInputView from './features/hostonboarding/views/AddressInputView.js';
-import CapacityView from './features/hostonboarding/views/GuestAmountView.js';
-import AmenitiesView from './features/hostonboarding/views/AmenitiesView.js';
-import HouseRulesView from './features/hostonboarding/views/HouseRulesView.js';
-import PhotosView from './features/hostonboarding/views/PhotosView.js';
-import AccommodationTitleView from './features/hostonboarding/views/AccommodationTitleView.js';
-import DescriptionView from './features/hostonboarding/views/DescriptionView.js';
-import PricingView from './features/hostonboarding/views/PricingView.js';
-import AvailabilityView from './features/hostonboarding/views/AvailabilityView.js';
+import AddressInputView from './features/hostonboarding/views/PropertyLocationView.js';
+import CapacityView from './features/hostonboarding/views/PropertyGuestAmountView.js';
+import AmenitiesView from './features/hostonboarding/views/PropertyAmenitiesView.js';
+import HouseRulesView from './features/hostonboarding/views/PropertyHouseRulesView.js';
+import PhotosView from './features/hostonboarding/views/PropertyPhotosView.js';
+import AccommodationTitleView from './features/hostonboarding/views/PropertyNameView.js';
+import DescriptionView from './features/hostonboarding/views/PropertyDescriptionView.js';
+import PricingView from './features/hostonboarding/views/PropertyRateView.js';
+import AvailabilityView from './features/hostonboarding/views/PropertyCalendarAvailabilityView.js';
 import RegistrationNumberView from './features/verification/hostverification/RegistrationNumberView.js';
 import SummaryView from './features/hostonboarding/views/SummaryView.js';
-
+import StepGuard from './features/hostonboarding/hooks/StepGuard.js';
 
 
 import { Auth } from 'aws-amplify';
