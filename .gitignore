@@ -25,6 +25,7 @@ amplifytools.xcconfig
 # Don't add .env (secret key) files:
 .env
 .env.*
+*.env
 
 # IDE and Editor
 .idea/
