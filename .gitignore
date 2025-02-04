@@ -31,7 +31,5 @@ amplifytools.xcconfig
 .idea/*
 .idea/sonarlint/
 .vscode/
+app/.idea/
 
-# Amplify folders
-web/amplify/
-app/Domits/amplify/
