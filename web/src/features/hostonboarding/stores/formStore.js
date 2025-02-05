@@ -364,7 +364,7 @@ const useFormStore = create((set) => ({
         HasLicense: specifications?.HasLicense || false,
         Height: specifications?.Height || 0,
         HouseRules: accommodationDetails.houseRules || {},
-        Images: accommodationDetails.images || [],
+        Images: Object.values(accommodationDetails.images) || [],
         IsPro: specifications?.IsPro || false,
         Length: specifications?.Length || 0,
         LicensePlate: isCamper ? specifications?.LicensePlate || "" : "",
@@ -394,6 +394,7 @@ const useFormStore = create((set) => ({
         headers: { "Content-Type": "application/json" },
       });
 
+      console.log("Submitting accommodation data:", JSON.stringify(formattedData, null, 2));
       console.log("Accommodation uploaded successfully:", response.data);
       if (response.data.statusCode === 200) {
         navigate("/hostdashboard");
