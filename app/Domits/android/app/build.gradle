@@ -39,7 +39,7 @@ android {
                     details.useTarget "project :react-native-camera", {
                         attributes {
                             attribute(Attribute.of("com.android.build.api.attributes.BuildTypeAttr", String.class), "debug")
-                            attribute(Attribute.of("com.android.build.api.attributes.AgpVersionAttr", String.class), "8.1.1")
+                            attribute(Attribute.of("com.android.build.api.attributes.AgpVersionAttr", String.class), "8.1")
                             attribute(Attribute.of("org.jetbrains.kotlin.platform.type", String.class), "androidJvm")
                         }
                     }
