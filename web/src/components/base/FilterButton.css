@@ -1,5 +1,6 @@
 .filter-button {
-    display: flex;
+    /* om de filter knopje momenteel niet te zien krijgen */
+    display: none; 
     align-items: center;
     gap: 8px;
     padding: 8px 12px;
@@ -31,12 +32,13 @@
     .filter-button {
         font-size: 14px;
         padding: 6px 10px;
-        transform: translateY(-0.3rem);
+        transform: translateY(-0.02rem);
         display: flex;
         justify-content: center; 
         align-items: center; 
-        margin: 0 auto; 
-        width: auto; 
+        margin: left; 
+        margin-left: 20px;
+        width: 100px; 
       }
 
     .filter-button svg {

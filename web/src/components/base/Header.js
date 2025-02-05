@@ -203,7 +203,7 @@ document.addEventListener('click', function (event) {
                             toggleBar={toggleSearchBar} />
                     </div>
 
-                    <FilterButton onClick={() => console.log('Filter button clicked!')} />
+                    <FilterButton/>
 
 
 
@@ -248,7 +248,7 @@ document.addEventListener('click', function (event) {
                         </div>
                     </div>
                 </nav>
-                 {/* Extra balk voor de Trustpilot-widget */}
+                 {/* Extra balk voor de Trustpilot-widget
                  <div className="trustpilot-bar">
                     <div className="trustpilot-widget" data-locale="en-GB" data-template-id="56278e9abfbbba0bdcd568bc"
                         data-businessunit-id="6731d0f09ecd53e30da42a87" data-style-height="40px" data-style-width="80%">
@@ -256,7 +256,7 @@ document.addEventListener('click', function (event) {
                             Trustpilot
                         </a>
                     </div>
-                </div>
+                </div> */}
                 {/* Einde van de extra balk */}
             </header>
         </div>

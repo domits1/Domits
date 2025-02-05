@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Slider from '@mui/material/Slider'; 
-import { TV as TVIcon, LocalBar as MinibarIcon, Balcony as BalconyIcon, Bathtub as BathtubIcon,
-   LocalCafe as CoffeeMakerIcon, SafetyCheck as SafeIcon, HairDryer as HairDryerIcon, Work as DeskIcon } from '@mui/icons-material';
+import Slider from '@mui/material/Slider';
 import './FilterModal.css';
 
 const FilterModal = ({ isOpen, onClose }) => {
@@ -58,25 +56,25 @@ const FilterModal = ({ isOpen, onClose }) => {
         <div className="filter-section">
           <h3>Price Range</h3>
           <Slider
-          sx={{
-            '& .MuiSlider-thumb': {
-              width: 30,
-              height: 30,
-              backgroundColor: '#ffffff',
-              border: '1px solid #d3d3d3',
-            },
-            '& .MuiSlider-rail': {
-              backgroundColor: '#e6e6e6', 
-            },
-            '& .MuiSlider-track': {
-              backgroundColor: '#4caf50', 
-              border: '1px solid #4caf50',
-            },
-            '& .MuiSlider-thumb:hover': {
-              backgroundColor: '#e2e2e2', 
-            },
-          }}
-          
+            sx={{
+              '& .MuiSlider-thumb': {
+                width: 30,
+                height: 30,
+                backgroundColor: '#ffffff',
+                border: '1px solid #d3d3d3',
+              },
+              '& .MuiSlider-rail': {
+                backgroundColor: '#e6e6e6',
+              },
+              '& .MuiSlider-track': {
+                backgroundColor: '#4caf50',
+                border: '1px solid #4caf50',
+              },
+              '& .MuiSlider-thumb:hover': {
+                backgroundColor: '#e2e2e2',
+              },
+            }}
+
             value={priceValues}
             onChange={(e, newValues) => setPriceValues(newValues)}
             valueLabelDisplay="auto"
