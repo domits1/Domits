@@ -27,7 +27,9 @@ const ContactItem = ({ contact, updateContactRequest, isPending }) => {
                 <p className="contact-item-full-name">{contact.givenName}</p>
                 {!isPending && (
                     <p className="contact-item-subtitle">
-                        Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text.
+                        {contact.latestMessage.text
+                            ? contact.latestMessage.text || "No message yet" // Adjust field name if needed
+                            : "No message available"}
                     </p>
                 )}
             </div>

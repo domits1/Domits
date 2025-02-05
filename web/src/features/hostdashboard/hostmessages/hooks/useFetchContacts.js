@@ -29,16 +29,15 @@ const useFetchContacts = (userId) => {
       const responseData = await response.json();
       const JSONData = JSON.parse(responseData.body);
 
-      // Fetch additional user information for each contact
       const fetchUserInfoForContacts = async (contacts) => {
         const contactDetails = await Promise.all(contacts.map(async (contact) => {
           const userInfo = await fetchUserInfo(contact.userId);
-          return { ...contact, ...userInfo };
+          const latestMessage = await fetchLatestMessage(contact.userId);
+          return { ...contact, ...userInfo, latestMessage };
         }));
         return contactDetails;
       };
 
-      // Function to fetch user info
       const fetchUserInfo = async (userId) => {
         const requestData = { UserId: userId };
         const userResponse = await fetch('https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo', {
@@ -62,6 +61,28 @@ const useFetchContacts = (userId) => {
           givenName: attributes['given_name'],
           userId: parsedData.Attributes[2].Value,
         };
+      };
+
+      const fetchLatestMessage = async (recipientIdToSend) => {
+        const response = await fetch('https://tgkskhfz79.execute-api.eu-north-1.amazonaws.com/General-Messaging-Production-Read-NewMessages', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            userId: userId,
+            recipientId: recipientIdToSend,
+          }),
+        });
+
+        const rawResponse = await response.text();
+        const result = JSON.parse(rawResponse);
+        console.log('Result:', result)
+
+        if (response.ok) {
+          return result;
+        }
+        return null;
       };
 
       const acceptedContacts = await fetchUserInfoForContacts(
