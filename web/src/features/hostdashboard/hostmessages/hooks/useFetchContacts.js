@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 const useFetchContacts = (userId) => {
   const [contacts, setContacts] = useState([]);
+  const [pendingContacts, setPendingContacts] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -27,7 +28,51 @@ const useFetchContacts = (userId) => {
 
       const responseData = await response.json();
       const JSONData = JSON.parse(responseData.body);
-      setContacts(JSONData.accepted);
+
+      // Fetch additional user information for each contact
+      const fetchUserInfoForContacts = async (contacts) => {
+        const contactDetails = await Promise.all(contacts.map(async (contact) => {
+          const userInfo = await fetchUserInfo(contact.userId);
+          return { ...contact, ...userInfo };
+        }));
+        return contactDetails;
+      };
+
+      // Function to fetch user info
+      const fetchUserInfo = async (userId) => {
+        const requestData = { UserId: userId };
+        const userResponse = await fetch('https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestData),
+        });
+
+        if (!userResponse.ok) {
+          throw new Error('Failed to fetch user information');
+        }
+
+        const userData = await userResponse.json();
+        const parsedData = JSON.parse(userData.body)[0];
+        const attributes = parsedData.Attributes.reduce((acc, attribute) => {
+          acc[attribute.Name] = attribute.Value;
+          return acc;
+        }, {});
+
+        return {
+          givenName: attributes['given_name'],
+          userId: parsedData.Attributes[2].Value,
+        };
+      };
+
+      const acceptedContacts = await fetchUserInfoForContacts(
+        JSONData.accepted.filter(contact => contact.userId !== userId)
+      );
+      const pendingContacts = await fetchUserInfoForContacts(
+        JSONData.pending.filter(contact => contact.userId !== userId)
+      );
+
+      setContacts(acceptedContacts);
+      setPendingContacts(pendingContacts);
     } catch (error) {
       setError('Error fetching host contacts: ' + error.message);
     } finally {
@@ -35,7 +80,7 @@ const useFetchContacts = (userId) => {
     }
   };
 
-  return { contacts, loading, error };
+  return { contacts, pendingContacts, loading, error };
 };
 
 export default useFetchContacts;

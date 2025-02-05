@@ -5,23 +5,22 @@
     gap: 1rem;
     border-radius: 1rem;
     justify-content: start;
-    padding: 2rem;
+    padding: 0 0.25rem 0.25rem 0.25rem;
+    border: 1px solid #dee2e6;
+
     width: 100%;
-    max-width: 400px; 
-    max-height: 300px;
+    max-width: 400px;
+    min-height: 450px;
+    max-height: 450px;
     overflow-y: auto;
+    scrollbar-width: none;
 }
 
 
 .contact-list-modal::-webkit-scrollbar {
     width: 6px;
+    opacity: 0;
 }
-
-.contact-list-modal::-webkit-scrollbar-thumb {
-    background-color: #bbb;
-    border-radius: 10px;
-}
-
 .contact-list-loading-container {
     display: flex;
     justify-content: center;
@@ -50,6 +49,7 @@
     padding: 0;
     margin: 0;
     display: flex;
+    align-items: center;
     flex-direction: column;
     gap: 10px;
 }
@@ -65,12 +65,15 @@
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
     background-color: #fff;
     min-height: 80px;
+    border: 1px solid #dee2e6;
+    width: 85%;
 }
 
 .contact-list-list-item:hover {
     background-color: #f9f9f9;
     transform: scale(1.02);
 }
+
 .contact-list-list-item:active {
     transform: scale(1);
 }
@@ -81,10 +84,10 @@
     color: #333;
     margin-bottom: 4px;
 }
+
 .contact-item-subtitle {
     font-size: 10px;
     font-weight: 400;
-
     line-height: 1.4;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -102,9 +105,62 @@
     border-radius: 50%;
     background-color: #e0e0e0;
     flex-shrink: 0;
-} 
+}
+
 .contact-item-content {
     display: flex;
     flex-direction: row;
     align-items: center;
+}
+
+.reject-button {
+    background-color: red;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.accept-button {
+    background-color: green;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}   
+.contact-list-toggle {
+    position: sticky; 
+    top: 0;
+    background-color: white;
+    z-index: 10; 
+    padding: 10px;
+    padding-right: 1rem;
+    border-bottom: 1px solid #dee2e6; 
+    display: flex;
+    justify-content: space-evenly; /* Spaces buttons evenly */
+    align-items: center; 
+}
+.contact-list-toggle button {
+    background-color: white;
+    color: var(--secondary-color); 
+    border: 1px solid var(--secondary-color);
+    padding: 10px 20px;
+    border-radius: 5%;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.contact-list-toggle button.active {
+    background-color: var(--secondary-color); 
+    color: white; 
 }
