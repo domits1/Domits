@@ -52,14 +52,28 @@ import './Calendar.module.scss';
 
 
 /**
+ * convertToNumDate is een functie dat jaar maand en dag omzet is een enkele date getal
+ * 
+ * @param {number} year
+ * @param {number} month deze maand telling is 1-12 dus 1 is januari en 12 is december
+ * @param {number} day
+ * @returns {number} de return heeft een (jaar maand dag struct) b.v. 20250112 is 2025 jan 12
+ */
+function convertToNumDate(year, month, day){
+    return Number(`${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`);
+}
+
+/**
  * getCalDays is een functie die wordt gebruikt om de dag getallen op te halen van geselecteerde maand en jaar.
  * deze dagen worden zichtbaar in de calender
  * 
  * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is decemnber
  * @param {number} year
- * @returns {{date: number, day: number}[]} de date heeft een (yaar maand dag struct) b.v. 20250112 - 2025 jan 12
+ * @returns {{date: number, day: number}[]} de date heeft een (jaar maand dag struct) b.v. 20250112 is 2025 jan 12
  */
 function getCalDays(month,year){
+    const dateArray = []
+
     let previusMonth = month - 1
     let previusYear = year
 
@@ -83,8 +97,24 @@ function getCalDays(month,year){
 
     let nextMonthFirstDay = new Date(nextyear, nextMonth, 1).getDay()-1; // de dagen telling gaat van -1-5 0 is maandag -1 is zondag
 
-    console.log(previusMonthLastDay,previusMonthDays,daysInMonth,nextMonthFirstDay)
+    for(let i = previusMonthLastDay;i >= 0; i--){
+        let dayIndex = previusMonthDays-i
+        dateArray.push({date: convertToNumDate(previusYear,previusMonth+1,dayIndex),day: dayIndex})
+    }
 
+    for(let i = 1; i <= daysInMonth; i++){
+        dateArray.push({date: convertToNumDate(year,month+1,i),day: i})
+    }
+
+    let addRow = 0
+    if(dateArray.length < 35){
+        addRow = 7
+    }
+    for(let i = 1; i <= 7-nextMonthFirstDay+addRow;i++){
+        dateArray.push({date: convertToNumDate(nextyear,nextMonth+1,i),day: i})
+    }
+
+    return dateArray
 }
 
 function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
@@ -94,7 +124,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
 
     function dayClick(e,row,column){
         e.preventDefault()
-        getCalDays(11,2025)
+        getCalDays(7,2025)
     }
 
     return(
