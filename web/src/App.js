@@ -88,6 +88,9 @@ import AvailabilityView from './features/hostonboarding/views/AvailabilityView.j
 import RegistrationNumberView from './features/verification/hostverification/RegistrationNumberView.js';
 import SummaryView from './features/hostonboarding/views/SummaryView.js';
 
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 
 
 import { Auth } from 'aws-amplify';
@@ -102,7 +105,7 @@ Modal.setAppElement('#root');
 function App() {
     const [searchResults, setSearchResults] = useState([]);
     const [loading, setLoading] = useState(false);
-
+    
     // Apollo Client
     const client = new ApolloClient({
         uri: 'https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql',  //
@@ -111,36 +114,48 @@ function App() {
             "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",   // Replace with your AppSync API key
         },
     });
-
+    
     useEffect(() => {
         document.title = 'Domits';
     }, [searchResults]);
-
+    
     useEffect(() => {
         initializeUserAttributes();
     }, []);
-
+    
     const currentPath = window.location.pathname;
-
+    
     const renderFooter = () => {
         if (['/admin', '/bookingoverview', '/bookingpayment'].includes(currentPath) || currentPath.startsWith('/verify')) {
             return null;
         }
         return <Footer />;
     };
-
+    
     const renderChatWidget = () => {
         if (currentPath.startsWith('/verify')) {
             return null;
         }
         return <ChatWidget />;
     };
-
+    
     const [flowState, setFlowState] = useState({ isHost: false });
-
-
+    
+    
     return (
         <ApolloProvider client={client}> {/* ApolloProvider */}
+        <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+            />
             <FlowContext.Provider value={{ flowState, setFlowState }}>
                 <Router>
                     <ScrollToTop />
