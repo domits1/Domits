@@ -588,12 +588,12 @@ const HostPricing = () => {
                             )}
                           </p>
 
-                          <button
+                          {/* <button
                             className="dynamic-pricing-button"
                             onClick={() => openModal(accommodation)}
                           >
                             Configure Dynamic Pricing
-                          </button>
+                          </button> */}
 
                           <p className="pricing-rate-input">
                             Cleaning Fee:{' '}
