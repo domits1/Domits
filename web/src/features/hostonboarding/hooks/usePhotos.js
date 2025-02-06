@@ -6,6 +6,7 @@ export default function usePhotos() {
 
   const handleFileChange = (file, index) => {
     const reader = new FileReader();
+    console.log(`Selected image ${index + 1}:`, reader.result);
     reader.onload = () => {
       setImages((prev) => ({
         ...prev,
