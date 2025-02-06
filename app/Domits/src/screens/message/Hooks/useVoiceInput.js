@@ -1,6 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
-// import Voice from '@react-native-voice/voice';
-import Voice from 'react-native-voice';
+import Voice from '@react-native-voice/voice';
 import { NativeModules } from 'react-native';
 
 const useVoiceInput = (setUserInput) => {

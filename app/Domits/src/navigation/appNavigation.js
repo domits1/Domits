@@ -23,7 +23,7 @@ import HostReviews from '../screens/hostdashboard/HostReviewsTab';
 import HostProfile from '../screens/hostdashboard/HostProfileTab';
 import HostPayments from '../screens/hostdashboard/HostPaymentsTab';
 import HostListings from '../screens/hostdashboard/HostListingsTab';
-import OnboardingHost from '../screens/hostOnboarding/OnboardingHost';
+import OnboardingHost from '../screens/apphostonboarding/OnboardingHost';
 import HostSettings from '../screens/hostdashboard/HostSettingsTab';
 import Landing from '../screens/Landing';
 import emailSettings from '../screens/hostdashboard/emailSettings';
