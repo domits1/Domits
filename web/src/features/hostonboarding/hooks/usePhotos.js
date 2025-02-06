@@ -6,15 +6,21 @@ export default function usePhotos() {
 
   const handleFileChange = (file, index) => {
     const reader = new FileReader();
-    console.log(`Selected image ${index + 1}:`, reader.result);
     reader.onload = () => {
-      setImages((prev) => ({
-        ...prev,
-        [`image${index + 1}`]: reader.result,
-      }));
+      const imageURL = reader.result; // Get the image data URL
+      console.log(`Selected image ${index + 1}:`, imageURL); // Log image data URL
+      setImages((prev) => {
+        const updatedImages = {
+          ...prev,
+          [`image${index + 1}`]: imageURL, // Update state with image URL
+        };
+        console.log("Updated images:", updatedImages); // Log the updated images state
+        return updatedImages;
+      });
     };
     reader.readAsDataURL(file);
   };
+  
 
   const deleteImage = (index) => {
     setImages((prev) => {
@@ -42,15 +48,23 @@ export default function usePhotos() {
     Array.from(files).forEach((file, i) => {
       const reader = new FileReader();
       reader.onload = () => {
-        newImages[`image${Object.keys(images).length + i + 1}`] = reader.result;
-        setImages((prev) => ({
-          ...prev,
-          ...newImages,
-        }));
+        const imageKey = `image${Object.keys(images).length + i + 1}`;
+        const imageURL = reader.result;
+        console.log(`Dropped image ${imageKey}:`, imageURL); // Log the dropped image data URL
+        newImages[imageKey] = imageURL;
+        setImages((prev) => {
+          const updatedImages = {
+            ...prev,
+            ...newImages, // Add the new image(s) to the state
+          };
+          console.log("Updated images after drop:", updatedImages); // Log updated state
+          return updatedImages;
+        });
       };
       reader.readAsDataURL(file);
     });
   };
+  
 
   return {
     images,
