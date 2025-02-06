@@ -35,19 +35,21 @@
     display: flex;
     padding: 5px 15px;
     border-radius: 15px;
-    border: 0.50px #000000 solid;
+    border: 0px;
     background: #0fa616;
     justify-content: center;
     align-items: center;
     gap: 10px;
     color: white;
     font-size: 16px;
-    width: 100%;
+    width: 150px;
     margin-top: 57%;
+    height: 50px;
+    transition: all 0.4s ease;
 }
 
 .addChannelButton:hover {
-    opacity: 90%;
+    opacity: 85%;
     cursor: pointer;
 }
 
@@ -600,3 +602,4 @@
 .channelNavigation button:hover:not(:disabled) {
     background-color: #ddd;
 }
+
