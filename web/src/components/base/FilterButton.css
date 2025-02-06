@@ -1,0 +1,58 @@
+.filter-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: #ffffff;
+    border: none;
+    color: #000;
+    cursor: pointer;
+    border-radius: 20px;
+    font-size: 16px;
+    transition: background-color 0.3s;
+    border: #bababa solid 1px;
+    transform: translateY(1rem);
+}
+
+.filter-button svg {
+    border: none;
+    outline: none;
+}
+
+.filter-button:hover {
+    border-color: #000;
+}
+
+.icon {
+    color: black;
+}
+
+@media (max-width: 768px) {
+    .filter-button {
+        font-size: 14px;
+        padding: 6px 10px;
+        transform: translateY(-0.3rem);
+        display: flex;
+        justify-content: center; 
+        align-items: center; 
+        margin: 0 auto; 
+        width: auto; 
+      }
+
+    .filter-button svg {
+        width: 20px; 
+        height: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .filter-button {
+        font-size: 10px; 
+        padding: 5px 8px; 
+    }
+
+    .filter-button svg {
+        width: 18px; 
+        height: 18px;
+    }
+}
