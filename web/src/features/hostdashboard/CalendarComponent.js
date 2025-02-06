@@ -1,217 +1,5 @@
-import React, {useEffect, useState} from "react";
-import styles from './Calendar.module.css';
-import {isSameDay} from "date-fns";
-import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
-import {useNavigate} from "react-router-dom";
-import HostCalendar from "./HostCalendar";
 
 /**
- * TEST
- * @param passedProp
- * @param isNew
- * @param updateDates
- * @returns {Element}
- * @constructor
- */
-function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
-    const navigate = useNavigate();
-    const [month, setMonth] = useState(new Date().getMonth());
-    const [year, setYear] = useState(new Date().getFullYear());
-    const [dates, setDates] = useState([]);
-    const [selectedRanges, setSelectedRanges] = useState([]);
-    const [originalRanges, setOriginalRanges] = useState([]);
-    let [dateRange, setDateRange] = useState({
-        startDate: null,
-        endDate: null
-    });
-
-    const [showSection, setShowSection] = useState(componentView || false);
-
-    const months = [
-        'January', 'February', 'March', 'April',
-        'May', 'June', 'July', 'August',
-        'September', 'October', 'November', 'December'
-    ];
-
-    const [minimumStay, setMinimumStay] = useState(passedProp.MinimumStay || 0);
-    const [minimumAdvanceReservation, setMinimumAdvanceReservation] = useState(passedProp.MinimumAdvanceReservation || 0);
-    const [maximumStay, setMaximumStay] = useState(passedProp.MaximumStay || 0);
-    const [maximumAdvanceReservation, setMaximumAdvanceReservation] = useState(passedProp.MaximumAdvanceReservation || 0);
-    const [originalMinimumStay, setOriginalMinimumStay] = useState(passedProp.MinimumStay || 0);
-    const [originalMinimumAdvanceReservation, setOriginalMinimumAdvanceReservation] = useState(passedProp.MinimumAdvanceReservation || 0);
-    const [originalMaximumStay, setOriginalMaximumStay] = useState(passedProp.MaximumStay || 0);
-    const [originalMaximumAdvanceReservation, setOriginalMaximumAdvanceReservation] = useState(passedProp.MaximumAdvanceReservation || 0);
-
-    useEffect(() => {
-        if (passedProp && passedProp.DateRanges) {
-            setSelectedRanges(passedProp.DateRanges);
-            setOriginalRanges(passedProp.DateRanges);
-            setMinimumStay(passedProp.MinimumStay || 0);
-            setMinimumAdvanceReservation(passedProp.MinimumAdvanceReservation || 0);
-            setMaximumStay(passedProp.MaximumStay || 0);
-            setMaximumAdvanceReservation(passedProp.MaximumAdvanceReservation || 0);
-        }
-    }, [passedProp.ID, passedProp.DateRanges, passedProp.MinimumStay, passedProp.MinimumAdvanceReservation, passedProp.MaximumStay, passedProp.MaximumAdvanceReservation]);
-    useEffect(() => {
-        if (passedProp && passedProp.DateRanges) {
-            setOriginalRanges(passedProp.DateRanges);
-        }
-    }, [passedProp.ID]);
-
-    const incrementAmount = (setter, value, limit) => {
-        setter(prev => (prev < limit ? prev + 1 : prev));
-    };
-
-    const decrementAmount = (setter, value, minimum = 0) => {
-        setter(prev => (prev > minimum ? prev - 1 : prev));
-    };
-
-    const renderDates = () => {
-        const today = new Date();
-        const start = new Date(year, month, 1).getDay();
-        const endDate = new Date(year, month + 1, 0).getDate();
-        const end = new Date(year, month, endDate).getDay();
-        const endDatePrev = new Date(year, month, 0).getDate();
-        const newDates = [];
-
-        const safeSelectedRanges = Array.isArray(selectedRanges) ? selectedRanges : [];
-
-        for (let i = start; i > 0; i--) {
-            const date = new Date(year, month - 1, endDatePrev - i + 1);
-            newDates.push(
-                <li
-                    key={`inactive-prev-${endDatePrev - i + 1}`}
-                    className={`${styles.date} ${styles.inactive} ${date < today ? styles.disabled : ''}`}
-                >
-                    {`${endDatePrev - i + 1}`}
-                </li>
-            );
-        }
-
-        for (let i = 1; i <= endDate; i++) {
-            const currentDate = new Date(year, month, i);
-            const isActiveDay = isSameDay(currentDate, new Date());
-            const isSelected = safeSelectedRanges.some(range => isDateInRange(currentDate, range.startDate, range.endDate));
-            const isStartDate = safeSelectedRanges.some(range => isSameDay(range.startDate, currentDate));
-            const isEndDate = safeSelectedRanges.some(range => isSameDay(range.endDate, currentDate));
-            newDates.push(
-                <li
-                    key={`active-${i}`}
-                    className={`${styles.date} ${isActiveDay ? styles.today : ''} 
-                        ${isSelected ? styles.selected : ''} 
-                        ${isStartDate ? styles.startDate : ''} 
-                        ${isEndDate ? styles.endDate : ''} 
-                        ${currentDate < today ? styles.disabled : ''}`}
-                    onClick={() => handleDateClick(currentDate)}
-                >
-                    {`${i}`}
-                </li>
-            );
-        }
-
-        for (let i = end + 1; i <= 6; i++) {
-            newDates.push(
-                <li key={`inactive-next-${i}`} className={`${styles.date} ${styles.inactive}`}>
-                    {`${i - end}`}
-                </li>
-            );
-        }
-
-        setDates(newDates);
-    };
-
-    const dateRangesOverlap = (range1, range2) => {
-        const {startDate: start1, endDate: end1} = range1;
-        const {startDate: start2, endDate: end2} = range2;
-
-        return (
-            (start1 <= start2 && (end1 === null || start2 <= end1)) ||
-            (start1 <= end2 && (end1 === null || end2 <= end1)) ||
-            (start2 <= start1 && (end2 === null || start1 <= end2)) ||
-            (start2 <= end1 && (end2 === null || end1 <= end2))
-        );
-    };
-
-    useEffect(() => {
-        renderDates();
-    }, [month, year, selectedRanges]);
-
-    const handleDateClick = (dateClicked) => {
-        const clickedDate = new Date(dateClicked);
-
-        if (clickedDate >= new Date()) {
-            setDateRange(prevDateRange => {
-                if (!prevDateRange.startDate) {
-                    return {
-                        startDate: clickedDate,
-                        endDate: null
-                    };
-                }
-
-                if (prevDateRange.startDate && !prevDateRange.endDate) {
-                    let newDateRange = {
-                        ...prevDateRange,
-                        endDate: clickedDate
-                    };
-
-                    if (clickedDate < newDateRange.startDate) {
-                        newDateRange = {
-                            startDate: clickedDate,
-                            endDate: newDateRange.startDate
-                        };
-                    }
-
-                    const overlappingIndex = selectedRanges.findIndex(range =>
-                        dateRangesOverlap(newDateRange, range)
-                    );
-
-                    if (overlappingIndex !== -1) {
-                        const updatedRanges = [...selectedRanges];
-                        updatedRanges[overlappingIndex] = newDateRange;
-                        setSelectedRanges(updatedRanges);
-                    } else {
-                        setSelectedRanges([...selectedRanges, newDateRange]);
-                    }
-
-                    updateDates([...selectedRanges, newDateRange]);
-
-                    return {
-                        startDate: null,
-                        endDate: null
-                    };
-                }
-
-                return {
-                    startDate: null,
-                    endDate: null
-                };
-            });
-        }
-    };
-
-    const isDateInRange = (date, startDate, endDate) => {
-        const selectedDate = new Date(date);
-        const rangeStart = new Date(startDate);
-        const rangeEnd = new Date(endDate);
-        return rangeStart && rangeEnd && selectedDate >= rangeStart && selectedDate <= rangeEnd;
-    };
-
-    const navigateDates = (nav) => {
-        let newMonth = month;
-        let newYear = year;
-
-        if (nav === 'prev') {
-            newMonth = (month === 0) ? 11 : month - 1;
-            newYear = (month === 0) ? year - 1 : year;
-        } else if (nav === 'next') {
-            newMonth = (month === 11) ? 0 : month + 1;
-            newYear = (month === 11) ? year + 1 : year;
-        }
-
-        setMonth(newMonth);
-        setYear(newYear);
-    };
-
     const asyncSaveDates = async () => {
         const body = {
             DateRanges: selectedRanges,
@@ -245,165 +33,104 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                     alert("Something went wrong, please try again later...");
                     console.log("updatedAttributes is missing in the response");
                 }
-            }
+            }+
         } catch (error) {
             console.error("Unexpected error:", error);
         } finally {
             navigate(0);
         }
     };
+*/
 
-    const handleRemoveDateRange = (indexToRemove) => {
-        setSelectedRanges(prevSelectedRanges => {
-            const updatedRanges = [...prevSelectedRanges];
-            updatedRanges.splice(indexToRemove, 1);
-            updateDates(updatedRanges);
-            return updatedRanges;
-        });
-    };
+/**
+ * Dit is geschreven door Marijn Klappe
+ * 
+ * als jij niet begrijpt wat hier gebreurd verander dan ook niks als er iets aan gepast moet worden berijk mij dan via discord --marijn3--
+ */
+import React, {useEffect, useState} from "react";
+import './Calendar.module.scss';
 
-    const handleUndo = () => {
-        setSelectedRanges(originalRanges);
-        setMinimumStay(originalMinimumStay);
-        setMinimumAdvanceReservation(originalMinimumAdvanceReservation);
-        setMaximumStay(originalMaximumStay);
-        setMaximumAdvanceReservation(originalMaximumAdvanceReservation);
+
+/**
+ * getCalDays is een functie die wordt gebruikt om de dag getallen op te halen van geselecteerde maand en jaar.
+ * deze dagen worden zichtbaar in de calender
+ * 
+ * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is decemnber
+ * @param {number} year
+ * @returns {{date: number, day: number}[]} de date heeft een (yaar maand dag struct) b.v. 20250112 - 2025 jan 12
+ */
+function getCalDays(month,year){
+    let previusMonth = month - 1
+    let previusYear = year
+
+    if(previusMonth == -1){
+        previusMonth = 11
+        previusYear--
     }
 
-    useEffect(() => {
-        if (componentView === true) {
-            setShowSection(true);
-        } else {
-            setShowSection(false);
-        }
-    }, [componentView]);
+    let nextMonth = month + 1
+    let nextyear = year
 
-    return (
-        <main className={styles.body}>
-            <section className={styles.calendarContent}>
-                <div className={styles.calendar}>
-                    <header>
-                        <h3>{`${months[month]} ${year}`}</h3>
-                        <nav>
-                            <button className={styles.prev} onClick={() => navigateDates('prev')}></button>
-                            <button className={styles.next} onClick={() => navigateDates('next')}></button>
-                        </nav>
-                    </header>
-                    <section>
-                        <ul className="days">
-                            <li>Sun</li>
-                            <li>Mon</li>
-                            <li>Tue</li>
-                            <li>Wed</li>
-                            <li>Thu</li>
-                            <li>Fri</li>
-                            <li>Sat</li>
-                        </ul>
-                        <ul className="dates">
-                            {dates}
-                        </ul>
-                    </section>
+    if(nextMonth == 12){
+        nextMonth = 0
+        nextyear++
+    }
+
+    let previusMonthLastDay = new Date(previusYear, previusMonth + 1, 0).getDay()-1 // de dagen telling gaat van -1-5 0 is maandag -1 is zondag
+    let previusMonthDays = new Date(previusYear, previusMonth + 1, 0).getDate()
+
+    let daysInMonth = new Date(year, month + 1, 0).getDate()
+
+    let nextMonthFirstDay = new Date(nextyear, nextMonth, 1).getDay()-1; // de dagen telling gaat van -1-5 0 is maandag -1 is zondag
+
+    console.log(previusMonthLastDay,previusMonthDays,daysInMonth,nextMonthFirstDay)
+
+}
+
+function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
+
+    const calenderGrid = Array(6).fill(Array(7).fill({dayNumber: 2, isDate: 0, selected: false}));
+    const [calenderGridObject, setGrid] = useState(calenderGrid);
+
+    function dayClick(e,row,column){
+        e.preventDefault()
+        getCalDays(11,2025)
+    }
+
+    return(
+        <div className="calender">
+            <div className="column">
+                <div className="header">
+
                 </div>
-                <div className={styles.dateRanges}>
-                    <header>
-                        <h3>Selected date ranges:</h3>
-                    </header>
-                    <section className={styles.dateRangeSection}>
-                        {selectedRanges.length > 0 ? selectedRanges.map((dateRange, index) => (
-                            <div key={index} className={styles.dateRange}>
-                                {`${DateFormatterDD_MM_YYYY(dateRange.startDate)} - ${DateFormatterDD_MM_YYYY(dateRange.endDate)}`}
-                                <button className={styles.removeButton} onClick={() => handleRemoveDateRange(index)}>x
-                                </button>
+                <div className="days">
+                    <div className="day-labels">
+                        {['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'].map((day) => (
+                            <div className="day-label">
+                                <span>{day}</span>
                             </div>
-                        )) : <div>Start by selecting your date range</div>}
-                    </section>
+                        ))}
+                    </div>
+                    <table className="calender-days">
+                        {calenderGridObject.map((row, rowIndex) => (
+                            <tr key={rowIndex}>
+                            {row.map((cell, colIndex) => (
+                                <td>
+                                    <a href="" key={colIndex} onClick={(e) => dayClick(e,rowIndex, colIndex)}>
+                                        {cell.dayNumber}
+                                    </a>
+                                </td>
+                            ))}
+                            </tr>
+                        ))}
+                    </table>
                 </div>
-                {showSection === true && (<section>
-                        <div className={styles.staying_nights}>
-                            <div className={styles.stayMinMaxBox}>
-                                <div className={styles.stayMinMaxField}>
-                                    <label className={styles.minMaxLabel}>Minimum Stay (Days):</label>
-                                    <div className={styles.minMaxButtons}>
-                                        <button
-                                            className={styles.roundButton}
-                                            onClick={() => decrementAmount(setMinimumStay, minimumStay)}
-                                        >
-                                            -
-                                        </button>
-                                        {minimumStay}
-                                        <button
-                                            className={styles.roundButton}
-                                            onClick={() => incrementAmount(setMinimumStay, minimumStay, 30)}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className={styles.stayMinMaxField}>
-                                    <label className={styles.minMaxLabel}>Minimum Booking Period (Days):</label>
-                                    <div className={styles.minMaxButtons}>
-                                        <button
-                                            className={styles.roundButton}
-                                            onClick={() => decrementAmount(setMinimumAdvanceReservation, minimumAdvanceReservation)}
-                                        >
-                                            -
-                                        </button>
-                                        {minimumAdvanceReservation}
-                                        <button
-                                            className={styles.roundButton}
-                                            onClick={() => incrementAmount(setMinimumAdvanceReservation, minimumAdvanceReservation, 30)}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className={styles.stayMinMaxField}>
-                                    <label className={styles.minMaxLabel}>Maximum Stay (Days):</label>
-                                    <div className={styles.minMaxButtons}>
-                                        <button
-                                            className={styles.roundButton}
-                                            onClick={() => decrementAmount(setMaximumStay, maximumStay, minimumStay)}
-                                        >
-                                            -
-                                        </button>
-                                        {maximumStay}
-                                        <button
-                                            className={styles.roundButton}
-                                            onClick={() => incrementAmount(setMaximumStay, maximumStay, 365)}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                                <div className={styles.stayMinMaxField}>
-                                    <label className={styles.minMaxLabel}>Maximum Advance Reservation (Days):</label>
-                                    <div className={styles.minMaxButtons}>
-                                        <button
-                                            className={styles.roundButton}
-                                            onClick={() => decrementAmount(setMaximumAdvanceReservation, maximumAdvanceReservation, minimumAdvanceReservation)}
-                                        >
-                                            -
-                                        </button>
-                                        {maximumAdvanceReservation}
-                                        <button
-                                            className={styles.roundButton}
-                                            onClick={() => incrementAmount(setMaximumAdvanceReservation, maximumAdvanceReservation, 365)}
-                                        >
-                                            +
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-                )}
-            </section>
-            {!isNew && <section className={styles.buttonBox}>
-                <button className={styles.undo} onClick={() => handleUndo()}>Undo</button>
-                <button className={styles.save} onClick={() => asyncSaveDates()}>Save</button>
-            </section>}
-        </main>
-    );
+            </div>
+            <div className="column">
+                
+            </div>
+        </div>
+    )
 }
 
 export default CalendarComponent;
