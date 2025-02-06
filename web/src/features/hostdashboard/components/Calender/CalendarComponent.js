@@ -45,20 +45,22 @@
 /**
  * Dit is geschreven door Marijn Klappe
  * 
- * als jij niet begrijpt wat hier gebreurd verander dan ook niks als er iets aan gepast moet worden berijk mij dan via discord --marijn3--
+ * als jij niet begrijpt wat hier gebreurd verander dan ook niks als er iets aan gepast moet worden berijk mij dan via discord --@marijn3--
  */
 import React, {useEffect, useState} from "react";
 import './Calendar.module.scss';
+import leftArrowSVG from './left-arrow-calender.svg';
+import rightArrowSVG from './right-arrow-calender.svg';
 
 
 /**
- * convertToNumDate is een functie dat jaar maand en dag omzet is een enkele date getal
- * 
- * @param {number} year
- * @param {number} month deze maand telling is 1-12 dus 1 is januari en 12 is december
- * @param {number} day
- * @returns {number} de return heeft een (jaar maand dag struct) b.v. 20250112 is 2025 jan 12
- */
+     * convertToNumDate is een functie dat jaar maand en dag omzet is een enkel date getal
+     * 
+     * @param {number} year
+     * @param {number} month deze maand telling is 1-12 dus 1 is januari en 12 is december
+     * @param {number} day
+     * @returns {number} de return heeft een (jaar maand dag struct) b.v. 20250112 is 2025 jan 12
+     */
 function convertToNumDate(year, month, day){
     return Number(`${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`);
 }
@@ -117,21 +119,115 @@ function getCalDays(month,year){
     return dateArray
 }
 
+/**
+ * deze functie handeld de interactie af als er op een dag wordt geclickt het selecteerd een nieuwe datum
+ * 
+ * @param {MouseEvent} e 
+ * @param {number} col 
+ * @param {number} row 
+ */
+function dayClick(e, col, row){
+    e.preventDefault()
+    console.log(col,row)
+}
+
+/**
+ * deze functie returns de maand dagen als een html element
+ * 
+ * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is decemnber
+ * @param {number} year
+ * @returns {Element[]}
+ */
+function getGridObject(month,year){
+    const calDays = getCalDays(month,year)
+    const tableData = []
+    
+    for(let i = 0; i < 6; i++){
+        tableData.push(
+            <tr>
+                {[...Array(7)].map((_, j) => (
+                    <td><a onClick={(e)=>{
+                        dayClick(e,i,j)
+                    }} href="">{calDays[i*7+j].day}</a></td>
+                ))}
+            </tr>
+        )
+    }
+
+    return tableData
+}
+
+/**
+ * deze functie wordt gebruikt om de maand getal om te zetten naar een string zodat het in de html code gezet kan worden
+ * 
+ * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is decemnber
+ * @returns {string}
+ */
+function getMonthName(month){
+    const months = [
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ];
+    return months[month];
+}
+
+
+
 function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
 
-    const calenderGrid = Array(6).fill(Array(7).fill({dayNumber: 2, isDate: 0, selected: false}));
-    const [calenderGridObject, setGrid] = useState(calenderGrid);
+    let selectedMonth = new Date().getMonth()
+    let selectedYear = new Date().getFullYear()
 
-    function dayClick(e,row,column){
+    const [calenderGridObject, setGrid] = useState(getGridObject(selectedMonth,selectedYear));
+    const [calenderHeader, setHeader] = useState(getMonthName(selectedMonth) + " " + selectedYear.toString())
+
+    /**
+     * deze functie wordt angeroepen als de gebruiker op de nextMonth btn clickt dat wordt de Calender geupdate met de dagen van de volgende maand
+     * 
+     * @param {MouseEvent} e
+     */
+    function nextMonthBtn(e){
+        console.log(selectedMonth,typeof selectedMonth)
         e.preventDefault()
-        getCalDays(7,2025)
+
+        selectedMonth++
+        if(selectedMonth==12){
+            selectedMonth=0
+            selectedYear++
+        }
+
+        //setHeader(getMonthName(selectedMonth) + " " + selectedYear.toString())
+    }
+
+    /**
+     * deze functie wordt angeroepen als de gebruiker op de previusMonth btn clickt dat wordt de Calender geupdate met de dagen van de vorige maand
+     * 
+     * @param {MouseEvent} e
+     */
+    function previusMonthBtn(e){
+        e.preventDefault()
+
+        selectedMonth--
+        if(selectedMonth==-1){
+            selectedMonth=11
+            selectedYear--
+        }
+        setHeader(getMonthName(selectedMonth) + " " + selectedYear.toString())
     }
 
     return(
         <div className="calender">
             <div className="column">
                 <div className="header">
-
+                    <h4>{calenderHeader}</h4>
+                    <div className="btn-container">
+                        <a href="" onClick={previusMonthBtn}>
+                            <img src={leftArrowSVG} alt="" />
+                        </a>
+                        <a href="" onClick={nextMonthBtn}>
+                            <img src={rightArrowSVG} alt="" />
+                        </a>
+                    </div>
                 </div>
                 <div className="days">
                     <div className="day-labels">
@@ -142,17 +238,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                         ))}
                     </div>
                     <table className="calender-days">
-                        {calenderGridObject.map((row, rowIndex) => (
-                            <tr key={rowIndex}>
-                            {row.map((cell, colIndex) => (
-                                <td>
-                                    <a href="" key={colIndex} onClick={(e) => dayClick(e,rowIndex, colIndex)}>
-                                        {cell.dayNumber}
-                                    </a>
-                                </td>
-                            ))}
-                            </tr>
-                        ))}
+                        {calenderGridObject}
                     </table>
                 </div>
             </div>
