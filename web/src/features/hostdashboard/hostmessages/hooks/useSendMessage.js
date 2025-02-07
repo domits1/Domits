@@ -5,7 +5,11 @@ export const useSendMessage = (userId) => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState(null);
 
-    const sendMessage = async (userId, recipientId, text) => {
+
+
+    const sendMessage = async (recipientId, text) => {
+        const channelID = [userId, recipientId].sort().join('_');
+
         setSending(true);
         try {
             const response = await fetch('https://qkptcbb445.execute-api.eu-north-1.amazonaws.com/ChatSendMessageFunction', {
@@ -17,7 +21,7 @@ export const useSendMessage = (userId) => {
                     userId: userId,
                     recipientId: recipientId,
                     text: text,
-                    createdAt: new Date().toISOString()
+                    channelId: channelID,
                 })
             });
 
@@ -26,9 +30,10 @@ export const useSendMessage = (userId) => {
             }
 
             const data = await response.json();
-            const newMessage = JSON.parse(data.body);
-
-            return newMessage;
+            if (data.status === 'sent') {
+                console.log('Message sent successfully');
+                
+            }
         } catch (error) {
             console.error("Error sending message:", error);
             setError(error);

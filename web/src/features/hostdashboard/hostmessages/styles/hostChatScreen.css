@@ -18,10 +18,13 @@
     /* background-color: green; */
 }
 
+
 .chat-screen {
+    display: flex;
+    flex-direction: column-reverse;
     height: 72.5%;
     /* background-color: red; */
-    overflow-y: auto;
+    overflow-y: auto; 
 }
 
 .chat-screen::-webkit-scrollbar {
@@ -38,52 +41,80 @@
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
 .chat-message.sent .message-header {
     display: flex;
     flex-direction: row-reverse;
     margin-bottom: 0.5rem;
+    gap: 0.5rem;
+    align-items: center;
+}
+.chat-message.received .message-header {
+    display: flex;
+    flex-direction: row;
+    margin-bottom: 0.5rem;
+    gap: 0.5rem;
+    align-items: center;
 }
 
 .chat-message.sent .message-content {
     display: inline-block;
 
-    background-color: #f1f0f0;
+    background-color: var(--secondary-color);
+    color: white;
     border-radius: 0.5rem;
     padding: 0.3rem 1rem;
     text-align: right;
     margin-left: auto;
     max-width: 70%;
     word-wrap: break-word;
+    border-bottom-right-radius: 0;
+}
+.chat-message.received {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
 }
 
-
-
 .chat-message.received .message-content {
+    background-color: var(--primary-color);
+    color: white;
     display: inline-block;
-    background-color: #f1f0f0;
     border-radius: 0.5rem;
     padding: 0.3rem 1rem;
     margin-right: auto;
     max-width: 70%;
     word-wrap: break-word;
+    border-bottom-left-radius: 0;
 }
-
+.sender-name {
+    font-size: 1rem;
+    color: black;
+}
 .chat-input {
     display: flex;
     flex-direction: row;
-    justify-content: center;
+    justify-content: space-around;
     align-items: center;
     /* background-color: blue; */
     height: 12.5%;
 }
 
 .message-input-textarea {
-    height: 50%;
-    width: 85%;
+    height: 60%;
+    width: 80%;
     resize: none;
-    border-radius: 2rem;
-
+    border-radius: 1rem;
+}
+.message-input-send-button {
+    height: 50%;
+    width: 15%;
+    align-self: center;
+    border-radius: 1rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
 }

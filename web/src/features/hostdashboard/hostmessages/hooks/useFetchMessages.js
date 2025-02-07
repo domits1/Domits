@@ -35,7 +35,7 @@ export const useFetchMessages = (userId) => {
             const result = JSON.parse(rawResponse);
 
             if (Array.isArray(result)) {
-                const allChats = result.sort((b, a) => new Date(b.createdAt) - new Date(a.createdAt));
+                const allChats = result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
                 setMessages(allChats);
             } else {
                 console.error("Unexpected response format:", result);

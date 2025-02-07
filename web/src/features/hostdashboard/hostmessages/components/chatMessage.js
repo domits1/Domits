@@ -1,14 +1,11 @@
 import React from 'react';
-// import '../styles/chatMessage.css'; 
 
 const ChatMessage = ({ message, userId, contactName }) => {
     const { userId: senderId, text, createdAt, isRead, isSent } = message;
-    // console.log(message)
 
-    // Format the date to display it properly
     const formatDate = (dateString) => {
         const date = new Date(dateString);
-        return `${date.getHours()}:${date.getMinutes()} ${date.toDateString()}`;
+        return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
     };
 
     return (

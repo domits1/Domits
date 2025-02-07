@@ -46,16 +46,16 @@ const ContactList = ({ userId, onContactClick }) => {
                 ) : contactList.length === 0 ? (
                     <p className="contact-list-empty-text">{noContactsMessage}</p>
                 ) : (
-                    contactList.map((contact) => (
-                        <li key={contact.userId} className="contact-list-list-item" onClick={() => handleContactClick(contact.recipientId, contact.givenName)}>
-                            
-                            <ContactItem
-                                contact={contact}
-                                // updateContactRequest={updateContactRequest}
-                                isPending={displayType === 'pendingContacts'}
-                            />
-                        </li>
-                    ))
+                    contactList
+                        .sort((a, b) => new Date(b.latestMessage.createdAt) - new Date(a.latestMessage.createdAt))
+                        .map((contact) => (
+                            <li key={contact.userId} className="contact-list-list-item" onClick={() => handleContactClick(contact.recipientId, contact.givenName)}>
+                                <ContactItem
+                                    contact={contact}
+                                    isPending={displayType === 'pendingContacts'}
+                                />
+                            </li>
+                        ))
                 )}
             </ul>
         </div>
