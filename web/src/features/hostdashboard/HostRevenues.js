@@ -6,9 +6,12 @@ import RevenueOverview from './HostRevenueCards/RevenueOverview.jsx';
 import axios from "axios";
 import MonthlyComparison from './HostRevenueCards/MonthlyComparison.jsx';
 import OccupancyRateCard from './HostRevenueCards/OccupancyRate.jsx';
-import RevPARCard from './HostRevenueCards/RevPAR.jsx'; // Import RevPARCard
+import RevPARCard from './HostRevenueCards/RevPAR.jsx';
 import ADRCard from './HostRevenueCards/ADRCard.jsx';
 import { Auth } from 'aws-amplify';
+import ClipLoader from 'react-spinners/ClipLoader';
+//import BookingTrends from './HostDashboard/HostRevenueCards/BookingTrends.jsx';
+import BookedNights from './HostRevenueCards/BookedNights.jsx';
 
 const GET_REVENUE = gql`
     query GetRevenue {
@@ -21,98 +24,109 @@ const GET_REVENUE = gql`
 `;
 
 const HostRevenues = () => {
-    const [userEmail, setUserEmail] = useState(null);
     const [cognitoUserId, setCognitoUserId] = useState(null);
-    const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
-    const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
-    const [loading, setLoading] = useState(true);
     const [stripeStatus, setStripeStatus] = useState('');
+    const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
     const [monthlyRevenueData, setMonthlyRevenueData] = useState([]);
-    const [occupancyData, setOccupancyData] = useState(null);
+    const [occupancyData] = useState({
+        occupancyRate: 0,
+        numberOfProperties: 0,
+        vsLastMonth: 0,
+    });
+    const [setBookedNights] = useState(null);
+    const [loadingStates, setLoadingStates] = useState({
+        user: true,
+        occupancy: false,
+        bookedNights: false,
+        monthlyRevenue: false,
+    });
 
-    const { loading: revenueLoading, error, data } = useQuery(GET_REVENUE);
+    const { loading: revenueLoading, data } = useQuery(GET_REVENUE);
 
-    const fetchMonthlyRevenueData = async () => {
-        try {
-            const response = await axios.post('https://dcp1zwsq7c.execute-api.eu-north-1.amazonaws.com/default/GetMonthlyComparison');
-            setMonthlyRevenueData(response.data);
-        } catch (error) {
-            console.error("Error fetching monthly comparison data:", error);
-        }
+    // Update specific loading state
+    const updateLoadingState = (key, value) => {
+        setLoadingStates((prev) => ({ ...prev, [key]: value }));
     };
 
-    const fetchOccupancyData = async () => {
-        try {
-            const response = await axios.get('https://cui7ru7r87.execute-api.eu-north-1.amazonaws.com/prod/occupancy');
-            setOccupancyData(response.data);
-        } catch (error) {
-            console.error("Error fetching occupancy data:", error);
-        }
-    };
-
+    // Fetch user and Stripe status
     useEffect(() => {
-        fetchMonthlyRevenueData();
-        fetchOccupancyData();
-    }, []);
-
-    useEffect(() => {
-        const fetchUserAndStripeStatus = async () => {
+        const fetchUserInfo = async () => {
+            updateLoadingState('user', true);
             try {
                 const userInfo = await Auth.currentUserInfo();
-                setUserEmail(userInfo.attributes.email);
+                if (!userInfo?.attributes?.sub) throw new Error("Invalid Cognito User Info");
+
                 setCognitoUserId(userInfo.attributes.sub);
 
-                const response = await fetch(`https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists`, {
-                    method: 'POST',
-                    headers: { 'Content-type': 'application/json; charset=UTF-8' },
-                    body: JSON.stringify({ sub: userInfo.attributes.sub }),
-                });
+                const response = await axios.post(
+                    'https://0yxfn7yjhh.execute-api.eu-north-1.amazonaws.com/default/General-Payments-Production-Read-CheckIfStripeExists',
+                    { sub: userInfo.attributes.sub },
+                    { headers: { 'Content-Type': 'application/json' } }
+                );
 
-                const data = await response.json();
-                const parsedBody = JSON.parse(data.body);
-
+                const parsedBody = JSON.parse(response.data.body);
                 if (parsedBody.hasStripeAccount) {
                     setStripeLoginUrl(parsedBody.loginLinkUrl);
-                    setBankDetailsProvided(parsedBody.bankDetailsProvided);
                     setStripeStatus(parsedBody.bankDetailsProvided ? 'complete' : 'incomplete');
                 } else {
                     setStripeStatus('none');
                 }
             } catch (error) {
-                console.error("Error fetching user or Stripe status:", error);
+                console.error("Error fetching user info:", error);
             } finally {
-                setLoading(false);
+                updateLoadingState('user', false);
             }
         };
 
-        fetchUserAndStripeStatus();
+        fetchUserInfo();
     }, []);
 
-    const handleStripeAction = () => {
-        if (stripeLoginUrl) {
-            window.open(stripeLoginUrl, '_blank');
-        } else if (userEmail && cognitoUserId) {
-            const createStripeAccount = async () => {
-                const result = await fetch('https://zuak8serw5.execute-api.eu-north-1.amazonaws.com/dev/CreateStripeAccount', {
-                    method: 'POST',
-                    body: JSON.stringify({ userEmail, cognitoUserId }),
-                    headers: { 'Content-type': 'application/json; charset=UTF-8' },
-                });
-                const data = await result.json();
-                window.location.replace(data.url);
-            };
-            createStripeAccount();
+
+    // Fetch Booked Nights
+    const fetchBookedNights = async () => {
+        if (!cognitoUserId) return console.error("Cognito User ID is missing.");
+
+        updateLoadingState('bookedNights', true);
+        try {
+            const response = await axios.post(
+                'https://yjzk78t2u0.execute-api.eu-north-1.amazonaws.com/prod/Host-Revenues-Production-Read-BookedNights',
+                { hostId: cognitoUserId, periodType: "monthly" },
+                { headers: { 'Content-Type': 'application/json' } }
+            );
+            setBookedNights(response.data.bookedNights || 0);
+        } catch (error) {
+            console.error("Error fetching booked nights:", error);
+        } finally {
+            updateLoadingState('bookedNights', false);
         }
     };
 
-    if (loading || revenueLoading) return <p>Loading...</p>;
-    if (error) return <p>Error loading revenue data: {error.message}</p>;
+    // Fetch Monthly Revenue Data
+    const fetchMonthlyRevenueData = async () => {
+        if (!cognitoUserId) return console.error("Cognito User ID is missing.");
 
-    const revenueData = [
-        { title: "Total Revenue This Month", value: `$${data.getRevenue.totalRevenueThisMonth}` },
-        { title: "Year-To-Date Revenue", value: `$${data.getRevenue.yearToDateRevenue}` },
-        { title: "Total Revenue", value: `$${data.getRevenue.totalRevenue}` }
-    ];
+        updateLoadingState('monthlyRevenue', true);
+        try {
+            const response = await axios.post(
+                'https://dcp1zwsq7c.execute-api.eu-north-1.amazonaws.com/default/GetMonthlyComparison',
+                { hostId: cognitoUserId },
+                { headers: { 'Content-Type': 'application/json' } }
+            );
+            setMonthlyRevenueData(response.data);
+        } catch (error) {
+            console.error("Error fetching monthly revenue data:", error);
+        } finally {
+            updateLoadingState('monthlyRevenue', false);
+        }
+    };
+
+    // Trigger data fetching when cognitoUserId is available
+    useEffect(() => {
+        if (cognitoUserId) {
+            fetchBookedNights();
+            fetchMonthlyRevenueData();
+        }
+    }, [cognitoUserId]);
 
     return (
         <main className="hr-page-body hr-container">
@@ -121,49 +135,56 @@ const HostRevenues = () => {
                     <Pages />
                 </div>
                 <div className="hr-content">
-                    {stripeStatus === 'none' && (
-                        <div>
-                            <h3>No Stripe Account Found</h3>
-                            <p>Connect your Stripe account to start receiving payments.</p>
-                            <button onClick={handleStripeAction} className="hr-button">Connect Stripe</button>
+                    {loadingStates.user || revenueLoading ? (
+                        <div className="hr-revenue-spinner-container">
+                            <ClipLoader size={100} color="#3498db" loading={true} />
                         </div>
-                    )}
-                    {stripeStatus === 'incomplete' && (
-                        <div>
-                            <h3>Incomplete Stripe Setup</h3>
-                            <p>Your Stripe account is created, but your payment details are missing.</p>
-                            <button onClick={handleStripeAction} className="hr-button">Complete Stripe Setup</button>
-                        </div>
-                    )}
-                    {stripeStatus === 'complete' && (
+                    ) : (
                         <>
-                            <div className="hr-revenue-overview">
-                                <h3>Revenue Overview</h3>
-                                {revenueData.map((item, index) => (
-                                    <RevenueOverview key={index} title={item.title} value={item.value} />
-                                ))}
-                            </div>
-    
-                            <div className="hr-monthly-comparison">
-                                <h3>Monthly Comparison</h3>
-                                <MonthlyComparison data={monthlyRevenueData} />
-                            </div>
-    
-                            <div className="hr-cards">
-                                <OccupancyRateCard
-                                    occupancyRate={occupancyData?.combinedOccupancyRate || "N/A"}
-                                    numberOfProperties={occupancyData?.totalProperties || 0}
-                                    className="hr-card"
-                                />
-                                <ADRCard hostId={cognitoUserId} className="hr-card" />
-                                <RevPARCard className="hr-card" />
-                            </div>
+                            {stripeStatus === 'none' && (
+                                <div>
+                                    <h3>No Stripe Account Found</h3>
+                                    <button onClick={() => window.open(stripeLoginUrl, '_blank')}>
+                                        Connect Stripe
+                                    </button>
+                                </div>
+                            )}
+                            {stripeStatus === 'complete' && (
+                                <>
+                                    <div className="hr-revenue-overview">
+                                        <h3>Revenue Overview</h3>
+                                        <RevenueOverview
+                                            title="Total Revenue This Month"
+                                            value={`$${data?.getRevenue?.totalRevenueThisMonth || 0}`}
+                                        />
+                                        <RevenueOverview
+                                            title="Year-To-Date Revenue"
+                                            value={`$${data?.getRevenue?.yearToDateRevenue || 0}`}
+                                        />
+                                        <RevenueOverview
+                                            title="Total Revenue"
+                                            value={`$${data?.getRevenue?.totalRevenue || 0}`}
+                                        />
+                                    </div>
+                                    <div className="hr-monthly-comparison">
+                                        <h3>Monthly Comparison</h3>
+                                        <MonthlyComparison data={monthlyRevenueData} />
+                                    </div>
+                                    <div className="hr-cards">
+                                        <OccupancyRateCard {...occupancyData} />
+                                        <ADRCard hostId={cognitoUserId} />
+                                        <RevPARCard />
+                                        <BookedNights/>
+                                        {/*<BookingTrends />*/}
+                                    </div>
+                                </>
+                            )}
                         </>
                     )}
                 </div>
             </section>
         </main>
-    );    
+    );
 };
 
 export default HostRevenues;

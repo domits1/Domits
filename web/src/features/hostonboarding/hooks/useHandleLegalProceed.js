@@ -13,7 +13,7 @@ export const useHandleLegalProceed = () => {
     if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) {
       navigate("/hostonboarding/legal/registrationnumber");
     } else {
-      navigate("/hostonboarding/next");
+      navigate("/hostonboarding/summary");
     }
   };
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import "../../components/chat/chat.css";
-import styles from "../../components/chat/ChatPage.module.css";
+import "../guestdashboard/chat/chat.css";
+import styles from "../guestdashboard/chat/ChatPage.module.css";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";
@@ -9,7 +9,7 @@ import Pages from "./Pages";
 import * as subscriptions from "../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
-import ContactItem from "../../components/chat/ContactItem";
+import ContactItem from "../guestdashboard/chat/ContactItem";
 import spinner from "../../images/spinnner.gif";
 import ContactModal from "./contactModal";
 

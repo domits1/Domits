@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useContext, useRef, toggleBar } from 'react';
 import { Link,  useNavigate, useLocation } from 'react-router-dom';
-import logo from '../../logo.svg';
+import logo from '../../images/logo.svg';
 import nineDots from '../../images/dots-grid.svg';
 import profile from '../../images/profile-icon.svg';
 import arrowDown from '../../images/arrow-down-icon.svg';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../services/FlowContext';
 import { Auth } from 'aws-amplify';
 import './components/bases.css';
 import { SearchBar } from '../../components/base/SearchBar';

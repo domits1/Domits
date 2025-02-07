@@ -9,7 +9,8 @@ import { SearchBar } from '../../components/base/SearchBar';
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import "swiper/css/pagination";
-import Header from "./Header";
+import Header from "./Header"; 
+
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);

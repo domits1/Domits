@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useContext } from 'react';
 import { Link } from 'react-router-dom';
 import './base.css';
-import logo from "../../logo.svg";
+import logo from "../../images/logo.svg";
 import nineDots from '../../images/dots-grid.svg';
 import profile from '../../images/profile-icon.svg';
 import arrowDown from '../../images/arrow-down-icon.svg';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../services/FlowContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
+import FilterButton from './FilterButton';
 import { Auth } from "aws-amplify";
 
 function Header({ setSearchResults, setLoading }) {
@@ -75,14 +76,14 @@ const getDropdownElement = () => document.querySelector('.header-personal-menu-d
 const getDropdownContentElement = () => document.querySelector('.header-personal-menu-dropdown-content');
 
 document.addEventListener('click', function (event) {
-    const dropdown = getDropdownElement(); 
-    const dropdownContent = getDropdownContentElement(); 
+    const dropdown = getDropdownElement();
+    const dropdownContent = getDropdownContentElement();
 
     if (dropdown && dropdownContent) {
-        const isClickInside = dropdown.contains(event.target); 
+        const isClickInside = dropdown.contains(event.target);
 
         if (!isClickInside) {
-            dropdownContent.classList.remove('show'); 
+            dropdownContent.classList.remove('show');
         }
     }
 });
@@ -201,6 +202,11 @@ document.addEventListener('click', function (event) {
                         <SearchBar setSearchResults={setSearchResults} setLoading={setLoading}
                             toggleBar={toggleSearchBar} />
                     </div>
+
+                    <FilterButton onClick={() => console.log('Filter button clicked!')} />
+
+
+
                     <div className='headerRight'>
                         <ul className='header-links'>
                             {!isLoggedIn ? (
@@ -254,7 +260,7 @@ document.addEventListener('click', function (event) {
                 {/* Einde van de extra balk */}
             </header>
         </div>
-    );    
+    );
 }
 
 export default Header;

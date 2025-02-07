@@ -7,7 +7,7 @@ import '../guestdashboard/guestdashboard.css';
 import styles from './HostReviews.module.css';
 import general from './HostDashboard.module.css'
 import { Auth } from "aws-amplify";
-import DateFormatterDD_MM_YYYY from "../../components/utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 function HostReviews() {
     const [reviews, setReviews] = useState([]);

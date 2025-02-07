@@ -5,7 +5,7 @@ import spinner from "../../images/spinnner.gif";
 import deleteIcon from "../../images/icons/cross.png";
 import styles from '../hostdashboard/HostReviews.module.css';
 import { Auth } from "aws-amplify";
-import DateFormatterDD_MM_YYYY from "../../components/utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 function GuestReviews() {
     const [reviews, setReviews] = useState([]);

@@ -5,7 +5,7 @@ import appartement from "../../images/icons/flat.png";
 import camper from "../../images/icons/camper-van.png";
 import villa from "../../images/icons/mansion.png";
 import { useNavigate } from 'react-router-dom';
-import FlowContext from '../../FlowContext';
+import FlowContext from '../../services/FlowContext';
 import { Auth } from 'aws-amplify';
 import styles from './landing.module.css';
 

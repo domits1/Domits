@@ -18,13 +18,13 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
           <LabeledInput
             label="Manufacturer*"
             value={specifications.Manufacturer || ""}
-            onChange={(value) => updateSpecification("Manufacturer", value)}
+            onChange={(event) => updateSpecification("Manufacturer", event.target.value)}
             placeholder="Enter the manufacturer of your boat"
           />
           <LabeledInput
             label="Model*"
             value={specifications.Model || ""}
-            onChange={(value) => updateSpecification("Model", value)}
+            onChange={(event) => updateSpecification("Model", event.target.value)}
             placeholder="Enter the name of the model"
           />
           <RadioGroup
@@ -49,39 +49,41 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
             label="General periodic inspection*"
             type="date"
             value={specifications.GPI || ""}
-            onChange={(value) => updateSpecification("GPI", value)}
+            onChange={(event) => updateSpecification("GPI", event.target.value)}
             placeholder="DD/MM/YYYY"
           />
           <h1>Technical</h1>
           <LabeledInput
             label="Capacity (allowed)"
             value={specifications.Capacity || ""}
-            onChange={(value) => updateSpecification("Capacity", value)}
+            onChange={(event) => updateSpecification("Capacity", event.target.value)}
             placeholder="0"
           />
           <LabeledInput
             label="Length (m)"
             value={specifications.Length || ""}
-            onChange={(value) => updateSpecification("Length", value)}
+            onChange={(event) => updateSpecification("Length", event.target.value)}
             placeholder="0"
           />
           <LabeledInput
             label="Fuel (L/h)"
             value={specifications.FuelTank || ""}
-            onChange={(value) => updateSpecification("FuelTank", value)}
+            onChange={(event) => updateSpecification("FuelTank", event.target.value)}
             placeholder="0"
           />
           <LabeledInput
             label="Top speed (Km)"
             value={specifications.Speed || ""}
-            onChange={(value) => updateSpecification("Speed", value)}
+            onChange={(event) => updateSpecification("Speed", event.target.value)}
             placeholder="0"
           />
           <LabeledInput
             label="Year of construction"
             type="number"
             value={specifications.YOC || ""}
-            onChange={(value) => updateSpecification("YOC", value)}
+            onChange={(event) => {
+              updateSpecification("YOC", event.target.value);
+            }}
             min={1900}
             max={new Date().getFullYear()}
             placeholder="YYYY"
@@ -90,7 +92,9 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
             label="Renovated"
             type="number"
             value={specifications.Renovated || ""}
-            onChange={(value) => updateSpecification("Renovated", value)}
+            onChange={(event) =>
+              updateSpecification("Renovated", event.target.value)
+            }
             min={1900}
             max={new Date().getFullYear()}
             placeholder="YYYY"
@@ -108,64 +112,64 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
           <LabeledInput
             label="License plate*"
             value={specifications.LicensePlate || ""}
-            onChange={(value) => updateSpecification("LicensePlate", value)}
+            onChange={(event) => updateSpecification("LicensePlate", event.target.value)}
             placeholder="Enter the characters of your license plate"
           />
           <LabeledInput
             label="Brand*"
             value={specifications.CamperBrand || ""}
-            onChange={(value) => updateSpecification("CamperBrand", value)}
+            onChange={(event) => updateSpecification("CamperBrand", event.target.value)}
             placeholder="Enter the brand of your camper"
           />
           <LabeledInput
             label="Model*"
             value={specifications.Model || ""}
-            onChange={(value) => updateSpecification("Model", value)}
+            onChange={(event) => updateSpecification("Model", event.target.value)}
             placeholder="Enter the name of the model"
           />
           <LabeledInput
             label="Required driver’s license"
             value={specifications.Requirement || ""}
-            onChange={(value) => updateSpecification("Requirement", value)}
+            onChange={(event) => updateSpecification("Requirement", event.target.value)}
             placeholder="Select the required license type"
           />
           <LabeledInput
             label="General periodic inspection*"
             type="date"
             value={specifications.GPI || ""}
-            onChange={(value) => updateSpecification("GPI", value)}
+            onChange={(event) => updateSpecification("GPI", event.target.value)}
             placeholder="DD/MM/YYYY"
           />
           <h1>Technical</h1>
           <LabeledInput
             label="Length (m)"
             value={specifications.Length || ""}
-            onChange={(value) => updateSpecification("Length", value)}
+            onChange={(event) => updateSpecification("Length", event.target.value)}
             placeholder="0"
           />
           <LabeledInput
             label="Height (m)"
             value={specifications.Height || ""}
-            onChange={(value) => updateSpecification("Height", value)}
+            onChange={(event) => updateSpecification("Height", event.target.value)}
             placeholder="0"
           />
           <LabeledInput
             label="Transmission"
             value={specifications.Transmission || ""}
-            onChange={(value) => updateSpecification("Transmission", value)}
+            onChange={(event) => updateSpecification("Transmission", event.target.value)}
             placeholder="Manual or Automatic"
           />
           <LabeledInput
             label="Fuel (L/h)"
             value={specifications.FuelTank || ""}
-            onChange={(value) => updateSpecification("FuelTank", value)}
+            onChange={(event) => updateSpecification("FuelTank", event.target.value)}
             placeholder="0"
           />
           <LabeledInput
             label="Year of construction"
             type="number"
             value={specifications.YOC || ""}
-            onChange={(value) => updateSpecification("YOC", value)}
+            onChange={(event) => updateSpecification("YOC", event.target.value)}
             min={1900}
             max={new Date().getFullYear()}
             placeholder="YYYY"
@@ -174,7 +178,7 @@ function SpecificationForm({ type, specifications, updateSpecification }) {
             label="Renovated"
             type="number"
             value={specifications.Renovated || ""}
-            onChange={(value) => updateSpecification("Renovated", value)}
+            onChange={(event) => updateSpecification("Renovated", event.target.value)}
             min={1900}
             max={new Date().getFullYear()}
             placeholder="YYYY"

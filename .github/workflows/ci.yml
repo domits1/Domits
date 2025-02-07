@@ -9,6 +9,9 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    env:
+      REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}  # Moved here
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,20 +19,28 @@ jobs:
       # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
-          cd web
+          cd web/src
           npm ci --verbose
 
       # Run your Cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
-          working-directory: web
+          working-directory: web/src/tests
           start: npx vite --host
 
       # Run Jest tests
       - name: Run Jest tests
         run: |
-          cd web
-          npm test  -- --detectOpenHandles
-env:
-  REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}     
+          cd web/src
+          npm test -- --detectOpenHandles
+
+      # Check for .env (secrets) files
+      - name: Check for .env files
+        run: |
+          if find . -name "*.env" -print | grep -q '.env'; then
+            echo "❌ .env file(s) found! Please remove them from the repository."
+            exit 1  # Correctly aligned
+          else
+            echo "✅ No .env files found."
+          fi
