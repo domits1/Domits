@@ -19,7 +19,8 @@ import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
 import HostOnboarding from "./pages/landingpage/OnboardingHost";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostMessages from "./features/hostdashboard/HostMessages";
+// import HostMessages from "./features/hostdashboard/HostMessages";
+import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
@@ -48,7 +49,6 @@ import Chatbot from "./components/chatbot/chatbot";
 import ChatWidget from "./components/chatwidget/ChatWidget";
 import EmployeeChat from './components/employee/EmployeeChat';
 import FlowContext from './FlowContext';
-import Hostchat from './features/hostdashboard/Hostchat';
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
@@ -225,7 +225,7 @@ function App() {
                                                     <Route path="reporting" element={<HostPayments />} />
                                                     <Route path="settings" element={<HostSettings />} />
                                                     <Route path="reviews" element={<HostReviews />} />
-                                                    <Route path="chat" element={<Hostchat />} />
+                                                    <Route path="chat" element={<HostMessages />} />
                                                     <Route path="reservations" element={<HostReservations />} />
                                                     <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
                                                     <Route path="housekeeping" element={<HostHousekeeping />} />
