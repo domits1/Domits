@@ -35,23 +35,13 @@ const HostPricing = () => {
   const [originalRates, setOriginalRates] = useState([]);
   const [editedCleaningFees, setEditedCleaningFees] = useState([]);
   const [originalCleaningFees, setOriginalCleaningFees] = useState([]);
-
   const [taxFeePopup, setTaxFeePopup] = useState(false);
   const [selectedAccommodation, setSelectedAccommodation] = useState(null);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [basePrice, setBasePrice] = useState(0);
-
-  // Wil je de AI-voorspelde prijs echt gebruiken als dynamicPrice,
-  // dan kun je state "dynamicPrice" direct instellen na berekening.
-  // Voor demo laat ik het los, maar is hier als referentie:
   const [dynamicPrice, setDynamicPrice] = useState(0);
-
   const [priceHistory, setPriceHistory] = useState([]);
   const [predictedPrice, setPredictedPrice] = useState(0);
-
-  // We bewaren het TensorFlow model in een useRef,
-  // zodat we niet telkens een nieuw model maken bij elke render.
   const modelRef = useRef(null);
 
   useEffect(() => {
@@ -150,7 +140,6 @@ const HostPricing = () => {
   };
   const handleClosePopUp = () => setTaxFeePopup(false);
 
-  // --- Pop-up voor Tax & Fee calculaties ---
   const handleTaxFeePopup = (details, globalIndex) => {
     const countryVAT = vatRates.find(rate => rate.country === details.Country?.S)?.vat || "0";
     const vatRate = parseFloat(countryVAT) / 100;
@@ -212,7 +201,6 @@ const HostPricing = () => {
     );
   };
 
-  // --- Edit mode toggelen ---
   const handleEditMode = () => setEditMode(!editMode);
 
   const handleRateChange = (e, index) => {
@@ -227,7 +215,6 @@ const HostPricing = () => {
     setEditedCleaningFees(updatedCleaningFees);
   };
 
-  // --- Opslaan van nieuwe rates ---
   const handleSaveRates = async () => {
     try {
       const updatedAccommodations = accommodations.map((acc, i) => {
@@ -287,7 +274,6 @@ const HostPricing = () => {
         setOriginalCleaningFees(updatedCleaningFees);
         setEditMode(false);
         alert('Rates updated successfully');
-        // Refresh de data:
         fetchAccommodationsRates();
       } else {
         console.error('Rates update failed:', parsedBody);
@@ -303,7 +289,6 @@ const HostPricing = () => {
     setEditedCleaningFees([...originalCleaningFees]);
   };
 
-  // --- Demo: random trainingsdata genereren ---
   const generateRandomTrainingData = (basePrice, numDays = 60) => {
     let data = [];
     let startDate = new Date();
@@ -350,9 +335,7 @@ const HostPricing = () => {
     return data;
   };
 
-  // --- TensorFlow.js model ---
   const trainAIModel = async (trainingData) => {
-    // Dispose het oude model als er al een bestaat
     if (modelRef.current) {
       modelRef.current.dispose();
       modelRef.current = null;
@@ -383,13 +366,10 @@ const HostPricing = () => {
     return newModel;
   };
 
-  // --- Evenementen ophalen (demo) ---
   const fetchEventsInLocation = async (location) => {
-    // Pas aan naar je eigen API of laat leeg als je geen events hebt
     try {
       const response = await fetch(`/api/events?location=${location}`);
       if (!response.ok) {
-        // Niet geslaagde fetch
         console.warn("No events found or error fetching events");
         return [];
       }
@@ -401,7 +381,6 @@ const HostPricing = () => {
     }
   };
 
-  // --- Prijzen voorspellen voor komende 365 dagen (demo) ---
   const predictFuturePrices = async (trainedModel, basePrice, country, events) => {
     let future = [];
     let today = new Date();
@@ -469,7 +448,6 @@ const HostPricing = () => {
         eventMultiplier *
         noiseFactor;
 
-      // AI-model fine-tuning
       const inputTensor = tf.tensor2d([[
         seasonalMultiplier,
         weekendMultiplier,
@@ -495,7 +473,6 @@ const HostPricing = () => {
   };
   
 
-  // --- Wanneer je op "Configure Dynamic Pricing" klikt in de UI ---
   const openModal = async (accommodation) => {
     setSelectedAccommodation(accommodation);
 
@@ -512,25 +489,16 @@ const HostPricing = () => {
 
     setBasePrice(storedRent);
 
-    // Events ophalen (indien beschikbaar)
     const events = await fetchEventsInLocation(accommodation.Country?.S || "Unknown");
 
-    // Historische data genereren (Demo!)
     const trainingData = generateRandomTrainingData(storedRent, 60);
-    // Model trainen
     const trainedModel = await trainAIModel(trainingData);
 
-    // 365 dagen voorspellen
     const future = await predictFuturePrices(trainedModel, storedRent, accommodation.Country?.S, events);
     setPriceHistory(future);
 
     const lastDayPrice = future[future.length - 1].price;
     setPredictedPrice(lastDayPrice);
-
-    // Als je wilt dat dynamicPrice meteen de AI-voorspelling is,
-    // kun je bijvoorbeeld het gemiddelde pakken of de 1e dag:
-    // setDynamicPrice(future[0].price);
-
     setIsModalOpen(true);
   };
 
@@ -539,14 +507,12 @@ const HostPricing = () => {
     setSelectedAccommodation(null);
   };
 
-  // Als je wilt dat dynamicPrice standaard = basePrice is
   useEffect(() => {
     if (basePrice) {
       setDynamicPrice(basePrice);
     }
   }, [basePrice]);
 
-  // --- Data voor Chart.js ---
   const priceData = useMemo(() => {
     const labels = priceHistory.map((entry) => format(entry.date, "dd MMM yyyy"));
     const data = priceHistory.map((entry) => entry.price);
@@ -674,12 +640,12 @@ const HostPricing = () => {
                             )}
                           </p>
 
-                          <button
+                          {/* <button
                             className="dynamic-pricing-button"
                             onClick={() => openModal(accommodation)}
                           >
                             Configure Dynamic Pricing
-                          </button>
+                          </button> */}
 
                           <p className="pricing-rate-input">
                             Cleaning Fee:{' '}
@@ -789,7 +755,6 @@ const HostPricing = () => {
             </div>
           )}
 
-          {/* Tax & Fee Popup */}
           {taxFeePopup && selectedAccommodation && (
             handleTaxFeePopup(
               selectedAccommodation,
@@ -797,7 +762,6 @@ const HostPricing = () => {
             )
           )}
 
-          {/* Modal voor AI-pricing */}
           {isModalOpen && selectedAccommodation && (
             <div className="modal-overlay">
               <div className="modal-content">
@@ -828,7 +792,6 @@ const HostPricing = () => {
             </div>
           )}
 
-          {/* Paginanavigatie + Actions */}
           <div className="pricing-bottom-buttons">
             <div className="pricing-navigation-buttons">
               <button
