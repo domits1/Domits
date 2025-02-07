@@ -11,6 +11,7 @@ export const useFetchMessages = (userId) => {
             return;
         }
 
+        console.log("Fetching messages for recipient:", recipientId, "from user:", userId);
         setLoading(true);
         setError(null);
 
@@ -30,14 +31,16 @@ export const useFetchMessages = (userId) => {
                 throw new Error('Failed to fetch messages');
             }
 
-            const data = await response.json();
-            const parsedData = JSON.parse(data.body);
+            const rawResponse = await response.text();
+            const result = JSON.parse(rawResponse);
 
-            const sortedMessages = parsedData.sort((a, b) => 
-                new Date(a.createdAt) - new Date(b.createdAt)
-            );
-
-            setMessages(sortedMessages);
+            if (Array.isArray(result)) {
+                const allChats = result.sort((b, a) => new Date(b.createdAt) - new Date(a.createdAt));
+                setMessages(allChats);
+            } else {
+                console.error("Unexpected response format:", result);
+                setError("Unexpected response format");
+            }
         } catch (error) {
             console.error("Error fetching messages:", error);
             setError(error);
@@ -53,3 +56,5 @@ export const useFetchMessages = (userId) => {
         fetchMessages
     };
 };
+
+export default useFetchMessages;

@@ -33,7 +33,7 @@ const useFetchContacts = (userId) => {
         const contactDetails = await Promise.all(contacts.map(async (contact) => {
           const userInfo = await fetchUserInfo(contact.userId);
           const latestMessage = await fetchLatestMessage(contact.userId);
-          return { ...contact, ...userInfo, latestMessage };
+          return { ...contact, ...userInfo, latestMessage, recipientId: contact.userId, };
         }));
         return contactDetails;
       };
@@ -77,7 +77,6 @@ const useFetchContacts = (userId) => {
 
         const rawResponse = await response.text();
         const result = JSON.parse(rawResponse);
-        console.log('Result:', result)
 
         if (response.ok) {
           return result;

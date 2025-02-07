@@ -1,8 +1,11 @@
+import { useState } from 'react';
+
+
 export const useSendMessage = (userId) => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState(null);
 
-    const sendMessage = async (recipientId, text) => {
+    const sendMessage = async (userId, recipientId, text) => {
         setSending(true);
         try {
             const response = await fetch('https://qkptcbb445.execute-api.eu-north-1.amazonaws.com/ChatSendMessageFunction', {

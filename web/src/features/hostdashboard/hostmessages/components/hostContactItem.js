@@ -37,12 +37,14 @@ const ContactItem = ({ contact, updateContactRequest, isPending }) => {
             {/* Conditionally render Accept and Deny buttons only if the contact is a pending request */}
             {isPending && (
                 <>
-                    <button onClick={handleAccept} className="accept-button">
-                        Accept
-                    </button>
-                    <button onClick={handleReject} className="reject-button">
-                        Deny
-                    </button>
+                    <div className="contact-item-buttons-container">
+                        <button onClick={handleAccept} className="accept-button">
+                            Accept
+                        </button>
+                        <button onClick={handleReject} className="reject-button">
+                            Deny
+                        </button>
+                    </div>
                 </>
             )}
 

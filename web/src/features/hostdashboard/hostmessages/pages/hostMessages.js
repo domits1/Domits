@@ -7,6 +7,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
 import ContactList from "../components/hostContactList";
+import HostChatScreen from "../components/hostChatScreen";
 
 const HostMessages = () => {
     return (
@@ -18,14 +19,21 @@ const HostMessages = () => {
 
 const HostMessagesContent = () => {
     const { userId } = useAuth();
+    const [selectedContactId, setSelectedContactId] = useState(null);
+    const [selectedContactName, setSelectedContactName] = useState(null);
+
+    const handleContactClick = (contactId, contactName) => {
+        console.log('Contact ID:', contactId);
+        setSelectedContactId(contactId);
+        setSelectedContactName(contactName);
+    };
 
     return (
         <div>
             {userId ? (
                 <>
-                    {/* <div>Welcome, user {userId}!</div> */}
-                    {/* Contact List Component */}
-                    <ContactList userId={userId} />
+                    <ContactList userId={userId} onContactClick={handleContactClick} />
+                    <HostChatScreen userId={userId} contactId={selectedContactId} contactName={selectedContactName} />
                 </>
             ) : (
                 <div>Loading user info...</div>
