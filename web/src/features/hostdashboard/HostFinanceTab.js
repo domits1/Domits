@@ -13,7 +13,7 @@ const HostFinanceTab = () => {
     const [loading, setLoading] = useState(true);
 
     const handleEnlistNavigation = () => {
-        navigate('/enlist');
+        navigate('/hostonboarding');
     };
 
     const handleNavigation = (value) => {

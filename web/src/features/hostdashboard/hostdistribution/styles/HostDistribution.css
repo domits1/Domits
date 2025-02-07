@@ -360,9 +360,6 @@
     width: 65vw;
 }
 
-.closeAddAccommodationsContent {
-
-}
 
 .closeAddViewButton {
     border-radius: 50%;
@@ -434,10 +431,6 @@
     right: 20%;
     bottom: 0;
     width: 65vw;
-}
-
-.closeRemoveAccommodationsContent {
-
 }
 
 .closeRemoveViewButton {

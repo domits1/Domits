@@ -589,7 +589,7 @@ const Chat = ({ user }) => {
                                             <div className={styles.textDisplay}>
                                                 <h3>This accommodation is unavailable</h3>
                                                 {accoId !== '' && (
-                                                    <button className={styles.hostButton} onClick={() => navigate(`/enlist`)}>
+                                                    <button className={styles.hostButton} onClick={() => navigate(`/hostonboarding`)}>
                                                         List accommodation
                                                     </button>
                                                 )}
