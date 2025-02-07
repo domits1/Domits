@@ -17,6 +17,8 @@ import Sam from '../../images/about-img/Sam.jpg';
 import Jared from '../../images/about-img/Jared.jpg';
 import Ryan from '../../images/about-img/Ryan-compressed.png';
 import Santosh from '../../images/about-img/Santosh.png';
+import Sander from '../../images/about-img/Sander.png';
+import Bekir from '../../images/about-img/Bekir.png';
 
 
 function About() {
@@ -103,7 +105,7 @@ function About() {
 
                     {[
                         {name: 'Ales', src: Ales, role: 'Developer'},
-                        {name: 'Bekir', src: standard, role: 'Developer'},
+                        {name: 'Bekir', src: Bekir, role: 'Developer'},
                         {name: 'Chant', src: Chant, role: 'Developer'},
                         {name: 'Etka', src: standard, role: 'Developer'},
                         {name: 'Fejsal', src: standard, role: 'Developer'},
@@ -122,7 +124,7 @@ function About() {
                         {name: 'Ryan', src: Ryan, role: 'Developer'},
                         {name: 'Sam', src: Sam, role: 'Developer'},
                         {name: 'Santosh', src: Santosh, role: 'Developer'},
-                        {name: 'Sander', src: standard, role: 'Developer'},
+                        {name: 'Sander', src: Sander, role: 'Developer'},
                         {name: 'Sebastiaan', src: standard, role: 'Developer'},
                         {name: 'Sem', src: standard, role: 'Developer'},
                     ]
