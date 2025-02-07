@@ -216,7 +216,7 @@ function App() {
                   />
 
                   {/* Host Management */}
-                  <Route path="/enlist" element={<HostOnboarding />} />
+                  {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
 
                   {/* Verification */}
                   <Route path="/verify" element={<HostVerificationView />} />
