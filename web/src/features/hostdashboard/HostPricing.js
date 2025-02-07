@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import Pages from "./Pages.js";
 import "./HostPricing.css";
 import detailsIcon from "../../images/icons/content-view-detail-list-icon.svg";
@@ -29,24 +29,20 @@ const HostPricing = () => {
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [currentPannel, setCurrentPannel] = useState(1);
-  const accommodationsLength = accommodations.length;
 
   const [editMode, setEditMode] = useState(false);
   const [editedRates, setEditedRates] = useState([]);
   const [originalRates, setOriginalRates] = useState([]);
   const [editedCleaningFees, setEditedCleaningFees] = useState([]);
   const [originalCleaningFees, setOriginalCleaningFees] = useState([]);
-
   const [taxFeePopup, setTaxFeePopup] = useState(false);
   const [selectedAccommodation, setSelectedAccommodation] = useState(null);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [basePrice, setBasePrice] = useState(0);
   const [dynamicPrice, setDynamicPrice] = useState(0);
   const [priceHistory, setPriceHistory] = useState([]);
   const [predictedPrice, setPredictedPrice] = useState(0);
-
-  let model = null;
+  const modelRef = useRef(null);
 
   useEffect(() => {
     const setUserIdAsync = async () => {
@@ -75,6 +71,7 @@ const HostPricing = () => {
           }
         }
       );
+
       const data = await response.json();
 
       if (data.body && typeof data.body === 'string') {
@@ -107,9 +104,11 @@ const HostPricing = () => {
     }
   }, [accommodations]);
 
+  const accommodationsLength = accommodations.length;
   const itemsPerPageDetails = 3;
   const itemsPerPageTable = 7;
   const activeItemsPerPage = viewMode === 'details' ? itemsPerPageDetails : itemsPerPageTable;
+
   const startIndex = (currentPannel - 1) * activeItemsPerPage;
   const endIndex = currentPannel * activeItemsPerPage;
   const currentAccommodations = accommodations.slice(startIndex, endIndex);
@@ -290,26 +289,46 @@ const HostPricing = () => {
     setEditedCleaningFees([...originalCleaningFees]);
   };
 
-  const generateRandomTrainingData = (basePrice, num = 30) => {
+  const generateRandomTrainingData = (basePrice, numDays = 60) => {
     let data = [];
-    for (let i = 0; i < num; i++) {
-      let seasonalEffect = 1 + 0.1 * Math.sin((i / 365) * Math.PI * 2);
-      let occupancyRate = 0.3 + Math.random() * 0.7;
-      let competitorPrice = basePrice + (Math.random() - 0.5) * 50;
-      let specialEventFactor = Math.random() < 0.2 ? 1.3 : 1.0;
+    let startDate = new Date();
+    for (let i = 0; i < numDays; i++) {
+      const day = new Date(startDate);
+      day.setDate(startDate.getDate() - (numDays - i));
+
+      let month = day.getMonth() + 1;
+      let dayOfWeek = day.getDay();
+
+      let seasonalFactor = 1.0;
+      if (month >= 6 && month <= 8) {
+        seasonalFactor = 1.2;
+      } else if (month >= 9 && month <= 11) {
+        seasonalFactor = 0.9;
+      } else if (month === 12 || month <= 2) {
+        seasonalFactor = 1.05;
+      } else if (month >= 3 && month <= 5) {
+        seasonalFactor = 1.1;
+      }
+
+      let weekendFactor = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.15 : 1.0;
+      let eventFactor = Math.random() < 0.1 ? 1.2 : 1.0;
+      let competitorPrice = basePrice + (Math.random() - 0.5) * 60;
+      let noiseFactor = 1 + (Math.random() - 0.5) * 0.1;
 
       let finalPrice =
         basePrice *
-        seasonalEffect *
-        (0.8 + occupancyRate * 0.2) *
+        seasonalFactor *
+        weekendFactor *
+        eventFactor *
         (0.5 + competitorPrice / (basePrice * 2)) *
-        specialEventFactor;
+        noiseFactor;
 
       data.push({
-        seasonalEffect,
-        occupancyRate,
+        date: day,
+        seasonalFactor,
+        weekendFactor,
         competitorPrice,
-        specialEventFactor,
+        eventFactor,
         price: parseFloat(finalPrice.toFixed(2))
       });
     }
@@ -317,120 +336,142 @@ const HostPricing = () => {
   };
 
   const trainAIModel = async (trainingData) => {
-    if (model) {
-      model.dispose();
+    if (modelRef.current) {
+      modelRef.current.dispose();
+      modelRef.current = null;
     }
-    model = tf.sequential();
-    model.add(tf.layers.dense({ units: 16, inputShape: [4], activation: 'relu' }));
-    model.add(tf.layers.dense({ units: 8, activation: 'relu' }));
-    model.add(tf.layers.dense({ units: 1 }));
 
-    model.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
+    const newModel = tf.sequential();
+    newModel.add(tf.layers.dense({ units: 16, inputShape: [4], activation: 'relu' }));
+    newModel.add(tf.layers.dense({ units: 8, activation: 'relu' }));
+    newModel.add(tf.layers.dense({ units: 1 }));
+
+    newModel.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
 
     const xs = tf.tensor2d(
       trainingData.map(d => [
-        d.seasonalEffect,
-        d.occupancyRate,
+        d.seasonalFactor,
+        d.weekendFactor,
         d.competitorPrice,
-        d.specialEventFactor
+        d.eventFactor
       ])
     );
     const ys = tf.tensor2d(trainingData.map(d => [d.price]));
 
-    await model.fit(xs, ys, { epochs: 80 });
-    return model;
+    await newModel.fit(xs, ys, { epochs: 100 });
+    xs.dispose();
+    ys.dispose();
+
+    modelRef.current = newModel;
+    return newModel;
   };
 
   const fetchEventsInLocation = async (location) => {
     try {
       const response = await fetch(`/api/events?location=${location}`);
-      return await response.json();
+      if (!response.ok) {
+        console.warn("No events found or error fetching events");
+        return [];
+      }
+      const events = await response.json();
+      return events;
     } catch (err) {
       console.error("Error fetching events data:", err);
       return [];
     }
   };
 
-  const predictFuturePrices = async (model, basePrice, country, events) => {
+  const predictFuturePrices = async (trainedModel, basePrice, country, events) => {
     let future = [];
     let today = new Date();
 
     const seasonalMultipliers = {
-      "default": { summer: [1.1, 1.2], autumn: [0.8, 0.9], winter: [0.85, 0.95], spring: [1.05, 1.1] },
-      "Zwitserland": { winter: [1.2, 1.3], summer: [0.9, 1.0] },
-      "Oostenrijk": { winter: [1.2, 1.3], summer: [0.9, 1.0] },
-      "Australië": { summer: [0.8, 0.9], winter: [1.1, 1.2] },
-      "Argentinië": { summer: [0.8, 0.9], winter: [1.1, 1.2] }
+      "default": { summer: [1.1, 1.2], autumn: [0.9, 1.0], winter: [1.0, 1.1], spring: [1.0, 1.1] },
+      "Zwitserland": { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Oostenrijk": { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Australië": { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Argentinië": { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] }
     };
 
     const countrySeason = seasonalMultipliers[country] || seasonalMultipliers["default"];
-
     const holidayMultipliers = {
       "01-01": 1.3,
       "12-25": 1.5,
+      "12-26": 1.5,
       "12-31": 1.4,
-      "07-04": 1.3,
-      "04-27": 1.3
+      "14-02": 1.4,
+      "05-05": 1.1,
+      "05-12": 1.2,
+      "04-27": 1.2
     };
 
     for (let i = 1; i <= 365; i++) {
       let day = new Date(today);
       day.setDate(today.getDate() + i);
+
       let month = day.getMonth() + 1;
       let dayOfWeek = day.getDay();
 
       let seasonalMultiplier = 1.0;
-      if (month >= 6 && month <= 8) {
-        if (countrySeason.summer) {
-          seasonalMultiplier = countrySeason.summer[0] + Math.random() * (countrySeason.summer[1] - countrySeason.summer[0]);
-        } else {
-          seasonalMultiplier = 1.1;
-        }
-      } else if (month >= 9 && month <= 11) {
-        if (countrySeason.autumn) {
-          seasonalMultiplier = countrySeason.autumn[0] + Math.random() * (countrySeason.autumn[1] - countrySeason.autumn[0]);
-        } else {
-          seasonalMultiplier = 0.8;
-        }
-      } else if (month === 12 || month <= 2) {
-        if (countrySeason.winter) {
-          seasonalMultiplier = countrySeason.winter[0] + Math.random() * (countrySeason.winter[1] - countrySeason.winter[0]);
-        } else {
-          seasonalMultiplier = 0.85;
-        }
-      } else if (month >= 3 && month <= 5) {
-        if (countrySeason.spring) {
-          seasonalMultiplier = countrySeason.spring[0] + Math.random() * (countrySeason.spring[1] - countrySeason.spring[0]);
-        } else {
-          seasonalMultiplier = 1.05;
-        }
+      if (month >= 6 && month <= 8 && countrySeason.summer) {
+        seasonalMultiplier = countrySeason.summer[0] + Math.random() * (countrySeason.summer[1] - countrySeason.summer[0]);
+      } else if (month >= 9 && month <= 11 && countrySeason.autumn) {
+        seasonalMultiplier = countrySeason.autumn[0] + Math.random() * (countrySeason.autumn[1] - countrySeason.autumn[0]);
+      } else if ((month === 12 || month <= 2) && countrySeason.winter) {
+        seasonalMultiplier = countrySeason.winter[0] + Math.random() * (countrySeason.winter[1] - countrySeason.winter[0]);
+      } else if (month >= 3 && month <= 5 && countrySeason.spring) {
+        seasonalMultiplier = countrySeason.spring[0] + Math.random() * (countrySeason.spring[1] - countrySeason.spring[0]);
       }
 
       let dateKey = `${month.toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
       let holidayMultiplier = holidayMultipliers[dateKey] || 1.0;
-
       let weekendMultiplier = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.1 + Math.random() * 0.05 : 1.0;
 
       let eventMultiplier = 1.0;
-      let eventToday = events.find(event => {
-        let eventDate = new Date(event.date);
-        return eventDate.toDateString() === day.toDateString();
-      });
-      if (eventToday) {
-        eventMultiplier = eventToday.factor || 1.3;
+      if (Array.isArray(events) && events.length > 0) {
+        let eventToday = events.find(event => {
+          let eventDate = new Date(event.date);
+          return eventDate.toDateString() === day.toDateString();
+        });
+        if (eventToday) {
+          eventMultiplier = eventToday.factor || 1.3;
+        }
       }
 
-      let noiseFactor = 1 + (Math.random() - 0.5) * 0.1;
+      let noiseFactor = 1 + (Math.random() - 0.5) * 0.05;
 
-      let adjustedPrice = basePrice * seasonalMultiplier * holidayMultiplier * weekendMultiplier * eventMultiplier * noiseFactor;
+      let adjustedPrice =
+        basePrice *
+        seasonalMultiplier *
+        holidayMultiplier *
+        weekendMultiplier *
+        eventMultiplier *
+        noiseFactor;
+
+      const inputTensor = tf.tensor2d([[
+        seasonalMultiplier,
+        weekendMultiplier,
+        basePrice,
+        eventMultiplier
+      ]], [1, 4]);
+
+      const modelOutput = trainedModel.predict(inputTensor);
+      const aiPriceTensor = await modelOutput.data();
+      const aiPrice = aiPriceTensor[0];
+
+      let finalPredictedPrice = (adjustedPrice + aiPrice) / 2;
+
+      inputTensor.dispose();
+      modelOutput.dispose();
 
       future.push({
         date: day,
-        price: parseFloat(adjustedPrice.toFixed(2))
+        price: parseFloat(finalPredictedPrice.toFixed(2))
       });
     }
     return future;
   };
+  
 
   const openModal = async (accommodation) => {
     setSelectedAccommodation(accommodation);
@@ -449,14 +490,15 @@ const HostPricing = () => {
     setBasePrice(storedRent);
 
     const events = await fetchEventsInLocation(accommodation.Country?.S || "Unknown");
-    const trainingData = generateRandomTrainingData(storedRent, 30);
+
+    const trainingData = generateRandomTrainingData(storedRent, 60);
     const trainedModel = await trainAIModel(trainingData);
+
     const future = await predictFuturePrices(trainedModel, storedRent, accommodation.Country?.S, events);
-    const lastDayPrice = future[future.length - 1].price;
-
     setPriceHistory(future);
-    setPredictedPrice(lastDayPrice);
 
+    const lastDayPrice = future[future.length - 1].price;
+    setPredictedPrice(lastDayPrice);
     setIsModalOpen(true);
   };
 
@@ -471,23 +513,26 @@ const HostPricing = () => {
     }
   }, [basePrice]);
 
-  const priceData = {
-    labels: priceHistory.map((entry, index) =>
-      index % 28 === 0 ? format(entry.date, "MMM yyyy") : ""
-    ),
-    datasets: [
-      {
-        label: "Predicted Price (€)",
-        data: priceHistory.map(entry => entry.price),
-        borderColor: "#3498db",
-        backgroundColor: "rgba(52, 152, 219, 0.2)",
-        borderWidth: 2,
-        pointRadius: 2,
-        fill: true,
-        tension: 0.3
-      }
-    ]
-  };
+  const priceData = useMemo(() => {
+    const labels = priceHistory.map((entry) => format(entry.date, "dd MMM yyyy"));
+    const data = priceHistory.map((entry) => entry.price);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: "Predicted Price (€)",
+          data: data,
+          borderColor: "#3498db",
+          backgroundColor: "rgba(52, 152, 219, 0.2)",
+          borderWidth: 2,
+          pointRadius: 2,
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    };
+  }, [priceHistory]);
 
   const chartOptions = {
     responsive: true,
@@ -495,8 +540,8 @@ const HostPricing = () => {
     scales: {
       x: {
         ticks: {
-          autoSkip: false,
-          maxTicksLimit: 12
+          autoSkip: true,
+          maxTicksLimit: 12,
         }
       },
       y: {
@@ -514,7 +559,14 @@ const HostPricing = () => {
       tooltip: {
         enabled: true,
         callbacks: {
-          title: tooltipItems => tooltipItems[0].label
+          title: (tooltipItems) => {
+            const item = tooltipItems[0];
+            return item.label;
+          },
+          label: (tooltipItem) => {
+            const price = tooltipItem.parsed.y;
+            return `Price: €${price}`;
+          }
         }
       }
     }
@@ -703,14 +755,12 @@ const HostPricing = () => {
             </div>
           )}
 
-          <div>
-            {taxFeePopup && selectedAccommodation && (
-              handleTaxFeePopup(
-                selectedAccommodation,
-                accommodations.indexOf(selectedAccommodation)
-              )
-            )}
-          </div>
+          {taxFeePopup && selectedAccommodation && (
+            handleTaxFeePopup(
+              selectedAccommodation,
+              accommodations.indexOf(selectedAccommodation)
+            )
+          )}
 
           {isModalOpen && selectedAccommodation && (
             <div className="modal-overlay">
@@ -719,6 +769,7 @@ const HostPricing = () => {
 
                 <label>Base Price (€): </label>
                 <input
+                  disabled
                   type="number"
                   step="0.01"
                   value={basePrice}
@@ -785,6 +836,7 @@ const HostPricing = () => {
               </button>
             </div>
           </div>
+
         </div>
       </div>
     </div>

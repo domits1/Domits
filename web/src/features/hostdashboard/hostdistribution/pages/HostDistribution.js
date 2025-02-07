@@ -340,6 +340,36 @@ function HostDistribution() {
     console.log("Eerste channel (debug):", channelData[0]);
   }, [channelData]);
 
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (activeManageDropdown) {
+        const manageContainer = document.querySelector('.channelManageContainer.visible');
+        if (manageContainer && !manageContainer.contains(event.target)) {
+          setActiveManageDropdown(null);
+        }
+      }
+
+      if (activeThreeDotsDropdown) {
+        const threeDotsContainer = document.querySelector('.threeDotsContainer.visible');
+        if (threeDotsContainer && !threeDotsContainer.contains(event.target)) {
+          setActiveThreeDotsDropdown(null);
+        }
+      }
+
+      if (dropdownAddChannelsVisible) {
+        const addChannelMenu = document.querySelector('.addChannelButtonMenu.visible');
+        if (addChannelMenu && !addChannelMenu.contains(event.target)) {
+          setDropdownAddChannelsVisible(false);
+        }
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [activeManageDropdown, activeThreeDotsDropdown, dropdownAddChannelsVisible]);
+  
   const handleToggleAddChannel = () => {
     toggleAddChannelButtonMenu(
       setDropdownAddChannelsVisible,
@@ -434,13 +464,15 @@ function HostDistribution() {
       console.error('Accommodation not found');
       return;
     }
-  
-    if (tempListedAccommodations[channelId]?.length > 0 || 
-        channelData.find(ch => ch.id.S === channelId)?.ListedAccommodations.L.length > 0) {
+
+    if (
+      tempListedAccommodations[channelId]?.length > 0 ||
+      channelData.find(ch => ch.id.S === channelId)?.ListedAccommodations.L.length > 0
+    ) {
       toast.warn("You can only add one accommodation per channel!");
       return;
     }
-  
+
     const newAcc = {
       AccommodationId: { S: found.ID },
       Title: { S: found.Title.S },
@@ -448,15 +480,14 @@ function HostDistribution() {
       Rent: { S: found.Rent.S },
       Availability: { S: found.Drafted ? 'Unavailable' : 'Available' }
     };
-  
+
     setTempListedAccommodations(prev => ({
       ...prev,
       [channelId]: [newAcc]
     }));
-  
+
     toast.success(`Added accommodation "${found.Title.S}" to channel!`);
   };
-  
 
   const handleRemoveAccommodationButton = (channelId, accommodationId) => {
     setTempListedAccommodations(prev => {
