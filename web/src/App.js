@@ -87,6 +87,10 @@ import PricingView from './features/hostonboarding/views/PropertyRateView.js';
 import AvailabilityView from './features/hostonboarding/views/PropertyCalendarAvailabilityView.js';
 import RegistrationNumberView from './features/verification/hostverification/RegistrationNumberView.js';
 import SummaryView from './features/hostonboarding/views/SummaryView.js';
+
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+
 import StepGuard from './features/hostonboarding/hooks/StepGuard.js';
 
 
@@ -99,114 +103,96 @@ import ReleaseUpdates from './pages/productupdates/ReleaseUpdates.js'
 Modal.setAppElement("#root");
 
 function App() {
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
+    const [searchResults, setSearchResults] = useState([]);
+    const [loading, setLoading] = useState(false);
+    
+    // Apollo Client
+    const client = new ApolloClient({
+        uri: 'https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql',  //
+        cache: new InMemoryCache(),
+        headers: {
+            "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm",   // Replace with your AppSync API key
+        },
+    });
+    
+    useEffect(() => {
+        document.title = 'Domits';
+    }, [searchResults]);
+    
+    useEffect(() => {
+        initializeUserAttributes();
+    }, []);
+    
+    const currentPath = window.location.pathname;
+    
+    const renderFooter = () => {
+        if (['/admin', '/bookingoverview', '/bookingpayment'].includes(currentPath) || currentPath.startsWith('/verify')) {
+            return null;
+        }
+        return <Footer />;
+    };
+    
+    const renderChatWidget = () => {
+        if (currentPath.startsWith('/verify')) {
+            return null;
+        }
+        return <ChatWidget />;
+    };
+    
+    const [flowState, setFlowState] = useState({ isHost: false });
+    
+    
+    return (
+        <ApolloProvider client={client}> {/* ApolloProvider */}
+        <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="colored"
+            />
+            <FlowContext.Provider value={{ flowState, setFlowState }}>
+                <Router>
+                    <ScrollToTop />
+                    <AuthProvider>
+                        <UserProvider>
+                            <div className="App">
+                            {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
+                                <Routes>
+                                    <Route path="/home" element={<Home searchResults={searchResults} />} />
+                                    <Route path="/" element={<Homepage />} />
+                                    <Route path="/about" element={<About />} />
+                                    {/* <Route path="/release" element={<Release />} /> */}
+                                    <Route path="/releaseTwo" element={<ReleaseTwo />} />
+                                    <Route path="/data-safety" element={<Datasafety />} />
+                                    <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
+                                    <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
+                                    <Route path="/how-it-works" element={<Howitworks />} />
+                                    <Route path="/why-domits" element={<Whydomits />} />
+                                    <Route path="/contact" element={<Contact />} />
+                                    <Route path="/travelinnovation" element={<Travelinnovation />} />
+                                    <Route path="/release" element={<ReleaseUpdates />} />
+                                    <Route path="/landing" element={<Landing />} />
+                                    <Route path="/login" element={<Login />} />
+                                    <Route path="/register" element={<Register />} />
+                                    <Route path="/confirm-email" element={<ConfirmRegister />} />
+                                    <Route path="/listingdetails" element={<ListingDetails />} />
+                                    <Route path="/bookingoverview" element={<BookingOverview />} />
+                                    <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
+                                    <Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />
 
-  // Apollo Client
-  const client = new ApolloClient({
-    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
-    cache: new InMemoryCache(),
-    headers: {
-      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
-    },
-  });
+                                    {/* Chat */}
+                                    <Route path="/chat" element={<Chat />} />
+                                    <Route path="/employeechat" element={<EmployeeChat />} />
+                                    <Route path="/chatbot" element={<Chatbot />} />
 
-  useEffect(() => {
-    document.title = "Domits";
-  }, [searchResults]);
-
-  useEffect(() => {
-    initializeUserAttributes();
-  }, []);
-
-  const currentPath = window.location.pathname;
-
-  const renderFooter = () => {
-    if (
-      ["/admin", "/bookingoverview", "/bookingpayment"].includes(currentPath) ||
-      currentPath.startsWith("/verify")
-    ) {
-      return null;
-    }
-    return <Footer />;
-  };
-
-  const renderChatWidget = () => {
-    if (currentPath.startsWith("/verify")) {
-      return null;
-    }
-    return <ChatWidget />;
-  };
-
-  const [flowState, setFlowState] = useState({ isHost: false });
-
-  return (
-    <ApolloProvider client={client}>
-      {" "}
-      {/* ApolloProvider */}
-      <FlowContext.Provider value={{ flowState, setFlowState }}>
-        <Router>
-          <ScrollToTop />
-          <AuthProvider>
-            <UserProvider>
-              <div className="App">
-                {currentPath !== "/admin" && (
-                  <Header
-                    setSearchResults={setSearchResults}
-                    setLoading={setLoading}
-                  />
-                )}
-                <Routes>
-                  <Route
-                    path="/home"
-                    element={<Home searchResults={searchResults} />}
-                  />
-                  <Route path="/" element={<Homepage />} />
-                  <Route path="/about" element={<About />} />
-                  {/* <Route path="/release" element={<Release />} /> */}
-                  <Route path="/releaseTwo" element={<ReleaseTwo />} />
-                  <Route path="/data-safety" element={<Datasafety />} />
-                  <Route
-                    path="/helpdesk-guest"
-                    element={<Helpdesk category="guest" />}
-                  />
-                  <Route
-                    path="/helpdesk-host"
-                    element={<Helpdesk category="host" />}
-                  />
-                  <Route path="/how-it-works" element={<Howitworks />} />
-                  <Route path="/why-domits" element={<Whydomits />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route
-                    path="/travelinnovation"
-                    element={<Travelinnovation />}
-                  />
-                  <Route path="/release" element={<ReleaseUpdates />} />
-                  <Route path="/landing" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/confirm-email" element={<ConfirmRegister />} />
-                  <Route path="/listingdetails" element={<ListingDetails />} />
-                  <Route
-                    path="/bookingoverview"
-                    element={<BookingOverview />}
-                  />
-                  <Route
-                    path="/bookingconfirmation"
-                    element={<BookingConfirmation />}
-                  />
-                  <Route
-                    path="/bookingconfirmationoverview"
-                    element={<PaymentConfirmPage />}
-                  />
-
-                  {/* Chat */}
-                  <Route path="/chat" element={<Chat />} />
-                  <Route path="/employeechat" element={<EmployeeChat />} />
-                  <Route path="/chatbot" element={<Chatbot />} />
-
-                  {/* Host Chatbot */}
-                  <Route path="/hostchatbot" element={<Hostchatbot />} />
+                                    {/* Host Chatbot */}
+                                    <Route path="/hostchatbot" element={<Hostchatbot />} />
 
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
