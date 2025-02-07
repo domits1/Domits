@@ -47,7 +47,7 @@
  * 
  * als jij niet begrijpt wat hier gebreurd verander dan ook niks als er iets aan gepast moet worden berijk mij dan via discord --@marijn3--
  */
-import React, {useEffect, useState} from "react";
+import React, {useState} from "react";
 import './Calendar.module.scss';
 import leftArrowSVG from './left-arrow-calender.svg';
 import rightArrowSVG from './right-arrow-calender.svg';
@@ -174,12 +174,11 @@ function getMonthName(month){
 
 
 function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
-
-    let selectedMonth = new Date().getMonth()
-    let selectedYear = new Date().getFullYear()
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
+    const [selectedMonthName, setSelectedMonthName] = useState(getMonthName(selectedMonth))
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
 
     const [calenderGridObject, setGrid] = useState(getGridObject(selectedMonth,selectedYear));
-    const [calenderHeader, setHeader] = useState(getMonthName(selectedMonth) + " " + selectedYear.toString())
 
     /**
      * deze functie wordt angeroepen als de gebruiker op de nextMonth btn clickt dat wordt de Calender geupdate met de dagen van de volgende maand
@@ -187,16 +186,18 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
      * @param {MouseEvent} e
      */
     function nextMonthBtn(e){
-        console.log(selectedMonth,typeof selectedMonth)
         e.preventDefault()
 
-        selectedMonth++
-        if(selectedMonth==12){
-            selectedMonth=0
-            selectedYear++
+        if(selectedMonth==11){
+            setSelectedMonth(0)
+            setSelectedMonthName(getMonthName(selectedMonth))
+            setSelectedYear(selectedYear + 1)
+        }else{
+            setSelectedMonth(selectedMonth + 1)
+            setSelectedMonthName(getMonthName(selectedMonth))
         }
 
-        //setHeader(getMonthName(selectedMonth) + " " + selectedYear.toString())
+        setGrid(getGridObject(selectedMonth,selectedYear))
     }
 
     /**
@@ -207,19 +208,23 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     function previusMonthBtn(e){
         e.preventDefault()
 
-        selectedMonth--
-        if(selectedMonth==-1){
-            selectedMonth=11
-            selectedYear--
+        if(selectedMonth==0){
+            setSelectedMonth(11)
+            setSelectedMonthName(getMonthName(selectedMonth))
+            setSelectedYear(selectedYear - 1)
+        }else{
+            setSelectedMonth(selectedMonth - 1)
+            setSelectedMonthName(getMonthName(selectedMonth))
         }
-        setHeader(getMonthName(selectedMonth) + " " + selectedYear.toString())
+
+        setGrid(getGridObject(selectedMonth,selectedYear))
     }
 
     return(
         <div className="calender">
             <div className="column">
                 <div className="header">
-                    <h4>{calenderHeader}</h4>
+                    <h4>{selectedMonthName} {selectedYear}</h4>
                     <div className="btn-container">
                         <a href="" onClick={previusMonthBtn}>
                             <img src={leftArrowSVG} alt="" />
