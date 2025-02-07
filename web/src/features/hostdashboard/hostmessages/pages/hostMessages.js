@@ -8,6 +8,7 @@ import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
 import ContactList from "../components/hostContactList";
 import HostChatScreen from "../components/hostChatScreen";
+import "../styles/hostMessages.css";
 
 const HostMessages = () => {
     return (
@@ -29,17 +30,22 @@ const HostMessagesContent = () => {
     };
 
     return (
-        <div>
+
+        <main className="page-body">
+
             {userId ? (
                 <>
-                    <ContactList userId={userId} onContactClick={handleContactClick} />
-                    <HostChatScreen userId={userId} contactId={selectedContactId} contactName={selectedContactName} />
+                    <div className="host-chat-components">
+                        <Pages />
+
+                        <ContactList userId={userId} onContactClick={handleContactClick} />
+                        <HostChatScreen userId={userId} contactId={selectedContactId} contactName={selectedContactName} />
+                    </div>
                 </>
             ) : (
                 <div>Loading user info...</div>
             )}
-            <Pages />
-        </div>
+        </main>
     );
 };
 

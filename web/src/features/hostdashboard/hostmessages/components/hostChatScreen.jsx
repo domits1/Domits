@@ -23,14 +23,14 @@ const HostChatScreen = ({ userId, contactId, contactName }) => {
     }, [messages]);
 
     const handleSendMessage = async () => {
-        if (newMessage.trim()) {
-            try {
-                const message = await sendMessage(contactId, newMessage);
-                setNewMessage('');
-            } catch (error) {
-                console.error('Error sending message:', error);
-            }
-        }
+        // if (newMessage.trim()) {
+        //     try {
+        //         const message = await sendMessage(contactId, newMessage);
+        //         setNewMessage('');
+        //     } catch (error) {
+        //         console.error('Error sending message:', error);
+        //     }
+        // }
     };
 
 
@@ -61,7 +61,7 @@ const HostChatScreen = ({ userId, contactId, contactName }) => {
                 <textarea
                     value={newMessage}
                     onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type a message..."
+                    placeholder=""
                     className="message-input-textarea"
                 />
                 <button

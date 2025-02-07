@@ -7,11 +7,10 @@
     justify-content: start;
     padding: 0 0.25rem 0.25rem 0.25rem;
     border: 1px solid #dee2e6;
-
     width: 100%;
-    max-width: 400px;
-    min-height: 450px;
-    max-height: 450px;
+    max-width: 20rem;
+    min-height: 30rem;
+    max-height: 30rem;
     overflow-y: auto;
     scrollbar-width: none;
 }
@@ -118,7 +117,7 @@
 
 .contact-item-buttons-container {
     display: flex;
-    gap: 10px;
+    justify-content: space-between;
 }
 
 .reject-button {

@@ -249,7 +249,7 @@ function App() {
                           <Route path="reporting" element={<HostPayments />} />
                           <Route path="settings" element={<HostSettings />} />
                           <Route path="reviews" element={<HostReviews />} />
-                          <Route path="chat" element={<Hostchat />} />
+                          <Route path="chat" element={<HostMessages />} />
                           <Route
                             path="reservations"
                             element={<HostReservations />}
