@@ -19,7 +19,11 @@ import Ryan from '../../images/about-img/Ryan-compressed.png';
 import Santosh from '../../images/about-img/Santosh.png';
 import Sander from '../../images/about-img/Sander.png';
 import Bekir from '../../images/about-img/Bekir.png';
+import Kacper from '../../images/about-img/Kacper.png';
+import Etka from '../../images/about-img/Etka.jpg';
 
+// Handy tool for editing the images:
+// https://imageresizer.com/image-compressor
 
 function About() {
     return (
@@ -107,12 +111,12 @@ function About() {
                         {name: 'Ales', src: Ales, role: 'Developer'},
                         {name: 'Bekir', src: Bekir, role: 'Developer'},
                         {name: 'Chant', src: Chant, role: 'Developer'},
-                        {name: 'Etka', src: standard, role: 'Developer'},
+                        {name: 'Etka', src: Etka, role: 'Developer'},
                         {name: 'Fejsal', src: standard, role: 'Developer'},
                         {name: 'Hamza H.', src: standard, role: 'Developer AI Agents'},
                         {name: 'Hamza Z.', src: standard, role: 'Developer'},
                         {name: 'Justin', src: Justin, role: 'Developer Distribution'},
-                        {name: 'Kacper', src: standard, role: 'Developer'},
+                        {name: 'Kacper', src: Kacper, role: 'Developer'},
                         {name: 'Martijn', src: standard, role: 'Developer'},
                         {name: 'Mortada', src: standard, role: 'Developer Revenue'},
                         {name: 'Mohamed', src: muhammed, role: 'Developer'},
