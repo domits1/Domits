@@ -132,13 +132,9 @@ const BookingOverview = () => {
         checkAuthentication();
     }, []);
 
-
-
-
     if (!bookingDetails || !accommodation) {
         return <div>Loading...</div>;
     }
-
 
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
@@ -245,7 +241,7 @@ const BookingOverview = () => {
         setIsProcessing(true);
         initiateStripeCheckout();
     };
-
+    
     return (
         <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
         <div className="booking-header">
@@ -341,17 +337,14 @@ const BookingOverview = () => {
                         € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + serviceFee / 100).toFixed(2)}
                         </span>
                     </div>
-                </div>
+                </div>  
             </div>
         </div>
     </main>
 
 
 
-
     );
-
-
 };
 
 export default BookingOverview;

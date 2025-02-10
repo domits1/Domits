@@ -1,116 +1,113 @@
-import React, { useState } from 'react';
-import './paymentconfirmpage.css';
-import Circle from '@mui/icons-material/CheckCircleOutlineOutlined';
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import "./paymentconfirmpage.css";
+import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 
-const PaymentConfirmPage = () => {
-    const [email] = useState("lotte_summer@gmail.com");
-    const [totalPrice] = useState(527.00);
+const BookingConfirmationOverview = () => {
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [bookingDetails, setBookingDetails] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
-
-    const [accommodations, setAccommodations] = useState([]);
-
-    const fetchAccommodationsById = async () => {
-        if (!userId) return;
-
-        setLoading(true);
-        try {
-            const response = await fetch(
-                'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation',
-                {
-                    method: 'POST',
-                    body: JSON.stringify({ OwnerId: userId }),
-                    headers: { 'Content-type': 'application/json; charset=UTF-8' },
-                }
-            );
-            const data = await response.json();
-            const accommodationsArray = data.body ? JSON.parse(data.body) : [];
-
-            const formattedAccommodations = accommodationsArray.map((acc) => ({
-                id: acc.ID,
-                title: acc.Title || 'Accommodation',
-                city: acc.City,
-                bathrooms: acc.Bathrooms,
-                guestAmount: acc.GuestAmount,
-                images: acc.Images || {},
-            }));
-
-            setAccommodations(formattedAccommodations);
-            if (currentOption === '1') {
-                setMessages((prevMessages) => [
-                    ...prevMessages,
-                    { text: 'Here are your accommodations:', sender: 'bot', contentType: 'accommodation' },
-                ]);
+    useEffect(() => {
+        const fetchBookingDetails = async () => {
+            const queryParams = new URLSearchParams(location.search);
+            const paymentID = queryParams.get("paymentID");
+    
+            if (!paymentID) {
+                console.error("Missing Payment ID in URL");
+                setError("Payment ID is missing.");
+                setLoading(false);
+                return;
             }
-        } catch (error) {
-            console.error('Error fetching accommodations:', error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
+    
+            console.log("🔍 Extracted Payment ID:", paymentID);
+    
+            try {
+                const response = await fetch(
+                    `https://cmxggcetwh.execute-api.eu-north-1.amazonaws.com/default/Guest-Booking-Production-Read-PaymentConfirmation?paymentID=${paymentID}`
+                );
+    
+                if (!response.ok) {
+                    throw new Error(`Error fetching booking details: ${response.statusText}`);
+                }
+    
+                const data = await response.json();
+                console.log("API Response:", data);
+    
+                const parsedBody = data.body ? JSON.parse(data.body) : data;
+    
+                if (!parsedBody.bookingDetails) {
+                    throw new Error("Booking details not found.");
+                }
+    
+                setBookingDetails(parsedBody.bookingDetails);
+            } catch (error) {
+                console.error("❌ Fetch Error:", error);
+                setError("Failed to load booking details.");
+            } finally {
+                setLoading(false);
+            }
+        };
+    
+        fetchBookingDetails();
+    }, [location]);
+    
+    if (loading) return <p>Loading booking details...</p>;
+    if (error) return <p>{error}</p>;
 
     return (
         <main className="PaymentOverview">
-
-        <div className="left-side">
-            {accommodations.length > 0 ? (
-                <ImageGallery images={Object.values(accommodations[0].images)} />
-            ) : (
-                <p>Loading accommodations...</p>
-            )}
-        </div>
-
             <div className="right-panel">
-                <h1>Minimalistic and Cozy Place in Haarlem</h1>
+                <h1>Booking Confirmation</h1>
 
                 <div className="confirmInformation">
                     <div>
-                        <h3>Booking Confirmed!</h3>
-                        <p>You paid with Mastercard [ L.Summer ] [0123 xxxx xxxx 2345]</p>
+                        <h3>Booking Confirmed</h3>
+                        <p><strong>Check-in:</strong> {bookingDetails?.StartDate}</p>
+                        <p><strong>Check-out:</strong> {bookingDetails?.EndDate}</p>
                     </div>
                     <div className="right">
-                        <Circle sx={{ fontSize: 50 }} />
+                        <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 50, color: "green" }} />
                     </div>
-                </div>
-
-                <div className="display-row">
-                    <p>Payment and booking details are sent to <strong>{email}</strong></p>
-                    <p className="resend-confirmation">Resend confirmation</p>
                 </div>
 
                 <div className="priceContainer">
                     <h3>Price Details</h3>
-                    <p><strong>2 adults – 2 kids | 3 nights</strong></p>
+                    <p><strong>Guests:</strong> {bookingDetails?.AmountOfGuest}</p>
 
                     <div className="price-breakdown">
                         <div className="row">
-                            <p>$140 night x 3</p>
-                            <p>$420.00</p>
+                            <p>Price per night</p>
+                            <p>€ {bookingDetails?.Price}</p>
                         </div>
                         <div className="row">
                             <p>Cleaning Fee</p>
-                            <p>$50.00</p>
+                            <p>€ {bookingDetails?.CleaningFee}</p>
                         </div>
                         <div className="row">
-                            <p>Cat Tax</p>
-                            <p>$17.50</p>
-                        </div>
-                        <div className="row">
-                            <p>Domits Service Fee</p>
-                            <p>$39.50</p>
+                            <p>Taxes</p>
+                            <p>€ {bookingDetails?.Taxes}</p>
                         </div>
                     </div>
 
                     <div className="total-price">
-                        <strong>Total (DOL)</strong>
-                        <strong>${totalPrice.toFixed(2)}</strong>
-                    </div>
+                    <strong>Total:</strong>
+                    <strong>€ {(
+                        (isNaN(parseFloat(bookingDetails?.Price)) ? 0 : parseFloat(bookingDetails?.Price)) +
+                        (isNaN(parseFloat(bookingDetails?.CleaningFee)) ? 0 : parseFloat(bookingDetails?.CleaningFee)) +
+                        (isNaN(parseFloat(bookingDetails?.Taxes)) ? 0 : parseFloat(bookingDetails?.Taxes))
+                    ).toFixed(2)}</strong>
+                </div>
                 </div>
 
-                <button className="view-booking-button">View Booking</button>
+                <button className="view-booking-button" onClick={() => navigate("/guestdashboard/bookings")}>
+                    View Booking
+                </button>
             </div>
         </main>
     );
 };
 
-export default PaymentConfirmPage;
+export default BookingConfirmationOverview;
