@@ -5,9 +5,10 @@
   max-width: 1200px;
   margin: 0 auto;
 }
-
+/* dit is een tijdelijke aanpassing om te kijken of de huidige filters goed passen */
+/* op het moment dat de filters klaar zijn kan deze waardens aangepast worden om meer ruimte te creëren */
 #filters-sidebar {
-  flex: 0 0 250px; /* Adjust the width as needed */
+  flex: 0 0 250px; 
   margin-right: 20px;
 }
 
@@ -141,13 +142,13 @@
 
 @media (max-width: 1292px) {
   .accocard {
-    width: 23%;
+    width: auto;
   }
 }
 
 @media (max-width: 856px) {
   .accocard {
-    width: 48%;
+    width: auto;
   }
   .accocard-specs {
     display: flex;

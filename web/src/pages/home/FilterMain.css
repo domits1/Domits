@@ -41,6 +41,10 @@
     border-color: #333;
     border-radius: 1rem;
   }
+  .filter-select-option {
+    transform: scale(1.5); 
+    margin-right: 10px; 
+  }
   
   .facility-list {
     margin-top: 15px;
@@ -58,12 +62,12 @@
     margin-right: 8px;
   }
   .show-more-text {
-    color: #007bff; /* Blauwe kleur */
-    text-decoration: underline; /* Streepje onder de tekst */
-    cursor: pointer; /* Handcursor bij hover */
+    color: #007bff; 
+    text-decoration: underline; 
+    cursor: pointer; 
   }
   
   .show-more-text:hover {
-    text-decoration: none; /* Verwijder de streep als je over de tekst hovert */
+    text-decoration: none; 
   }
   

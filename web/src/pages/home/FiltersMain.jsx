@@ -74,7 +74,7 @@ const FilterModal = () => {
                 type="text"
                 value={`€${priceValues[0] || ''}`}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, ''); // Alleen nummers behouden
+                  const value = e.target.value.replace(/[^0-9]/g, ''); 
                   handleInputChange(0, value);
                 }}
               />
@@ -85,7 +85,7 @@ const FilterModal = () => {
                 type="text"
                 value={`€${priceValues[1] || ''}`}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, ''); // Alleen nummers behouden
+                  const value = e.target.value.replace(/[^0-9]/g, ''); 
                   handleInputChange(1, value);
                 }}
               />
@@ -94,7 +94,7 @@ const FilterModal = () => {
         </div>
       </div>
 
-      {/* Facility filter met border */}
+      {/* facility filter */}
       <div className="filter-section">
         <h3>Facilities</h3>
         <div className="facility-list">
@@ -105,6 +105,7 @@ const FilterModal = () => {
                 name={facility}
                 checked={selectedFacilities[facility]}
                 onChange={handleFacilityChange}
+                className="filter-select-option"
               />
               {facility.charAt(0).toUpperCase() + facility.slice(1)}
             </label>
