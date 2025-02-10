@@ -1,0 +1,69 @@
+.filter-section {
+    border: 1px solid #d3d3d3;
+    padding: 15px;
+    margin-top: 15px;
+    border-radius: 8px;
+  }
+  
+  .slider-container {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 10px;
+  }
+  
+  .price-inputs {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 10px;
+
+  }
+  
+  .price-inputs div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .price-inputs label {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+  }
+  
+  .price-inputs input {
+    width: 60px;
+    padding: 5px;
+    font-size: 14px;
+    text-align: center;
+    border-color: #333;
+    border-radius: 1rem;
+  }
+  
+  .facility-list {
+    margin-top: 15px;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .facility-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 5px;
+  }
+  
+  .facility-item input {
+    margin-right: 8px;
+  }
+  .show-more-text {
+    color: #007bff; /* Blauwe kleur */
+    text-decoration: underline; /* Streepje onder de tekst */
+    cursor: pointer; /* Handcursor bij hover */
+  }
+  
+  .show-more-text:hover {
+    text-decoration: none; /* Verwijder de streep als je over de tekst hovert */
+  }
+  
