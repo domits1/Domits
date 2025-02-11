@@ -8,7 +8,7 @@
 /* dit is een tijdelijke aanpassing om te kijken of de huidige filters goed passen */
 /* op het moment dat de filters klaar zijn kan deze waardens aangepast worden om meer ruimte te creëren */
 #filters-sidebar {
-  flex: 0 0 250px; 
+  flex: 0 0 240px; 
   margin-right: 20px;
 }
 
@@ -163,6 +163,10 @@
 }
 
 @media (max-width: 480px) {
+  /* om  filters weg te halen bij de mobileview en als vervanger de filter knopje*/
+  #filters-sidebar{
+    display: none;
+  }
   .accocard {
     width: 90%;
     margin: 0 auto;
@@ -182,6 +186,7 @@
     align-items: center;
     text-align: center;
   }
+  
 }
 
 .accocard-share-button, .accocard-like-button {

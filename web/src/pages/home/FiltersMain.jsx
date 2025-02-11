@@ -16,7 +16,24 @@ const FilterModal = () => {
     breakfast: false,
     bar: false,
   });
-  const [showMore, setShowMore] = useState(false);
+
+  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState({
+    apartment: false,
+    villa: false,
+    bungalow: false,
+    studio: false,
+    penthouse: false,
+    cottage: false,
+    townhouse: false,
+    cabin: false,
+    chalet: false,
+    duplex: false,
+    mansion: false,
+    farmstay: false,
+  });
+
+  const [showMoreFacilities, setShowMoreFacilities] = useState(false);
+  const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
 
   const handleInputChange = (index, value) => {
     const newValues = [...priceValues];
@@ -33,6 +50,13 @@ const FilterModal = () => {
     });
   };
 
+  const handlePropertyTypeChange = (event) => {
+    setSelectedPropertyTypes({
+      ...selectedPropertyTypes,
+      [event.target.name]: event.target.checked,
+    });
+  };
+
   return (
     <div>
       {/* Prijsfilter met border */}
@@ -42,8 +66,8 @@ const FilterModal = () => {
           <Slider
             sx={{
               '& .MuiSlider-thumb': {
-                width: 30,
-                height: 30,
+                width: 25,
+                height: 25,
                 backgroundColor: '#ffffff',
                 border: '1px solid #d3d3d3',
               },
@@ -94,7 +118,7 @@ const FilterModal = () => {
         </div>
       </div>
 
-      {/* facility filter */}
+      {/* Facility filter met checkboxes */}
       <div className="filter-section">
         <h3>Facilities</h3>
         <div className="facility-list">
@@ -110,7 +134,7 @@ const FilterModal = () => {
               {facility.charAt(0).toUpperCase() + facility.slice(1)}
             </label>
           ))}
-          {showMore &&
+          {showMoreFacilities &&
             Object.keys(selectedFacilities)
               .slice(5)
               .map((facility) => (
@@ -120,16 +144,58 @@ const FilterModal = () => {
                     name={facility}
                     checked={selectedFacilities[facility]}
                     onChange={handleFacilityChange}
+                    className="filter-select-option"
                   />
                   {facility.charAt(0).toUpperCase() + facility.slice(1)}
                 </label>
               ))}
         </div>
         <span
-          onClick={() => setShowMore(!showMore)}
+          onClick={() => setShowMoreFacilities(!showMoreFacilities)}
           className="show-more-text"
         >
-          {showMore ? 'Show Less' : 'Show More'}
+          {showMoreFacilities ? 'Show Less' : 'Show More'}
+        </span>
+      </div>
+
+      {/* Property type filter met checkboxes */}
+      <div className="filter-section">
+        <h3>Property Type</h3>
+        <div className="facility-list">
+          {Object.keys(selectedPropertyTypes).slice(0, 5).map((propertyType) => (
+            <label key={propertyType} className="facility-item">
+              <input
+                type="checkbox"
+                name={propertyType}
+                checked={selectedPropertyTypes[propertyType]}
+                onChange={handlePropertyTypeChange}
+                className="filter-select-option"
+              />
+              {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
+            </label>
+          ))}
+          {showMorePropertyTypes &&
+            Object.keys(selectedPropertyTypes)
+              .slice(5)
+              .map((propertyType) => (
+                <label key={propertyType} className="facility-item">
+                  <input
+                    type="checkbox"
+                    name={propertyType}
+                    checked={selectedPropertyTypes[propertyType]}
+                    onChange={handlePropertyTypeChange}
+                    className="filter-select-option"
+                  />
+                  {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
+                </label>
+              ))}
+        </div>
+        {/* Functie om meer opties aan gebruiker te laten tonen */}
+        <span
+          onClick={() => setShowMorePropertyTypes(!showMorePropertyTypes)}
+          className="show-more-text"
+        >
+          {showMorePropertyTypes ? 'Show Less' : 'Show More'}
         </span>
       </div>
     </div>
