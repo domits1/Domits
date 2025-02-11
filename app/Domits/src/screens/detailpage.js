@@ -125,7 +125,7 @@ const Detailpage = ({route, navigation}) => {
   const [currentPage, setCurrentPage] = useState(0);
 
   const handleHomeScreenPress = () => {
-    navigation.navigate('HomeScreen');
+    navigation.navigate('Home');
   };
 
   const handleMessagesPress = () => {

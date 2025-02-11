@@ -89,8 +89,8 @@ function Pages() {
       </div>
       <div className="dashboardSection section-1 host-navigation">
         <div
-          className={`wijzer addAcco ${activeTab === "/enlist" ? "active" : ""}`}
-          onClick={() => handleNavigation("/enlist")}
+          className={`wijzer addAcco ${activeTab === "/hostonboarding" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostonboarding")}
           style={{ maxWidth: 250 }}
         >
           {/* <img src={add} alt="add"></img> */}
