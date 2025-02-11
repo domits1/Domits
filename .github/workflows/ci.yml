@@ -30,6 +30,4 @@ jobs:
       - name: Run Jest tests
         run: |
           cd web/src
-          npm test  -- --detectOpenHandles
-env:
-  REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}     
+          npm test  -- --detectOpenHandles   
