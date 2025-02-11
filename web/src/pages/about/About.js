@@ -21,6 +21,7 @@ import Sander from '../../images/about-img/Sander.png';
 import Bekir from '../../images/about-img/Bekir.png';
 import Kacper from '../../images/about-img/Kacper.png';
 import Etka from '../../images/about-img/Etka.jpg';
+import Sebastiaan from '../../images/about-img/Sebastiaan.png';
 
 // Handy tool for editing the images:
 // https://imageresizer.com/image-compressor
@@ -129,7 +130,7 @@ function About() {
                         {name: 'Sam', src: Sam, role: 'Developer'},
                         {name: 'Santosh', src: Santosh, role: 'Developer'},
                         {name: 'Sander', src: Sander, role: 'Developer'},
-                        {name: 'Sebastiaan', src: standard, role: 'Developer'},
+                        {name: 'Sebastiaan', src: Sebastiaan, role: 'Developer'},
                         {name: 'Sem', src: standard, role: 'Developer'},
                     ]
                         .sort((a, b) => a.name.localeCompare(b.name))
