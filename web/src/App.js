@@ -19,7 +19,8 @@ import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
 import HostOnboarding from "./pages/landingpage/OnboardingHost";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostMessages from "./features/hostdashboard/HostMessages";
+// import HostMessages from "./features/hostdashboard/HostMessages";
+import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
@@ -248,7 +249,7 @@ function App() {
                           <Route path="reporting" element={<HostPayments />} />
                           <Route path="settings" element={<HostSettings />} />
                           <Route path="reviews" element={<HostReviews />} />
-                          <Route path="chat" element={<Hostchat />} />
+                          <Route path="chat" element={<HostMessages />} />
                           <Route
                             path="reservations"
                             element={<HostReservations />}

@@ -1,0 +1,4 @@
+.host-chat-components {
+    display: flex;
+    flex-direction: row;
+}
