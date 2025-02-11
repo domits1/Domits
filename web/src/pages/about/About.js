@@ -16,6 +16,7 @@ import Roozbeh from '../../images/about-img/Roozbeh.jpg';
 import Sam from '../../images/about-img/Sam.jpg';
 import Jared from '../../images/about-img/Jared.jpg';
 import Ryan from '../../images/about-img/Ryan-compressed.png';
+import Santosh from '../../images/about-img/Santosh.png';
 
 
 function About() {
@@ -120,7 +121,7 @@ function About() {
                         {name: 'Roozbeh', src: Roozbeh, role: 'Developer Revenue'},
                         {name: 'Ryan', src: Ryan, role: 'Developer'},
                         {name: 'Sam', src: Sam, role: 'Developer'},
-                        {name: 'Santosh', src: standard, role: 'Developer'},
+                        {name: 'Santosh', src: Santosh, role: 'Developer'},
                         {name: 'Sander', src: standard, role: 'Developer'},
                         {name: 'Sebastiaan', src: standard, role: 'Developer'},
                         {name: 'Sem', src: standard, role: 'Developer'},

@@ -1,68 +1,86 @@
 import { useState } from "react";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function usePhotos() {
-  const [images, setImages] = useState({});
+  const [images, setImages] = useState([]);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleFileChange = (file, index) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const imageURL = reader.result; // Get the image data URL
-      console.log(`Selected image ${index + 1}:`, imageURL); // Log image data URL
-      setImages((prev) => {
-        const updatedImages = {
-          ...prev,
-          [`image${index + 1}`]: imageURL, // Update state with image URL
-        };
-        console.log("Updated images:", updatedImages); // Log the updated images state
-        return updatedImages;
-      });
+  const MIN_WIDTH = 500;
+  const MIN_HEIGHT = 500;
+  const MIN_SIZE = 50000;
+  const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
+  const MAX_IMAGES = 5;
+
+  const validateImage = (file, callback) => {
+    if (!file) return;
+
+    if (!allowedFormats.includes(file.type)) {
+      toast.error("❌ Alleen JPG, PNG of WEBP toegestaan.");
+      return;
+    }
+
+    if (file.size < MIN_SIZE) {
+      toast.error("❌ Afbeelding is te klein (min. 50 KB).");
+      return;
+    }
+
+    const img = new Image();
+    img.src = URL.createObjectURL(file);
+    img.onload = () => {
+      if (img.width < MIN_WIDTH || img.height < MIN_HEIGHT) {
+        toast.error(`❌ Afbeelding moet minimaal ${MIN_WIDTH}x${MIN_HEIGHT} pixels zijn.`);
+      } else {
+        callback(file);
+      }
     };
-    reader.readAsDataURL(file);
+    img.onerror = () => {
+      toast.error("❌ Ongeldige afbeelding.");
+    };
+  };
+
+  const handleFileChange = (files) => {
+    if (images.length >= MAX_IMAGES) {
+      toast.error(`❌ Je kunt maximaal ${MAX_IMAGES} afbeeldingen uploaden.`);
+      return;
+    }
+
+    let newImages = [...images];
+
+    Array.from(files).forEach((file) => {
+      if (newImages.length < MAX_IMAGES) {
+        validateImage(file, (validFile) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            newImages = [...newImages, reader.result];
+            setImages(newImages);
+            toast.success("✅ Afbeelding toegevoegd!");
+          };
+          reader.readAsDataURL(validFile);
+        });
+      } else {
+        toast.error(`❌ Maximaal ${MAX_IMAGES} afbeeldingen toegestaan.`);
+      }
+    });
   };
   
 
   const deleteImage = (index) => {
     setImages((prev) => {
-      const updated = { ...prev };
-      delete updated[`image${index + 1}`];
-      return updated;
+      const updatedImages = prev.filter((_, i) => i !== index);
+      return updatedImages;
     });
+    toast.info("🗑️ Afbeelding verwijderd.");
   };
 
   const reorderImages = (fromIndex, toIndex) => {
     setImages((prev) => {
-      const entries = Object.entries(prev);
-      const [movedImage] = entries.splice(fromIndex, 1);
-      entries.splice(toIndex, 0, movedImage);
-      const reorderedImages = {};
-      entries.forEach(([_, value], i) => {
-        reorderedImages[`image${i + 1}`] = value;
-      });
-      return reorderedImages;
+      const newImages = [...prev];
+      const [movedImage] = newImages.splice(fromIndex, 1);
+      newImages.splice(toIndex, 0, movedImage);
+      return newImages;
     });
-  };
-
-  const handleDropFiles = (files) => {
-    const newImages = {};
-    Array.from(files).forEach((file, i) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const imageKey = `image${Object.keys(images).length + i + 1}`;
-        const imageURL = reader.result;
-        console.log(`Dropped image ${imageKey}:`, imageURL); // Log the dropped image data URL
-        newImages[imageKey] = imageURL;
-        setImages((prev) => {
-          const updatedImages = {
-            ...prev,
-            ...newImages, // Add the new image(s) to the state
-          };
-          console.log("Updated images after drop:", updatedImages); // Log updated state
-          return updatedImages;
-        });
-      };
-      reader.readAsDataURL(file);
-    });
+    toast.info("🔄 Afbeeldingen opnieuw gerangschikt.");
   };
   
 
@@ -73,6 +91,5 @@ export default function usePhotos() {
     reorderImages,
     isDragOver,
     setIsDragOver,
-    handleDropFiles,
   };
 }
