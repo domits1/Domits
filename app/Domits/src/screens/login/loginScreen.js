@@ -32,7 +32,7 @@ const LoginScreen = () => {
     try {
       await signIn({username: email, password}); // Ensure the correct parameters
       checkAuth(); // Update the global auth state
-      navigation.navigate('Account');
+      navigation.navigate('Home');
     } catch (error) {
       // console.error('Error logging in:', error);
       setErrorMessage('Invalid username or password. Please try again.');
