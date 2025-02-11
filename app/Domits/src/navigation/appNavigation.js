@@ -1,6 +1,6 @@
 import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import HomeScreen from '../screens/homeScreen';
 import Messages from '../screens/messages';
@@ -10,7 +10,7 @@ import Scan from '../header/scan';
 import Pay from '../header/pay';
 import Bookings from '../header/bookings';
 import Pocket from '../header/pocket';
-import { View, Text } from 'react-native';
+import {View, Text} from 'react-native';
 import profile from '../screens/guestdashboard/GuestProfileTab';
 import paymentMethods from '../screens/guestdashboard/GuestPaymentsTab';
 import reviews from '../screens/guestdashboard/GuestReviewsTab';
@@ -58,7 +58,6 @@ function HomeStack() {
         headerShown: false,
       }}>
       <Stack.Screen name="Home" component={HomeScreen} />
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="LoginScreen" component={LoginScreen} />
       <Stack.Screen name="SignupScreen" component={SignupScreen} />
       <Stack.Screen name="GuestDashboard" component={GuestDashboard} />
@@ -118,7 +117,7 @@ function HomeStack() {
 function BottomTabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={({route}) => ({
         tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: '#f0f0f0',
@@ -126,7 +125,7 @@ function BottomTabNavigator() {
           height: 60,
           paddingBottom: 10,
         },
-        tabBarIcon: ({ focused, color, size }) => {
+        tabBarIcon: ({focused, color, size}) => {
           let iconName;
           switch (route.name) {
             case 'Home':
@@ -143,14 +142,14 @@ function BottomTabNavigator() {
           }
 
           return (
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{alignItems: 'center', justifyContent: 'center'}}>
               <MaterialIcons
                 name={iconName}
                 size={30}
                 color={focused ? '#007AFF' : '#8e8e93'}
               />
               <Text
-                style={{ color: focused ? '#007AFF' : '#8e8e93', fontSize: 12 }}>
+                style={{color: focused ? '#007AFF' : '#8e8e93', fontSize: 12}}>
                 {route.name}
               </Text>
             </View>
@@ -160,12 +159,12 @@ function BottomTabNavigator() {
       <Tab.Screen
         name="Home"
         component={HomeStack}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Tab.Screen
         name="Messages"
         component={MessagesStackNavigator}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Tab.Screen name="Account" component={AccountPage} />
     </Tab.Navigator>
