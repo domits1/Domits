@@ -10,6 +10,7 @@ import logoutArrow from '../../images/log-out-04.svg';
 import FlowContext from '../../services/FlowContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { SearchBar } from './SearchBar';
+import FilterButton from './FilterButton';
 import { Auth } from "aws-amplify";
 
 function Header({ setSearchResults, setLoading }) {
@@ -201,6 +202,11 @@ document.addEventListener('click', function (event) {
                         <SearchBar setSearchResults={setSearchResults} setLoading={setLoading}
                             toggleBar={toggleSearchBar} />
                     </div>
+
+                    <FilterButton onClick={() => console.log('Filter button clicked!')} />
+
+
+
                     <div className='headerRight'>
                         <ul className='header-links'>
                             {!isLoggedIn ? (

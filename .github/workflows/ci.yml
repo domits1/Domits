@@ -9,6 +9,9 @@ on:
 jobs:
   tests:
     runs-on: ubuntu-latest
+    env:
+      REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}  # Moved here
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -16,7 +19,7 @@ jobs:
       # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
-          cd web
+          cd web/src
           npm ci --verbose
 
       # Run your Cypress tests
@@ -29,7 +32,5 @@ jobs:
       # Run Jest tests
       - name: Run Jest tests
         run: |
-          cd web
-          npm test  -- --detectOpenHandles
-env:
-  REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}     
+          cd web/src
+

@@ -6,6 +6,7 @@ import {useLocation, useNavigate} from 'react-router-dom';
 import { Auth } from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
 import PageSwitcher from "../../utils/PageSwitcher";
+import { useSetLiveEligibility } from "./hooks/useSetLiveEligibility";
 
 function HostListings() {
     const [accommodations, setAccommodations] = useState([]);
@@ -89,12 +90,45 @@ function HostListings() {
     const asyncEditAccommodation = async (accoId, accoTitle) => {
         if (confirm(`Do you wish to edit ${accoTitle}?`)) {
             if (accoId) {
-                navigate(`/enlist?ID=${accoId}`)
+                navigate(`/hostboarding?ID=${accoId}`)
             }
         }
     }
+
+    const {
+        liveEligibility,
+        liveEligibilityError,
+        liveEligibilityLoading,
+        fetchVerificationStatus
+      } = useSetLiveEligibility({userId});
+
+      useEffect(() => {
+        fetchVerificationStatus();
+      }, [userId]);
+
     const asyncChangeAccommodationStatus = async (id, drafted) => {
         let status = drafted ? 'Draft' : 'Live';
+        if (status === "Live"){
+            if (liveEligibilityLoading) {
+                alert("Checking your verification status, please wait...");
+                return;
+              }
+
+              if (liveEligibilityError) {
+                alert(liveEligibilityError);
+                return;
+              }
+
+              if (!liveEligibility) {
+                navigate("/verify", {
+                    state: {
+                      userId: userId,
+                      accommodationId: id,
+                    }
+                  })
+                return;
+              }
+        }
         if(confirm(`Do you wish to set this accommodation as ${status}?`) === true) {
             const options = {
                 ID: id,
@@ -165,7 +199,7 @@ function HostListings() {
                     ) : (
                         <div className={styles.listingBody}>
                             <div className={styles.buttonBox}>
-                                <button className={styles.greenBtn} onClick={() => navigate("/enlist")}>Add new
+                                <button className={styles.greenBtn} onClick={() => navigate("/hostboarding")}>Add new
                                     accommodation
                                 </button>
                                 <button className={styles.greenBtn} onClick={fetchAccommodations}>Refresh</button>
