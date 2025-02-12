@@ -66,8 +66,8 @@ const FilterModal = () => {
           <Slider
             sx={{
               '& .MuiSlider-thumb': {
-                width: 25,
-                height: 25,
+                width: 27,
+                height: 27,
                 backgroundColor: '#ffffff',
                 border: '1px solid #d3d3d3',
               },

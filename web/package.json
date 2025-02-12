@@ -34,6 +34,7 @@
     "typescript": "^4.9.5",
     "ui-react": "^1.0.3",
     "web-vitals": "^2.1.4"
+    
   },
   "scripts": {
     "start": "react-scripts start",
@@ -56,6 +57,7 @@
     "babel-eslint": "^10.1.0",
     "babel-jest": "^29.7.0",
     "babel-preset-react-app": "^10.0.1",
+    "@react-native-community/cli": "latest",
     "cypress": "^13.15.0",
     "dotenv-webpack": "^8.1.0",
     "eslint": "^8.57.0",
@@ -66,6 +68,7 @@
     "jest-transform-stub": "^2.0.0",
     "react-router-dom": "^6.23.1",
     "typescript-eslint": "^8.4.0"
+    
   },
   "author": "",
   "license": "ISC",
@@ -81,6 +84,7 @@
       "last 1 safari version"
     ]
   },
+  
   "dependencies": {
     "@apollo/client": "^3.11.8",
     "@emotion/react": "^11.14.0",
@@ -126,10 +130,13 @@
     "string-similarity": "^4.0.4",
     "swiper": "^11.1.14",
     "zustand": "^5.0.1"
+    
   },
   "jest": {
     "moduleNameMapper": {
       "^axios$": "axios/dist/node/axios.cjs"
     }
+    
   }
+  
 }
