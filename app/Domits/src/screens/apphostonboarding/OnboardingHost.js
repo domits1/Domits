@@ -575,13 +575,17 @@ const OnboardingHost = () => {
               <TextInput
                 placeholder="Select your city"
                 value={formData.City}
-                onChangeText={value => handleInputChange('City', value)}
+                onChangeText={value => {
+                  handleInputChange('City', value);
+                  if (value.trim() !== '') {
+                    setErrors(prev => ({ ...prev, City: '' })); // Clear error if not empty
+                  }
+                }}
                 style={[styles.input, errors.City && styles.errorInput]}
               />
-              {errors.City && (
-                <Text style={styles.errorText}>{errors.City}</Text>
-              )}
+              {errors.City && <Text style={styles.errorText}>{errors.City}</Text>}
             </View>
+
 
             <View style={styles.formGroup}>
               <Text style={styles.label}>Street + house nr.*</Text>

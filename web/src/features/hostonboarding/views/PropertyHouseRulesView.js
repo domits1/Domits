@@ -9,6 +9,8 @@ function HouseRulesView() {
   const { houseRules, handleCheckboxChange, handleTimeChange } =
     useHouseRules();
 
+  const isProceedDisabled = !houseRules.CheckIn.start || !houseRules.CheckOut.end;
+
   return (
     <main className="page-body">
       <h2 className="onboardingSectionTitle">House rules</h2>
@@ -60,6 +62,8 @@ function HouseRulesView() {
         <Button
           routePath={`/hostonboarding/${accommodationType}/photos`}
           btnText="Proceed"
+          disabled={isProceedDisabled}
+          className={isProceedDisabled ? "button-disabled" : ""}
         />
       </nav>
     </main>
