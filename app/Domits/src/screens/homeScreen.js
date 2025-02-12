@@ -3,7 +3,7 @@ import {View, ScrollView, StyleSheet, Button, SafeAreaView} from 'react-native';
 import Header from '../header/header';
 import Accommodations from './Acommodations'; // Import the new component
 
-function HomeScreen({navigation}) {
+function HomeScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView stickyHeaderIndices={[0]}>

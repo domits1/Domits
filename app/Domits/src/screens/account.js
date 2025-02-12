@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 import {
   View,
   Text,
-  Button,
   SafeAreaView,
   StyleSheet,
   TouchableOpacity,
@@ -19,20 +18,20 @@ const Account = () => {
 
   useFocusEffect(
     React.useCallback(() => {
-      setLoading(true)
+      setLoading(true);
       if (!isAuthenticated) {
-        navigation.navigate('LoginScreen');
+        navigation.navigate('Login');
       } else {
         setLoading(false);
       }
-    }, [isAuthenticated, navigation])
+    }, [isAuthenticated, navigation]),
   );
 
   const handleLogout = async () => {
     try {
       await signOut(); // Logs out the user
       checkAuth(); // Update authentication state in context
-      navigation.navigate('LoginScreen'); // Navigate to login screen after logout
+      navigation.navigate('Login'); // Navigate to login screen after logout
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -48,7 +47,7 @@ const Account = () => {
       <SafeAreaView style={styles.items}>
         <Text>Account Screen.</Text>
         <TouchableOpacity onPress={() => handleLogout()}>
-        <Text>Logout</Text>
+          <Text>Logout</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );

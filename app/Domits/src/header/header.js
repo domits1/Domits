@@ -14,72 +14,22 @@ import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import SearchBarApp from '../header/SearchBarApp';
-// import GuestSettingsTab from '../screens/pictures/settings-icon.png';
 function Header() {
   const navigation = useNavigation();
-
-  const handleScanPress = () => {
-    navigation.navigate('Scan');
-  };
-
-  // const handlePayPress = () => {
-  //   navigation.navigate('Pay');
-  // };
 
   const handleBookingsPress = () => {
     navigation.navigate('Bookings');
   };
-  //
-  // const handlePocketPress = () => {
-  //   navigation.navigate('Pocket');
-  // };
-
-  const handleSettingsPress = () => {
-    navigation.navigate('HostSettingsTab');
-  };
 
   return (
     <View style={styles.headerContainer}>
-      {/*<SearchBarApp />*/}
       <View style={styles.contentContainer}>
         <View style={styles.squareContainer}>
-          {/*<TouchableOpacity*/}
-          {/*  onPress={handleScanPress}*/}
-          {/*  style={styles.itemContainer}>*/}
-          {/*  <MaterialCommunityIconsIcon*/}
-          {/*    name="qrcode-scan"*/}
-          {/*    size={30}*/}
-          {/*    color="black"*/}
-          {/*  />*/}
-          {/*  <Text style={styles.itemText}>Scan</Text>*/}
-          {/*</TouchableOpacity>*/}
-
-          {/*<TouchableOpacity*/}
-          {/*  onPress={handlePayPress}*/}
-          {/*  style={styles.itemContainer}>*/}
-          {/*  <FontAwesome5Icon name="money-bill-wave" size={30} color="black" />*/}
-          {/*  <Text style={styles.itemText}>Pay</Text>*/}
-          {/*</TouchableOpacity>*/}
-
-          {/*<TouchableOpacity*/}
-          {/*  onPress={handlePocketPress}*/}
-          {/*  style={styles.itemContainer}>*/}
-          {/*  <IoniconsIcon name="wallet-outline" size={30} color="black" />*/}
-          {/*  <Text style={styles.itemText}>Pocket</Text>*/}
-          {/*</TouchableOpacity>*/}
-
           <TouchableOpacity
             onPress={handleBookingsPress}
             style={styles.itemContainer}>
             <EntypoIcon name="location" size={30} color="black" />
             <Text style={styles.itemText}>Bookings</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            onPress={handleSettingsPress}
-            style={styles.itemContainer}>
-            <IoniconsIcon name="settings" size={30} color="black" />
-            <Text style={styles.itemText}>Settings</Text>
           </TouchableOpacity>
         </View>
       </View>
