@@ -191,12 +191,40 @@ const FilterModal = () => {
               ))}
         </div>
         {/* Functie om meer opties aan gebruiker te laten tonen */}
-        <span
-          onClick={() => setShowMorePropertyTypes(!showMorePropertyTypes)}
-          className="show-more-text"
-        >
-          {showMorePropertyTypes ? 'Show Less' : 'Show More'}
-        </span>
+       
+      </div>
+
+      <div className="filter-section">
+        <h3>Property rating</h3>
+        <div className="facility-list">
+          {Object.keys(selectedFacilities).slice(0, 5).map((facility) => (
+            <label key={facility} className="facility-item">
+              <input
+                type="checkbox"
+                name={facility}
+                checked={selectedFacilities[facility]}
+                onChange={handleFacilityChange}
+                className="filter-select-option"
+              />
+              {facility.charAt(0).toUpperCase() + facility.slice(1)}
+            </label>
+          ))}
+          {showMoreFacilities &&
+            Object.keys(selectedFacilities)
+              .slice(5)
+              .map((facility) => (
+                <label key={facility} className="facility-item">
+                  <input
+                    type="checkbox"
+                    name={facility}
+                    checked={selectedFacilities[facility]}
+                    onChange={handleFacilityChange}
+                    className="filter-select-option"
+                  />
+                  {facility.charAt(0).toUpperCase() + facility.slice(1)}
+                </label>
+              ))}
+        </div>
       </div>
     </div>
   );
