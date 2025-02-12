@@ -1,56 +1,12 @@
 /**
-    const asyncSaveDates = async () => {
-        const body = {
-            DateRanges: selectedRanges,
-            MinimumStay: minimumStay,
-            MinimumAdvanceReservation: minimumAdvanceReservation,
-            MaximumStay: maximumStay,
-            MaximumAdvanceReservation: maximumAdvanceReservation,
-            ID: passedProp.ID
-        };
-
-        console.log(body);
-        try {
-            const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Update-AccommodationStayParameters', {
-                method: 'PUT',
-                body: JSON.stringify(body),
-                headers: {
-                    'Content-type': 'application/json; charset=UTF-8',
-                }
-            });
-            if (!response.ok) {
-                alert("Something went wrong, please try again later...");
-                throw new Error('Failed to fetch');
-            } else {
-                const data = await response.json();
-                const jsonData = JSON.parse(data.body);
-                if (jsonData.updatedAttributes) {
-                    const updatedAttributes = jsonData.updatedAttributes;
-                    passedProp.DateRanges = updatedAttributes.DateRanges;
-                    alert("Update successful!");
-                } else {
-                    alert("Something went wrong, please try again later...");
-                    console.log("updatedAttributes is missing in the response");
-                }
-            }+
-        } catch (error) {
-            console.error("Unexpected error:", error);
-        } finally {
-            navigate(0);
-        }
-    };
-*/
-
-/**
- * Dit is geschreven door Marijn Klappe
+ * Dies wurde von Marijn Klappe geschrieben
  * 
- * als jij niet begrijpt wat hier gebreurd verander dan ook niks als er iets aan gepast moet worden berijk mij dan via discord --@marijn3--
+ * Wenn du nicht verstehst, was hier passiert, dann ändere nichts. Falls etwas angepasst werden muss, kontaktiere mich über Discord --@marijn3--
  */
 import React, {useState} from "react";
-import './Calendar.module.scss';
 import leftArrowSVG from './left-arrow-calender.svg';
 import rightArrowSVG from './right-arrow-calender.svg';
-
+import './Calendar.scss';
 
 /**
  * 
@@ -64,30 +20,30 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     const [calenderGridObject, setGrid] = useState(getGridObject(selectedMonth,selectedYear));
 
     /**
-     * convertToNumDate is een functie dat jaar maand en dag omzet is een enkel date getal
+     * convertToNumDate ist eine Funktion, die Jahr, Monat und Tag in eine einzige Zahl umwandelt.
      * 
      * @param {number} year
-     * @param {number} month deze maand telling is 1-12 dus 1 is januari en 12 is december
+     * @param {number} month Dieser Monat wird von 1-12 gezählt, also 1 ist Januar und 12 ist Dezember.
      * @param {number} day
-     * @returns {number} de return heeft een (jaar maand dag struct) b.v. 20250112 is 2025 jan 12
+     * @returns {number} Die Rückgabe hat eine (Jahr-Monat-Tag-Struktur), z. B. 20250112 entspricht dem 12. Januar 2025.
      */
     function convertToNumDate(year, month, day){
         return Number(`${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`);
     }
 
     /**
-     * getCalDays is een functie die wordt gebruikt om de dag getallen op te halen van geselecteerde maand en jaar.
-     * deze dagen worden gebruikt om de calender dagen in te vullen
+     * getCalDays ist eine Funktion, die verwendet wird, um die Tageszahlen des ausgewählten Monats und Jahres zu erhalten.
+     * Diese Tage werden genutzt, um die Kalendertage zu füllen.
      * 
-     * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is decemnber
+     * @param {number} month Der Monat wird hier von 0-11 gespeichert, also 0 ist Januar und 11 ist Dezember.
      * @param {number} year
-     * @returns {{date: number, day: number}[]} de date heeft een (jaar maand dag struct) b.v. 20250112 is 2025 jan 12
+     * @returns {{date: number, day: number}[]} Das Datum hat eine (Jahr-Monat-Tag-Struktur), z. B. 20250112 entspricht dem 12. Januar 2025.
      */
     function getCalDays(month, year) {
         const dateArray = [];
     
         const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
-        const getDayOfWeek = (y, m, d) => (new Date(y, m, d).getDay() + 6) % 7; // 0 is maandag, 6 is zondag
+        const getDayOfWeek = (y, m, d) => (new Date(y, m, d).getDay() + 6) % 7; // 0 ist Montag, 6 ist Sonntag
     
         let prevMonth = (month + 11) % 12;
         let prevYear = month === 0 ? year - 1 : year;
@@ -98,19 +54,19 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         let prevMonthLastDay = getDayOfWeek(prevYear, prevMonth, prevMonthDays);
         let daysInMonth = getDaysInMonth(year, month);
     
-        // Voeg de dagen van de vorige maand toe
+        // Füge die Tage des vorherigen Monats hinzu
         for (let i = prevMonthDays - prevMonthLastDay; i <= prevMonthDays; i++) {
             dateArray.push({ date: convertToNumDate(prevYear, prevMonth + 1, i), day: i });
         }
     
-        // Voeg de dagen van de huidige maand toe
+        // Füge die Tage des aktuellen Monats hinzu
         for (let i = 1; i <= daysInMonth; i++) {
             dateArray.push({ date: convertToNumDate(year, month + 1, i), day: i });
         }
     
-        let remainingDays = 42 - dateArray.length; // Dit zorgt ervoor dat de kalender altijd 6 weken toont
+        let remainingDays = 42 - dateArray.length; // Stellt sicher, dass der Kalender immer 6 Wochen zeigt
     
-        // Voeg de dagen van de volgende maand toe
+        // Füge die Tage des nächsten Monats hinzu
         for (let i = 1; i <= remainingDays; i++) {
             dateArray.push({ date: convertToNumDate(nextYear, nextMonth + 1, i), day: i });
         }
@@ -119,7 +75,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
-     * deze functie handeld de interactie af als er op een dag wordt geclickt het selecteerd een nieuwe datum
+     * Diese Funktion behandelt die Interaktion, wenn auf einen Tag geklickt wird. Sie wählt ein neues Datum aus.
      * 
      * @param {MouseEvent} e
      */
@@ -132,15 +88,16 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
-     * deze functie returns de maand dagen als een html element
+     * Diese Funktion gibt die Monatstage als HTML-Element zurück.
      * 
-     * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is december
+     * @param {number} month Der Monat wird hier von 0-11 gespeichert, also 0 ist Januar und 11 ist Dezember.
      * @param {number} year
      * @returns {Element[]}
      */
     function getGridObject(month,year){
+        console.log(month,year);
         const calDays = getCalDays(month,year)
-        const tableData = []
+        const tableData = [];
         
         for(let i = 0; i < 6; i++){
             tableData.push(
@@ -155,61 +112,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             )
         }
 
-        return tableData
-    }
-
-    /**
-     * deze functie wordt gebruikt om de maand getal om te zetten naar een string zodat het in de html code gezet kan worden
-     * 
-     * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is december
-     * @returns {string}
-     */
-    function getMonthName(month){
-        const months = [
-            "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
-        ];
-        return months[month];
-    }
-
-    /**
-     * deze functie wordt angeroepen als de gebruiker op de nextMonth btn clickt dat wordt de Calender geupdate met de dagen van de volgende maand
-     * 
-     * @param {MouseEvent} e
-     */
-    function nextMonthBtn(e){
-        e.preventDefault()
-
-        if(selectedMonth==11){
-            setSelectedMonth(0)
-            setSelectedMonthName(getMonthName(selectedMonth))
-            setSelectedYear(selectedYear + 1)
-        }else{
-            setSelectedMonth(selectedMonth + 1)
-            setSelectedMonthName(getMonthName(selectedMonth))
-        }
-
-        setGrid(getGridObject(selectedMonth,selectedYear))
-    }
-
-    /**
-     * deze functie wordt angeroepen als de gebruiker op de previusMonth btn clickt dat wordt de Calender geupdate met de dagen van de vorige maand
-     * 
-     * @param {MouseEvent} e
-     */
-    function previusMonthBtn(e){
-        e.preventDefault()
-
-        if(selectedMonth==0){
-            setSelectedMonth(11)
-            setSelectedMonthName(getMonthName(selectedMonth))
-            setSelectedYear(selectedYear - 1)
-        }else{
-            setSelectedMonth(selectedMonth - 1)
-            setSelectedMonthName(getMonthName(selectedMonth))
-        }
-
-        setGrid(getGridObject(selectedMonth,selectedYear))
+        return tableData;
     }
 
     return(
@@ -227,21 +130,6 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                             </a>
                         </div>
                     </div>
-                    <div className="days">
-                        <div className="day-labels">
-                            {['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'].map((day) => (
-                                <div className="day-label">
-                                    <span>{day}</span>
-                                </div>
-                            ))}
-                        </div>
-                        <table className="calender-days">
-                            {calenderGridObject}
-                        </table>
-                    </div>
-                </div>
-                <div className="column">
-                    
                 </div>
             </div>
         </div>

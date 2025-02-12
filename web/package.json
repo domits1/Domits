@@ -123,6 +123,7 @@
     "react-spinners": "^0.15.0",
     "react-twitter-embed": "^4.0.4",
     "recharts": "^2.12.7",
+    "sass-loader": "^16.0.4",
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
     "swiper": "^11.1.14",
