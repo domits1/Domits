@@ -184,7 +184,7 @@ function App() {
                                     <Route path="/listingdetails" element={<ListingDetails />} />
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                                    <Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />
+                                    <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />

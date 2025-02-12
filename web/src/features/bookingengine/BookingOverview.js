@@ -318,18 +318,20 @@ const BookingOverview = () => {
                     </div>
 
                     <div className="detail-row">
-                        <span className="detail-label">Cleaning Fee:</span>
+                        <span className="detail-label">Cleaning fee:</span>
                         <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
-                        <span className="detail-label">Service Fee:</span>
+                        <span className="detail-label">Service fee:</span>
                         <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
                     </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Domits fee:</span>
-                        <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
-                    </div>
+
+                    {/* Service fee of Domits unknown */}
+                    {/* <div className="row">
+                        <p>Domits fee:</p>
+                        <p>€ {accommodationDetails?.DomitsFee || "0"}</p>
+                    </div> */}
 
                     <div className="detail-row total-price">
                         <span className="detail-label">Total:</span>

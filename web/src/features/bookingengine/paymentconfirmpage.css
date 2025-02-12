@@ -21,6 +21,18 @@
     width: 8vh;
 }
 
+.left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    width: 100%;
+    max-width: 400px;
+    justify-content: center;
+}
+
 .resend-confirmation {
     color: #4CAF50;
     cursor: pointer;
@@ -28,10 +40,13 @@
 }
 
 .priceContainer {
-    border: 2px solid black;
-    padding: 15px;
-    border-radius: 10px;
-    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px;
 }
 
 .priceContainer h3{

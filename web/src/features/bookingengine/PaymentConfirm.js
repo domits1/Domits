@@ -81,7 +81,7 @@ const PaymentConfirm = () => {
 
                 if (response.ok) {
                     console.log("Booking stored successfully! Redirecting...");
-                    navigate(`/bookingconfirmationoverview?paymentID=${paymentID}`);
+                    navigate(`/paymentconfirmpage?paymentID=${paymentID}`);
                 } else {
                     const errorMessage = await response.text();
                     console.error("Failed to store booking:", errorMessage);
