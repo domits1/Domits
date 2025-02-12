@@ -38,7 +38,7 @@
     padding: 5px;
     font-size: 14px;
     text-align: center;
-    border-color: #000000;
+    border-color: #000;
     border-radius: 1rem;
   }
   .filter-select-option {
@@ -69,5 +69,10 @@
   
   .show-more-text:hover {
     text-decoration: none; 
+  }
+  .FilterTitle{
+    color: #000;
+    font-size: 1rem;
+    font-weight: 500;
   }
   

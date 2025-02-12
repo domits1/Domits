@@ -71,12 +71,6 @@
   /* background-color: #f9f9f9; */
 }
 
-.filter-section h3 {
-  margin-bottom: 10px;
-  font-size: 1.2rem;
-  color: #555;
-}
-
 /* Price Display */
 .price-display {
   display: flex;

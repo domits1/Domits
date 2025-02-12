@@ -57,11 +57,26 @@ const FilterModal = () => {
     });
   };
 
+  const [selectedRatings, setSelectedRatings] = useState({
+    1: false,
+    2: false,
+    3: false,
+    4: false,
+    5: false,
+  });
+
+  const handleRatingChange = (event) => {
+    setSelectedRatings({
+      ...selectedRatings,
+      [event.target.name]: event.target.checked,
+    });
+  };
+
   return (
     <div>
       {/* Prijsfilter met border */}
       <div className="filter-section">
-        <h3>Price Range</h3>
+        <div className='FilterTitle'>Price Range</div>
         <div className="slider-container">
           <Slider
             sx={{
@@ -98,7 +113,7 @@ const FilterModal = () => {
                 type="text"
                 value={`€${priceValues[0] || ''}`}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, ''); 
+                  const value = e.target.value.replace(/[^0-9]/g, '');
                   handleInputChange(0, value);
                 }}
               />
@@ -109,7 +124,7 @@ const FilterModal = () => {
                 type="text"
                 value={`€${priceValues[1] || ''}`}
                 onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, ''); 
+                  const value = e.target.value.replace(/[^0-9]/g, '');
                   handleInputChange(1, value);
                 }}
               />
@@ -120,7 +135,7 @@ const FilterModal = () => {
 
       {/* Facility filter met checkboxes */}
       <div className="filter-section">
-        <h3>Facilities</h3>
+        <div className='FilterTitle'>Facilities</div>
         <div className="facility-list">
           {Object.keys(selectedFacilities).slice(0, 5).map((facility) => (
             <label key={facility} className="facility-item">
@@ -160,7 +175,7 @@ const FilterModal = () => {
 
       {/* Property type filter met checkboxes */}
       <div className="filter-section">
-        <h3>Property Type</h3>
+        <div className='FilterTitle'>Property Type</div>
         <div className="facility-list">
           {Object.keys(selectedPropertyTypes).slice(0, 5).map((propertyType) => (
             <label key={propertyType} className="facility-item">
@@ -191,39 +206,30 @@ const FilterModal = () => {
               ))}
         </div>
         {/* Functie om meer opties aan gebruiker te laten tonen */}
-       
+        <span
+          onClick={() => setShowMorePropertyTypes(!showMorePropertyTypes)}
+          className="show-more-text"
+        >
+          {showMorePropertyTypes ? 'Show Less' : 'Show More'}
+        </span>
       </div>
 
+      {/* Rating filter met checkboxes */}
       <div className="filter-section">
-        <h3>Property rating</h3>
+        <div className='FilterTitle'>Property Rating</div>
         <div className="facility-list">
-          {Object.keys(selectedFacilities).slice(0, 5).map((facility) => (
-            <label key={facility} className="facility-item">
+          {Object.keys(selectedRatings).map((rating) => (
+            <label key={rating} className="facility-item">
               <input
                 type="checkbox"
-                name={facility}
-                checked={selectedFacilities[facility]}
-                onChange={handleFacilityChange}
+                name={rating}
+                checked={selectedRatings[rating]}
+                onChange={handleRatingChange}
                 className="filter-select-option"
               />
-              {facility.charAt(0).toUpperCase() + facility.slice(1)}
+              {rating} Star{rating > 1 ? 's' : ''}
             </label>
           ))}
-          {showMoreFacilities &&
-            Object.keys(selectedFacilities)
-              .slice(5)
-              .map((facility) => (
-                <label key={facility} className="facility-item">
-                  <input
-                    type="checkbox"
-                    name={facility}
-                    checked={selectedFacilities[facility]}
-                    onChange={handleFacilityChange}
-                    className="filter-select-option"
-                  />
-                  {facility.charAt(0).toUpperCase() + facility.slice(1)}
-                </label>
-              ))}
         </div>
       </div>
     </div>
