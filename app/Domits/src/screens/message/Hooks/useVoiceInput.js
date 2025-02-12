@@ -17,7 +17,7 @@ const useVoiceInput = (setUserInput) => {
             const onSpeechStart = () => setIsRecording(true);
             const onSpeechEnd = () => setIsRecording(false);
             const onSpeechResults = (event) => {
-                console.log('Speech results event:', event);
+                
                 if (event.value && event.value.length > 0) {
                     setUserInput(event.value[0]);
                 } else {
