@@ -43,8 +43,8 @@ Cypress.Commands.add('loginAsHost', () => {
   cy.wait(500);
   cy.get('.personalMenuDropdown').click();
   cy.contains('button', 'Login').click();
-  cy.get('input[name="email"]').type('kacperfl29@gmail.com');
-  cy.get('input[name="password"]').type('Kacper2911');
+  cy.get('input[name="email"]').type('');
+  cy.get('input[name="password"]').type('');
   cy.get('.loginButton').click();
   cy.wait(3000);
   cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard');
