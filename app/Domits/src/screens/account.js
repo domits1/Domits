@@ -10,6 +10,7 @@ import {
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
 import {signOut} from '@aws-amplify/auth';
+import DeleteAccount from '../features/auth/DeleteAccount';
 
 const Account = () => {
   const navigation = useNavigation();
@@ -45,9 +46,15 @@ const Account = () => {
   } else {
     return (
       <SafeAreaView style={styles.items}>
-        <Text>Account Screen.</Text>
-        <TouchableOpacity onPress={() => handleLogout()}>
+        <TouchableOpacity
+          onPress={() => handleLogout()}
+          style={styles.listItem}>
           <Text>Logout</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => DeleteAccount(user.userId, navigation)}
+          style={styles.listItem}>
+          <Text>Delete Account</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -59,6 +66,15 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  listItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
 });
 
