@@ -61,6 +61,16 @@ const BookingConfirmationOverview = () => {
         return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
       };
 
+      const calculateTotalPrice = (bookingDetails) => {
+        const price = parseFloat(bookingDetails?.Price) || 0;
+        const taxes = parseFloat(bookingDetails?.Taxes) || 0;
+        const cleaningFee = parseFloat(bookingDetails?.CleaningFee) || 0;
+        const serviceFee = parseFloat(bookingDetails?.ServiceFee) || 0;
+    
+        return price + taxes + cleaningFee + serviceFee;
+    };
+    
+
     if (loading) return <p>Loading booking details...</p>;
     if (error) return <p>{error}</p>
 
@@ -118,10 +128,10 @@ const BookingConfirmationOverview = () => {
 
                     <div className="price-breakdown">
 
-                        {/* <div className="row">
+                        <div className="row">
                             <p>Price</p>
                             <p>€ {bookingDetails?.Price}</p>
-                        </div> */}
+                        </div>
                         <div className="row">
                             <p>Taxes</p>
                             <p>€ {bookingDetails?.Taxes}</p>
@@ -145,13 +155,7 @@ const BookingConfirmationOverview = () => {
                     <div className="total-price">
                         <strong>Total:</strong>
                         <strong></strong>
-                        {/* <strong>€ {(
-                            (isNaN(parseFloat(bookingDetails?.Price)) ? 0 : parseFloat(bookingDetails?.Price)) +
-                            (isNaN(parseFloat(accommodationDetails?.CleaningFee)) ? 0 : parseFloat(accommodationDetails?.CleaningFee)) +
-                            (isNaN(parseFloat(bookingDetails?.ServiceFee)) ? 0 : parseFloat(bookingDetails?.ServiceFee)) +
-                            (isNaN(parseFloat(bookingDetails?.Taxes)) ? 0 : parseFloat(bookingDetails?.Taxes))
-                        ).toFixed(2)}</strong> */}
-                         <p>€ {bookingDetails?.Price}</p>
+                        <strong>€ {calculateTotalPrice(bookingDetails)}</strong>
                     </div>
 
                 </div>
