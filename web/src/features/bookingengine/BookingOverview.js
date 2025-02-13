@@ -322,12 +322,12 @@ const BookingOverview = () => {
 
                     <div className="detail-row">
                         <span className="detail-label">Cleaning fee:</span>
-                        <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                        <span className="detail-value">€ {(cleaningFee).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
                         <span className="detail-label">Service fee:</span>
-                        <span className="detail-value">€ {(ServiceFee / 100).toFixed(2)}</span>
+                        <span className="detail-value">€ {(ServiceFee).toFixed(2)}</span>
                     </div>
 
                     {/* Service fee of Domits unknown */}
