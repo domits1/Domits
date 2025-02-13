@@ -44,6 +44,8 @@ import GuestBooking from './features/guestdashboard/GuestBooking';
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
+import GuestWishlistPage from "./features/guestdashboard/pages/GuestWishlistPage";
+
 import Chat from "./features/guestdashboard/chat/Chat.js";
 import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./features/chatwidget/ChatWidget";
@@ -210,6 +212,7 @@ function App() {
                           <Route path="reviews" element={<GuestReviews />} />
                           <Route path="bookings" element={<GuestBooking />} />
                           <Route path="settings" element={<GuestSettings />} />
+                          <Route path="wishlist" element={<GuestWishlistPage />} />
                           <Route path="chat" element={<Chat />} />
                         </Routes>
                       </GuestProtectedRoute>
