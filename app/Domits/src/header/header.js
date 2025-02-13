@@ -1,75 +1,70 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/AntDesign';
+import {Image, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import EntypoIcon from 'react-native-vector-icons/Entypo';
-import FeatherIcon from 'react-native-vector-icons/Feather';
-import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
-import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import IoniconsIcon from 'react-native-vector-icons/Ionicons';
-import SearchBarApp from '../header/SearchBarApp';
+
 function Header() {
-  const navigation = useNavigation();
+    const navigation = useNavigation();
 
-  const handleBookingsPress = () => {
-    navigation.navigate('Bookings');
-  };
+    const handleBookingsPress = () => {
+        navigation.navigate('Bookings');
+    };
 
-  return (
-    <View style={styles.headerContainer}>
-      <View style={styles.contentContainer}>
-        <View style={styles.squareContainer}>
-          <TouchableOpacity
-            onPress={handleBookingsPress}
-            style={styles.itemContainer}>
-            <EntypoIcon name="location" size={30} color="black" />
-            <Text style={styles.itemText}>Bookings</Text>
-          </TouchableOpacity>
+    return (
+        <View style={styles.headerContainer}>
+            <View style={styles.contentContainer}>
+                <View style={styles.squareContainer}>
+                    <TouchableOpacity
+                        onPress={handleBookingsPress}
+                        style={styles.itemContainer}>
+                        <Image source={require('../images/icons/app-bookings-icon-black.png')}/>
+                        <Text style={styles.itemText}>Bookings</Text>
+                    </TouchableOpacity>
+                </View>
+            </View>
         </View>
-      </View>
-    </View>
-  );
+    );
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    flex: 1,
-
-    backgroundColor: '#f0f0f0',
-  },
-  contentContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
-  },
-  squareContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 10,
-    marginTop: 15,
-  },
-  itemContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-    width: 64,
-    height: 64,
-    backgroundColor: 'white',
-    margin: 10,
-    borderRadius: 12,
-    marginHorizontal: 15,
-  },
-  itemText: {
-    color: 'black',
-    fontFamily: 'MotivaSansRegular.woff',
-  },
+    headerContainer: {
+        flex: 1,
+        backgroundColor: '#ffffff',
+        elevation: 2,
+    },
+    contentContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginHorizontal: 20,
+    },
+    squareContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-around',
+        width: '100%',
+        paddingHorizontal: 10,
+        marginTop: 15,
+    },
+    itemContainer: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        width: 64,
+        height: 64,
+        backgroundColor: 'white',
+        margin: 10,
+        borderRadius: 12,
+        marginHorizontal: 15,
+        // iOS shadow properties
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.23,
+        shadowRadius: 2.62,
+        // Android shadow properties
+        elevation: 2,
+    },
+    itemText: {
+        color: 'black',
+        fontFamily: 'MotivaSansRegular.woff',
+    },
 });
 
 export default Header;
