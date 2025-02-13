@@ -63,6 +63,7 @@ export default function usePhotos() {
       }
     });
   };
+  
 
   const deleteImage = (index) => {
     setImages((prev) => {
@@ -81,6 +82,7 @@ export default function usePhotos() {
     });
     toast.info("🔄 Afbeeldingen opnieuw gerangschikt.");
   };
+  
 
   return {
     images,
