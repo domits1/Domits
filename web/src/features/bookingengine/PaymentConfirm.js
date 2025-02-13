@@ -23,6 +23,7 @@ const PaymentConfirm = () => {
         const cleaningFee = queryParams.get("cleaningFee");
         const amountOfGuest = queryParams.get("amountOfGuest");
         const taxes = queryParams.get("taxes");
+        const ServiceFee = queryParams.get("ServiceFee");
 
         console.log("🔍 Extracted Query Params:", {
             paymentID,
@@ -36,7 +37,8 @@ const PaymentConfirm = () => {
             endDate,
             cleaningFee,
             amountOfGuest,
-            taxes
+            taxes,
+            ServiceFee
         });
 
         if (!userId || !accommodationId || !ownerId || !State || !price) {
@@ -61,7 +63,8 @@ const PaymentConfirm = () => {
             endDate,
             cleaningFee,
             amountOfGuest,
-            taxes
+            taxes,
+            ServiceFee
         };
 
         console.log("📤 Booking Payload Ready:", JSON.stringify(payload, null, 2));

@@ -51,6 +51,8 @@ const BookingConfirmationOverview = () => {
                 setLoading(false);
             }
         };
+
+        console.log(bookingDetails)
         fetchBookingDetails();
     }, [location]);
 
@@ -116,11 +118,11 @@ const BookingConfirmationOverview = () => {
 
                     <div className="price-breakdown">
 
-                        <div className="row">
+                        {/* <div className="row">
                             <p>Price</p>
                             <p>€ {bookingDetails?.Price}</p>
-                        </div>
-                        {/* <div className="row">
+                        </div> */}
+                        <div className="row">
                             <p>Taxes</p>
                             <p>€ {bookingDetails?.Taxes}</p>
                         </div>
@@ -130,25 +132,28 @@ const BookingConfirmationOverview = () => {
                         </div>
 
                         <div className="row">
-                            <p>Domits service fee:</p>
-                            <p>€ {accommodationDetails?.ServiceFee || "0"}</p>
-                        </div> */}
+                            <p>Domit service fee:</p>
+                            <p>€ {bookingDetails?.ServiceFee}</p>
+                        </div>
                         {/* Service fee of Domits unknown */}
                         {/* <div className="row">
                             <p>Domits fee:</p>
                             <p>€ {accommodationDetails?.DomitsFee || "0"}</p>
                         </div> */}
                     </div>
-{/* 
+
                     <div className="total-price">
                         <strong>Total:</strong>
-                        <strong>€ {(
+                        <strong></strong>
+                        {/* <strong>€ {(
                             (isNaN(parseFloat(bookingDetails?.Price)) ? 0 : parseFloat(bookingDetails?.Price)) +
                             (isNaN(parseFloat(accommodationDetails?.CleaningFee)) ? 0 : parseFloat(accommodationDetails?.CleaningFee)) +
                             (isNaN(parseFloat(bookingDetails?.ServiceFee)) ? 0 : parseFloat(bookingDetails?.ServiceFee)) +
                             (isNaN(parseFloat(bookingDetails?.Taxes)) ? 0 : parseFloat(bookingDetails?.Taxes))
-                        ).toFixed(2)}</strong>
-                    </div> */}
+                        ).toFixed(2)}</strong> */}
+                         <p>€ {bookingDetails?.Price}</p>
+                    </div>
+
                 </div>
 
                 <button className="view-booking-button" onClick={() => navigate("/guestdashboard/bookings")}>

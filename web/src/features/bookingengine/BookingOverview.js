@@ -41,10 +41,10 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('adults'), 10);
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
-    const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100;
+    const cleaningFee = parseFloat(searchParams.get('cleaningFee'));
     const amountOfGuest = searchParams.get('amountOfGuest');
     const taxes = parseFloat(searchParams.get('taxes')); 
-    const serviceFee = parseFloat(searchParams.get('serviceFee')) * 100;
+    const ServiceFee = parseFloat(searchParams.get('ServiceFee'));
 
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
@@ -161,7 +161,7 @@ const BookingOverview = () => {
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
         // const totalAmount = Math.round(basePrice * 1.15 + cleaningFee + taxes);
-        const totalAmount = Math.round(basePrice + cleaningFee + serviceFee + taxes * 100);
+        const totalAmount = Math.round(basePrice + cleaningFee * 100 + ServiceFee * 100 + taxes * 100);
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -177,7 +177,8 @@ const BookingOverview = () => {
             endDate,
             cleaningFee,
             amountOfGuest,
-            taxes
+            taxes,
+            ServiceFee
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
@@ -191,7 +192,8 @@ const BookingOverview = () => {
             endDate,
             cleaningFee,
             amountOfGuest,
-            taxes
+            taxes,
+            ServiceFee
         }).toString();
 
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
@@ -325,7 +327,7 @@ const BookingOverview = () => {
 
                     <div className="detail-row">
                         <span className="detail-label">Service fee:</span>
-                        <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
+                        <span className="detail-value">€ {(ServiceFee / 100).toFixed(2)}</span>
                     </div>
 
                     {/* Service fee of Domits unknown */}
@@ -337,11 +339,11 @@ const BookingOverview = () => {
                     <div className="detail-row total-price">
                         <span className="detail-label">Total:</span>
                         {/* <span className="detail-value">
-                        € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + serviceFee / 100).toFixed(2)}
+                        € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + ServiceFee / 100).toFixed(2)}
                         </span> */}
 
                         <span className="detail-value">
-                            € {(accommodationPrice + cleaningFee / 100 + taxes + serviceFee / 100).toFixed(2)}
+                            € {(accommodationPrice + cleaningFee / 100 + taxes + ServiceFee).toFixed(2)}
                         </span>
                     </div>
                 </div>  
