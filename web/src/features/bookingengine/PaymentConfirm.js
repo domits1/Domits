@@ -1,36 +1,35 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { v4 as uuidv4 } from "uuid";
 
 const PaymentConfirm = () => {
     const location = useLocation();
     const navigate = useNavigate();
-    const [accommodationTitle, setAccommodationTitle] = useState('');
+    const [accommodationTitle, setAccommodationTitle] = useState("");
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
-        const ID = queryParams.get('paymentID');
-        const userId = queryParams.get('userId');
-        const accommodationId = queryParams.get('accommodationId');
-        const rawAccommodationTitle = queryParams.get('accommodationTitle');
-        const ownerId = queryParams.get('ownerId');
-        const State = queryParams.get('State');
-        const price = queryParams.get('price');
-        const startDate = queryParams.get('startDate');
-        const endDate = queryParams.get('endDate');
-        const cleaningFee = queryParams.get('cleaningFee');
-        const amountOfGuest = queryParams.get('amountOfGuest');
-        const taxes = queryParams.get('taxes');
 
+        const paymentID = queryParams.get("paymentID") || uuidv4(); 
+        const userId = queryParams.get("userId");
+        const accommodationId = queryParams.get("accommodationId");
+        const rawAccommodationTitle = queryParams.get("accommodationTitle");
+        const ownerId = queryParams.get("ownerId");
+        const State = queryParams.get("State");
+        const price = queryParams.get("price");
+        const startDate = queryParams.get("startDate");
+        const endDate = queryParams.get("endDate");
+        const cleaningFee = queryParams.get("cleaningFee");
+        const amountOfGuest = queryParams.get("amountOfGuest");
+        const taxes = queryParams.get("taxes");
+        const ServiceFee = queryParams.get("ServiceFee");
 
-        // Decode the accommodationTitle
-        const decodedAccommodationTitle = decodeURIComponent(rawAccommodationTitle);
-        setAccommodationTitle(decodedAccommodationTitle);
-
-        const payload = {
-            ID,
+        console.log("🔍 Extracted Query Params:", {
+            paymentID,
             userId,
             accommodationId,
-            accommodationTitle: decodedAccommodationTitle, // Ensure to use the decoded title
+            rawAccommodationTitle,
             ownerId,
             State,
             price,
@@ -38,35 +37,72 @@ const PaymentConfirm = () => {
             endDate,
             cleaningFee,
             amountOfGuest,
-            taxes
+            taxes,
+            ServiceFee
+        });
+
+        if (!userId || !accommodationId || !ownerId || !State || !price) {
+            console.error("❌ Missing required booking fields!");
+            setError("Missing required booking details.");
+            return;
+        }
+
+        const decodedAccommodationTitle = rawAccommodationTitle ? decodeURIComponent(rawAccommodationTitle) : "Unknown";
+        setAccommodationTitle(decodedAccommodationTitle);
+
+        const payload = {
+            ID: paymentID,  
+            paymentID, 
+            userId,
+            accommodationId,
+            accommodationTitle: decodedAccommodationTitle,
+            ownerId,
+            State,
+            price,
+            startDate,
+            endDate,
+            cleaningFee,
+            amountOfGuest,
+            taxes,
+            ServiceFee
         };
 
-        const storeData = async () => {
+        console.log("📤 Booking Payload Ready:", JSON.stringify(payload, null, 2));
+
+        const storeBooking = async () => {
             try {
-                const response = await fetch('https://3zkmgnm6g6.execute-api.eu-north-1.amazonaws.com/dev/store-checkout', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(payload)
-                });
-                console.log(payload)
+                const response = await fetch(
+                    "https://enpt37588f.execute-api.eu-north-1.amazonaws.com/default/store-booking",
+                    {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload),
+                    }
+                );
+
+                console.log("📡 API Response Status:", response.status);
+
                 if (response.ok) {
-                    navigate('/bookingconfirmationoverview');
+                    console.log("Booking stored successfully! Redirecting...");
+                    navigate(`/paymentconfirmpage?paymentID=${paymentID}`);
                 } else {
-                    console.error('Failed to store data:', response.statusText);
+                    const errorMessage = await response.text();
+                    console.error("Failed to store booking:", errorMessage);
+                    setError("Failed to store booking. Please try again.");
                 }
             } catch (error) {
-                console.error('Error storing data:', error);
+                console.error("Error storing booking:", error);
+                setError("An error occurred while storing your booking.");
             }
         };
 
-        storeData();
-    }, [location]);
+        storeBooking();
+    }, [location, navigate]);
 
     return (
         <div>
             <h1>Processing Payment...</h1>
+            {error && <p style={{ color: "red" }}>{error}</p>}
         </div>
     );
 };

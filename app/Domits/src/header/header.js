@@ -14,27 +14,31 @@ import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
 import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
 import IoniconsIcon from 'react-native-vector-icons/Ionicons';
 import SearchBarApp from '../header/SearchBarApp';
+import {useAuth} from '../context/AuthContext';
+
 function Header() {
   const navigation = useNavigation();
+  const {isAuthenticated} = useAuth();
 
   const handleBookingsPress = () => {
     navigation.navigate('Bookings');
   };
-
-  return (
-    <View style={styles.headerContainer}>
-      <View style={styles.contentContainer}>
-        <View style={styles.squareContainer}>
-          <TouchableOpacity
-            onPress={handleBookingsPress}
-            style={styles.itemContainer}>
-            <EntypoIcon name="location" size={30} color="black" />
-            <Text style={styles.itemText}>Bookings</Text>
-          </TouchableOpacity>
+  if (isAuthenticated) {
+    return (
+      <View style={styles.headerContainer}>
+        <View style={styles.contentContainer}>
+          <View style={styles.squareContainer}>
+            <TouchableOpacity
+              onPress={handleBookingsPress}
+              style={styles.itemContainer}>
+              <EntypoIcon name="location" size={30} color="black" />
+              <Text style={styles.itemText}>Bookings</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
-    </View>
-  );
+    );
+  }
 }
 
 const styles = StyleSheet.create({
