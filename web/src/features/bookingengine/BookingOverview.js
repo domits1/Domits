@@ -160,7 +160,6 @@ const BookingOverview = () => {
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
-        // const totalAmount = Math.round(basePrice * 1.15 + cleaningFee + taxes);
         const totalAmount = Math.round(basePrice + cleaningFee * 100 + ServiceFee * 100 + taxes * 100);
         const startDate = checkIn;
         const endDate = checkOut;
