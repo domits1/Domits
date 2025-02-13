@@ -145,11 +145,6 @@ const BookingConfirmationOverview = () => {
                             <p>Domit service fee:</p>
                             <p>€ {bookingDetails?.ServiceFee}</p>
                         </div>
-                        {/* Service fee of Domits unknown */}
-                        {/* <div className="row">
-                            <p>Domits fee:</p>
-                            <p>€ {accommodationDetails?.DomitsFee || "0"}</p>
-                        </div> */}
                     </div>
 
                     <div className="total-price">
