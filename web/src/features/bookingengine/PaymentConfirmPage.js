@@ -54,6 +54,11 @@ const BookingConfirmationOverview = () => {
         fetchBookingDetails();
     }, [location]);
 
+    const formatDate = (date) => {
+        if (!date) return "";
+        return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+      };
+
     if (loading) return <p>Loading booking details...</p>;
     if (error) return <p>{error}</p>
 
@@ -82,7 +87,9 @@ const BookingConfirmationOverview = () => {
 
                 <div className="confirmInformation">
                     <div>
-                        <h3>Booking Confirmed</h3>
+                    <h3>
+                    Booking {bookingDetails.Status === "Confirmed" ? "Confirmed" : bookingDetails.Status === "Failed" ? "Failed" : "Pending"}
+                    </h3>
                         <p><strong>Check-in:</strong> {accommodationDetails?.StartDate ? new Date(accommodationDetails.StartDate).toLocaleDateString() : 'N/A'}</p>
                         <p><strong>Check-out:</strong> {accommodationDetails?.EndDate ? new Date(accommodationDetails.EndDate).toLocaleDateString() : 'N/A'}</p>
                     </div>
@@ -102,8 +109,8 @@ const BookingConfirmationOverview = () => {
                         </div>
 
                     <div className="row">
-                            <p>Date</p>
-                            <p>{bookingDetails?.StartDate}-{bookingDetails?.EndDate}</p>
+                    <p>Date</p>
+                    <p>{formatDate(bookingDetails?.StartDate)} - {formatDate(bookingDetails?.EndDate)}</p>
                         </div>
                     </div>
 
@@ -113,7 +120,7 @@ const BookingConfirmationOverview = () => {
                             <p>Price</p>
                             <p>€ {bookingDetails?.Price}</p>
                         </div>
-                        <div className="row">
+                        {/* <div className="row">
                             <p>Taxes</p>
                             <p>€ {bookingDetails?.Taxes}</p>
                         </div>
@@ -123,16 +130,16 @@ const BookingConfirmationOverview = () => {
                         </div>
 
                         <div className="row">
-                            <p>Service fee:</p>
+                            <p>Domits service fee:</p>
                             <p>€ {accommodationDetails?.ServiceFee || "0"}</p>
-                        </div>
+                        </div> */}
                         {/* Service fee of Domits unknown */}
                         {/* <div className="row">
                             <p>Domits fee:</p>
                             <p>€ {accommodationDetails?.DomitsFee || "0"}</p>
                         </div> */}
                     </div>
-
+{/* 
                     <div className="total-price">
                         <strong>Total:</strong>
                         <strong>€ {(
@@ -141,7 +148,7 @@ const BookingConfirmationOverview = () => {
                             (isNaN(parseFloat(bookingDetails?.ServiceFee)) ? 0 : parseFloat(bookingDetails?.ServiceFee)) +
                             (isNaN(parseFloat(bookingDetails?.Taxes)) ? 0 : parseFloat(bookingDetails?.Taxes))
                         ).toFixed(2)}</strong>
-                    </div>
+                    </div> */}
                 </div>
 
                 <button className="view-booking-button" onClick={() => navigate("/guestdashboard/bookings")}>

@@ -43,7 +43,7 @@ const BookingOverview = () => {
     const pets = searchParams.get('pets');
     const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100;
     const amountOfGuest = searchParams.get('amountOfGuest');
-    const taxes = parseFloat(searchParams.get('taxes')) * 100;
+    const taxes = parseFloat(searchParams.get('taxes')); 
     const serviceFee = parseFloat(searchParams.get('serviceFee')) * 100;
 
 
@@ -160,7 +160,8 @@ const BookingOverview = () => {
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
-        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee + taxes);
+        // const totalAmount = Math.round(basePrice * 1.15 + cleaningFee + taxes);
+        const totalAmount = Math.round(basePrice + cleaningFee + serviceFee + taxes * 100);
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -314,7 +315,7 @@ const BookingOverview = () => {
 
                     <div className="detail-row">
                         <span className="detail-label">Taxes:</span>
-                        <span className="detail-value">€ {(taxes / 100).toFixed(2)}</span>
+                        <span className="detail-value">€ {(taxes).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
@@ -335,8 +336,12 @@ const BookingOverview = () => {
 
                     <div className="detail-row total-price">
                         <span className="detail-label">Total:</span>
-                        <span className="detail-value">
+                        {/* <span className="detail-value">
                         € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + serviceFee / 100).toFixed(2)}
+                        </span> */}
+
+                        <span className="detail-value">
+                            € {(accommodationPrice + cleaningFee / 100 + taxes + serviceFee / 100).toFixed(2)}
                         </span>
                     </div>
                 </div>  
