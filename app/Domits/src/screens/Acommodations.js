@@ -1,9 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import FetchAccommodationsData from '../features/search/FetchAccommodationsData'
 
 const Accommodations = ({searchResults}) => {
-    const [accolist, setAccolist] = useState([]);
+    const [accommodationsList, setAccommodationsList] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigation = useNavigation();
 
@@ -25,27 +26,10 @@ const Accommodations = ({searchResults}) => {
     };
 
     useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const response = await fetch(
-                    'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation',
-                );
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data');
-                }
-                const responseData = await response.json();
-                const data = JSON.parse(responseData.body);
-                setAccolist(formatData(data));
-            } catch (error) {
-                console.error('Error fetching or processing data:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
         if (searchResults && searchResults.length > 0) {
-            setAccolist(formatData(searchResults));
+            setAccommodationsList(formatData(searchResults));
         } else {
-            fetchData();
+            FetchAccommodationsData(setAccommodationsList, setLoading, formatData);
         }
     }, [searchResults]);
 
@@ -77,7 +61,7 @@ const Accommodations = ({searchResults}) => {
 
     return (
         <ScrollView contentContainerStyle={styles.container}>
-            {accolist.map(accommodation => (
+            {accommodationsList.map(accommodation => (
                 <TouchableOpacity
                     style={styles.card}
                     key={accommodation.id}
