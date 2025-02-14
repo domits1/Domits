@@ -1,7 +1,7 @@
 /**
- * Dit is geschreven door Marijn Klappe
+ * This is written by Marijn Klappe
  * 
- * als jij niet begrijpt wat hier gebreurd verander dan ook niks als er iets aan gepast moet worden berijk mij dan via discord --@marijn3--
+ * If you do not understand what is happening here, do not change anything. If something needs to be adjusted, contact me via discord --@marijn3--
  */
 import React, {useState} from "react";
 import leftArrowSVG from './left-arrow-calender.svg';
@@ -9,6 +9,7 @@ import rightArrowSVG from './right-arrow-calender.svg';
 import './Calendar.scss';
 
 /**
+ * CalendarComponent is a component that displays a calendar
  * 
  * @returns {JSX.Element}
  */
@@ -19,30 +20,30 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     const [calenderGridObject, setGrid] = useState(getGridObject(selectedMonth,selectedYear));
 
     /**
-     * convertToNumDate is een functie dat jaar maand en dag omzet is een enkel date getal
+     * convertToNumDate is a function that converts year, month, and day into a single date number
      * 
      * @param {number} year
-     * @param {number} month deze maand telling is 1-12 dus 1 is januari en 12 is december
+     * @param {number} month this month count is 1-12 so 1 is January and 12 is December
      * @param {number} day
-     * @returns {number} de return heeft een (jaar maand dag struct) b.v. 20250112 is 2025 jan 12
+     * @returns {number} the return has a (year month day structure) e.g. 20250112 is 2025 Jan 12
      */
     function convertToNumDate(year, month, day){
         return Number(`${year}${String(month).padStart(2, '0')}${String(day).padStart(2, '0')}`);
     }
 
     /**
-     * getCalDays is een functie die wordt gebruikt om de dag getallen op te halen van geselecteerde maand en jaar.
-     * deze dagen worden gebruikt om de calender dagen in te vullen
+     * getCalDays is a function used to retrieve the day numbers of the selected month and year.
+     * these days are used to fill in the calendar days
      * 
-     * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is decemnber
+     * @param {number} month the month is stored here from 0-11 so 0 is January and 11 is December
      * @param {number} year
-     * @returns {{date: number, day: number}[]} de date heeft een (jaar maand dag struct) b.v. 20250112 is 2025 jan 12
+     * @returns {{date: number, day: number}[]} the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
      */
     function getCalDays(month, year) {
         const dateArray = [];
     
         const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
-        const getDayOfWeek = (y, m, d) => (new Date(y, m, d).getDay() + 6) % 7; // 0 is maandag, 6 is zondag
+        const getDayOfWeek = (y, m, d) => (new Date(y, m, d).getDay() + 6) % 7; // 0 is Monday, 6 is Sunday
     
         let prevMonth = (month + 11) % 12;
         let prevYear = month === 0 ? year - 1 : year;
@@ -53,19 +54,19 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         let prevMonthLastDay = getDayOfWeek(prevYear, prevMonth, prevMonthDays);
         let daysInMonth = getDaysInMonth(year, month);
     
-        // Voeg de dagen van de vorige maand toe
+        // Add the days of the previous month
         for (let i = prevMonthDays - prevMonthLastDay; i <= prevMonthDays; i++) {
             dateArray.push({ date: convertToNumDate(prevYear, prevMonth + 1, i), day: i });
         }
     
-        // Voeg de dagen van de huidige maand toe
+        // Add the days of the current month
         for (let i = 1; i <= daysInMonth; i++) {
             dateArray.push({ date: convertToNumDate(year, month + 1, i), day: i });
         }
     
-        let remainingDays = 42 - dateArray.length; // Dit zorgt ervoor dat de kalender altijd 6 weken toont
+        let remainingDays = 42 - dateArray.length; // This ensures that the calendar always shows 6 weeks
     
-        // Voeg de dagen van de volgende maand toe
+        // Add the days of the next month
         for (let i = 1; i <= remainingDays; i++) {
             dateArray.push({ date: convertToNumDate(nextYear, nextMonth + 1, i), day: i });
         }
@@ -74,7 +75,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
-     * deze functie handeld de interactie af als er op een dag wordt geclickt het selecteerd een nieuwe datum
+     * this function handles the interaction when a day is clicked, it selects a new date
      * 
      * @param {MouseEvent} e
      */
@@ -87,14 +88,13 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
-     * deze functie returns de maand dagen als een html element
+     * this function returns the month days as an HTML element
      * 
-     * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is december
+     * @param {number} month the month is stored here from 0-11 so 0 is January and 11 is December
      * @param {number} year
      * @returns {Element[]}
      */
     function getGridObject(month,year){
-        console.log(month,year);
         const calDays = getCalDays(month,year)
         const tableData = []
         
@@ -115,9 +115,9 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
-     * deze functie wordt gebruikt om de maand getal om te zetten naar een string zodat het in de html code gezet kan worden
+     * this function is used to convert the month number to a string so it can be placed in the HTML code
      * 
-     * @param {number} month de maand wordt hier van 0-11 opgeslagen dus 0 is januari en 11 is december
+     * @param {number} month the month is stored here from 0-11 so 0 is January and 11 is December
      * @returns {string}
      */
     function getMonthName(month){
@@ -129,7 +129,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
-     * deze functie wordt angeroepen als de gebruiker op de nextMonth btn clickt dat wordt de Calender geupdate met de dagen van de volgende maand
+     * this function is called when the user clicks the nextMonth button, the Calendar is updated with the days of the next month
      * 
      * @param {MouseEvent} e
      */
@@ -146,7 +146,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
-     * deze functie wordt angeroepen als de gebruiker op de previusMonth btn clickt dat wordt de Calender geupdate met de dagen van de vorige maand
+     * this function is called when the user clicks the previousMonth button, the Calendar is updated with the days of the previous month
      * 
      * @param {MouseEvent} e
      */
