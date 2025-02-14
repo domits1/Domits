@@ -1,4 +1,4 @@
-import '../support/commands';
+import '../../support/commands';
 
 describe.skip('Web Host Promo codes', () => {
   it('should go to promo codes section', () => {

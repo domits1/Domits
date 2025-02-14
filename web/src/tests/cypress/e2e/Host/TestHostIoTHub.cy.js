@@ -1,4 +1,4 @@
-import '../support/commands';
+import '../../support/commands';
 
 describe.skip('Web Host IoT Hub', () => {
   it('should go to IoT Hub section', () => {

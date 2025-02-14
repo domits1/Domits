@@ -1,4 +1,4 @@
-import '../support/commands';
+import '../../support/commands';
 
 describe.skip('Web Host Screening', () => {
   it('should go to screening section', () => {
