@@ -1,0 +1,144 @@
+.container {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+}
+
+.sidebar {
+  padding: 50px;
+}
+
+.content {
+  flex-grow: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.propertyHeader {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 10px;
+  padding: 10px;
+  width: 100%;
+}
+
+.propertyHeader h1 {
+  margin: 0;
+  font-weight: bold;
+}
+
+.mainSection {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 2%;
+  width: 100%;
+  padding-top: 10px;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 50vh;
+  gap: 15px;
+  padding-top: 10px;
+}
+
+.left button {
+  text-align: left;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #ffffff;
+  padding: 16px;
+  width: 100%;
+  max-width: 400px;
+  transition: border 0.3s ease, background 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+
+.left button.activeButton {
+  border: 2px solid black;
+  background-color: #f5f5f5;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.left button:hover {
+  background-color: #f0f0f0;
+  /* border: 1px solid #bbb; */
+}
+
+.left button h4,
+.left button p {
+  margin: 5px 0;
+}
+
+.left button h4 {
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.switch {
+  display: flex;
+  border-radius: 20px;
+  background-color: #eaeaea;
+  padding: 5px;
+  width: auto;
+  gap: 10px;
+  position: relative;
+}
+
+.switch button {
+  border: none;
+  background: none;
+  padding: 10px 50px;
+  cursor: pointer;
+  font-weight: bold;
+  border-radius: 20px;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+.switch button.active {
+  background-color: #ffffff;
+  color: black;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.switch button:hover {
+  background-color: #f8f8f8;
+}
+
+.right {
+  flex-grow: 1;
+  background-color: #e0e0e0;
+  /* width: 100%; */
+  /* height: 100%; */
+  width: 10vh;
+  height: auto;
+  border-radius: 1vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.editBox {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  width: 80%;
+  max-width: 500px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.inputField {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 14px;
+}
