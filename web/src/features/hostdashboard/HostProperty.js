@@ -6,47 +6,14 @@ import Back from "@mui/icons-material/KeyboardBackspace";
 
 const HostProperty = () => {
   const [isLoading, setIsLoading] = useState(true);
-  const [accommodations, setAccommodations] = useState([]);
+  const [accommodationData, setAccommodationData] = useState(null);
   const [activeTab, setActiveTab] = useState("Details");
-  const [activeButton, setActiveButton] = useState(null);
-  const [userId, setUserId] = useState("USER_ID_HERE"); // Replace with actual user logic
-  const [selectedAccommodation, setSelectedAccommodation] = useState(null);
-  const [selectedFeature, setSelectedFeature] = useState(null);
-  const [inputValue, setInputValue] = useState("");
-
+  const [selectedSection, setSelectedSection] = useState(null);
   const location = useLocation();
   const params = new URLSearchParams(location.search);
   const accommodationID = params.get("ID");
 
-  useEffect(() => {
-    if (!userId) return;
-
-    const fetchAccommodations = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(
-          "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ OwnerId: userId }),
-          }
-        );
-
-        if (!response.ok) throw new Error("Failed to fetch accommodations");
-
-        const data = await response.json();
-        const parsedData = JSON.parse(data.body);
-        setAccommodations(Array.isArray(parsedData) ? parsedData : []);
-      } catch (error) {
-        console.error("Error fetching accommodations:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchAccommodations();
-  }, [userId]);
+  console.log("🔎 Extracted Accommodation ID from URL:", accommodationID);
 
   useEffect(() => {
     if (!accommodationID) return;
@@ -54,6 +21,7 @@ const HostProperty = () => {
     const fetchAccommodationByID = async () => {
       setIsLoading(true);
       try {
+        console.log("🔄 Fetching accommodation by ID:", accommodationID);
         const response = await fetch(
           "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation",
           {
@@ -63,14 +31,15 @@ const HostProperty = () => {
           }
         );
 
-        if (!response.ok) throw new Error("Failed to fetch accommodation by ID");
+        if (!response.ok) throw new Error("❌ Failed to fetch accommodation by ID");
 
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
 
-        setSelectedAccommodation(data);
+        console.log("✅ Accommodation data fetched:", data);
+        setAccommodationData(data);
       } catch (error) {
-        console.error("Error fetching accommodation by ID:", error);
+        console.error("❌ Error fetching accommodation by ID:", error);
       } finally {
         setIsLoading(false);
       }
@@ -78,18 +47,6 @@ const HostProperty = () => {
 
     fetchAccommodationByID();
   }, [accommodationID]);
-
-  const handleFeatureClick = (index, feature) => {
-    setActiveButton(index);
-    setSelectedFeature(feature);
-    setSelectedAccommodation(null); // Hide accommodation panel
-  };
-
-  const handleAccommodationClick = (index, acco) => {
-    setActiveButton(index);
-    setSelectedAccommodation(acco);
-    setSelectedFeature(null); // Hide feature panel
-  };
 
   return (
     <div className={styles.container}>
@@ -122,99 +79,131 @@ const HostProperty = () => {
 
             {activeTab === "Details" ? (
               <>
-                <button className={activeButton === 1 ? styles.activeButton : ""} onClick={() => handleFeatureClick(1, "Complete required steps")}>
-                  <h4>🔴 Complete required steps</h4>
-                  <p>Complete these final tasks to publish your listing and start getting bookings.</p>
-                </button>
-                <button className={activeButton === 2 ? styles.activeButton : ""} onClick={() => handleFeatureClick(2, "Fotos")}>
-                  <h4>Fotos</h4>
+                <button onClick={() => setSelectedSection("Photos")}>
+                  <h4>Photos</h4>
                   <p>Add extra photos to show people more of your accommodation.</p>
                 </button>
-                <button className={activeButton === 3 ? styles.activeButton : ""} onClick={() => handleFeatureClick(3, "Add a new room or space")}>
-                  <h4>Add a new room or space</h4>
-                  <p>2 bedrooms - 2 beds - 1 bathroom</p>
-                </button>
-                <button className={activeButton === 2 ? styles.activeButton : ""} onClick={() => handleFeatureClick(2, "Add extra photos to show people more of your accommodation.")}>
+                <button onClick={() => setSelectedSection("Add a new room or space")}>
+              <h4>Add a new room or space</h4>
+              <p style={{ display: "inline", marginRight: "8px" }}>
+                {accommodationData?.GuestAmount} guest -
+              </p>
+              <p style={{ display: "inline", marginRight: "8px" }}>
+                {accommodationData?.Bedrooms} bedrooms -
+              </p>
+              <p style={{ display: "inline" }}>
+                {accommodationData?.Beds} beds
+              </p>
+            </button>
+                <button onClick={() => setSelectedSection("Title")}>
                   <h4>Title</h4>
-                  <p>Add extra photos to show people more of your accommodation.</p>
+                  <p>{accommodationData ? accommodationData.Title : "No title available"}</p>
                 </button>
-                <button className={activeButton === 2 ? styles.activeButton : ""} onClick={() => handleFeatureClick(2, "Vila")}>
-                  <h4>Accommodation type</h4>
-                  <p>Vila</p>
+                <button onClick={() => setSelectedSection("AccommodationType")}>
+                  <h4>Accommodation Type</h4>
+                  <p>{accommodationData ? accommodationData.AccommodationType : "No type available"}</p>
                 </button>
-
-                {accommodations.length > 0 &&
-                  accommodations.map((acco, index) => (
-                    <button
-                      key={acco.ID || index}
-                      className={activeButton === index ? styles.activeButton : ""}
-                      onClick={() => handleAccommodationClick(index, acco)}
-                    >
-                      <h4>{acco.Title || "Untitled Property"}</h4>
-                      <p>
-                        {acco.Address
-                          ? `${acco.Address}, ${acco.City}, ${acco.Country}`
-                          : "No Address Available"}
-                      </p>
-                    </button>
-                  ))}
               </>
             ) : (
               <>
-                <button className={activeButton === 6 ? styles.activeButton : ""} onClick={() => handleFeatureClick(6, "Smoking Allowed")}>
+                <button onClick={() => setSelectedSection("Smoking")}>
                   <h4>Smoking</h4>
-                  <p>Enable or disable smoking in the property.</p>
+                  <p>{accommodationData?.AllowSmoking ? "Allowed" : "Not Allowed"}</p>
                 </button>
-                <button className={activeButton === 7 ? styles.activeButton : ""} onClick={() => handleFeatureClick(7, "Parties Allowed")}>
-                  <h4>Parties/events</h4>
-                  <p>Enable or disable parties/events in the property.</p>
+                <button onClick={() => setSelectedSection("Parties")}>
+                  <h4>Parties</h4>
+                  <p>{accommodationData?.AllowParties ? "Allowed" : "Not Allowed"}</p>
                 </button>
-                <button className={activeButton === 7 ? styles.activeButton : ""} onClick={() => handleFeatureClick(7, "Parties Allowed")}>
+                <button onClick={() => setSelectedSection("Pets")}>
                   <h4>Pets</h4>
-                  <p>Enable or disable Pets in the property.</p>
+                  <p>{accommodationData?.AllowPets ? "Allowed" : "Not Allowed"}</p>
+                </button>
+                <button onClick={() => setSelectedSection("CheckInOut")}>
+                  <h4>Check-in/out</h4>
+                  <p>Check-in: {accommodationData?.CheckIn ? `${accommodationData.CheckIn.From} - ${accommodationData.CheckIn.Til}` : "N/A"}</p>
+                  <p>Check-out: {accommodationData?.CheckOut ? `${accommodationData.CheckOut.From} - ${accommodationData.CheckOut.Til}` : "N/A"}</p>
                 </button>
               </>
             )}
           </div>
 
-          {/* ✅ Right Panel: Shows only ONE section at a time */}
           <div className={styles.right}>
-            {selectedFeature && (
+            {selectedSection && (
               <div className={styles.editBox}>
                 <h2>Edit Information</h2>
-                <label>Selected Feature:</label>
-                <p>{selectedFeature}</p>
-                <input
-                  type="text"
-                  value={selectedFeature}
-                  onChange={(e) => setSelectedFeature(e.target.value)}
-                  className={styles.inputField}
-                />
-              </div>
-            )}
-            {selectedAccommodation && (
-              <div className={styles.editBox}>
-                <h2>Edit Accommodation</h2>
-                <label>Title:</label>
-                <input
-                  type="text"
-                  value={selectedAccommodation.Title || "No Title"}
-                  onChange={(e) =>
-                    setSelectedAccommodation({ ...selectedAccommodation, Title: e.target.value })
-                  }
-                  className={styles.inputField}
-                />
-                <label>Address:</label>
-                <p>{selectedAccommodation.Address || "No Address"}</p>
+                <p>{selectedSection}</p>
 
-                <label>Bedrooms:</label>
-                <p>{selectedAccommodation.Bedrooms || "N/A"}</p>
+                {/* Display Information Based on the Selected Section */}
+                {selectedSection === "Photos" && (
+                  <div>
+                    {accommodationData?.Images && Object.values(accommodationData.Images).map((img, index) => (
+                      <img key={index} src={img} alt={`Image-${index}`} style={{ width: "100px", margin: "5px" }} />
+                    ))}
+                  </div>
+                )}
 
-                <label>Bathrooms:</label>
-                <p>{selectedAccommodation.Bathrooms || "N/A"}</p>
+                {selectedSection === "Title" && (
+                  <div>
+                    <label>Title:</label>
+                    <p>{accommodationData?.Title || "No title available"}</p>
+                  </div>
+                )}
 
-                <label>Rent:</label>
-                <p>${selectedAccommodation.Rent || "Not Specified"}</p>
+                {selectedSection === "AccommodationType" && (
+                  <div>
+                    <label>Accommodation Type:</label>
+                    <p>{accommodationData?.AccommodationType || "No type available"}</p>
+                  </div>
+                )}
+
+                {selectedSection === "Smoking" && (
+                  <div>
+                    <label>Smoking Policy:</label>
+                    <p>{accommodationData?.AllowSmoking ? "Allowed" : "Not Allowed"}</p>
+                  </div>
+                )}
+
+                {selectedSection === "Parties" && (
+                  <div>
+                    <label>Parties Policy:</label>
+                    <p>{accommodationData?.AllowParties ? "Allowed" : "Not Allowed"}</p>
+                  </div>
+                )}
+
+                {selectedSection === "Pets" && (
+                  <div>
+                    <label>Pets Policy:</label>
+                    <p>{accommodationData?.AllowPets ? "Allowed" : "Not Allowed"}</p>
+                  </div>
+                )}
+
+                {selectedSection === "CheckInOut" && (
+                  <div>
+                    <label>Check-in:</label>
+                    <p>
+                      {accommodationData?.CheckIn
+                        ? `${accommodationData.CheckIn.From} - ${accommodationData.CheckIn.Til}`
+                        : "N/A"}
+                    </p>
+                    <label>Check-out:</label>
+                    <p>
+                      {accommodationData?.CheckOut
+                        ? `${accommodationData.CheckOut.From} - ${accommodationData.CheckOut.Til}`
+                        : "N/A"}
+                    </p>
+                  </div>
+                )}
+
+                {selectedSection === "Add a new room or space" && (
+                  <div>
+                    <label>Guest Capacity:</label>
+                    <p>{accommodationData?.GuestAmount} guests</p>
+                    <label>Bedrooms:</label>
+                    <p>{accommodationData?.Bedrooms} bedrooms</p>
+                    <label>Beds:</label>
+                    <p>{accommodationData?.Beds} beds</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
