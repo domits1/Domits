@@ -8,15 +8,19 @@ import leftArrowSVG from './left-arrow-calender.svg';
 import rightArrowSVG from './right-arrow-calender.svg';
 import './Calendar.scss';
 
+let selectedDate = null
+let selectedDates = []
+let selectedMonth = new Date().getMonth()
+let selectedYear = new Date().getFullYear()
+
 /**
  * CalendarComponent is a component that displays a calendar
  * 
  * @returns {JSX.Element}
  */
 function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
-    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth())
-    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear())
-
+    const [selectedMonthState, setSelectedMonth] = useState(selectedMonth)
+    const [selectedYearState, setSelectedYear] = useState(selectedYear)
     const [calenderGridObject, setGrid] = useState(getGridObject(selectedMonth,selectedYear));
 
     /**
@@ -24,7 +28,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
      * 
      * @param {number} year
      * @param {number} month this month count is 1-12 so 1 is January and 12 is December
-     * @param {number} day
+     * @param {number} day 
      * @returns {number} the return has a (year month day structure) e.g. 20250112 is 2025 Jan 12
      */
     function convertToNumDate(year, month, day){
@@ -53,10 +57,12 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         let prevMonthDays = getDaysInMonth(prevYear, prevMonth);
         let prevMonthLastDay = getDayOfWeek(prevYear, prevMonth, prevMonthDays);
         let daysInMonth = getDaysInMonth(year, month);
-    
+        
         // Add the days of the previous month
-        for (let i = prevMonthDays - prevMonthLastDay; i <= prevMonthDays; i++) {
-            dateArray.push({ date: convertToNumDate(prevYear, prevMonth + 1, i), day: i });
+        if(prevMonthLastDay != 6) {
+            for (let i = prevMonthDays - prevMonthLastDay; i <= prevMonthDays; i++) {
+                dateArray.push({ date: convertToNumDate(prevYear, prevMonth + 1, i), day: i });
+            }
         }
     
         // Add the days of the current month
@@ -83,8 +89,43 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         e.preventDefault()
         const anchorElement = e.currentTarget
         let date = Number(anchorElement.getAttribute("dateNumber"))
+        selectedDate = date
+        setGrid(getGridObject(selectedMonth,selectedYear))
+    }
 
-        console.log(date)
+    /**
+     * this function is used to convert the date number to a date object
+     * 
+     * @param {number} date the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
+     * @returns {[number, number, number]} the return is a array with the year, month, and day the month is stored here from 0-11
+     */
+    function decodeDateNumber(date) {
+        const dateString = date.toString();
+        const year = parseInt(dateString.slice(0, 4), 10);
+        const month = parseInt(dateString.slice(4, 6), 10) - 1; // Subtract 1 to convert to 0-based month
+        const day = parseInt(dateString.slice(6, 8), 10);
+        return [year, month, day];
+    }
+
+    /**
+     * this function returns the class name of the day, this is used to style the day
+     * 
+     * @param {number} date the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
+     * @param {[number,number]} currentDate this is the current selected month and year month is stored as 0-11
+     * @returns {string}
+     */
+    function getDayClassName(date,currentDate){
+        let dayClass = ""
+        let dateDecode = decodeDateNumber(date)
+        if(dateDecode[1]!=currentDate[0]){
+            dayClass += "other-month"
+        }
+
+        if(date==selectedDate){
+            dayClass += " day-selected"
+        }
+        
+        return dayClass
     }
 
     /**
@@ -102,8 +143,9 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             tableData.push(
                 <tr>
                     {[...Array(7)].map((_, j) => (
-                        <td><a 
-                            dateNumber={calDays[i*7+j].date} 
+                        <td><a
+                            className={getDayClassName(calDays[i*7+j].date,[month,year])}
+                            dateNumber={calDays[i*7+j].date}
                             onClick={dayClick}
                             href="">{calDays[i*7+j].day}</a></td>
                     ))}
@@ -136,13 +178,22 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     function nextMonthBtn(e){
         e.preventDefault()
 
-        if(selectedMonth==11){
-            setSelectedMonth(0)
-            setSelectedYear(selectedYear + 1)
+        let newMonth = selectedMonthState
+        let newYear = selectedYearState
+
+        if(newMonth==11){
+            newMonth = 0;
+            newYear++;
         }else{
-            setSelectedMonth(selectedMonth + 1)
+            newMonth++;
         }
-        setGrid(getGridObject(selectedMonth,selectedYear))
+
+        selectedMonth = newMonth
+        selectedYear = newYear
+
+        setSelectedMonth(newMonth)
+        setSelectedYear(newYear)
+        setGrid(getGridObject(newMonth,newYear))
     }
 
     /**
@@ -153,13 +204,22 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     function previusMonthBtn(e){
         e.preventDefault()
 
-        if(selectedMonth==0){
-            setSelectedMonth(11)
-            setSelectedYear(selectedYear - 1)
+        let newMonth = selectedMonthState
+        let newYear = selectedYearState
+
+        if(newMonth==0){
+            newMonth = 11;
+            newYear--;
         }else{
-            setSelectedMonth(selectedMonth - 1)
+            newMonth--;
         }
-        setGrid(getGridObject(selectedMonth,selectedYear))
+
+        selectedMonth = newMonth
+        selectedYear = newYear
+
+        setSelectedMonth(newMonth)
+        setSelectedYear(newYear)
+        setGrid(getGridObject(newMonth,newYear))
     }
 
     return(
@@ -167,7 +227,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             <div className="calender">
                 <div className="column">
                     <div className="header">
-                        <h4>{getMonthName(selectedMonth)} {selectedYear}</h4>
+                        <h4>{getMonthName(selectedMonthState)} {selectedYearState}</h4>
                         <div className="btn-container">
                             <a href="" onClick={previusMonthBtn}>
                                 <img src={leftArrowSVG} alt="" />
@@ -179,7 +239,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                     </div>
                     <div className="days">
                         <div className="day-labels">
-                            {['ma', 'di', 'wo', 'do', 'vr', 'za', 'zo'].map((day) => (
+                            {['mo', 'tu', 'we', 'th', 'fr', 'sa', 'su'].map((day) => (
                                 <div className="day-label">
                                     <span>{day}</span>
                                 </div>

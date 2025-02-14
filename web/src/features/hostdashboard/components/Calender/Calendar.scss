@@ -1,12 +1,16 @@
 $border: 1px solid #D6D6D6;
+$other-month-color: #F8F8F8;
+$accent-color: #0084FF;
 
 .calender-container {
     display: flex;
     justify-content: center;
+    margin-top: 20px;
     .calender {
         border: $border;
         border-radius: 15px;
         overflow: hidden;
+        display: flex;
         .column {
             .header {
                 height: 50px;
@@ -18,6 +22,20 @@ $border: 1px solid #D6D6D6;
 
                 h4{
                     margin: 0;
+                }
+                .btn-container{
+                    display: flex;
+                    padding: 0 5px;
+                    gap: 5px;
+                    a{
+                        border: $border;
+                        border-radius: 5px;
+                        width: 38px;
+                        height: 38px;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                    }
                 }
             }
             .days {
@@ -39,6 +57,7 @@ $border: 1px solid #D6D6D6;
                             text-align: center;
                             width: 50%;
                             font-size: 10px;
+                            background-color: white;
                         }
                     }
                 }
@@ -59,7 +78,28 @@ $border: 1px solid #D6D6D6;
                                 display: flex;
                                 justify-content: center;
                                 align-items: center;
+                                text-decoration: none;
+                                position: relative;
+                                overflow: hidden;
+                                &.other-month{
+                                    background-color: $other-month-color;
+                                }
+                                &.day-selected{
+                    
+                                    &::before{
+                                        content: "";
+                                        position: absolute;
+                                        width: 20px;
+                                        height: 20px;
+                                        left: -10px;
+                                        top: -10px;
+                
+                                        background: $accent-color;
+                                        transform: rotate(-45deg);
+                                    }
+                                }
                             }
+                            
                         }
                     }
                 }
