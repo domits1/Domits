@@ -37,6 +37,7 @@
   gap: 2%;
   width: 100%;
   padding-top: 10px;
+  position: relative;
 }
 
 .left {
@@ -46,6 +47,7 @@
   width: 50vh;
   gap: 15px;
   padding-top: 10px;
+  position: relative;
 }
 
 .left button {
@@ -68,7 +70,6 @@
 
 .left button:hover {
   background-color: #f0f0f0;
-  /* border: 1px solid #bbb; */
 }
 
 .left button h4,
@@ -111,34 +112,71 @@
   background-color: #f8f8f8;
 }
 
+.left::after {
+  content: "";
+  position: absolute;
+  right: -20px;
+  top: 0;
+  height: 100%;
+  width: 2px;
+  background-color: #ccc;
+}
+
 .right {
   flex-grow: 1;
-  background-color: #e0e0e0;
-  /* width: 100%; */
-  /* height: 100%; */
-  width: 10vh;
+  background-color: #f8f8f8;
+  width: 40vw;
+  max-width: 500px;
   height: auto;
-  border-radius: 1vh;
+  border-radius: 10px;
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 20px;
+  position: relative;
 }
 
 .editBox {
   background: white;
   padding: 20px;
   border-radius: 10px;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-  width: 80%;
-  max-width: 500px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 400px;
   text-align: center;
-  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  position: relative;
+}
+
+.editBox h2 {
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  width: 100%;
+  border-bottom: 2px solid #ccc;
 }
 
 .inputField {
   width: 100%;
-  padding: 10px;
+  padding: 12px;
   border: 1px solid #ccc;
-  border-radius: 5px;
-  font-size: 14px;
+  border-radius: 8px;
+  font-size: 16px;
+  outline: none;
+  transition: border 0.3s ease;
+}
+
+.inputField:focus {
+  border-color: #007bff;
+}
+
+.full-width-line {
+  width: 100%;
+  height: 2px;
+  background-color: #ccc;
+  position: absolute;
+  bottom: -10px;
+  left: 0;
 }
