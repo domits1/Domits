@@ -1,4 +1,4 @@
-import '../support/commands';
+import '../../support/commands';
 
 describe('Landing Page Tests', () => {
     beforeEach(() => {

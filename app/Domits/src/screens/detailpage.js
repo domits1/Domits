@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
+  ToastAndroid,
 } from 'react-native';
 import FeatherIcon from 'react-native-vector-icons/Feather';
 import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
@@ -128,25 +129,14 @@ const Detailpage = ({route, navigation}) => {
     navigation.navigate('HomeScreen');
   };
 
-  const handleMessagesPress = () => {
-    const email = 'user1@example.com';
-    navigation.dispatch(
-      CommonActions.reset({
-        index: 0,
-        routes: [{name: 'Messages', params: {email}}],
-      }),
-    );
-  };
-
-  const handleSettingsPress = () => {
-    navigation.navigate('Settings');
-  };
   const handleonBoarding1Press = () => {
-    navigation.navigate('onBoarding1', {
-      accommodation,
-      parsedAccommodation,
-      images,
-    });
+  //TODO Remove ToastAndroid message after working booking system
+    ToastAndroid.show("Sorry, we currently do not accept bookings.", ToastAndroid.SHORT)
+//    navigation.navigate('onBoarding1', {
+//      accommodation,
+//      parsedAccommodation,
+//      images,
+//    });
   };
 
   const handleScroll = event => {
@@ -626,35 +616,6 @@ const Detailpage = ({route, navigation}) => {
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleHomeScreenPress}>
-            <Ionicons
-              name="chevron-back-outline"
-              size={24}
-              color="black"
-              style={styles.icon}
-            />
-          </TouchableOpacity>
-          <View style={styles.iconContainer}>
-            <TouchableOpacity onPress={handleMessagesPress}>
-              <FeatherIcon
-                name="message-square"
-                size={24}
-                color="black"
-                style={styles.icon1}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={handleSettingsPress}>
-              <FeatherIcon
-                name="settings"
-                size={24}
-                color="black"
-                style={styles.icon2}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-
         <View>
           <Text style={styles.text}>{parsedAccommodation.Title}</Text>
         </View>

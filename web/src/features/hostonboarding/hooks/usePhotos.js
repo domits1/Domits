@@ -14,6 +14,7 @@ export default function usePhotos() {
     };
     reader.readAsDataURL(file);
   };
+  
 
   const deleteImage = (index) => {
     setImages((prev) => {
@@ -50,6 +51,7 @@ export default function usePhotos() {
       reader.readAsDataURL(file);
     });
   };
+  
 
   return {
     images,

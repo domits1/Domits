@@ -1,4 +1,4 @@
-import '../support/commands';
+import '../../support/commands';
 
 describe.skip('Web Host Monitoring', () => {
   it('should go to monitoring section', () => {
