@@ -23,7 +23,6 @@ const BookingConfirmationOverview = () => {
                 return;
             }
 
-            console.log("Extracted Payment ID:", paymentID);
 
             try {
                 const response = await fetch(
@@ -52,7 +51,6 @@ const BookingConfirmationOverview = () => {
             }
         };
 
-        console.log(bookingDetails)
         fetchBookingDetails();
     }, [location]);
 

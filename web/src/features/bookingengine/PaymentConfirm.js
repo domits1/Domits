@@ -25,22 +25,6 @@ const PaymentConfirm = () => {
         const taxes = queryParams.get("taxes");
         const ServiceFee = queryParams.get("ServiceFee");
 
-        console.log("🔍 Extracted Query Params:", {
-            paymentID,
-            userId,
-            accommodationId,
-            rawAccommodationTitle,
-            ownerId,
-            State,
-            price,
-            startDate,
-            endDate,
-            cleaningFee,
-            amountOfGuest,
-            taxes,
-            ServiceFee
-        });
-
         if (!userId || !accommodationId || !ownerId || !State || !price) {
             console.error("❌ Missing required booking fields!");
             setError("Missing required booking details.");
@@ -67,8 +51,6 @@ const PaymentConfirm = () => {
             ServiceFee
         };
 
-        console.log("📤 Booking Payload Ready:", JSON.stringify(payload, null, 2));
-
         const storeBooking = async () => {
             try {
                 const response = await fetch(
@@ -80,10 +62,8 @@ const PaymentConfirm = () => {
                     }
                 );
 
-                console.log("📡 API Response Status:", response.status);
 
                 if (response.ok) {
-                    console.log("Booking stored successfully! Redirecting...");
                     navigate(`/paymentconfirmpage?paymentID=${paymentID}`);
                 } else {
                     const errorMessage = await response.text();
