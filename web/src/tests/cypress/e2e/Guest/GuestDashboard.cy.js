@@ -1,16 +1,11 @@
 import '../../support/commands'
 
-describe.skip('Landing Page Tests', () => {
+describe('Landing Page Tests', () => {
     beforeEach(() => {
         cy.viewport(1920, 1080);
     });
 
-    it('TODO: Fix API issue before enabling this test', function() {
-        this.skip(); // Prevent execution while keeping a reminder
-    });
-
-    it.skip('Should display the landing page and load key sections', () => {
-        // TODO: Change the API to the correct one because even though the name is changed, it still shows 'kacper' in Cypress tests.
+    it('Should display the landing page and load key sections', () => {
         cy.loginAsGuest();
         cy.get('.header-links > .headerHostButton').click();
         cy.get('.edit-icon-background').click();
@@ -31,9 +26,8 @@ describe.skip('Landing Page Tests', () => {
         });
     });
 
-    describe.skip('Guest Dashboard Initial Render', () => {
-        it.skip('should fetch and display user data', () => {
-            // TODO: Change the API to fetch the correct user information.
+    describe('Guest Dashboard Initial Render', () => {
+        it('should fetch and display user data', () => {
             cy.loginAsGuest();
             cy.intercept('GET', '**/currentUserInfo', {
                 statusCode: 200,
@@ -51,9 +45,8 @@ describe.skip('Landing Page Tests', () => {
         });
     });
 
-    describe.skip('Edit Button Toggle', () => {
-        it.skip('should toggle edit mode for email and name', () => {
-            // TODO: Investigate why edit mode is not toggling properly.
+    describe('Edit Button Toggle', () => {
+        it('should toggle edit mode for email and name', () => {
             cy.loginAsGuest();
             cy.get('.header-links > .headerHostButton').click();
             cy.wait(500);
