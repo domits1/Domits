@@ -7,6 +7,7 @@ import Back from "@mui/icons-material/KeyboardBackspace";
 const HostProperty = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [accommodationData, setAccommodationData] = useState(null);
+  const [editedData, setEditedData] = useState({});
   const [activeTab, setActiveTab] = useState("Details");
   const [selectedSection, setSelectedSection] = useState(null);
   const location = useLocation();
@@ -14,14 +15,13 @@ const HostProperty = () => {
   const accommodationID = params.get("ID");
 
   console.log("🔎 Extracted Accommodation ID from URL:", accommodationID);
-
+  
   useEffect(() => {
     if (!accommodationID) return;
 
     const fetchAccommodationByID = async () => {
       setIsLoading(true);
       try {
-        console.log("🔄 Fetching accommodation by ID:", accommodationID);
         const response = await fetch(
           "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation",
           {
@@ -31,15 +31,15 @@ const HostProperty = () => {
           }
         );
 
-        if (!response.ok) throw new Error("❌ Failed to fetch accommodation by ID");
+        if (!response.ok) throw new Error("Failed to fetch accommodation data");
 
         const responseData = await response.json();
         const data = JSON.parse(responseData.body);
 
-        console.log("✅ Accommodation data fetched:", data);
         setAccommodationData(data);
+        setEditedData(data);
       } catch (error) {
-        console.error("❌ Error fetching accommodation by ID:", error);
+        console.error("Error fetching accommodation:", error);
       } finally {
         setIsLoading(false);
       }
@@ -47,6 +47,38 @@ const HostProperty = () => {
 
     fetchAccommodationByID();
   }, [accommodationID]);
+
+
+  const handleChange = (field, value) => {
+    setEditedData((prevData) => ({
+      ...prevData,
+      [field]: value,
+    }));
+  };
+
+
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch(
+        "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/EditAccommodation",
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(editedData),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update accommodation");
+
+      setAccommodationData(editedData);
+      alert("Accommodation updated successfully!");
+    } catch (error) {
+      console.error("Error updating accommodation:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={styles.container}>
@@ -79,6 +111,11 @@ const HostProperty = () => {
 
             {activeTab === "Details" ? (
               <>
+              <button>
+                  <h4>🔴Complete required steps</h4>
+                  <p>Complete these final tasks to publish your listing and start getting bookings.</p>
+                </button>        
+
                 <button onClick={() => setSelectedSection("Photos")}>
                   <h4>Photos</h4>
                   <p>Add extra photos to show people more of your accommodation.</p>
@@ -132,8 +169,6 @@ const HostProperty = () => {
               <div className={styles.editBox}>
                 <h2>Edit Information</h2>
                 <p>{selectedSection}</p>
-
-                {/* Display Information Based on the Selected Section */}
                 {selectedSection === "Photos" && (
                   <div>
                     {accommodationData?.Images && Object.values(accommodationData.Images).map((img, index) => (
@@ -142,40 +177,60 @@ const HostProperty = () => {
                   </div>
                 )}
 
-                {selectedSection === "Title" && (
-                  <div>
-                    <label>Title:</label>
-                    <p>{accommodationData?.Title || "No title available"}</p>
-                  </div>
+
+              {selectedSection === "Title" && (
+                  <input
+                    type="text"
+                    value={editedData?.Title || ""}
+                    onChange={(e) => handleChange("Title", e.target.value)}
+                  />
                 )}
 
-                {selectedSection === "AccommodationType" && (
-                  <div>
-                    <label>Accommodation Type:</label>
-                    <p>{accommodationData?.AccommodationType || "No type available"}</p>
-                  </div>
+              {selectedSection === "AccommodationType" && (
+                <select
+                  value={editedData?.AccommodationType || ""}
+                  onChange={(e) => handleChange("AccommodationType", e.target.value)}
+                >
+                  <option value="Apartment">Apartment</option>
+                  <option value="House">House</option>
+                  <option value="Vila">Vila</option>
+                  <option value="Boat">Boat</option>
+                  <option value="Camper">Camper</option>
+                  <option value="Cottage">Cottage</option>
+                </select>
+              )}
+
+              {selectedSection === "Smoking" && (
+                  <select
+                    value={editedData?.AllowSmoking ? "Allowed" : "Not Allowed"}
+                    onChange={(e) => handleChange("AllowSmoking", e.target.value === "Allowed")}
+                  >
+                    <option value="Allowed">Allowed</option>
+                    <option value="Not Allowed">Not Allowed</option>
+                  </select>
                 )}
 
-                {selectedSection === "Smoking" && (
-                  <div>
-                    <label>Smoking Policy:</label>
-                    <p>{accommodationData?.AllowSmoking ? "Allowed" : "Not Allowed"}</p>
-                  </div>
+              {selectedSection === "Parties" && (
+                  <select
+                    value={editedData?.AllowParties ? "Allowed" : "Not Allowed"}
+                    onChange={(e) => handleChange("AllowParties", e.target.value === "Allowed")}
+                  >
+                    <option value="Allowed">Allowed</option>
+                    <option value="Not Allowed">Not Allowed</option>
+                  </select>
                 )}
 
-                {selectedSection === "Parties" && (
-                  <div>
-                    <label>Parties Policy:</label>
-                    <p>{accommodationData?.AllowParties ? "Allowed" : "Not Allowed"}</p>
-                  </div>
+              {selectedSection === "Pets" && (
+                  <select
+                    value={editedData?.AllowPets ? "Allowed" : "Not Allowed"}
+                    onChange={(e) => handleChange("AllowPets", e.target.value === "Allowed")}
+                  >
+                    <option value="Allowed">Allowed</option>
+                    <option value="Not Allowed">Not Allowed</option>
+                  </select>
                 )}
 
-                {selectedSection === "Pets" && (
-                  <div>
-                    <label>Pets Policy:</label>
-                    <p>{accommodationData?.AllowPets ? "Allowed" : "Not Allowed"}</p>
-                  </div>
-                )}
+                
 
                 {selectedSection === "CheckInOut" && (
                   <div>
@@ -207,6 +262,7 @@ const HostProperty = () => {
               </div>
             )}
           </div>
+          <button>Save</button>
         </div>
       </main>
     </div>
