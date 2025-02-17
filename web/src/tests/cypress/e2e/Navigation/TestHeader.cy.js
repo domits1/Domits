@@ -1,5 +1,5 @@
-/// <reference types="Cypress" />
-import "../support/commands";
+// /// <reference types="Cypress" />
+// import "../support/commands";
 
 // describe("Header logo button test", () => {
 //   it("should go to home page if clicked on logo", () => {
@@ -40,13 +40,13 @@ import "../support/commands";
 //   });
 // });
 
-describe.skip("Header Guest&Rooms test", () => {
-     it("Guest&Rooms function should work", () => {
-        cy.visit("https://domits.com/");
-        cy.get(".searchTitleGuest").click();
-        cy.get(".Search-guestCounter:first-child > button:").pause;
+// describe.skip("Header Guest&Rooms test", () => {
+//      it("Guest&Rooms function should work", () => {
+//         cy.visit("https://domits.com/");
+//         cy.get(".searchTitleGuest").click();
+//         cy.get(".Search-guestCounter:first-child > button:").pause;
         
-        // cy.get("").pause;
+//         // cy.get("").pause;
         
-     });
-    });
+//      });
+//     });

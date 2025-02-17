@@ -90,7 +90,7 @@ function HostListings() {
     const asyncEditAccommodation = async (accoId, accoTitle) => {
         if (confirm(`Do you wish to edit ${accoTitle}?`)) {
             if (accoId) {
-                navigate(`/enlist?ID=${accoId}`)
+                navigate(`/hostdashboard/property?ID=${accoId}`)
             }
         }
     }
