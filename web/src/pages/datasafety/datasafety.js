@@ -1,5 +1,5 @@
 import React from 'react';
-import './datasafety.css';
+import './styles/datasafety.css';
 
 function Datasafety() {
   return (

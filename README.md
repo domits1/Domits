@@ -1,2 +1,2 @@
-See: https://github.com/domits1/Domits/wiki
+See: https://github.com/domits1/Domits/wiki/README.md
 

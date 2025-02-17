@@ -1,4 +1,4 @@
-import './App.css';
+import './styles/App.css';
 import HostProtectedRoute from './features/auth/hostauth/HostProtectedRoute';
 import { UserProvider } from './features/auth/UserContext';
 import Header from "./components/base/Header";
