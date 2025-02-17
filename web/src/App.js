@@ -141,7 +141,9 @@ function App() {
     
     return (
         <ApolloProvider client={client}> {/* ApolloProvider */}
-        <ToastContainer
+        {/* This section isn't yet imported... */}
+
+        {/* <ToastContainer
             position="top-right"
             autoClose={3000}
             hideProgressBar={false}
@@ -152,7 +154,7 @@ function App() {
             draggable
             pauseOnHover
             theme="colored"
-            />
+            /> */}
             <FlowContext.Provider value={{ flowState, setFlowState }}>
                 <Router>
                     <ScrollToTop />
