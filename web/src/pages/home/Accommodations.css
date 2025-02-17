@@ -26,7 +26,7 @@
 
 .accocard {
   width: auto;
-  display: flex;
+  display: block;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -73,7 +73,7 @@
   text-overflow: ellipsis;
   bottom: 160px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(-10px);
   color: white;
   font-size: 18px;
   font-weight: 500;
@@ -142,13 +142,15 @@
 
 @media (max-width: 1292px) {
   .accocard {
-    width: auto;
+    width: 100%;
+    display: block;
   }
 }
 
 @media (max-width: 856px) {
   .accocard {
-    width: auto;
+    width: 100%;
+    display: block;
   }
   .accocard-specs {
     display: flex;
@@ -283,11 +285,12 @@ body {
   margin: 0;
   padding: 0;
 }
+/* this class makes the description of accommodation in mobile view not visable */
 
-.swiper {
+/* .swiper {
   width: 100%;
   height: 100%;
-}
+} */
 
 .swiper-slide {
   background-position: center;
