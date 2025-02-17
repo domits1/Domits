@@ -19,9 +19,10 @@ let selectedYear = new Date().getFullYear()
  * @returns {JSX.Element}
  */
 function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
-    const [selectedMonthState, setSelectedMonth] = useState(selectedMonth)
-    const [selectedYearState, setSelectedYear] = useState(selectedYear)
+    const [selectedMonthState, setSelectedMonth] = useState(selectedMonth);
+    const [selectedYearState, setSelectedYear] = useState(selectedYear);
     const [calenderGridObject, setGrid] = useState(getGridObject(selectedMonth,selectedYear));
+    const [datesGridObject, setDates] = useState(getDatesObject(selectedDates));
 
     /**
      * convertToNumDate is a function that converts year, month, and day into a single date number
@@ -81,6 +82,20 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
+     * this function adds a new date to the selectedDates array it also makes shore that the dates dont overlap
+     * 
+     * @param {[number,number]} date 
+     */
+    function newDate(date){
+
+
+        
+
+
+        selectedDates.push(date)
+    }
+
+    /**
      * this function handles the interaction when a day is clicked, it selects a new date
      * 
      * @param {MouseEvent} e
@@ -89,7 +104,19 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         e.preventDefault()
         const anchorElement = e.currentTarget
         let date = Number(anchorElement.getAttribute("dateNumber"))
-        selectedDate = date
+
+        if(selectedDate==null){
+            selectedDate = date
+        }else{
+            if(selectedDate>date){
+                newDate([date,selectedDate])
+            }else{
+                newDate([selectedDate,date])
+            }
+            selectedDate = null
+        }
+        
+        setDates(getDatesObject(selectedDates))
         setGrid(getGridObject(selectedMonth,selectedYear))
     }
 
@@ -125,7 +152,43 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             dayClass += " day-selected"
         }
         
+        for (let i = 0; i < selectedDates.length; i++) {
+            let v = selectedDates[i];
+            if (date >= v[0] && date <= v[1]) {
+                dayClass += " day-range"
+            }
+
+            if (date == v[0]) {
+                dayClass += " day-range-start"
+            }
+
+            if (date == v[1]) {
+                dayClass += " day-range-end"
+            }
+        }
+
         return dayClass
+    }
+
+    /**
+     * this function returns the selected dates as an HTML element
+     * 
+     * @param {[number,number][]} dates the dates have a (year month day structure) e.g. 18890420 is 1889 Apr 20
+     * @returns {Element[]}
+     */
+    function getDatesObject(dates)
+    {
+        const tableData = []
+        for(let i = 0; i < dates.length; i++){
+            const date = dates[i]
+            tableData.push(
+                <div className="date">
+                    <span>{date[0]} {date[1]}</span>
+                </div>
+            )
+        }
+
+        return tableData
     }
 
     /**
@@ -147,7 +210,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                             className={getDayClassName(calDays[i*7+j].date,[month,year])}
                             dateNumber={calDays[i*7+j].date}
                             onClick={dayClick}
-                            href="">{calDays[i*7+j].day}</a></td>
+                            href="#day-click">{calDays[i*7+j].day}</a></td>
                     ))}
                 </tr>
             )
@@ -178,22 +241,16 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     function nextMonthBtn(e){
         e.preventDefault()
 
-        let newMonth = selectedMonthState
-        let newYear = selectedYearState
-
-        if(newMonth==11){
-            newMonth = 0;
-            newYear++;
+        if(selectedMonth==11){
+            selectedMonth = 0;
+            selectedYear++;
         }else{
-            newMonth++;
+            selectedMonth++;
         }
 
-        selectedMonth = newMonth
-        selectedYear = newYear
-
-        setSelectedMonth(newMonth)
-        setSelectedYear(newYear)
-        setGrid(getGridObject(newMonth,newYear))
+        setSelectedMonth(selectedMonth)
+        setSelectedYear(selectedYear)
+        setGrid(getGridObject(selectedMonth,selectedYear))
     }
 
     /**
@@ -204,22 +261,16 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     function previusMonthBtn(e){
         e.preventDefault()
 
-        let newMonth = selectedMonthState
-        let newYear = selectedYearState
-
-        if(newMonth==0){
-            newMonth = 11;
-            newYear--;
+        if(selectedMonth==0){
+            selectedMonth = 11;
+            selectedYear--;
         }else{
-            newMonth--;
+            selectedMonth--;
         }
 
-        selectedMonth = newMonth
-        selectedYear = newYear
-
-        setSelectedMonth(newMonth)
-        setSelectedYear(newYear)
-        setGrid(getGridObject(newMonth,newYear))
+        setSelectedMonth(selectedMonth)
+        setSelectedYear(selectedYear)
+        setGrid(getGridObject(selectedMonth,selectedYear))
     }
 
     return(
@@ -251,7 +302,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                     </div>
                 </div>
                 <div className="column">
-                    
+                    {datesGridObject}
                 </div>
             </div>
         </div>

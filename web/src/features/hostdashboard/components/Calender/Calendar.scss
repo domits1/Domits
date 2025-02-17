@@ -1,6 +1,7 @@
 $border: 1px solid #D6D6D6;
 $other-month-color: #F8F8F8;
 $accent-color: #0084FF;
+$a-color: #b6b6b6;
 
 .calender-container {
     display: flex;
@@ -82,10 +83,11 @@ $accent-color: #0084FF;
                                 position: relative;
                                 overflow: hidden;
                                 &.other-month{
+                                    color: $a-color;
                                     background-color: $other-month-color;
                                 }
                                 &.day-selected{
-                    
+                                    
                                     &::before{
                                         content: "";
                                         position: absolute;
@@ -98,8 +100,29 @@ $accent-color: #0084FF;
                                         transform: rotate(-45deg);
                                     }
                                 }
+                                &.day-range-start{
+                                    &::after{
+                                        border-top-left-radius: 15px;
+                                        border-bottom-left-radius: 15px;
+                                    }
+                                }
+                                &.day-range{
+                                    &::after{
+                                        position: absolute;
+                                        opacity: .2;
+                                        content: "";
+                                        width: 100%;
+                                        height: 100%;
+                                        background: $accent-color;
+                                    }
+                                }
+                                &.day-range-end{
+                                    &::after{
+                                        border-top-right-radius: 15px;
+                                        border-bottom-right-radius: 15px;
+                                    }
+                                }
                             }
-                            
                         }
                     }
                 }
