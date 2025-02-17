@@ -1,4 +1,4 @@
-import '../support/commands';
+import '../../support/commands';
 
 describe.skip('Web Host Reservations', () => {
   it('should go to reservations section', () => {

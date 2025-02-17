@@ -1,4 +1,4 @@
-import '../support/commands';
+import '../../support/commands';
 
 describe.skip('Web Host Pricing', () => {
   it('should go to pricing section', () => {

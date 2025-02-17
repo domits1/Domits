@@ -4,6 +4,7 @@ import Header from '../header/header';
 import Accommodations from './Acommodations'; // Import the new component
 
 function HomeScreen() {
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView stickyHeaderIndices={[0]}>

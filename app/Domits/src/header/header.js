@@ -1,28 +1,31 @@
 import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
+import {useAuth} from '../context/AuthContext';
 
 function Header() {
-    const navigation = useNavigation();
+  const navigation = useNavigation();
+  const {isAuthenticated} = useAuth();
 
     const handleBookingsPress = () => {
         navigation.navigate('Bookings');
     };
-
+  if (isAuthenticated) {
     return (
         <View style={styles.headerContainer}>
-            <View style={styles.contentContainer}>
-                <View style={styles.squareContainer}>
-                    <TouchableOpacity
-                        onPress={handleBookingsPress}
-                        style={styles.itemContainer}>
-                        <Image source={require('../images/icons/app-bookings-icon-black.png')}/>
-                        <Text style={styles.itemText}>Bookings</Text>
-                    </TouchableOpacity>
-                </View>
+          <View style={styles.contentContainer}>
+            <View style={styles.squareContainer}>
+              <TouchableOpacity
+                  onPress={handleBookingsPress}
+                  style={styles.itemContainer}>
+                <Image source={require('../images/icons/app-bookings-icon-black.png')}/>
+                <Text style={styles.itemText}>Bookings</Text>
+              </TouchableOpacity>
             </View>
+          </View>
         </View>
     );
+  }
 }
 
 const styles = StyleSheet.create({
