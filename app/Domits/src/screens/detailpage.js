@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {
+  ActivityIndicator,
   Dimensions,
   Image,
   Modal,
@@ -13,50 +14,28 @@ import {
 import {SafeAreaView} from 'react-native-safe-area-context';
 import featureIcons from '../ui-components/FeatureIcons';
 import FetchOwnerData from '../features/search/FetchOwnerData';
+import FetchAccommodation from '../features/search/FetchAccommodation';
+import Ionicons from "react-native-vector-icons/Ionicons";
 
 const Detailpage = ({route, navigation}) => {
-  const id = route.params.accommodation.id;
-  const [accommodation, setAccommodation] = useState([]);
+  const accommodationId = route.params.accommodation.id;
   const [parsedAccommodation, setParsedAccommodation] = useState({});
   const [owner, setOwner] = useState();
   const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
   const [images, setImages] = useState([]);
   const [showModal, setShowModal] = useState(false);
-  const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  // Dynamically calculate image width based on screen width
+  const imageWidth = Dimensions.get('window').width;
 
+  /**
+   * Fetch current accommodation data.
+   */
   useEffect(() => {
-    const fetchAccommodation = async () => {
-      try {
-        const response = await fetch(
-          'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/GetAccommodation',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ID: id}),
-          },
-        );
-        if (!response.ok) {
-          throw new Error('Failed to fetch data');
-        }
-        const responseData = await response.json();
-        setAccommodation(responseData);
-
-        const parsedBody =
-          typeof responseData.body === 'string'
-            ? JSON.parse(responseData.body)
-            : responseData.body;
-        setParsedAccommodation(parsedBody);
-      } catch (error) {
-        console.error('Error fetching or processing data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAccommodation();
-  }, [id]);
+    FetchAccommodation(accommodationId, setParsedAccommodation, setLoading).then().catch(error => {
+      console.error('Error fetching accommodation:', error);
+    });
+  }, [accommodationId]);
 
   /**
    * Fetch owner data of the current accommodation.
@@ -84,22 +63,20 @@ const Detailpage = ({route, navigation}) => {
     }
   }, [parsedAccommodation, loading]);
 
-  const [currentPage, setCurrentPage] = useState(0);
-
   const handleHomeScreenPress = () => {
     navigation.navigate('HomeScreen');
   };
 
   const handleonBoarding1Press = () => {
-  //TODO Remove ToastAndroid message after working booking system
+    //TODO Remove ToastAndroid message after working booking system
     ToastAndroid.show("Sorry, we currently do not accept bookings.", ToastAndroid.SHORT)
 //    navigation.navigate('onBoarding1', {
 //      accommodation,
 //      parsedAccommodation,
 //      images,
 //    });
-  };
 
+  };
   const handleScroll = event => {
     const page = Math.round(
       event.nativeEvent.contentOffset.x /
@@ -107,9 +84,6 @@ const Detailpage = ({route, navigation}) => {
     );
     setCurrentPage(page);
   };
-
-  // Dynamically calculate image width based on screen width
-  const imageWidth = Dimensions.get('window').width;
 
   const toggleModal = () => {
     setShowModal(!showModal);
@@ -239,10 +213,26 @@ const Detailpage = ({route, navigation}) => {
     );
   };
 
+  if (loading) {
+    return (
+        <View style={styles.loaderContainer}>
+          <ActivityIndicator size="large" color="#0000ff"/>
+        </View>
+    );
+  }
+
   return (
     <SafeAreaView style={{flex: 1}}>
       <View style={styles.container}>
-        <View>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleHomeScreenPress}>
+            <Ionicons
+                name="chevron-back-outline"
+                size={24}
+                color="black"
+                style={styles.icon}
+            />
+          </TouchableOpacity>
           <Text style={styles.text}>{parsedAccommodation.Title}</Text>
         </View>
 
@@ -350,15 +340,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: 'white',
   },
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   header: {
     flexDirection: 'row',
     backgroundColor: 'white',
     padding: 20,
     alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  iconContainer: {
-    flexDirection: 'row',
+    justifyContent: 'flex-start',
   },
   bothAmenities: {
     flexDirection: 'row',
@@ -380,13 +372,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   icon: {
-    marginHorizontal: 1,
-  },
-  icon1: {
     marginHorizontal: 10,
-  },
-  icon2: {
-    marginLeft: 20,
   },
   text: {
     color: 'black',
