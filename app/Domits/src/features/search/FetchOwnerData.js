@@ -5,7 +5,7 @@
  * @returns {Promise<void>} - A promise that resolves when the fetch is completed.
  * @constructor
  */
-const FetchOwner = async (ownerId, setOwner) => {
+const FetchOwnerData = async (ownerId, setOwner) => {
     if (!ownerId) {
         return;
     }
@@ -18,7 +18,7 @@ const FetchOwner = async (ownerId, setOwner) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({OwnerId: ownerId}),
+                body: JSON.stringify({UserId: ownerId}),
             },
         );
         if (!response.ok) {
@@ -44,4 +44,4 @@ const FetchOwner = async (ownerId, setOwner) => {
     }
 };
 
-export default FetchOwner;
+export default FetchOwnerData;

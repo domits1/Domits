@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import featureIcons from '../ui-components/FeatureIcons';
-import FetchOwner from '../features/search/FetchOwner';
+import FetchOwnerData from '../features/search/FetchOwnerData';
 
 const Detailpage = ({route, navigation}) => {
   const id = route.params.accommodation.id;
@@ -58,9 +58,14 @@ const Detailpage = ({route, navigation}) => {
     fetchAccommodation();
   }, [id]);
 
+  /**
+   * Fetch owner data of the current accommodation.
+   */
   useEffect(() => {
     const ownerId = parsedAccommodation.OwnerId;
-    FetchOwner(ownerId, setOwner)
+    FetchOwnerData(ownerId, setOwner).then().catch(error => {
+          console.error('Error fetching owner data:', error);
+        });
   }, [parsedAccommodation]);
 
   useEffect(() => {
