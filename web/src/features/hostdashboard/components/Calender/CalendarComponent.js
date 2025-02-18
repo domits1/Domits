@@ -6,12 +6,31 @@
 import React, {useState} from "react";
 import leftArrowSVG from './left-arrow-calender.svg';
 import rightArrowSVG from './right-arrow-calender.svg';
+import trashSVG from './trash-calender.svg';
 import './Calendar.scss';
 
 let selectedDate = null
 let selectedDates = []
 let selectedMonth = new Date().getMonth()
 let selectedYear = new Date().getFullYear()
+
+/**
+ * functions this is a list of all the functions that are used in the CalendarComponent
+ * 
+ * convertToNumDate
+ * getCalDays
+ * newDate
+ * dayClick
+ * decodeDateNumber
+ * getDayClassName
+ * convertDateToHTML
+ * deleteDate
+ * getDatesObject
+ * getGridObject
+ * getMonthName
+ * nextMonthBtn
+ * previusMonthBtn
+ */
 
 /**
  * CalendarComponent is a component that displays a calendar
@@ -171,6 +190,38 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
+     * this function is used to convert the date number to a HTML element for the dates column.
+     * 
+     * @param {number} date the dates have a (year month day structure) e.g. 18890420 is 1889 Apr 20
+     * @param {number} i the index of the date in the selectedDates
+     * @returns {Element}
+     */
+    function convertDateToHTML(date){
+        let decodeNumber = decodeDateNumber(date)
+        let month = getMonthName(decodeNumber[1]).substring(0,3)
+
+        return(
+            <span>
+                {decodeNumber[2]} {month} {decodeNumber[0]}
+            </span>
+        )
+    }
+
+    /**
+     * this function is called when the user clicks the trash icon, the date is removed from the selectedDates
+     * 
+     * @param {MouseEvent} e
+     */
+    function deleteDate(e){
+        e.preventDefault()
+        const anchorElement = e.currentTarget
+        const index = anchorElement.parentElement.parentElement.getAttribute("index")
+        selectedDates.splice(index,1)
+        setDates(getDatesObject(selectedDates))
+        setGrid(getGridObject(selectedMonth,selectedYear))
+    }
+
+    /**
      * this function returns the selected dates as an HTML element
      * 
      * @param {[number,number][]} dates the dates have a (year month day structure) e.g. 18890420 is 1889 Apr 20
@@ -182,8 +233,9 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         for(let i = 0; i < dates.length; i++){
             const date = dates[i]
             tableData.push(
-                <div className="date">
-                    <span>{date[0]} {date[1]}</span>
+                <div className="date" index={i}>
+                    {convertDateToHTML(date[0])} - {convertDateToHTML(date[1])}
+                    <a href="#trash"><img src={trashSVG} alt="" onClick={deleteDate} /></a>
                 </div>
             )
         }
@@ -302,7 +354,9 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                     </div>
                 </div>
                 <div className="column">
-                    {datesGridObject}
+                    <div className="wrapper">
+                        {datesGridObject}
+                    </div>
                 </div>
             </div>
         </div>
