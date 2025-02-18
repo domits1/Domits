@@ -18,8 +18,7 @@ WishlistList.propTypes = {
       id: PropTypes.number.isRequired,
       name: PropTypes.string.isRequired,
       location: PropTypes.string.isRequired,
-      distance: PropTypes.string.isRequired,
-      price: PropTypes.string.isRequired,
+      price: PropTypes.number.isRequired,
       image: PropTypes.string.isRequired,
     })
   ).isRequired,
