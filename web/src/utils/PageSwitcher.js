@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from "react";
 import ImageSlider from "./ImageSlider";
-import styles from './PageSwitcher.module.css';
+import styles from './styles/PageSwitcher.module.css';
 import DateFormatterDD_MM_YYYY from "./DateFormatterDD_MM_YYYY";
 function PageSwitcher({accommodations, bankDetailsProvided, amount, onEdit, onDelete , onUpdate}) {
     const [currentPage, setCurrentPage] = useState(1);

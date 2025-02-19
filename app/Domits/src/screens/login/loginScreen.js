@@ -12,7 +12,7 @@ import {useNavigation} from '@react-navigation/native';
 import {signIn} from '@aws-amplify/auth'; // Correct import for Amplify Auth
 import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
 import 'react-native-get-random-values';
-import {Label} from '@aws-amplify/ui-react-native/src/primitives';
+import {Label} from '@aws-amplify/ui-react-native/shared/primitives';
 
 const LoginScreen = () => {
   const navigation = useNavigation();

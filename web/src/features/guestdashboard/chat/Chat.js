@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import "./chat.css";
+import "../styles/chat.css";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../../graphql/mutations";
@@ -8,7 +8,7 @@ import Pages from "../Pages";
 import * as subscriptions from "../../../graphql/subscriptions";
 import { Auth } from 'aws-amplify';
 import { useLocation, useNavigate } from 'react-router-dom';
-import styles from './ChatPage.module.css';
+import styles from '../styles/ChatPage.module.css';
 import spinner from "../../../images/spinnner.gif";
 import ContactItem from "./ContactItem_Guest";
 

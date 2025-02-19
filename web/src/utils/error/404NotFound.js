@@ -1,6 +1,6 @@
 import React from 'react';
 import sadface from '../../images/icons/sad.png';
-import './error.css';
+import '../styles/error.css';
 import {useNavigate} from "react-router-dom";
 const PageNotFound = () => {
     const navigate = useNavigate();

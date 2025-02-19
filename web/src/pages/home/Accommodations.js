@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import './styles/Accommodations.css';
-import PageSwitcher from '../../utils/PageSwitcher.module.css';
+import PageSwitcher from '../../utils/styles/PageSwitcher.module.css';
 
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';

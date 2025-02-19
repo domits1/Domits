@@ -4,7 +4,7 @@ import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
 import Pages from "./Pages.js";
 import {confirmEmailChange} from "../guestdashboard/emailSettings";
-import './settingshostdashboard.css';
+import './styles/settingshostdashboard.css';
 
 
 const HostSettings = () => {
@@ -464,7 +464,7 @@ const HostSettings = () => {
                         {/*    <span>Address:</span>*/}
                         {/*    <p>{user.address}</p>*/}
                         {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Address" className="guest-edit-icon" />*/}
+                        {/*        <img shared={editIcon} alt="Edit Address" className="guest-edit-icon" />*/}
                         {/*    </div>*/}
                         {/*</div>*/}
 
@@ -472,7 +472,7 @@ const HostSettings = () => {
                         {/*    <span>Phone:</span>*/}
                         {/*    <p>{user.phone}</p>*/}
                         {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Phone" className="guest-edit-icon" />*/}
+                        {/*        <img shared={editIcon} alt="Edit Phone" className="guest-edit-icon" />*/}
                         {/*    </div>*/}
                         {/*</div>*/}
 
@@ -480,7 +480,7 @@ const HostSettings = () => {
                         {/*    <span>Family:</span>*/}
                         {/*    <p>{user.family}</p>*/}
                         {/*    <div className="edit-icon-background">*/}
-                        {/*        <img src={editIcon} alt="Edit Family" className="guest-edit-icon" />*/}
+                        {/*        <img shared={editIcon} alt="Edit Family" className="guest-edit-icon" />*/}
                         {/*    </div>*/}
                         {/*</div>*/}
 

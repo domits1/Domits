@@ -249,7 +249,7 @@ const Login = () => {
                         </main>
                     ) : (
                         <main className="loginContainer">
-                            {/* <img src={logo} alt="Logo Domits" className='loginLogo'/> */}
+                            {/* <img shared={logo} alt="Logo Domits" className='loginLogo'/> */}
                             <div className="loginTitle">Good to see you again</div>
                             <div className="loginForm">
                                 <form onSubmit={handleSubmit}>

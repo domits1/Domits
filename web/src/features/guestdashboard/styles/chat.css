@@ -55,7 +55,7 @@
 /* h2{
     font-family: sans-serif;
     font-family: "Kanit";
-    src: local("KanitRegular"),
+    shared: local("KanitRegular"),
      url("../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
     font-weight: normal;
     font-size: 2rem;
@@ -64,7 +64,7 @@
 li{
     font-family: sans-serif;
     font-family: "Kanit";
-    src: local("KanitRegular"),
+    shared: local("KanitRegular"),
      url("../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
     font-weight: bold;
     font-size: 1.5rem;
@@ -72,7 +72,7 @@ li{
 
 p{
     font-family: "Kanit";
-    src: local("KanitLight"),
+    shared: local("KanitLight"),
      url("../../fonts/kanit/Kanit-Light.ttf") format("truetype");
      color: #707070;
 } */
@@ -208,7 +208,7 @@ p{
     color: white;
     font-family: "Kanit";
     src: local("KanitRegular"),
-     url("../../../fonts/kanit/Kanit-Regular.ttf") format("truetype");
+     url("../../../../../shared/fonts/kanit/Kanit-Regular.ttf") format("truetype");
 }
 
 .chat__user--selected{
@@ -287,7 +287,7 @@ p{
     color: #1E1E1E;
     font-family: "Kanit";
     src: local("KanitLight"),
-     url("../../../fonts/kanit/Kanit-Light.ttf") format("truetype");
+     url("../../../../../shared/fonts/kanit/Kanit-Light.ttf") format("truetype");
 }
 
 .chat__dialog--user {

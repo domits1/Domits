@@ -15,7 +15,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import stripe from "../../images/icons/stripe-icon.png";
 import spinner from "../../images/spinnner.gif";
 import { Auth } from "aws-amplify";
-import './HostHomepage.css';
+import './styles/HostHomepage.css';
 import add from "../../images/icons/host-add.png";
 
 function Pages() {
@@ -50,7 +50,7 @@ function Pages() {
         <br />
         {/*{loading ? (*/}
         {/*  <div>*/}
-        {/*    <img src={spinner} alt="Loading" />*/}
+        {/*    <img shared={spinner} alt="Loading" />*/}
         {/*  </div>*/}
         {/*) : (*/}
           <div className="dropdown-section">
@@ -93,7 +93,7 @@ function Pages() {
           onClick={() => handleNavigation("/enlist")}
           style={{ maxWidth: 250 }}
         >
-          {/* <img src={add} alt="add"></img> */}
+          {/* <img shared={add} alt="add"></img> */}
           <div className="Mui">
           <AddIcon/></div>
           <p>List your property</p>
@@ -171,7 +171,7 @@ function Pages() {
         {/*  className={`wijzer ${activeTab === "/hostdashboard/iot-hub" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/iot-hub")}*/}
         {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <img shared={dashboard} alt="Dashboard" />*/}
         {/*  <p>IoT Hub</p>*/}
         {/*</div>*/}
         <div
@@ -186,21 +186,21 @@ function Pages() {
         {/*  className={`wijzer ${activeTab === "/hostdashboard/distribution" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/distribution")}*/}
         {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <img shared={dashboard} alt="Dashboard" />*/}
         {/*  <p>Distribution</p>*/}
         {/*</div>*/}
         {/*<div*/}
         {/*  className={`wijzer ${activeTab === "/hostdashboard/monitoring" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/monitoring")}*/}
         {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <img shared={dashboard} alt="Dashboard" />*/}
         {/*  <p>Monitoring</p>*/}
         {/*</div>*/}
         {/*<div*/}
         {/*  className={`wijzer ${activeTab === "/hostdashboard/screening" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/screening")}*/}
         {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <img shared={dashboard} alt="Dashboard" />*/}
         {/*  <p>Screening</p>*/}
         {/*</div>*/}
         <br />
@@ -225,25 +225,25 @@ function Pages() {
         {/*  className={`wijzer ${activeTab === "/hostdashboard/setup" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/setup")}*/}
         {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <img shared={dashboard} alt="Dashboard" />*/}
         {/*  <p>Setup</p>*/}
         {/*</div>*/}
         {/*<div*/}
         {/*  className={`wijzer ${activeTab === "/hostdashboard/promo-codes" ? "active" : ""}`}*/}
         {/*  onClick={() => handleNavigation("/hostdashboard/promo-codes")}*/}
         {/*>*/}
-        {/*  <img src={dashboard} alt="Dashboard" />*/}
+        {/*  <img shared={dashboard} alt="Dashboard" />*/}
         {/*  <p>Promo codes</p>*/}
         {/*</div>*/}
         {/*commented for now and transfered it to finance tab*/}
         {/*{loading ? (*/}
         {/*  <div className="spinnerdiv">*/}
-        {/*    <img className="spinner" src={spinner} alt="Loading" />*/}
+        {/*    <img className="spinner" shared={spinner} alt="Loading" />*/}
         {/*  </div>*/}
         {/*) : (*/}
         {/*  <div className="wijzer-grn" onClick={handleStripeAction}>*/}
         {/*    <div className="stripe-icon-div">*/}
-        {/*      <img src={stripe} className="stripe-icon" alt="Stripe" />*/}
+        {/*      <img shared={stripe} className="stripe-icon" alt="Stripe" />*/}
         {/*    </div>*/}
         {/*    <p className="stripe-btn">{stripeLoginUrl ? 'Go to Stripe Dashboard' : 'Set Up Payments'}</p>*/}
         {/*  </div>*/}

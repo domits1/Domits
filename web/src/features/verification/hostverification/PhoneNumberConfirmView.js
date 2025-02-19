@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import styles from "./hostverification.module.css";
+import styles from "./styles/hostverification.module.css";
 import Toast from "../../../components/toast/Toast"; // Import the Toast component
 import { Auth } from "aws-amplify"; // Import the Auth module
 import { verifyCode, sendVerificationCode } from "./services/verificationServices"; // Import the API function

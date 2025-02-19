@@ -2,14 +2,14 @@ projects:
   domits:
     schemaPath: amplify/backend/api/domits/build/schema.graphql
     includes:
-      - src/graphql/**/*.js
+      - shared/graphql/**/*.js
     excludes:
       - ./amplify/**
     extensions:
       amplify:
         codeGenTarget: javascript
         generatedFileName: ''
-        docsFilePath: src/graphql
+        docsFilePath: shared/graphql
         region: eu-north-1
         apiId: null
         maxDepth: 2

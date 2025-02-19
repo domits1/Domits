@@ -8,7 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import {Button} from '@aws-amplify/ui-react-native/src/primitives';
+import {Button} from '@aws-amplify/ui-react-native/shared/primitives';
 import {useAuth} from '../../context/AuthContext';
 import {useNavigation} from '@react-navigation/native';
 import ImageSlider from '../utils/ImageSlider';

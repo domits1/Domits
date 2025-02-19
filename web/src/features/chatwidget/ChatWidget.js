@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { ResizableBox } from 'react-resizable';
-import './ChatWidget.css';
+import '../bookingengine/styles/ChatWidget.css';
 import { useUser } from '../auth/UserContext';
 import Slider from 'react-slick';
 

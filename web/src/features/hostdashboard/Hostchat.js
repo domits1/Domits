@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from "react";
-import "../guestdashboard/chat/chat.css";
-import styles from "../guestdashboard/chat/ChatPage.module.css";
+import "../guestdashboard/styles/chat.css";
+import styles from "../guestdashboard/styles/ChatPage.module.css";
 import { API, graphqlOperation } from "aws-amplify";
 import { withAuthenticator } from "@aws-amplify/ui-react";
 import * as mutations from "../../graphql/mutations";

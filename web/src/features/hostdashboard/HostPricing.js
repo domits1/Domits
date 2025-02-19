@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Pages from "./Pages.js";
-import "./HostPricing.css";
+import "./styles/HostPricing.css";
 import detailsIcon from "../../images/icons/content-view-detail-list-icon.svg";
 import tableIcon from "../../images/icons/content-view-table-list-icon.svg";
 import {Auth} from "aws-amplify";
