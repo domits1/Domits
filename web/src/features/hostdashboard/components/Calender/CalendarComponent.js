@@ -106,12 +106,63 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
      * @param {[number,number]} date 
      */
     function newDate(date){
+        let addNewDate = true
 
+        for(let a = 0; a < 2; a++){
+            for (let i = 0; i < selectedDates.length; i++) {
+                let v = selectedDates[i];
 
-        
+                if(date[0] >= v[0] && date[0] <= v[1] && date[1] >= v[0] && date[1] <= v[1]){
+                    addNewDate = false
+                    continue
+                }
 
+                if (date[0] >= v[0] && date[0] <= v[1] && date[1] > v[1]) {
+                    selectedDates[i][1] = date[1]
+                    date[0] = selectedDates[i][0]
+                    addNewDate = false
+                    continue
+                }
 
-        selectedDates.push(date)
+                if (date[1] >= v[0] && date[1] <= v[1] && date[0] < v[0]) {
+                    selectedDates[i][0] = date[0]
+                    date[1] = selectedDates[i][1]
+                    addNewDate = false
+                    continue
+                }
+
+                if (date[0] <= v[0] && date[1] >= v[1]) {
+                    selectedDates[i][0] = date[0]
+                    selectedDates[i][1] = date[1]
+
+                    date[0] = selectedDates[i][0]
+                    date[1] = selectedDates[i][1]
+
+                    addNewDate = false
+                    continue
+                }
+            }
+        }
+
+        for(let i = 0; i < selectedDates.length; i++){
+            let v1 = selectedDates[i];
+            if(v1==null){break}
+
+            for(let j = 0; j < selectedDates.length; j++){
+                let v2 = selectedDates[j];
+                if(v2==null){break}
+                if(i == j){continue}
+
+                if(v1[0] == v2[0] && v1[1] == v2[1]){
+                    selectedDates.splice(j,1);
+                    j--
+                }
+            }
+        }        
+
+        if(addNewDate){
+            selectedDates.push(date)
+        }
     }
 
     /**
@@ -193,7 +244,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
      * this function is used to convert the date number to a HTML element for the dates column.
      * 
      * @param {number} date the dates have a (year month day structure) e.g. 18890420 is 1889 Apr 20
-     * @param {number} i the index of the date in the selectedDates
+     * @param {number} i
      * @returns {Element}
      */
     function convertDateToHTML(date){
