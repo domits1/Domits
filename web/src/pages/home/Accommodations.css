@@ -1,5 +1,23 @@
+#container {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+/* dit is een tijdelijke aanpassing om te kijken of de huidige filters goed passen */
+/* op het moment dat de filters klaar zijn kan deze waardens aangepast worden om meer ruimte te creÃ«ren */
+#filters-sidebar {
+  flex: 0 0 240px; 
+  margin-right: 20px;
+}
+
 #card-visibility {
-  padding-top: 30px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  justify-content: center;
+  flex: 1;
 }
 
 .full-visibility {
@@ -7,16 +25,14 @@
 }
 
 .accocard {
-  width: 18%;
-  margin: 1%;
-  margin-top: 10px;
-  background-color: #fff;
-  overflow: hidden;
-  display: inline-block;
-  vertical-align: top;
-  transition: all 0.5s ease-in-out;
+  width: 20vw;
+  display: block;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: relative;
-  z-index: 1;
+  /* left: 0rem; */
+  gap: 1rem;
 }
 
 .accocard:hover {
@@ -32,7 +48,6 @@
   display: block;
   transition: transform 0.4s ease-in-out;
 }
-
 .accocard:hover img {
   transform: scale(1.05);
 }
@@ -43,8 +58,8 @@
 
 .accocard-content {
   padding: 15px 0;
-  overflow: hidden;
-}
+  /* overflow: hidden;  */
+} 
 
 .accocard-title {
   width: 90%;
@@ -59,7 +74,7 @@
   text-overflow: ellipsis;
   bottom: 160px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(-10px);
   color: white;
   font-size: 18px;
   font-weight: 500;
@@ -128,13 +143,15 @@
 
 @media (max-width: 1292px) {
   .accocard {
-    width: 23%;
+    width: 100%;
+    display: block;
   }
 }
 
 @media (max-width: 856px) {
   .accocard {
-    width: 48%;
+    width: 100%;
+    display: block;
   }
   .accocard-specs {
     display: flex;
@@ -149,8 +166,12 @@
 }
 
 @media (max-width: 480px) {
+  /* om  filters weg te halen bij de mobileview en als vervanger de filter knopje*/
+  #filters-sidebar{
+    display: none;
+  }
   .accocard {
-    width: 90%;
+    width: 100%;
     margin: 0 auto;
     display: block;
   }
@@ -168,6 +189,7 @@
     align-items: center;
     text-align: center;
   }
+  
 }
 
 .accocard-share-button, .accocard-like-button {
@@ -264,11 +286,12 @@ body {
   margin: 0;
   padding: 0;
 }
+/* this class makes the description of accommodation in mobile view not visable */
 
-.swiper {
+/* .swiper {
   width: 100%;
   height: 100%;
-}
+} */
 
 .swiper-slide {
   background-position: center;
