@@ -3,6 +3,7 @@ import MaterialCommunityIcons from "react-native-vector-icons/MaterialCommunityI
 import FontAwesome from "react-native-vector-icons/FontAwesome";
 import FontAwesome5 from "react-native-vector-icons/FontAwesome5";
 import React from "react";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
 /**
  * Amenities icons for accommodations
@@ -13,6 +14,13 @@ const DEFAULT_SIZE = 24;
 
 const FeatureIcons = {
     'Wi-Fi': <Ionicons name="wifi" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
+    'One guest': <MaterialCommunityIcons name="account" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
+    'Two guests': <MaterialCommunityIcons name="account-multiple" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
+    'Multiple guests': <MaterialCommunityIcons name="account-group" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
+    'Bedroom': <MaterialIcons name="bedroom-parent" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
+    'Bed': <MaterialCommunityIcons name="bed" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
+    'Single bed': <MaterialCommunityIcons name="bed-queen" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
+    'King bed': <MaterialCommunityIcons name="bed-king" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
     'Air conditioning': <MaterialCommunityIcons name="air-conditioner" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
     'Heating': <MaterialCommunityIcons name="fire" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
     'TV with cable/satellite': <Ionicons name="tv-outline" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
@@ -78,6 +86,7 @@ const FeatureIcons = {
     'Wide doorways': <MaterialCommunityIcons name="door" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
     'Accessible-height bed': <FontAwesome name="wheelchair" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
     'Accessible-height toilet': <MaterialCommunityIcons name="toilet" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
+    'Bathroom': <MaterialCommunityIcons name="bathtub" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
     'Shower chair': <MaterialCommunityIcons name="shower" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
     'Recycling bins': <MaterialCommunityIcons name="recycle" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,
     'Energy-efficient appliances': <Ionicons name="battery-charging" size={DEFAULT_SIZE} color={DEFAULT_COLOR}/>,

@@ -16,7 +16,7 @@ const Accommodations = ({searchResults}) => {
             country: item.Country,
             details: item.Description,
             size: item.Measurements,
-            price: item.Rent,
+            price: Number(item.Rent).toFixed(2),
             id: item.ID,
             bathrooms: item.Bathrooms,
             bedrooms: item.Bedrooms,
