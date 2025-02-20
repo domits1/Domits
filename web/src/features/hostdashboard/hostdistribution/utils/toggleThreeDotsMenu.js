@@ -1,3 +1,3 @@
 export const toggleThreeDotsMenu = (channelId, setActiveThreeDotsDropdown) => {
-    setActiveThreeDotsDropdown(prev => (prev === channelId ? null : channelId));
-};
+  setActiveThreeDotsDropdown(prev => (prev === channelId ? null : channelId))
+}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
@@ -6,17 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useNavigation} from '@react-navigation/native';
-import {deleteUser} from '../GeneralUtils/GenUtils';
-import {useAuth} from '../../context/AuthContext';
+} from 'react-native'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import {SafeAreaView} from 'react-native-safe-area-context'
+import {useNavigation} from '@react-navigation/native'
+import {deleteUser} from '../GeneralUtils/GenUtils'
+import {useAuth} from '../../context/AuthContext'
 
 const HostSettings = () => {
-  const navigation = useNavigation();
-  const {userAttributes} = useAuth();
-  const userId = userAttributes?.sub;
+  const navigation = useNavigation()
+  const {userAttributes} = useAuth()
+  const userId = userAttributes?.sub
 
   const handleDeleteAccount = async () => {
     Alert.alert(
@@ -32,19 +32,19 @@ const HostSettings = () => {
           text: 'Delete',
           onPress: async () => {
             try {
-              await deleteUser(userId); // Ensure account deletion completes
-              navigation.navigate('LoginScreen'); // Navigate to LoginScreen after success
+              await deleteUser(userId) // Ensure account deletion completes
+              navigation.navigate('LoginScreen') // Navigate to LoginScreen after success
             } catch (error) {
-              console.error('Failed to delete account:', error);
-              alert('Error deleting account. Please try again.');
+              console.error('Failed to delete account:', error)
+              alert('Error deleting account. Please try again.')
             }
           },
           style: 'destructive', // Makes the button appear as a destructive action on iOS
         },
       ],
       {cancelable: true}, // Allows tapping outside to cancel
-    );
-  };
+    )
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -86,8 +86,8 @@ const HostSettings = () => {
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -124,6 +124,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'black',
   },
-});
+})
 
-export default HostSettings;
+export default HostSettings

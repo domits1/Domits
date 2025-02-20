@@ -57,17 +57,17 @@
   }
 
   .feature-item h3 {
-    font-size: 1.2em; 
+    font-size: 1.2em;
   }
 
   .feature-item p {
-    font-size: 1em; 
+    font-size: 1em;
   }
 
   .feature-item img {
     height: 230px;
     width: 500px;
     object-fit: cover;
-    border-radius: 5px; 
+    border-radius: 5px;
   }
 }

@@ -1,213 +1,249 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Modal, Animated, Image } from 'react-native';
-import Icon from 'react-native-vector-icons/MaterialIcons';
-import Sound from 'react-native-sound';
-import RNFetchBlob from 'rn-fetch-blob';
+import React, {useState, useEffect, useCallback, useRef} from 'react'
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  StyleSheet,
+  Modal,
+  Animated,
+  Image,
+} from 'react-native'
+import Icon from 'react-native-vector-icons/MaterialIcons'
+import Sound from 'react-native-sound'
+import RNFetchBlob from 'rn-fetch-blob'
 
-import usePollySpeech from './Hooks/usePollySpeech';
-import useUserDetails from './Hooks/useUserDetails';
-import useFetchData from './Hooks/useFetchData';
-import useChatHistory from './Hooks/useChatHistory';
-import useVoiceInput from './Hooks/useVoiceInput';
+import usePollySpeech from './Hooks/usePollySpeech'
+import useUserDetails from './Hooks/useUserDetails'
+import useFetchData from './Hooks/useFetchData'
+import useChatHistory from './Hooks/useChatHistory'
+import useVoiceInput from './Hooks/useVoiceInput'
 
 const Support = () => {
-  const [messages, setMessages] = useState([]);
-  const [userInput, setUserInput] = useState('');
-  const [awaitingUserChoice, setAwaitingUserChoice] = useState(true);
-  const [currentOption, setCurrentOption] = useState(null);
-  const [suggestions, setSuggestions] = useState([]);
-  const [isDropdownVisible, setIsDropdownVisible] = useState(false);
-  const [dropdownAnimation] = useState(new Animated.Value(0));
+  const [messages, setMessages] = useState([])
+  const [userInput, setUserInput] = useState('')
+  const [awaitingUserChoice, setAwaitingUserChoice] = useState(true)
+  const [currentOption, setCurrentOption] = useState(null)
+  const [suggestions, setSuggestions] = useState([])
+  const [isDropdownVisible, setIsDropdownVisible] = useState(false)
+  const [dropdownAnimation] = useState(new Animated.Value(0))
 
-  const { messageAudios, fetchPollySpeech } = usePollySpeech();
-  const { userId, username } = useUserDetails(setMessages, fetchPollySpeech);
-  const { accommodations, faqList, fetchAccommodations, fetchFAQ } = useFetchData();
-  const { downloadChatHistory, shareChatHistory } = useChatHistory(messages);
-  const { isRecording, handleVoiceInput } = useVoiceInput(setUserInput);
+  const {messageAudios, fetchPollySpeech} = usePollySpeech()
+  const {userId, username} = useUserDetails(setMessages, fetchPollySpeech)
+  const {accommodations, faqList, fetchAccommodations, fetchFAQ} =
+    useFetchData()
+  const {downloadChatHistory, shareChatHistory} = useChatHistory(messages)
+  const {isRecording, handleVoiceInput} = useVoiceInput(setUserInput)
 
-
-  const flatListRef = useRef(null);
-
+  const flatListRef = useRef(null)
 
   useEffect(() => {
-    fetchFAQ();
-  }, []);
+    fetchFAQ()
+  }, [])
 
-  const handleButtonClick = useCallback((choice) => {
-    setAwaitingUserChoice(false);
-    setCurrentOption(choice);
-    handleUserChoice(choice);
-  }, []);
+  const handleButtonClick = useCallback(choice => {
+    setAwaitingUserChoice(false)
+    setCurrentOption(choice)
+    handleUserChoice(choice)
+  }, [])
 
-  const handleUserChoice = useCallback((choice) => {
-    const messageId = Date.now();
-    let newMessage = '';
-    switch (choice) {
-      case '1':
-        newMessage = 'You can ask me about accommodations. Here are some suggestions:';
-        setSuggestions(['List my accommodation', 'Show all accommodations']);
-        break;
-      case '2':
-        newMessage = 'You can ask me about Domits. Here are some suggestions:';
-        setSuggestions(['Is Domits 100% free for hosts']);
-        break;
-      case '3':
-        newMessage = 'You can contact an expert at support@domits.com or call +123456789.';
-        setSuggestions([]);
-        break;
-      default:
-        newMessage = 'Please choose a valid option (1, 2, or 3).';
-        setSuggestions([]);
-        setAwaitingUserChoice(true);
-    }
+  const handleUserChoice = useCallback(
+    choice => {
+      const messageId = Date.now()
+      let newMessage = ''
+      switch (choice) {
+        case '1':
+          newMessage =
+            'You can ask me about accommodations. Here are some suggestions:'
+          setSuggestions(['List my accommodation', 'Show all accommodations'])
+          break
+        case '2':
+          newMessage = 'You can ask me about Domits. Here are some suggestions:'
+          setSuggestions(['Is Domits 100% free for hosts'])
+          break
+        case '3':
+          newMessage =
+            'You can contact an expert at support@domits.com or call +123456789.'
+          setSuggestions([])
+          break
+        default:
+          newMessage = 'Please choose a valid option (1, 2, or 3).'
+          setSuggestions([])
+          setAwaitingUserChoice(true)
+      }
 
-    setMessages([{ id: messageId, text: newMessage, sender: 'bot', contentType: 'text', audioUrl: messageAudios[messageId], }]);
-    fetchPollySpeech(newMessage, messageId);
-  }, [fetchPollySpeech]);
-
+      setMessages([
+        {
+          id: messageId,
+          text: newMessage,
+          sender: 'bot',
+          contentType: 'text',
+          audioUrl: messageAudios[messageId],
+        },
+      ])
+      fetchPollySpeech(newMessage, messageId)
+    },
+    [fetchPollySpeech],
+  )
 
   const handleSubmit = useCallback(() => {
     if (userInput.trim() && currentOption) {
-      const messageId = Date.now();
-      setMessages((prevMessages) => [
+      const messageId = Date.now()
+      setMessages(prevMessages => [
         ...prevMessages,
-        { id: messageId, text: userInput, sender: 'user', contentType: 'text' },
-      ]);
-      fetchPollySpeech(userInput, messageId);
-      setUserInput('');
+        {id: messageId, text: userInput, sender: 'user', contentType: 'text'},
+      ])
+      fetchPollySpeech(userInput, messageId)
+      setUserInput('')
 
       if (currentOption === '1') {
-        handleAccommodationQuery(userInput);
+        handleAccommodationQuery(userInput)
       } else if (currentOption === '2') {
-        handleFAQQuery(userInput);
+        handleFAQQuery(userInput)
       } else {
-        handleExpertContact();
+        handleExpertContact()
       }
     }
-  }, [userInput, currentOption, fetchPollySpeech]);
+  }, [userInput, currentOption, fetchPollySpeech])
 
-  const handleAccommodationQuery = useCallback(async (input) => {
-    const messageId = Date.now();
-    if (input.toLowerCase().includes('show all accommodations')) {
-      await fetchAccommodations(userId);
-    }
-    const responseMessage = accommodations.length
-      ? `Here are the accommodations:\n${accommodations
-        .map((acc) => `
+  const handleAccommodationQuery = useCallback(
+    async input => {
+      const messageId = Date.now()
+      if (input.toLowerCase().includes('show all accommodations')) {
+        await fetchAccommodations(userId)
+      }
+      const responseMessage = accommodations.length
+        ? `Here are the accommodations:\n${accommodations
+            .map(
+              acc => `
       Title: ${acc.title}
       City: ${acc.city}
-    `)
-        .join('\n\n')}`
-      : 'Sorry, there is no accommodation data available right now.';
+    `,
+            )
+            .join('\n\n')}`
+        : 'Sorry, there is no accommodation data available right now.'
 
-    setMessages((prevMessages) => [
-      ...prevMessages,
-      { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
-    ]);
-    fetchPollySpeech(responseMessage, messageId);
-  }, [accommodations, fetchAccommodations, userId, fetchPollySpeech]);
+      setMessages(prevMessages => [
+        ...prevMessages,
+        {
+          id: messageId,
+          text: responseMessage,
+          sender: 'bot',
+          contentType: 'text',
+        },
+      ])
+      fetchPollySpeech(responseMessage, messageId)
+    },
+    [accommodations, fetchAccommodations, userId, fetchPollySpeech],
+  )
 
-  const handleFAQQuery = useCallback((input) => {
-    const messageId = Date.now();
-    const bestMatch = faqList.find((faq) =>
-      faq.question.toLowerCase().includes(input.toLowerCase())
-    );
+  const handleFAQQuery = useCallback(input => {
+    const messageId = Date.now()
+    const bestMatch = faqList.find(faq =>
+      faq.question.toLowerCase().includes(input.toLowerCase()),
+    )
     const responseMessage = bestMatch
       ? `Q: ${bestMatch.question}\nA: ${bestMatch.answer}`
-      : "Sorry, I couldn't find an answer to your question.";
+      : "Sorry, I couldn't find an answer to your question."
 
-    setMessages((prevMessages) => [
+    setMessages(prevMessages => [
       ...prevMessages,
-      { id: messageId, text: responseMessage, sender: 'bot', contentType: 'text' },
-    ]);
-    fetchPollySpeech(responseMessage, messageId);
-  });
+      {
+        id: messageId,
+        text: responseMessage,
+        sender: 'bot',
+        contentType: 'text',
+      },
+    ])
+    fetchPollySpeech(responseMessage, messageId)
+  })
 
   const handleExpertContact = () => {
-    const expertMessage = 'You can contact an expert at support@domits.com or call +123456789.';
-    const messageId = Date.now();
-    setMessages((prevMessages) => [
+    const expertMessage =
+      'You can contact an expert at support@domits.com or call +123456789.'
+    const messageId = Date.now()
+    setMessages(prevMessages => [
       ...prevMessages,
-      { id: messageId, text: expertMessage, sender: 'bot', contentType: 'text' },
-    ]);
-    fetchPollySpeech(expertMessage, messageId);
-  };
+      {id: messageId, text: expertMessage, sender: 'bot', contentType: 'text'},
+    ])
+    fetchPollySpeech(expertMessage, messageId)
+  }
 
   const goBackToOptions = () => {
-    setAwaitingUserChoice(true);
-    setSuggestions([]);
-    setCurrentOption(null);
+    setAwaitingUserChoice(true)
+    setSuggestions([])
+    setCurrentOption(null)
 
-    const message = `Hello again, ${username}! Please choose an option:`;
-    const messageId = Date.now();
-    setMessages([{ id: messageId, text: message, sender: 'bot', contentType: 'text' }]);
-    fetchPollySpeech(message, messageId);
-
-  };
+    const message = `Hello again, ${username}! Please choose an option:`
+    const messageId = Date.now()
+    setMessages([
+      {id: messageId, text: message, sender: 'bot', contentType: 'text'},
+    ])
+    fetchPollySpeech(message, messageId)
+  }
 
   useEffect(() => {
-    setMessages((prevMessages) =>
-      prevMessages.map((msg) =>
-        messageAudios[msg.id]
-          ? { ...msg, audioUrl: messageAudios[msg.id] }
-          : msg
-      )
-    );
-  }, [messageAudios]);
+    setMessages(prevMessages =>
+      prevMessages.map(msg =>
+        messageAudios[msg.id] ? {...msg, audioUrl: messageAudios[msg.id]} : msg,
+      ),
+    )
+  }, [messageAudios])
 
-
-  const renderItem = ({ item }) => {
-    const isUser = item.sender === 'user';
-    const alignStyle = item.sender === 'user' ? styles.alignEnd : styles.alignStart;
+  const renderItem = ({item}) => {
+    const isUser = item.sender === 'user'
+    const alignStyle =
+      item.sender === 'user' ? styles.alignEnd : styles.alignStart
     const profileImage = isUser
       ? require('../../screens/pictures/domits-logo.jpg')
-      : require('../../screens/pictures/domits-logo.jpg');
+      : require('../../screens/pictures/domits-logo.jpg')
 
-    const playAudio = async (base64Audio) => {
+    const playAudio = async base64Audio => {
       if (!base64Audio.startsWith('data:audio/mp3;base64,')) {
-        console.error('Invalid Base64 Audio');
-        return;
+        console.error('Invalid Base64 Audio')
+        return
       }
-      const audioData = base64Audio.replace('data:audio/mp3;base64,', '');
-      const path = `${RNFetchBlob.fs.dirs.CacheDir}/temp_audio.mp3`;
+      const audioData = base64Audio.replace('data:audio/mp3;base64,', '')
+      const path = `${RNFetchBlob.fs.dirs.CacheDir}/temp_audio.mp3`
 
       try {
-        await RNFetchBlob.fs.writeFile(path, audioData, 'base64');
-        const sound = new Sound(path, '', (error) => {
+        await RNFetchBlob.fs.writeFile(path, audioData, 'base64')
+        const sound = new Sound(path, '', error => {
           if (error) {
-            console.error('Error loading audio:', error);
-            return;
+            console.error('Error loading audio:', error)
+            return
           }
-          sound.play();
-        });
+          sound.play()
+        })
       } catch (err) {
-        console.error('Error writing audio file:', err);
+        console.error('Error writing audio file:', err)
       }
-    };
+    }
     return (
       <View style={[styles.messageContainer, alignStyle]}>
         {!isUser && (
           <View style={styles.messageContent}>
             <View style={styles.senderHeader}>
-              <Image
-                source={profileImage}
-                style={styles.senderImage}
-              />
+              <Image source={profileImage} style={styles.senderImage} />
               <Text style={styles.senderName}>
                 {item.sender === 'bot' ? 'Domits Bot' : 'YOU'}
               </Text>
               {item.audioUrl && (
                 <TouchableOpacity
                   style={styles.speakerIconContainer}
-                  onPress={() => playAudio(item.audioUrl)}
-                >
-                  <Icon name="volume-up" size={24} color="green" marginLeft={10} />
+                  onPress={() => playAudio(item.audioUrl)}>
+                  <Icon
+                    name="volume-up"
+                    size={24}
+                    color="green"
+                    marginLeft={10}
+                  />
                 </TouchableOpacity>
               )}
             </View>
 
             <Text style={styles.senderMessageText}>{item.text}</Text>
-
           </View>
         )}
 
@@ -217,33 +253,33 @@ const Support = () => {
               {item.audioUrl && (
                 <TouchableOpacity
                   style={styles.speakerIconContainer}
-                  onPress={() => playAudio(item.audioUrl)}
-                >
-                  <Icon name="volume-up" size={24} color="green" marginRight={10} />
+                  onPress={() => playAudio(item.audioUrl)}>
+                  <Icon
+                    name="volume-up"
+                    size={24}
+                    color="green"
+                    marginRight={10}
+                  />
                 </TouchableOpacity>
               )}
               <Text style={styles.youLabel}>YOU</Text>
-              <Image
-                source={profileImage}
-                style={styles.youImage}
-              />
-
+              <Image source={profileImage} style={styles.youImage} />
             </View>
             <Text style={styles.youMessageText}>{item.text}</Text>
           </View>
         )}
       </View>
-    );
-  };
+    )
+  }
 
   const toggleDropdown = () => {
-    setIsDropdownVisible(!isDropdownVisible);
+    setIsDropdownVisible(!isDropdownVisible)
     Animated.timing(dropdownAnimation, {
       toValue: isDropdownVisible ? 0 : 1,
       duration: 300,
       useNativeDriver: true,
-    }).start();
-  };
+    }).start()
+  }
 
   return (
     <View style={styles.container}>
@@ -254,23 +290,41 @@ const Support = () => {
         keyExtractor={(item, index) => index.toString()}
         style={styles.messageList}
         onContentSizeChange={() => {
-          setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+          setTimeout(
+            () => flatListRef.current?.scrollToEnd({animated: true}),
+            100,
+          )
         }}
         onLayout={() => {
-          setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 100);
+          setTimeout(
+            () => flatListRef.current?.scrollToEnd({animated: true}),
+            100,
+          )
         }}
       />
 
       {awaitingUserChoice && (
         <View style={styles.optionButtons}>
-          <TouchableOpacity onPress={() => handleButtonClick('1')} style={styles.optionButton}>
-            <Text style={styles.optionButtonText}>1. I have a question regarding accommodations</Text>
+          <TouchableOpacity
+            onPress={() => handleButtonClick('1')}
+            style={styles.optionButton}>
+            <Text style={styles.optionButtonText}>
+              1. I have a question regarding accommodations
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleButtonClick('2')} style={styles.optionButton}>
-            <Text style={styles.optionButtonText}>2. I want to learn about Domits</Text>
+          <TouchableOpacity
+            onPress={() => handleButtonClick('2')}
+            style={styles.optionButton}>
+            <Text style={styles.optionButtonText}>
+              2. I want to learn about Domits
+            </Text>
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => handleButtonClick('3')} style={styles.optionButton}>
-            <Text style={styles.optionButtonText}>3. Connect me with an expert</Text>
+          <TouchableOpacity
+            onPress={() => handleButtonClick('3')}
+            style={styles.optionButton}>
+            <Text style={styles.optionButtonText}>
+              3. Connect me with an expert
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -284,23 +338,31 @@ const Support = () => {
         <View style={styles.suggestionsContainer}>
           <Text style={styles.suggestionsTitle}>Suggestions:</Text>
           {suggestions.map((suggestion, index) => (
-            <Text key={index} style={styles.suggestionText}>{suggestion}</Text>
+            <Text key={index} style={styles.suggestionText}>
+              {suggestion}
+            </Text>
           ))}
         </View>
       )}
 
       <View style={styles.inputContainer}>
-        <TouchableOpacity onPress={currentOption ? toggleDropdown : null}
+        <TouchableOpacity
+          onPress={currentOption ? toggleDropdown : null}
           disabled={!currentOption}>
-          <Icon name="add" size={40} color={currentOption ? 'green' : '#b6dbb9'} style={styles.icon} />
+          <Icon
+            name="add"
+            size={40}
+            color={currentOption ? 'green' : '#b6dbb9'}
+            style={styles.icon}
+          />
         </TouchableOpacity>
 
         <TextInput
           style={[
             styles.input,
-            { borderColor: currentOption ? 'green' : '#b6dbb9' }
+            {borderColor: currentOption ? 'green' : '#b6dbb9'},
           ]}
-          placeholder={"Write a message..."}
+          placeholder={'Write a message...'}
           value={userInput}
           onChangeText={setUserInput}
           onSubmitEditing={handleSubmit}
@@ -313,39 +375,41 @@ const Support = () => {
           transparent={true}
           animationType="fade"
           visible={isDropdownVisible}
-          onRequestClose={() => setIsDropdownVisible(false)}
-        >
+          onRequestClose={() => setIsDropdownVisible(false)}>
           <TouchableOpacity
             style={styles.overlay}
             activeOpacity={1}
-            onPress={() => setIsDropdownVisible(false)}
-          >
+            onPress={() => setIsDropdownVisible(false)}>
             <Animated.View
               style={[
                 styles.dropdown,
                 {
                   opacity: dropdownAnimation,
-                  transform: [{
-                    translateY: dropdownAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [20, 0],
-                    }),
-                  }],
+                  transform: [
+                    {
+                      translateY: dropdownAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
                 },
-              ]}
-            >
-
+              ]}>
               <TouchableOpacity
                 style={styles.dropdownItem}
                 onPress={() => {
                   // Handle download chat
-                  console.log('Download Chat');
-                  downloadChatHistory();
-                  setIsDropdownVisible(false);
-                }}
-              >
+                  console.log('Download Chat')
+                  downloadChatHistory()
+                  setIsDropdownVisible(false)
+                }}>
                 <View style={styles.iconTextContainer}>
-                  <Icon name="download" size={20} color="#34C759" style={styles.icon} />
+                  <Icon
+                    name="download"
+                    size={20}
+                    color="#34C759"
+                    style={styles.icon}
+                  />
                   <Text style={styles.dropdownItemText}>Download Chat</Text>
                 </View>
               </TouchableOpacity>
@@ -355,13 +419,17 @@ const Support = () => {
               <TouchableOpacity
                 style={styles.dropdownItem}
                 onPress={() => {
-                  console.log('share Chat');
-                  shareChatHistory();
-                  setIsDropdownVisible(false);
-                }}
-              >
+                  console.log('share Chat')
+                  shareChatHistory()
+                  setIsDropdownVisible(false)
+                }}>
                 <View style={styles.iconTextContainer}>
-                  <Icon name="share" size={20} color="#34C759" style={styles.icon} />
+                  <Icon
+                    name="share"
+                    size={20}
+                    color="#34C759"
+                    style={styles.icon}
+                  />
                   <Text style={styles.dropdownItemText}> Share Chat</Text>
                 </View>
               </TouchableOpacity>
@@ -386,11 +454,9 @@ const Support = () => {
           </TouchableOpacity>
         </Modal>
       )}
-
-
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -408,7 +474,6 @@ const styles = StyleSheet.create({
     padding: 10,
     marginVertical: 5,
     fontSize: 16,
-
   },
   messageContainer: {
     marginVertical: 8,
@@ -533,14 +598,12 @@ const styles = StyleSheet.create({
     color: 'black',
     fontWeight: '500',
     marginRight: 10,
-
   },
   youImage: {
     width: 40,
     height: 40,
     borderRadius: 20,
     marginRight: 5,
-
   },
   senderMessageText: {
     fontSize: 16,
@@ -568,7 +631,6 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
     flexWrap: 'wrap',
     overflow: 'hidden',
-
   },
   messageContent: {
     marginVertical: 5,
@@ -589,6 +651,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E0E0E0', // Light gray color for separation
     marginHorizontal: 10,
   },
-});
+})
 
-export default Support;
+export default Support

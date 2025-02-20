@@ -1,7 +1,7 @@
-import React from "react";
+import React from 'react'
 
-function SpecificationsTable({ data, type }) {
-  if (type === "Boat") {
+function SpecificationsTable({data, type}) {
+  if (type === 'Boat') {
     return (
       <table className="specifications-table">
         <tbody>
@@ -19,14 +19,16 @@ function SpecificationsTable({ data, type }) {
           </tr>
           <tr>
             <td>Maximum Capacity:</td>
-            <td>{data.Capacity} {data.Capacity > 1 ? "People" : "Person"}</td>
+            <td>
+              {data.Capacity} {data.Capacity > 1 ? 'People' : 'Person'}
+            </td>
           </tr>
         </tbody>
       </table>
-    );
+    )
   }
 
-  if (type === "Camper") {
+  if (type === 'Camper') {
     return (
       <table className="specifications-table">
         <tbody>
@@ -44,10 +46,10 @@ function SpecificationsTable({ data, type }) {
           </tr>
         </tbody>
       </table>
-    );
+    )
   }
 
-  return null;
+  return null
 }
 
-export default SpecificationsTable;
+export default SpecificationsTable

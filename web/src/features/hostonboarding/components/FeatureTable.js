@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react'
 
-function FeatureTable({ features }) {
+function FeatureTable({features}) {
   return (
     <table className="features-table">
       <tbody>
@@ -17,11 +17,11 @@ function FeatureTable({ features }) {
                 </tr>
               ))}
             </React.Fragment>
-          ) : null
+          ) : null,
         )}
       </tbody>
     </table>
-  );
+  )
 }
 
-export default FeatureTable;
+export default FeatureTable

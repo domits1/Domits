@@ -2,8 +2,8 @@
 
 // describe('Web Host dashboard Listings', () => {
 //     it('should be able to see listings', () => {
-//         cy.loginAsHost(); 
-//         cy.wait(500); 
+//         cy.loginAsHost();
+//         cy.wait(500);
 
 //         cy.get('.dashboard-head > :nth-child(3)').click();
 //         cy.get('.contentContainer').should('be.visible');
@@ -12,7 +12,6 @@
 //         cy.get('.refresh-btn').click();
 //     });
 // });
-
 
 // /*
 //     cy.get('.personalInfoContent > :nth-child(2) > img').should('be.visible');

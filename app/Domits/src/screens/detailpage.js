@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react'
 import {
   View,
   Text,
@@ -8,28 +8,28 @@ import {
   TouchableOpacity,
   Dimensions,
   Modal,
-} from 'react-native';
-import FeatherIcon from 'react-native-vector-icons/Feather';
-import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome';
-import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {CommonActions} from '@react-navigation/native';
-import FontAwesome from 'react-native-vector-icons/FontAwesome';
-import Feather from 'react-native-vector-icons/Feather';
-import AntDesign from 'react-native-vector-icons/AntDesign';
-import FontAwesome5 from 'react-native-vector-icons/FontAwesome5';
+} from 'react-native'
+import FeatherIcon from 'react-native-vector-icons/Feather'
+import FontAwesomeIcon from 'react-native-vector-icons/FontAwesome'
+import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons'
+import Ionicons from 'react-native-vector-icons/Ionicons'
+import {SafeAreaView} from 'react-native-safe-area-context'
+import {CommonActions} from '@react-navigation/native'
+import FontAwesome from 'react-native-vector-icons/FontAwesome'
+import Feather from 'react-native-vector-icons/Feather'
+import AntDesign from 'react-native-vector-icons/AntDesign'
+import FontAwesome5 from 'react-native-vector-icons/FontAwesome5'
 
 const Detailpage = ({route, navigation}) => {
-  const id = route.params.accommodation.id;
-  const [accommodation, setAccommodation] = useState([]);
-  const [parsedAccommodation, setParsedAccommodation] = useState({});
-  const [owner, setOwner] = useState();
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [images, setImages] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [showAllAmenities, setShowAllAmenities] = useState(false);
+  const id = route.params.accommodation.id
+  const [accommodation, setAccommodation] = useState([])
+  const [parsedAccommodation, setParsedAccommodation] = useState({})
+  const [owner, setOwner] = useState()
+  const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [images, setImages] = useState([])
+  const [showModal, setShowModal] = useState(false)
+  const [showAllAmenities, setShowAllAmenities] = useState(false)
 
   useEffect(() => {
     const fetchAccommodation = async () => {
@@ -43,32 +43,32 @@ const Detailpage = ({route, navigation}) => {
             },
             body: JSON.stringify({ID: id}),
           },
-        );
+        )
         if (!response.ok) {
-          throw new Error('Failed to fetch data');
+          throw new Error('Failed to fetch data')
         }
-        const responseData = await response.json();
-        setAccommodation(responseData);
+        const responseData = await response.json()
+        setAccommodation(responseData)
 
         const parsedBody =
           typeof responseData.body === 'string'
             ? JSON.parse(responseData.body)
-            : responseData.body;
-        setParsedAccommodation(parsedBody);
+            : responseData.body
+        setParsedAccommodation(parsedBody)
       } catch (error) {
-        console.error('Error fetching or processing data:', error);
+        console.error('Error fetching or processing data:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    fetchAccommodation();
-  }, [id]);
+    }
+    fetchAccommodation()
+  }, [id])
 
   useEffect(() => {
     const fetchOwner = async () => {
-      const ownerId = parsedAccommodation.OwnerId;
+      const ownerId = parsedAccommodation.OwnerId
       if (!ownerId) {
-        return;
+        return
       }
       try {
         const response = await fetch(
@@ -80,85 +80,85 @@ const Detailpage = ({route, navigation}) => {
             },
             body: JSON.stringify({OwnerId: ownerId}),
           },
-        );
+        )
         if (!response.ok) {
-          throw new Error('Failed to fetch owner data');
+          throw new Error('Failed to fetch owner data')
         }
-        const responseData = await response.json();
-        const data = responseData.body ? JSON.parse(responseData.body) : null;
+        const responseData = await response.json()
+        const data = responseData.body ? JSON.parse(responseData.body) : null
         if (!data) {
-          console.error('No data found in response body');
-          return;
+          console.error('No data found in response body')
+          return
         }
 
         const attributesObject = data[0].Attributes.reduce((acc, attr) => {
-          acc[attr.Name] = attr.Value;
-          return acc;
-        }, {});
+          acc[attr.Name] = attr.Value
+          return acc
+        }, {})
         setOwner(
           attributesObject.given_name + ' ' + attributesObject.family_name ||
             'Unknown Host',
-        );
+        )
       } catch (error) {
-        console.error('Error fetching owner data:', error);
+        console.error('Error fetching owner data:', error)
       }
-    };
-    fetchOwner();
-  }, [id, parsedAccommodation]);
+    }
+    fetchOwner()
+  }, [id, parsedAccommodation])
 
   useEffect(() => {
     if (parsedAccommodation && parsedAccommodation.Images) {
-      const originalImages = parsedAccommodation.Images;
+      const originalImages = parsedAccommodation.Images
 
       const updatedImages = Object.entries(originalImages)
         .sort(([keyA], [keyB]) => keyA.localeCompare(keyB))
         .map(([key, url]) => {
-          const updatedUrl = url.replace('detail', 'mobile');
-          return {uri: updatedUrl};
-        });
-      setImages(updatedImages);
+          const updatedUrl = url.replace('detail', 'mobile')
+          return {uri: updatedUrl}
+        })
+      setImages(updatedImages)
     } else if (!loading) {
-      console.warn('No Images object found in parsed accommodation data.');
+      console.warn('No Images object found in parsed accommodation data.')
     }
-  }, [parsedAccommodation, loading]);
+  }, [parsedAccommodation, loading])
 
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0)
 
   const handleHomeScreenPress = () => {
-    navigation.navigate('HomeScreen');
-  };
+    navigation.navigate('HomeScreen')
+  }
 
   const handleMessagesPress = () => {
-    const email = 'user1@example.com';
+    const email = 'user1@example.com'
     navigation.dispatch(
       CommonActions.reset({
         index: 0,
         routes: [{name: 'Messages', params: {email}}],
       }),
-    );
-  };
+    )
+  }
 
   const handleSettingsPress = () => {
-    navigation.navigate('Settings');
-  };
+    navigation.navigate('Settings')
+  }
   const handleonBoarding1Press = () => {
     navigation.navigate('onBoarding1', {
       accommodation,
       parsedAccommodation,
       images,
-    });
-  };
+    })
+  }
 
   const handleScroll = event => {
     const page = Math.round(
       event.nativeEvent.contentOffset.x /
         event.nativeEvent.layoutMeasurement.width,
-    );
-    setCurrentPage(page);
-  };
+    )
+    setCurrentPage(page)
+  }
 
   // Dynamically calculate image width based on screen width
-  const imageWidth = Dimensions.get('window').width;
+  const imageWidth = Dimensions.get('window').width
 
   const featureIcons = {
     'Wi-Fi': <Ionicons name="wifi" size={24} color="green" />,
@@ -493,20 +493,20 @@ const Detailpage = ({route, navigation}) => {
     Housekeeping: (
       <MaterialCommunityIcons name="broom" size={24} color="green" />
     ),
-  };
+  }
 
   const toggleModal = () => {
-    setShowModal(!showModal);
-  };
+    setShowModal(!showModal)
+  }
 
   const renderAmenities = () => {
-    const allAmenities = parsedAccommodation.Features || {};
+    const allAmenities = parsedAccommodation.Features || {}
     const categoriesToShow = Object.keys(allAmenities)
       .filter(category => allAmenities[category].length > 0)
-      .slice(0, 3);
+      .slice(0, 3)
 
     return categoriesToShow.map((category, categoryIndex) => {
-      const items = allAmenities[category].slice(0, 5);
+      const items = allAmenities[category].slice(0, 5)
 
       return (
         <View key={categoryIndex} style={styles.featuresCategory}>
@@ -522,9 +522,9 @@ const Detailpage = ({route, navigation}) => {
             </View>
           ))}
         </View>
-      );
-    });
-  };
+      )
+    })
+  }
 
   const FeaturePopup = ({features, onClose}) => {
     return (
@@ -539,7 +539,7 @@ const Detailpage = ({route, navigation}) => {
             </Text>
             <ScrollView>
               {Object.keys(features).map(category => {
-                const categoryItems = features[category];
+                const categoryItems = features[category]
                 if (categoryItems.length > 0) {
                   return (
                     <View key={category} style={styles.featuresCategory}>
@@ -561,42 +561,42 @@ const Detailpage = ({route, navigation}) => {
                         </View>
                       ))}
                     </View>
-                  );
+                  )
                 }
-                return null;
+                return null
               })}
             </ScrollView>
           </View>
         </View>
       </Modal>
-    );
-  };
+    )
+  }
 
   const renderDateRange = () => {
-    const dateRanges = parsedAccommodation.DateRanges || [];
+    const dateRanges = parsedAccommodation.DateRanges || []
 
     if (dateRanges.length === 0) {
-      return null;
+      return null
     }
 
     const sortedRanges = dateRanges.sort(
       (a, b) => new Date(a.startDate) - new Date(b.startDate),
-    );
+    )
 
-    const earliestDate = new Date(sortedRanges[0].startDate);
-    const latestDate = new Date(sortedRanges[sortedRanges.length - 1].endDate);
+    const earliestDate = new Date(sortedRanges[0].startDate)
+    const latestDate = new Date(sortedRanges[sortedRanges.length - 1].endDate)
 
     const formatDate = date => {
       const day = date.toLocaleDateString('en-US', {
         day: 'numeric',
         timeZone: 'UTC',
-      });
+      })
       const month = date.toLocaleDateString('en-US', {
         month: 'long',
         timeZone: 'UTC',
-      });
-      return `${day} ${month}`;
-    };
+      })
+      return `${day} ${month}`
+    }
 
     return (
       <View>
@@ -604,8 +604,8 @@ const Detailpage = ({route, navigation}) => {
           {formatDate(earliestDate)} - {formatDate(latestDate)}
         </Text>
       </View>
-    );
-  };
+    )
+  }
 
   const renderDotIndicator = () => {
     return (
@@ -620,8 +620,8 @@ const Detailpage = ({route, navigation}) => {
           />
         ))}
       </View>
-    );
-  };
+    )
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -756,8 +756,8 @@ const Detailpage = ({route, navigation}) => {
         </ScrollView>
       </View>
     </SafeAreaView>
-  );
-};
+  )
+}
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -1120,6 +1120,6 @@ const styles = StyleSheet.create({
   inactiveDot: {
     backgroundColor: 'gray',
   },
-});
+})
 
-export default Detailpage;
+export default Detailpage

@@ -1,12 +1,7 @@
 // @ts-check
-import { initSchema } from '@aws-amplify/datastore';
-import { schema } from './schema';
+import {initSchema} from '@aws-amplify/datastore'
+import {schema} from './schema'
 
+const {User, Todo} = initSchema(schema)
 
-
-const { User, Todo } = initSchema(schema);
-
-export {
-  User,
-  Todo
-};
+export {User, Todo}

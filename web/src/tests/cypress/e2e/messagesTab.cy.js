@@ -2,15 +2,15 @@
 
 // describe('Chat Functionaliteit Tests', () => {
 //     beforeEach(() => {
-//         cy.loginAsGuest();  
+//         cy.loginAsGuest();
 //         cy.get('.personalMenu').first().click();
 //         cy.contains('button', 'Profile').click({ force: true });
-//         cy.get('.dashboardSections > :nth-child(3)').click();  
+//         cy.get('.dashboardSections > :nth-child(3)').click();
 //     });
 
 //     it('stuurt een eenvoudig bericht', () => {
 //         cy.get('.chat__input').type('Hallo, hoe kan ik u helpen?{enter}');
-//         // cy.get('.chat__message').should('contain', 'Hallo, hoe kan ik u helpen?');  
+//         // cy.get('.chat__message').should('contain', 'Hallo, hoe kan ik u helpen?');
 //     });
 
 //     it('stuurt een bericht in een andere taal', () => {
@@ -25,7 +25,7 @@
 //     });
 
 //     it('test zeer lange tekst', () => {
-//         const longMessage = 'a'.repeat(1000);  
+//         const longMessage = 'a'.repeat(1000);
 //         cy.get('.chat__input').type(`${longMessage}{enter}`);
 //         // cy.get('.chat__message').should('contain', longMessage);
 //     });
@@ -39,6 +39,6 @@
 //     afterEach(() => {
 //         cy.wait(1000);
 //         cy.get('.personalMenu').click();
-//         cy.get('.dropdownLogoutButton').click();  
+//         cy.get('.dropdownLogoutButton').click();
 //     });
 // });

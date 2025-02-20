@@ -19,13 +19,17 @@
   opacity: 1;
   z-index: 1000;
   visibility: visible;
-  transition: opacity 0.5s ease-in, visibility 0.5s ease-in;
+  transition:
+    opacity 0.5s ease-in,
+    visibility 0.5s ease-in;
 }
 
 .Toast.hidden {
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.5s ease-in, visibility 0.5s ease-in;
+  transition:
+    opacity 0.5s ease-in,
+    visibility 0.5s ease-in;
 }
 
 .Toast-content {
@@ -89,7 +93,7 @@
 }
 
 @media (max-width: 575.98px) {
-  .Toast{
+  .Toast {
     top: 146.66px;
     width: 75%;
   }
@@ -101,7 +105,7 @@
 
 /* Medium devices (tablets, 768px and up) */
 @media (min-width: 768px) and (max-width: 991.98px) {
-  .Toast{
+  .Toast {
     top: 151.76px;
     width: 70%;
   }
@@ -109,7 +113,6 @@
 
 /* Large devices (laptops, 992px and up) */
 @media (min-width: 992px) and (max-width: 1199.98px) {
-
 }
 
 /* Extra large devices (desktops, 1200px and up) */

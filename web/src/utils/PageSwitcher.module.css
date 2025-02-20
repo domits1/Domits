@@ -1,214 +1,217 @@
 .accommodationTab {
-    border-radius: 15px;
-    border: 1px solid gray;
-    text-align: left;
-    padding: 1.5em;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    gap: 2em;
-    margin: 1em;
-    width: auto;
+  border-radius: 15px;
+  border: 1px solid gray;
+  text-align: left;
+  padding: 1.5em;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 2em;
+  margin: 1em;
+  width: auto;
 }
 .accommodationTab:hover {
-    box-shadow: 4px 4px #003366;
+  box-shadow: 4px 4px #003366;
 }
 
 .accommodationImg {
-    padding: 1em;
-    border-radius: 2em;
-    max-height: 15vh;
-    max-width: 25vw;
-    height: auto;
-    transition: opacity 1s ease-in-out;
-    opacity: 0;
+  padding: 1em;
+  border-radius: 2em;
+  max-height: 15vh;
+  max-width: 25vw;
+  height: auto;
+  transition: opacity 1s ease-in-out;
+  opacity: 0;
 }
 .accommodationTitle {
-    font-size: 1.2em;
-    font-weight: bolder;
+  font-size: 1.2em;
+  font-weight: bolder;
 }
 
 .accommodationLeft {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
 }
 
 .accommodationRight {
-    display: flex;
-    flex-direction: column;
-    align-items: start;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
 }
 
 .pagination {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
 }
 
 .pagination button {
-    padding: 5px 10px;
-    margin: 0 5px;
-    border: none;
-    background-color: #f4f4f4;
-    cursor: pointer;
-    border-radius: 15px;
+  padding: 5px 10px;
+  margin: 0 5px;
+  border: none;
+  background-color: #f4f4f4;
+  cursor: pointer;
+  border-radius: 15px;
 }
 
 .pagination .active {
-    background-color: var(--primary-color);
-    color: #fff;
+  background-color: var(--primary-color);
+  color: #fff;
 }
 
 .paginationButton:disabled {
-    opacity: 0.5;
-    cursor: default;
+  opacity: 0.5;
+  cursor: default;
 }
 
 .paginationButton:hover:not(:disabled) {
-    background-color: #ddd;
+  background-color: #ddd;
 }
 
 .listing {
-    box-shadow: none;
+  box-shadow: none;
 }
 
 .listingButtonBox {
-    display: flex;
-    flex-direction: column;
-    gap: 3%;
-    padding: 1em;
+  display: flex;
+  flex-direction: column;
+  gap: 3%;
+  padding: 1em;
 }
 
 .listingButton {
-    color: white;
-    padding: 0.35em 1.2em;
-    border: none;
-    margin-right: 0;
-    border-radius: 2em;
-    transition: all 0.2s;
-    max-height: 2em;
+  color: white;
+  padding: 0.35em 1.2em;
+  border: none;
+  margin-right: 0;
+  border-radius: 2em;
+  transition: all 0.2s;
+  max-height: 2em;
 }
 
 .listingEdit {
-    background-color: var(--primary-color);
-    cursor: pointer;
+  background-color: var(--primary-color);
+  cursor: pointer;
 }
 
 .listingDelete {
-    background-color: rgb(193, 57, 57);
-    cursor: pointer;
+  background-color: rgb(193, 57, 57);
+  cursor: pointer;
 }
 
 .listingDraft {
-    background-color: var(--secondary-color);
-    cursor: pointer;
+  background-color: var(--secondary-color);
+  cursor: pointer;
 }
 
-.listingDelete:hover, .listingDraft:hover, .listingEdit:hover {
-    opacity: 90%;
+.listingDelete:hover,
+.listingDraft:hover,
+.listingEdit:hover {
+  opacity: 90%;
 }
 
 /* Mobile Responsive Adjustments */
 @media (max-width: 480px) {
-    .App {
-        padding: 0;
-        margin: 0;
-    }
-    
-    h2 {
-        margin: 0;
-    }
-    
-    .wijzer {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    div.box {
-        margin: 0;
-        padding: 0;
-    }
-    
-    .boxColumns {
-        margin: 0;
-    }
-    
-    .fullBox {
-        box-shadow: none;
-    }
-    
-    .page-body {
-        display: flex;
-        flex-direction: column;
-    }
-    
-    .dashboard {
-        width: auto;
-    }
-    
-    .dashboardSection.section-1 {
-        margin: 0;
-        padding: 0;
-        grid-template-columns: 0.5fr 0.5fr;
-    }
-    
-    .contentContainer {
-        margin: 0;
-        padding: 0;
-        text-align: left;
-    }
-    
-    .accommodationTab {
-        margin: 0;
-        padding: 0;
-        flex-direction: column;
-        border-radius: 0.5em;
-        justify-content: space-around;
-        gap: 0.1em;
-        margin-bottom: 1em;
-        max-width: none;
-    }
+  .App {
+    padding: 0;
+    margin: 0;
+  }
 
-    .accommodationTitle {
-        font-size: 0.75em;
-        margin: 0;
-    }
+  h2 {
+    margin: 0;
+  }
 
-    .accommodationLeft, .accommodationRight {
-        padding: 0;
-    }
+  .wijzer {
+    display: flex;
+    flex-direction: column;
+  }
 
-    .accommodationImg {
-        border-radius: 0.5em 0.5em 0 0;
-        padding: 0;
-        align-self: center;
-        width: 100%;
-        max-width: none;
-        max-height: none;
-        height: auto;
-    }
+  div.box {
+    margin: 0;
+    padding: 0;
+  }
 
-    .listingButton {
-        margin: 1em;
-    }
+  .boxColumns {
+    margin: 0;
+  }
 
-    .pagination {
-        padding: 0;
-    }
+  .fullBox {
+    box-shadow: none;
+  }
 
-    .listing {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        width: 100%;
-        margin: 0;
-        padding: 0;
-    }
+  .page-body {
+    display: flex;
+    flex-direction: column;
+  }
 
-    .refresh-btn {
-        margin: 1em;
-        place-self: center;
-    }
+  .dashboard {
+    width: auto;
+  }
+
+  .dashboardSection.section-1 {
+    margin: 0;
+    padding: 0;
+    grid-template-columns: 0.5fr 0.5fr;
+  }
+
+  .contentContainer {
+    margin: 0;
+    padding: 0;
+    text-align: left;
+  }
+
+  .accommodationTab {
+    margin: 0;
+    padding: 0;
+    flex-direction: column;
+    border-radius: 0.5em;
+    justify-content: space-around;
+    gap: 0.1em;
+    margin-bottom: 1em;
+    max-width: none;
+  }
+
+  .accommodationTitle {
+    font-size: 0.75em;
+    margin: 0;
+  }
+
+  .accommodationLeft,
+  .accommodationRight {
+    padding: 0;
+  }
+
+  .accommodationImg {
+    border-radius: 0.5em 0.5em 0 0;
+    padding: 0;
+    align-self: center;
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    height: auto;
+  }
+
+  .listingButton {
+    margin: 1em;
+  }
+
+  .pagination {
+    padding: 0;
+  }
+
+  .listing {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+
+  .refresh-btn {
+    margin: 1em;
+    place-self: center;
+  }
 }

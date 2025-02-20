@@ -1,10 +1,10 @@
-import React from "react";
+import React from 'react'
 
-function RadioGroup({ label, name, options, selectedValue, onChange }) {
+function RadioGroup({label, name, options, selectedValue, onChange}) {
   return (
     <div className="radio-group">
       <label>{label}</label>
-      {options.map((option) => (
+      {options.map(option => (
         <label key={option}>
           <input
             type="radio"
@@ -16,7 +16,7 @@ function RadioGroup({ label, name, options, selectedValue, onChange }) {
         </label>
       ))}
     </div>
-  );
+  )
 }
 
-export default RadioGroup;
+export default RadioGroup

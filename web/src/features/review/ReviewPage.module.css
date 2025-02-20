@@ -1,150 +1,149 @@
 .main {
-    width: 90%;
-    max-width: 75rem;
-    margin: 0 auto;
-    padding: 1.25rem;
+  width: 90%;
+  max-width: 75rem;
+  margin: 0 auto;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  h1 {
+    align-self: center;
+  }
+  .rating {
+    display: inline-block;
+    position: relative;
+    height: 10vh;
+    line-height: 100px;
+    font-size: 2rem;
+    align-self: center;
+  }
+
+  .rating label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    cursor: pointer;
+  }
+
+  .rating label:last-child {
+    position: static;
+  }
+
+  .rating label:nth-child(1) {
+    z-index: 5;
+  }
+
+  .rating label:nth-child(2) {
+    z-index: 4;
+  }
+
+  .rating label:nth-child(3) {
+    z-index: 3;
+  }
+
+  .rating label:nth-child(4) {
+    z-index: 2;
+  }
+
+  .rating label:nth-child(5) {
+    z-index: 1;
+  }
+
+  .rating label input {
+    position: absolute;
+    top: 0;
+    left: 0;
+    opacity: 0;
+  }
+
+  .rating label .icon {
+    float: left;
+    color: transparent;
+    font-size: 4rem;
+  }
+
+  .rating label:last-child .icon {
+    color: gray;
+  }
+
+  .rating:not(:hover) label input:checked ~ .icon,
+  .rating:hover label:hover input ~ .icon {
+    color: gold;
+  }
+
+  .rating label input:focus:not(:checked) ~ .icon:last-child {
+    color: gray;
+    text-shadow: 0 0 5px gold;
+  }
+  .comment {
+    text-align: center;
+    padding: 0 0 10% 0;
+  }
+  .buttonBox {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+  button {
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    box-shadow: 0.25rem 0.25rem #0a760f;
+    background: #0fa616;
+    color: white;
+    cursor: pointer;
+  }
+  .disabled {
+    background: darkgray !important;
+    box-shadow: 0.25rem 0.25rem gray;
+    cursor: not-allowed;
+  }
+  button:hover {
+    background: lightgreen;
+  }
+  input {
+    font-size: 1rem;
+    border-radius: 0.25rem;
+    border: 1px solid #cccccc;
+    padding: 0.5rem;
+  }
+  .title {
     display: flex;
     flex-direction: column;
-    h1 {
-        align-self: center;
-    }
-    .rating {
-        display: inline-block;
-        position: relative;
-        height: 10vh;
-        line-height: 100px;
-        font-size: 2rem;
-        align-self: center;
-    }
-
-    .rating label {
-        position: absolute;
-        top: 0;
-        left: 0;
-        height: 100%;
-        cursor: pointer;
-    }
-
-    .rating label:last-child {
-        position: static;
-    }
-
-    .rating label:nth-child(1) {
-        z-index: 5;
-    }
-
-    .rating label:nth-child(2) {
-        z-index: 4;
-    }
-
-    .rating label:nth-child(3) {
-        z-index: 3;
-    }
-
-    .rating label:nth-child(4) {
-        z-index: 2;
-    }
-
-    .rating label:nth-child(5) {
-        z-index: 1;
-    }
-
-    .rating label input {
-        position: absolute;
-        top: 0;
-        left: 0;
-        opacity: 0;
-    }
-
-    .rating label .icon {
-        float: left;
-        color: transparent;
-        font-size: 4rem;
-    }
-
-    .rating label:last-child .icon {
-        color: gray;
-    }
-
-    .rating:not(:hover) label input:checked ~ .icon,
-    .rating:hover label:hover input ~ .icon {
-        color: gold;
-    }
-
-    .rating label input:focus:not(:checked) ~ .icon:last-child {
-        color: gray;
-        text-shadow: 0 0 5px gold;
-    }
-    .comment {
-        text-align: center;
-        padding: 0 0 10% 0;
-    }
-    .buttonBox {
-        display: flex;
-        flex-direction: row;
-        justify-content: space-between;
-    }
-    button {
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border: none;
-        box-shadow: 0.25rem 0.25rem #0A760F;
-        background: #0fa616;
-        color: white;
-        cursor: pointer;
-    }
-    .disabled {
-        background: darkgray !important;
-        box-shadow: 0.25rem 0.25rem gray;
-        cursor: not-allowed;
-    }
-    button:hover {
-        background: lightgreen;
-    }
+    padding: 1rem 0;
     input {
-        font-size: 1rem;
-        border-radius: 0.25rem;
-        border: 1px solid #cccccc;
-        padding: 0.5rem;
+      width: 40%;
     }
-    .title {
-        display: flex;
-        flex-direction: column;
-        padding: 1rem 0;
-        input {
-            width: 40%;
-        }
+  }
+  .content {
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 0;
+    margin-bottom: 5%;
+    input {
+      height: 30vh;
+      text-align: left;
+      line-height: 1rem;
     }
-    .content {
-        display: flex;
-        flex-direction: column;
-        padding: 1rem 0;
-        margin-bottom: 5%;
-        input {
-            height: 30vh;
-            text-align: left;
-            line-height: 1rem;
-        }
-        .textarea {
-            font-size: 1rem;
-            border-radius: 0.25rem;
-            border: 1px solid #cccccc;
-            padding: 0.5rem;
-            height: 30vh;
-            resize: vertical;
-        }
-
+    .textarea {
+      font-size: 1rem;
+      border-radius: 0.25rem;
+      border: 1px solid #cccccc;
+      padding: 0.5rem;
+      height: 30vh;
+      resize: vertical;
     }
-    .imageDiv {
-        align-self: center;
-        .happy {
-            width: 50%;
-            height: 50%;
-            padding: 1.5rem;
-        }
+  }
+  .imageDiv {
+    align-self: center;
+    .happy {
+      width: 50%;
+      height: 50%;
+      padding: 1.5rem;
     }
-    .spinnerDiv {
-        align-self: center;
-        padding: 2rem;
-    }
+  }
+  .spinnerDiv {
+    align-self: center;
+    padding: 2rem;
+  }
 }

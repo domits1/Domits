@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react'
 import {
   View,
   Text,
@@ -7,34 +7,34 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {useAuth} from '../../context/AuthContext';
-import {signUp, getCurrentUser, signOut} from '@aws-amplify/auth';
-import CheckBox from '@react-native-community/checkbox';
+} from 'react-native'
+import {useNavigation} from '@react-navigation/native'
+import {useAuth} from '../../context/AuthContext'
+import {signUp, getCurrentUser, signOut} from '@aws-amplify/auth'
+import CheckBox from '@react-native-community/checkbox'
 
 const generateRandomUsername = () => {
-  const chars = String.fromCharCode(...Array(127).keys()).slice(33);
-  let result = '';
+  const chars = String.fromCharCode(...Array(127).keys()).slice(33)
+  let result = ''
   for (let i = 0; i < 15; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+    result += chars.charAt(Math.floor(Math.random() * chars.length))
   }
-  return result;
-};
+  return result
+}
 
 const Register = () => {
-  const navigation = useNavigation();
-  const {setAuthCredentials} = useAuth();
+  const navigation = useNavigation()
+  const {setAuthCredentials} = useAuth()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     username: generateRandomUsername(),
     firstName: '',
     lastName: '',
-  });
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isHost, setIsHost] = useState(false);
+  })
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [isHost, setIsHost] = useState(false)
   const [passwordStrength, setPasswordStrength] = useState({
     text: 'Weak',
     color: 'red',
@@ -44,14 +44,14 @@ const Register = () => {
       number: false,
       specialChar: false,
     },
-  });
+  })
 
   const handleChangePassword = (name, value) => {
-    setFormData(prevState => ({...prevState, [name]: value}));
+    setFormData(prevState => ({...prevState, [name]: value}))
     if (name === 'password') {
-      checkPasswordStrength(value);
+      checkPasswordStrength(value)
     }
-  };
+  }
 
   const checkPasswordStrength = password => {
     const requirements = {
@@ -59,73 +59,69 @@ const Register = () => {
       uppercase: /[A-Z]/.test(password),
       number: /[0-9]/.test(password),
       specialChar: /[^A-Za-z0-9]/.test(password),
-    };
-    const metRequirements = Object.values(requirements).filter(Boolean).length;
+    }
+    const metRequirements = Object.values(requirements).filter(Boolean).length
 
-    let strength = {text: 'Weak', color: 'red'};
+    let strength = {text: 'Weak', color: 'red'}
     if (metRequirements === 4) {
-      strength = {text: 'Very Strong', color: 'green'};
+      strength = {text: 'Very Strong', color: 'green'}
     } else if (metRequirements === 3) {
-      strength = {text: 'Strong', color: '#088f08'};
+      strength = {text: 'Strong', color: '#088f08'}
     } else if (metRequirements === 2) {
-      strength = {text: 'Weak', color: 'orange'};
+      strength = {text: 'Weak', color: 'orange'}
     }
 
-    setPasswordStrength({...strength, requirements});
-  };
+    setPasswordStrength({...strength, requirements})
+  }
   const handleHostChange = () => {
-    setIsHost(!isHost);
-  };
+    setIsHost(!isHost)
+  }
 
   const handleChange = (name, value) => {
     setFormData(prevState => ({
       ...prevState,
       [name]: value,
-    }));
-  };
+    }))
+  }
 
   const onSubmit = async () => {
-    const {username, email, password, firstName, lastName} = formData;
+    const {username, email, password, firstName, lastName} = formData
     if (!passwordStrength.requirements.length) {
-      setErrorMessage('Password must be at least 8 characters.');
-      return;
+      setErrorMessage('Password must be at least 8 characters.')
+      return
     }
     if (
       !passwordStrength.requirements.uppercase ||
       !passwordStrength.requirements.number
     ) {
-      setErrorMessage(
-        'Password must contain an uppercase letter and a number.',
-      );
-      return;
+      setErrorMessage('Password must contain an uppercase letter and a number.')
+      return
     }
     if (!passwordStrength.requirements.specialChar) {
-      setErrorMessage('Password must contain at least one special character.');
-      return;
+      setErrorMessage('Password must contain at least one special character.')
+      return
     }
     // Basic validation
     if (username.length < 4) {
-      setErrorMessage('Username must be at least 4 characters long.');
-      return;
+      setErrorMessage('Username must be at least 4 characters long.')
+      return
     }
     if (firstName.length < 2 || lastName.length < 2) {
-      setErrorMessage(
-        'First and last name must be at least 2 characters long.',
-      );
-      return;
+      setErrorMessage('First and last name must be at least 2 characters long.')
+      return
     }
     if (password.length < 7) {
-      setErrorMessage('Password must be at least 7 characters long.');
-      return;
+      setErrorMessage('Password must be at least 7 characters long.')
+      return
     }
     if (!email) {
-      setErrorMessage("Email can't be empty!");
-      return;
+      setErrorMessage("Email can't be empty!")
+      return
     }
 
     try {
-      const emailName = email.split('@')[0];
-      const groupName = isHost ? 'Host' : 'Traveler';
+      const emailName = email.split('@')[0]
+      const groupName = isHost ? 'Host' : 'Traveler'
 
       const {isSignUpComplete, userId, nextStep} = await signUp({
         username: email, // Email as username
@@ -140,41 +136,41 @@ const Register = () => {
           },
           autoSignIn: true,
         },
-      });
+      })
 
-      console.log('UserId:', userId, 'Next Step:', nextStep);
+      console.log('UserId:', userId, 'Next Step:', nextStep)
 
       if (setAuthCredentials) {
-        setAuthCredentials(email, password);
+        setAuthCredentials(email, password)
       }
 
       // Navigate to confirmation screen
       navigation.navigate('ConfirmEmail', {
         email: email,
         username: email,
-      });
+      })
     } catch (error) {
       if (error.code === 'UsernameExistsException') {
-        setErrorMessage('User already exists!');
+        setErrorMessage('User already exists!')
       } else {
-        console.error('Error signing up:', error);
-        setErrorMessage('An error occurred. Please try again.');
+        console.error('Error signing up:', error)
+        setErrorMessage('An error occurred. Please try again.')
       }
     }
-  };
+  }
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        await getCurrentUser();
-        setIsAuthenticated(true);
+        await getCurrentUser()
+        setIsAuthenticated(true)
       } catch {
-        setIsAuthenticated(false);
+        setIsAuthenticated(false)
       }
-    };
+    }
 
-    checkAuth();
-  }, []);
+    checkAuth()
+  }, [])
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: 'white'}}>
@@ -249,8 +245,8 @@ const Register = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   scrollContainer: {
@@ -301,6 +297,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   buttonText: {color: 'white', fontSize: 20, fontWeight: 'bold'},
-});
+})
 
-export default Register;
+export default Register

@@ -19,4 +19,3 @@
 //   cy.get('.personalMenu').eq(0).scrollIntoView().click();
 //   cy.get('.dropdownLogoutButton').eq(0).click();
 // });
-

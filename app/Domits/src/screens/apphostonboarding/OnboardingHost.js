@@ -1,4 +1,4 @@
-import React, {useMemo, useState} from 'react';
+import React, {useMemo, useState} from 'react'
 import {
   View,
   Text,
@@ -10,42 +10,42 @@ import {
   FlatList,
   TextInput,
   Switch,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+} from 'react-native'
+import {useNavigation} from '@react-navigation/native'
 
-import Apartment from '../pictures/Onboarding-icons/flat.png';
-import House from '../pictures/Onboarding-icons/house.png';
-import Villa from '../pictures/Onboarding-icons/mansion.png';
-import Boat from '../pictures/Onboarding-icons/house-boat.png';
-import Camper from '../pictures/Onboarding-icons/camper-van.png';
-import Cottage from '../pictures/Onboarding-icons/cottage.png';
+import Apartment from '../pictures/Onboarding-icons/flat.png'
+import House from '../pictures/Onboarding-icons/house.png'
+import Villa from '../pictures/Onboarding-icons/mansion.png'
+import Boat from '../pictures/Onboarding-icons/house-boat.png'
+import Camper from '../pictures/Onboarding-icons/camper-van.png'
+import Cottage from '../pictures/Onboarding-icons/cottage.png'
 
-import CamperVan from '../pictures/Onboarding-icons/camper-van.png';
-import Motorboat from '../pictures/BoatTypes/motorboat.png';
-import Sailboat from '../pictures/BoatTypes/sailboat.png';
-import Rib from '../pictures/BoatTypes/rib.png';
-import Catamaran from '../pictures/BoatTypes/catamaran.png';
-import Yacht from '../pictures/BoatTypes/yacht.png';
-import Barge from '../pictures/BoatTypes/barge.png';
-import Houseboat from '../pictures/BoatTypes/house_boat.png';
-import Jetski from '../pictures/BoatTypes/jetski.png';
-import Electric_Boat from '../pictures/BoatTypes/electric-boat.png';
-import Boat_Without_License from '../pictures/BoatTypes/boat-without-license.png';
+import CamperVan from '../pictures/Onboarding-icons/camper-van.png'
+import Motorboat from '../pictures/BoatTypes/motorboat.png'
+import Sailboat from '../pictures/BoatTypes/sailboat.png'
+import Rib from '../pictures/BoatTypes/rib.png'
+import Catamaran from '../pictures/BoatTypes/catamaran.png'
+import Yacht from '../pictures/BoatTypes/yacht.png'
+import Barge from '../pictures/BoatTypes/barge.png'
+import Houseboat from '../pictures/BoatTypes/house_boat.png'
+import Jetski from '../pictures/BoatTypes/jetski.png'
+import Electric_Boat from '../pictures/BoatTypes/electric-boat.png'
+import Boat_Without_License from '../pictures/BoatTypes/boat-without-license.png'
 
-import {Picker} from '@react-native-picker/picker';
+import {Picker} from '@react-native-picker/picker'
 
 const OnboardingHost = () => {
-  const listingType = 0;
-  const listingSpaceType = 1;
-  const listingLocation = 2;
-  const listingAmountOfGuests = 3;
-  const listingAmenities = 4;
-  const listingHouseRules = 5;
-  const listingName = 6;
-  const listingDescription = 7;
-  const navigation = useNavigation();
-  const [page, setPage] = useState(0);
-  const [selectedAccoType, setSelectedAccoType] = useState(null);
+  const listingType = 0
+  const listingSpaceType = 1
+  const listingLocation = 2
+  const listingAmountOfGuests = 3
+  const listingAmenities = 4
+  const listingHouseRules = 5
+  const listingName = 6
+  const listingDescription = 7
+  const navigation = useNavigation()
+  const [page, setPage] = useState(0)
+  const [selectedAccoType, setSelectedAccoType] = useState(null)
   const [formData, setFormData] = useState({
     GuestAccess: '',
     BoatType: '',
@@ -62,9 +62,9 @@ const OnboardingHost = () => {
     CheckOut: {From: '00:00', Til: '00:00'},
     AccommodationTitle: '', // For listingName
     AccommodationDescription: '', // For listingDescription
-  });
-  const [errors, setErrors] = useState({});
-  const [selectedCountry, setSelectedCountry] = useState('');
+  })
+  const [errors, setErrors] = useState({})
+  const [selectedCountry, setSelectedCountry] = useState('')
   const countries = [
     'Netherlands',
     'United States',
@@ -79,16 +79,9 @@ const OnboardingHost = () => {
     'Croatia',
     'Belgium',
     'Australia',
-  ];
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const accoTypes = [
-    'Apartment',
-    'House',
-    'Villa',
-    'Boat',
-    'Camper',
-    'Cottage',
-  ];
+  ]
+  const [dropdownOpen, setDropdownOpen] = useState(false)
+  const accoTypes = ['Apartment', 'House', 'Villa', 'Boat', 'Camper', 'Cottage']
   const boatTypes = [
     'Motorboat',
     'Sailboat',
@@ -100,7 +93,7 @@ const OnboardingHost = () => {
     'Jetski',
     'Electric boat',
     'Boat without license',
-  ];
+  ]
 
   const camperTypes = [
     'Campervan',
@@ -110,7 +103,7 @@ const OnboardingHost = () => {
     'Integrated Motorhome',
     'Roof Tent',
     'Other',
-  ];
+  ]
 
   const accommodationIcons = {
     Apartment,
@@ -119,7 +112,7 @@ const OnboardingHost = () => {
     Boat,
     Camper,
     Cottage,
-  };
+  }
 
   const boatIcons = {
     Motorboat,
@@ -132,7 +125,7 @@ const OnboardingHost = () => {
     Jetski,
     'Electric boat': Electric_Boat,
     'Boat without license': Boat_Without_License,
-  };
+  }
 
   const allAmenities = {
     Essentials: [
@@ -245,59 +238,59 @@ const OnboardingHost = () => {
       'Garden or backyard',
       'Bicycle',
     ],
-  };
+  }
 
   const handleSelectType = type => {
-    setSelectedAccoType(type);
+    setSelectedAccoType(type)
     setFormData({
       ...formData,
       BoatType: '', // Reset BoatType if a new type is selected
       CamperType: '', // Reset CamperType if a new type is selected
       GuestAccess: '', // Reset GuestAccess for other selections
-    });
-  };
+    })
+  }
 
   const handleSelectBoatType = boatType => {
     setFormData({
       ...formData,
       BoatType: boatType,
-    });
-  };
+    })
+  }
 
   const handleSelectCamperType = camperType => {
     setFormData({
       ...formData,
       CamperType: camperType,
-    });
-  };
+    })
+  }
 
   const handleSelectGuestAccess = guestAccess => {
     setFormData({
       ...formData,
       GuestAccess: guestAccess,
-    });
-  };
+    })
+  }
 
   const pageUpdater = pageNumber => {
-    setPage(pageNumber);
-  };
+    setPage(pageNumber)
+  }
 
   const toggleDropdown = () => {
-    setDropdownOpen(!dropdownOpen);
-  };
+    setDropdownOpen(!dropdownOpen)
+  }
 
   const selectCountry = country => {
-    setSelectedCountry(country);
-    setDropdownOpen(false);
-  };
+    setSelectedCountry(country)
+    setDropdownOpen(false)
+  }
 
   const handleInputChange = (field, value) => {
     setFormData({
       ...formData,
       [field]: value,
-    });
-  };
-  const [selectedAmenities, setSelectedAmenities] = useState({});
+    })
+  }
+  const [selectedAmenities, setSelectedAmenities] = useState({})
 
   const toggleAmenity = (category, amenity) => {
     setSelectedAmenities(prev => ({
@@ -306,23 +299,23 @@ const OnboardingHost = () => {
         ...prev[category],
         [amenity]: !prev[category]?.[amenity],
       },
-    }));
-  };
+    }))
+  }
   const incrementAmount = field => {
     setFormData(prevData => ({
       ...prevData,
       [field]: prevData[field] + 1,
-    }));
-  };
+    }))
+  }
 
   const decrementAmount = field => {
     if (formData[field] > 0) {
       setFormData(prevData => ({
         ...prevData,
         [field]: prevData[field] - 1,
-      }));
+      }))
     }
-  };
+  }
   const handleHouseRulesChange = (field, value, subField = null) => {
     if (subField) {
       setFormData(prevData => ({
@@ -331,14 +324,14 @@ const OnboardingHost = () => {
           ...prevData[field],
           [subField]: value,
         },
-      }));
+      }))
     } else {
       setFormData(prevData => ({
         ...prevData,
         [field]: value,
-      }));
+      }))
     }
-  };
+  }
   const renderPageContent = page => {
     switch (page) {
       case listingType:
@@ -381,7 +374,7 @@ const OnboardingHost = () => {
               </TouchableOpacity>
             </View>
           </SafeAreaView>
-        );
+        )
       case listingSpaceType:
         return (
           <ScrollView>
@@ -536,7 +529,7 @@ const OnboardingHost = () => {
               </View>
             </SafeAreaView>
           </ScrollView>
-        );
+        )
       case listingLocation:
         return (
           <SafeAreaView style={styles.container}>
@@ -635,7 +628,7 @@ const OnboardingHost = () => {
               </TouchableOpacity>
             </View>
           </SafeAreaView>
-        );
+        )
       case listingAmountOfGuests:
         return (
           <SafeAreaView style={styles.container}>
@@ -750,7 +743,7 @@ const OnboardingHost = () => {
               </View>
             </ScrollView>
           </SafeAreaView>
-        );
+        )
       case listingAmenities:
         return (
           <SafeAreaView style={styles.aminityContainer}>
@@ -799,7 +792,7 @@ const OnboardingHost = () => {
               </TouchableOpacity>
             </View>
           </SafeAreaView>
-        );
+        )
       case listingHouseRules:
         return (
           <View style={styles.pageBody}>
@@ -846,8 +839,8 @@ const OnboardingHost = () => {
                   }
                   style={styles.picker}>
                   {Array.from({length: 24}, (_, i) => {
-                    const time = `${i.toString().padStart(2, '0')}:00`;
-                    return <Picker.Item key={time} label={time} value={time} />;
+                    const time = `${i.toString().padStart(2, '0')}:00`
+                    return <Picker.Item key={time} label={time} value={time} />
                   })}
                 </Picker>
                 <Text style={styles.timePickerLabel}>Til:</Text>
@@ -858,8 +851,8 @@ const OnboardingHost = () => {
                   }
                   style={styles.picker}>
                   {Array.from({length: 24}, (_, i) => {
-                    const time = `${i.toString().padStart(2, '0')}:00`;
-                    return <Picker.Item key={time} label={time} value={time} />;
+                    const time = `${i.toString().padStart(2, '0')}:00`
+                    return <Picker.Item key={time} label={time} value={time} />
                   })}
                 </Picker>
               </View>
@@ -877,8 +870,8 @@ const OnboardingHost = () => {
                   }
                   style={styles.picker}>
                   {Array.from({length: 24}, (_, i) => {
-                    const time = `${i.toString().padStart(2, '0')}:00`;
-                    return <Picker.Item key={time} label={time} value={time} />;
+                    const time = `${i.toString().padStart(2, '0')}:00`
+                    return <Picker.Item key={time} label={time} value={time} />
                   })}
                 </Picker>
                 <Text style={styles.timePickerLabel}>Til:</Text>
@@ -889,8 +882,8 @@ const OnboardingHost = () => {
                   }
                   style={styles.picker}>
                   {Array.from({length: 24}, (_, i) => {
-                    const time = `${i.toString().padStart(2, '0')}:00`;
-                    return <Picker.Item key={time} label={time} value={time} />;
+                    const time = `${i.toString().padStart(2, '0')}:00`
+                    return <Picker.Item key={time} label={time} value={time} />
                   })}
                 </Picker>
               </View>
@@ -925,7 +918,7 @@ const OnboardingHost = () => {
               </TouchableOpacity>
             </View>
           </View>
-        );
+        )
       case listingName:
         return (
           <SafeAreaView style={styles.container}>
@@ -964,12 +957,12 @@ const OnboardingHost = () => {
                 ]}
                 onPress={() => {
                   if (formData.AccommodationTitle) {
-                    setPage(page + 1);
+                    setPage(page + 1)
                   } else {
                     setErrors(prevErrors => ({
                       ...prevErrors,
                       AccommodationTitle: 'Title is required',
-                    }));
+                    }))
                   }
                 }}
                 disabled={!formData.AccommodationTitle}>
@@ -977,7 +970,7 @@ const OnboardingHost = () => {
               </TouchableOpacity>
             </View>
           </SafeAreaView>
-        );
+        )
       case listingDescription:
         return (
           <SafeAreaView style={styles.container}>
@@ -1011,12 +1004,12 @@ const OnboardingHost = () => {
                 ]}
                 onPress={() => {
                   if (formData.AccommodationDescription) {
-                    setPage(page + 1);
+                    setPage(page + 1)
                   } else {
                     setErrors(prevErrors => ({
                       ...prevErrors,
                       AccommodationDescription: 'Description is required',
-                    }));
+                    }))
                   }
                 }}
                 disabled={!formData.AccommodationDescription}>
@@ -1024,7 +1017,7 @@ const OnboardingHost = () => {
               </TouchableOpacity>
             </View>
           </SafeAreaView>
-        );
+        )
       case 8:
         return (
           <SafeAreaView style={styles.container}>
@@ -1114,14 +1107,14 @@ const OnboardingHost = () => {
               </TouchableOpacity>
             </View>
           </SafeAreaView>
-        );
+        )
       default:
-        return null;
+        return null
     }
-  };
+  }
 
-  return <View style={styles.container}>{renderPageContent(page)}</View>;
-};
+  return <View style={styles.container}>{renderPageContent(page)}</View>
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -1461,6 +1454,6 @@ const styles = StyleSheet.create({
     marginLeft: '10%',
     width: '80%',
   },
-});
+})
 
-export default OnboardingHost;
+export default OnboardingHost

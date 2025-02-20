@@ -1,4 +1,3 @@
-
 function AccommodationTypeSelector({
   options,
   icons,
@@ -10,9 +9,8 @@ function AccommodationTypeSelector({
       {options.map((option, index) => (
         <div
           key={index}
-          className={`option ${selectedType === option ? "selected" : ""}`}
-          onClick={() => onSelectType(option)}
-        >
+          className={`option ${selectedType === option ? 'selected' : ''}`}
+          onClick={() => onSelectType(option)}>
           <img
             className="accommodation-icon"
             src={icons[option]}
@@ -22,7 +20,7 @@ function AccommodationTypeSelector({
         </div>
       ))}
     </section>
-  );
+  )
 }
 
-export default AccommodationTypeSelector;
+export default AccommodationTypeSelector

@@ -17,7 +17,7 @@
 
 // Cypress.Commands.add('testinlog', () => {
 //     cy.setDesktopViewport();
-//     cy.visit("https://localhost:3000/login") 
+//     cy.visit("https://localhost:3000/login")
 // });
 
 // Cypress.Commands.add('performInputCheck2', (value1, value2) => {
@@ -29,8 +29,7 @@
 //     cy.inlogmenu();
 //     cy.uitloggen();
 //     cy.visit('https://localhost:3000/login');
-  
-    
+
 // });
 
 // Cypress.Commands.add('inlogmenu', () => {

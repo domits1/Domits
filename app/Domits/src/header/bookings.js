@@ -1,13 +1,13 @@
-import React from 'react';
-import {View, Text, StyleSheet} from 'react-native';
+import React from 'react'
+import {View, Text, StyleSheet} from 'react-native'
 
 const Bookings = () => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>No Bookings</Text>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -20,6 +20,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 50,
   },
-});
+})
 
-export default Bookings;
+export default Bookings

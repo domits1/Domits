@@ -1,100 +1,115 @@
-import React, { useEffect, useState, useRef } from "react";
-import { generateClient } from 'aws-amplify/api';
-import { fetchUserAttributes, getCurrentUser } from '@aws-amplify/auth';
-import * as mutations from "./mutations";
-import * as queries from "./queries";
-import * as subscriptions from './subscriptions';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Dimensions, FlatList, KeyboardAvoidingView, Platform } from 'react-native';
+import React, {useEffect, useState, useRef} from 'react'
+import {generateClient} from 'aws-amplify/api'
+import {fetchUserAttributes, getCurrentUser} from '@aws-amplify/auth'
+import * as mutations from './mutations'
+import * as queries from './queries'
+import * as subscriptions from './subscriptions'
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native'
 
-const client = generateClient();
+const client = generateClient()
 
-const { width: windowWidth, height: windowHeight } = Dimensions.get('window');
+const {width: windowWidth, height: windowHeight} = Dimensions.get('window')
 
-export function Messages({ route, navigation }) {
-  const [chats, setChats] = useState([]);
-  const [newMessage, setNewMessage] = useState('');
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [chatUsers, setChatUsers] = useState([]);
-  const [channelUUID, setChannelUUID] = useState(null);
-  const [isChatVisible, setIsChatVisible] = useState(false);
-  const [user, setUser] = useState(null);
+export function Messages({route, navigation}) {
+  const [chats, setChats] = useState([])
+  const [newMessage, setNewMessage] = useState('')
+  const [selectedUser, setSelectedUser] = useState(null)
+  const [chatUsers, setChatUsers] = useState([])
+  const [channelUUID, setChannelUUID] = useState(null)
+  const [isChatVisible, setIsChatVisible] = useState(false)
+  const [user, setUser] = useState(null)
 
-  const chatContainerRef = useRef(null);
+  const chatContainerRef = useRef(null)
 
-  const recipientEmail = route.params?.email;
+  const recipientEmail = route.params?.email
 
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const currentUser = await getCurrentUser();
-        const attributes = await fetchUserAttributes(currentUser);
+        const currentUser = await getCurrentUser()
+        const attributes = await fetchUserAttributes(currentUser)
         if (attributes && attributes.email) {
-          setUser({ email: attributes.email });
+          setUser({email: attributes.email})
         }
       } catch (error) {
-        console.error('Error fetching user:', error);
+        console.error('Error fetching user:', error)
       }
-    };
+    }
 
-    fetchUser();
-  }, []);
+    fetchUser()
+  }, [])
 
   useEffect(() => {
     if (recipientEmail) {
-      handleUserClick(recipientEmail);
+      handleUserClick(recipientEmail)
     }
-  }, [recipientEmail]);
+  }, [recipientEmail])
 
   useEffect(() => {
     if (user && user.email) {
-      fetchChatUsers();
+      fetchChatUsers()
     }
-  }, [user]);
+  }, [user])
 
   useEffect(() => {
     if (channelUUID) {
-      const subscription = client.graphql({
-        query: subscriptions.onCreateChat,
-        variables: { channelID: channelUUID }
-      }).subscribe({
-        next: ({ value }) => {
-          const newChat = value.data.onCreateChat;
-          setChats(prevChats => [...prevChats, { ...newChat, isSent: newChat.email === user.email }]);
-        },
-        error: error => {
-          console.warn('Subscription error:', error);
-        }
-      });
+      const subscription = client
+        .graphql({
+          query: subscriptions.onCreateChat,
+          variables: {channelID: channelUUID},
+        })
+        .subscribe({
+          next: ({value}) => {
+            const newChat = value.data.onCreateChat
+            setChats(prevChats => [
+              ...prevChats,
+              {...newChat, isSent: newChat.email === user.email},
+            ])
+          },
+          error: error => {
+            console.warn('Subscription error:', error)
+          },
+        })
 
       // Cleanup subscription on component unmount
-      return () => subscription.unsubscribe();
+      return () => subscription.unsubscribe()
     }
-  }, [channelUUID, user]);
+  }, [channelUUID, user])
 
   const generateChannelName = (userEmail, recipientEmail) => {
-    const sortedEmails = [userEmail, recipientEmail].sort();
-    return sortedEmails.join('_');
-  };
+    const sortedEmails = [userEmail, recipientEmail].sort()
+    return sortedEmails.join('_')
+  }
 
-  const handleUserClick = async (email) => {
-    const selectedUser = { email: email };
-    setSelectedUser(selectedUser);
-    setIsChatVisible(true);
+  const handleUserClick = async email => {
+    const selectedUser = {email: email}
+    setSelectedUser(selectedUser)
+    setIsChatVisible(true)
 
     if (!user || !user.email) {
-      return;
+      return
     }
 
-    const userEmail = user.email;
-    const channelName = generateChannelName(userEmail, email);
-    setChannelUUID(channelName);
+    const userEmail = user.email
+    const channelName = generateChannelName(userEmail, email)
+    setChannelUUID(channelName)
 
-    fetchChats(email, channelName);
+    fetchChats(email, channelName)
 
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollIntoView({ behavior: 'smooth' });
+      chatContainerRef.current.scrollIntoView({behavior: 'smooth'})
     }
-  };
+  }
 
   const fetchChats = async (recipientEmail, channelName) => {
     try {
@@ -102,47 +117,52 @@ export function Messages({ route, navigation }) {
         query: queries.listChats,
         variables: {
           filter: {
-            email: { eq: user.email },
-            recipientEmail: { eq: recipientEmail }
-          }
-        }
-      });
+            email: {eq: user.email},
+            recipientEmail: {eq: recipientEmail},
+          },
+        },
+      })
 
       const receivedMessagesResponse = await client.graphql({
         query: queries.listChats,
         variables: {
           filter: {
-            email: { eq: recipientEmail },
-            recipientEmail: { eq: user.email }
-          }
-        }
-      });
+            email: {eq: recipientEmail},
+            recipientEmail: {eq: user.email},
+          },
+        },
+      })
 
-      const sentMessages = sentMessagesResponse.data.listChats.items.map(chat => ({
-        ...chat,
-        isSent: true
-      })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      const sentMessages = sentMessagesResponse.data.listChats.items
+        .map(chat => ({
+          ...chat,
+          isSent: true,
+        }))
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
 
-      const receivedMessages = receivedMessagesResponse.data.listChats.items.map(chat => ({
-        ...chat,
-        isSent: false
-      })).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      const receivedMessages = receivedMessagesResponse.data.listChats.items
+        .map(chat => ({
+          ...chat,
+          isSent: false,
+        }))
+        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
 
-      const allChats = [...sentMessages, ...receivedMessages].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+      const allChats = [...sentMessages, ...receivedMessages].sort(
+        (a, b) => new Date(a.createdAt) - new Date(b.createdAt),
+      )
 
-      setChats(allChats);
+      setChats(allChats)
     } catch (error) {
-      console.error('Error fetching chats:', error);
+      console.error('Error fetching chats:', error)
     }
-  };
-
+  }
 
   const sendMessage = async () => {
     if (!newMessage.trim()) {
-      return;
+      return
     }
     if (!selectedUser || !channelUUID || !user || !user.email) {
-      return;
+      return
     }
 
     try {
@@ -152,81 +172,93 @@ export function Messages({ route, navigation }) {
         recipientEmail: selectedUser.email,
         isRead: false,
         createdAt: new Date().toISOString(),
-        channelID: channelUUID
-      };
+        channelID: channelUUID,
+      }
 
       const response = await client.graphql({
         query: mutations.createChat,
         variables: {
           input: messagePayload,
         },
-      });
+      })
 
-      setNewMessage('');
+      setNewMessage('')
 
-      setChats(prevChats => [...prevChats, { ...messagePayload, isSent: true }]);
+      setChats(prevChats => [...prevChats, {...messagePayload, isSent: true}])
 
       const updatedChatUsers = chatUsers.map(chatUser => {
         if (chatUser.email === selectedUser.email) {
           return {
             ...chatUser,
             lastMessageTimestamp: new Date().getTime(),
-          };
+          }
         }
-        return chatUser;
-      });
-      setChatUsers(updatedChatUsers);
+        return chatUser
+      })
+      setChatUsers(updatedChatUsers)
     } catch (error) {
-      console.error('Error sending message:', error);
+      console.error('Error sending message:', error)
     }
-  };
+  }
 
   const handleBackToUsers = () => {
-    setSelectedUser(null);
-    setIsChatVisible(false);
-  };
+    setSelectedUser(null)
+    setIsChatVisible(false)
+  }
 
   const fetchChatUsers = async () => {
     try {
-      const response = await client.graphql({ query: queries.listChats });
-      const allChats = response.data.listChats.items;
+      const response = await client.graphql({query: queries.listChats})
+      const allChats = response.data.listChats.items
 
-      const uniqueUsers = [...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail]))];
+      const uniqueUsers = [
+        ...new Set(allChats.flatMap(chat => [chat.email, chat.recipientEmail])),
+      ]
 
       const filteredUsersData = uniqueUsers
         .filter(email => email !== user.email)
         .map(email => {
-          const userChats = allChats.filter(chat => chat.email === email || chat.recipientEmail === email);
-          const lastMessage = userChats.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+          const userChats = allChats.filter(
+            chat => chat.email === email || chat.recipientEmail === email,
+          )
+          const lastMessage = userChats.sort(
+            (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
+          )[0]
           return {
             email,
-            lastMessageTimestamp: lastMessage ? new Date(lastMessage.createdAt).getTime() : 0,
+            lastMessageTimestamp: lastMessage
+              ? new Date(lastMessage.createdAt).getTime()
+              : 0,
             lastMessage: lastMessage ? lastMessage.text : '',
-          };
+          }
         })
         .filter(userData => {
-          return allChats.some(chat =>
-            (chat.email === user.email && chat.recipientEmail === userData.email) ||
-            (chat.recipientEmail === user.email && chat.email === userData.email)
-          );
+          return allChats.some(
+            chat =>
+              (chat.email === user.email &&
+                chat.recipientEmail === userData.email) ||
+              (chat.recipientEmail === user.email &&
+                chat.email === userData.email),
+          )
         })
-        .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp);
+        .sort((a, b) => b.lastMessageTimestamp - a.lastMessageTimestamp)
 
-      setChatUsers(filteredUsersData);
+      setChatUsers(filteredUsersData)
     } catch (error) {
-      console.error('Error fetching chat users:', error);
+      console.error('Error fetching chat users:', error)
     }
-  };
+  }
 
   return (
     <KeyboardAvoidingView
       style={styles.chat}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
-    >
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}>
       {isChatVisible ? (
         <View style={styles.chat__container}>
-          <TouchableOpacity onPress={handleBackToUsers} style={styles.chat__backButton}>
+          <TouchableOpacity
+            onPress={handleBackToUsers}
+            style={styles.chat__backButton}>
             <Text style={styles.chat__backButtonText}>Back to Users</Text>
           </TouchableOpacity>
           <View style={styles.chat__message} ref={chatContainerRef}>
@@ -234,11 +266,16 @@ export function Messages({ route, navigation }) {
               <View style={styles.chat__aside}>
                 <View style={styles.chat__pfpSecond}></View>
                 <View style={styles.chat__list}>
-                  <Text style={styles.chat__name}>{selectedUser ? selectedUser.email : ''}</Text>
+                  <Text style={styles.chat__name}>
+                    {selectedUser ? selectedUser.email : ''}
+                  </Text>
                   <Text style={styles.chat__listP}>3rd all-time booker</Text>
                   <Text style={styles.chat__listP}> 2 adults, 2 kids</Text>
                   <Text style={styles.chat__listP}> Kinderhuissingel 6k</Text>
-                  <Text style={styles.chat__listP}> 21-12-2023 / 28-12-2023</Text>
+                  <Text style={styles.chat__listP}>
+                    {' '}
+                    21-12-2023 / 28-12-2023
+                  </Text>
                   <Text style={styles.chat__listP}> paid with mastercard</Text>
                 </View>
               </View>
@@ -246,8 +283,14 @@ export function Messages({ route, navigation }) {
             <FlatList
               data={chats}
               keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item }) => (
-                <View style={[styles.chat__bubble, item.isSent ? styles.chat__bubbleSent : styles.chat__bubbleReceived]}>
+              renderItem={({item}) => (
+                <View
+                  style={[
+                    styles.chat__bubble,
+                    item.isSent
+                      ? styles.chat__bubbleSent
+                      : styles.chat__bubbleReceived,
+                  ]}>
                   <Text style={styles.chat__bubbleText}>{item.text}</Text>
                 </View>
               )}
@@ -256,11 +299,13 @@ export function Messages({ route, navigation }) {
               <TextInput
                 style={styles.chat__input}
                 value={newMessage}
-                onChangeText={(text) => setNewMessage(text)}
+                onChangeText={text => setNewMessage(text)}
                 placeholder="Type your message..."
                 onSubmitEditing={() => sendMessage()}
               />
-              <TouchableOpacity onPress={() => sendMessage()} style={styles.chat__sendButton}>
+              <TouchableOpacity
+                onPress={() => sendMessage()}
+                style={styles.chat__sendButton}>
                 <Text style={styles.chat__sendButtonText}>Send</Text>
               </TouchableOpacity>
             </View>
@@ -268,30 +313,33 @@ export function Messages({ route, navigation }) {
         </View>
       ) : (
         <View style={styles.chat__people}>
-        <FlatList
-          data={chatUsers}
-          keyExtractor={(item) => item.email}
-          renderItem={({ item }) => (
-            <TouchableOpacity style={styles.chat__peopleContainer} onPress={() => handleUserClick(item.email)}>
-              <View style={styles.chat__pfp}></View>
-              <View style={styles.chat__body}>
-                <Text style={styles.chat__name}>{item.email}</Text>
-                <Text style={styles.chat__text}>{item.lastMessage}</Text>
-              </View>
-              <View style={styles.chat__time}>
-                <Text>{new Date(item.lastMessageTimestamp).toLocaleDateString()}</Text>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-
+          <FlatList
+            data={chatUsers}
+            keyExtractor={item => item.email}
+            renderItem={({item}) => (
+              <TouchableOpacity
+                style={styles.chat__peopleContainer}
+                onPress={() => handleUserClick(item.email)}>
+                <View style={styles.chat__pfp}></View>
+                <View style={styles.chat__body}>
+                  <Text style={styles.chat__name}>{item.email}</Text>
+                  <Text style={styles.chat__text}>{item.lastMessage}</Text>
+                </View>
+                <View style={styles.chat__time}>
+                  <Text>
+                    {new Date(item.lastMessageTimestamp).toLocaleDateString()}
+                  </Text>
+                </View>
+              </TouchableOpacity>
+            )}
+          />
         </View>
       )}
     </KeyboardAvoidingView>
-  );
+  )
 }
 
-export default Messages;
+export default Messages
 
 const styles = StyleSheet.create({
   chat: {
@@ -430,4 +478,4 @@ const styles = StyleSheet.create({
   chat__bubbleText: {
     fontSize: 16,
   },
-});
+})

@@ -18,7 +18,7 @@ export const onCreateChat = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onUpdateChat = /* GraphQL */ `
   subscription OnUpdateChat($filter: ModelSubscriptionChatFilterInput) {
     onUpdateChat(filter: $filter) {
@@ -34,7 +34,7 @@ export const onUpdateChat = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onDeleteChat = /* GraphQL */ `
   subscription OnDeleteChat($filter: ModelSubscriptionChatFilterInput) {
     onDeleteChat(filter: $filter) {
@@ -50,7 +50,7 @@ export const onDeleteChat = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onCreateAccommodation = /* GraphQL */ `
   subscription OnCreateAccommodation(
     $filter: ModelSubscriptionAccommodationFilterInput
@@ -64,7 +64,7 @@ export const onCreateAccommodation = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onUpdateAccommodation = /* GraphQL */ `
   subscription OnUpdateAccommodation(
     $filter: ModelSubscriptionAccommodationFilterInput
@@ -78,7 +78,7 @@ export const onUpdateAccommodation = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onDeleteAccommodation = /* GraphQL */ `
   subscription OnDeleteAccommodation(
     $filter: ModelSubscriptionAccommodationFilterInput
@@ -92,7 +92,7 @@ export const onDeleteAccommodation = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onCreateUser = /* GraphQL */ `
   subscription OnCreateUser($filter: ModelSubscriptionUserFilterInput) {
     onCreateUser(filter: $filter) {
@@ -104,7 +104,7 @@ export const onCreateUser = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onUpdateUser = /* GraphQL */ `
   subscription OnUpdateUser($filter: ModelSubscriptionUserFilterInput) {
     onUpdateUser(filter: $filter) {
@@ -116,7 +116,7 @@ export const onUpdateUser = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onDeleteUser = /* GraphQL */ `
   subscription OnDeleteUser($filter: ModelSubscriptionUserFilterInput) {
     onDeleteUser(filter: $filter) {
@@ -128,7 +128,7 @@ export const onDeleteUser = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onCreateTodo = /* GraphQL */ `
   subscription OnCreateTodo($filter: ModelSubscriptionTodoFilterInput) {
     onCreateTodo(filter: $filter) {
@@ -140,7 +140,7 @@ export const onCreateTodo = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onUpdateTodo = /* GraphQL */ `
   subscription OnUpdateTodo($filter: ModelSubscriptionTodoFilterInput) {
     onUpdateTodo(filter: $filter) {
@@ -152,7 +152,7 @@ export const onUpdateTodo = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const onDeleteTodo = /* GraphQL */ `
   subscription OnDeleteTodo($filter: ModelSubscriptionTodoFilterInput) {
     onDeleteTodo(filter: $filter) {
@@ -164,5 +164,4 @@ export const onDeleteTodo = /* GraphQL */ `
       __typename
     }
   }
-`;
-
+`

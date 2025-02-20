@@ -1,4 +1,5 @@
-.hiwContainerTraveller, .hiwContainerHost {
+.hiwContainerTraveller,
+.hiwContainerHost {
   display: flex;
   flex-direction: row;
   justify-content: center;
@@ -13,7 +14,8 @@
   margin: 0 50px;
 }
 
-.hiwCardImg, .hiwCardImgHost {
+.hiwCardImg,
+.hiwCardImgHost {
   background-color: var(--primary-color);
   width: 100%;
   height: 150px;
@@ -33,7 +35,8 @@
   margin-bottom: 20px;
 }
 
-.hiwBtn, .hiwBtnHost {
+.hiwBtn,
+.hiwBtnHost {
   color: white;
   background-color: var(--primary-color);
   text-decoration: none;

@@ -21,7 +21,9 @@ body.hide-header .app-header {
 
 .domits-searchContainer {
   height: 87vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/villaHomepage.jpg");
+  background:
+    linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+    url('../../images/villaHomepage.jpg');
   background-size: cover;
   background-position: 70% 100%;
   background-repeat: no-repeat;
@@ -180,7 +182,6 @@ body.hide-header .app-header {
 }
 
 @media (max-width: 1024px) {
-
 }
 
 @media (max-width: 1440px) {
@@ -204,14 +205,14 @@ body.hide-header .app-header {
 }
 
 @media (max-width: 768px) {
-    .domits-accocard {
-      width: 40%;
-      height: auto;
-    }
+  .domits-accocard {
+    width: 40%;
+    height: auto;
+  }
 
-    .domits-searchText {
-      font-size: 0.6em;
-    }
+  .domits-searchText {
+    font-size: 0.6em;
+  }
 
   .domits-searchTextCon {
     font-size: 3em;
@@ -237,7 +238,7 @@ body.hide-header .app-header {
   .domits-accommodationGroup {
     padding-left: 0vh;
     flex-direction: column;
-}
+  }
 
   .domits-trendingContainer {
     flex-direction: column;
@@ -355,4 +356,3 @@ body.hide-header .app-header {
     transform: translateY(0%);
   }
 }
-

@@ -3,7 +3,7 @@
   flex-direction: column;
   align-items: left;
   margin-bottom: 50px;
-} 
+}
 
 .faqHeader3 {
   font-size: clamp(20px, 4vw, 32px);
@@ -13,18 +13,18 @@
   font-size: clamp(10px, 4vw, 25px);
   font-weight: bolder;
 }
- 
+
 .faq-button-container {
   display: flex;
-  justify-content: left; 
+  justify-content: left;
   align-items: left;
   margin-bottom: 50px;
   gap: 20px;
 }
 
-.faqButton{
+.faqButton {
   display: flex;
-  flex-direction: row ;
+  flex-direction: row;
   color: white;
   border-radius: 8px;
   background-color: var(--primary-color);
@@ -34,7 +34,7 @@
   cursor: pointer;
   max-width: 200px;
   flex: 1;
-  text-align: center; 
+  text-align: center;
   font-weight: 500;
   font-size: 15px;
 }
@@ -51,7 +51,7 @@
   margin: 10px 0;
   padding: 15px;
   cursor: pointer;
-  transition: max-height 0.4s ease; 
+  transition: max-height 0.4s ease;
   overflow: hidden;
 }
 
@@ -59,7 +59,7 @@
   opacity: 90%;
 }
 
-.category{
+.category {
   color: white;
   border-radius: 8px;
   background-color: var(--primary-color);
@@ -76,7 +76,7 @@
   margin: 10px 0;
   padding: 15px;
   cursor: pointer;
-  transition: max-height 0.4s ease; 
+  transition: max-height 0.4s ease;
   overflow: hidden;
 }
 
@@ -87,7 +87,7 @@
 
 .answer {
   overflow: hidden;
-  transition: max-height 0.4s ease-in-out; 
+  transition: max-height 0.4s ease-in-out;
 }
 
 @media (max-width: 900px) {

@@ -1,19 +1,18 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import MessagesTab from './messagesTabNavigator';
-import { useNavigation } from '@react-navigation/native';
-import ChatScreen from '../screens/message/chatScreen';
-import { getGivenName } from '../screens/message/chatScreen';
-import Animated, { Easing, withTiming } from 'react-native-reanimated'
+import React, {useState} from 'react'
+import {View, Text, StyleSheet} from 'react-native'
+import {createNativeStackNavigator} from '@react-navigation/native-stack'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import MessagesTab from './messagesTabNavigator'
+import {useNavigation} from '@react-navigation/native'
+import ChatScreen from '../screens/message/chatScreen'
+import {getGivenName} from '../screens/message/chatScreen'
+import Animated, {Easing, withTiming} from 'react-native-reanimated'
 
-
-const Stack = createNativeStackNavigator();
+const Stack = createNativeStackNavigator()
 
 const MessagesStackNavigator = () => {
-  const navigation = useNavigation();
-  const [activeTab, setActiveTab] = useState('Notifications');
+  const navigation = useNavigation()
+  const [activeTab, setActiveTab] = useState('Notifications')
 
   return (
     <Stack.Navigator
@@ -22,8 +21,6 @@ const MessagesStackNavigator = () => {
         headerTransparent: true,
         headerStyle: {
           backgroundColor: 'white',
-
-
         },
         headerTitle: '',
 
@@ -34,8 +31,7 @@ const MessagesStackNavigator = () => {
               padding: 5,
               height: 60,
               justifyContent: 'center',
-            }}
-          >
+            }}>
             <View
               style={{
                 borderRadius: 20,
@@ -46,8 +42,7 @@ const MessagesStackNavigator = () => {
                 justifyContent: 'center',
                 alignItems: 'center',
                 marginLeft: 15,
-              }}
-            >
+              }}>
               <MaterialIcons
                 name="arrow-back"
                 size={20}
@@ -57,8 +52,7 @@ const MessagesStackNavigator = () => {
             </View>
           </View>
         ),
-      }}
-    >
+      }}>
       <Stack.Screen
         name="Messages"
         component={MessagesTab}
@@ -81,20 +75,18 @@ const MessagesStackNavigator = () => {
                 flexDirection: 'row',
                 justifyContent: 'space-between',
                 shadowColor: 'black',
-                shadowOffset: { width: 0, height: 2 },
+                shadowOffset: {width: 0, height: 2},
                 shadowOpacity: 0.2,
                 shadowRadius: 3,
                 elevation: 3,
-              }}
-            >
+              }}>
               <View
                 style={{
                   backgroundColor: 'white',
                   alignItems: 'center',
                   flexDirection: 'row',
                   justifyContent: 'space-between',
-                }}
-              >
+                }}>
                 <View
                   style={{
                     borderRadius: 20,
@@ -105,24 +97,19 @@ const MessagesStackNavigator = () => {
                     justifyContent: 'center',
                     alignItems: 'center',
                     marginLeft: 15,
-
-                  }}
-                >
+                  }}>
                   <MaterialIcons
                     name="arrow-back"
                     size={20}
                     color="black"
-
-
                     onPress={() => {
                       navigation.reset({
                         index: 0,
-                        routes: [{ name: 'Messages' }],
-                      });
+                        routes: [{name: 'Messages'}],
+                      })
                       setActiveTab('Inbox')
                     }}
                   />
-
                 </View>
                 <Text
                   style={{
@@ -130,8 +117,7 @@ const MessagesStackNavigator = () => {
                     fontSize: 20,
                     color: 'black',
                     fontWeight: '700',
-                  }}
-                >
+                  }}>
                   {/* {givenName} */}
                   {/* Micheal */}
                 </Text>
@@ -140,13 +126,11 @@ const MessagesStackNavigator = () => {
                 name="more-horiz"
                 size={26}
                 color="green"
-
-
                 onPress={() => {
                   navigation.reset({
                     index: 0,
-                    routes: [{ name: 'Messages' }],
-                  });
+                    routes: [{name: 'Messages'}],
+                  })
                   setActiveTab('Inbox')
                 }}
               />
@@ -155,7 +139,7 @@ const MessagesStackNavigator = () => {
         }}
       />
     </Stack.Navigator>
-  );
-};
+  )
+}
 
-export default MessagesStackNavigator;
+export default MessagesStackNavigator

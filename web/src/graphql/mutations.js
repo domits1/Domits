@@ -20,7 +20,7 @@ export const updateChat = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const deleteChat = /* GraphQL */ `
   mutation DeleteChat(
     $input: DeleteChatInput!
@@ -41,7 +41,7 @@ export const deleteChat = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const createAccommodation = /* GraphQL */ `
   mutation CreateAccommodation(
     $input: CreateAccommodationInput!
@@ -56,7 +56,7 @@ export const createAccommodation = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const updateAccommodation = /* GraphQL */ `
   mutation UpdateAccommodation(
     $input: UpdateAccommodationInput!
@@ -71,7 +71,7 @@ export const updateAccommodation = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const deleteAccommodation = /* GraphQL */ `
   mutation DeleteAccommodation(
     $input: DeleteAccommodationInput!
@@ -86,7 +86,7 @@ export const deleteAccommodation = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const createUser = /* GraphQL */ `
   mutation CreateUser(
     $input: CreateUserInput!
@@ -101,7 +101,7 @@ export const createUser = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const updateUser = /* GraphQL */ `
   mutation UpdateUser(
     $input: UpdateUserInput!
@@ -116,7 +116,7 @@ export const updateUser = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const deleteUser = /* GraphQL */ `
   mutation DeleteUser(
     $input: DeleteUserInput!
@@ -131,7 +131,7 @@ export const deleteUser = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const createTodo = /* GraphQL */ `
   mutation CreateTodo(
     $input: CreateTodoInput!
@@ -146,7 +146,7 @@ export const createTodo = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const updateTodo = /* GraphQL */ `
   mutation UpdateTodo(
     $input: UpdateTodoInput!
@@ -161,7 +161,7 @@ export const updateTodo = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const deleteTodo = /* GraphQL */ `
   mutation DeleteTodo(
     $input: DeleteTodoInput!
@@ -176,27 +176,24 @@ export const deleteTodo = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 
-
-
-export const createChat = /* GraphQL */ `mutation CreateChat(
-  $input: CreateChatInput!
-  $condition: ModelChatConditionInput
-) {
-  createChat(input: $input, condition: $condition) {
-    id
-    userId
-    recipientId
-    text
-    email
-    recipientEmail
-    isRead
-    sortKey
-    createdAt
-    channelID
+export const createChat = /* GraphQL */ `
+  mutation CreateChat(
+    $input: CreateChatInput!
+    $condition: ModelChatConditionInput
+  ) {
+    createChat(input: $input, condition: $condition) {
+      id
+      userId
+      recipientId
+      text
+      email
+      recipientEmail
+      isRead
+      sortKey
+      createdAt
+      channelID
+    }
   }
-}
-`;
-
-
+`

@@ -1,9 +1,9 @@
-import React from "react";
+import React from 'react'
 
-function CheckBoxGroup({ options, selectedValues, onChange }) {
+function CheckBoxGroup({options, selectedValues, onChange}) {
   return (
     <div className="checkbox-group">
-      {options.map((option) => (
+      {options.map(option => (
         <label key={option}>
           <input
             type="checkbox"
@@ -14,7 +14,7 @@ function CheckBoxGroup({ options, selectedValues, onChange }) {
         </label>
       ))}
     </div>
-  );
+  )
 }
 
-export default CheckBoxGroup;
+export default CheckBoxGroup

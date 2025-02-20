@@ -1,19 +1,19 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {SafeAreaView} from 'react-native-safe-area-context';
+} from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
+import {SafeAreaView} from 'react-native-safe-area-context'
 
 const BookingDeclinedPage = ({navigation, route}) => {
-  const parsedAccommodation = route.params.parsedAccommodation;
+  const parsedAccommodation = route.params.parsedAccommodation
   const handleGoBack = () => {
-    navigation.navigate('Home');
-  };
+    navigation.navigate('Home')
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -81,8 +81,8 @@ const BookingDeclinedPage = ({navigation, route}) => {
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -174,6 +174,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
   },
-});
+})
 
-export default BookingDeclinedPage;
+export default BookingDeclinedPage

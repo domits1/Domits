@@ -6,7 +6,7 @@
   min-width: 45%;
 }
 
-h2{
+h2 {
   text-align: center;
   flex-wrap: wrap;
 }
@@ -28,7 +28,6 @@ h2{
 
   margin-bottom: 15px;
   position: relative;
-  
 }
 
 .file-image {
@@ -53,8 +52,8 @@ h2{
 }
 
 .stayMinMaxBox {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 }
 
 .stayMinMaxField {
@@ -87,15 +86,15 @@ h2{
   flex-wrap: wrap;
 }
 
-.Check-checkbox{
+.Check-checkbox {
   width: 10rem;
 }
 
 @media (max-width: 400px) {
   .check-box {
-    grid-template-columns: 1fr; 
+    grid-template-columns: 1fr;
   }
-  
+
   .check-box label {
     display: block;
     margin-bottom: 0.5rem;
@@ -393,12 +392,15 @@ h2{
   align-items: center;
 }
 
-.accommodation-title, .accommodation-specification {
+.accommodation-title,
+.accommodation-specification {
   align-self: center;
 }
 .accommodation-specification {
   max-width: 50%;
-  .radioBtn-box, .radioBtn-box-vertical, input {
+  .radioBtn-box,
+  .radioBtn-box-vertical,
+  input {
     margin-bottom: 5%;
   }
   .accommodation-general {
@@ -463,8 +465,8 @@ h2{
   width: 20vw;
   margin-bottom: 1em;
   hr {
-    clear:both;
-    display:block;
+    clear: both;
+    display: block;
     width: 96%;
     background-color: black;
     height: 1px;
@@ -496,7 +498,8 @@ h2{
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .file-image, .accommodation-thumbnail {
+  .file-image,
+  .accommodation-thumbnail {
     width: 30%;
     height: 30%;
   }
@@ -512,7 +515,8 @@ h2{
   .acco-location {
     flex-direction: column;
   }
-  .location-left, .location-right {
+  .location-left,
+  .location-right {
     width: 70vw !important;
   }
 
@@ -538,10 +542,10 @@ h2{
 .houseRulesContainer {
   background-color: #ededed68;
   border-radius: 10px;
-  max-width: 600px; 
-  height: auto; 
+  max-width: 600px;
+  height: auto;
   padding: 20px;
-  margin: auto; 
+  margin: auto;
 }
 
 .toggle-container {
@@ -589,7 +593,6 @@ h2{
   background: #003366;
 }
 
-
 .toggle-checkbox:checked + .toggle-switch:before {
   left: 30px;
 }
@@ -599,11 +602,10 @@ h2{
   visibility: hidden;
 }
 
-
-.toggle-switch:before, .toggle-switch:after {
-  content: "";
+.toggle-switch:before,
+.toggle-switch:after {
+  content: '';
 }
-
 
 .Check {
   display: flex;
@@ -611,10 +613,9 @@ h2{
   flex-wrap: wrap;
   align-items: center;
   margin-top: 30px;
-  
 }
 
-input[type="time"] {
+input[type='time'] {
   border: none;
   color: #2a2c2d;
   font-size: 14px;
@@ -630,18 +631,11 @@ input[type="time"] {
   margin-top: 20px;
 }
 
-.verifyCheck{
+.verifyCheck {
   width: 60vw;
   line-height: normal;
 }
 
-.termsCondition{
-  text-decoration:underline;
-  
+.termsCondition {
+  text-decoration: underline;
 }
-
-
-
-
-
-

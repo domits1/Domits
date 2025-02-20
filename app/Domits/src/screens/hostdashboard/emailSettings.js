@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react'
 import {
   View,
   Text,
@@ -8,126 +8,126 @@ import {
   StyleSheet,
   ScrollView,
   SafeAreaView,
-} from 'react-native';
-import {useAuth} from '../../context/AuthContext';
-import {changeEmail, confirmEmailChange} from './emailConfig';
-import {fetchUserAttributes} from 'aws-amplify/auth';
+} from 'react-native'
+import {useAuth} from '../../context/AuthContext'
+import {changeEmail, confirmEmailChange} from './emailConfig'
+import {fetchUserAttributes} from 'aws-amplify/auth'
 
 const NAME_UPDATE_ENDPOINT =
-  'https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName';
+  'https://5imk8jy3hf.execute-api.eu-north-1.amazonaws.com/default/General-CustomerIAM-Production-Update-UserName'
 
 const HostSettings = () => {
-  const {user, userAttributes} = useAuth();
+  const {user, userAttributes} = useAuth()
 
-  const [tempUser, setTempUser] = useState({email: '', name: ''});
+  const [tempUser, setTempUser] = useState({email: '', name: ''})
   const [userState, setUserState] = useState({
     email: '',
     name: '',
     address: '',
     phone: '',
     family: '',
-  });
-  const [editState, setEditState] = useState({email: false, name: false});
-  const [verificationCode, setVerificationCode] = useState('');
-  const [isVerifying, setIsVerifying] = useState(false);
+  })
+  const [editState, setEditState] = useState({email: false, name: false})
+  const [verificationCode, setVerificationCode] = useState('')
+  const [isVerifying, setIsVerifying] = useState(false)
 
   const handleInputChange = (key, value) => {
-    setTempUser(prev => ({...prev, [key]: value}));
-  };
+    setTempUser(prev => ({...prev, [key]: value}))
+  }
 
   const toggleEditState = field => {
-    setEditState(prev => ({...prev, [field]: !prev[field]}));
-    setIsVerifying(false);
+    setEditState(prev => ({...prev, [field]: !prev[field]}))
+    setIsVerifying(false)
     if (!editState[field]) {
-      setTempUser(prev => ({...prev, [field]: userState[field]}));
+      setTempUser(prev => ({...prev, [field]: userState[field]}))
     }
-  };
+  }
 
   const saveUserEmail = async () => {
     if (!user || !userAttributes) {
-      Alert.alert('Error', 'User is not authenticated. Please sign in.');
-      return;
+      Alert.alert('Error', 'User is not authenticated. Please sign in.')
+      return
     }
 
     if (isVerifying) {
-      const result = await confirmEmailChange(verificationCode);
+      const result = await confirmEmailChange(verificationCode)
       if (result.success) {
         try {
-          const updatedAttributes = await fetchUserAttributes();
-          setUserState({...userState, email: updatedAttributes.email});
-          setTempUser({...tempUser, email: updatedAttributes.email});
+          const updatedAttributes = await fetchUserAttributes()
+          setUserState({...userState, email: updatedAttributes.email})
+          setTempUser({...tempUser, email: updatedAttributes.email})
 
-          toggleEditState('email');
-          setIsVerifying(false);
+          toggleEditState('email')
+          setIsVerifying(false)
 
           Alert.alert(
             'Success',
             'Email verified successfully! Please restart the app to see the changes.',
             [{text: 'OK'}],
-          );
+          )
         } catch (error) {
-          console.error('Error fetching updated user attributes:', error);
-          Alert.alert('Error', 'Email verified, but failed to refresh data.');
+          console.error('Error fetching updated user attributes:', error)
+          Alert.alert('Error', 'Email verified, but failed to refresh data.')
         }
       } else {
-        Alert.alert('Error', result.error || 'Invalid verification code.');
+        Alert.alert('Error', result.error || 'Invalid verification code.')
       }
-      return;
+      return
     }
 
-    const result = await changeEmail(tempUser.email);
+    const result = await changeEmail(tempUser.email)
     if (result.success) {
-      setIsVerifying(true);
-      Alert.alert('Verification Code Sent', result.message);
+      setIsVerifying(true)
+      Alert.alert('Verification Code Sent', result.message)
     } else {
-      Alert.alert('Error', result.error || 'Failed to update email.');
+      Alert.alert('Error', result.error || 'Failed to update email.')
     }
-  };
+  }
 
   const saveUserName = async () => {
     if (!user || !userAttributes) {
-      Alert.alert('Error', 'User is not authenticated. Please sign in.');
-      return;
+      Alert.alert('Error', 'User is not authenticated. Please sign in.')
+      return
     }
 
-    const userId = user.username;
-    const newName = tempUser.name;
+    const userId = user.username
+    const newName = tempUser.name
 
     if (!newName.trim()) {
-      Alert.alert('Invalid Name', 'Name cannot be empty.');
-      return;
+      Alert.alert('Invalid Name', 'Name cannot be empty.')
+      return
     }
 
     try {
-      const params = {userId, newName};
+      const params = {userId, newName}
       const response = await fetch(NAME_UPDATE_ENDPOINT, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(params),
-      });
+      })
 
-      const result = await response.json();
+      const result = await response.json()
 
       if (result.statusCode === 200) {
-        setUserState({...userState, name: newName});
-        toggleEditState('name');
+        setUserState({...userState, name: newName})
+        toggleEditState('name')
 
         Alert.alert(
           'Success',
           'Name updated successfully! Please restart the app to see the changes.',
           [{text: 'OK'}],
-        );
+        )
       } else {
-        Alert.alert('Error', 'Failed to update the name. Please try again.');
+        Alert.alert('Error', 'Failed to update the name. Please try again.')
       }
     } catch (error) {
-      console.error('Error updating username:', error);
+      console.error('Error updating username:', error)
       Alert.alert(
         'Error',
         'An error occurred while updating your name. Please try again.',
-      );
+      )
     }
-  };
+  }
 
   useEffect(() => {
     if (userAttributes) {
@@ -137,13 +137,13 @@ const HostSettings = () => {
         address: userAttributes.address || '',
         phone: userAttributes.phone_number || '',
         family: '2 adults - 2 kids',
-      });
+      })
       setTempUser({
         email: userAttributes.email || '',
         name: userAttributes.given_name || '',
-      });
+      })
     }
-  }, [userAttributes]);
+  }, [userAttributes])
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -217,8 +217,8 @@ const HostSettings = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   safeArea: {flex: 1, backgroundColor: 'white'},
@@ -238,6 +238,6 @@ const styles = StyleSheet.create({
   },
   row: {flexDirection: 'row', alignItems: 'center'},
   actionText: {color: '#007BFF', fontWeight: 'bold'},
-});
+})
 
-export default HostSettings;
+export default HostSettings

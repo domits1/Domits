@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState} from 'react'
 import {
   View,
   Text,
@@ -7,41 +7,41 @@ import {
   StyleSheet,
   SafeAreaView,
   ScrollView,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
-import {signIn} from '@aws-amplify/auth'; // Correct import for Amplify Auth
-import {useAuth} from '../../context/AuthContext'; // Ensure the path is correct
-import 'react-native-get-random-values';
-import {Label} from '@aws-amplify/ui-react-native/src/primitives';
+} from 'react-native'
+import {useNavigation} from '@react-navigation/native'
+import {signIn} from '@aws-amplify/auth' // Correct import for Amplify Auth
+import {useAuth} from '../../context/AuthContext' // Ensure the path is correct
+import 'react-native-get-random-values'
+import {Label} from '@aws-amplify/ui-react-native/src/primitives'
 
 const LoginScreen = () => {
-  const navigation = useNavigation();
-  const {checkAuth} = useAuth(); // Get the checkAuth method from context
-  const [formData, setFormData] = useState({email: '', password: ''});
-  const [errorMessage, setErrorMessage] = useState('');
+  const navigation = useNavigation()
+  const {checkAuth} = useAuth() // Get the checkAuth method from context
+  const [formData, setFormData] = useState({email: '', password: ''})
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleChange = (name, value) => {
     setFormData(prevFormData => ({
       ...prevFormData,
       [name]: value,
-    }));
-  };
+    }))
+  }
 
   const handleLogin = async () => {
-    const {email, password} = formData;
+    const {email, password} = formData
     try {
-      await signIn({username: email, password}); // Ensure the correct parameters
-      checkAuth(); // Update the global auth state
-      navigation.navigate('Account');
+      await signIn({username: email, password}) // Ensure the correct parameters
+      checkAuth() // Update the global auth state
+      navigation.navigate('Account')
     } catch (error) {
       // console.error('Error logging in:', error);
-      setErrorMessage('Invalid username or password. Please try again.');
+      setErrorMessage('Invalid username or password. Please try again.')
     }
-  };
+  }
 
   const handleGoogleSignIn = () => {
     // Google sign-in logic
-  };
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -72,7 +72,7 @@ const LoginScreen = () => {
         ) : null}
         <TouchableOpacity
           onPress={() => {
-            alert('To be done');
+            alert('To be done')
           }}>
           <Text style={styles.linkText}>Forgot your password?</Text>
         </TouchableOpacity>
@@ -101,7 +101,7 @@ const LoginScreen = () => {
           <TouchableOpacity
             style={styles.registerButton}
             onPress={() => {
-              navigation.navigate('Register');
+              navigation.navigate('Register')
             }}>
             <Text style={styles.registerButtonText}>Register</Text>
           </TouchableOpacity>
@@ -113,8 +113,8 @@ const LoginScreen = () => {
       </TouchableOpacity> */}
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -210,6 +210,6 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     textAlign: 'center',
   },
-});
+})
 
-export default LoginScreen;
+export default LoginScreen

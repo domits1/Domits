@@ -11,7 +11,7 @@
 }
 
 .css-h3fyes-control {
- text-align: center;
+  text-align: center;
 }
 
 .Search-bar .Search-searchInputContainer {
@@ -40,7 +40,6 @@
   font-weight: 500;
   text-overflow: ellipsis;
   transform: translateY(-15%);
-
 }
 .Search-check-in {
   width: 17%;
@@ -58,14 +57,16 @@
   height: 3.5rem;
 }
 
-.Search-bar>div {
+.Search-bar > div {
   position: relative;
-  transition: background 150ms ease, width 150ms ease;
+  transition:
+    background 150ms ease,
+    width 150ms ease;
 }
 
-.Search-bar>div::before {
+.Search-bar > div::before {
   position: absolute;
-  content: "";
+  content: '';
   left: -1.85%;
   top: 50%;
   transform: translateY(-40%);
@@ -74,16 +75,16 @@
   background: rgb(88, 153, 22);
 }
 
-.Search-bar>div:nth-of-type(1)::before {
+.Search-bar > div:nth-of-type(1)::before {
   background: transparent;
 }
 
-.Search-bar>div:nth-of-type(3)::before {
+.Search-bar > div:nth-of-type(3)::before {
   transform: translateY(-40%);
   left: -0.01%;
 }
 
-.Search-bar>div:nth-of-type(4)::before {
+.Search-bar > div:nth-of-type(4)::before {
   background: solid;
   height: 56%;
   transform: translateY(-40%);
@@ -109,7 +110,9 @@
   border-radius: 50%;
   color: #ffffff;
   background-color: var(--primary-color);
-  box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+  box-shadow:
+    rgba(27, 31, 35, 0.04) 0px 1px 0px 0px,
+    rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
   height: 2.5rem;
   width: 2.5rem;
   margin-top: 0.45rem;
@@ -118,7 +121,7 @@
 
 .searchbar-button:hover {
   opacity: 90%;
-  transition-duration: 0.0s
+  transition-duration: 0s;
 }
 
 .searchbar-button svg {
@@ -141,12 +144,11 @@
   height: 2rem;
   margin-left: 1rem;
 }
-.searchBar_inputfield[type="search"]::-webkit-search-cancel-button {
+.searchBar_inputfield[type='search']::-webkit-search-cancel-button {
   position: relative;
   color: black;
   font-size: large;
   filter: grayscale(100%);
-
 }
 
 .searchBar_inputfield:focus {
@@ -214,7 +216,7 @@
 @keyframes dropdownFadeIn {
   0% {
     opacity: 0;
-    transform: translateX(-50%) scale(0.80);
+    transform: translateX(-50%) scale(0.8);
   }
 
   100% {
@@ -235,7 +237,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 0.40rem;
+  margin-top: 0.4rem;
   border-bottom: 1px solid var(--primary-color);
 }
 
@@ -367,7 +369,6 @@
 }
 
 @media (max-width: 1500px) {
-
   .Calendar__monthSelectorItemText,
   .Calendar__yearSelectorText {
     font-size: 8px !important;
@@ -375,7 +376,6 @@
 }
 
 @media (max-width: 1200px) {
-
   .Calendar__monthSelectorItemText,
   .Calendar__yearSelectorText {
     font-size: 7px !important;
@@ -383,7 +383,6 @@
 }
 
 @media (max-width: 768px) {
-
   .Calendar__monthSelectorItemText,
   .Calendar__yearSelectorText {
     font-size: 1rem !important;
@@ -391,7 +390,6 @@
 }
 
 @media (min-width: 2500px) {
-
   .Calendar__monthSelectorItemText,
   .Calendar__yearSelectorText {
     font-size: 12px !important;
@@ -406,7 +404,7 @@
   height: 0.1%;
 }
 
-.DatePicker__calendarContainer.-top{
+.DatePicker__calendarContainer.-top {
   height: 4vh;
 }
 
@@ -433,7 +431,7 @@
   color: transparent;
 }
 
-.Calendar__monthYear>* {
+.Calendar__monthYear > * {
   font-size: 1.4em;
   color: black;
 }
@@ -456,12 +454,13 @@
   overflow: hidden;
 }
 
-.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(.-selectedEnd):not(.-selectedBetween) {
+.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(
+    .-selectedEnd
+  ):not(.-selectedBetween) {
   color: inherit;
 }
 
 @media (max-width: 768px) {
-
   .input-calendar,
   .DatePicker__input {
     font-size: 0.5rem;
@@ -523,7 +522,7 @@
   }
   /* kan problemen veroorzaken bij mobile-view */
   .searchBar_inputfield::placeholder {
-    transform: translateX(2.5%)
+    transform: translateX(2.5%);
   }
 
   .searchBar_inputfield * {
@@ -573,7 +572,7 @@
     transform: translateX(-2.25%);
     margin-top: 0.5rem;
   }
-  .Search-bar>div::before {
+  .Search-bar > div::before {
     background: transparent;
   }
   .DatePicker__calendarContainer {
@@ -638,10 +637,9 @@
     overflow: hidden;
     white-space: nowrap;
     transition: transform 0.3s ease-in-out;
-    margin-bottom: 0.5rem ;
+    margin-bottom: 0.5rem;
     text-overflow: ellipsis;
   }
-
 
   .Search-bar {
     display: none;
@@ -669,7 +667,7 @@
     overflow: hidden;
     white-space: nowrap;
     transition: transform 0.3s ease-in-out;
-    margin-bottom: 0.5rem ;
+    margin-bottom: 0.5rem;
     text-overflow: ellipsis;
   }
 
@@ -693,7 +691,3 @@
     padding-left: 0%;
   }
 }
-
-
-
-

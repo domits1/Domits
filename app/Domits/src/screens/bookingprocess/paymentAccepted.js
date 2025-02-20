@@ -1,21 +1,21 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {SafeAreaView} from 'react-native-safe-area-context';
+} from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
+import {SafeAreaView} from 'react-native-safe-area-context'
 
 const BookingConfirmationPage = ({navigation, route}) => {
-  const parsedAccommodation = route.params.parsedAccommodation;
-  const calculateCost = route.params.calculateCost;
-  const adults = route.params.adults;
-  const kids = route.params.kids;
-  const pets = route.params.pets;
-  const nights = route.params.nights;
+  const parsedAccommodation = route.params.parsedAccommodation
+  const calculateCost = route.params.calculateCost
+  const adults = route.params.adults
+  const kids = route.params.kids
+  const pets = route.params.pets
+  const nights = route.params.nights
 
   const handleButton = () => {
     navigation.navigate('bookedAccommodation', {
@@ -25,8 +25,8 @@ const BookingConfirmationPage = ({navigation, route}) => {
       kids: kids,
       pets: pets,
       nights: nights,
-    });
-  };
+    })
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -112,8 +112,8 @@ const BookingConfirmationPage = ({navigation, route}) => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -239,6 +239,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-});
+})
 
-export default BookingConfirmationPage;
+export default BookingConfirmationPage

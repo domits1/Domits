@@ -1,18 +1,22 @@
-import '../support/commands';
+import '../support/commands'
 
 describe('Landing Page and HostDashboard Tests', () => {
   beforeEach(() => {
-    cy.viewport(1920, 1080);
+    cy.viewport(1920, 1080)
 
-    cy.loginAsGuest();
+    cy.loginAsGuest()
 
     // Mock API responses for the dashboard
-    cy.intercept('POST', '**/General-Payments-Production-Read-CheckIfStripeExists', {
-      statusCode: 200,
-      body: {
-        hasStripeAccount: JSON.stringify({ body: false }),
+    cy.intercept(
+      'POST',
+      '**/General-Payments-Production-Read-CheckIfStripeExists',
+      {
+        statusCode: 200,
+        body: {
+          hasStripeAccount: JSON.stringify({body: false}),
+        },
       },
-    }).as('checkStripeAccount');
+    ).as('checkStripeAccount')
 
     cy.intercept('POST', '**/FetchRecentAccommodations', {
       statusCode: 200,
@@ -29,7 +33,10 @@ describe('Landing Page and HostDashboard Tests', () => {
             Drafted: false,
             createdAt: '2023-01-01T12:00:00Z',
             DateRanges: [
-              { startDate: '2023-02-01T00:00:00Z', endDate: '2023-02-10T00:00:00Z' },
+              {
+                startDate: '2023-02-01T00:00:00Z',
+                endDate: '2023-02-10T00:00:00Z',
+              },
             ],
           },
           {
@@ -45,7 +52,7 @@ describe('Landing Page and HostDashboard Tests', () => {
           },
         ]),
       },
-    }).as('fetchRecentAccommodations');
+    }).as('fetchRecentAccommodations')
 
     cy.stub(window, 'fetch')
       .resolves({
@@ -60,61 +67,62 @@ describe('Landing Page and HostDashboard Tests', () => {
             },
           }),
       })
-      .as('mockAuth');
-  });
+      .as('mockAuth')
+  })
 
   it('should load and display user information', () => {
-    cy.wait('@checkStripeAccount');
+    cy.wait('@checkStripeAccount')
 
-    cy.contains('Welcome adaswrrwdadadsa').should('be.visible');
-    cy.contains('Email: kacperfl29@gmail.com').should('be.visible');
-    cy.contains('Name: adaswrrwdadadsa').should('be.visible');
-  });
+    cy.contains('Welcome adaswrrwdadadsa').should('be.visible')
+    cy.contains('Email: kacperfl29@gmail.com').should('be.visible')
+    cy.contains('Name: adaswrrwdadadsa').should('be.visible')
+  })
 
   it('should fetch and display recent accommodations', () => {
-    cy.wait('@fetchRecentAccommodations');
+    cy.wait('@fetchRecentAccommodations')
 
-    cy.contains('My recent listings:').should('be.visible');
-    cy.contains('Cozy Apartment').should('be.visible');
-    cy.contains('New York').should('be.visible');
-    cy.contains('Main St').should('be.visible');
-    cy.contains('12345').should('be.visible');
-    cy.contains('Luxury Boat').should('be.visible');
-    cy.contains('Miami').should('be.visible');
-    cy.contains('Central Harbour').should('be.visible');
-  });
-
+    cy.contains('My recent listings:').should('be.visible')
+    cy.contains('Cozy Apartment').should('be.visible')
+    cy.contains('New York').should('be.visible')
+    cy.contains('Main St').should('be.visible')
+    cy.contains('12345').should('be.visible')
+    cy.contains('Luxury Boat').should('be.visible')
+    cy.contains('Miami').should('be.visible')
+    cy.contains('Central Harbour').should('be.visible')
+  })
 
   it('should navigate to listing details when clicking a live accommodation', () => {
-    cy.wait('@fetchRecentAccommodations');
+    cy.wait('@fetchRecentAccommodations')
 
-    cy.contains('Cozy Apartment').click();
-    cy.url().should('include', '/listingdetails?ID=1');
-  });
+    cy.contains('Cozy Apartment').click()
+    cy.url().should('include', '/listingdetails?ID=1')
+  })
 
   it('should display an alert when clicking a drafted accommodation', () => {
-    cy.wait('@fetchRecentAccommodations');
+    cy.wait('@fetchRecentAccommodations')
 
-    cy.contains('Luxury Boat').click();
-    cy.on('window:alert', (text) => {
-      expect(text).to.contains('This accommodation is drafted and cannot be viewed in listing details!');
-    });
-  });
+    cy.contains('Luxury Boat').click()
+    cy.on('window:alert', text => {
+      expect(text).to.contains(
+        'This accommodation is drafted and cannot be viewed in listing details!',
+      )
+    })
+  })
 
   it('should refresh accommodations when clicking the "Refresh" button', () => {
-    cy.wait('@fetchRecentAccommodations');
+    cy.wait('@fetchRecentAccommodations')
 
-    cy.contains('Refresh').click();
-    cy.wait('@fetchRecentAccommodations'); 
-  });
+    cy.contains('Refresh').click()
+    cy.wait('@fetchRecentAccommodations')
+  })
 
   it('should navigate to the listing page when clicking "Go to listing"', () => {
-    cy.contains('Go to listing').click();
-    cy.url().should('include', '/hostdashboard/listings');
-  });
+    cy.contains('Go to listing').click()
+    cy.url().should('include', '/hostdashboard/listings')
+  })
 
   it('should navigate to the "Add accommodation" page when clicking the button', () => {
-    cy.contains('Add accommodation').click();
-    cy.url().should('include', '/enlist');
-  });
-});
+    cy.contains('Add accommodation').click()
+    cy.url().should('include', '/enlist')
+  })
+})

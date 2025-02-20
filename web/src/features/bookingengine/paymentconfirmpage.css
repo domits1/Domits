@@ -1,34 +1,31 @@
-.PaymentOverview{
-    display: flex;
-    flex-direction: row;
-
+.PaymentOverview {
+  display: flex;
+  flex-direction: row;
 }
 .progress-bar-container {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 80%;
-    margin: 20px 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80%;
+  margin: 20px 0;
 }
 
 .circle.completed {
-    background-color: #4CAF50;
-    color: white;
+  background-color: #4caf50;
+  color: white;
 }
-
 
 .line.completed {
-    background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
-
-.number-complete{
-    font-size: 16px;
-    color: white;
+.number-complete {
+  font-size: 16px;
+  color: white;
 }
 
 .right-panel {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }

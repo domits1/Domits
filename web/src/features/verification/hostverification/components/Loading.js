@@ -1,5 +1,5 @@
-import React from 'react';
-import styles from '../loading.module.css';
+import React from 'react'
+import styles from '../loading.module.css'
 
 function Loading() {
   return (
@@ -8,7 +8,7 @@ function Loading() {
       <div className={styles.dot}></div>
       <div className={styles.dot}></div>
     </div>
-  );
+  )
 }
 
-export default Loading;
+export default Loading

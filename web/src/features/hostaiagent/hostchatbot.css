@@ -1,12 +1,12 @@
-@import  "slick-carousel/slick/slick.css";
-@import "slick-carousel/slick/slick-theme.css";
+@import 'slick-carousel/slick/slick.css';
+@import 'slick-carousel/slick/slick-theme.css';
 
 .hostchatbot-toggle-button {
   position: fixed;
   bottom: 20px;
   right: 20px;
   z-index: 3000;
-  background-color: #0078D7;
+  background-color: #0078d7;
   color: white;
   border: none;
   border-radius: 50%;
@@ -48,7 +48,9 @@
   overflow: hidden;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+  transition:
+    opacity 0.3s ease-in-out,
+    visibility 0.3s ease-in-out;
 }
 
 .hostchatbot-container.open {
@@ -57,7 +59,7 @@
 }
 
 .hostchatbot-header {
-  background: linear-gradient(45deg, #0078D7, #00A8E8);
+  background: linear-gradient(45deg, #0078d7, #00a8e8);
   color: white;
   padding: 12px 20px;
   border-top-left-radius: 16px;
@@ -82,7 +84,7 @@
 }
 
 .hostchatbot-header .hostchatbot-close-button:hover {
-  color: #FFD700;
+  color: #ffd700;
 }
 
 .hostchatbot-window {
@@ -105,7 +107,7 @@
 
 .hostchatbot-message.user {
   align-self: flex-end;
-  background-color: #0078D7;
+  background-color: #0078d7;
   color: white;
 }
 
@@ -121,7 +123,7 @@
 }
 
 .hostchatbot-option-buttons button {
-  background-color: #0078D7;
+  background-color: #0078d7;
   color: white;
   border: none;
   padding: 10px 16px;
@@ -168,7 +170,7 @@
 }
 
 .hostchatbot-input button {
-  background-color: #0078D7;
+  background-color: #0078d7;
   color: white;
   border: none;
   border-radius: 24px;
@@ -183,7 +185,7 @@
 }
 
 .hostchatbot-go-back-button {
-  background-color: #0078D7;
+  background-color: #0078d7;
   color: white;
   border: none;
   padding: 10px 16px;
@@ -191,7 +193,9 @@
   border-radius: 8px;
   cursor: pointer;
   width: 100%;
-  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.2s ease;
   font-size: 16px;
   text-align: center;
   font-weight: bold;
@@ -238,7 +242,6 @@
   cursor: not-allowed;
 }
 
-
 .slick-dots li button:before {
   color: #0078d7;
 }
@@ -255,7 +258,9 @@
   padding: 15px;
   margin: 10px 0;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .faq-layout:hover {
@@ -289,7 +294,7 @@
 
 /* Style for audio playback buttons */
 .play-audio-button {
-  background-color: #0078D7;
+  background-color: #0078d7;
   color: white;
   border: none;
   border-radius: 8px;
@@ -297,7 +302,9 @@
   font-size: 14px;
   cursor: pointer;
   margin-top: 8px;
-  transition: background-color 0.3s ease, box-shadow 0.2s ease;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.2s ease;
   font-weight: bold;
 }
 

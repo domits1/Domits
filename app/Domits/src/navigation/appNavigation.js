@@ -1,55 +1,55 @@
-import React from 'react';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import HomeScreen from '../screens/homeScreen';
-import Messages from '../screens/messages';
-import AccountPage from '../screens/account';
-import GuestDashboard from '../screens/guestdashboard/guestDashboard';
-import Scan from '../header/scan';
-import Pay from '../header/pay';
-import Bookings from '../header/bookings';
-import Pocket from '../header/pocket';
-import { View, Text } from 'react-native';
-import profile from '../screens/guestdashboard/GuestProfileTab';
-import paymentMethods from '../screens/guestdashboard/GuestPaymentsTab';
-import reviews from '../screens/guestdashboard/GuestReviewsTab';
-import settings from '../screens/guestdashboard/GuestSettingsTab';
-import helpAndFeedback from '../screens/guestdashboard/GuestHelpAndFeedbackTab';
+import React from 'react'
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs'
+import {createNativeStackNavigator} from '@react-navigation/native-stack'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import HomeScreen from '../screens/homeScreen'
+import Messages from '../screens/messages'
+import AccountPage from '../screens/account'
+import GuestDashboard from '../screens/guestdashboard/guestDashboard'
+import Scan from '../header/scan'
+import Pay from '../header/pay'
+import Bookings from '../header/bookings'
+import Pocket from '../header/pocket'
+import {View, Text} from 'react-native'
+import profile from '../screens/guestdashboard/GuestProfileTab'
+import paymentMethods from '../screens/guestdashboard/GuestPaymentsTab'
+import reviews from '../screens/guestdashboard/GuestReviewsTab'
+import settings from '../screens/guestdashboard/GuestSettingsTab'
+import helpAndFeedback from '../screens/guestdashboard/GuestHelpAndFeedbackTab'
 // import HostHomepage from '../screens/hostdashboard/hostDashboard';
-import HostDashboard from '../screens/hostdashboard/HostDashboard';
-import HostCalendar from '../screens/hostdashboard/HostCalendarTab';
-import HostReviews from '../screens/hostdashboard/HostReviewsTab';
-import HostProfile from '../screens/hostdashboard/HostProfileTab';
-import HostPayments from '../screens/hostdashboard/HostPaymentsTab';
-import HostListings from '../screens/hostdashboard/HostListingsTab';
-import OnboardingHost from '../screens/hostOnboarding/OnboardingHost';
-import HostSettings from '../screens/hostdashboard/HostSettingsTab';
-import Landing from '../screens/Landing';
-import emailSettings from '../screens/hostdashboard/emailSettings';
+import HostDashboard from '../screens/hostdashboard/HostDashboard'
+import HostCalendar from '../screens/hostdashboard/HostCalendarTab'
+import HostReviews from '../screens/hostdashboard/HostReviewsTab'
+import HostProfile from '../screens/hostdashboard/HostProfileTab'
+import HostPayments from '../screens/hostdashboard/HostPaymentsTab'
+import HostListings from '../screens/hostdashboard/HostListingsTab'
+import OnboardingHost from '../screens/hostOnboarding/OnboardingHost'
+import HostSettings from '../screens/hostdashboard/HostSettingsTab'
+import Landing from '../screens/Landing'
+import emailSettings from '../screens/hostdashboard/emailSettings'
 // import HostRevenue from '../screens/hostdashboard/HostRevenueTab';
-import Detailpage from '../screens/detailpage';
-import onBoarding1 from '../screens/bookingprocess/bookingProcess';
-import personalDetailsForm from '../screens/bookingprocess/personalDetailsForm';
-import finalBookingOverview from '../screens/bookingprocess/finalBookingOverview';
-import simulateStripe from '../screens/bookingprocess/simulateStripe';
-import paymentAccepted from '../screens/bookingprocess/paymentAccepted';
-import paymentDeclined from '../screens/bookingprocess/paymentDeclined';
-import bookedAccommodation from '../screens/bookingprocess/bookedAccommodation';
-import ListProperty from '../screens/hostdashboard/HostListingsTab';
+import Detailpage from '../screens/detailpage'
+import onBoarding1 from '../screens/bookingprocess/bookingProcess'
+import personalDetailsForm from '../screens/bookingprocess/personalDetailsForm'
+import finalBookingOverview from '../screens/bookingprocess/finalBookingOverview'
+import simulateStripe from '../screens/bookingprocess/simulateStripe'
+import paymentAccepted from '../screens/bookingprocess/paymentAccepted'
+import paymentDeclined from '../screens/bookingprocess/paymentDeclined'
+import bookedAccommodation from '../screens/bookingprocess/bookedAccommodation'
+import ListProperty from '../screens/hostdashboard/HostListingsTab'
 // import LocationFillIn from '../screens/hostonboarding/LocationFillIn';
 // import selectAmenities from '../screens/hostonboarding/selectAmenities';
 // import PriceProperty from '../screens/hostonboarding/PriceProperty';
-import SignupScreen from '../screens/login/signup';
-import LoginScreen from '../screens/login/loginScreen';
-import Register from '../screens/login/register';
-import ConfirmMail from '../screens/login/confirmMail';
-import HostDetailPage from '../screens/hostdashboard/HostDetailPage';
+import SignupScreen from '../screens/login/signup'
+import LoginScreen from '../screens/login/loginScreen'
+import Register from '../screens/login/register'
+import ConfirmMail from '../screens/login/confirmMail'
+import HostDetailPage from '../screens/hostdashboard/HostDetailPage'
 // import ReviewAndSubmitScreen from '../screens/hostonboarding/ReviewAndSubmitScreen';
-import MessagesStackNavigator from './messagesStackNavigator';
+import MessagesStackNavigator from './messagesStackNavigator'
 
-const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator()
+const Stack = createNativeStackNavigator()
 
 function HomeStack() {
   return (
@@ -112,13 +112,13 @@ function HomeStack() {
       {/*  component={ReviewAndSubmitScreen}*/}
       {/*/>*/}
     </Stack.Navigator>
-  );
+  )
 }
 
 function BottomTabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={({route}) => ({
         tabBarShowLabel: false,
         tabBarStyle: {
           backgroundColor: '#f0f0f0',
@@ -126,50 +126,50 @@ function BottomTabNavigator() {
           height: 60,
           paddingBottom: 10,
         },
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+        tabBarIcon: ({focused, color, size}) => {
+          let iconName
           switch (route.name) {
             case 'Home':
-              iconName = 'home';
-              break;
+              iconName = 'home'
+              break
             case 'Messages':
-              iconName = 'message';
-              break;
+              iconName = 'message'
+              break
             case 'Account':
-              iconName = 'account-circle';
-              break;
+              iconName = 'account-circle'
+              break
             default:
-              iconName = 'circle';
+              iconName = 'circle'
           }
 
           return (
-            <View style={{ alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{alignItems: 'center', justifyContent: 'center'}}>
               <MaterialIcons
                 name={iconName}
                 size={30}
                 color={focused ? '#007AFF' : '#8e8e93'}
               />
               <Text
-                style={{ color: focused ? '#007AFF' : '#8e8e93', fontSize: 12 }}>
+                style={{color: focused ? '#007AFF' : '#8e8e93', fontSize: 12}}>
                 {route.name}
               </Text>
             </View>
-          );
+          )
         },
       })}>
       <Tab.Screen
         name="Home"
         component={HomeStack}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Tab.Screen
         name="Messages"
         component={MessagesStackNavigator}
-        options={{ headerShown: false }}
+        options={{headerShown: false}}
       />
       <Tab.Screen name="Account" component={AccountPage} />
     </Tab.Navigator>
-  );
+  )
 }
 
-export default BottomTabNavigator;
+export default BottomTabNavigator

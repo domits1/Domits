@@ -1,92 +1,92 @@
 .image-container {
-    width: 70%;
-    margin: 20px auto;
-    border-radius: 30px;
-    height: 600px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-    background-position: center;
+  width: 70%;
+  margin: 20px auto;
+  border-radius: 30px;
+  height: 600px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
 }
 
-.image-container h1, 
+.image-container h1,
 .image-container h3 {
-    color: white;
-    text-shadow: 1px 1px 2px black;
-    text-align: center;
+  color: white;
+  text-shadow: 1px 1px 2px black;
+  text-align: center;
 }
 
 .image-container h1 {
-    font-size: clamp(1.5rem, 3vw + 1rem, 4rem);
+  font-size: clamp(1.5rem, 3vw + 1rem, 4rem);
 }
 
 .image-container h3 {
-    font-size: clamp(1rem, 2vw + 0.5rem, 2rem);
+  font-size: clamp(1rem, 2vw + 0.5rem, 2rem);
 }
 
 .header-two {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    padding: 0 10vw;
-    gap: 15%;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 0 10vw;
+  gap: 15%;
 }
 
 .header-text {
-    width: 35%;
+  width: 35%;
 }
 
 .header-text h2 {
-    font-size: 2rem;
-    margin-bottom: 10px;
+  font-size: 2rem;
+  margin-bottom: 10px;
 }
 
 .header-text p {
-    font-size: 1rem;
-    line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
 .travel-image {
-    width: 30%;
-    height: auto;
-    margin-left: 5%;
+  width: 30%;
+  height: auto;
+  margin-left: 5%;
 }
 
 .travel-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 2rem;
-    width: 80%;
-    margin: 5vw auto;
+  display: flex;
+  justify-content: space-between;
+  gap: 2rem;
+  width: 80%;
+  margin: 5vw auto;
 }
 
 .travel-item {
-    width: 30%;
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
+  width: 30%;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .travel-subtitle {
-    text-align: left;
-    font-size: 1.5rem;
-    margin-bottom: 5px;
+  text-align: left;
+  font-size: 1.5rem;
+  margin-bottom: 5px;
 }
 
 .travel-item p {
-    font-size: 1rem;
-    line-height: 1.5;
+  font-size: 1rem;
+  line-height: 1.5;
 }
 
 .text-description {
-    font-size: 1rem;
+  font-size: 1rem;
 }
 
 .text-h2 {
-    font-size: 2rem;
-    margin-bottom: 12px;
-    text-align: left;
+  font-size: 2rem;
+  margin-bottom: 12px;
+  text-align: left;
 }

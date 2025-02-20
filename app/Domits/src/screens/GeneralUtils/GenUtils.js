@@ -1,4 +1,4 @@
-import {Alert} from 'react-native';
+import {Alert} from 'react-native'
 
 /**
  * Deletes a user account by making an API call.
@@ -25,27 +25,27 @@ export const deleteUser = async (userId, navigation) => {
                 method: 'DELETE',
                 headers: {'Content-Type': 'application/json'},
               },
-            );
+            )
 
             if (!response.ok) {
-              const errorData = await response.json();
-              throw new Error(errorData.message || 'Failed to delete user');
+              const errorData = await response.json()
+              throw new Error(errorData.message || 'Failed to delete user')
             }
 
-            const data = await response.json();
-            Alert.alert('Success', data.message);
+            const data = await response.json()
+            Alert.alert('Success', data.message)
 
             // Navigate to the login screen
             navigation.reset({
               index: 0,
               routes: [{name: 'Login'}], // Adjust 'Login' if your route name differs
-            });
+            })
           } catch (error) {
-            console.error('Error deleting user:', error);
-            Alert.alert('Error', error.message || 'Failed to delete account');
+            console.error('Error deleting user:', error)
+            Alert.alert('Error', error.message || 'Failed to delete account')
           }
         },
       },
     ],
-  );
-};
+  )
+}

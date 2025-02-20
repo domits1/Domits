@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState} from 'react'
 import {
   View,
   Text,
@@ -9,22 +9,22 @@ import {
   ScrollView,
   ActivityIndicator,
   SafeAreaView,
-} from 'react-native';
+} from 'react-native'
 // import DocumentPicker from 'react-native-document-picker';
 
 const API_BASE_URL =
-  'https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail';
+  'https://bugbtl25mj.execute-api.eu-north-1.amazonaws.com/sendEmail'
 
 export default function Contact() {
-  const [sourceEmail, setSourceEmail] = useState('');
-  const [name, setName] = useState('');
-  const [subject, setSubject] = useState('');
-  const [message, setMessage] = useState('');
+  const [sourceEmail, setSourceEmail] = useState('')
+  const [name, setName] = useState('')
+  const [subject, setSubject] = useState('')
+  const [message, setMessage] = useState('')
   // const [attachments, setAttachments] = useState([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [feedbackMessage, setFeedbackMessage] = useState('')
 
-  const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  const isValidEmail = email => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 
   // const pickAttachments = async () => {
   //   try {
@@ -61,16 +61,16 @@ export default function Contact() {
 
   const handleSubmit = async () => {
     if (!name || !subject || !sourceEmail || !message) {
-      setFeedbackMessage('Please fill out all fields.');
-      return;
+      setFeedbackMessage('Please fill out all fields.')
+      return
     }
 
     if (!isValidEmail(sourceEmail)) {
-      setFeedbackMessage('Please enter a valid email address.');
-      return;
+      setFeedbackMessage('Please enter a valid email address.')
+      return
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true)
 
     const payload = {
       name,
@@ -78,7 +78,7 @@ export default function Contact() {
       sourceEmail,
       message,
       attachments: [],
-    };
+    }
 
     // if (attachments.length > 0) {
     //   for (let file of attachments) {
@@ -96,31 +96,31 @@ export default function Contact() {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(payload),
-      });
+      })
 
-      const data = await response.json();
+      const data = await response.json()
 
       if (data.success) {
-        Alert.alert('Success', 'Message sent successfully!');
-        setFeedbackMessage('Message sent successfully!');
+        Alert.alert('Success', 'Message sent successfully!')
+        setFeedbackMessage('Message sent successfully!')
         // Reset form
-        setName('');
-        setSubject('');
-        setSourceEmail('');
-        setMessage('');
+        setName('')
+        setSubject('')
+        setSourceEmail('')
+        setMessage('')
         // setAttachments([]);
       } else {
         setFeedbackMessage(
           `Failed to send message: ${data.error || 'Unknown error'}`,
-        );
+        )
       }
     } catch (error) {
-      console.error(error);
-      setFeedbackMessage(`Error sending message: ${error.message}`);
+      console.error(error)
+      setFeedbackMessage(`Error sending message: ${error.message}`)
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
   return (
     <SafeAreaView style={styles.mainContainer}>
@@ -197,7 +197,7 @@ export default function Contact() {
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -267,4 +267,4 @@ const styles = StyleSheet.create({
   error: {
     color: 'red',
   },
-});
+})

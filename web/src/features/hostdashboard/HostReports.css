@@ -1,5 +1,5 @@
 .container {
-    padding: 20px !important;
+  padding: 20px !important;
 }
 
 /* h2 {
@@ -10,119 +10,120 @@
 } */
 
 .dashboard {
-    display: flex !important;
-    justify-content: flex-start !important;
-    width: 100% !important;
+  display: flex !important;
+  justify-content: flex-start !important;
+  width: 100% !important;
 }
 
 .tabsContainer {
-    flex: 0 0 auto !important;
+  flex: 0 0 auto !important;
 }
 
 .contentContainer {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    max-width: 800px !important;
-    margin: 0 auto !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  max-width: 800px !important;
+  margin: 0 auto !important;
 }
 
 .reportsSection {
-    display: flex !important;
-    flex-direction: column !important;
-    width: 100% !important;
-    align-items: center;
+  display: flex !important;
+  flex-direction: column !important;
+  width: 100% !important;
+  align-items: center;
 }
 
 .overview {
-    margin-bottom: 20px !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
+  margin-bottom: 20px !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
 .overview h3 {
-    font-size: 20px !important;
-    color: #555 !important;
+  font-size: 20px !important;
+  color: #555 !important;
 }
 
 .chart {
-    margin-bottom: 20px !important;
+  margin-bottom: 20px !important;
 }
 
 .summary {
-    margin-bottom: 20px !important;
+  margin-bottom: 20px !important;
 }
 
 .waterfall {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 20px !important;
-    width: 75%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px !important;
+  width: 75%;
 }
 
 .waterfall h3 {
-    font-size: 20px !important;
-    color: #555 !important;
+  font-size: 20px !important;
+  color: #555 !important;
 }
 
 .waterfall table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    margin-bottom: 20px !important;
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin-bottom: 20px !important;
 }
 
-.waterfall th, .waterfall td {
-    border: 1px solid #ddd !important;
-    padding: 8px !important;
-    text-align: left !important;
+.waterfall th,
+.waterfall td {
+  border: 1px solid #ddd !important;
+  padding: 8px !important;
+  text-align: left !important;
 }
 
 .waterfall th {
-    background-color: #f2f2f2 !important;
+  background-color: #f2f2f2 !important;
 }
 
 .reportBox {
-    background-color: #f9f9f9 !important;
-    border: 1px solid #ddd !important;
-    border-radius: 5px !important;
-    padding: 20px !important;
-    margin-bottom: 15px !important;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 75%;
+  background-color: #f9f9f9 !important;
+  border: 1px solid #ddd !important;
+  border-radius: 5px !important;
+  padding: 20px !important;
+  margin-bottom: 15px !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 75%;
 }
 
 .reportBox h4 {
-    margin-top: 0 !important;
-    font-size: 18px !important;
-    color: #333 !important;
+  margin-top: 0 !important;
+  font-size: 18px !important;
+  color: #333 !important;
 }
 
 .reportBox p {
-    font-size: 14px !important;
-    color: #666 !important;
-    margin-bottom: 10px !important;
+  font-size: 14px !important;
+  color: #666 !important;
+  margin-bottom: 10px !important;
 }
 
 .exportButton {
-    padding: 10px 15px !important;
-    font-size: 14px !important;
-    color: #fff !important;
-    background-color: #007bff !important;
-    border: none !important;
-    border-radius: 5px !important;
-    cursor: pointer !important;
-    transition: background-color 0.3s !important;
-    width: 24%;
-    margin-top: 5%;
+  padding: 10px 15px !important;
+  font-size: 14px !important;
+  color: #fff !important;
+  background-color: #007bff !important;
+  border: none !important;
+  border-radius: 5px !important;
+  cursor: pointer !important;
+  transition: background-color 0.3s !important;
+  width: 24%;
+  margin-top: 5%;
 }
 
 .exportButton:hover {
-    background-color: #0056b3 !important;
+  background-color: #0056b3 !important;
 }

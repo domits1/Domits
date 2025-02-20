@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState} from 'react'
 import {
   View,
   Text,
@@ -10,23 +10,23 @@ import {
   Button,
   TextInput,
   Alert,
-} from 'react-native';
-import {Picker} from '@react-native-picker/picker';
-import {useNavigation} from '@react-navigation/native';
+} from 'react-native'
+import {Picker} from '@react-native-picker/picker'
+import {useNavigation} from '@react-navigation/native'
 
 function ListProperty({navigation}) {
-  const [roomType, setRoomType] = useState(undefined);
-  const [travelers, setTravelers] = useState(undefined);
-  const [bedrooms, setBedrooms] = useState(undefined);
-  const [bathrooms, setBathrooms] = useState(undefined);
-  const [beds, setBeds] = useState(undefined);
-  const [isPickerVisible, setPickerVisible] = useState(false);
-  const [currentPicker, setCurrentPicker] = useState(null);
-  const [tempValue, setTempValue] = useState(null); // Temporary state for picker value
+  const [roomType, setRoomType] = useState(undefined)
+  const [travelers, setTravelers] = useState(undefined)
+  const [bedrooms, setBedrooms] = useState(undefined)
+  const [bathrooms, setBathrooms] = useState(undefined)
+  const [beds, setBeds] = useState(undefined)
+  const [isPickerVisible, setPickerVisible] = useState(false)
+  const [currentPicker, setCurrentPicker] = useState(null)
+  const [tempValue, setTempValue] = useState(null) // Temporary state for picker value
 
-  const [title, setTitle] = useState('');
-  const [subtitle, setSubtitle] = useState('');
-  const [description, setDescription] = useState('');
+  const [title, setTitle] = useState('')
+  const [subtitle, setSubtitle] = useState('')
+  const [description, setDescription] = useState('')
 
   // Define the list of options
   const options = {
@@ -34,7 +34,7 @@ function ListProperty({navigation}) {
     bedrooms: Array.from({length: 5}, (_, i) => `${i + 1}`),
     bathrooms: Array.from({length: 5}, (_, i) => `${i + 1}`),
     beds: Array.from({length: 5}, (_, i) => `${i + 1}`),
-  };
+  }
 
   // Create an object that maps picker names to their state and setter
   const pickerState = {
@@ -42,39 +42,39 @@ function ListProperty({navigation}) {
     bedrooms: [bedrooms, setBedrooms],
     bathrooms: [bathrooms, setBathrooms],
     beds: [beds, setBeds],
-  };
+  }
 
   // Function to open the picker modal
   const openPicker = pickerName => {
-    setCurrentPicker(pickerName);
-    setPickerVisible(true);
-  };
+    setCurrentPicker(pickerName)
+    setPickerVisible(true)
+  }
 
   // Function to handle value change from the picker
   const handleValueChange = itemValue => {
-    const setValue = pickerState[currentPicker][1]; // Get the setter function for current picker
-    setValue(itemValue); // Set the new value using the setter function
-    setPickerVisible(false); // Close the picker modal
-  };
+    const setValue = pickerState[currentPicker][1] // Get the setter function for current picker
+    setValue(itemValue) // Set the new value using the setter function
+    setPickerVisible(false) // Close the picker modal
+  }
 
   const handlePickerSelect = itemValue => {
     // Update temp value on picker scroll
-    setTempValue(itemValue);
-  };
+    setTempValue(itemValue)
+  }
 
   const handleDonePress = () => {
     // Update the actual value when "Done" is pressed and hide picker
-    const setValue = pickerState[currentPicker][1];
-    setValue(tempValue);
-    setPickerVisible(false);
-  };
+    const setValue = pickerState[currentPicker][1]
+    setValue(tempValue)
+    setPickerVisible(false)
+  }
 
   // Render the picker items
   const renderPickerItems = pickerName => {
     return options[pickerName].map(value => (
       <Picker.Item key={value} label={value} value={value} />
-    ));
-  };
+    ))
+  }
 
   const navigateToLocationFillIn = () => {
     if (
@@ -87,8 +87,8 @@ function ListProperty({navigation}) {
       !subtitle ||
       !description
     ) {
-      Alert.alert('Please fill in all fields before proceeding.');
-      return;
+      Alert.alert('Please fill in all fields before proceeding.')
+      return
     }
     const listingData = {
       AccommodationType: roomType,
@@ -99,9 +99,9 @@ function ListProperty({navigation}) {
       Title: title,
       Subtitle: subtitle,
       Description: description,
-    };
-    navigation.navigate('LocationFillIn', {listingData});
-  };
+    }
+    navigation.navigate('LocationFillIn', {listingData})
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -167,8 +167,8 @@ function ListProperty({navigation}) {
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => {
-              setCurrentPicker('travelers');
-              setPickerVisible(true);
+              setCurrentPicker('travelers')
+              setPickerVisible(true)
             }}>
             <Text style={styles.dropdownText}>{travelers || 'Select'}</Text>
           </TouchableOpacity>
@@ -179,8 +179,8 @@ function ListProperty({navigation}) {
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => {
-              setCurrentPicker('bedrooms');
-              setPickerVisible(true);
+              setCurrentPicker('bedrooms')
+              setPickerVisible(true)
             }}>
             <Text style={styles.dropdownText}>{bedrooms || 'Select'}</Text>
           </TouchableOpacity>
@@ -191,8 +191,8 @@ function ListProperty({navigation}) {
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => {
-              setCurrentPicker('bathrooms');
-              setPickerVisible(true);
+              setCurrentPicker('bathrooms')
+              setPickerVisible(true)
             }}>
             <Text style={styles.dropdownText}>{bathrooms || 'Select'}</Text>
           </TouchableOpacity>
@@ -203,8 +203,8 @@ function ListProperty({navigation}) {
           <TouchableOpacity
             style={styles.dropdownButton}
             onPress={() => {
-              setCurrentPicker('beds');
-              setPickerVisible(true);
+              setCurrentPicker('beds')
+              setPickerVisible(true)
             }}>
             <Text style={styles.dropdownText}>{beds || 'Select'}</Text>
           </TouchableOpacity>
@@ -242,7 +242,7 @@ function ListProperty({navigation}) {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -348,6 +348,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     textAlign: 'center',
   },
-});
+})
 
-export default ListProperty;
+export default ListProperty

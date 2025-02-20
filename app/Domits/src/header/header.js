@@ -1,42 +1,42 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/AntDesign';
-import {useNavigation} from '@react-navigation/native';
-import EntypoIcon from 'react-native-vector-icons/Entypo';
-import FeatherIcon from 'react-native-vector-icons/Feather';
-import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5';
-import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons';
-import IoniconsIcon from 'react-native-vector-icons/Ionicons';
-import SearchBarApp from '../header/SearchBarApp';
+} from 'react-native'
+import Icon from 'react-native-vector-icons/AntDesign'
+import {useNavigation} from '@react-navigation/native'
+import EntypoIcon from 'react-native-vector-icons/Entypo'
+import FeatherIcon from 'react-native-vector-icons/Feather'
+import FontAwesome5Icon from 'react-native-vector-icons/FontAwesome5'
+import MaterialCommunityIconsIcon from 'react-native-vector-icons/MaterialCommunityIcons'
+import IoniconsIcon from 'react-native-vector-icons/Ionicons'
+import SearchBarApp from '../header/SearchBarApp'
 // import GuestSettingsTab from '../screens/pictures/settings-icon.png';
 function Header() {
-  const navigation = useNavigation();
+  const navigation = useNavigation()
 
   const handleScanPress = () => {
-    navigation.navigate('Scan');
-  };
+    navigation.navigate('Scan')
+  }
 
   // const handlePayPress = () => {
   //   navigation.navigate('Pay');
   // };
 
   const handleBookingsPress = () => {
-    navigation.navigate('Bookings');
-  };
+    navigation.navigate('Bookings')
+  }
   //
   // const handlePocketPress = () => {
   //   navigation.navigate('Pocket');
   // };
 
   const handleSettingsPress = () => {
-    navigation.navigate('HostSettingsTab');
-  };
+    navigation.navigate('HostSettingsTab')
+  }
 
   return (
     <View style={styles.headerContainer}>
@@ -84,7 +84,7 @@ function Header() {
         </View>
       </View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -120,6 +120,6 @@ const styles = StyleSheet.create({
     color: 'black',
     fontFamily: 'MotivaSansRegular.woff',
   },
-});
+})
 
-export default Header;
+export default Header

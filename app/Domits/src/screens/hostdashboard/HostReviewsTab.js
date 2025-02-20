@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react'
 import {
   View,
   Text,
@@ -8,27 +8,27 @@ import {
   TouchableOpacity,
   Alert,
   SafeAreaView,
-} from 'react-native';
-import {useAuth} from '../../context/AuthContext';
-import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
+} from 'react-native'
+import {useAuth} from '../../context/AuthContext'
+import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY'
 
 function HostReviews() {
-  const {userAttributes, isAuthenticated, checkAuth} = useAuth();
-  const [reviews, setReviews] = useState([]);
-  const [receivedReviews, setReceivedReviews] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoading2, setIsLoading2] = useState(true);
-  const userId = userAttributes?.sub;
+  const {userAttributes, isAuthenticated, checkAuth} = useAuth()
+  const [reviews, setReviews] = useState([])
+  const [receivedReviews, setReceivedReviews] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isLoading2, setIsLoading2] = useState(true)
+  const userId = userAttributes?.sub
 
   const fetchReviews = async () => {
-    setIsLoading(true);
+    setIsLoading(true)
     if (!userId) {
-      console.log('No user ID available');
-      setIsLoading(false);
-      return;
+      console.log('No user ID available')
+      setIsLoading(false)
+      return
     }
 
-    const options = {userIdFrom: userId};
+    const options = {userIdFrom: userId}
     try {
       const response = await fetch(
         'https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReviews',
@@ -37,30 +37,30 @@ function HostReviews() {
           body: JSON.stringify(options),
           headers: {'Content-Type': 'application/json'},
         },
-      );
+      )
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${response.status}`)
       }
 
-      const data = await response.json();
-      setReviews(data);
+      const data = await response.json()
+      setReviews(data)
     } catch (error) {
-      console.error('Error fetching reviews:', error);
+      console.error('Error fetching reviews:', error)
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  };
+  }
 
   const fetchReceivedReviews = async () => {
-    setIsLoading2(true);
+    setIsLoading2(true)
     if (!userId) {
-      console.log('No user ID available');
-      setIsLoading2(false);
-      return;
+      console.log('No user ID available')
+      setIsLoading2(false)
+      return
     }
 
-    const options = {itemIdTo: userId};
+    const options = {itemIdTo: userId}
     try {
       const response = await fetch(
         'https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/FetchReceivedReviews',
@@ -69,29 +69,29 @@ function HostReviews() {
           body: JSON.stringify(options),
           headers: {'Content-Type': 'application/json'},
         },
-      );
+      )
 
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(`HTTP error! Status: ${response.status}`)
       }
 
-      const data = await response.json();
-      setReceivedReviews(data);
+      const data = await response.json()
+      setReceivedReviews(data)
     } catch (error) {
-      console.error('Error fetching received reviews:', error);
+      console.error('Error fetching received reviews:', error)
     } finally {
-      setIsLoading2(false);
+      setIsLoading2(false)
     }
-  };
+  }
 
   useEffect(() => {
     if (isAuthenticated && userId) {
-      fetchReviews();
-      fetchReceivedReviews();
+      fetchReviews()
+      fetchReceivedReviews()
     } else if (!isAuthenticated) {
-      checkAuth();
+      checkAuth()
     }
-  }, [isAuthenticated, userId]);
+  }, [isAuthenticated, userId])
 
   const asyncDeleteReview = async review => {
     Alert.alert(
@@ -102,8 +102,8 @@ function HostReviews() {
         {
           text: 'OK',
           onPress: async () => {
-            const reviewId = review['reviewId '];
-            const options = {'reviewId ': reviewId};
+            const reviewId = review['reviewId ']
+            const options = {'reviewId ': reviewId}
             try {
               const response = await fetch(
                 'https://arj6ixha2m.execute-api.eu-north-1.amazonaws.com/default/DeleteReview',
@@ -112,24 +112,24 @@ function HostReviews() {
                   body: JSON.stringify(options),
                   headers: {'Content-Type': 'application/json'},
                 },
-              );
+              )
 
               if (!response.ok) {
-                throw new Error(`HTTP error! Status: ${response.status}`);
+                throw new Error(`HTTP error! Status: ${response.status}`)
               }
 
               const updatedReviews = reviews.filter(
                 r => r['reviewId '] !== reviewId,
-              );
-              setReviews(updatedReviews);
+              )
+              setReviews(updatedReviews)
             } catch (error) {
-              console.error('Error deleting review:', error);
+              console.error('Error deleting review:', error)
             }
           },
         },
       ],
-    );
-  };
+    )
+  }
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#ffffff'}}>
@@ -188,7 +188,7 @@ function HostReviews() {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -263,6 +263,6 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     color: '#777',
   },
-});
+})
 
-export default HostReviews;
+export default HostReviews

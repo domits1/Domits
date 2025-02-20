@@ -1,92 +1,92 @@
 .host-pc-property {
-    display: flex;
-    flex-direction: row;
-    width: 100%;
+  display: flex;
+  flex-direction: row;
+  width: 100%;
 }
 
 .property-content {
-    display: flex;
-    flex-direction: column;
-    padding: 15px;
-    margin-left: 5vw;
-    max-width: 800px; 
-    align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  padding: 15px;
+  margin-left: 5vw;
+  max-width: 800px;
+  align-items: flex-start;
 }
 
 .property-span {
-    color: blue;
-    text-decoration: underline;
-    cursor: pointer;
+  color: blue;
+  text-decoration: underline;
+  cursor: pointer;
 }
 
 .property-h3 {
-    width: 100%;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
-    .page-body {
-        flex-direction: column;
-    }
+  .page-body {
+    flex-direction: column;
+  }
 
-    .host-pc-property {
-        flex-direction: column;
-    }
+  .host-pc-property {
+    flex-direction: column;
+  }
 
-    .property-content {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: 10px;
-        padding: 15px;
-        margin-left: 5%;
-        max-width: 100%;
-        align-items: center;
-    }
+  .property-content {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 15px;
+    margin-left: 5%;
+    max-width: 100%;
+    align-items: center;
+  }
 }
 
 @media (min-width: 768px) and (max-width: 1024px) {
-    .page-body {
-        flex-direction: column;
-    }
+  .page-body {
+    flex-direction: column;
+  }
 
-    .host-pc-property {
-        flex-direction: column;
-        gap: 2rem;
-        width: 100%;
-    }
+  .host-pc-property {
+    flex-direction: column;
+    gap: 2rem;
+    width: 100%;
+  }
 
-    .property-content {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        padding: 15px;
-        margin-left: 5vw;
-        max-width: 80%;
-        align-items: center;
-    }
+  .property-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 15px;
+    margin-left: 5vw;
+    max-width: 80%;
+    align-items: center;
+  }
 
-    .property-h3 {
-        width: 80%;
-    }
+  .property-h3 {
+    width: 80%;
+  }
 }
 
 @media (min-width: 1024px) {
-    .page-body {
-        flex-direction: row;
-    }
+  .page-body {
+    flex-direction: row;
+  }
 
-    .host-pc-property {
-        display: flex;
-        flex-direction: row;
-        gap: 2rem;
-        width: 100%;
-    }
+  .host-pc-property {
+    display: flex;
+    flex-direction: row;
+    gap: 2rem;
+    width: 100%;
+  }
 
-    .property-content {
-        display: flex;
-        flex-direction: column;
-        padding: 20px;
-        margin-left: 5vw;
-        max-width: 100%;
-        align-items: flex-start;
-    }
+  .property-content {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    margin-left: 5vw;
+    max-width: 100%;
+    align-items: flex-start;
+  }
 }

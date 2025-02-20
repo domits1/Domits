@@ -13,7 +13,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-    # Install NPM dependencies, cache them correctly
+      # Install NPM dependencies, cache them correctly
       - name: Install dependencies
         run: |
           cd web/src
@@ -32,4 +32,4 @@ jobs:
           cd web/src
           npm test  -- --detectOpenHandles
 env:
-  REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}     
+  REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}

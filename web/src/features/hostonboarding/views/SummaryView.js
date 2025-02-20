@@ -1,23 +1,23 @@
-import React from "react";
-import { useSummary } from "../hooks/useSummary";
-import SummaryTable from "../components/SummaryTable";
-import SpecificationsTable from "../components/SpecificationsTable";
-import FeatureTable from "../components/FeatureTable";
-import DeclarationSection from "../components/DeclarationSection";
-import useFormStore from "../stores/formStore";
-import FetchUserId from "../utils/FetchUserId";
-import { useNavigate } from "react-router-dom";
+import React from 'react'
+import {useSummary} from '../hooks/useSummary'
+import SummaryTable from '../components/SummaryTable'
+import SpecificationsTable from '../components/SpecificationsTable'
+import FeatureTable from '../components/FeatureTable'
+import DeclarationSection from '../components/DeclarationSection'
+import useFormStore from '../stores/formStore'
+import FetchUserId from '../utils/FetchUserId'
+import {useNavigate} from 'react-router-dom'
 
 function SummaryView() {
-  const { data, toggleDrafted } = useSummary();
-  const type = data.type;
-  const navigate = useNavigate();
+  const {data, toggleDrafted} = useSummary()
+  const type = data.type
+  const navigate = useNavigate()
 
-  const submitAccommodation = useFormStore((state) => state.submitAccommodation);
+  const submitAccommodation = useFormStore(state => state.submitAccommodation)
 
   const handleSubmit = () => {
-    submitAccommodation(navigate);
-  };
+    submitAccommodation(navigate)
+  }
 
   return (
     <div className="container" id="summary">
@@ -33,19 +33,15 @@ function SummaryView() {
       <div className="onboarding-button-box">
         <button
           className="onboarding-button"
-          onClick={() => console.log("Go back")}
-        >
+          onClick={() => console.log('Go back')}>
           Go back to change
         </button>
-        <button
-          className="onboarding-button"
-          onClick={handleSubmit}
-        >
+        <button className="onboarding-button" onClick={handleSubmit}>
           Confirm and proceed
         </button>
       </div>
     </div>
-  );
+  )
 }
 
-export default SummaryView;
+export default SummaryView

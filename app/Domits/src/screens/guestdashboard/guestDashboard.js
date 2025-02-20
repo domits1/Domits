@@ -1,21 +1,21 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useAuth} from '../../context/AuthContext';
+} from 'react-native'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import {SafeAreaView} from 'react-native-safe-area-context'
+import {useAuth} from '../../context/AuthContext'
 
 const GuestDashboard = ({navigation}) => {
   const navigateTo = screen => {
-    navigation.navigate(screen);
-  };
-  const {userAttributes} = useAuth();
-  const firstName = userAttributes?.given_name || 'N/A';
+    navigation.navigate(screen)
+  }
+  const {userAttributes} = useAuth()
+  const firstName = userAttributes?.given_name || 'N/A'
   return (
     <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.container}>
@@ -64,8 +64,8 @@ const GuestDashboard = ({navigation}) => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -113,6 +113,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000',
   },
-});
+})
 
-export default GuestDashboard;
+export default GuestDashboard

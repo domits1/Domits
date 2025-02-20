@@ -1,21 +1,21 @@
-import { useNavigate } from "react-router-dom";
-import useFormStore from "../stores/formStore";
+import {useNavigate} from 'react-router-dom'
+import useFormStore from '../stores/formStore'
 
 export const useHandleLegalProceed = () => {
-  const navigate = useNavigate();
-  const selectedType = useFormStore((state) => state.accommodationDetails.type);
+  const navigate = useNavigate()
+  const selectedType = useFormStore(state => state.accommodationDetails.type)
 
   const handleProceed = () => {
     if (!selectedType) {
-      return;
+      return
     }
 
-    if (["Villa", "House", "Apartment", "Cottage"].includes(selectedType)) {
-      navigate("/hostonboarding/legal/registrationnumber");
+    if (['Villa', 'House', 'Apartment', 'Cottage'].includes(selectedType)) {
+      navigate('/hostonboarding/legal/registrationnumber')
     } else {
-      navigate("/hostonboarding/summary");
+      navigate('/hostonboarding/summary')
     }
-  };
+  }
 
-  return { handleProceed };
+  return {handleProceed}
 }

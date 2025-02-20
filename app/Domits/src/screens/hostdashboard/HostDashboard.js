@@ -1,20 +1,20 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {useNavigation} from '@react-navigation/native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useAuth} from '../../context/AuthContext';
+} from 'react-native'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import {useNavigation} from '@react-navigation/native'
+import {SafeAreaView} from 'react-native-safe-area-context'
+import {useAuth} from '../../context/AuthContext'
 
 const HostDashboard = () => {
-  const navigation = useNavigation();
-  const {userAttributes} = useAuth();
-  const firstName = userAttributes?.given_name || 'N/A';
+  const navigation = useNavigation()
+  const {userAttributes} = useAuth()
+  const firstName = userAttributes?.given_name || 'N/A'
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -93,8 +93,8 @@ const HostDashboard = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -143,6 +143,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#000',
   },
-});
+})
 
-export default HostDashboard;
+export default HostDashboard

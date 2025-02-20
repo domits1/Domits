@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState} from 'react'
 import {
   View,
   Text,
@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ScrollView,
-} from 'react-native';
-import MapView from 'react-native-maps';
+} from 'react-native'
+import MapView from 'react-native-maps'
 
 function FillInLocationScreen({route, navigation}) {
   const [inputs, setInputs] = useState({
@@ -16,19 +16,19 @@ function FillInLocationScreen({route, navigation}) {
     Country: '',
     Street: '',
     PostalCode: '',
-  });
+  })
 
   const handleInputChange = (key, value) => {
-    setInputs({...inputs, [key]: value});
-  };
+    setInputs({...inputs, [key]: value})
+  }
 
-  const goToPreviousStep = () => navigation.goBack();
+  const goToPreviousStep = () => navigation.goBack()
   const goToNextStep = () => {
-    const updatedListingData = {...route.params.listingData, ...inputs};
+    const updatedListingData = {...route.params.listingData, ...inputs}
     navigation.navigate('selectAmenities', {
       listingData: updatedListingData,
-    });
-  };
+    })
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -57,7 +57,7 @@ function FillInLocationScreen({route, navigation}) {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -116,6 +116,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
   },
-});
+})
 
-export default FillInLocationScreen;
+export default FillInLocationScreen

@@ -10,7 +10,7 @@
   margin-bottom: 50px;
 }
 
-.quistionText{
+.quistionText {
   width: 45vw;
 }
 
@@ -48,7 +48,7 @@
 
 .contactform input:not(.biginput input) {
   border-radius: 10px;
-  background: #FFF;
+  background: #fff;
   padding: 10px;
   width: 100%;
   margin: 15px 0 10px 0;
@@ -68,7 +68,7 @@
   padding: 8px 15px;
   margin-bottom: 20px;
   flex-shrink: 0;
-  color: #FFF;
+  color: #fff;
   border-radius: 10px;
   border: none;
   box-shadow: none;
@@ -93,7 +93,7 @@
   cursor: pointer;
 }
 
-.Contact-button{
+.Contact-button {
   background-color: var(--primary-color);
   color: white;
   border-radius: 1vh;
@@ -102,7 +102,7 @@
   width: 15vh;
 }
 
-.Contact-button a{
+.Contact-button a {
   text-decoration: none;
 }
 
@@ -111,7 +111,7 @@
   cursor: pointer;
 }
 
-.buttonContactContainer{
+.buttonContactContainer {
   gap: 1%;
   display: flex;
   flex-direction: row;
@@ -132,29 +132,29 @@
 
 @media screen and (max-width: 930px) {
   .contact {
-      padding: 10px;
-      margin: 10px auto;
-      font-size: 14px;
+    padding: 10px;
+    margin: 10px auto;
+    font-size: 14px;
   }
 
   .contactform {
-      padding: 10px;
+    padding: 10px;
   }
 
   .namemessage,
   .biginput,
   .formbuttons {
-      flex: 100%;
-      width: 100%;
+    flex: 100%;
+    width: 100%;
   }
 
   .biginput textarea {
-      height: 100px;
-      padding: 8px;
-      width: 100%;
+    height: 100px;
+    padding: 8px;
+    width: 100%;
   }
 
   .questionsContainer {
-      width: 100%;
+    width: 100%;
   }
 }

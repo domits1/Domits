@@ -18,13 +18,13 @@
   margin-bottom: 10px;
   border-radius: 15px;
   object-fit: cover;
-  aspect-ratio: 16 / 9; 
+  aspect-ratio: 16 / 9;
 }
 
 .image-thumbnails {
   display: flex;
-  flex-wrap: wrap; 
-  gap: 10px; 
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .image-thumbnails img {
@@ -34,13 +34,15 @@
   cursor: pointer;
   opacity: 0.6;
   border-radius: 15px;
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 
 .image-thumbnails img.active,
 .image-thumbnails img:hover {
   opacity: 1;
-  transform: scale(1.05); 
+  transform: scale(1.05);
 }
 
 .share-button,
@@ -57,7 +59,9 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
-  transition: background-color 0.3s ease, transform 0.2s ease;
+  transition:
+    background-color 0.3s ease,
+    transform 0.2s ease;
 }
 
 .share-button {
@@ -71,9 +75,8 @@
 .like-button:hover,
 .share-button:hover {
   background-color: rgba(200, 200, 200, 0.8);
-  transform: scale(1.1); 
+  transform: scale(1.1);
 }
-
 
 .like-button:focus,
 .share-button:focus {

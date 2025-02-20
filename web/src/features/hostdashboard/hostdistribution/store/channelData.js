@@ -1,10 +1,10 @@
 const allChannels = [
-    'Airbnb',
-    'Booking.com',
-    'Expedia',
-    'HomeAway',
-    'TripAdvisor',
-    'Vrbo'
-];
+  'Airbnb',
+  'Booking.com',
+  'Expedia',
+  'HomeAway',
+  'TripAdvisor',
+  'Vrbo',
+]
 
-export default allChannels;
+export default allChannels

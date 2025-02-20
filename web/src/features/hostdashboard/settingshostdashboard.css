@@ -1,195 +1,197 @@
 .settingsContent {
-    flex-grow: 1;
-    padding: 20px;
+  flex-grow: 1;
+  padding: 20px;
 }
 
 .horizontalOptions {
-    display: flex;
-    justify-content: flex-start;
-    margin-bottom: 10px;
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 10px;
 }
 
-.settingsOptions .settingsOption, .dataRemovalOption, .horizontalOptions .settingsOption {
-    background-color: #fff;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    flex: 1;
-    min-width: 120px;
-    margin-right: 10px;
+.settingsOptions .settingsOption,
+.dataRemovalOption,
+.horizontalOptions .settingsOption {
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+  min-width: 120px;
+  margin-right: 10px;
 }
 
 .horizontalOptions .settingsOption:last-child {
-    margin-right: 0;
+  margin-right: 0;
 }
 
 .dataRemovalSection {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-top: 20px;
 }
 
 .dataRemovalSection h2 {
-    width: 100%;
-    margin-bottom: 10px;
+  width: 100%;
+  margin-bottom: 10px;
 }
 
 .dataRemovalOption {
-    background-color: #fff;
-    border-radius: 15px;
-    padding: 10px 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-right: 10px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    flex: 1;
-    min-width: 120px;
-    height: 60px;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 10px 20px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  margin-right: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+  min-width: 120px;
+  height: 60px;
 }
 
 .dataRemovalSection h2 {
-    flex-basis: 100%;
-    margin-bottom: 10px;
+  flex-basis: 100%;
+  margin-bottom: 10px;
 }
 
 .publicProfileContent {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .publicProfileContent .profileField {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .publicProfileContent .profileField input {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 .publicProfileContent .profilePicture {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 .publicProfileContent .profilePicture .icon {
-    width: 100px;
-    height: 100px;
+  width: 100px;
+  height: 100px;
 }
 
 .InfoBox {
-    background-color: #fff;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between; 
-    width: 40%;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 40%;
 }
 
 .InfoBox span {
-    flex-grow: 1;
-    text-align: left; 
+  flex-grow: 1;
+  text-align: left;
 }
 
 .host-icon-background {
-    background-color: var(--secondary-color);
-    border-radius: 15px;
-    padding: 0.4rem;
-    margin-left: 2%;
-    width: 2rem;
-    height: 2rem;
-    position: relative;
-    text-align: center;
-    cursor: pointer;
-  }
+  background-color: var(--secondary-color);
+  border-radius: 15px;
+  padding: 0.4rem;
+  margin-left: 2%;
+  width: 2rem;
+  height: 2rem;
+  position: relative;
+  text-align: center;
+  cursor: pointer;
+}
 
 @media (max-width: 768px) {
-    .horizontalOptions {
-        flex-direction: column;
-    }
+  .horizontalOptions {
+    flex-direction: column;
+  }
 
-    .settingsOptions .settingsOption, 
-    .dataRemovalOption, 
-    .horizontalOptions .settingsOption {
-        padding: 15px;
-        font-size: 0.9em;
-        margin-right: 0;
-        min-width: 100%;
-    }
+  .settingsOptions .settingsOption,
+  .dataRemovalOption,
+  .horizontalOptions .settingsOption {
+    padding: 15px;
+    font-size: 0.9em;
+    margin-right: 0;
+    min-width: 100%;
+  }
 
-    .dataRemovalSection {
-        flex-direction: column;
-        margin-top: 15px;
-    }
+  .dataRemovalSection {
+    flex-direction: column;
+    margin-top: 15px;
+  }
 
-    .dataRemovalOption {
-        height: auto;
-        padding: 15px;
-        min-width: 100%;
-    }
+  .dataRemovalOption {
+    height: auto;
+    padding: 15px;
+    min-width: 100%;
+  }
 
-    .publicProfileContent .profileField input {
-        width: 100%;
-        margin: 5px 0;
-    }
+  .publicProfileContent .profileField input {
+    width: 100%;
+    margin: 5px 0;
+  }
 
-    .publicProfileContent .profilePicture .icon {
-        width: 80px;
-        height: 80px;
-    }
+  .publicProfileContent .profilePicture .icon {
+    width: 80px;
+    height: 80px;
+  }
 
-    .InfoBox {
-        padding: 15px;
-        font-size: 0.9em;
-    }
+  .InfoBox {
+    padding: 15px;
+    font-size: 0.9em;
+  }
 }
 
 @media (max-width: 480px) {
-    .horizontalOptions {
-        flex-direction: column;
-        justify-content: center;
-    }
+  .horizontalOptions {
+    flex-direction: column;
+    justify-content: center;
+  }
 
-    .settingsOptions .settingsOption, 
-    .dataRemovalOption, 
-    .horizontalOptions .settingsOption {
-        padding: 10px;
-        font-size: 0.8em;
-        margin-right: 0;
-        width: 100%;
-        flex: none;
-    }
+  .settingsOptions .settingsOption,
+  .dataRemovalOption,
+  .horizontalOptions .settingsOption {
+    padding: 10px;
+    font-size: 0.8em;
+    margin-right: 0;
+    width: 100%;
+    flex: none;
+  }
 
-    .dataRemovalSection {
-        margin-top: 10px;
-    }
+  .dataRemovalSection {
+    margin-top: 10px;
+  }
 
-    .dataRemovalOption {
-        padding: 10px;
-        width: 100%;
-    }
+  .dataRemovalOption {
+    padding: 10px;
+    width: 100%;
+  }
 
-    .publicProfileContent .profileField input {
-        font-size: 0.9em;
-        margin: 5px 0;
-    }
+  .publicProfileContent .profileField input {
+    font-size: 0.9em;
+    margin: 5px 0;
+  }
 
-    .publicProfileContent .profilePicture .icon {
-        width: 60px;
-        height: 60px;
-    }
+  .publicProfileContent .profilePicture .icon {
+    width: 60px;
+    height: 60px;
+  }
 
-    .InfoBox {
-        padding: 10px;
-        font-size: 0.8em;
-        width: 90%;
-        flex-wrap: wrap;
-    }
+  .InfoBox {
+    padding: 10px;
+    font-size: 0.8em;
+    width: 90%;
+    flex-wrap: wrap;
+  }
 }

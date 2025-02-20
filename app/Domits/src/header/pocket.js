@@ -1,31 +1,30 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, {useState} from 'react'
+import {View, Text, TouchableOpacity, StyleSheet} from 'react-native'
+import {SafeAreaView} from 'react-native-safe-area-context'
 
-const TabButton = ({ title, onPress, isActive }) => (
+const TabButton = ({title, onPress, isActive}) => (
   <TouchableOpacity
     style={[styles.tabButton, isActive && styles.activeTab]}
-    onPress={onPress}
-  >
+    onPress={onPress}>
     <Text style={styles.tabText}>{title}</Text>
   </TouchableOpacity>
-);
+)
 
 const Pocket = () => {
-  const [activeTab, setActiveTab] = useState('coupons');
+  const [activeTab, setActiveTab] = useState('coupons')
 
   const renderContent = () => {
     switch (activeTab) {
       case 'coupons':
-        return <Text style={styles.cardText}>No Coupons here yet</Text>;
+        return <Text style={styles.cardText}>No Coupons here yet</Text>
       case 'cards':
-        return <Text style={styles.cardText}>No Cards here yet</Text>;
+        return <Text style={styles.cardText}>No Cards here yet</Text>
       case 'tickets':
-        return <Text style={styles.cardText}>No Tickets here yet</Text>;
+        return <Text style={styles.cardText}>No Tickets here yet</Text>
       default:
-        return null;
+        return null
     }
-  };
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -46,12 +45,10 @@ const Pocket = () => {
           isActive={activeTab === 'tickets'}
         />
       </View>
-      <View style={styles.contentContainer}>
-        {renderContent()}
-      </View>
+      <View style={styles.contentContainer}>{renderContent()}</View>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -83,6 +80,6 @@ const styles = StyleSheet.create({
   cardText: {
     fontSize: 20,
   },
-});
+})
 
-export default Pocket;
+export default Pocket

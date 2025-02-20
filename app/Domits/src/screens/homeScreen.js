@@ -1,7 +1,7 @@
-import React from 'react';
-import {View, ScrollView, StyleSheet, Button, SafeAreaView} from 'react-native';
-import Header from '../header/header';
-import Accommodations from './Acommodations'; // Import the new component
+import React from 'react'
+import {View, ScrollView, StyleSheet, Button, SafeAreaView} from 'react-native'
+import Header from '../header/header'
+import Accommodations from './Acommodations' // Import the new component
 
 function HomeScreen({navigation}) {
   return (
@@ -11,7 +11,7 @@ function HomeScreen({navigation}) {
         <Accommodations />
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -19,6 +19,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f0f0',
   },
-});
+})
 
-export default HomeScreen;
+export default HomeScreen

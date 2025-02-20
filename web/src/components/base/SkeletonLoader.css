@@ -13,66 +13,64 @@
 .skeleton-image {
   width: 100%;
   aspect-ratio: 1;
-  background-color: #ddd; 
-  border-radius: 1.5rem; 
+  background-color: #ddd;
+  border-radius: 1.5rem;
 }
 
 .skeleton-content {
-  padding: 15px 0; 
+  padding: 15px 0;
 }
 
 .skeleton-title {
-  width: 90%; 
-  height: 20px; 
+  width: 90%;
+  height: 20px;
   background-color: #ccc;
-  margin: 10px; 
-  border-radius: 4px; 
+  margin: 10px;
+  border-radius: 4px;
 }
 
 .skeleton-detail {
-  width: 80%; 
-  height: 20px; 
+  width: 80%;
+  height: 20px;
   background-color: #ccc;
-  margin: 10px; 
-  border-radius: 4px; 
+  margin: 10px;
+  border-radius: 4px;
 }
 
 .skeleton-specs {
   display: flex;
   justify-content: space-around;
-  width: 90%; 
+  width: 90%;
 }
 
 .skeleton-size {
-  width: 28%; 
-  height: 20px; 
+  width: 28%;
+  height: 20px;
   background-color: #ccc;
-  border-radius: 4px; 
+  border-radius: 4px;
 }
-
-
 
 @media (max-width: 1292px) {
   .skeleton-card {
-    flex: 0 1 31%; 
+    flex: 0 1 31%;
   }
   .skeleton-card:not(:nth-child(3n)) {
-    margin-right: 2%; 
+    margin-right: 2%;
   }
 }
 
 @media (max-width: 856px) {
   .skeleton-card {
-    flex: 0 1 48%; 
+    flex: 0 1 48%;
   }
   .skeleton-card:not(:nth-child(2n)) {
-    margin-right: 2%; 
+    margin-right: 2%;
   }
 }
 
 @media (max-width: 480px) {
   .skeleton-card {
-    flex: 0 1 100%; 
-    margin-right: 0; 
+    flex: 0 1 100%;
+    margin-right: 0;
   }
 }

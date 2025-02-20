@@ -1,5 +1,5 @@
 /// <reference types="Cypress" />
-import "../support/commands";
+import '../support/commands'
 
 // describe("Header logo button test", () => {
 //   it("should go to home page if clicked on logo", () => {
@@ -20,13 +20,13 @@ import "../support/commands";
 // describe("Header accommodation test", () => {
 //   it("Accommodation button/function works", () => {
 //     cy.visit("https://domits.com/");
-//     //selecting Apartment in accomodations 
+//     //selecting Apartment in accomodations
 //     cy.get(".css-hlgwow").click();
 //     cy.get("#react-select-2-option-0").click();
 //     cy.get(".css-hlgwow").should("contain.text", "Apartment");
 //     cy.get(".css-hlgwow").should("not.contain.text", "House");
 
-//     //this should click on the x button to remove "Apartment" 
+//     //this should click on the x button to remove "Apartment"
 //     cy.get(".css-1wy0on6").click();
 //     cy.get(".css-hlgwow").should("not.contain.text", "Apartment");
 
@@ -40,13 +40,12 @@ import "../support/commands";
 //   });
 // });
 
-describe.skip("Header Guest&Rooms test", () => {
-     it("Guest&Rooms function should work", () => {
-        cy.visit("https://domits.com/");
-        cy.get(".searchTitleGuest").click();
-        cy.get(".Search-guestCounter:first-child > button:").pause;
-        
-        // cy.get("").pause;
-        
-     });
-    });
+describe.skip('Header Guest&Rooms test', () => {
+  it('Guest&Rooms function should work', () => {
+    cy.visit('https://domits.com/')
+    cy.get('.searchTitleGuest').click()
+    cy.get('.Search-guestCounter:first-child > button:').pause
+
+    // cy.get("").pause;
+  })
+})

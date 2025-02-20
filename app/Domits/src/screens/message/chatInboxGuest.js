@@ -1,16 +1,13 @@
-import React from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
-
-
+import React from 'react'
+import {View, Text, StyleSheet, FlatList, TouchableOpacity} from 'react-native'
 
 const InboxHost = () => {
-  
   return (
     <View style={styles.container}>
       <Text>No contacts</Text>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -18,6 +15,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-});
+})
 
-export default InboxHost;
+export default InboxHost
