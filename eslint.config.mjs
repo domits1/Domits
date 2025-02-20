@@ -1,17 +1,14 @@
-import globals from "globals";
-import pluginJs from "@eslint/js";
-import pluginReact from "eslint-plugin-react";
+import globals from 'globals'
+import pluginJs from '@eslint/js'
+import pluginReact from 'eslint-plugin-react'
 
-/** @type {import('eslint').Linter.Config[]} */
+/** @type {import('eslint').Linter.FlatConfig[]} */
 export default [
   {
-    files: ["**/*.{js,mjs,cjs,jsx}"],
-  },
-  {
+    files: ['**/*.{js,mjs,cjs,jsx,ts,tsx}'],
     languageOptions: {
       globals: {
-        ...globals.browser, // for browser-specific globals
-        jest: true,  // adds Jest globals like describe, test, and expect
+        ...globals.browser, // General browser globals
       },
     },
   },
@@ -19,18 +16,26 @@ export default [
   pluginReact.configs.flat.recommended,
   {
     ignores: [
-      "node_modules/*",
-      "dist/*",
-      "build/*",
-      "__tests__/*",  // Ignore test files
-      "amplify/*",     // Ignore compiled code in Amplify
+      '**/tests/**', // Ignores all test files (Jest & Cypress)
+      '**/*.test.js',
+      '**/*.test.jsx',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.cy.js',
+      '**/*.cy.jsx',
+      '**/*.cy.ts',
+      '**/*.cy.tsx',
+      'node_modules/',
+      'dist/',
+      'build/',
+      'amplify/',
     ],
   },
   {
     settings: {
       react: {
-        version: "detect",  // Automatically detects the React version
+        version: 'detect',
       },
     },
   },
-];
+]
