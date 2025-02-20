@@ -17,6 +17,7 @@ body.hide-header .app-header {
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 1.3rem;
 }
 
 .domits-searchContainer {

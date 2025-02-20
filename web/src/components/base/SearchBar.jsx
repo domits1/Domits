@@ -337,7 +337,7 @@ export const SearchBar = ({setSearchResults, setLoading, toggleBar}) => {
     }
   }, [selectedDayRange])
 
-  //voor de date format
+  //voor de date format in calendar
   function formatDateToEnglish(date) {
     const options = {day: 'numeric', month: 'short'}
     return date.toLocaleDateString('en-US', options)

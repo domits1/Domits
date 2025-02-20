@@ -1,31 +1,83 @@
-.PaymentOverview {
-  display: flex;
-  flex-direction: row;
-}
-.progress-bar-container {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 80%;
-  margin: 20px 0;
+.PaymentOverview{
+    display: flex;
+    justify-content: center;
 }
 
-.circle.completed {
-  background-color: #4caf50;
-  color: white;
+.confirmInformation {
+    background-color: #4CAF50;
+    color: white;
+    padding: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
 
-.line.completed {
-  background-color: #4caf50;
+.confirmInformation h3{
+    padding-left: 0px;
 }
 
-.number-complete {
-  font-size: 16px;
-  color: white;
+.right{
+    width: 8vh;
 }
 
-.right-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+.left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    width: 100%;
+    max-width: 400px;
+    justify-content: center;
+}
+
+.resend-confirmation {
+    color: #4CAF50;
+    cursor: pointer;
+    text-decoration: underline;
+}
+
+.priceContainer {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px;
+}
+
+.priceContainer h3{
+    padding-left: 0px;
+}
+
+.price-breakdown .row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.total-price {
+    display: flex;
+    justify-content: space-between;
+    font-size: 18px;
+    font-weight: bold;
+    margin-top: 10px;
+}
+
+.view-booking-button {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    text-align: center;
+    align-self: auto;
+}
+.view-booking-button button{
+    align-self: auto;
 }

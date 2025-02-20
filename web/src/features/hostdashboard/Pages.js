@@ -1,45 +1,46 @@
-import React, {useEffect, useState} from 'react'
-import {useLocation, useNavigate} from 'react-router-dom'
-import AddIcon from '@mui/icons-material/Add'
-import DashboardIcon from '@mui/icons-material/DashboardCustomizeRounded'
-import CalendarIcon from '@mui/icons-material/CalendarTodayOutlined'
-import ReservationIcon from '@mui/icons-material/Event'
-import MessageIcon from '@mui/icons-material/QuestionAnswerOutlined'
-import RevenueIcon from '@mui/icons-material/ShowChart'
-import RevieuwsIcon from '@mui/icons-material/StarBorderOutlined'
-import CleanIcon from '@mui/icons-material/CleaningServicesOutlined'
-import FinanceIcon from '@mui/icons-material/CreditScoreOutlined'
-import PriceChangeIcon from '@mui/icons-material/PriceChange'
-import ListingIcon from '@mui/icons-material/OtherHousesOutlined'
-import SettingsIcon from '@mui/icons-material/Settings'
-import stripe from '../../images/icons/stripe-icon.png'
-import spinner from '../../images/spinnner.gif'
-import {Auth} from 'aws-amplify'
-import './HostHomepage.css'
-import add from '../../images/icons/host-add.png'
+import React, { useEffect, useState } from "react";
+import { useLocation, useNavigate } from 'react-router-dom';
+import AddIcon from '@mui/icons-material/Add';
+import DashboardIcon from '@mui/icons-material/DashboardCustomizeRounded';
+import CalendarIcon from '@mui/icons-material/CalendarTodayOutlined';
+import ReservationIcon from '@mui/icons-material/Event';
+import MessageIcon from '@mui/icons-material/QuestionAnswerOutlined';
+import RevenueIcon from '@mui/icons-material/ShowChart';
+import RevieuwsIcon from '@mui/icons-material/StarBorderOutlined';
+import CleanIcon from '@mui/icons-material/CleaningServicesOutlined';
+import FinanceIcon from '@mui/icons-material/CreditScoreOutlined';
+import PriceChangeIcon from '@mui/icons-material/PriceChange';
+import ListingIcon from '@mui/icons-material/OtherHousesOutlined';
+import SettingsIcon from '@mui/icons-material/Settings';
+import stripe from "../../images/icons/stripe-icon.png";
+import spinner from "../../images/spinnner.gif";
+import { Auth } from "aws-amplify";
+import './HostHomepage.css';
+import add from "../../images/icons/host-add.png";
 
 function Pages() {
-  const [userEmail, setUserEmail] = useState(null)
-  const [cognitoUserId, setCognitoUserId] = useState(null)
-  const [stripeLoginUrl, setStripeLoginUrl] = useState(null)
-  const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState('/hostdashboard')
-  const navigate = useNavigate()
-  const location = useLocation()
+  const [userEmail, setUserEmail] = useState(null);
+  const [cognitoUserId, setCognitoUserId] = useState(null);
+  const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('/hostdashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
-    setActiveTab(location.pathname)
-  }, [location.pathname])
+    setActiveTab(location.pathname);
+  }, [location.pathname]);
 
-  const handleNavigation = value => {
+
+  const handleNavigation = (value) => {
     if (value === 'stripe') {
       if (stripeLoginUrl) {
-        window.location.href = stripeLoginUrl
+        window.location.href = stripeLoginUrl;
       } else {
-        console.log('Set up payments')
+        console.log("Set up payments");
       }
     } else if (value) {
-      navigate(value)
+      navigate(value);
     }
   }
 
@@ -52,26 +53,24 @@ function Pages() {
         {/*    <img src={spinner} alt="Loading" />*/}
         {/*  </div>*/}
         {/*) : (*/}
-        <div className="dropdown-section">
-          <div>
-            <select
-              onChange={e => handleNavigation(e.target.value)}
-              defaultValue="Management">
-              <option disabled>Host Options</option>
-              <option value="/hostdashboard">Dashboard</option>
-              <option value="/hostdashboard/calendar">Calendar</option>
-              <option value="/hostdashboard/calendar">Reservations</option>
-              <option value="/hostdashboard/chat">Messages</option>
-              <option value="/hostdashboard/reporting">Revenues</option>
-              <option value="/hostdashboard/reviews">Reviews</option>
-              <option value="/hostdashboard/calendar">Housekeeping</option>
-              <option value="/hostdashboard/calendar">Finance</option>
-              <option value="/hostdashboard/pricing">Pricing</option>
-              <option value="/hostdashboard/listings">Listing</option>
-              <option value="/hostdashboard/settings">Settings</option>
-            </select>
-          </div>
-          {/* <div>
+          <div className="dropdown-section">
+            <div>
+                <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Management">
+                    <option disabled>Host Options</option>
+                    <option value="/hostdashboard">Dashboard</option>
+                    <option value="/hostdashboard/calendar">Calendar</option>
+                    <option value="/hostdashboard/calendar">Reservations</option>
+                    <option value="/hostdashboard/chat">Messages</option>
+                    <option value="/hostdashboard/reporting">Revenues</option>
+                    <option value="/hostdashboard/reviews">Reviews</option>
+                    <option value="/hostdashboard/calendar">Housekeeping</option>
+                    <option value="/hostdashboard/calendar">Finance</option>
+                    <option value="/hostdashboard/pricing">Pricing</option>
+                    <option value="/hostdashboard/listings">Listing</option>
+                    <option value="/hostdashboard/settings">Settings</option>
+                </select>
+            </div>
+              {/* <div>
               <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Growth">
                 <option disabled>Growth</option>
                 <option value="/hostdashboard/reservations">Reservations</option>
@@ -85,83 +84,85 @@ function Pages() {
                 <option value="/hostdashboard/promo-codes">Promo Codes</option>
               </select>
             </div> */}
-        </div>
+          </div>
         {/*)}*/}
       </div>
       <div className="dashboardSection section-1 host-navigation">
         <div
-          className={`wijzer addAcco ${activeTab === '/enlist' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/enlist')}
-          style={{maxWidth: 250}}>
+          className={`wijzer addAcco ${activeTab === "/hostonboarding" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostonboarding")}
+          style={{ maxWidth: 250 }}
+        >
           {/* <img src={add} alt="add"></img> */}
           <div className="Mui">
-            <AddIcon />
-          </div>
+          <AddIcon/></div>
           <p>List your property</p>
         </div>
         <div
-          className={`wijzer ${activeTab === '/hostdashboard' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard')}>
+          className={`wijzer ${activeTab === "/hostdashboard" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard")}
+        >
           <div className="Mui">
-            <DashboardIcon />
-          </div>
-          <p>Dashboard</p>
+          <DashboardIcon/></div>
+          <p>Dashboard</p> 
         </div>
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/calendar' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/calendar')}>
+          className={`wijzer ${activeTab === "/hostdashboard/calendar" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/calendar")}
+        >
           <div className="Mui">
-            <CalendarIcon />
-          </div>
+          <CalendarIcon/></div>
           <p>Calendar</p>
         </div>
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/reservations' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/reservations')}>
+          className={`wijzer ${activeTab === "/hostdashboard/reservations" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/reservations")}
+        >
           <div className="Mui">
-            <ReservationIcon />
-          </div>
+          <ReservationIcon/></div>
           <p>Reservations</p>
         </div>
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/chat' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/chat')}>
+          className={`wijzer ${activeTab === "/hostdashboard/chat" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/chat")}
+        >
           <div className="Mui">
-            <MessageIcon />
-          </div>
+          <MessageIcon/></div>
           <p>Messages</p>
         </div>
         {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/revenues' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/revenues')}>
+          className={`wijzer ${activeTab === "/hostdashboard/revenues" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/revenues")}
+        >
           <div className="Mui">
-            <RevenueIcon />
-          </div>
+          <RevenueIcon/></div>
           <p>Revenues</p>
         </div>
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/reviews' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/reviews')}>
+          className={`wijzer ${activeTab === "/hostdashboard/reviews" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/reviews")}
+        >
+
           <div className="Mui">
-            <RevieuwsIcon />
-          </div>
+          <RevieuwsIcon/></div>
           <p>Reviews</p>
         </div>
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/housekeeping' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/housekeeping')}>
+          className={`wijzer ${activeTab === "/hostdashboard/housekeeping" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/housekeeping")}
+        >
+
           <div className="Mui">
-            <CleanIcon />
-          </div>
+          <CleanIcon/></div>
           <p>Housekeeping</p>
         </div>
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/finance' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/finance')}>
+            className={`wijzer ${activeTab === "/hostdashboard/finance" ? "active" : ""}`}
+            onClick={() => handleNavigation("/hostdashboard/finance")}
+        >
           <div className="Mui">
-            <FinanceIcon />
-          </div>
+          <FinanceIcon/></div>
           <p>Finance</p>
         </div>
 
@@ -174,11 +175,11 @@ function Pages() {
         {/*  <p>IoT Hub</p>*/}
         {/*</div>*/}
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/pricing' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/pricing')}>
+          className={`wijzer ${activeTab === "/hostdashboard/pricing" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/pricing")}
+        >
           <div className="Mui">
-            <PriceChangeIcon />
-          </div>
+          <PriceChangeIcon/></div>
           <p>Pricing</p>
         </div>
         {/*<div*/}
@@ -204,19 +205,19 @@ function Pages() {
         {/*</div>*/}
         <br />
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/listings' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/listings')}>
+          className={`wijzer ${activeTab === "/hostdashboard/listings" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/listings")}
+        >
           <div className="Mui">
-            <ListingIcon />
-          </div>
+          <ListingIcon/></div>
           <p>Listing</p>
         </div>
         <div
-          className={`wijzer ${activeTab === '/hostdashboard/settings' ? 'active' : ''}`}
-          onClick={() => handleNavigation('/hostdashboard/settings')}>
+          className={`wijzer ${activeTab === "/hostdashboard/settings" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostdashboard/settings")}
+        >
           <div className="Mui">
-            <SettingsIcon />
-          </div>
+          <SettingsIcon/></div>
           <p>Settings</p>
         </div>
         {/*Sommige pages zijn op het moment niet nodig (OP het MOMENT) maar voor nu houden we ze aan de kant (stefan en chant)*/}
@@ -249,7 +250,7 @@ function Pages() {
         {/*)}*/}
       </div>
     </main>
-  )
+  );
 }
 
-export default Pages
+export default Pages;

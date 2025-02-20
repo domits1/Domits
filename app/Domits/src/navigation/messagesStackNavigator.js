@@ -54,7 +54,7 @@ const MessagesStackNavigator = () => {
         ),
       }}>
       <Stack.Screen
-        name="Messages"
+        name="MessagesScreen"
         component={MessagesTab}
         options={{
           headerTitle: '',

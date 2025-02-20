@@ -1,54 +1,29 @@
-function ImagePreview({
-  image,
-  index,
-  onFileChange,
-  onDelete,
-  onDragStart,
-  onDrop,
-  onDragOver,
-}) {
+function ImagePreview({ image, index, onDelete, onDragStart, onDrop }) {
   return (
     <div
-      className={index === 0 ? 'large-photo' : 'small-photo'}
+      className={index === 0 ? "large-photo" : "small-photo"}
       draggable
-      onDragStart={() => {
-        onDragStart(index)
+      onDragStart={() => onDragStart(index)}
+      onDrop={(e) => {
+        e.preventDefault();
+        onDrop(index);
       }}
-      onDrop={e => {
-        e.preventDefault()
-        onDrop(index)
-      }}
-      onDragOver={e => {
-        e.preventDefault()
-      }}>
+      onDragOver={(e) => e.preventDefault()}
+    >
       {image ? (
         <>
           <img
             src={image}
             alt={`Preview ${index + 1}`}
-            className={index === 0 ? 'accommodation-thumbnail' : 'file-image'}
+            className={index === 0 ? "accommodation-thumbnail" : "file-image"}
           />
-          <button
-            className="image-delete-button"
-            onClick={() => {
-              onDelete(index)
-            }}>
-            Delete
+          <button className="image-delete-button" onClick={() => onDelete(index)}>
+            ❌
           </button>
         </>
-      ) : (
-        <input
-          type="file"
-          onChange={e => {
-            onFileChange(e.target.files[0], index)
-          }}
-          accept="image/*"
-          className="file-input"
-          required
-        />
-      )}
+      ) : null}
     </div>
-  )
+  );
 }
 
-export default ImagePreview
+export default ImagePreview;

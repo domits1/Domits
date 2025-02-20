@@ -1,418 +1,416 @@
 /* CSS for the header */
 .app-header {
-  box-shadow: 0 2px 6px 0 #0d1a2626;
-  padding: 20px 50px 5px 50px;
-  text-align: center;
+    box-shadow: 0 2px 6px 0 #0d1a2626;
+    padding: 20px 50px 5px 50px;
+    text-align: center;
 }
 
 .trustpilot-bar {
-  display: flex;
-  justify-content: center;
-  margin-top: 2px;
+    display: flex;
+    justify-content: center;
+    margin-top: 2px;
 }
 
 .header-nav {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
 }
 
 .headerRight {
-  float: right;
-  display: flex;
-  align-items: center;
+    float: right;
+    display: flex;
+    align-items: center;
 }
 
-.headerButtons,
+.headerButtons, .personalMenu {
+    float: left;
+    color: black;
+    text-align: center;
+    padding: 12px;
+    font-size: 18px;
+    border-radius: 10px;
+    margin-top: 0;
+    display: inline-flex;
+    font-family: Kanit, sans-serif;
+    cursor: pointer;
+    width: auto;
+    box-shadow: 0 0 5px hsl(0 0% 78%);
+}
+
 .personalMenu {
-  float: left;
-  color: black;
-  text-align: center;
-  padding: 12px;
-  font-size: 18px;
-  border-radius: 10px;
-  margin-top: 0;
-  display: inline-flex;
-  font-family: Kanit, sans-serif;
-  cursor: pointer;
-  width: auto;
-  box-shadow: 0 0 5px hsl(0 0% 78%);
+    border: none;
+    background-color: var(--primary-color);
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    display: flex;
 }
 
-.personalMenu {
-  border: none;
-  background-color: var(--primary-color);
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  display: flex;
-}
-
-.headerHostButton,
-.headerButtons {
-  border: none;
-  background: none;
-  box-shadow: none;
-  margin-right: 10px;
+.headerHostButton, .headerButtons {
+    border: none;
+    background: none;
+    box-shadow: none;
+    margin-right: 10px;
 }
 
 .personalMenuDropdown {
-  position: relative;
-  display: inline-block;
-  z-index: 2;
+    position: relative;
+    display: inline-block;
+    z-index: 2;
 }
 
 .personalMenuDropdownContent {
-  display: none;
+    display: none;
 }
 
 .personalMenuDropdownContent.show {
-  display: block;
+    display: block;
 }
 
 .personalMenuDropdown .personalMenuDropdownContent {
-  padding: 20px 25px 20px 25px;
-  position: absolute;
-  background-color: white;
-  width: auto;
-  min-width: 240px;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  z-index: 1;
-  top: calc(100% + 5px);
-  right: 0;
-  border-radius: 10px;
+    padding: 20px 25px 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: auto;
+    min-width: 240px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    top: calc(100% + 5px);
+    right: 0;
+    border-radius: 10px;
 }
 
 .personalMenuDropdownContent button {
-  padding: 8px 15px;
-  border-radius: 15px;
-  justify-content: center;
-  align-items: center;
-  gap: 10px;
-  display: inline-flex;
-  width: 100%;
-  color: white;
-  font-size: 16px;
-  font-family: Kanit, sans-serif;
-  font-weight: 400;
-  line-height: 24px;
-  word-wrap: break-word;
+    padding: 8px 15px;
+    border-radius: 15px;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
+    width: 100%;
+    color: white;
+    font-size: 16px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
 }
 
 .dropdownLoginButton {
-  margin-top: 0;
-  margin-bottom: 10px;
-  background: var(--primary-color);
-  border: none;
-  box-shadow: none;
+    margin-top: 0;
+    margin-bottom: 10px;
+    background: var(--primary-color);
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
 }
 
-.dropdownRegisterButton,
-.dropdownLogoutButton {
-  margin-top: 10px;
-  background-color: var(--secondary-color);
-  border: none;
-  box-shadow: none;
+.dropdownRegisterButton, .dropdownLogoutButton {
+    margin-top: 10px;
+    background-color: var(--secondary-color);
+    border: none;
+    box-shadow: none;
+    cursor: pointer;
 }
 
 .dropdownLogoutButton {
-  margin-top: 20px;
+    cursor: pointer;
+    margin-top: 20px;
 }
 
 .personalMenuDropdown .personalMenuDropdownContent button:hover {
-  opacity: 90%;
+    opacity: 90%;
 }
 
 .headerButtons button {
-  width: 100%;
-  height: 100%;
-  padding: 5px 15px;
-  border-radius: 15px;
-  overflow: hidden;
-  border: 0.5px #49146a solid;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 10px;
-  display: inline-flex;
+    width: 100%;
+    height: 100%;
+    padding: 5px 15px;
+    border-radius: 15px;
+    overflow: hidden;
+    border: 0.50px #49146A solid;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 10px;
+    display: inline-flex;
 }
 
 .headerButtons:hover {
-  background: #3fb3663a;
-  padding: 12px;
+    background: #3fb3663a;
+    padding: 12px;
 }
 
 .personalMenu:hover {
-  opacity: 90%;
+    opacity: 90%;
 }
 
 .helloUsername {
-  margin-bottom: 10px;
-  font-size: 18px;
-  font-family: Kanit, sans-serif;
-  font-weight: 400;
-  line-height: 24px;
-  word-wrap: break-word;
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-family: Kanit, sans-serif;
+    font-weight: 400;
+    line-height: 24px;
+    word-wrap: break-word;
 }
 
 @media screen and (max-width: 768px) {
-  .trustpilot-bar {
-    margin: 0 auto 0 auto;
-    padding-bottom: 10px;
-  }
-  .trustpilot-widget {
-    display: flex;
-    justify-content: center;
-  }
-  .logo {
-    padding-top: 2vh;
-  }
-  .header-nav,
-  .headerRight {
-    flex-direction: row;
-    justify-content: center;
-    width: 100%;
-  }
+    .trustpilot-bar {
+        margin: 0 auto 0 auto;
+        padding-bottom: 10px;
+    }
+    .trustpilot-widget {
+        display: flex;
+        justify-content: center;
+    }
+    .logo {
+        padding-top: 2vh;
+    }
+    .header-nav, .headerRight {
+        flex-direction: row;
+        justify-content: center;
+        width: 100%;
+    }
 
-  .headerRight {
-    width: 69%;
-    margin-top: 20px;
-  }
+    .headerRight {
+        width: 69%;
+        margin-top: 20px;
+    }
 
-  .headerButtons,
-  .personalMenu,
-  .Search-bar {
-    width: 100%;
-    margin-top: 10px;
-    margin-right: 0;
-    justify-content: center;
-    float: none;
-  }
+    .headerButtons, .personalMenu, .Search-bar {
+        width: 100%;
+        margin-top: 10px;
+        margin-right: 0;
+        justify-content: center;
+        float: none;
+    }
 
-  .app-header {
-    padding: 0;
-  }
+    .app-header {
+        padding: 0;
+    }
 
-  .App,
-  .header-nav {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: white;
-    width: 100%;
-  }
+    .App, .header-nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+    }
 
-  .header-nav {
-    width: auto;
-  }
+    .header-nav {
+        width: auto;
+    }
 
-  .headerRight {
-    display: none;
-  }
+    .headerRight {
+        display: none;
+    }
 
-  .bar-container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    padding: 10px 20px;
-  }
+    .bar-container {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 10px 20px;
+    }
 
-  .SearchBarContainer.inactive {
-    display: none;
-  }
+    .SearchBarContainer.inactive {
+        display: none;
+    }
 
-  .Search-bar.inactive {
-    display: none;
-  }
+    .Search-bar.inactive {
+        display: none;
+    }
 
-  .Search-bar.active {
-    display: block;
-    overflow: hidden;
-  }
+    .Search-bar.active {
+        display: block;
+        overflow: hidden;
+    }
 
-  .SearchBarContainer.active {
-    align-content: center;
-    margin: 4vh 0 31vh 4vw;
-  }
+    .SearchBarContainer.active {
+        align-content: center;
+        margin: 4vh 0 31vh 4vw;
+    }
+
 }
 
-@media screen and (min-width: 769px) and (max-width: 1024px) {
-  .header-nav {
-    flex-wrap: nowrap;
-  }
-  .App,
-  .header-nav {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: white;
-    width: 100%;
-  }
-  .logo {
-    margin: 0 1vw 0 -4vw;
-  }
-  .headerRight {
-    margin-left: 3vw;
-  }
-  .headerButtons.headerHostButton {
-    margin-left: -15%;
-    font-size: 13px;
-  }
-  .personalMenu {
-    margin-left: -15%;
-  }
+@media screen and (min-width: 769px) and (max-width: 1024px){
+    .header-nav {
+        flex-wrap: nowrap;
+    }
+    .App, .header-nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+    }
+    .logo {
+        margin: 0 1vw 0 -4vw;
+    }
+    .headerRight {
+        margin-left: 3vw;
+    }
+    .headerButtons.headerHostButton {
+        margin-left: -15%;
+        font-size: 13px;
+    }
+    .personalMenu {
+        margin-left: -15%;
+    }
 }
 
 .main-footer {
-  background-color: #f8f8f8;
+    background-color: #f8f8f8;
 }
 
 .footer-content {
-  margin: auto;
-  display: flex;
-  flex-direction: row;
-  width: 90%;
-  justify-content: space-between;
+    margin: auto;
+    display: flex;
+    flex-direction: row;
+    width: 90%;
+    justify-content: space-between;
 }
 
 .footer-headers {
-  color: var(--primary-color);
-  font-family: Kanit, sans-serif;
-  font-size: 24px;
-  font-style: normal;
-  font-weight: 400;
-  line-height: 150%;
+    color: var(--primary-color);
+    font-family: Kanit, sans-serif;
+    font-size: 24px;
+    font-style: normal;
+    font-weight: 400;
+    line-height: 150%;
 }
 
 .footer-lists {
-  list-style: none;
-  padding: 0;
-  overflow: visible;
-  white-space: normal;
+    list-style: none;
+    padding: 0;
+    overflow: visible;
+    white-space: normal;
 }
 
 .footer-links {
-  color: #000;
-  font-family: Kanit, sans-serif;
-  font-size: 1rem;
-  font-style: normal;
-  font-weight: 300;
-  line-height: 150%;
+
+    color: #000;
+    font-family: Kanit, sans-serif;
+    font-size: 1rem;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
 }
 
 .footer-copyright {
-  background-color: var(--primary-color);
-  flex-shrink: 0;
-  margin-top: auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 15px;
+
+    background-color: var(--primary-color);
+    flex-shrink: 0;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px;
 }
 
 .footer-icons img {
-  width: 2.3rem;
-  height: auto;
-  margin-left: 1.2rem;
-  margin-bottom: 0.6rem;
-  border-radius: 25%;
+    width: 2.3rem;
+    height: auto;
+    margin-left: 1.2rem;
+    margin-bottom: 0.6rem;
+    border-radius: 25%;
 }
 
 .footer-copyright-text {
-  color: #fff;
-  font-family: Kanit, sans-serif;
-  font-size: 16px;
-  font-style: normal;
-  font-weight: 300;
-  line-height: 150%;
+    color: #fff;
+    font-family: Kanit, sans-serif;
+    font-size: 16px;
+    font-style: normal;
+    font-weight: 300;
+    line-height: 150%;
 }
 
 .footer-section {
-  display: inline-block;
-  margin-right: 15px;
+    display: inline-block;
+    margin-right: 15px;
 }
 
 .footer-section-grid {
-  display: block;
-  flex-wrap: wrap;
-  gap: 20px;
+    display: block;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
 .footer-select {
-  display: inline-flex;
-  padding: 5px 15px;
-  align-items: center;
-  gap: 10px;
-  border-radius: 15px;
-  border: 0.5px solid var(--primary-color);
+    display: inline-flex;
+    padding: 5px 15px;
+    align-items: center;
+    gap: 10px;
+    border-radius: 15px;
+    border: 0.5px solid var(--primary-color);
 }
 
 #appstorebadge {
-  margin-top: 20px;
+    margin-top: 20px;
 }
 
 #playstorebadge {
-  margin-top: 20px;
+    margin-top: 20px;
 }
 
 .footer-column ul li {
-  margin: 10px 0;
-  color: var(--colors-font-interactive, #0a760f);
-  font-family: Inter;
-  font-size: 16px;
-  font-weight: 400;
-  line-height: 24px;
-  letter-spacing: 0.16px;
+    margin: 10px 0;
+    color: var(--colors-font-interactive, #0A760F);
+    font-family: Inter;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 24px;
+    letter-spacing: 0.16px;
 }
 
 .footer-terms {
-  margin: 10px auto;
-  padding: 0;
-  width: 90%;
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  margin-top: 20px;
+    margin: 10px auto;
+    padding: 0;
+    width: 90%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin-top: 20px;
 }
 
 .footer-terms a {
-  display: inline;
-  margin-left: 20px;
-  text-decoration-line: underline;
+    display: inline;
+    margin-left: 20px;
+    text-decoration-line: underline;
 }
 
 .borderline {
-  border-right: 1px solid var(--primary-color);
-  padding-right: 5%;
+    border-right: 1px solid var(--primary-color);
+    padding-right: 5%;
 }
 
 a:hover {
-  text-decoration: underline;
+    text-decoration: underline;
 }
 
 @media screen and (max-width: 830px) {
-  .footer-content {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-  }
 
-  .footer-section,
-  .footer-endsection {
-    margin: 0;
-    border-top: 1px solid var(--primary-color);
-    margin-bottom: 20px;
-    width: 80%;
-  }
+    .footer-content {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
 
-  .footer-headers {
-    margin-top: 10px;
-  }
+    .footer-section, .footer-endsection {
+        margin: 0;
+        border-top: 1px solid var(--primary-color);
+        margin-bottom: 20px;
+        width: 80%;
+    }
 
-  .borderline {
-    border-right: none;
-    padding-right: 0px;
-  }
+    .footer-headers {
+        margin-top: 10px;
+    }
+
+    .borderline {
+        border-right: none;
+        padding-right: 0px;
+    }
 }

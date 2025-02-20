@@ -1,10 +1,10 @@
-import React, {useState} from 'react'
-import {View, StyleSheet} from 'react-native'
-import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete'
-import FeatherIcon from 'react-native-vector-icons/Feather'
+import React, {useState} from 'react';
+import {View, StyleSheet} from 'react-native';
+import {GooglePlacesAutocomplete} from 'react-native-google-places-autocomplete';
+import FeatherIcon from 'react-native-vector-icons/Feather';
 
 const GooglePlacesInput = () => {
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState('');
 
   const renderLeftButton = () => (
     <FeatherIcon
@@ -13,18 +13,17 @@ const GooglePlacesInput = () => {
       color="black"
       style={styles.searchIcon}
     />
-  )
+  );
 
   return (
     <View style={styles.container}>
       <GooglePlacesAutocomplete
         placeholder="Search Destinations"
         onPress={(data, details = null) => {
-          console.log(data, details)
-          setSearchText(data.description)
+          console.log(data, details);
+          setSearchText(data.description);
         }}
         query={{
-          key: 'AIzaSyDsc4bZSQfuPkpluzSPfT5eYnVRzPWD-ow',
           language: 'en',
         }}
         styles={{
@@ -35,8 +34,8 @@ const GooglePlacesInput = () => {
         renderLeftButton={renderLeftButton}
       />
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -59,6 +58,6 @@ const styles = StyleSheet.create({
     marginRight: 10,
     marginVertical: 12,
   },
-})
+});
 
-export default GooglePlacesInput
+export default GooglePlacesInput;
