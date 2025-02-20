@@ -18,7 +18,6 @@
   height: 85vh; /* Take up 85% of the viewport height */
 }
 
-
 .cbc-chat-status {
   background-color: #007bff;
   color: white;
@@ -145,13 +144,17 @@
   cursor: pointer;
 }
 
-.cbc-predefined-messages, .cbc-sub-questions, .cbc-sub-sub-questions {
+.cbc-predefined-messages,
+.cbc-sub-questions,
+.cbc-sub-sub-questions {
   display: flex;
   flex-wrap: wrap;
   padding: 10px;
 }
 
-.cbc-predefined-message-button, .cbc-sub-question-button, .cbc-sub-sub-question-button {
+.cbc-predefined-message-button,
+.cbc-sub-question-button,
+.cbc-sub-sub-question-button {
   background: #007bff;
   color: white;
   border: none;
@@ -161,7 +164,9 @@
   cursor: pointer;
 }
 
-.cbc-predefined-message-button:disabled, .cbc-sub-question-button:disabled, .cbc-sub-sub-question-button:disabled {
+.cbc-predefined-message-button:disabled,
+.cbc-sub-question-button:disabled,
+.cbc-sub-sub-question-button:disabled {
   background: #ddd;
   cursor: not-allowed;
 }

@@ -1,34 +1,34 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import {createContext, useContext, useState, ReactNode} from 'react'
 
 interface UserContextProps {
-    user: any;
-    updateUser: (newUser: any) => void;
+  user: any
+  updateUser: (newUser: any) => void
 }
 
-const UserContext = createContext<UserContextProps | undefined>(undefined);
+const UserContext = createContext<UserContextProps | undefined>(undefined)
 
 interface UserProviderProps {
-    children: ReactNode;
+  children: ReactNode
 }
 
-export const UserProvider: React.FC<UserProviderProps> = ({ children }) => {
-    const [user, setUser] = useState<any | null>(null);
+export const UserProvider: React.FC<UserProviderProps> = ({children}) => {
+  const [user, setUser] = useState<any | null>(null)
 
-    const updateUser = (newUser: any) => {
-        setUser(newUser);
-    };
+  const updateUser = (newUser: any) => {
+    setUser(newUser)
+  }
 
-    return (
-        <UserContext.Provider value={{ user, updateUser }}>
-            {children}
-        </UserContext.Provider>
-    );
-};
+  return (
+    <UserContext.Provider value={{user, updateUser}}>
+      {children}
+    </UserContext.Provider>
+  )
+}
 
 export const useUser = (): UserContextProps => {
-    const context = useContext(UserContext);
-    if (!context) {
-        throw new Error('useUser must be used within a UserProvider');
-    }
-    return context;
-};
+  const context = useContext(UserContext)
+  if (!context) {
+    throw new Error('useUser must be used within a UserProvider')
+  }
+  return context
+}

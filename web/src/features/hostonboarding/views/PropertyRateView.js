@@ -1,24 +1,24 @@
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
-import PricingRow from "../components/PricingRow";
-import { usePricing } from "../hooks/usePricing";
-import Button from "../components/button";
+import React, {useEffect} from 'react'
+import {useParams} from 'react-router-dom'
+import PricingRow from '../components/PricingRow'
+import {usePricing} from '../hooks/usePricing'
+import Button from '../components/button'
 
 function PricingView() {
-  const { type: accommodationType } = useParams();
-  const { pricing, updatePricing, calculateServiceFee } = usePricing();
+  const {type: accommodationType} = useParams()
+  const {pricing, updatePricing, calculateServiceFee} = usePricing()
 
   useEffect(() => {
-    calculateServiceFee();
-  }, [pricing.Rent, pricing.CleaningFee, calculateServiceFee]);
+    calculateServiceFee()
+  }, [pricing.Rent, pricing.CleaningFee, calculateServiceFee])
 
   const totalGuestPrice =
     (parseFloat(pricing.Rent) || 0) +
     (parseFloat(pricing.CleaningFee) || 0) +
-    (parseFloat(pricing.ServiceFee) || 0);
+    (parseFloat(pricing.ServiceFee) || 0)
 
   const totalEarnings =
-    (parseFloat(pricing.Rent) || 0) + (parseFloat(pricing.CleaningFee) || 0);
+    (parseFloat(pricing.Rent) || 0) + (parseFloat(pricing.CleaningFee) || 0)
 
   return (
     <main className="container">
@@ -26,22 +26,22 @@ function PricingView() {
       <h2 className="acco-price">
         {pricing.Rent
           ? `€ ${parseFloat(pricing.Rent).toFixed(0)}`
-          : "Enter your base rate"}
+          : 'Enter your base rate'}
       </h2>
 
       <section className="accommodation-pricing">
         <PricingRow
           label="Base rate"
           value={pricing.Rent}
-          onChange={(value) => updatePricing("Rent", value)}
+          onChange={value => updatePricing('Rent', value)}
         />
         {pricing.Features.ExtraServices.includes(
-          "Cleaning service (add service fee manually)"
+          'Cleaning service (add service fee manually)',
         ) && (
           <PricingRow
             label="Cleaning fee"
             value={pricing.CleaningFee}
-            onChange={(value) => updatePricing("CleaningFee", value)}
+            onChange={value => updatePricing('CleaningFee', value)}
           />
         )}
         <PricingRow label="Service fees" value={pricing.ServiceFee} readonly />
@@ -64,7 +64,7 @@ function PricingView() {
         />
       </nav>
     </main>
-  );
+  )
 }
 
-export default PricingView;
+export default PricingView

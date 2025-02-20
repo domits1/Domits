@@ -1,27 +1,27 @@
-import React from 'react';
-import {View, Text, StyleSheet, Button, ScrollView, Alert} from 'react-native';
-import {useAuth} from '../../context/AuthContext';
+import React from 'react'
+import {View, Text, StyleSheet, Button, ScrollView, Alert} from 'react-native'
+import {useAuth} from '../../context/AuthContext'
 
 function ReviewAndSubmitScreen({route, navigation}) {
-  const {listingData} = route.params;
-  const {user} = useAuth();
+  const {listingData} = route.params
+  const {user} = useAuth()
 
   const handleSubmit = async () => {
     if (!user) {
-      Alert.alert('User not authenticated');
-      return;
+      Alert.alert('User not authenticated')
+      return
     }
 
     try {
-      const listingWithUserId = {...listingData, OwnerId: user};
-      await saveListingToAPI(listingWithUserId);
-      Alert.alert('Listing created successfully!');
-      navigation.popToTop(); // Go back to the initial screen
+      const listingWithUserId = {...listingData, OwnerId: user}
+      await saveListingToAPI(listingWithUserId)
+      Alert.alert('Listing created successfully!')
+      navigation.popToTop() // Go back to the initial screen
     } catch (error) {
-      console.error(error);
-      Alert.alert('Failed to create listing.');
+      console.error(error)
+      Alert.alert('Failed to create listing.')
     }
-  };
+  }
 
   const saveListingToAPI = async listing => {
     const response = await fetch(
@@ -33,12 +33,12 @@ function ReviewAndSubmitScreen({route, navigation}) {
           'Content-Type': 'application/json',
         },
       },
-    );
+    )
 
     if (!response.ok) {
-      throw new Error('Error saving listing to API');
+      throw new Error('Error saving listing to API')
     }
-  };
+  }
 
   return (
     <ScrollView style={styles.container}>
@@ -72,7 +72,7 @@ function ReviewAndSubmitScreen({route, navigation}) {
       </Text>
       <Button title="Submit Listing" onPress={handleSubmit} />
     </ScrollView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -90,6 +90,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     marginBottom: 8,
   },
-});
+})
 
-export default ReviewAndSubmitScreen;
+export default ReviewAndSubmitScreen

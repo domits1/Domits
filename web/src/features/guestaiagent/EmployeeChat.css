@@ -110,7 +110,9 @@
   border: 1px solid #ddd;
   margin-bottom: 10px;
   border-radius: 5px;
-  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .ec-chat-list li:hover {

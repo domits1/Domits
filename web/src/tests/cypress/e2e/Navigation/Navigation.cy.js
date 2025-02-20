@@ -5,10 +5,9 @@
 //admin navigation
 
 describe('Navigation spec', () => {
-
-    // guest login/logout
-    it('LoginGuest', () => {
-        console.log('navigation');
+  // guest login/logout
+  it('LoginGuest', () => {
+    console.log('navigation')
     //   cy.visit('https://develop.domits.com/');
     //   cy.wait(1000); //1 second interval
     //   cy.get('.personalMenu').click(); // to login page
@@ -31,6 +30,5 @@ describe('Navigation spec', () => {
     //      cy.log('login and out successfull')
     //     }
     //   });
-    });
-
-});
+  })
+})

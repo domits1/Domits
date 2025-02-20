@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState} from 'react'
 import {
   View,
   Text,
@@ -6,15 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
+} from 'react-native'
+import Icon from 'react-native-vector-icons/FontAwesome'
 
 const amenitiesData = [
   {key: 'wifi', name: 'WiFi', iconName: 'wifi'},
   {key: 'pool', name: 'Swimming Pool', iconName: 'swimming-pool'},
   {key: 'gym', name: 'Gym', iconName: 'dumbbell'},
   // Add more amenities as needed
-];
+]
 
 const safetyData = [
   {key: 'smoke_detector', name: 'Smoke Detector', iconName: 'shield'},
@@ -25,48 +25,48 @@ const safetyData = [
   },
   {key: 'first_aid_kit', name: 'First Aid Kit', iconName: 'first-aid'},
   // Add more safety measures as needed
-];
+]
 
 function SelectAmenitiesScreen({route, navigation}) {
-  const [selectedAmenities, setSelectedAmenities] = useState(new Set());
+  const [selectedAmenities, setSelectedAmenities] = useState(new Set())
   const [selectedSafetyMeasures, setSelectedSafetyMeasures] = useState(
     new Set(),
-  );
+  )
 
   const toggleAmenity = key => {
-    const newSelectedAmenities = new Set(selectedAmenities);
+    const newSelectedAmenities = new Set(selectedAmenities)
     if (newSelectedAmenities.has(key)) {
-      newSelectedAmenities.delete(key);
+      newSelectedAmenities.delete(key)
     } else {
-      newSelectedAmenities.add(key);
+      newSelectedAmenities.add(key)
     }
-    setSelectedAmenities(newSelectedAmenities);
-  };
+    setSelectedAmenities(newSelectedAmenities)
+  }
 
   const toggleSafetyMeasure = key => {
-    const newSelectedSafetyMeasures = new Set(selectedSafetyMeasures);
+    const newSelectedSafetyMeasures = new Set(selectedSafetyMeasures)
     if (newSelectedSafetyMeasures.has(key)) {
-      newSelectedSafetyMeasures.delete(key);
+      newSelectedSafetyMeasures.delete(key)
     } else {
-      newSelectedSafetyMeasures.add(key);
+      newSelectedSafetyMeasures.add(key)
     }
-    setSelectedSafetyMeasures(newSelectedSafetyMeasures);
-  };
+    setSelectedSafetyMeasures(newSelectedSafetyMeasures)
+  }
 
-  const goToPreviousStep = () => navigation.goBack();
+  const goToPreviousStep = () => navigation.goBack()
 
   const goToNextStep = () => {
-    const features = {};
-    selectedAmenities.forEach(amenity => (features[amenity] = {BOOL: true}));
+    const features = {}
+    selectedAmenities.forEach(amenity => (features[amenity] = {BOOL: true}))
     selectedSafetyMeasures.forEach(
       measure => (features[measure] = {BOOL: true}),
-    );
+    )
     const updatedListingData = {
       ...route.params.listingData,
       Features: features,
-    };
-    navigation.navigate('PriceProperty', {listingData: updatedListingData});
-  };
+    }
+    navigation.navigate('PriceProperty', {listingData: updatedListingData})
+  }
 
   const renderAmenity = item => (
     <TouchableOpacity
@@ -80,7 +80,7 @@ function SelectAmenitiesScreen({route, navigation}) {
       />
       <Text style={styles.itemText}>{item.name}</Text>
     </TouchableOpacity>
-  );
+  )
 
   const renderSafetyMeasure = item => (
     <TouchableOpacity
@@ -96,7 +96,7 @@ function SelectAmenitiesScreen({route, navigation}) {
       />
       <Text style={styles.itemText}>{item.name}</Text>
     </TouchableOpacity>
-  );
+  )
 
   return (
     <SafeAreaView style={styles.container}>
@@ -115,7 +115,7 @@ function SelectAmenitiesScreen({route, navigation}) {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -159,6 +159,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-});
+})
 
-export default SelectAmenitiesScreen;
+export default SelectAmenitiesScreen

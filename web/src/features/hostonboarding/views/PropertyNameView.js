@@ -1,11 +1,11 @@
-import { useParams } from "react-router-dom";
-import TextAreaField from "../components/TextAreaField";
-import { useAccommodationTitle } from "../hooks/useAccommodationTitle";
-import Button from "../components/button";
+import {useParams} from 'react-router-dom'
+import TextAreaField from '../components/TextAreaField'
+import {useAccommodationTitle} from '../hooks/useAccommodationTitle'
+import Button from '../components/button'
 
 function AccommodationTitleView() {
-  const { type: accommodationType } = useParams();
-  const { title, subtitle, handleInputChange } = useAccommodationTitle();
+  const {type: accommodationType} = useParams()
+  const {title, subtitle, handleInputChange} = useAccommodationTitle()
 
   return (
     <main className="container">
@@ -17,7 +17,7 @@ function AccommodationTitleView() {
       <TextAreaField
         label="Title"
         value={title}
-        onChange={(value) => handleInputChange("title", value)}
+        onChange={value => handleInputChange('title', value)}
         maxLength={128}
         placeholder="Enter your title here..."
       />
@@ -27,7 +27,7 @@ function AccommodationTitleView() {
       <TextAreaField
         label="Subtitle"
         value={subtitle}
-        onChange={(value) => handleInputChange("subtitle", value)}
+        onChange={value => handleInputChange('subtitle', value)}
         maxLength={128}
         placeholder="Enter your subtitle here..."
       />
@@ -43,7 +43,7 @@ function AccommodationTitleView() {
         />
       </nav>
     </main>
-  );
+  )
 }
 
-export default AccommodationTitleView;
+export default AccommodationTitleView

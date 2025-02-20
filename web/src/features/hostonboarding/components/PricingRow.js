@@ -1,6 +1,13 @@
-import React from "react";
+import React from 'react'
 
-function PricingRow({ label, value, onChange, type = "number", readonly = false, placeholder }) {
+function PricingRow({
+  label,
+  value,
+  onChange,
+  type = 'number',
+  readonly = false,
+  placeholder,
+}) {
   return (
     <div className="pricing-row">
       <label>{label}</label>
@@ -11,7 +18,7 @@ function PricingRow({ label, value, onChange, type = "number", readonly = false,
           className="pricing-input"
           type={type}
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={e => onChange(e.target.value)}
           placeholder={placeholder}
           min={1}
           step={0.1}
@@ -19,7 +26,7 @@ function PricingRow({ label, value, onChange, type = "number", readonly = false,
         />
       )}
     </div>
-  );
+  )
 }
 
-export default PricingRow;
+export default PricingRow

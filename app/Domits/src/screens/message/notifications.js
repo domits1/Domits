@@ -1,115 +1,134 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Modal, ActivityIndicator } from 'react-native';
-import { useAuth } from '../../context/AuthContext';
+import React, {useState, useEffect} from 'react'
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Modal,
+  ActivityIndicator,
+} from 'react-native'
+import {useAuth} from '../../context/AuthContext'
 
 const Notifications = () => {
   const [notificationData, setNotificationData] = useState([])
-  const [pendingContacts, setPendingContacts] = useState([]);
-  const { isAuthenticated, userAttributes, checkAuth } = useAuth();
-  const userId = userAttributes?.sub;
-  const [fullName, setFullName] = useState(null);
-  const [givenName, setGivenName] = useState(null);
-  const [contactUserId, setContactUserID] = useState(null);
-  const [loading, setLoading] = useState(true);
-
+  const [pendingContacts, setPendingContacts] = useState([])
+  const {isAuthenticated, userAttributes, checkAuth} = useAuth()
+  const userId = userAttributes?.sub
+  const [fullName, setFullName] = useState(null)
+  const [givenName, setGivenName] = useState(null)
+  const [contactUserId, setContactUserID] = useState(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     if (userId) {
-      fetchHostContacts();
+      fetchHostContacts()
     }
-  }, [userId]);
+  }, [userId])
 
   const fetchHostContacts = async () => {
-    setLoading(true);
-    setPendingContacts([]);
-    const notifications = [];
+    setLoading(true)
+    setPendingContacts([])
+    const notifications = []
 
     try {
-      const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ hostID: userId })
-      });
+      const response = await fetch(
+        'https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/FetchContacts',
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({hostID: userId}),
+        },
+      )
 
-      if (!response.ok) throw new Error('Failed to fetch host information');
+      if (!response.ok) throw new Error('Failed to fetch host information')
 
-      const { pending } = await response.json().then(data => JSON.parse(data.body));
-      setPendingContacts(pending);
+      const {pending} = await response
+        .json()
+        .then(data => JSON.parse(data.body))
+      setPendingContacts(pending)
 
-      console.log(pending);
+      console.log(pending)
 
       // Fetch user info for each pending contact and build notification messages
-      await Promise.all(pending.map(async (item) => {
-        const attributes = await fetchUserInfo(item.userId);
-        if (attributes && attributes['given_name']) {
-          const message = `${attributes['given_name']} has sent you a request.`;
-          notifications.push({
-            id: item.ID,
-            type: 'request',
-            message,
-            action: true,
-          });
-        }
-      }));
+      await Promise.all(
+        pending.map(async item => {
+          const attributes = await fetchUserInfo(item.userId)
+          if (attributes && attributes['given_name']) {
+            const message = `${attributes['given_name']} has sent you a request.`
+            notifications.push({
+              id: item.ID,
+              type: 'request',
+              message,
+              action: true,
+            })
+          }
+        }),
+      )
 
       // Set the notification data
-      setNotificationData(notifications);
+      setNotificationData(notifications)
     } catch (error) {
-      console.error('Error fetching host contacts:', error);
+      console.error('Error fetching host contacts:', error)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
-
-  const fetchUserInfo = async (userId) => {
+  const fetchUserInfo = async userId => {
     try {
-      const requestData = { OwnerId: userId };
+      const requestData = {OwnerId: userId}
 
-      const response = await fetch(`https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestData),
-      });
+      const response = await fetch(
+        `https://gernw0crt3.execute-api.eu-north-1.amazonaws.com/default/GetUserInfo`,
+        {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify(requestData),
+        },
+      )
 
       if (!response.ok) {
-        throw new Error('Failed to fetch user information');
+        throw new Error('Failed to fetch user information')
       }
 
-      const responseData = await response.json();
-      const parsedData = JSON.parse(responseData.body)[0];
+      const responseData = await response.json()
+      const parsedData = JSON.parse(responseData.body)[0]
       const attributes = parsedData.Attributes.reduce((acc, attribute) => {
-        acc[attribute.Name] = attribute.Value;
-        return acc;
-      }, {});
+        acc[attribute.Name] = attribute.Value
+        return acc
+      }, {})
 
       // console.log(`Fetching user info for userId: ${userId}`);
       // console.log("Fetched Attributes:", attributes);
 
       // Log the userId being set to the state
-      setGivenName(attributes['given_name']);
-      setContactUserID(parsedData.Attributes[2].Value);  // Assuming it's always at index 2
+      setGivenName(attributes['given_name'])
+      setContactUserID(parsedData.Attributes[2].Value) // Assuming it's always at index 2
       // console.log(`User ID set to Contact User ID: ${parsedData.Attributes[2].Value}`);
 
-      return attributes;
+      return attributes
     } catch (error) {
-      console.error('Error fetching user info:', error);
+      console.error('Error fetching user info:', error)
     }
-  };
+  }
 
   const updateContactRequest = async (id, status) => {
     try {
-      const response = await fetch('https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Id: id, Status: status }),
-      });
+      const response = await fetch(
+        'https://d1mhedhjkb.execute-api.eu-north-1.amazonaws.com/default/UpdateContactRequest',
+        {
+          method: 'PUT',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({Id: id, Status: status}),
+        },
+      )
 
-      if (!response.ok) throw new Error('Failed to update contact request');
+      if (!response.ok) throw new Error('Failed to update contact request')
 
-      const data = await response.json();
-      const parsedData = JSON.parse(data.body);
-      console.log(`Request ${status}:`, parsedData);
+      const data = await response.json()
+      const parsedData = JSON.parse(data.body)
+      console.log(`Request ${status}:`, parsedData)
       if (parsedData.isAccepted) {
         const result = await API.graphql({
           query: mutations.createChat,
@@ -120,26 +139,28 @@ const Notifications = () => {
               recipientId: origin,
               isRead: false,
               createdAt: new Date().toISOString(),
-              channelID: channelUUID
+              channelID: channelUUID,
             },
           },
-
-        });
-        console.log(result);
+        })
+        console.log(result)
       }
 
       // Update the pending contacts state after accepting or rejecting a request
-      setPendingContacts((prev) => prev.filter((contact) => contact.userId !== id));
-      setNotificationData((prev) =>
-        prev.filter((notification) => notification.id !== id)
-      );
+      setPendingContacts(prev => prev.filter(contact => contact.userId !== id))
+      setNotificationData(prev =>
+        prev.filter(notification => notification.id !== id),
+      )
 
-      return data;
+      return data
     } catch (error) {
-      console.error('Error updating contact request:', error);
-      Alert.alert('Error', 'Failed to update the contact request. Please try again.');
+      console.error('Error updating contact request:', error)
+      Alert.alert(
+        'Error',
+        'Failed to update the contact request. Please try again.',
+      )
     }
-  };
+  }
 
   return (
     <View style={styles.container}>
@@ -149,7 +170,7 @@ const Notifications = () => {
           {/* <Text style={styles.loadingText}>Loading Notifications...</Text> */}
         </View>
       ) : (
-        notificationData.map((notification) => (
+        notificationData.map(notification => (
           <NotificationItem
             key={notification.id}
             notification={notification}
@@ -158,26 +179,26 @@ const Notifications = () => {
         ))
       )}
     </View>
-  );
-};
+  )
+}
 
-const NotificationItem = ({ notification, updateContactRequest }) => {
-  const [expanded, setExpanded] = useState(notification.type === 'request');
-  const [showAlert, setShowAlert] = useState(false);
+const NotificationItem = ({notification, updateContactRequest}) => {
+  const [expanded, setExpanded] = useState(notification.type === 'request')
+  const [showAlert, setShowAlert] = useState(false)
 
   const handleToggleExpand = () => {
-    setExpanded(!expanded);
-  };
+    setExpanded(!expanded)
+  }
   const handleAcceptPress = async () => {
-    await updateContactRequest(notification.id, 'accepted');
-  };
+    await updateContactRequest(notification.id, 'accepted')
+  }
   const handleDenyPress = () => {
-    setShowAlert(true);
-  };
+    setShowAlert(true)
+  }
   const handleConfirmDeny = async () => {
-    await updateContactRequest(notification.id, 'rejected');
-    setShowAlert(false);
-  };
+    await updateContactRequest(notification.id, 'rejected')
+    setShowAlert(false)
+  }
 
   if (notification.type === 'request' && notification.action) {
     return (
@@ -190,11 +211,15 @@ const NotificationItem = ({ notification, updateContactRequest }) => {
         </View>
         {expanded && (
           <View style={styles.actions}>
-            <TouchableOpacity style={styles.acceptButton} onPress={handleAcceptPress}>
+            <TouchableOpacity
+              style={styles.acceptButton}
+              onPress={handleAcceptPress}>
               <Text style={styles.buttonText}>Accept</Text>
             </TouchableOpacity>
-            <View style={{ width: 15 }} />
-            <TouchableOpacity style={styles.denyButton} onPress={handleDenyPress}>
+            <View style={{width: 15}} />
+            <TouchableOpacity
+              style={styles.denyButton}
+              onPress={handleDenyPress}>
               <Text style={styles.buttonText}>Deny</Text>
             </TouchableOpacity>
           </View>
@@ -207,12 +232,16 @@ const NotificationItem = ({ notification, updateContactRequest }) => {
                   Are you sure you want to reject this contact request?
                 </Text>
                 <View style={styles.alertActions}>
-                  <TouchableOpacity style={styles.alertCancel} onPress={() => setShowAlert(false)}>
+                  <TouchableOpacity
+                    style={styles.alertCancel}
+                    onPress={() => setShowAlert(false)}>
                     <Text style={styles.alertButtonText}>Cancel</Text>
                   </TouchableOpacity>
-                  <View style={{ width: 10 }} />
+                  <View style={{width: 10}} />
 
-                  <TouchableOpacity style={styles.alertConfirm} onPress={handleConfirmDeny}>
+                  <TouchableOpacity
+                    style={styles.alertConfirm}
+                    onPress={handleConfirmDeny}>
                     <Text style={styles.alertButtonText}>Confirm</Text>
                   </TouchableOpacity>
                 </View>
@@ -221,10 +250,12 @@ const NotificationItem = ({ notification, updateContactRequest }) => {
           </Modal>
         )}
       </TouchableOpacity>
-    );
+    )
   } else {
     return (
-      <TouchableOpacity style={styles.notificationItem} onPress={handleToggleExpand}>
+      <TouchableOpacity
+        style={styles.notificationItem}
+        onPress={handleToggleExpand}>
         <View style={styles.notificationContent}>
           <Text style={styles.message} numberOfLines={expanded ? undefined : 1}>
             {notification.message.length > 50 && !expanded
@@ -234,9 +265,9 @@ const NotificationItem = ({ notification, updateContactRequest }) => {
           <Text style={styles.time}>13:40pm</Text>
         </View>
       </TouchableOpacity>
-    );
+    )
   }
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -338,6 +369,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontSize: 14,
   },
-});
+})
 
-export default Notifications;
+export default Notifications

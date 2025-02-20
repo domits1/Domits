@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
@@ -7,19 +7,19 @@ import {
   ScrollView,
   Image,
   SafeAreaView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {useAuth} from '../../context/AuthContext';
+} from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
+import {useAuth} from '../../context/AuthContext'
 
 const ProfileScreen = ({navigation, route}) => {
-  const parsedAccommodation = route.params.parsedAccommodation;
-  const calculateCost = route.params.calculateCost;
-  const adults = route.params.adults;
-  const kids = route.params.kids;
-  const pets = route.params.pets;
-  const nights = route.params.nights;
-  const {userAttributes} = useAuth();
-  const firstName = userAttributes?.given_name || 'N/A';
+  const parsedAccommodation = route.params.parsedAccommodation
+  const calculateCost = route.params.calculateCost
+  const adults = route.params.adults
+  const kids = route.params.kids
+  const pets = route.params.pets
+  const nights = route.params.nights
+  const {userAttributes} = useAuth()
+  const firstName = userAttributes?.given_name || 'N/A'
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollContainer}>
@@ -123,8 +123,8 @@ const ProfileScreen = ({navigation, route}) => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -286,6 +286,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   // Add any additional styles you might need
-});
+})
 
-export default ProfileScreen;
+export default ProfileScreen

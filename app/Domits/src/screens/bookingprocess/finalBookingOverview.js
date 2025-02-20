@@ -1,18 +1,18 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {SafeAreaView} from 'react-native-safe-area-context';
+} from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
+import {SafeAreaView} from 'react-native-safe-area-context'
 
 const PaymentPage = ({navigation}) => {
   const handleButton = () => {
-    navigation.navigate('simulateStripe');
-  };
+    navigation.navigate('simulateStripe')
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -82,8 +82,8 @@ const PaymentPage = ({navigation}) => {
         </Text>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -203,6 +203,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 20,
   },
-});
+})
 
-export default PaymentPage;
+export default PaymentPage

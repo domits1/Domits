@@ -1,7 +1,6 @@
 /* ChatWidget.css */
-@import "../../../node_modules/slick-carousel/slick/slick.css";
-@import "../../../node_modules/slick-carousel/slick/slick-theme.css";
-
+@import '../../../node_modules/slick-carousel/slick/slick.css';
+@import '../../../node_modules/slick-carousel/slick/slick-theme.css';
 
 .chatwidget-widget {
   position: fixed;
@@ -21,14 +20,13 @@
   cursor: pointer;
 }
 
-
 @media screen and (max-width: 650px) {
-  .chatwidget-toggle{
+  .chatwidget-toggle {
     position: fixed;
     bottom: 100px;
     right: 20px;
     z-index: 3000;
-  cursor: pointer;
+    cursor: pointer;
   }
 }
 
@@ -43,7 +41,6 @@
   flex-direction: column;
   height: 100%;
 }
-
 
 .chatwidget-header {
   background-color: #28a745;
@@ -67,7 +64,6 @@
   cursor: pointer;
 }
 
-
 .chatwidget-container {
   display: flex;
   flex-direction: column;
@@ -83,7 +79,6 @@
   background-color: #f9f9f9;
   max-height: calc(100% - 80px); /* Leave room for the input field */
 }
-
 
 .chatwidget-message {
   margin-bottom: 10px;
@@ -150,14 +145,14 @@
 }
 
 @keyframes chatwidget-blink {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0;
   }
   50% {
     opacity: 1;
   }
 }
-
 
 .chatwidget-accommodation-tiles {
   display: flex;
@@ -236,7 +231,6 @@
   opacity: 0.9;
 }
 
-
 .chatwidget-decision-box {
   padding: 1px 20px 100px 20px;
   background-color: #f1f1f1;
@@ -279,8 +273,8 @@
   color: #1d6f34;
 }
 
-
-.slick-prev, .slick-next {
+.slick-prev,
+.slick-next {
   z-index: 1;
   color: white;
   width: 30px;

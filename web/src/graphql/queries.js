@@ -12,7 +12,7 @@ export const getAccommodation = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const listAccommodations = /* GraphQL */ `
   query ListAccommodations(
     $filter: ModelAccommodationFilterInput
@@ -32,7 +32,7 @@ export const listAccommodations = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const getUser = /* GraphQL */ `
   query GetUser($id: ID!) {
     getUser(id: $id) {
@@ -44,7 +44,7 @@ export const getUser = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const listUsers = /* GraphQL */ `
   query ListUsers(
     $filter: ModelUserFilterInput
@@ -64,7 +64,7 @@ export const listUsers = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const getTodo = /* GraphQL */ `
   query GetTodo($id: ID!) {
     getTodo(id: $id) {
@@ -76,7 +76,7 @@ export const getTodo = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const listTodos = /* GraphQL */ `
   query ListTodos(
     $filter: ModelTodoFilterInput
@@ -96,31 +96,11 @@ export const listTodos = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 
-export const getChat = /* GraphQL */ `query GetChat($id: ID!) {
-  getChat(id: $id) {
-    id
-    userId
-    recipientId
-    text
-    email
-    recipientEmail
-    isRead
-    sortKey
-    createdAt
-    channelID
-  }
-}
-`;
-
-export const listChats = /* GraphQL */ `query ListChats(
-  $filter: ModelChatFilterInput
-  $limit: Int
-  $nextToken: String
-) {
-  listChats(filter: $filter, limit: $limit, nextToken: $nextToken) {
-    items {
+export const getChat = /* GraphQL */ `
+  query GetChat($id: ID!) {
+    getChat(id: $id) {
       id
       userId
       recipientId
@@ -131,11 +111,33 @@ export const listChats = /* GraphQL */ `query ListChats(
       sortKey
       createdAt
       channelID
-      updatedAt
+    }
+  }
+`
+
+export const listChats = /* GraphQL */ `
+  query ListChats(
+    $filter: ModelChatFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listChats(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        userId
+        recipientId
+        text
+        email
+        recipientEmail
+        isRead
+        sortKey
+        createdAt
+        channelID
+        updatedAt
+        __typename
+      }
+      nextToken
       __typename
     }
-    nextToken
-    __typename
   }
-}
-`;
+`

@@ -1,32 +1,32 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react'
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {useAuth} from '../../context/AuthContext';
+} from 'react-native'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import {SafeAreaView} from 'react-native-safe-area-context'
+import {useAuth} from '../../context/AuthContext'
 
 const GuestProfileTab = () => {
-  const {userAttributes} = useAuth();
-  const [firstName, setFirstName] = useState('');
-  const [emailAddress, setEmailAddress] = useState('');
+  const {userAttributes} = useAuth()
+  const [firstName, setFirstName] = useState('')
+  const [emailAddress, setEmailAddress] = useState('')
 
   useEffect(() => {
     const fetchUserAttributes = async () => {
       try {
-        setFirstName(userAttributes?.given_name);
-        setEmailAddress(userAttributes?.email);
+        setFirstName(userAttributes?.given_name)
+        setEmailAddress(userAttributes?.email)
       } catch (error) {
-        console.error('Error fetching user attributes:', error);
+        console.error('Error fetching user attributes:', error)
       }
-    };
+    }
 
-    fetchUserAttributes();
-  }, [userAttributes]);
+    fetchUserAttributes()
+  }, [userAttributes])
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -62,8 +62,8 @@ const GuestProfileTab = () => {
         {/*</View>*/}
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -106,6 +106,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: 'red',
   },
-});
+})
 
-export default GuestProfileTab;
+export default GuestProfileTab

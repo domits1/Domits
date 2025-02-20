@@ -1,10 +1,10 @@
-import React from 'react';
-import Modal from 'react-modal';
-import './contactModal.css'; 
+import React from 'react'
+import Modal from 'react-modal'
+import './contactModal.css'
 
-Modal.setAppElement('#root'); 
+Modal.setAppElement('#root')
 
-const ContactModal = ({ show, onClose, onConfirm, title, message }) => {
+const ContactModal = ({show, onClose, onConfirm, title, message}) => {
   return (
     <Modal
       isOpen={show}
@@ -12,16 +12,19 @@ const ContactModal = ({ show, onClose, onConfirm, title, message }) => {
       contentLabel={title}
       ariaHideApp={false}
       className="modal-content"
-      overlayClassName="modal-backdrop"
-    >
+      overlayClassName="modal-backdrop">
       <h2>{title}</h2>
       <p>{message}</p>
       <div className="modal-actions">
-        <button id="cancelButton" onClick={onClose}>Cancel</button>
-        <button id="confirmButton" onClick={onConfirm}>Confirm</button>
+        <button id="cancelButton" onClick={onClose}>
+          Cancel
+        </button>
+        <button id="confirmButton" onClick={onConfirm}>
+          Confirm
+        </button>
       </div>
     </Modal>
-  );
-};
+  )
+}
 
-export default ContactModal;
+export default ContactModal

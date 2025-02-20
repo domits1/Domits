@@ -1,110 +1,132 @@
-import React, { useState, useEffect } from 'react';
-import './EmployeeChat.css';
-import { useUser } from '../auth/UserContext';
-import { Auth } from 'aws-amplify';
+import React, {useState, useEffect} from 'react'
+import './EmployeeChat.css'
+import {useUser} from '../auth/UserContext'
+import {Auth} from 'aws-amplify'
 
 const EmployeeChat = () => {
-  const [chats, setChats] = useState([]); // Stores open chats
-  const [activeChat, setActiveChat] = useState(null); // Tracks the active chat
-  const [employeeMessage, setEmployeeMessage] = useState(''); // Message typed by employee
-  const [isConnected, setIsConnected] = useState(false); // WebSocket connection status
-  const [socket, setSocket] = useState(null); // WebSocket instance
-  const [chatIds, setChatIds] = useState({}); // Stores chat IDs per connection ID
-  const { user, role, isLoading } = useUser();
-  const [connectionId, setConnectionId] = useState(''); // Store connectionId
-  const [wantsToConnect, setWantsToConnect] = useState(false); // Prompt employee to go online
-  const [chatMessages, setChatMessages] = useState({}); // Store chat messages by chat ID { chatID: [messages] }
+  const [chats, setChats] = useState([]) // Stores open chats
+  const [activeChat, setActiveChat] = useState(null) // Tracks the active chat
+  const [employeeMessage, setEmployeeMessage] = useState('') // Message typed by employee
+  const [isConnected, setIsConnected] = useState(false) // WebSocket connection status
+  const [socket, setSocket] = useState(null) // WebSocket instance
+  const [chatIds, setChatIds] = useState({}) // Stores chat IDs per connection ID
+  const {user, role, isLoading} = useUser()
+  const [connectionId, setConnectionId] = useState('') // Store connectionId
+  const [wantsToConnect, setWantsToConnect] = useState(false) // Prompt employee to go online
+  const [chatMessages, setChatMessages] = useState({}) // Store chat messages by chat ID { chatID: [messages] }
 
   useEffect(() => {
     if (wantsToConnect && !socket) {
-      connectWebSocket();
+      connectWebSocket()
     }
-  }, [wantsToConnect]);
+  }, [wantsToConnect])
 
-  const fetchConnectionId = async (userId) => {
+  const fetchConnectionId = async userId => {
     try {
-      const response = await fetch('https://s5telb0icl.execute-api.eu-north-1.amazonaws.com/default/eChatGetConnectionId', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        'https://s5telb0icl.execute-api.eu-north-1.amazonaws.com/default/eChatGetConnectionId',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({userId}),
         },
-        body: JSON.stringify({ userId }),
-      });
+      )
 
-      const data = await response.json();
+      const data = await response.json()
       if (response.ok) {
-        const parsedBody = JSON.parse(data.body);
-        return parsedBody.connectionId;
+        const parsedBody = JSON.parse(data.body)
+        return parsedBody.connectionId
       } else {
-        return null;
+        return null
       }
     } catch (error) {
-      return null;
+      return null
     }
-  };
+  }
 
   const connectWebSocket = async () => {
-    const userInfo = await Auth.currentUserInfo();
+    const userInfo = await Auth.currentUserInfo()
 
     const ws = new WebSocket(
-      `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${userInfo.attributes.sub}&userName=${userInfo.attributes['given_name']}`
-    );
+      `wss://0e39mc46j0.execute-api.eu-north-1.amazonaws.com/production/?userId=${userInfo.attributes.sub}&userName=${userInfo.attributes['given_name']}`,
+    )
 
     ws.onopen = async () => {
-      setIsConnected(true);
+      setIsConnected(true)
 
-      const fetchedConnectionId = await fetchConnectionId(userInfo.attributes.sub);
+      const fetchedConnectionId = await fetchConnectionId(
+        userInfo.attributes.sub,
+      )
       if (fetchedConnectionId) {
-        setConnectionId(fetchedConnectionId);
-        await setEmployeeAvailability(true, userInfo.attributes.sub, fetchedConnectionId);
+        setConnectionId(fetchedConnectionId)
+        await setEmployeeAvailability(
+          true,
+          userInfo.attributes.sub,
+          fetchedConnectionId,
+        )
       }
-    };
+    }
 
-    ws.onmessage = (event) => {
-      const incomingMessage = JSON.parse(event.data);
+    ws.onmessage = event => {
+      const incomingMessage = JSON.parse(event.data)
       //console.log(incomingMessage);
 
       if (incomingMessage.senderId && incomingMessage.message) {
-        const senderId = incomingMessage.senderId;
-        const message = { role: 'user', content: incomingMessage.message };
+        const senderId = incomingMessage.senderId
+        const message = {role: 'user', content: incomingMessage.message}
 
         // Save the chatId for this conversation if it's the first message
         if (incomingMessage.chatId && !chatIds[senderId]) {
-          setChatIds((prevChatIds) => ({ ...prevChatIds, [senderId]: incomingMessage.chatId }));
+          setChatIds(prevChatIds => ({
+            ...prevChatIds,
+            [senderId]: incomingMessage.chatId,
+          }))
         }
 
-        setChatMessages((prevChatMessages) => {
-          const prevMessages = prevChatMessages[senderId] || [];
-          return { ...prevChatMessages, [senderId]: [...prevMessages, message] };
-        });
+        setChatMessages(prevChatMessages => {
+          const prevMessages = prevChatMessages[senderId] || []
+          return {...prevChatMessages, [senderId]: [...prevMessages, message]}
+        })
 
-        setChats((prevChats) => {
-          const existingChat = prevChats.find((chat) => chat.chatID === senderId);
+        setChats(prevChats => {
+          const existingChat = prevChats.find(chat => chat.chatID === senderId)
           if (!existingChat) {
-            return [...prevChats, { chatID: senderId, userName: incomingMessage.userName || 'User' }];
+            return [
+              ...prevChats,
+              {chatID: senderId, userName: incomingMessage.userName || 'User'},
+            ]
           }
-          return prevChats;
-        });
+          return prevChats
+        })
 
         // Send the employee's name when the user sends their name and opens a new chat
         if (incomingMessage.userName) {
-          sendEmployeeName(incomingMessage.senderId, userInfo.attributes['given_name']);
+          sendEmployeeName(
+            incomingMessage.senderId,
+            userInfo.attributes['given_name'],
+          )
         }
       }
-    };
+    }
 
-    ws.onerror = (error) => {
+    ws.onerror = error => {
       //error('WebSocket error observed:', error);
-    };
+    }
 
-    ws.onclose = async (event) => {
-      setIsConnected(false);
-      setSocket(null);
-      await setEmployeeAvailability(false, userInfo.attributes.sub, connectionId || '');
-    };
+    ws.onclose = async event => {
+      setIsConnected(false)
+      setSocket(null)
+      await setEmployeeAvailability(
+        false,
+        userInfo.attributes.sub,
+        connectionId || '',
+      )
+    }
 
-    setSocket(ws);
-  };
+    setSocket(ws)
+  }
 
   const sendEmployeeName = (recipientConnectionId, employeeName) => {
     if (socket && isConnected) {
@@ -113,78 +135,85 @@ const EmployeeChat = () => {
         recipientConnectionId,
         message: `Hello, I'm ${employeeName}, how can I help you today?`,
         employeeName: employeeName,
-        chatId: chatIds[recipientConnectionId] // Attach the chat ID here
-      };
-      socket.send(JSON.stringify(payload));
+        chatId: chatIds[recipientConnectionId], // Attach the chat ID here
+      }
+      socket.send(JSON.stringify(payload))
     }
-  };
+  }
 
   const disconnectWebSocket = () => {
     if (socket) {
-      socket.close();
-      setWantsToConnect(false);
-      setIsConnected(false);
-      setSocket(null);
+      socket.close()
+      setWantsToConnect(false)
+      setIsConnected(false)
+      setSocket(null)
     }
-  };
+  }
 
-  const setEmployeeAvailability = async (isAvailable, employeeId, connectionId) => {
+  const setEmployeeAvailability = async (
+    isAvailable,
+    employeeId,
+    connectionId,
+  ) => {
     const payload = {
       employeeId,
       connectionId: connectionId || '',
       isAvailable,
-    };
+    }
 
     try {
-      const response = await fetch('https://nw6g99dmhe.execute-api.eu-north-1.amazonaws.com/default/eChatSetEmployeeAvailability', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+      const response = await fetch(
+        'https://nw6g99dmhe.execute-api.eu-north-1.amazonaws.com/default/eChatSetEmployeeAvailability',
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(payload),
         },
-        body: JSON.stringify(payload),
-      });
+      )
 
       if (!response.ok) {
-        throw new Error('Failed to set employee availability');
+        throw new Error('Failed to set employee availability')
       }
 
-      const data = await response.json();
+      const data = await response.json()
     } catch (error) {
       //console.error(error.message);
     }
-  };
+  }
 
-  const selectChat = (chatID) => {
-    setActiveChat(chatID);
-  };
+  const selectChat = chatID => {
+    setActiveChat(chatID)
+  }
 
   const sendMessage = () => {
-    if (employeeMessage.trim() === '' || !activeChat || !socket) return;
+    if (employeeMessage.trim() === '' || !activeChat || !socket) return
     const payload = {
       action: 'sendMessage',
       recipientConnectionId: activeChat,
       message: employeeMessage,
       userName: user.attributes.given_name,
-      liveChatId: "61d30741-0bda-4d0d-89ce-d6c5f64b6267" // NOG FIXEN
-    };
+      liveChatId: '61d30741-0bda-4d0d-89ce-d6c5f64b6267', // NOG FIXEN
+    }
 
-    socket.send(JSON.stringify(payload));
+    socket.send(JSON.stringify(payload))
 
-    const newMessage = { role: 'employee', content: employeeMessage };
-    setChatMessages((prevChatMessages) => ({
+    const newMessage = {role: 'employee', content: employeeMessage}
+    setChatMessages(prevChatMessages => ({
       ...prevChatMessages,
       [activeChat]: [...(prevChatMessages[activeChat] || []), newMessage],
-    }));
+    }))
 
-    setEmployeeMessage('');
-  };
+    setEmployeeMessage('')
+  }
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>
   }
 
   if (role !== 'Employee') {
-    return null;
+    return null
   }
 
   return (
@@ -200,7 +229,9 @@ const EmployeeChat = () => {
           </div>
         )}
         {!wantsToConnect && !isConnected && (
-          <button className="ec-go-online" onClick={() => setWantsToConnect(true)}>
+          <button
+            className="ec-go-online"
+            onClick={() => setWantsToConnect(true)}>
             Go Online
           </button>
         )}
@@ -217,7 +248,7 @@ const EmployeeChat = () => {
             <div className="ec-chat-list">
               <h3>Open Chats</h3>
               <ul>
-                {chats.map((chat) => (
+                {chats.map(chat => (
                   <li key={chat.chatID} onClick={() => selectChat(chat.chatID)}>
                     Chat with {chat.userName}
                   </li>
@@ -230,7 +261,9 @@ const EmployeeChat = () => {
                 <>
                   <div className="ec-chat-messages">
                     {(chatMessages[activeChat] || []).map((message, index) => (
-                      <div key={index} className={`ec-message-wrapper ${message.role}`}>
+                      <div
+                        key={index}
+                        className={`ec-message-wrapper ${message.role}`}>
                         <span className="ec-sender-label">
                           {message.role === 'employee' ? 'You' : 'User'}
                         </span>
@@ -247,23 +280,27 @@ const EmployeeChat = () => {
                     <input
                       type="text"
                       value={employeeMessage}
-                      onChange={(e) => setEmployeeMessage(e.target.value)}
+                      onChange={e => setEmployeeMessage(e.target.value)}
                       placeholder="Type a message..."
                     />
                     <button onClick={sendMessage}>Send</button>
                   </div>
                 </>
               ) : (
-                <div className="ec-no-chat-selected">Select a chat to start messaging</div>
+                <div className="ec-no-chat-selected">
+                  Select a chat to start messaging
+                </div>
               )}
             </div>
           </>
         ) : (
-          <div className="ec-no-chat-connection">Please connect to start messaging</div>
+          <div className="ec-no-chat-connection">
+            Please connect to start messaging
+          </div>
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default EmployeeChat;
+export default EmployeeChat

@@ -5,7 +5,7 @@
   height: 2vw;
   margin-left: auto;
   margin-right: auto;
-  background-color: #0D9813;
+  background-color: #0d9813;
   color: white;
   padding: 20px;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.1);
@@ -31,7 +31,7 @@
 }
 
 .StripeModal button {
-  background-color: #0D9813;
+  background-color: #0d9813;
   border: none;
   border-radius: 40px;
   font-size: 1.5em;
@@ -74,7 +74,7 @@
   font-size: 0.75em;
   text-align: center;
   height: 8vh;
-  padding-left: 1vh;  
+  padding-left: 1vh;
 }
 
 .Mui {
@@ -85,14 +85,14 @@
   border-radius: 2vh;
   display: flex;
   align-items: center;
-  color: black !important; 
+  color: black !important;
   justify-content: space-around;
 }
 
 .wijzer:hover {
   background-color: var(--secondary-color);
   color: white;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .wijzer.active {
@@ -122,7 +122,7 @@
 
 .wijzer-grn:hover {
   box-shadow: 4px 4px #003366;
-  transition: .3s;
+  transition: 0.3s;
 }
 
 .stripe-icon {
@@ -275,7 +275,7 @@
   padding: 1em;
   border-radius: 1.25em;
   border: none;
-  background-color: #0D9813;
+  background-color: #0d9813;
   color: white;
   margin-left: 85%;
 }
@@ -324,7 +324,7 @@
 }
 
 .save-btn:hover {
-  background-color: #0D9813;
+  background-color: #0d9813;
   box-shadow: 4px 4px #003366;
 }
 
@@ -344,7 +344,8 @@
 }
 
 @media (max-width: 1024px) {
-  .dashboard-1, .dashboard-2 {
+  .dashboard-1,
+  .dashboard-2 {
     width: 100%;
     margin-bottom: 20px;
   }
@@ -475,7 +476,7 @@
 }
 
 .StripeModal button {
-  background-color: #0D9813;
+  background-color: #0d9813;
   border: none;
   border-radius: 40px;
   font-size: 1.5em;
@@ -490,7 +491,6 @@
 .spinner {
   width: 3.2vw;
 }
-
 
 .enlist-info {
   padding: 2em;

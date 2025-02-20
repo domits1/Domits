@@ -1,17 +1,18 @@
 /* global styling */
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
 }
 
-.headertext-container h1{
+.headertext-container h1 {
   font-size: 1.625em;
   font-weight: 800;
   color: #484848;
   margin: 0 auto;
 }
 
-.headertext-container p{
+.headertext-container p {
   font-size: 1em;
   color: #484848;
   margin: 0 auto;
@@ -27,12 +28,12 @@ html, body {
   height: calc(100vh - 94.88px);
 }
 
-.verification-container svg{
+.verification-container svg {
   margin-bottom: 30px;
   cursor: pointer;
 }
 
-.back-btn{
+.back-btn {
   display: flex;
   align-items: center;
   cursor: pointer;
@@ -44,7 +45,7 @@ html, body {
   text-decoration: underline;
 }
 
-.back-btn svg{
+.back-btn svg {
   margin: 0 5px 0 0;
 }
 /* global styling */
@@ -79,7 +80,7 @@ html, body {
   width: 50%;
 }
 
-.bottom-container{
+.bottom-container {
   display: flex;
   align-items: end;
   justify-content: space-between;
@@ -100,7 +101,7 @@ html, body {
   transform: scale(1.05);
 }
 
-.options-container p{
+.options-container p {
   margin: 2px 0px;
 }
 
@@ -111,12 +112,12 @@ hr {
   border-top: 1px solid #e1e1e1;
 }
 
-.option-title{
+.option-title {
   font-size: 0.875em;
   color: black;
 }
 
-.option-text{
+.option-text {
   font-size: 0.875em;
   font-weight: 300;
   color: black;
@@ -162,7 +163,7 @@ hr {
   gap: 24px;
 }
 
-.registrationnumber-inputfield h2{
+.registrationnumber-inputfield h2 {
   text-align: left !important;
   margin: 0 !important;
   font-size: 1em !important;
@@ -171,7 +172,7 @@ hr {
   margin: 0 0 16px 0 !important;
 }
 
-.registrationnumber-inputfield input{
+.registrationnumber-inputfield input {
   width: 95%;
   padding: 10px 0 10px 10px;
   border: 1px solid #e1e1e1;
@@ -179,19 +180,19 @@ hr {
   font-size: 1em;
 }
 
-.registrationnumber-inputfield h1{
+.registrationnumber-inputfield h1 {
   font-size: 1.5em;
   font-weight: 800;
   color: #484848;
   margin: 0 0 16px;
 }
 
-.registrationnumber-inputfield p{
+.registrationnumber-inputfield p {
   font-weight: 400;
   color: #484848;
 }
 
-.registrationnumber-address h2{
+.registrationnumber-address h2 {
   text-align: left !important;
   margin: 0 !important;
   font-size: 1em !important;
@@ -200,37 +201,37 @@ hr {
   margin: 0 0 16px 0 !important;
 }
 
-.registrationnumber-address p{
+.registrationnumber-address p {
   font-weight: 400;
   color: #484848;
 }
 
-.registrationnumber-legal{
+.registrationnumber-legal {
   display: flex;
   width: 100%;
   gap: 5px;
   align-items: flex-start;
 }
 
-.registrationnumber-legal p{
+.registrationnumber-legal p {
   font-size: 0.875em;
   color: #484848;
 }
 /* registration number input */
 
 /* phone number inputfield */
-.phonenumber-inputfield{
+.phonenumber-inputfield {
   margin: 40px 0;
   display: flex;
   flex-direction: column;
 }
 
-.phonenumber-inputfield input{
+.phonenumber-inputfield input {
   font-size: 1em;
   padding: 10px 0 10px 5px;
   border: 1px solid #e1e1e1;
   border-top: none;
-  border-radius: 0 0 10px 10px; 
+  border-radius: 0 0 10px 10px;
 }
 
 .country-select-container {
@@ -298,7 +299,7 @@ hr {
 }
 
 .country-select:focus ~ .floating-label,
-.country-select:not([value=""]) ~ .floating-label {
+.country-select:not([value='']) ~ .floating-label {
   top: 8px;
   left: 6px;
   font-size: 0.8em;
@@ -307,19 +308,19 @@ hr {
 /* phone number inputfield */
 
 /* code input */
-.code-input-container{
+.code-input-container {
   display: flex;
   flex-direction: column;
   margin-top: 40px;
   align-items: center;
   gap: 25px;
 }
-.code-input-container p{
+.code-input-container p {
   font-size: 1em;
   color: #484848;
 }
 
-.code-input-container button{
+.code-input-container button {
   align-self: center !important;
   width: 15%;
   padding: 10px 0;
@@ -327,15 +328,17 @@ hr {
 /* code input */
 /* Extra small devices (phones, <576px) */
 @media (max-width: 575.98px) {
-  body{
+  body {
     font-size: small;
   }
 
-  .main-container{
+  .main-container {
     width: 100%;
   }
 
-  .left-container, .right-container, .bottom-container{
+  .left-container,
+  .right-container,
+  .bottom-container {
     width: 90%;
     align-items: center;
     margin: 20px auto;
@@ -351,12 +354,12 @@ hr {
     height: calc(100vh - 146.66px);
   }
 
-  .registrationnumber-container svg{
+  .registrationnumber-container svg {
     width: 15px;
     height: 20px;
   }
-  
-  .code-input-container button{
+
+  .code-input-container button {
     width: 25%;
     padding: 14px 0;
   }
@@ -376,8 +379,8 @@ hr {
     width: 70%;
     height: calc(100vh - 151.76px);
   }
-  
-  .code-input-container button{
+
+  .code-input-container button {
     width: 25%;
     padding: 14px 0;
   }
@@ -385,7 +388,6 @@ hr {
 
 /* Large devices (laptops, 992px and up) */
 @media (min-width: 992px) and (max-width: 1199.98px) {
-
 }
 
 /* Extra large devices (desktops, 1200px and up) */

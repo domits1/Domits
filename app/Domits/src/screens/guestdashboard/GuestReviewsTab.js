@@ -1,13 +1,13 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from "react-native-safe-area-context";
+} from 'react-native'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import {SafeAreaView} from 'react-native-safe-area-context'
 
 const GuestReviewsTab = () => {
   // Dummy data for the example
@@ -18,7 +18,7 @@ const GuestReviewsTab = () => {
       'Huub, the host, is a good host. He is kind and also offers free fruit. The mornings in the office are a bit chilly though.',
     views: '153 views',
     rating: 4,
-  };
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -62,8 +62,8 @@ const GuestReviewsTab = () => {
         </Text>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -134,6 +134,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'gray',
   },
-});
+})
 
-export default GuestReviewsTab;
+export default GuestReviewsTab

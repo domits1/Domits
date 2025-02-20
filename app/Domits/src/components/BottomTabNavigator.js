@@ -1,12 +1,12 @@
-import React from 'react';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {View, Text, StyleSheet} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import HomePage from '../screens/homeScreen';
-import Messages from '../screens/messages';
-import AccountPage from '../screens/account';
+import React from 'react'
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs'
+import {View, Text, StyleSheet} from 'react-native'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import HomePage from '../screens/homeScreen'
+import Messages from '../screens/messages'
+import AccountPage from '../screens/account'
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator()
 
 const BottomTabNavigator = () => {
   return (
@@ -16,13 +16,13 @@ const BottomTabNavigator = () => {
         tabBarStyle: styles.tabBar,
         headerShown: false,
         tabBarIcon: ({focused, color, size}) => {
-          let iconName;
+          let iconName
           if (route.name === 'Home') {
-            iconName = 'home';
+            iconName = 'home'
           } else if (route.name === 'Messages') {
-            iconName = 'message';
+            iconName = 'message'
           } else if (route.name === 'Account') {
-            iconName = 'account-circle';
+            iconName = 'account-circle'
           }
 
           return (
@@ -30,7 +30,7 @@ const BottomTabNavigator = () => {
               <MaterialIcons name={iconName} size={size} color={color} />
               <Text style={styles.tabLabel(focused)}>{route.name}</Text>
             </View>
-          );
+          )
         },
       })}
       tabBarOptions={{
@@ -43,8 +43,8 @@ const BottomTabNavigator = () => {
       <Tab.Screen name="Messages" component={Messages} />
       <Tab.Screen name="Account" component={AccountPage} />
     </Tab.Navigator>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   tabBar: {
@@ -61,5 +61,5 @@ const styles = StyleSheet.create({
     color: focused ? '#ffffff' : '#8e8e93',
     fontSize: 12,
   }),
-});
-export default BottomTabNavigator;
+})
+export default BottomTabNavigator

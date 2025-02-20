@@ -20,13 +20,13 @@
 // const text135 = `Luxurious Boat Stay: Enjoy Breathtaking Views, Cozy Cabins, Premium Amenities, and Unforgettable Adventures on Stunning Waters. words`;
 // const subboatTitle = `Experience Tranquility on Our Beautiful Boat: Enjoy Comfortable Lodging, Breathtaking Views, and Unforgettable Adventures Await!`;
 // const subtext135 = `Experience Tranquility on Our Beautiful Boat: Enjoy Comfortable Lodging, Breathtaking Views, and Unforgettable Adventures Await! words`;
-// const description505 = `Welcome aboard our luxurious boat accommodation, where comfort meets adventure! Experience breathtaking views of the open water from 
-// your cozy cabin, equipped with modern amenities to ensure a relaxing stay. Whether you're looking to unwind in tranquility or embark on exciting excursions, 
-// our boat offers the perfect getaway. Explore nearby scenic spots, indulge in delightful culinary experiences, and create lasting memories with friends and 
+// const description505 = `Welcome aboard our luxurious boat accommodation, where comfort meets adventure! Experience breathtaking views of the open water from
+// your cozy cabin, equipped with modern amenities to ensure a relaxing stay. Whether you're looking to unwind in tranquility or embark on exciting excursions,
+// our boat offers the perfect getaway. Explore nearby scenic spots, indulge in delightful culinary experiences, and create lasting memories with friends and
 // family. Book your unforgettable stay with us today words`;
-// const description = `Welcome aboard our luxurious boat accommodation, where comfort meets adventure! Experience breathtaking views of the open water from 
-// your cozy cabin, equipped with modern amenities to ensure a relaxing stay. Whether you're looking to unwind in tranquility or embark on exciting excursions, 
-// our boat offers the perfect getaway. Explore nearby scenic spots, indulge in delightful culinary experiences and create lasting memories with friends and 
+// const description = `Welcome aboard our luxurious boat accommodation, where comfort meets adventure! Experience breathtaking views of the open water from
+// your cozy cabin, equipped with modern amenities to ensure a relaxing stay. Whether you're looking to unwind in tranquility or embark on exciting excursions,
+// our boat offers the perfect getaway. Explore nearby scenic spots, indulge in delightful culinary experiences and create lasting memories with friends and
 // family. Book your unforgettable stay with us today`;
 
 // const manufacturerName = 'Sea ray';
@@ -165,7 +165,7 @@
 //         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click()
 //         cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled').click();
 
-//         // Test: all checkboxes 
+//         // Test: all checkboxes
 //         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').check();
 //         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').should('be.checked');
 //         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').uncheck();
@@ -176,7 +176,7 @@
 //         cy.get('#root > div > main > div > div:nth-child(17) > section > label:nth-child(6) > input[type=checkbox]').uncheck();
 //         cy.get('#root > div > main > div > div:nth-child(17) > section > label:nth-child(6) > input[type=checkbox]').should('not.be.checked');
 
-//         // checking and unchecking everything 
+//         // checking and unchecking everything
 //         cy.get('input[type=checkbox]').check();
 //         cy.get('input[type=checkbox]').uncheck();
 //     });
@@ -242,7 +242,6 @@
 //         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(3)').type(checks[2]);
 //         cy.get('#root > div > main > div > label:nth-child(4) > input:nth-child(5)').type(checks[3]);
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
-
 
 //         // Test: add photos and remove
 //         cy.get('#root > div > main > section > section > section:nth-child(1) > input').selectFile('cypress/fixtures/image1.jpg');
@@ -444,7 +443,6 @@
 //     });
 // });
 
-
 // describe("Test: Calendar functionality", () => {
 //     it("should check the functionality of the calendar", () => {
 //         cy.loginAsGuest();
@@ -584,7 +582,6 @@
 //         cy.get('#root > div > main > section > main > section > div.Calendar_calendar__7tYff > section > ul.dates > li:nth-child(6)').click();
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-
 //         // Test: Please check if everything is correct
 //         cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(2) > td:nth-child(2)').should('have.text', boatTitle);
 //         cy.get('#summary > table.accommodation-summary > tbody > tr:nth-child(3) > td:nth-child(2)').should('have.text', description);
@@ -603,6 +600,3 @@
 //         cy.get('#summary > table:nth-child(4) > tbody > tr:nth-child(9) > td:nth-child(2)').should('have.text', '01/01/2022');
 //     });
 // });
-
-
-

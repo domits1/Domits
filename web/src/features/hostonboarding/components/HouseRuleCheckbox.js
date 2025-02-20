@@ -1,6 +1,6 @@
-import React from "react";
+import React from 'react'
 
-function HouseRuleCheckbox({ label, value, onChange }) {
+function HouseRuleCheckbox({label, value, onChange}) {
   return (
     <label className="toggle">
       <span className="toggle-label">{label}</span>
@@ -12,7 +12,7 @@ function HouseRuleCheckbox({ label, value, onChange }) {
       />
       <div className="toggle-switch"></div>
     </label>
-  );
+  )
 }
 
-export default HouseRuleCheckbox;
+export default HouseRuleCheckbox

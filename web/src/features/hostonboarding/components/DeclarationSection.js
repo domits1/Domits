@@ -1,6 +1,13 @@
-import React from "react";
+import React from 'react'
 
-function DeclarationSection({ drafted, toggleDrafted, declare, toggleDeclareDrafted, confirm, toggleConfirmDrafted }) {
+function DeclarationSection({
+  drafted,
+  toggleDrafted,
+  declare,
+  toggleDeclareDrafted,
+  confirm,
+  toggleConfirmDrafted,
+}) {
   return (
     <div className="declaration-section">
       <label>
@@ -9,21 +16,29 @@ function DeclarationSection({ drafted, toggleDrafted, declare, toggleDeclareDraf
       </label>
       <div className="declarations-section">
         <label>
-      <input type="checkbox" checked={declare} onChange={toggleDeclareDrafted} />
+          <input
+            type="checkbox"
+            checked={declare}
+            onChange={toggleDeclareDrafted}
+          />
           I declare that this property is legitimate, complete with required
           licenses and permits, which can be displayed upon request. Domits B.V.
           reserves the right to verify and investigate your registration
           information.
         </label>
-        </div>
-        <div className="declarations-section">
+      </div>
+      <div className="declarations-section">
         <label>
-        <input type="checkbox" checked={confirm} onChange={toggleConfirmDrafted} />
+          <input
+            type="checkbox"
+            checked={confirm}
+            onChange={toggleConfirmDrafted}
+          />
           I confirm that I have read and accept the General Terms and
           Conditions.
         </label>
       </div>
     </div>
-  );
+  )
 }
-export default DeclarationSection;
+export default DeclarationSection

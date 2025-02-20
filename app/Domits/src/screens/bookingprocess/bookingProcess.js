@@ -1,4 +1,4 @@
-import React, {useEffect, useState, memo} from 'react';
+import React, {useEffect, useState, memo} from 'react'
 import {
   View,
   Text,
@@ -7,23 +7,23 @@ import {
   Image,
   TouchableOpacity,
   Modal,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import personalDetailsForm from './personalDetailsForm';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {Calendar} from 'react-native-calendars';
-import DateFormatterYYYY_MM_DD from '../utils/DateFormatterYYYY_MM_DD';
+} from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
+import personalDetailsForm from './personalDetailsForm'
+import {SafeAreaView} from 'react-native-safe-area-context'
+import {Calendar} from 'react-native-calendars'
+import DateFormatterYYYY_MM_DD from '../utils/DateFormatterYYYY_MM_DD'
 
 const OnBoarding1 = ({navigation, route}) => {
-  const accommodation = route.params.accommodation;
-  const parsedAccommodation = route.params.parsedAccommodation;
-  const [owner, setOwner] = useState();
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const images = route.params.images;
-  const [showDatePopUp, setShowDatePopUp] = useState(false);
-  const [showAllAmenities, setShowAllAmenities] = useState(false);
-  const [showGuestAmountPopUp, setShowGuestAmountPopUp] = useState(false);
+  const accommodation = route.params.accommodation
+  const parsedAccommodation = route.params.parsedAccommodation
+  const [owner, setOwner] = useState()
+  const [loading, setLoading] = useState(true)
+  const [errorMessage, setErrorMessage] = useState('')
+  const images = route.params.images
+  const [showDatePopUp, setShowDatePopUp] = useState(false)
+  const [showAllAmenities, setShowAllAmenities] = useState(false)
+  const [showGuestAmountPopUp, setShowGuestAmountPopUp] = useState(false)
 
   const handleBookButton = () => {
     navigation.navigate('simulateStripe', {
@@ -33,26 +33,26 @@ const OnBoarding1 = ({navigation, route}) => {
       kids: kids,
       pets: pets,
       nights: nights,
-    });
-  };
+    })
+  }
 
   const handleChangeDatesPopUp = () => {
-    setShowDatePopUp(!showDatePopUp);
-  };
+    setShowDatePopUp(!showDatePopUp)
+  }
 
-  const [selectedDates, setSelectedDates] = useState({});
-  const [selectedRange, setSelectedRange] = useState({});
+  const [selectedDates, setSelectedDates] = useState({})
+  const [selectedRange, setSelectedRange] = useState({})
 
   useEffect(() => {
-    calculateNights();
-  }, [selectedDates]);
+    calculateNights()
+  }, [selectedDates])
 
-  const [bookings, setBookings] = useState([]);
-  const [bookedDates, setBookedDates] = useState([]);
+  const [bookings, setBookings] = useState([])
+  const [bookedDates, setBookedDates] = useState([])
 
   useEffect(() => {
     if (!accommodation) {
-      return;
+      return
     }
 
     const fetchBookings = async () => {
@@ -69,218 +69,217 @@ const OnBoarding1 = ({navigation, route}) => {
               'Content-type': 'application/json; charset=UTF-8',
             },
           },
-        );
+        )
         if (!response.ok) {
-          throw new Error('Failed to fetch');
+          throw new Error('Failed to fetch')
         }
-        const data = await response.json();
+        const data = await response.json()
 
         if (data.body && typeof data.body === 'string') {
-          const retrievedBookingDataArray = JSON.parse(data.body);
+          const retrievedBookingDataArray = JSON.parse(data.body)
 
           if (Array.isArray(retrievedBookingDataArray)) {
             const validBookings = retrievedBookingDataArray
               .filter(booking => {
-                const startDate = booking.StartDate?.S;
-                const endDate = booking.EndDate?.S;
+                const startDate = booking.StartDate?.S
+                const endDate = booking.EndDate?.S
 
                 const startDateValid =
-                  startDate && !isNaN(Date.parse(startDate));
-                const endDateValid = endDate && !isNaN(Date.parse(endDate));
+                  startDate && !isNaN(Date.parse(startDate))
+                const endDateValid = endDate && !isNaN(Date.parse(endDate))
 
-                return startDateValid && endDateValid;
+                return startDateValid && endDateValid
               })
               .map(booking => {
-                const startDateObj = new Date(booking.StartDate.S);
-                startDateObj.setDate(startDateObj.getDate() + 1);
-                const startDateFormatted =
-                  DateFormatterYYYY_MM_DD(startDateObj);
-                const endDateObj = new Date(booking.EndDate.S);
-                endDateObj.setDate(endDateObj.getDate() + 1);
-                const endDateFormatted = DateFormatterYYYY_MM_DD(endDateObj);
+                const startDateObj = new Date(booking.StartDate.S)
+                startDateObj.setDate(startDateObj.getDate() + 1)
+                const startDateFormatted = DateFormatterYYYY_MM_DD(startDateObj)
+                const endDateObj = new Date(booking.EndDate.S)
+                endDateObj.setDate(endDateObj.getDate() + 1)
+                const endDateFormatted = DateFormatterYYYY_MM_DD(endDateObj)
 
-                return [startDateFormatted, endDateFormatted];
-              });
+                return [startDateFormatted, endDateFormatted]
+              })
 
-            setBookings(retrievedBookingDataArray);
-            setBookedDates(validBookings);
+            setBookings(retrievedBookingDataArray)
+            setBookedDates(validBookings)
           } else {
             console.error(
               'Retrieved data is not an array:',
               retrievedBookingDataArray,
-            );
+            )
           }
         }
       } catch (error) {
-        console.error('Failed to fetch booking data:', error);
+        console.error('Failed to fetch booking data:', error)
       }
-    };
+    }
 
-    fetchBookings();
-  }, [accommodation, parsedAccommodation]);
+    fetchBookings()
+  }, [accommodation, parsedAccommodation])
 
   const CalendarModal = ({onClose, onConfirm, dateRanges}) => {
-    const today = DateFormatterYYYY_MM_DD(new Date());
+    const today = DateFormatterYYYY_MM_DD(new Date())
     const [selectedRange, setSelectedRange] = useState({
       startDate: '',
       endDate: '',
-    });
+    })
 
     const maxDateObj = new Date(
       Math.max(...dateRanges.map(range => new Date(range.endDate))),
-    );
-    const maxDateStr = DateFormatterYYYY_MM_DD(maxDateObj);
-    const minDate = today;
+    )
+    const maxDateStr = DateFormatterYYYY_MM_DD(maxDateObj)
+    const minDate = today
 
     const filterBookedDates = date => {
-      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date));
+      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date))
       return bookedDates.some(bookedRange => {
-        const start = DateFormatterYYYY_MM_DD(new Date(bookedRange[0]));
-        const end = DateFormatterYYYY_MM_DD(new Date(bookedRange[1]));
-        return selectedDate >= start && selectedDate <= end;
-      });
-    };
+        const start = DateFormatterYYYY_MM_DD(new Date(bookedRange[0]))
+        const end = DateFormatterYYYY_MM_DD(new Date(bookedRange[1]))
+        return selectedDate >= start && selectedDate <= end
+      })
+    }
 
     const filterDisabledDays = date => {
-      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date));
+      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date))
       return !dateRanges.some(range => {
-        const start = DateFormatterYYYY_MM_DD(new Date(range.startDate));
-        const end = DateFormatterYYYY_MM_DD(new Date(range.endDate));
-        return selectedDate >= start && selectedDate <= end;
-      });
-    };
+        const start = DateFormatterYYYY_MM_DD(new Date(range.startDate))
+        const end = DateFormatterYYYY_MM_DD(new Date(range.endDate))
+        return selectedDate >= start && selectedDate <= end
+      })
+    }
 
     const combinedDateFilter = date => {
-      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date));
-      const isInThePast = selectedDate < today;
-      const isOutsideAvailableRange = filterDisabledDays(selectedDate);
-      const isBooked = filterBookedDates(selectedDate);
+      const selectedDate = DateFormatterYYYY_MM_DD(new Date(date))
+      const isInThePast = selectedDate < today
+      const isOutsideAvailableRange = filterDisabledDays(selectedDate)
+      const isBooked = filterBookedDates(selectedDate)
 
-      return !(isOutsideAvailableRange || isBooked || isInThePast);
-    };
+      return !(isOutsideAvailableRange || isBooked || isInThePast)
+    }
 
-    const [currentDateRange, setCurrentDateRange] = useState({});
+    const [currentDateRange, setCurrentDateRange] = useState({})
 
     const onDayPress = day => {
-      const selectedDate = day.dateString;
+      const selectedDate = day.dateString
       if (!combinedDateFilter(selectedDate)) {
-        alert('This date is unavailable.');
-        return;
+        alert('This date is unavailable.')
+        return
       }
 
       if (!selectedRange.startDate) {
         const selectedRange = dateRanges.find(range => {
-          const start = DateFormatterYYYY_MM_DD(new Date(range.startDate));
-          const end = DateFormatterYYYY_MM_DD(new Date(range.endDate));
-          return selectedDate >= start && selectedDate <= end;
-        });
+          const start = DateFormatterYYYY_MM_DD(new Date(range.startDate))
+          const end = DateFormatterYYYY_MM_DD(new Date(range.endDate))
+          return selectedDate >= start && selectedDate <= end
+        })
 
         if (selectedRange) {
-          setSelectedRange({startDate: selectedDate});
-          setCurrentDateRange(selectedRange);
+          setSelectedRange({startDate: selectedDate})
+          setCurrentDateRange(selectedRange)
         }
       } else if (!selectedRange.endDate) {
-        const selectedEndDate = DateFormatterYYYY_MM_DD(new Date(selectedDate));
+        const selectedEndDate = DateFormatterYYYY_MM_DD(new Date(selectedDate))
         const rangeStart = DateFormatterYYYY_MM_DD(
           new Date(currentDateRange.startDate),
-        );
+        )
         const rangeEnd = DateFormatterYYYY_MM_DD(
           new Date(currentDateRange.endDate),
-        );
+        )
 
         if (selectedEndDate >= rangeStart && selectedEndDate <= rangeEnd) {
-          const startDate = new Date(selectedRange.startDate);
-          const endDate = new Date(selectedDate);
+          const startDate = new Date(selectedRange.startDate)
+          const endDate = new Date(selectedDate)
 
           const isOverlap = bookedDates.some(bookedRange => {
-            const bookedStart = new Date(bookedRange[0]);
-            const bookedEnd = new Date(bookedRange[1]);
-            return startDate <= bookedEnd && endDate >= bookedStart;
-          });
+            const bookedStart = new Date(bookedRange[0])
+            const bookedEnd = new Date(bookedRange[1])
+            return startDate <= bookedEnd && endDate >= bookedStart
+          })
 
           if (isOverlap) {
             alert(
               'The selected date range includes booked dates. Please choose another range.',
-            );
-            setSelectedRange({startDate: '', endDate: ''});
-            return;
+            )
+            setSelectedRange({startDate: '', endDate: ''})
+            return
           }
 
-          setSelectedRange({...selectedRange, endDate: selectedDate});
+          setSelectedRange({...selectedRange, endDate: selectedDate})
         } else {
-          alert('Please select an end date within the same range.');
+          alert('Please select an end date within the same range.')
         }
       } else {
-        setSelectedRange({startDate: selectedDate});
+        setSelectedRange({startDate: selectedDate})
         const selectedRange = dateRanges.find(range => {
-          const start = DateFormatterYYYY_MM_DD(new Date(range.startDate));
-          const end = DateFormatterYYYY_MM_DD(new Date(range.endDate));
-          return selectedDate >= start && selectedDate <= end;
-        });
-        setCurrentDateRange(selectedRange);
+          const start = DateFormatterYYYY_MM_DD(new Date(range.startDate))
+          const end = DateFormatterYYYY_MM_DD(new Date(range.endDate))
+          return selectedDate >= start && selectedDate <= end
+        })
+        setCurrentDateRange(selectedRange)
       }
-    };
+    }
 
     const getDatesInRange = (start, end) => {
-      const dates = {};
-      let currentDate = new Date(start);
-      const endDate = new Date(end);
+      const dates = {}
+      let currentDate = new Date(start)
+      const endDate = new Date(end)
 
       while (currentDate <= endDate) {
-        const dateString = DateFormatterYYYY_MM_DD(currentDate);
-        dates[dateString] = {color: '#4CAF50', textColor: 'white'};
-        currentDate.setDate(currentDate.getDate() + 1);
+        const dateString = DateFormatterYYYY_MM_DD(currentDate)
+        dates[dateString] = {color: '#4CAF50', textColor: 'white'}
+        currentDate.setDate(currentDate.getDate() + 1)
       }
-      return dates;
-    };
+      return dates
+    }
 
     const getUnavailableDates = () => {
-      const unavailableDates = {};
+      const unavailableDates = {}
 
       const markDisabledDate = date => {
-        const dateString = DateFormatterYYYY_MM_DD(new Date(date));
+        const dateString = DateFormatterYYYY_MM_DD(new Date(date))
         unavailableDates[dateString] = {
           disabled: true,
           disableTouchEvent: true,
           textColor: '#a9a9a9',
-        };
-      };
+        }
+      }
 
-      const earliestStart = new Date(dateRanges[0].startDate);
-      let currentDate = new Date(today);
+      const earliestStart = new Date(dateRanges[0].startDate)
+      let currentDate = new Date(today)
       while (currentDate <= maxDateObj) {
         if (
           !dateRanges.some(range => {
-            const start = new Date(range.startDate);
-            const end = new Date(range.endDate);
-            return currentDate >= start && currentDate <= end;
+            const start = new Date(range.startDate)
+            const end = new Date(range.endDate)
+            return currentDate >= start && currentDate <= end
           })
         ) {
-          markDisabledDate(currentDate);
+          markDisabledDate(currentDate)
         }
-        currentDate.setDate(currentDate.getDate() + 1);
+        currentDate.setDate(currentDate.getDate() + 1)
       }
 
       bookedDates.forEach(bookedRange => {
-        let start = new Date(bookedRange[0]);
-        const end = new Date(bookedRange[1]);
+        let start = new Date(bookedRange[0])
+        const end = new Date(bookedRange[1])
         while (start <= end) {
-          markDisabledDate(start);
-          start.setDate(start.getDate() + 1);
+          markDisabledDate(start)
+          start.setDate(start.getDate() + 1)
         }
-      });
+      })
 
-      currentDate = new Date(today);
-      currentDate.setDate(currentDate.getDate() - 1);
+      currentDate = new Date(today)
+      currentDate.setDate(currentDate.getDate() - 1)
       while (currentDate >= earliestStart) {
-        markDisabledDate(currentDate);
-        currentDate.setDate(currentDate.getDate() - 1);
+        markDisabledDate(currentDate)
+        currentDate.setDate(currentDate.getDate() - 1)
       }
 
-      return unavailableDates;
-    };
+      return unavailableDates
+    }
 
-    const unavailableDates = getUnavailableDates();
+    const unavailableDates = getUnavailableDates()
 
     const markedDates = {
       ...unavailableDates,
@@ -297,16 +296,16 @@ const OnBoarding1 = ({navigation, route}) => {
         color: '#4CAF50',
         textColor: 'white',
       },
-    };
+    }
 
     const confirmSelection = () => {
       if (selectedRange.startDate && selectedRange.endDate) {
-        onConfirm(selectedRange);
-        onClose();
+        onConfirm(selectedRange)
+        onClose()
       } else {
-        alert('Please select both start and end dates.');
+        alert('Please select both start and end dates.')
       }
-    };
+    }
 
     return (
       <Modal transparent={true} visible={true} animationType="slide">
@@ -331,16 +330,16 @@ const OnBoarding1 = ({navigation, route}) => {
           </View>
         </View>
       </Modal>
-    );
-  };
+    )
+  }
 
   const handleGuestAmountPopUp = () => {
-    setShowGuestAmountPopUp(!showGuestAmountPopUp);
-  };
+    setShowGuestAmountPopUp(!showGuestAmountPopUp)
+  }
 
-  const [adults, setAdults] = useState(1);
-  const [kids, setKids] = useState(0);
-  const [pets, setPets] = useState(0);
+  const [adults, setAdults] = useState(1)
+  const [kids, setKids] = useState(0)
+  const [pets, setPets] = useState(0)
 
   const GuestAmountModal = ({
     onClose,
@@ -349,44 +348,44 @@ const OnBoarding1 = ({navigation, route}) => {
     currentKids,
     currentPets,
   }) => {
-    const [tempAdults, setTempAdults] = useState(currentAdults || 1);
-    const [tempKids, setTempKids] = useState(currentKids || 0);
-    const [tempPets, setTempPets] = useState(currentPets || 0);
+    const [tempAdults, setTempAdults] = useState(currentAdults || 1)
+    const [tempKids, setTempKids] = useState(currentKids || 0)
+    const [tempPets, setTempPets] = useState(currentPets || 0)
 
-    const totalGuests = tempAdults + tempKids + tempPets;
+    const totalGuests = tempAdults + tempKids + tempPets
 
     const incrementGuests = type => {
       if (totalGuests < maxGuests) {
         if (type === 'adults') {
-          setTempAdults(tempAdults + 1);
+          setTempAdults(tempAdults + 1)
         }
         if (type === 'kids') {
-          setTempKids(tempKids + 1);
+          setTempKids(tempKids + 1)
         }
         if (type === 'pets') {
-          setTempPets(tempPets + 1);
+          setTempPets(tempPets + 1)
         }
       }
-    };
+    }
 
     const decrementGuests = type => {
       if (type === 'adults' && tempAdults > 0) {
-        setTempAdults(tempAdults - 1);
+        setTempAdults(tempAdults - 1)
       }
       if (type === 'kids' && tempKids > 0) {
-        setTempKids(tempKids - 1);
+        setTempKids(tempKids - 1)
       }
       if (type === 'pets' && tempPets > 0) {
-        setTempPets(tempPets - 1);
+        setTempPets(tempPets - 1)
       }
-    };
+    }
 
     const confirmGuestSelection = () => {
-      setAdults(tempAdults);
-      setKids(tempKids);
-      setPets(tempPets);
-      onClose();
-    };
+      setAdults(tempAdults)
+      setKids(tempKids)
+      setPets(tempPets)
+      onClose()
+    }
 
     return (
       <Modal transparent={true} visible={true} animationType="slide">
@@ -448,27 +447,27 @@ const OnBoarding1 = ({navigation, route}) => {
           </View>
         </View>
       </Modal>
-    );
-  };
+    )
+  }
 
-  const [nights, setNights] = useState(0);
+  const [nights, setNights] = useState(0)
 
   const calculateNights = () => {
-    const start = new Date(selectedDates.startDate);
-    const end = new Date(selectedDates.endDate);
-    const timeDifference = end.getTime() - start.getTime();
-    const days = timeDifference / (1000 * 3600 * 24);
-    setNights(days);
-    return days;
-  };
+    const start = new Date(selectedDates.startDate)
+    const end = new Date(selectedDates.endDate)
+    const timeDifference = end.getTime() - start.getTime()
+    const days = timeDifference / (1000 * 3600 * 24)
+    setNights(days)
+    return days
+  }
 
   const calculateCost = () => {
     return (
       parsedAccommodation.Rent * nights +
       parsedAccommodation.CleaningFee +
       parsedAccommodation.ServiceFee
-    ).toFixed(2);
-  };
+    ).toFixed(2)
+  }
 
   return (
     <SafeAreaView style={{flex: 1}}>
@@ -556,8 +555,8 @@ const OnBoarding1 = ({navigation, route}) => {
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -739,6 +738,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-});
+})
 
-export default OnBoarding1;
+export default OnBoarding1

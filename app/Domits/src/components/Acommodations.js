@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react'
 import {
   View,
   ScrollView,
@@ -7,13 +7,13 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+} from 'react-native'
+import {useNavigation} from '@react-navigation/native'
 
 const Accommodations = ({searchResults}) => {
-  const [accolist, setAccolist] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const navigation = useNavigation();
+  const [accolist, setAccolist] = useState([])
+  const [loading, setLoading] = useState(true)
+  const navigation = useNavigation()
 
   const formatData = items => {
     return items.map(item => ({
@@ -28,45 +28,45 @@ const Accommodations = ({searchResults}) => {
       bathrooms: `${item.Bathrooms} Bathrooms`,
       bedrooms: `${item.Bedrooms} Bedrooms`,
       persons: `${item.GuestAmount} Persons`,
-    }));
-  };
+    }))
+  }
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const response = await fetch(
           'https://6jjgpv2gci.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation',
-        );
+        )
         if (!response.ok) {
-          throw new Error('Failed to fetch data');
+          throw new Error('Failed to fetch data')
         }
-        const responseData = await response.json();
-        const data = JSON.parse(responseData.body);
-        setAccolist(formatData(data));
+        const responseData = await response.json()
+        const data = JSON.parse(responseData.body)
+        setAccolist(formatData(data))
       } catch (error) {
-        console.error('Error fetching or processing data:', error);
+        console.error('Error fetching or processing data:', error)
       } finally {
-        setLoading(false);
+        setLoading(false)
       }
-    };
-    if (searchResults && searchResults.length > 0) {
-      setAccolist(formatData(searchResults));
-    } else {
-      fetchData();
     }
-  }, [searchResults]);
+    if (searchResults && searchResults.length > 0) {
+      setAccolist(formatData(searchResults))
+    } else {
+      fetchData()
+    }
+  }, [searchResults])
 
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
         <ActivityIndicator size="large" color="#0000ff" />
       </View>
-    );
+    )
   }
 
   const handlePress = accommodation => {
-    navigation.navigate('Detailpage', {accommodation});
-  };
+    navigation.navigate('Detailpage', {accommodation})
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -92,8 +92,8 @@ const Accommodations = ({searchResults}) => {
         </TouchableOpacity>
       ))}
     </ScrollView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -138,6 +138,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#555',
   },
-});
+})
 
-export default Accommodations;
+export default Accommodations

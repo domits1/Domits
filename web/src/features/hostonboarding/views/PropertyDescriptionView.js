@@ -1,12 +1,12 @@
-import React from "react";
-import { useParams } from "react-router-dom";
-import { useDescription } from "../hooks/useDescription";
-import TextAreaField from "../components/TextAreaField";
-import SpecificationForm from "../components/SpecificationForm";
-import Button from "../components/button";
+import React from 'react'
+import {useParams} from 'react-router-dom'
+import {useDescription} from '../hooks/useDescription'
+import TextAreaField from '../components/TextAreaField'
+import SpecificationForm from '../components/SpecificationForm'
+import Button from '../components/button'
 
 function DescriptionView() {
-  const { type: accommodationType } = useParams();
+  const {type: accommodationType} = useParams()
   const {
     description,
     boatSpecifications,
@@ -14,20 +14,20 @@ function DescriptionView() {
     updateDescription,
     updateBoatSpecification,
     updateCamperSpecification,
-  } = useDescription();
+  } = useDescription()
 
   const specifications =
-    accommodationType === "boat"
+    accommodationType === 'boat'
       ? boatSpecifications
-      : accommodationType === "camper"
-      ? camperSpecifications
-      : null;
+      : accommodationType === 'camper'
+        ? camperSpecifications
+        : null
   const updateSpecification =
-    accommodationType === "boat"
+    accommodationType === 'boat'
       ? updateBoatSpecification
-      : accommodationType === "camper"
-      ? updateCamperSpecification
-      : null;
+      : accommodationType === 'camper'
+        ? updateCamperSpecification
+        : null
 
   return (
     <main className="container">
@@ -58,7 +58,7 @@ function DescriptionView() {
         />
       </nav>
     </main>
-  );
+  )
 }
 
-export default DescriptionView;
+export default DescriptionView

@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
@@ -6,18 +6,16 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
-import {SafeAreaView} from "react-native-safe-area-context";
+} from 'react-native'
+import Icon from 'react-native-vector-icons/Ionicons'
+import {SafeAreaView} from 'react-native-safe-area-context'
 
 const BookingScreen = ({navigation}) => {
-
   const handleButton = () => {
-    navigation.navigate('finalBookingOverview');
-  };
+    navigation.navigate('finalBookingOverview')
+  }
   return (
-
-      <SafeAreaView style={{flex: 1}}>
+    <SafeAreaView style={{flex: 1}}>
       <ScrollView style={styles.scrollView}>
         <Text style={styles.title}>Kinderhuissingel 6k</Text>
         <Text style={styles.description}>
@@ -75,9 +73,9 @@ const BookingScreen = ({navigation}) => {
           </TouchableOpacity>
         </View>
       </ScrollView>
-      </SafeAreaView>
-  );
-};
+    </SafeAreaView>
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -175,6 +173,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-});
+})
 
-export default BookingScreen;
+export default BookingScreen

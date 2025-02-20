@@ -15,7 +15,7 @@ export const getChat = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const listChats = /* GraphQL */ `
   query ListChats(
     $filter: ModelChatFilterInput
@@ -38,7 +38,7 @@ export const listChats = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const getAccommodation = /* GraphQL */ `
   query GetAccommodation($id: ID!) {
     getAccommodation(id: $id) {
@@ -50,7 +50,7 @@ export const getAccommodation = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const listAccommodations = /* GraphQL */ `
   query ListAccommodations(
     $filter: ModelAccommodationFilterInput
@@ -70,7 +70,7 @@ export const listAccommodations = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const getUser = /* GraphQL */ `
   query GetUser($id: ID!) {
     getUser(id: $id) {
@@ -82,7 +82,7 @@ export const getUser = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const listUsers = /* GraphQL */ `
   query ListUsers(
     $filter: ModelUserFilterInput
@@ -102,7 +102,7 @@ export const listUsers = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const getTodo = /* GraphQL */ `
   query GetTodo($id: ID!) {
     getTodo(id: $id) {
@@ -114,7 +114,7 @@ export const getTodo = /* GraphQL */ `
       __typename
     }
   }
-`;
+`
 export const listTodos = /* GraphQL */ `
   query ListTodos(
     $filter: ModelTodoFilterInput
@@ -134,4 +134,4 @@ export const listTodos = /* GraphQL */ `
       __typename
     }
   }
-`;
+`

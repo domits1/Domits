@@ -1,76 +1,74 @@
 .adr-card {
-    width: 320px;
-    padding: 20px;
-    margin: 20px auto;
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    background-color: #f9f9f9;
-    text-align: center;
-    height: 460px;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-
+  width: 320px;
+  padding: 20px;
+  margin: 20px auto;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #f9f9f9;
+  text-align: center;
+  height: 460px;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 .adr-card h3 {
-    font-size: 20px ;
-    font-weight: 400 ;
-    color: #333;
-    text-align: center;
-    margin-bottom: 20px;
+  font-size: 20px;
+  font-weight: 400;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
 }
 
 .time-filter {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 15px;
-    font-weight: normal;
-    font-size: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  font-weight: normal;
+  font-size: 20px;
 }
 
-
-
 .custom-date-filter input {
-    margin-bottom: 10px;
-    font-size: 15px;
-    font-weight: normal;
-    color: #555;
+  margin-bottom: 10px;
+  font-size: 15px;
+  font-weight: normal;
+  color: #555;
 }
 
 .custom-date-filter label {
-    font-size: 15px;
-    font-weight: normal;
-    color: #555;
+  font-size: 15px;
+  font-weight: normal;
+  color: #555;
 }
 
 .adr-details p {
-    margin: 20px 10px;
-    font-size: 20px;
-    font-weight: normal;
-    color: #444;
-
+  margin: 20px 10px;
+  font-size: 20px;
+  font-weight: normal;
+  color: #444;
 }
 
 .adr-details strong {
-    font-weight: normal;
+  font-weight: normal;
 }
 
 .adr-card-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    width: 100%;
-    border-radius: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  border-radius: 30px;
 }
 
 .adr-graph {
-    width: 100%;
-    max-width: 600px;
-    margin-top: 20px;
+  width: 100%;
+  max-width: 600px;
+  margin-top: 20px;
 }
 
 .adr-card:hover {
-    transform: scale(1.02);
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  transform: scale(1.02);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }

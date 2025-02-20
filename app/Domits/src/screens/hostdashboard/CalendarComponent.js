@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react'
 import {
   View,
   Text,
@@ -6,21 +6,21 @@ import {
   Alert,
   StyleSheet,
   ScrollView,
-} from 'react-native';
-import {isSameDay, isBefore, isAfter} from 'date-fns';
-import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
+} from 'react-native'
+import {isSameDay, isBefore, isAfter} from 'date-fns'
+import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY'
 
 const CalendarComponent = ({passedProp, isNew, updateDates}) => {
-  const [month, setMonth] = useState(new Date().getMonth());
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [dates, setDates] = useState([]);
-  const [selectedRanges, setSelectedRanges] = useState([]);
-  const [originalRanges, setOriginalRanges] = useState([]);
+  const [month, setMonth] = useState(new Date().getMonth())
+  const [year, setYear] = useState(new Date().getFullYear())
+  const [dates, setDates] = useState([])
+  const [selectedRanges, setSelectedRanges] = useState([])
+  const [originalRanges, setOriginalRanges] = useState([])
   const [dateRange, setDateRange] = useState({
     startDate: null,
     endDate: null,
-  });
-  const [minimumStay, setMinimumStay] = useState(0);
+  })
+  const [minimumStay, setMinimumStay] = useState(0)
 
   const months = [
     'January',
@@ -35,40 +35,40 @@ const CalendarComponent = ({passedProp, isNew, updateDates}) => {
     'October',
     'November',
     'December',
-  ];
+  ]
 
   useEffect(() => {
     if (passedProp?.DateRanges) {
-      setSelectedRanges(passedProp.DateRanges);
-      setOriginalRanges(passedProp.DateRanges);
+      setSelectedRanges(passedProp.DateRanges)
+      setOriginalRanges(passedProp.DateRanges)
     }
     if (passedProp?.MinimumStay !== undefined) {
-      setMinimumStay(passedProp.MinimumStay);
+      setMinimumStay(passedProp.MinimumStay)
     }
-  }, [passedProp]);
+  }, [passedProp])
 
   useEffect(() => {
-    renderDates();
-  }, [month, year, selectedRanges]);
+    renderDates()
+  }, [month, year, selectedRanges])
 
   const renderDates = () => {
-    const start = new Date(year, month, 1).getDay();
-    const endDate = new Date(year, month + 1, 0).getDate();
-    const today = new Date();
-    const newDates = [];
+    const start = new Date(year, month, 1).getDay()
+    const endDate = new Date(year, month + 1, 0).getDate()
+    const today = new Date()
+    const newDates = []
 
     for (let i = 1; i <= endDate; i++) {
-      const currentDate = new Date(year, month, i);
-      const isActiveDay = isSameDay(currentDate, today);
+      const currentDate = new Date(year, month, i)
+      const isActiveDay = isSameDay(currentDate, today)
       const isSelected = selectedRanges.some(range =>
         isDateInRange(currentDate, range.startDate, range.endDate),
-      );
+      )
       const isStartDay = selectedRanges.some(range =>
         isSameDay(currentDate, new Date(range.startDate)),
-      );
+      )
       const isEndDay = selectedRanges.some(range =>
         isSameDay(currentDate, new Date(range.endDate)),
-      );
+      )
 
       newDates.push({
         key: i.toString(),
@@ -77,88 +77,88 @@ const CalendarComponent = ({passedProp, isNew, updateDates}) => {
         isSelected,
         isStartDay,
         isEndDay,
-      });
+      })
     }
 
-    setDates(newDates);
-  };
+    setDates(newDates)
+  }
 
   const isDateInRange = (date, startDate, endDate) => {
-    const selectedDate = new Date(date);
-    const rangeStart = new Date(startDate);
-    const rangeEnd = new Date(endDate);
+    const selectedDate = new Date(date)
+    const rangeStart = new Date(startDate)
+    const rangeEnd = new Date(endDate)
     return (
       rangeStart &&
       rangeEnd &&
       selectedDate >= rangeStart &&
       selectedDate <= rangeEnd
-    );
-  };
+    )
+  }
 
   const handleDateClick = clickedDate => {
     if (clickedDate >= new Date()) {
       setDateRange(prevDateRange => {
         if (!prevDateRange.startDate) {
-          return {startDate: clickedDate, endDate: null};
+          return {startDate: clickedDate, endDate: null}
         }
 
         if (prevDateRange.startDate && !prevDateRange.endDate) {
           const newDateRange = {
             startDate: Math.min(prevDateRange.startDate, clickedDate),
             endDate: Math.max(prevDateRange.startDate, clickedDate),
-          };
+          }
 
           const daysSelected =
             (newDateRange.endDate - newDateRange.startDate) /
               (1000 * 60 * 60 * 24) +
-            1;
+            1
 
           if (daysSelected < minimumStay) {
             Alert.alert(
               'Invalid Range',
               `The selected range is too short. Minimum stay is ${minimumStay} days.`,
-            );
-            return {startDate: null, endDate: null};
+            )
+            return {startDate: null, endDate: null}
           }
 
-          setSelectedRanges([...selectedRanges, newDateRange]);
-          updateDates([...selectedRanges, newDateRange]);
-          return {startDate: null, endDate: null};
+          setSelectedRanges([...selectedRanges, newDateRange])
+          updateDates([...selectedRanges, newDateRange])
+          return {startDate: null, endDate: null}
         }
 
-        return {startDate: null, endDate: null};
-      });
+        return {startDate: null, endDate: null}
+      })
     }
-  };
+  }
 
   const navigateDates = direction => {
     setMonth(prevMonth => {
       if (direction === 'prev') {
-        return prevMonth === 0 ? 11 : prevMonth - 1;
+        return prevMonth === 0 ? 11 : prevMonth - 1
       }
       if (direction === 'next') {
-        return prevMonth === 11 ? 0 : prevMonth + 1;
+        return prevMonth === 11 ? 0 : prevMonth + 1
       }
-      return prevMonth;
-    });
+      return prevMonth
+    })
 
     setYear(prevYear => {
       if (direction === 'prev' && month === 0) {
-        return prevYear - 1;
+        return prevYear - 1
       }
       if (direction === 'next' && month === 11) {
-        return prevYear + 1;
+        return prevYear + 1
       }
-      return prevYear;
-    });
-  };
+      return prevYear
+    })
+  }
 
   const asyncSaveDates = async () => {
     const body = {
       DateRanges: selectedRanges,
       ID: passedProp.ID,
-    };
-    console.log(body);
+    }
+    console.log(body)
     try {
       const response = await fetch(
         'https://m2e7jwiohg.execute-api.eu-north-1.amazonaws.com/default/UpdateAccommodation',
@@ -167,24 +167,24 @@ const CalendarComponent = ({passedProp, isNew, updateDates}) => {
           body: JSON.stringify(body),
           headers: {'Content-Type': 'application/json'},
         },
-      );
+      )
       if (!response.ok) {
-        Alert.alert('Error', 'Something went wrong. Please try again later.');
-        throw new Error('Failed to fetch');
+        Alert.alert('Error', 'Something went wrong. Please try again later.')
+        throw new Error('Failed to fetch')
       }
-      Alert.alert('Success', 'Update successful!');
+      Alert.alert('Success', 'Update successful!')
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Unexpected error:', error)
     }
-  };
+  }
 
   const CustomButton = ({title, onPress, style}) => {
     return (
       <TouchableOpacity style={[styles.button, style]} onPress={onPress}>
         <Text style={styles.buttonText}>{title}</Text>
       </TouchableOpacity>
-    );
-  };
+    )
+  }
 
   return (
     <View style={styles.container}>
@@ -254,8 +254,8 @@ const CalendarComponent = ({passedProp, isNew, updateDates}) => {
         </View>
       )}
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -392,6 +392,6 @@ const styles = StyleSheet.create({
   RemoveButton: {
     backgroundColor: '#f44336',
   },
-});
+})
 
-export default CalendarComponent;
+export default CalendarComponent

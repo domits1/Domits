@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState} from 'react'
 import {
   View,
   Text,
@@ -6,17 +6,17 @@ import {
   TextInput,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
+} from 'react-native'
+import {SafeAreaView} from 'react-native-safe-area-context'
 
 function PriceSettingScreen({route, navigation}) {
-  const [price, setPrice] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [cancelPolicy, setCancelPolicy] = useState('');
-  const [guestType, setGuestType] = useState('');
+  const [price, setPrice] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [cancelPolicy, setCancelPolicy] = useState('')
+  const [guestType, setGuestType] = useState('')
 
-  const goToPreviousStep = () => navigation.goBack();
+  const goToPreviousStep = () => navigation.goBack()
 
   const goToNextStep = () => {
     const updatedListingData = {
@@ -26,11 +26,11 @@ function PriceSettingScreen({route, navigation}) {
       EndDate: endDate,
       CancelPolicy: cancelPolicy,
       GuestType: guestType,
-    };
+    }
     navigation.navigate('ReviewAndSubmitScreen', {
       listingData: updatedListingData,
-    });
-  };
+    })
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -111,7 +111,7 @@ function PriceSettingScreen({route, navigation}) {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -164,6 +164,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-});
+})
 
-export default PriceSettingScreen;
+export default PriceSettingScreen

@@ -1,27 +1,27 @@
-import { amenities } from "../constants/amenitiesData";
-import AmenityCategory from "../components/AmenityCategory";
-import useFormStore from "../stores/formStore";
-import { useParams } from "react-router-dom";
-import Button from "../components/button";
+import {amenities} from '../constants/amenitiesData'
+import AmenityCategory from '../components/AmenityCategory'
+import useFormStore from '../stores/formStore'
+import {useParams} from 'react-router-dom'
+import Button from '../components/button'
 
 function AmenitiesView() {
-  const { type: accommodationType } = useParams();
+  const {type: accommodationType} = useParams()
 
   const selectedAmenities = useFormStore(
-    (state) => state.accommodationDetails.selectedAmenities
-  );
-  const setAmenities = useFormStore((state) => state.setAmenities);
+    state => state.accommodationDetails.selectedAmenities,
+  )
+  const setAmenities = useFormStore(state => state.setAmenities)
 
   const handleAmenityChange = (category, amenity, isChecked) => {
     const updatedAmenities = isChecked
       ? [...(selectedAmenities[category] || []), amenity]
-      : (selectedAmenities[category] || []).filter((item) => item !== amenity);
+      : (selectedAmenities[category] || []).filter(item => item !== amenity)
 
-    setAmenities(category, updatedAmenities);
-  };
+    setAmenities(category, updatedAmenities)
+  }
 
   const typeAmenities =
-    amenities[`${accommodationType}Amenities`] || amenities.allAmenities;
+    amenities[`${accommodationType}Amenities`] || amenities.allAmenities
 
   return (
     <main className="page-body">
@@ -30,7 +30,7 @@ function AmenitiesView() {
         Choose the amenities that your property offers.
       </p>
       <div className="amenity-groups">
-        {Object.keys(typeAmenities).map((category) => (
+        {Object.keys(typeAmenities).map(category => (
           <AmenityCategory
             key={category}
             category={category}
@@ -41,11 +41,17 @@ function AmenitiesView() {
         ))}
       </div>
       <nav className="onboarding-button-box">
-        <Button routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Go back" />
-        <Button routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" />
+        <Button
+          routePath={`/hostonboarding/${accommodationType}/capacity`}
+          btnText="Go back"
+        />
+        <Button
+          routePath={`/hostonboarding/${accommodationType}/rules`}
+          btnText="Proceed"
+        />
       </nav>
     </main>
-  );
+  )
 }
 
-export default AmenitiesView;
+export default AmenitiesView

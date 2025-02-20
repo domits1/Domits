@@ -1,98 +1,97 @@
 .settingsContent {
-    flex-grow: 1;
-    padding: 20px;
+  flex-grow: 1;
+  padding: 20px;
 }
 
 .horizontalOptions {
-    display: flex;
-    justify-content: flex-start; 
-    margin-bottom: 10px;
+  display: flex;
+  justify-content: flex-start;
+  margin-bottom: 10px;
 }
 
-.flexwrap{
-    flex-wrap: wrap;
+.flexwrap {
+  flex-wrap: wrap;
 }
 
-.settingsOptions .settingsOption, .dataRemovalOption, .horizontalOptions .settingsOption {
-    background-color: #fff;
-    border-radius: 15px;
-    padding: 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    flex: 1;
-    min-width: 120px;
-    margin-right: 10px; 
+.settingsOptions .settingsOption,
+.dataRemovalOption,
+.horizontalOptions .settingsOption {
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+  min-width: 120px;
+  margin-right: 10px;
 }
 
 .horizontalOptions .settingsOption:last-child {
-    margin-right: 0;
+  margin-right: 0;
 }
 
-
 .dataRemovalSection {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  margin-top: 20px;
 }
 
 .dataRemovalSection h2 {
-    width: 100%;
-    margin-bottom: 10px;
+  width: 100%;
+  margin-bottom: 10px;
 }
 
 .dataRemovalOption {
-    background-color: #fff;
-    border-radius: 15px;
-    padding: 10px 20px;
-    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-    margin-right: 10px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-    flex: 1;
-    min-width: 120px;
-    min-height: 60px;
+  background-color: #fff;
+  border-radius: 15px;
+  padding: 10px 20px;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+  margin-right: 10px;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  flex: 1;
+  min-width: 120px;
+  min-height: 60px;
 }
 
-
 .dataRemovalSection h2 {
-    flex-basis: 100%;
-    margin-bottom: 10px;
+  flex-basis: 100%;
+  margin-bottom: 10px;
 }
 
 .publicProfileContent {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 .publicProfileContent .profileField {
-    margin-bottom: 20px;
+  margin-bottom: 20px;
 }
 
 .publicProfileContent .profileField input {
-    margin-left: 10px;
+  margin-left: 10px;
 }
 
 .publicProfileContent .profilePicture {
-    display: flex;
-    justify-content: center;
+  display: flex;
+  justify-content: center;
 }
 
 .publicProfileContent .profilePicture .icon {
-    width: 100px;
-    height: 100px;
+  width: 100px;
+  height: 100px;
 }
 
-
 @media (max-width: 480px) {
-      .infoBox {
-          padding: 10px;
-          font-size: 0.8em;
-          width: 90%;
-          flex-wrap: wrap;
-      }
+  .infoBox {
+    padding: 10px;
+    font-size: 0.8em;
+    width: 90%;
+    flex-wrap: wrap;
+  }
 }

@@ -1,13 +1,13 @@
-import React from 'react';
+import React from 'react'
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-} from 'react-native';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {SafeAreaView} from "react-native-safe-area-context";
+} from 'react-native'
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons'
+import {SafeAreaView} from 'react-native-safe-area-context'
 
 const GuestPaymentsTab = () => {
   return (
@@ -54,8 +54,8 @@ const GuestPaymentsTab = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -108,6 +108,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-});
+})
 
-export default GuestPaymentsTab;
+export default GuestPaymentsTab

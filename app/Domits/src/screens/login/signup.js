@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState} from 'react'
 import {
   View,
   Text,
@@ -6,11 +6,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
-} from 'react-native';
-import {useNavigation} from '@react-navigation/native';
+} from 'react-native'
+import {useNavigation} from '@react-navigation/native'
 
 const SignupScreen = () => {
-  const navigation = useNavigation();
+  const navigation = useNavigation()
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.head}>
@@ -25,8 +25,7 @@ const SignupScreen = () => {
         <Text style={styles.centeredText}>Welcome to Domits!</Text>
         <Text style={styles.centeredText}>Let's get started,</Text>
         <Text style={styles.centeredTextSmall}>
-          Tap 'Host' if you want to rent out. Tap 'Traveler'
-          if you want to book
+          Tap 'Host' if you want to rent out. Tap 'Traveler' if you want to book
         </Text>
         <TouchableOpacity style={styles.travelerBtn}>
           <Text style={styles.btnText2}>Traveler</Text>
@@ -36,8 +35,8 @@ const SignupScreen = () => {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   head: {
@@ -99,5 +98,5 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
   },
-});
-export default SignupScreen;
+})
+export default SignupScreen

@@ -1,13 +1,13 @@
-import React from 'react';
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import React from 'react'
+import {View, Text, StyleSheet, TouchableOpacity} from 'react-native'
 
 const SimulateStripe = ({navigation, route}) => {
-  const parsedAccommodation = route.params.parsedAccommodation;
-  const calculateCost = route.params.calculateCost;
-  const adults = route.params.adults;
-  const kids = route.params.kids;
-  const pets = route.params.pets;
-  const nights = route.params.nights;
+  const parsedAccommodation = route.params.parsedAccommodation
+  const calculateCost = route.params.calculateCost
+  const adults = route.params.adults
+  const kids = route.params.kids
+  const pets = route.params.pets
+  const nights = route.params.nights
   const handlePaymentAccepted = () => {
     navigation.navigate('paymentAccepted', {
       parsedAccommodation: parsedAccommodation,
@@ -16,14 +16,14 @@ const SimulateStripe = ({navigation, route}) => {
       kids: kids,
       pets: pets,
       nights: nights,
-    });
-  };
+    })
+  }
 
   const handlePaymentDeclined = () => {
     navigation.navigate('paymentDeclined', {
       parsedAccommodation: parsedAccommodation,
-    });
-  };
+    })
+  }
 
   return (
     <View style={styles.container}>
@@ -38,8 +38,8 @@ const SimulateStripe = ({navigation, route}) => {
         <Text style={styles.buttonText}>Payment Declined</Text>
       </TouchableOpacity>
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
-});
+})
 
-export default SimulateStripe;
+export default SimulateStripe

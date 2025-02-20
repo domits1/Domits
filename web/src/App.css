@@ -1,6 +1,6 @@
 :root {
-    --primary-color: #0D9813;
-    --secondary-color: #003366;
+  --primary-color: #0d9813;
+  --secondary-color: #003366;
 }
 
 .page-body {
@@ -64,7 +64,7 @@
 
 .sidebar-label {
   margin-top: 10px;
-  color: var(--colors-font-tertiary, #5C6670);
+  color: var(--colors-font-tertiary, #5c6670);
 }
 
 ul {
@@ -78,7 +78,7 @@ p {
 }
 
 li a {
-  color: var(--colors-font-interactive, #0A760F);
+  color: var(--colors-font-interactive, #0a760f);
   text-decoration: none;
 }
 
@@ -129,15 +129,15 @@ li a {
 
 .selects p {
   border-radius: 15px;
-  border: 1px solid #D9D9D9;
-  background: #D9D9D9;
+  border: 1px solid #d9d9d9;
+  background: #d9d9d9;
   padding: 8px 12px;
   margin-left: 7px;
   transition: border-color 0.3s ease-in-out;
 }
 
 .selects p:hover {
-  border-color: #0D9813;
+  border-color: #0d9813;
   cursor: pointer;
 }
 
@@ -165,9 +165,9 @@ li a {
   background-color: transparent;
   width: 40%;
   border: none;
-  border-bottom: 2px solid #0A760F;
+  border-bottom: 2px solid #0a760f;
   padding: 1em 0.3em;
-  outline: none; 
+  outline: none;
 }
 
 .midtext {
@@ -182,7 +182,7 @@ li a {
   width: 420px;
   height: 300px;
   border-radius: 15px;
-  border: 0.5px solid #0D9813;
+  border: 0.5px solid #0d9813;
   padding-left: 20px;
   padding-right: 20px;
   margin: 10px;
@@ -200,7 +200,7 @@ li a {
 .moreinfo,
 .hostinfo h4:hover,
 .bottomtext h3:hover {
-  color: #0A760F;
+  color: #0a760f;
   cursor: pointer;
   text-decoration: underline;
 }
@@ -228,7 +228,7 @@ li a {
 }
 
 .bottomtext {
-  color: #0A760F;
+  color: #0a760f;
   width: 1200px;
   display: flex;
   gap: 80px;
@@ -277,8 +277,8 @@ li a {
 
 .topdetails li {
   border-radius: 20px;
-  border: 0.5px solid #0D9813;
-  background: #FFF;
+  border: 0.5px solid #0d9813;
+  background: #fff;
   padding: 5px;
 }
 
@@ -319,7 +319,7 @@ li a {
   width: 60%;
   align-items: center;
   border-radius: 15px;
-  border: 1px solid #0D9813;
+  border: 1px solid #0d9813;
   padding-left: 20px;
   padding-right: 20px;
   margin: 10px;
@@ -345,7 +345,7 @@ li a {
   font-size: 16px;
   font-style: normal;
   font-weight: bold;
-  color: #0A760F;
+  color: #0a760f;
 }
 
 .accodetails h4:hover,

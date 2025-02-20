@@ -1,21 +1,17 @@
-import React from "react";
-import CalendarComponent from "../../hostdashboard/CalendarComponent";
-import { useParams } from "react-router-dom";
-import StayControl from "../components/StayControl";
-import { useAvailability } from "../hooks/useAvailability";
-import Button from "../components/button";
-import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
+import React from 'react'
+import CalendarComponent from '../../hostdashboard/CalendarComponent'
+import {useParams} from 'react-router-dom'
+import StayControl from '../components/StayControl'
+import {useAvailability} from '../hooks/useAvailability'
+import Button from '../components/button'
+import {useHandleLegalProceed} from '../hooks/useHandleLegalProceed'
 
 function AvailabilityView() {
-    const { type: accommodationType } = useParams();
-  const {
-    availability,
-    updateSelectedDates,
-    incrementAmount,
-    decrementAmount,
-  } = useAvailability();
+  const {type: accommodationType} = useParams()
+  const {availability, updateSelectedDates, incrementAmount, decrementAmount} =
+    useAvailability()
 
-  const { handleProceed } = useHandleLegalProceed();
+  const {handleProceed} = useHandleLegalProceed()
 
   return (
     <main className="container">
@@ -35,20 +31,20 @@ function AvailabilityView() {
           <StayControl
             label="Minimum Stay (Days):"
             value={availability.MinimumStay}
-            onIncrement={() => incrementAmount("MinimumStay", 30)}
-            onDecrement={() => decrementAmount("MinimumStay", 1)}
+            onIncrement={() => incrementAmount('MinimumStay', 30)}
+            onDecrement={() => decrementAmount('MinimumStay', 1)}
           />
           <StayControl
             label="Minimum Booking Period (Days):"
             value={availability.MinimumBookingPeriod}
-            onIncrement={() => incrementAmount("MinimumBookingPeriod", 30)}
-            onDecrement={() => decrementAmount("MinimumBookingPeriod", 1)}
+            onIncrement={() => incrementAmount('MinimumBookingPeriod', 30)}
+            onDecrement={() => decrementAmount('MinimumBookingPeriod', 1)}
           />
           <StayControl
             label="Maximum Stay (Days):"
             value={availability.MaximumStay}
-            onIncrement={() => incrementAmount("MaximumStay", 365)}
-            onDecrement={() => decrementAmount("MaximumStay", 1)}
+            onIncrement={() => incrementAmount('MaximumStay', 365)}
+            onDecrement={() => decrementAmount('MaximumStay', 1)}
           />
         </div>
       </div>
@@ -58,13 +54,10 @@ function AvailabilityView() {
           routePath={`/hostonboarding/${accommodationType}/pricing`}
           btnText="Go back"
         />
-        <Button
-          onClick={handleProceed}
-          btnText="Proceed"
-        />
+        <Button onClick={handleProceed} btnText="Proceed" />
       </nav>
     </main>
-  );
+  )
 }
 
-export default AvailabilityView;
+export default AvailabilityView

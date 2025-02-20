@@ -1,20 +1,18 @@
 // Desc: Step 1 - Choose the type of accommodation you want to list on the platform
 
-import AccommodationTypeSelector from "../components/TypeSelector";
-import Button from "../components/button";
-import { useHandleAccommodationTypeProceed } from "../hooks/useHandleAccommodationTypeProceed";
-import { accommodationData } from "../constants/accommodationData";
-import useFormStore from "../stores/formStore";
+import AccommodationTypeSelector from '../components/TypeSelector'
+import Button from '../components/button'
+import {useHandleAccommodationTypeProceed} from '../hooks/useHandleAccommodationTypeProceed'
+import {accommodationData} from '../constants/accommodationData'
+import useFormStore from '../stores/formStore'
 
 function AccommodationTypeView() {
   const selectedAccommodationType = useFormStore(
-    (state) => state.accommodationDetails.type
-  );
-  const setAccommodationType = useFormStore(
-    (state) => state.setAccommodationType
-  );
+    state => state.accommodationDetails.type,
+  )
+  const setAccommodationType = useFormStore(state => state.setAccommodationType)
 
-  const { handleProceed } = useHandleAccommodationTypeProceed();
+  const {handleProceed} = useHandleAccommodationTypeProceed()
 
   return (
     <main className="page-body">
@@ -32,7 +30,7 @@ function AccommodationTypeView() {
         <Button onClick={handleProceed} btnText="Proceed" />
       </nav>
     </main>
-  );
+  )
 }
 
-export default AccommodationTypeView;
+export default AccommodationTypeView

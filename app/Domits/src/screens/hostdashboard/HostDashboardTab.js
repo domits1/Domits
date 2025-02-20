@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect} from 'react'
 import {
   View,
   Text,
@@ -6,25 +6,25 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-} from 'react-native';
-import {SafeAreaView} from 'react-native-safe-area-context';
-import {Button} from '@aws-amplify/ui-react-native/src/primitives';
-import {useAuth} from '../../context/AuthContext';
-import {useNavigation} from '@react-navigation/native';
-import ImageSlider from '../utils/ImageSlider';
-import DateFormatterDD_MM_YYYY from '../DateFormatterDD_MM_YYYY';
+} from 'react-native'
+import {SafeAreaView} from 'react-native-safe-area-context'
+import {Button} from '@aws-amplify/ui-react-native/src/primitives'
+import {useAuth} from '../../context/AuthContext'
+import {useNavigation} from '@react-navigation/native'
+import ImageSlider from '../utils/ImageSlider'
+import DateFormatterDD_MM_YYYY from '../DateFormatterDD_MM_YYYY'
 
 const HostDashboardTab = () => {
-  const {userAttributes} = useAuth();
-  const firstName = userAttributes?.given_name || 'N/A';
-  const email = userAttributes?.email || 'N/A';
-  const navigation = useNavigation();
-  const [accommodations, setAccommodations] = useState([]);
-  const userId = userAttributes?.sub;
+  const {userAttributes} = useAuth()
+  const firstName = userAttributes?.given_name || 'N/A'
+  const email = userAttributes?.email || 'N/A'
+  const navigation = useNavigation()
+  const [accommodations, setAccommodations] = useState([])
+  const userId = userAttributes?.sub
 
   const fetchRecentAccommodations = async () => {
     if (!userId) {
-      return;
+      return
     }
 
     try {
@@ -35,24 +35,24 @@ const HostDashboardTab = () => {
           headers: {'Content-type': 'application/json; charset=UTF-8'},
           body: JSON.stringify({OwnerId: userId}),
         },
-      );
+      )
 
       if (!response.ok) {
-        throw new Error('Failed to fetch');
+        throw new Error('Failed to fetch')
       }
 
-      const data = await response.json();
-      setAccommodations(JSON.parse(data.body));
+      const data = await response.json()
+      setAccommodations(JSON.parse(data.body))
     } catch (error) {
-      console.error('Unexpected error:', error);
+      console.error('Unexpected error:', error)
     }
-  };
+  }
 
   useEffect(() => {
     if (userId) {
-      fetchRecentAccommodations();
+      fetchRecentAccommodations()
     }
-  }, [userId]);
+  }, [userId])
 
   return (
     <SafeAreaView style={{flex: 1, backgroundColor: '#F9F9F9'}}>
@@ -168,8 +168,8 @@ const HostDashboardTab = () => {
         </View>
       </ScrollView>
     </SafeAreaView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -282,6 +282,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 20,
   },
-});
+})
 
-export default HostDashboardTab;
+export default HostDashboardTab

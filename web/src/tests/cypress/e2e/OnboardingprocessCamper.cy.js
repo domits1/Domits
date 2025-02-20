@@ -19,12 +19,12 @@
 // const camperTitle = `Explore the Open Road with a Campervan: Your Home on Wheels, Perfect for Adventure and Creating Unforgettable Memories.`;
 // const camperSubtitle = `From coastlines to mountain escapes, your campervan lets you travel freely, bringing comfort, convenience, and adventure.`;
 // const shareSpecial505 = `
-// Our camper stands out by offering the perfect blend of comfort, versatility, and adventure-ready features. With its spacious interior, cleverly designed to maximize 
-// every inch, you get a fully equipped kitchen, comfortable sleeping areas, and plenty of storage for your gear. Built for all terrains, it's ideal for both off-grid 
+// Our camper stands out by offering the perfect blend of comfort, versatility, and adventure-ready features. With its spacious interior, cleverly designed to maximize
+// every inch, you get a fully equipped kitchen, comfortable sleeping areas, and plenty of storage for your gear. Built for all terrains, it's ideal for both off-grid
 // adventures and cozy campgrounds. Its eco-friendly features, like solar power options, keep you connected to nature while minimizing your impact. Travel in style. More Words`;
 // const shareSpecial = `
-// Our camper stands out by offering the perfect blend of comfort, versatility, and adventure-ready features. With its spacious interior, cleverly designed to maximize 
-// every inch, you get a fully equipped kitchen, comfortable sleeping areas, and plenty of storage for your gear. Built for all terrains, it's ideal for both off-grid 
+// Our camper stands out by offering the perfect blend of comfort, versatility, and adventure-ready features. With its spacious interior, cleverly designed to maximize
+// every inch, you get a fully equipped kitchen, comfortable sleeping areas, and plenty of storage for your gear. Built for all terrains, it's ideal for both off-grid
 // adventures and cozy campgrounds. Its eco-friendly features, like solar power options, keep you connected to nature while minimizing your impact. Travel in style.`;
 // const radioButtons = [
 //     '#root > div > main > div > section.accommodation-general > div.radioBtn-box > label:nth-child(1) > input[type=radio]',
@@ -85,7 +85,7 @@
 //         cy.get('#root > div > main > div > section > div:nth-child(5)').click();
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-//         // Where can we find your camper 
+//         // Where can we find your camper
 //         cy.get('#country > div').click(); // Click to open the dropdown
 //         cy.get('#country > div.css-1nmdiq5-menu').should('be.visible'); //dropdown options should be visible
 //         cy.contains(countryToSelect).click();
@@ -123,19 +123,19 @@
 //         cy.get('#root > div > main > section > div:nth-child(1) > div').contains(0);
 //         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click()
 //         cy.get('#root > div > main > nav > button:nth-child(2)').should('be.enabled');
-        
+
 //         cy.get('#root > div > main > section > div:nth-child(2) > div').contains(0);
 //         cy.get('#root > div > main > section > div:nth-child(2) > div > button:nth-child(2)').click()
 //         cy.get('#root > div > main > section > div:nth-child(2) > div').contains(1);
 //         cy.get('#root > div > main > section > div:nth-child(2) > div > button:nth-child(1)').click()
 //         cy.get('#root > div > main > section > div:nth-child(3) > div').contains(0);
-        
+
 //         cy.get('#root > div > main > section > div:nth-child(3) > div').contains(0);
 //         cy.get('#root > div > main > section > div:nth-child(3) > div > button:nth-child(2)').click()
 //         cy.get('#root > div > main > section > div:nth-child(3) > div').contains(1);
 //         cy.get('#root > div > main > section > div:nth-child(3) > div > button:nth-child(1)').click()
 //         cy.get('#root > div > main > section > div:nth-child(3) > div').contains(0);
-        
+
 //         cy.get('#root > div > main > section > div:nth-child(4) > div').contains(0);
 //         cy.get('#root > div > main > section > div:nth-child(4) > div > button:nth-child(2)').click()
 //         cy.get('#root > div > main > section > div:nth-child(4) > div').contains(1);
@@ -168,7 +168,6 @@
 //         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-        
 //         // Test: Checkboxes
 //         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').check();
 //         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').should('be.checked');
@@ -203,7 +202,6 @@
 //         cy.get('#root > div > main > section > div:nth-child(1) > div > button:nth-child(2)').click();
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
 
-        
 //         // Test: Checkboxes
 //         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').check();
 //         cy.get('#root > div > main > div > div:nth-child(1) > section > label:nth-child(1) > input[type=checkbox]').should('be.checked');
@@ -219,7 +217,6 @@
 //         cy.get('input[type=checkbox]').check().should('be.checked');
 //         cy.get('input[type=checkbox]').uncheck().should('not.be.checked');
 //         cy.get('#root > div > main > nav > button:nth-child(2)').click();
-
 
 //         // Test: House rules
 //         cy.get('#root > div > main > div > div > label > div').click({ multiple: true });
@@ -414,7 +411,6 @@
 //             .should('not.be.checked');
 //         cy.get('#root > div > main > div > section.accommodation-technical > div.check-box-vertical > label:nth-child(2) > input[type=checkbox]')
 //             .check().should('be.checked').uncheck().should('not.be.checked');
-
 
 //     });
 // });
