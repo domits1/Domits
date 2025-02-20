@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import RetrieveSessionTokens from '../features/auth/RetrieveSessionTokens';
 import DeleteProperty from '../features/hostdashboard/hostproperty/services/DeleteProperty';
 
 const Bookings = () => {
