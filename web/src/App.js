@@ -19,6 +19,8 @@ import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
 import HostOnboarding from "./pages/landingpage/OnboardingHost";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
+
+import HostProperty from "./features/hostdashboard/HostProperty";
 // import HostMessages from "./features/hostdashboard/HostMessages";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
@@ -185,7 +187,7 @@ function App() {
                                     <Route path="/listingdetails" element={<ListingDetails />} />
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                                    <Route path="/bookingconfirmationoverview" element={<PaymentConfirmPage />} />
+                                    <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />
@@ -243,6 +245,7 @@ function App() {
                     element={
                       <HostProtectedRoute>
                         <Routes>
+                        <Route path="property" element={<HostProperty />} />
                           <Route path="listings" element={<HostListings />} />
                           <Route path="calendar" element={<HostCalendar />} />
                           <Route path="messages" element={<HostMessages />} />

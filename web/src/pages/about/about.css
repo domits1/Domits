@@ -7,7 +7,7 @@
     font-style: normal;
 }
 
-.about__subtitle-container h3, h4{
+.about__subtitle-container h3, .about__subtitle-container h4{
     font-family: 'Kanit', sans-serif;
     font-weight: 400;
     font-size: 1em;
