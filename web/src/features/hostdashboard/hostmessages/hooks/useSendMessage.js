@@ -1,51 +1,43 @@
 import { useState } from 'react';
-
+import { sendMessage } from '../services/websocket';
 
 export const useSendMessage = (userId) => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState(null);
 
+    const sendMessageHandler = async (recipientId, text, connectionId) => {
+        if (!userId || !recipientId || !text) {
+            setError("Invalid message parameters");
+            return;
+        }
+        
+        const channelID = [userId, recipientId].sort().join("_");
 
-
-    const sendMessage = async (recipientId, text) => {
-        const channelID = [userId, recipientId].sort().join('_');
+        const message = {
+            action: "sendMessage",
+            connectionId: connectionId,
+            userId: userId,
+            recipientId: recipientId,
+            text: text,
+            channelId: channelID,
+        };
+        
 
         setSending(true);
+
         try {
-            const response = await fetch('https://qkptcbb445.execute-api.eu-north-1.amazonaws.com/ChatSendMessageFunction', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    recipientId: recipientId,
-                    text: text,
-                    channelId: channelID,
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to send message');
-            }
-
-            const data = await response.json();
-            if (data.status === 'sent') {
-                console.log('Message sent successfully');
-                
-            }
-        } catch (error) {
-            console.error("Error sending message:", error);
-            setError(error);
-            throw error;
+            sendMessage(message); // Uses WebSocket to send message
+        } catch (err) {
+            console.error("⚠️ Error sending message:", err);
+            setError(err);
         } finally {
             setSending(false);
         }
     };
 
     return {
-        sendMessage,
+        sendMessage: sendMessageHandler,
         sending,
-        error
+        error,
     };
 };

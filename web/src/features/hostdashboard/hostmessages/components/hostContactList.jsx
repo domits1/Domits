@@ -1,11 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import useFetchContacts from '../hooks/useFetchContacts';
 import ContactItem from './hostContactItem';
+import { WebSocketContext } from '../context/webSocketContext';
 import '../styles/hostContactList.css';
 
 const ContactList = ({ userId, onContactClick }) => {
-    const { contacts, pendingContacts, loading, error } = useFetchContacts(userId);
+    const { contacts, pendingContacts, loading, error, setContacts } = useFetchContacts(userId);
+    const { messages: wsMessages } = useContext(WebSocketContext);
     const [displayType, setDisplayType] = useState('contacts');
+
+    // useEffect(() => {
+    //     if (!wsMessages || wsMessages.length === 0) return;
+
+    //     setContacts((prevContacts) => {
+    //         const updatedContacts = prevContacts.map((contact) => {
+    //             const newMessage = wsMessages.find(msg => msg.recipientId === contact.userId);
+    //             if (newMessage) {
+    //                 return {
+    //                     ...contact,
+    //                     latestMessage: {
+    //                         message: newMessage.message,
+    //                         createdAt: newMessage.createdAt,
+    //                     },
+    //                 };
+    //             }
+    //             return contact;
+    //         });
+
+    //         return updatedContacts.sort((a, b) =>
+    //             new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
+    //         );
+    //     });
+
+    // }, [wsMessages, setContacts]);
 
     if (error) {
         return <p className="contact-list-error-text">{error}</p>;
@@ -14,9 +41,6 @@ const ContactList = ({ userId, onContactClick }) => {
     const contactList = displayType === 'contacts' ? contacts : pendingContacts;
     const noContactsMessage = displayType === 'contacts' ? 'No contacts found.' : 'No pending contacts found.';
 
-    // if (filteredContacts.length === 0) {
-    //     return <p className="contact-list-empty-text">No contacts found.</p>;
-    // }
     const handleContactClick = (contactId, contactName) => {
         if (onContactClick) {
             onContactClick(contactId, contactName);
