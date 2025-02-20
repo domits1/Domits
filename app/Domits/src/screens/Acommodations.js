@@ -2,34 +2,18 @@ import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import FetchAccommodationsData from '../features/search/FetchAccommodationsData'
+import FormatAccommodationData from "../components/utils/mappings/FormatAccommodationData";
 
 const Accommodations = ({searchResults}) => {
     const [accommodationsList, setAccommodationsList] = useState([]);
     const [loading, setLoading] = useState(true);
     const navigation = useNavigation();
 
-    const formatData = items => {
-        return items.map(item => ({
-            image: item.Images.image1,
-            title: item.Title,
-            city: item.City,
-            country: item.Country,
-            details: item.Description,
-            size: item.Measurements,
-            price: Number(item.Rent).toFixed(2),
-            id: item.ID,
-            bathrooms: item.Bathrooms,
-            bedrooms: item.Bedrooms,
-            beds: item.Beds,
-            guests: item.GuestAmount,
-        }));
-    };
-
     useEffect(() => {
         if (searchResults && searchResults.length > 0) {
-            setAccommodationsList(formatData(searchResults));
+            setAccommodationsList(FormatAccommodationData(searchResults));
         } else {
-            FetchAccommodationsData(setAccommodationsList, setLoading, formatData);
+            FetchAccommodationsData(setAccommodationsList, setLoading, FormatAccommodationData);
         }
     }, [searchResults]);
 

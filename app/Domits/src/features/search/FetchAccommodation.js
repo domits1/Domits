@@ -3,8 +3,7 @@
  * @param accommodationId - The id of the accommodation to be fetched.
  * @param setAccommodation - Function to set the current accommodation data.
  * @param setLoading - Function to update the loading state.
- * @returns {Promise<void>}
- * @constructor
+ * @returns - Update current accommodation.
  */
 const FetchAccommodation = async (accommodationId, setAccommodation, setLoading) => {
     try {

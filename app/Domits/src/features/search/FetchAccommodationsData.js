@@ -5,8 +5,7 @@ import {ToastAndroid} from "react-native";
  * @param setAccommodationsList - Function to update the list accommodations.
  * @param setLoading - Function to update the loading state.
  * @param formatData - Function to format the fetched data.
- * @returns {Promise<void>} - A promise that resolves when the fetch is completed.
- * @constructor
+ * @returns - Update accommodation list.
  */
 const FetchAccommodationsData = async (setAccommodationsList, setLoading, formatData) => {
     try {

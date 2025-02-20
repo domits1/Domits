@@ -2,8 +2,7 @@
  * Fetch the owner data by a given id.
  * @param ownerId - The id of the owner to be fetched.
  * @param setOwner - Function to set the owner.
- * @returns {Promise<void>} - A promise that resolves when the fetch is completed.
- * @constructor
+ * @returns - Update the owner.
  */
 const FetchOwnerData = async (ownerId, setOwner) => {
     if (!ownerId) {
