@@ -23,3 +23,7 @@ amplifytools.xcconfig
 #amplify-do-not-edit-end
 
 /.idea/
+*/node_modules/
+*/dist/
+*/build/
+*/amplify/
