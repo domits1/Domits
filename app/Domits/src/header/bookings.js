@@ -1,10 +1,24 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
+import RetrieveSessionTokens from '../features/auth/RetrieveSessionTokens';
+import DeleteProperty from '../features/hostdashboard/hostproperty/services/DeleteProperty';
 
 const Bookings = () => {
+  const [sessions, setSessions] = useState([]);
+  const [result, setResult] = useState(null);
+
+  useEffect(() => {
+    async function doDeleteProperty() {
+      setResult(await DeleteProperty());
+    }
+
+    doDeleteProperty();
+  }, []);
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>No Bookings</Text>
+      <Text>{result}</Text>
     </View>
   );
 };
