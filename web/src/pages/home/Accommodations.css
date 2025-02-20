@@ -5,10 +5,11 @@
   max-width: 1200px;
   margin: 0 auto;
 }
+
 /* dit is een tijdelijke aanpassing om te kijken of de huidige filters goed passen */
-/* op het moment dat de filters klaar zijn kan deze waardens aangepast worden om meer ruimte te creÃ«ren */
+/* op het moment dat de filters klaar zijn kan deze waardens aangepast worden om meer ruimte te creëren */
 #filters-sidebar {
-  flex: 0 0 240px; 
+  flex: 0 0 240px;
   margin-right: 20px;
 }
 
@@ -25,14 +26,18 @@
 }
 
 .accocard {
-  width: 20vw;
-  display: block;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  width: 300px;
+  height: auto;
+  max-width: 100%;
+  margin: 1%;
+  margin-top: 10px;
+  background-color: #fff;
+  overflow: hidden;
+  display: inline-block;
+  vertical-align: top;
+  transition: all 0.5s ease-in-out;
   position: relative;
-  /* left: 0rem; */
-  gap: 1rem;
+  z-index: 1;
 }
 
 .accocard:hover {
@@ -48,6 +53,7 @@
   display: block;
   transition: transform 0.4s ease-in-out;
 }
+
 .accocard:hover img {
   transform: scale(1.05);
 }
@@ -59,7 +65,7 @@
 .accocard-content {
   padding: 15px 0;
   /* overflow: hidden;  */
-} 
+}
 
 .accocard-title {
   width: 90%;
@@ -144,6 +150,8 @@
 @media (max-width: 1292px) {
   .accocard {
     width: 100%;
+    height: auto;
+    /* Zorg ervoor dat de hoogte automatisch wordt aangepast */
     display: block;
   }
 }
@@ -151,8 +159,11 @@
 @media (max-width: 856px) {
   .accocard {
     width: 100%;
+    height: auto;
+    margin: 0 auto;
     display: block;
   }
+
   .accocard-specs {
     display: flex;
     flex-direction: row;
@@ -160,24 +171,30 @@
     align-items: center;
     text-align: center;
   }
+
   .why-domits-button {
+    display: none;
+  }
+}
+@media (max-width: 580px){
+  #filters-sidebar{
     display: none;
   }
 }
 
 @media (max-width: 480px) {
-  /* om  filters weg te halen bij de mobileview en als vervanger de filter knopje*/
-  #filters-sidebar{
-    display: none;
-  }
   .accocard {
     width: 100%;
+    height: auto;
     margin: 0 auto;
     display: block;
   }
+
   .accocard-detail {
     width: 100%;
   }
+  
+
   .accocard-size {
     font-size: 12px;
   }
@@ -189,10 +206,10 @@
     align-items: center;
     text-align: center;
   }
-  
 }
 
-.accocard-share-button, .accocard-like-button {
+.accocard-share-button,
+.accocard-like-button {
   position: absolute;
   top: 10px;
   background-color: rgba(255, 255, 255, 0.8);
@@ -217,22 +234,27 @@
   right: 10px;
 }
 
-.accocard-share-button:hover, .accocard-like-button:hover {
+.accocard-share-button:hover,
+.accocard-like-button:hover {
   background-color: rgba(255, 255, 255, 0.9);
   transform: scale(1.1);
 }
 
-.accocard:hover .accocard-share-button, .accocard:hover .accocard-like-button {
+.accocard:hover .accocard-share-button,
+.accocard:hover .accocard-like-button {
   opacity: 1;
   transform: scale(1);
 }
 
-.accocard .accocard-share-button, .accocard .accocard-like-button {
+.accocard .accocard-share-button,
+.accocard .accocard-like-button {
   opacity: 0;
   transition: opacity 0.5s ease-in-out;
 }
 
-.swiper-button-next, .swiper-button-prev,.swiper-button-prev-swiper-button-disabled {
+.swiper-button-next,
+.swiper-button-prev,
+.swiper-button-prev-swiper-button-disabled {
   z-index: 30;
   cursor: pointer;
   color: #333;
@@ -252,12 +274,15 @@
   opacity: 1;
 }
 
-.swiper-button-next:hover, .swiper-button-prev:hover {
+.swiper-button-next:hover,
+.swiper-button-prev:hover {
   background: rgba(255, 255, 255, 1);
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
   transform: scale(1.1);
 }
-.swiper-button-next::after, .swiper-button-prev::after {
+
+.swiper-button-next::after,
+.swiper-button-prev::after {
   color: #000;
   font-size: 10px !important;
 }
@@ -286,6 +311,7 @@ body {
   margin: 0;
   padding: 0;
 }
+
 /* this class makes the description of accommodation in mobile view not visable */
 
 /* .swiper {
