@@ -27,5 +27,11 @@
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.20.0",
+    "eslint": "^9.20.1",
+    "eslint-plugin-react": "^7.37.4",
+    "globals": "^15.15.0"
   }
 }
