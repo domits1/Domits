@@ -48,8 +48,8 @@ const FilterModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay-filter" onClick={onClose}>
+      <div className="modal-content-filter" onClick={(e) => e.stopPropagation()}>
         <h2>Filter Options</h2>
 
         {/* filter voor het prijs slider */}
