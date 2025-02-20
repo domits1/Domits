@@ -13,23 +13,28 @@ let selectedDate = null
 let selectedDates = []
 let selectedMonth = new Date().getMonth()
 let selectedYear = new Date().getFullYear()
+let editMode = false
 
 /**
- * functions this is a list of all the functions that are used in the CalendarComponent
+ * this is a list of all the functions that are used in the CalendarComponent
  * 
  * convertToNumDate
  * getCalDays
+ * addToDate
+ * sortDates
+ * deleteDate
  * newDate
  * dayClick
  * decodeDateNumber
  * getDayClassName
  * convertDateToHTML
- * deleteDate
+ * deleteDateBtn
  * getDatesObject
  * getGridObject
  * getMonthName
  * nextMonthBtn
  * previusMonthBtn
+ * switchBtn
  */
 
 /**
@@ -42,6 +47,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     const [selectedYearState, setSelectedYear] = useState(selectedYear);
     const [calenderGridObject, setGrid] = useState(getGridObject(selectedMonth,selectedYear));
     const [datesGridObject, setDates] = useState(getDatesObject(selectedDates));
+    const [editModeClass, setEditMode] = useState("switch-btn");
 
     /**
      * convertToNumDate is a function that converts year, month, and day into a single date number
@@ -101,6 +107,62 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
 
     /**
+     * addToDate is a function that adds a specified number of days to a given date
+     * 
+     * @param {number} date the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
+     * @param {number} days the number of days to add to the date
+     * @returns {number} the new date after adding the specified number of days, in the same (year month day structure)
+     */
+    function addToDate(date,days){
+        let decodedDate = decodeDateNumber(date)
+        date = new Date(decodedDate[0],decodedDate[1],decodedDate[2]);
+        date.setDate(date.getDate() + days);
+        return convertToNumDate(date.getFullYear(),date.getMonth() + 1,date.getDate())
+    }
+
+    /**
+     * this function sorts the dates in the selectedDates array
+     * 
+     */
+    function sortDates() {
+        selectedDates.sort((a, b) => a[0] - b[0]);
+    }
+    
+    /**
+     * 
+     * @param {[number,number]} date 
+     */
+    function deleteDate(date){
+        for (let i = 0; i < selectedDates.length; i++) {
+            let v = selectedDates[i];
+
+            if (date[0] > v[0] && date[0] <= v[1] && date[1] >= v[1]){
+                selectedDates[i][1] = addToDate(date[0],-1)
+                continue
+            }
+
+            if (date[0] <= v[0] && date[1] >= v[0] && date[1] < v[1]){
+                selectedDates[i][0] = addToDate(date[1],1)
+                continue
+            }
+
+            if (date[0] <= v[0] && date[1] >= v[1]){
+                selectedDates.splice(i,1);
+                i--
+                continue
+            }
+
+            if (date[0] > v[0] && date[1] < v[1]){
+                selectedDates.push([addToDate(date[1],1),v[1]])
+                selectedDates[i][1] = addToDate(date[0],-1)
+                break
+            }
+        }
+
+        sortDates()
+    }
+
+    /**
      * this function adds a new date to the selectedDates array it also makes shore that the dates dont overlap
      * 
      * @param {[number,number]} date 
@@ -108,7 +170,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     function newDate(date){
         let addNewDate = true
 
-        for(let a = 0; a < 2; a++){
+        for(let _ = 0; _ < 2; _++){
             for (let i = 0; i < selectedDates.length; i++) {
                 let v = selectedDates[i];
 
@@ -163,6 +225,8 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         if(addNewDate){
             selectedDates.push(date)
         }
+
+        sortDates()
     }
 
     /**
@@ -178,10 +242,18 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         if(selectedDate==null){
             selectedDate = date
         }else{
-            if(selectedDate>date){
-                newDate([date,selectedDate])
+            if(editMode){
+                if(selectedDate>date){
+                    deleteDate([date,selectedDate])
+                }else{
+                    deleteDate([selectedDate,date])
+                }
             }else{
-                newDate([selectedDate,date])
+                if(selectedDate>date){
+                    newDate([date,selectedDate])
+                }else{
+                    newDate([selectedDate,date])
+                }
             }
             selectedDate = null
         }
@@ -263,7 +335,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
      * 
      * @param {MouseEvent} e
      */
-    function deleteDate(e){
+    function deleteDateBtn(e){
         e.preventDefault()
         const anchorElement = e.currentTarget
         const index = anchorElement.parentElement.parentElement.getAttribute("index")
@@ -286,7 +358,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             tableData.push(
                 <div className="date" index={i}>
                     {convertDateToHTML(date[0])} - {convertDateToHTML(date[1])}
-                    <a href="#trash"><img src={trashSVG} alt="" onClick={deleteDate} /></a>
+                    <a href="#trash"><img src={trashSVG} alt="" onClick={deleteDateBtn} /></a>
                 </div>
             )
         }
@@ -376,6 +448,22 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         setGrid(getGridObject(selectedMonth,selectedYear))
     }
 
+    /**
+     * this function is called when the user clicks the switch button, the edit mode is toggled
+     * 
+     * @param {MouseEvent} e 
+     */
+    function switchBtn(e){
+        e.preventDefault()
+        if(editMode){
+            editMode = false
+            setEditMode("switch-btn")
+        }else{
+            editMode = true
+            setEditMode("switch-btn active")
+        }
+    }
+
     return(
         <div className="calender-container">
             <div className="calender">
@@ -408,6 +496,12 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                     <div className="wrapper">
                         {datesGridObject}
                     </div>
+                </div>
+            </div>
+            <div className="options-column">
+                <div className="option">
+                    <h4>Switch edit mode</h4>
+                    <a className={editModeClass} onClick={switchBtn} href="#switch-edit-mode"></a>
                 </div>
             </div>
         </div>
