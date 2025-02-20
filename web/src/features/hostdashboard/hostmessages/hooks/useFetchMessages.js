@@ -1,17 +1,16 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 export const useFetchMessages = (userId) => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
 
-    const fetchMessages = async (recipientId) => {
+    const fetchMessages = useCallback(async (recipientId) => {
         if (!recipientId) {
             console.error("Recipient ID is undefined");
             return;
         }
 
-        console.log("Fetching messages for recipient:", recipientId, "from user:", userId);
         setLoading(true);
         setError(null);
 
@@ -47,13 +46,24 @@ export const useFetchMessages = (userId) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [userId]);
+
+    const addNewMessage = useCallback((newMessage) => {
+        setMessages((prevMessages) => {
+            const messageExists = prevMessages.some((msg) => msg.id === newMessage.id);
+            if (!messageExists) {
+                return [newMessage, ...prevMessages];
+            }
+            return prevMessages;
+        });
+    }, []);
 
     return {
         messages,
         loading,
         error,
-        fetchMessages
+        fetchMessages,
+        addNewMessage,
     };
 };
 
