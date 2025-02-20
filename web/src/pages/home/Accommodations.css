@@ -151,7 +151,6 @@
   .accocard {
     width: 100%;
     height: auto;
-    /* Zorg ervoor dat de hoogte automatisch wordt aangepast */
     display: block;
   }
 }
@@ -312,7 +311,7 @@ body {
   padding: 0;
 }
 
-/* this class makes the description of accommodation in mobile view not visable */
+/* this class makes the description of accommodation in mobile view not visable...*/
 
 /* .swiper {
   width: 100%;
