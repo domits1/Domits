@@ -2,7 +2,8 @@
 Name: @[GitHub username]
 
 ## Related Issue
-Related Issue: #[issue number]
+Related Issue: #[issue number] 
+resolves #[issue number] (only if it should close it)
 
 ## Proposed Changes
 Description: [Please add detailed description of the changes here]
