@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
     ActivityIndicator,
     Dimensions,
@@ -15,7 +15,9 @@ import FetchOwnerData from '../../features/search/FetchOwnerData';
 import FetchAccommodation from '../../features/search/FetchAccommodation';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {styles} from "./styles/listingDetailStyles";
-import AmenitiesPopup from "./views/AmenitiesPopup"
+import AmenitiesPopup from "./views/AmenitiesPopup";
+import {Calendar, CalendarUtils} from "react-native-calendars/src/index";
+import SelectBookingDateCalendar from "./components/SelectBookingDateCalendar";
 
 const ListingDetailScreen = ({route, navigation}) => {
     const accommodationId = route.params.accommodation.id;
@@ -252,6 +254,15 @@ const ListingDetailScreen = ({route, navigation}) => {
                             </View>
                         </View>
 
+
+                        <View style={styles.descriptionContainer}>
+                            <Text style={styles.descriptionText}>
+                                {parsedAccommodation.Description.trim()}
+                            </Text>
+                        </View>
+
+                        <SelectBookingDateCalendar></SelectBookingDateCalendar>
+
                         <View style={styles.bookingButtonContainer}>
                             <View style={styles.bookingButton}>
                                 <TouchableOpacity onPress={handleOnBoardingPress} style={styles.bookingButtonContent}>
@@ -260,12 +271,6 @@ const ListingDetailScreen = ({route, navigation}) => {
                                               style={styles.bookingButtonIcon}></Ionicons>
                                 </TouchableOpacity>
                             </View>
-                        </View>
-
-                        <View style={styles.descriptionContainer}>
-                            <Text style={styles.descriptionText}>
-                                {parsedAccommodation.Description.trim()}
-                            </Text>
                         </View>
 
                         <View style={styles.categoryDivider}/>
