@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -14,7 +14,7 @@ import LogoutAccount from '../features/auth/LogoutAccount';
 
 const Account = () => {
   const navigation = useNavigation();
-  const {isAuthenticated, user, userAttributes, checkAuth} = useAuth();
+  const {isAuthenticated, user, checkAuth} = useAuth();
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
