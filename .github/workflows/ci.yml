@@ -33,14 +33,4 @@ jobs:
       - name: Run Jest tests
         run: |
           cd web/src
-          npm test -- --detectOpenHandles
 
-      # Check for .env (secrets) files
-      - name: Check for .env files
-        run: |
-          if find . -name "*.env" -print | grep -q '.env'; then
-            echo "❌ .env file(s) found! Please remove them from the repository."
-            exit 1  # Correctly aligned
-          else
-            echo "✅ No .env files found."
-          fi

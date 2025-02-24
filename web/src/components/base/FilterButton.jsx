@@ -9,7 +9,7 @@ const FilterButton = () => {
   return (
     <>
       <button className="filter-button" onClick={() => setModalOpen(true)}>
-        <FaSlidersH  /> Filter
+        <FaSlidersH  /> 
       </button>
       <FilterModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
     </>

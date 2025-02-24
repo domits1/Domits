@@ -5,6 +5,7 @@ import PageSwitcher from '../../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
+import FiltersMain from "./FiltersMain";
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
@@ -103,47 +104,51 @@ const Accommodations = ({ searchResults }) => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
 
-
   return (
-    <div id="card-visibility">
-      {displayedAccolist.length > 0 ? (
-        displayedAccolist.map((accommodation) => {
-          const images =
-            accommodationImages.find((img) => img.ID === accommodation.ID)?.Images || [];
-          return (
-            <AccommodationCard
-              key={accommodation.ID}
-              accommodation={accommodation}
-              images={Object.values(images)}
-              onClick={handleClick}
-            />
-          );
-        })
-      ) : (
-        <div className="no-results">No accommodations found for your search.</div>
-      )}
-      <div className={PageSwitcher.pagination}>
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          &lt; Previous
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => (
+    <div id="container">
+      <div id="filters-sidebar">
+        <FiltersMain />
+      </div>
+      <div id="card-visibility">
+        {displayedAccolist.length > 0 ? (
+          displayedAccolist.map((accommodation) => {
+            const images =
+              accommodationImages.find((img) => img.ID === accommodation.ID)?.Images || [];
+            return (
+              <AccommodationCard
+                key={accommodation.ID}
+                accommodation={accommodation}
+                images={Object.values(images)}
+                onClick={handleClick}
+              />
+            );
+          })
+        ) : (
+          <div className="no-results">No accommodations found for your search.</div>
+        )}
+        <div className={PageSwitcher.pagination}>
           <button
-            key={i}
-            onClick={() => handlePageChange(i + 1)}
-            className={`${currentPage === i + 1 ? PageSwitcher.active : ''}`}
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
           >
-            {i + 1}
+            &lt; Previous
           </button>
-        ))}
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Next &gt;
-        </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => handlePageChange(i + 1)}
+              className={`${currentPage === i + 1 ? PageSwitcher.active : ''}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next &gt;
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -21,7 +21,7 @@ const ConfirmEmail = () => {
 
       if (isSignUpComplete) {
         setSuccessMessage('Email confirmed successfully!');
-        navigation.navigate('LoginScreen'); // Navigate to login screen after confirmation
+        navigation.navigate('Login'); // Navigate to login screen after confirmation
       } else {
         setErrorMessage('Email confirmation is not complete.');
       }

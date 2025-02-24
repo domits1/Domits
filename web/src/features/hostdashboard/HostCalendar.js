@@ -3,7 +3,7 @@ import Pages from "./Pages";
 import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
-import CalendarComponent from "./components/Calender/CalendarComponent.js";
+import CalendarComponent from "./CalendarComponent";
 import styles from "./HostDashboard.module.css";
 import calenderStyles from "./HostCalendar.module.css";
 import {generateUUID} from "../../utils/generateUUID.js";

@@ -1,5 +1,5 @@
 import React from "react";
-import CalendarComponent from "../../hostdashboard/components/Calender/CalendarComponent";
+import CalendarComponent from "../../hostdashboard/CalendarComponent";
 import { useParams } from "react-router-dom";
 import StayControl from "../components/StayControl";
 import { useAvailability } from "../hooks/useAvailability";

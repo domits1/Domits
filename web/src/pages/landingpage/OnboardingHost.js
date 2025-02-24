@@ -24,7 +24,7 @@ import HouseBoat from "../../images/boat_types/house_boat.png";
 import JetSki from "../../images/boat_types/jetski.png";
 import ElectricBoat from "../../images/boat_types/electric-boat.png";
 import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png";
-import CalendarComponent from "../../features/hostdashboard/components/Calender/CalendarComponent";
+import CalendarComponent from "../../features/hostdashboard/CalendarComponent";
 import imageCompression from 'browser-image-compression';
 import RegistrationNumber from "../../features/verification/hostverification/RegistrationNumberView";
 

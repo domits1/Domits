@@ -14,11 +14,9 @@ function PhotosView() {
     reorderImages,
     isDragOver,
     setIsDragOver,
-    handleDropFiles,
   } = usePhotos();
 
   const [draggedIndex, setDraggedIndex] = useState(null);
-  const [imageCount, setImageCount] = useState(5); 
   const fileInputRef = useRef(null);
 
   const handleDragStart = (index) => {
@@ -34,19 +32,16 @@ function PhotosView() {
 
   const handleBoxClick = () => {
     if (fileInputRef.current) {
+      fileInputRef.current.value = "";
       fileInputRef.current.click();
     }
-  };
-
-  const handleAddMore = () => {
-    setImageCount((prev) => prev + 1);
   };
 
   return (
     <main className="photo-gallery-container">
       <h2 className="photo-gallery-title">Choose at least 5 photos</h2>
 
-      {!Object.keys(images).length ? (
+      {!images.length ? (
         <div
           className={`drag-drop-area ${isDragOver ? "drag-over" : ""}`}
           onClick={handleBoxClick}
@@ -58,7 +53,7 @@ function PhotosView() {
           onDrop={(e) => {
             e.preventDefault();
             setIsDragOver(false);
-            handleDropFiles(e.dataTransfer.files);
+            handleFileChange(e.dataTransfer.files);
           }}
         >
           <p>Drag and drop your files here or click to upload</p>
@@ -66,30 +61,37 @@ function PhotosView() {
             ref={fileInputRef}
             type="file"
             multiple
-            onChange={(e) => handleDropFiles(e.target.files)}
+            onChange={(e) => handleFileChange(e.target.files)}
             style={{ display: "none" }}
           />
         </div>
       ) : (
         <section className="photo-gallery-section">
           <section className="photo-gallery-images">
-            {[...Array(imageCount)].map((_, index) => (
+            {images.map((image, index) => (
               <ImagePreview
                 key={index}
-                image={images[`image${index + 1}`] || null}
+                image={image}
                 index={index}
-                onFileChange={handleFileChange}
                 onDelete={deleteImage}
                 onDragStart={handleDragStart}
                 onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
               />
             ))}
-            {/* Add More Box */}
-            <div className="small-photo add-more-box" onClick={handleAddMore}>
-              <p>Add More +</p>
-            </div>
+            {images.length < 5 && (
+              <div className="small-photo add-more-box" onClick={handleBoxClick}>
+                <p>Add More +</p>
+              </div>
+            )}
           </section>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            onChange={(e) => handleFileChange(e.target.files)}
+            accept="image/*"
+            style={{ display: "none" }}
+          />
         </section>
       )}
 

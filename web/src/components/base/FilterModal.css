@@ -1,63 +1,202 @@
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+.modal-overlay-filter {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.modal-content-filter {
+  width: 35vw;
+  height: 80vh;
+  max-height: 80vh;
+  padding: 20px;
+  background-color: white;
+  border-radius: 0.9rem;
+  overflow: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+.modal-footer-filter {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px 20px;
+  background-color: #f4f4f4;
+  border-top: 1px solid #ddd;
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+}
+
+.close-menu-btn {
+  background-color: #f44336; /* Rood voor de sluitknop */
+  color: white;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.close-menu-btn:hover {
+  background-color: #d32f2f;
+}
+
+.modal-content-filter h2 {
+  margin-top: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.filter-section {
+  margin: 20px 0;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  /* background-color: #f9f9f9; */
+}
+
+/* Price Display */
+.price-display {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.price-display span {
+  font-size: 14px;
+  color: #333;
+}
+
+/* Facility Checkboxes */
+.filter-section label {
+  display: block;
+  margin: 8px 0;
+  font-size: 14px;
+  color: #444;
+}
+
+.filter-section input[type='checkbox'] {
+  margin-right: 8px;
+}
+
+/* Distance Slider */
+.slider-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+/* Select Dropdown */
+.filter-section select {
+  width: 100%;
+  padding: 10px;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 0.5rem;
+  background-color: white;
+  cursor: pointer;
+}
+.room-facilities-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr); 
+  gap: 12px; 
+}
+
+.room-facility-option {
+  display: flex;
+  align-items: center;
+  background: #f9f9f9;
+  padding: 12px 16px;
+  border-radius: 8px;
+  transition: background 0.3s, box-shadow 0.3s;
+  cursor: pointer;
+}
+
+.room-facility-option:hover {
+  background: #e6f7ff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.room-facility-option input[type="checkbox"] {
+  margin-right: 12px;
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+.room-facility-option label {
+  font-size: 16px;
+  color: #333;
+}
+
+
+.accessibility-option {
+display: flex;
+align-items: center;
+background: #f2f2f2;
+padding: 12px 16px;
+margin: 8px 0;
+border-radius: 8px;
+transition: background 0.3s, box-shadow 0.3s;
+cursor: pointer;
+}
+
+.accessibility-option:hover {
+background: #e6f7ff;
+box-shadow: 0 2px 8px rgba(0, 0, 0, 1);
+}
+
+.accessibility-option input[type="checkbox"] {
+margin-right: 12px;
+width: 18px;
+height: 18px;
+cursor: pointer;
+}
+
+.accessibility-option label {
+font-size: 16px;
+color: #333;
+}
+
+@media (max-width: 768px) {
+  .modal-content-filter {
+    width: 80vw;
+    height: 60vh;
+    padding: 15px;
   }
-  
-  .modal-content {
-    width: 35vw;
-    height: 80vh;
-    max-height: 80vh;
-    padding: 20px;
-    background-color: white;
-    border-radius: 0.9rem;
-    overflow: auto;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-    position: relative;
+}
+
+@media (max-width: 480px) {
+  .modal-content-filter {
+    width: 82vw;
+    height: 55vh;
   }
-  
-  .modal-content h2 {
-    margin-top: 0;
+
+  .filter-section {
+    padding: 8px;
   }
-  
-  .close-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: none;
-    border: none;
-    font-size: 18px;
-    cursor: pointer;
+
+  .filter-section h3 {
+    font-size: 1rem;
   }
-   
-  .price-display {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
+
+  .filter-section select {
+    padding: 8px;
   }
-  
-  .price-display span {
-    font-size: 14px;
-    color: #333;
-  }
-  @media (max-width: 768px) {
-    .modal-content {
-      width: 80vw; 
-      height: 60vh; 
-      padding: 15px; 
-    }
-  }
-  
-  @media (max-width: 480px) {
-    .modal-content {
-      width: 90vw; 
-      height: 50vh; 
-    }
-  }
+}
