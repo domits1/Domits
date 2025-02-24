@@ -63,7 +63,7 @@
   flex-direction: row;
   justify-content: space-between;
   cursor: pointer;
-  margin-bottom: 10px;
+  margin-bottom: 15px;
   align-items: center;
   width: 200px;
   border: 0.1px solid black;
@@ -71,15 +71,22 @@
   padding: 5px;
   box-sizing: border-box;
   transition: all 0.3s ease;
-  font-size: 0.75em;
-  text-align: center;
+  text-align: left;
   height: 8vh;
-  padding-left: 1vh;  
+  padding-left: 1vh;
+  font-size: 1rem;
+  justify-content: flex-start;
+}
+
+.list-property-p {
+  margin-left: 0px;
 }
 
 .Mui {
-  width: 5vh;
-  height: 5vh;
+  width: 50px;
+  height: 50px;
+  max-height: 3rem;
+  max-width: 3rem;
   background-color: #fff;
   border: 2px solid black;
   border-radius: 2vh;
@@ -87,6 +94,22 @@
   align-items: center;
   color: black !important; 
   justify-content: space-around;
+  margin-right: 1rem;
+}
+
+.Mui-add {
+  width: 55px;
+  height: 5vh;
+  max-height: 3rem;
+  max-width: 3rem;
+  background-color: #fff;
+  border: 2px solid black;
+  border-radius: 2vh;
+  display: flex;
+  align-items: center;
+  color: black !important; 
+  justify-content: space-around;
+  margin-right: 1rem;
 }
 
 .wijzer:hover {
