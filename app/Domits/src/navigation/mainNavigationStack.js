@@ -7,7 +7,7 @@ import Scan from "../header/scan";
 import Pay from "../header/pay";
 import Bookings from "../header/bookings";
 import Pocket from "../header/pocket";
-import Detailpage from "../screens/detailpage";
+import ListingDetailScreen from "../screens/listingDetailScreen/listingDetailScreen";
 import onBoarding1 from "../screens/bookingprocess/bookingProcess";
 import personalDetailsForm from "../screens/bookingprocess/personalDetailsForm";
 import finalBookingOverview from "../screens/bookingprocess/finalBookingOverview";
@@ -50,7 +50,7 @@ function MainNavigationStack() {
             <Stack.Screen name="Pay" component={Pay} />
             <Stack.Screen name="Bookings" component={Bookings} />
             <Stack.Screen name="Pocket" component={Pocket} />
-            <Stack.Screen name="Detailpage" component={Detailpage} />
+            <Stack.Screen name="Detailpage" component={ListingDetailScreen} />
             <Stack.Screen name="onBoarding1" component={onBoarding1} />
             <Stack.Screen
                 name="personalDetailsForm"

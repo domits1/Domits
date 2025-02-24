@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,12 @@ import {
 } from 'react-native';
 import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
-import {signOut} from '@aws-amplify/auth';
 import DeleteAccount from '../features/auth/DeleteAccount';
+import LogoutAccount from '../features/auth/LogoutAccount';
 
 const Account = () => {
   const navigation = useNavigation();
-  const {isAuthenticated, user, userAttributes, checkAuth} = useAuth();
+  const {isAuthenticated, user, checkAuth} = useAuth();
   const [loading, setLoading] = useState(true);
 
   useFocusEffect(
@@ -28,15 +28,6 @@ const Account = () => {
     }, [isAuthenticated, navigation]),
   );
 
-  const handleLogout = async () => {
-    try {
-      await signOut(); // Logs out the user
-      checkAuth(); // Update authentication state in context
-      navigation.navigate('Login'); // Navigate to login screen after logout
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -47,7 +38,7 @@ const Account = () => {
     return (
       <SafeAreaView style={styles.items}>
         <TouchableOpacity
-          onPress={() => handleLogout()}
+          onPress={() => LogoutAccount(navigation, checkAuth)}
           style={styles.listItem}>
           <Text>Logout</Text>
         </TouchableOpacity>
