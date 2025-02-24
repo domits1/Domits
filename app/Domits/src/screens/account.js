@@ -44,18 +44,22 @@ const Account = () => {
         <TouchableOpacity
           onPress={() => LogoutAccount(navigation, checkAuth)}
           style={styles.listItem}>
-          <Text>Logout</Text>
+          <TranslatedText textToTranslate={'logout'} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => DeleteAccount(user.userId, navigation)}
           style={styles.listItem}>
-          <Text>Delete Account</Text>
+          <TranslatedText textToTranslate={'delete account'} />
         </TouchableOpacity>
 
         <TranslatedText textToTranslate={'welcome'} />
 
         <TouchableOpacity onPress={() => i18n.changeLanguage('nl')}>
           <Text>Switch to Dutch</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => i18n.changeLanguage('en')}>
+          <Text>Switch to English</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );

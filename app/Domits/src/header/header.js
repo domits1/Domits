@@ -2,6 +2,7 @@ import React from 'react';
 import {Image, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
+import TranslatedText from "../features/translation/components/TranslatedText";
 
 function Header() {
   const navigation = useNavigation();
@@ -19,7 +20,7 @@ function Header() {
                   onPress={handleBookingsPress}
                   style={styles.itemContainer}>
                 <Image source={require('../images/icons/app-bookings-icon-black.png')}/>
-                <Text style={styles.itemText}>Bookings</Text>
+                <Text style={styles.itemText}><TranslatedText textToTranslate={'bookings'} /></Text>
               </TouchableOpacity>
             </View>
           </View>
