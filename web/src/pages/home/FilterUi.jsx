@@ -74,7 +74,7 @@ const FilterUi = () => {
                 value={`€${priceValues[1] || ''}`}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, '');
-                  handlePriceChange(1, value);
+                  handleInputChange(1, value);
                 }}
               />
             </div>
