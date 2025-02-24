@@ -26,9 +26,9 @@
 }
 
 .accocard {
-  width: 300px;
+  width: 100%;
   height: auto;
-  max-width: 100%;
+  max-width: 450px;
   margin: 1%;
   margin-top: 10px;
   background-color: #fff;
