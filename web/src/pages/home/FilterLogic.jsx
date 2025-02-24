@@ -3,7 +3,6 @@ import { useState } from 'react';
 export const FilterLogic = () => {
   const [priceValues, setPriceValues] = useState([15, 400]);
   
-  // Alle mogelijke faciliteiten die een accommodatie kan hebben die op default niet aan zijn
   const [selectedFacilities, setSelectedFacilities] = useState({
     wifi: false,
     parking: false,
@@ -17,7 +16,6 @@ export const FilterLogic = () => {
     bar: false,
   });
 
-  // alle mogelijke soorten accommodaties die een accommodatie kan hebben
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState({
     apartment: false,
     villa: false,
@@ -33,11 +31,9 @@ export const FilterLogic = () => {
     farmstay: false,
   });
 
-  //op default staat de optie voor tonen van meer opties op false
   const [showMoreFacilities, setShowMoreFacilities] = useState(false);
   const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
 
-  // zorgt ervoor dat de ingevoerde prijs waarden correct worden bijgewerkt en  voorkomt dat de minimumprijs hoger wordt dan de maximumprijs.
   const handlePriceChange = (index, value) => {
     const newValues = [...priceValues];
     newValues[index] = Number(value);
@@ -46,7 +42,6 @@ export const FilterLogic = () => {
     }
   };
 
-  // functie om de geselecteerde faciliteiten aan te passen
   const handleFacilityChange = (event) => {
     setSelectedFacilities({
       ...selectedFacilities,
@@ -54,7 +49,6 @@ export const FilterLogic = () => {
     });
   };
 
-  // functie om de geselecteerde soorten accommodaties aan te passen
   const handlePropertyTypeChange = (event) => {
     setSelectedPropertyTypes({
       ...selectedPropertyTypes,
@@ -62,7 +56,6 @@ export const FilterLogic = () => {
     });
   };
 
-  // functie dat de checkoxes voor de ratings op default uit zet
   const [selectedRatings, setSelectedRatings] = useState({
     1: false,
     2: false,
@@ -71,14 +64,12 @@ export const FilterLogic = () => {
     5: false,
   });
 
-  // functie om de geselecteerde ratings aan te passen
   const handleRatingChange = (event) => {
     setSelectedRatings({
       ...selectedRatings,
       [event.target.name]: event.target.checked,
     });
   };
-// return alle variabelen en functies die nodig zijn voor de filter bij filterUi.jsx
   return {
     priceValues,
     setPriceValues,

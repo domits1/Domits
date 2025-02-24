@@ -22,7 +22,6 @@ const FilterUi = () => {
 
   return (
     <div>
-      {/* Price filter with slider */}
       <div className="filter-section">
         <div className='FilterTitle'>Price Range</div>
         <div className="slider-container">
@@ -81,7 +80,6 @@ const FilterUi = () => {
         </div>
       </div>
 
-      {/* Facility filter with checkboxes */}
       <div className="filter-section">
         <div className='FilterTitle'>Facilities</div>
         <div className="facility-list">
@@ -121,7 +119,6 @@ const FilterUi = () => {
         </span>
       </div>
 
-      {/* Property type filter with checkboxes */}
       <div className="filter-section">
         <div className='FilterTitle'>Property Type</div>
         <div className="facility-list">
@@ -161,7 +158,6 @@ const FilterUi = () => {
         </span>
       </div>
 
-      {/* Rating filter with checkboxes */}
       <div className="filter-section">
         <div className='FilterTitle'>Property Rating</div>
         <div className="facility-list">
