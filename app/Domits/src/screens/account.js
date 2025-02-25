@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import {
   View,
-  Text,
   SafeAreaView,
   StyleSheet,
   TouchableOpacity,
@@ -30,8 +29,6 @@ const Account = () => {
     }, [isAuthenticated, navigation]),
   );
 
-  const {i18n} = useTranslation();
-
   if (loading) {
     return (
       <View style={styles.loaderContainer}>
@@ -50,16 +47,6 @@ const Account = () => {
           onPress={() => DeleteAccount(user.userId, navigation)}
           style={styles.listItem}>
           <TranslatedText textToTranslate={'delete account'} />
-        </TouchableOpacity>
-
-        <TranslatedText textToTranslate={'welcome'} />
-
-        <TouchableOpacity onPress={() => i18n.changeLanguage('nl')}>
-          <Text>Switch to Dutch</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity onPress={() => i18n.changeLanguage('en')}>
-          <Text>Switch to English</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
