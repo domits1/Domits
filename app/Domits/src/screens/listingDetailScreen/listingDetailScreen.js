@@ -18,6 +18,7 @@ import {styles} from "./styles/listingDetailStyles";
 import AmenitiesPopup from "./views/AmenitiesPopup";
 import SelectBookingDateCalendar from "./components/SelectBookingDateCalendar";
 import BookingPopup from "./components/BookingPopup";
+import TranslatedText from "../../features/translation/components/TranslatedText";
 
 const ListingDetailScreen = ({route, navigation}) => {
     const accommodationId = route.params.accommodation.id;
@@ -80,7 +81,7 @@ const ListingDetailScreen = ({route, navigation}) => {
     };
 
     const handleOnBookPress = () => {
-        if (!firstSelectedDate || !lastSelectedDate){
+        if (!firstSelectedDate || !lastSelectedDate) {
             ToastAndroid.show("No dates have been selected", ToastAndroid.SHORT)
         } else toggleBookingModal();
     };
@@ -223,8 +224,10 @@ const ListingDetailScreen = ({route, navigation}) => {
                             <Text style={styles.subtitleText}>
                                 {parsedAccommodation.Subtitle.trim()}
                             </Text>
-                            <Text style={styles.costPerNightText}>€{Number(parsedAccommodation.Rent).toFixed(2)} per
-                                night</Text>
+                            <Text style={styles.costPerNightText}>
+                                €{Number(parsedAccommodation.Rent).toFixed(2)} {" "}
+                                <TranslatedText textToTranslate={"per night"}/>
+                            </Text>
                             <Text>{renderDateRange()}</Text>
                         </View>
 
@@ -234,7 +237,7 @@ const ListingDetailScreen = ({route, navigation}) => {
                                     {featureIcons["Multiple guests"]}
                                 </View>
                                 <Text style={styles.mainAmenitiesText}>
-                                    {parsedAccommodation.GuestAmount} guest(s)
+                                    {parsedAccommodation.GuestAmount} <TranslatedText textToTranslate={"guests"}/>
                                 </Text>
                             </View>
                             <View style={styles.mainAmenityContainer}>
@@ -242,7 +245,7 @@ const ListingDetailScreen = ({route, navigation}) => {
                                     {featureIcons["Bedroom"]}
                                 </View>
                                 <Text style={styles.mainAmenitiesText}>
-                                    {parsedAccommodation.bedrooms || 0} bedroom(s)
+                                    {parsedAccommodation.bedrooms || 0} <TranslatedText textToTranslate={"bedrooms"}/>
                                 </Text>
                             </View>
                             <View style={styles.mainAmenityContainer}>
@@ -250,7 +253,7 @@ const ListingDetailScreen = ({route, navigation}) => {
                                     {featureIcons["Bed"]}
                                 </View>
                                 <Text style={styles.mainAmenitiesText}>
-                                    {parsedAccommodation.Beds} bed(s)
+                                    {parsedAccommodation.Beds} <TranslatedText textToTranslate={"beds"}/>
                                 </Text>
                             </View>
                             <View style={styles.mainAmenityContainer}>
@@ -258,7 +261,7 @@ const ListingDetailScreen = ({route, navigation}) => {
                                     {featureIcons["Bathroom"]}
                                 </View>
                                 <Text style={styles.mainAmenitiesText}>
-                                    {parsedAccommodation.Bathrooms} bathroom(s)
+                                    {parsedAccommodation.Bathrooms} <TranslatedText textToTranslate={"bathrooms"}/>
                                 </Text>
                             </View>
                         </View>
@@ -279,9 +282,10 @@ const ListingDetailScreen = ({route, navigation}) => {
                         <View style={styles.bookingButtonContainer}>
                             <View style={styles.bookingButton}>
                                 <TouchableOpacity onPress={handleOnBookPress} style={styles.bookingButtonContent}>
-                                    <Text style={styles.bookingButtonText}>Book</Text>
+                                    <Text style={styles.bookingButtonText}><TranslatedText
+                                        textToTranslate={"book"}/></Text>
                                     <Ionicons name={'arrow-forward-circle-outline'} size={24}
-                                              style={styles.bookingButtonIcon}></Ionicons>
+                                              style={styles.bookingButtonIcon}/>
                                 </TouchableOpacity>
                                 {showBookingModal && (
                                     <BookingPopup
@@ -295,13 +299,14 @@ const ListingDetailScreen = ({route, navigation}) => {
 
                         <View style={styles.categoryDivider}/>
 
-                        <Text style={styles.categoryTitle}>Amenities</Text>
+                        <Text style={styles.categoryTitle}><TranslatedText textToTranslate={"amenities"}/></Text>
                         <View style={styles.amenities}>{renderAmenities()}</View>
                         <View>
                             <TouchableOpacity
                                 onPress={toggleAmenitiesModal}
                                 style={styles.ShowAllAmenitiesButton}>
-                                <Text style={styles.ShowAllAmenitiesButtonText}>Show all amenities</Text>
+                                <Text style={styles.ShowAllAmenitiesButtonText}><TranslatedText
+                                    textToTranslate={"show all amenities"}/></Text>
                             </TouchableOpacity>
                             {showAmenitiesModal && (
                                 <AmenitiesPopup
@@ -313,7 +318,7 @@ const ListingDetailScreen = ({route, navigation}) => {
 
                         <View style={styles.categoryDivider}/>
 
-                        <Text style={styles.categoryTitle}>Hosted by</Text>
+                        <Text style={styles.categoryTitle}><TranslatedText textToTranslate={"hosted by"}/></Text>
                         <View style={styles.hostInfoContainer}>
                             <View style={styles.nameButton}>
                                 <Text style={styles.nameText}>{owner}</Text>
