@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams } from "react-router-dom";
-import { useDescription } from "../hooks/useDescription";
+import { useDescription } from "../hooks/usePropertyDescription";
 import TextAreaField from "../components/TextAreaField";
 import SpecificationForm from "../components/SpecificationForm";
 import Button from "../components/button";

@@ -2,8 +2,8 @@
 
 import AccommodationTypeSelector from "../components/TypeSelector";
 import Button from "../components/button";
-import { useHandleAccommodationTypeProceed } from "../hooks/useHandleAccommodationTypeProceed";
-import { accommodationData } from "../constants/accommodationData";
+import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType";
+import { accommodationData } from "../constants/propertyTypeData";
 import useFormStore from "../stores/formStore";
 
 function AccommodationTypeView() {
