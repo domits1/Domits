@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
     ActivityIndicator,
     Dimensions,
@@ -16,8 +16,8 @@ import FetchAccommodation from '../../features/search/FetchAccommodation';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {styles} from "./styles/listingDetailStyles";
 import AmenitiesPopup from "./views/AmenitiesPopup";
-import {Calendar, CalendarUtils} from "react-native-calendars/src/index";
 import SelectBookingDateCalendar from "./components/SelectBookingDateCalendar";
+import BookingPopup from "./components/BookingPopup";
 
 const ListingDetailScreen = ({route, navigation}) => {
     const accommodationId = route.params.accommodation.id;
@@ -25,11 +25,21 @@ const ListingDetailScreen = ({route, navigation}) => {
     const [owner, setOwner] = useState();
     const [loading, setLoading] = useState(true);
     const [images, setImages] = useState([]);
-    const [showModal, setShowModal] = useState(false);
+    const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+    const [showBookingModal, setShowBookingModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     // Dynamically calculate image width based on screen width
     const imageWidth = Dimensions.get('window').width;
+    const [firstSelectedDate, setFirstSelectedDate] = useState(null);
+    const [lastSelectedDate, setLastSelectedDate] = useState(null);
 
+    const handleFirstDateSelected = (date) => {
+        setFirstSelectedDate(date);
+    };
+
+    const handleLastDateSelected = (date) => {
+        setLastSelectedDate(date);
+    }
     /**
      * Fetch current accommodation data.
      */
@@ -69,15 +79,10 @@ const ListingDetailScreen = ({route, navigation}) => {
         navigation.navigate('HomeScreen');
     };
 
-    const handleOnBoardingPress = () => {
-        //TODO Remove ToastAndroid message after working booking system
-        ToastAndroid.show("Sorry, we currently do not accept bookings.", ToastAndroid.SHORT)
-//    navigation.navigate('onBoarding1', {
-//      accommodation,
-//      parsedAccommodation,
-//      images,
-//    });
-
+    const handleOnBookPress = () => {
+        if (!firstSelectedDate || !lastSelectedDate){
+            ToastAndroid.show("No dates have been selected", ToastAndroid.SHORT)
+        } else toggleBookingModal();
     };
     const handleScroll = event => {
         const page = Math.round(
@@ -87,8 +92,12 @@ const ListingDetailScreen = ({route, navigation}) => {
         setCurrentPage(page);
     };
 
-    const toggleModal = () => {
-        setShowModal(!showModal);
+    const toggleBookingModal = () => {
+        setShowBookingModal(!showBookingModal);
+    }
+
+    const toggleAmenitiesModal = () => {
+        setShowAmenitiesModal(!showAmenitiesModal);
     };
 
     const renderAmenities = () => {
@@ -261,15 +270,26 @@ const ListingDetailScreen = ({route, navigation}) => {
                             </Text>
                         </View>
 
-                        <SelectBookingDateCalendar></SelectBookingDateCalendar>
+                        <SelectBookingDateCalendar
+                            onFirstDateSelected={handleFirstDateSelected}
+                            onLastDateSelected={handleLastDateSelected}
+                            property={parsedAccommodation}
+                        ></SelectBookingDateCalendar>
 
                         <View style={styles.bookingButtonContainer}>
                             <View style={styles.bookingButton}>
-                                <TouchableOpacity onPress={handleOnBoardingPress} style={styles.bookingButtonContent}>
+                                <TouchableOpacity onPress={handleOnBookPress} style={styles.bookingButtonContent}>
                                     <Text style={styles.bookingButtonText}>Book</Text>
                                     <Ionicons name={'arrow-forward-circle-outline'} size={24}
                                               style={styles.bookingButtonIcon}></Ionicons>
                                 </TouchableOpacity>
+                                {showBookingModal && (
+                                    <BookingPopup
+                                        onClose={toggleBookingModal}
+                                        startDate={firstSelectedDate}
+                                        endDate={lastSelectedDate}
+                                    />
+                                )}
                             </View>
                         </View>
 
@@ -279,14 +299,14 @@ const ListingDetailScreen = ({route, navigation}) => {
                         <View style={styles.amenities}>{renderAmenities()}</View>
                         <View>
                             <TouchableOpacity
-                                onPress={toggleModal}
+                                onPress={toggleAmenitiesModal}
                                 style={styles.ShowAllAmenitiesButton}>
                                 <Text style={styles.ShowAllAmenitiesButtonText}>Show all amenities</Text>
                             </TouchableOpacity>
-                            {showModal && (
+                            {showAmenitiesModal && (
                                 <AmenitiesPopup
                                     features={parsedAccommodation.Features}
-                                    onClose={toggleModal}
+                                    onClose={toggleAmenitiesModal}
                                 />
                             )}
                         </View>

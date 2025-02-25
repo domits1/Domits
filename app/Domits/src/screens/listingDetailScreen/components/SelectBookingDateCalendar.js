@@ -3,7 +3,8 @@ import {Calendar, CalendarUtils} from "react-native-calendars/src/index";
 import {styles} from "../styles/listingDetailStyles";
 import React, {useCallback, useEffect, useState} from "react";
 
-const SelectBookingDateCalendar = () => {
+// Currently takes the date of today with several days after as the availability
+const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, property}) => {
     const [firstSelectedDate, setFirstSelectedDate] = useState(null);
     const [lastSelectedDate, setLastSelectedDate] = useState(null);
     const [markedDates, setMarkedDates] = useState({})
@@ -13,7 +14,7 @@ const SelectBookingDateCalendar = () => {
         return new Date().toISOString().split('T')[0];
     };
 
-    useEffect( () => {
+    useEffect(() => {
         setInitialDate(getCurrentDate)
     }, [initialDate])
 
@@ -34,17 +35,21 @@ const SelectBookingDateCalendar = () => {
             setLastSelectedDate(selectedDate);
             const newMarkedDates = getDatesRange(firstSelectedDate, selectedDate);
             setMarkedDates(newMarkedDates);
+            onLastDateSelected(selectedDate)
         } else if (lastSelectedDate) {
             setFirstSelectedDate(selectedDate);
             setLastSelectedDate(null);
             setMarkedDates({
-                [selectedDate]: { selected: true, color: 'green'},
+                [selectedDate]: {selected: true, color: 'green'},
             });
+            onFirstDateSelected(selectedDate)
+            onLastDateSelected(null)
         } else {
             setFirstSelectedDate(selectedDate);
             setMarkedDates({
-                [selectedDate]: { selected: true, color: 'green' },
+                [selectedDate]: {selected: true, color: 'green'},
             });
+            onFirstDateSelected(selectedDate)
         }
 
     }, [firstSelectedDate, lastSelectedDate]);
@@ -61,19 +66,19 @@ const SelectBookingDateCalendar = () => {
 
         while (currentDate <= new Date(end)) {
             const dateString = currentDate.toISOString().split('T')[0];
-            range[dateString] = { selected: true, color: 'green' };
+            range[dateString] = {selected: true, color: 'green'};
             currentDate.setDate(currentDate.getDate() + 1);
         }
 
         return range;
     };
 
-    return(
+    return (
         <View>
             <Calendar
                 style={styles.calendar}
-                minDate={getDate(-10)}
-                maxDate={getDate(10)}
+                minDate={getDate(0)}
+                maxDate={getDate(20)}
                 onDayPress={onDayPress}
                 markedDates={markedDates}
                 markingType={"period"}
