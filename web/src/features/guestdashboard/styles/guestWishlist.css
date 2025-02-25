@@ -331,3 +331,29 @@
   gap: 10px;
   padding: 15px;
 }
+
+
+/* Base styling for pop-up */
+.popup {
+  position: absolute;
+  background: white;
+  padding: 15px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  min-width: 220px;
+}
+
+/* Pop-up arrow */
+.popup::before {
+  content: "";
+  position: absolute;
+  top: -7.5px; /* Position above the pop-up */
+  left: 12px; /* Align under the first letter */
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid rgb(255, 255, 255); /* Arrow color */
+}
+
