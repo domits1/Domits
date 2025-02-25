@@ -23,6 +23,8 @@ function AmenitiesView() {
   const typeAmenities =
     amenities[`${accommodationType}Amenities`] || amenities.allAmenities;
 
+  const isProceedDisabled = Object.keys(selectedAmenities).some((category) => selectedAmenities[category].length === 0);
+
   return (
     <main className="page-body">
       <h2 className="onboardingSectionTitle">Select Amenities</h2>
@@ -42,7 +44,7 @@ function AmenitiesView() {
       </div>
       <nav className="onboarding-button-box">
         <Button routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Go back" />
-        <Button routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" />
+        <Button routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" disabled={isProceedDisabled} className={isProceedDisabled ? "button-disabled" : ""} />
       </nav>
     </main>
   );

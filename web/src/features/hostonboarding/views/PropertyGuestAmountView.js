@@ -29,6 +29,9 @@ function GuestAmountView() {
         setAccommodationCapacity(key, accommodationCapacity[key] - 1);
     }
   };
+
+  const isProceedDisabled = Object.values(accommodationCapacity).every((value) => value === 0);
+
   return (
     <main className="container">
       <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
@@ -46,7 +49,7 @@ function GuestAmountView() {
       </section>
       <nav className="onboarding-button-box">
       <Button routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
-      <Button routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" />
+      <Button routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" disabled={isProceedDisabled} className={isProceedDisabled ? "button-disabled" : ""} />
       </nav>
     </main>
   );

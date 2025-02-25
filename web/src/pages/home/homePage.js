@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef  } from "react";
 import { useNavigate } from "react-router-dom";
-import "./homePage.css";
+import "./styles/homePage.css";
 import verifiedLogo from "../../images/icons/verify-icon.png";
 import checkMark from "../../images/icons/checkMark.png";
 import question from "../../images/icons/question.png";

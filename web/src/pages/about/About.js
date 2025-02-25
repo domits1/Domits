@@ -1,5 +1,5 @@
 import React from "react";
-import './about.css';
+import './styles/about.css';
 import FAQ from "../landingpage/Faq";
 import vision from '../../images/icons/vision.png';
 import whatwedo from '../../images/icons/route.png';
