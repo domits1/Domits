@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import "../styles/guestWishlist.css";
 import WishlistList from "../components/WishlistList";
+import GuestRoomSelector from "../components/GuestRoomSelector"; 
+import { FaPencilAlt, FaTimes } from "react-icons/fa";
 
 import greeceYacht from '../../../images/Greece-Yacht.jpeg';
 import cabinWinter from '../../../images/cabin-in-the-winter-at.jpg';
@@ -16,13 +18,16 @@ const accommodationsData = [
 
 const GuestWishlistPage = () => {
   const [likedAccommodations, setLikedAccommodations] = useState(accommodationsData);
-  const [selectedCategory, setSelectedCategory] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState("My Next Trip"); // Set default category
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [createListOpen, setCreateListOpen] = useState(false);
   const [shareListOpen, setShareListOpen] = useState(false);
   const [newListName, setNewListName] = useState("");
 
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([
+    { name: "Hotels", count: 2 },
+    { name: "My Next Trip", count: 2 }
+  ]);
 
   const removeLike = (id) => {
     setLikedAccommodations(likedAccommodations.filter((acc) => acc.id !== id));
@@ -35,6 +40,7 @@ const GuestWishlistPage = () => {
   const handleCreateList = () => {
     if (newListName.trim() !== "" && !categories.find((cat) => cat.name === newListName)) {
       setCategories([...categories, { name: newListName, count: 0 }]);
+      setSelectedCategory(newListName); // Update button text to new list name
       setNewListName("");
       setCreateListOpen(false);
     }
@@ -45,20 +51,35 @@ const GuestWishlistPage = () => {
       {/* Wishlist Navigation Bar */}
       <div className="wishlist-navbar">
         <span className="favorites-label">Favorites</span>
+        
+        {/* Dropdown Button */}
         <div className="dropdown">
-          <button className="dropdown-toggle" onClick={() => setDropdownOpen(!dropdownOpen)}>
-            {selectedCategory} ({filteredAccommodations.length}) ▼
+          <button className="dropdown-select" onClick={() => setDropdownOpen(!dropdownOpen)}>
+            {selectedCategory} <span className="dropdown-arrow"></span>
           </button>
           {dropdownOpen && (
             <div className="dropdown-menu">
               {categories.map((category) => (
-                <button key={category.name} className="dropdown-item" onClick={() => { setSelectedCategory(category.name); setDropdownOpen(false); }}>
-                  {category.name} ({category.count})
-                </button>
+                <div 
+                  key={category.name} 
+                  className="dropdown-item" 
+                  onClick={() => {
+                    setSelectedCategory(category.name); // Update dropdown button text
+                    setDropdownOpen(false);
+                  }}
+                >
+                  <span>{category.name} <span className="list-count">{category.count}</span></span>
+                  <div className="dropdown-icons">
+                    <FaPencilAlt className="edit-icon" />
+                    <FaTimes className="delete-icon" />
+                  </div>
+                </div>
               ))}
             </div>
           )}
         </div>
+
+        {/* Share List & Create List Buttons */}
         <button className="list-button" onClick={() => setShareListOpen(!shareListOpen)}>
           Share List
         </button>
@@ -73,6 +94,10 @@ const GuestWishlistPage = () => {
         <div className="wishlist-info">
           <p>❤️ {filteredAccommodations.length} saved accommodations</p>
           <input type="date" className="date-picker" />
+          
+          {/* Add GuestRoomSelector here */}
+          <GuestRoomSelector />
+          
           <button className="map-button">Show on Map</button>
         </div>
       </div>
