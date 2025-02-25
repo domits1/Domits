@@ -3,4 +3,7 @@ module.exports = {
   transform: {
     '^.+\\.jsx?$': 'babel-jest',
   },
+  transformIgnorePatterns: [
+    '/node_modules/(?!react-native-vector-icons|some-other-es-module)/',
+  ],
 };
