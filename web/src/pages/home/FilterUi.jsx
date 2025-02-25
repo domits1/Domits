@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Slider from '@mui/material/Slider';
 import { FilterLogic } from './FilterLogic';
 import './FilterMain.css';
@@ -17,8 +17,21 @@ const FilterUi = () => {
     setShowMorePropertyTypes,
     selectedRatings,
     handleRatingChange,
+    accommodationResults,
+    loading,
+    error,
+    fetchFilteredAccommodations,
     handlePriceChange,
   } = FilterLogic();
+
+  // Gebruik een effect om de filtering uit te voeren wanneer de prijs verandert
+  useEffect(() => {
+    fetchFilteredAccommodations();
+  }, [priceValues]); // Het effect wordt geactiveerd wanneer priceValues verandert
+
+  const handleSliderChange = (e, newValues) => {
+    setPriceValues(newValues);
+  };
 
   return (
     <div>
@@ -45,7 +58,7 @@ const FilterUi = () => {
               },
             }}
             value={priceValues}
-            onChange={(e, newValues) => setPriceValues(newValues)}
+            onChange={handleSliderChange} // Slider verandering
             valueLabelDisplay="auto"
             min={15}
             max={400}
@@ -72,14 +85,13 @@ const FilterUi = () => {
                 value={`€${priceValues[1] || ''}`}
                 onChange={(e) => {
                   const value = e.target.value.replace(/[^0-9]/g, '');
-                  handleInputChange(1, value);
+                  handlePriceChange(1, value);
                 }}
               />
             </div>
           </div>
         </div>
       </div>
-
       <div className="filter-section">
         <div className='FilterTitle'>Facilities</div>
         <div className="facility-list">
@@ -175,6 +187,28 @@ const FilterUi = () => {
           ))}
         </div>
       </div>
+
+      {loading ? (
+        <div>Loading...</div>
+      ) : error ? (
+        <div>Error: {error}</div>
+      ) : (
+        <div>
+          <h3>Filtered Accommodations</h3>
+          {accommodationResults && accommodationResults.length > 0 ? (
+            <div>
+              {accommodationResults.map((accommodation, index) => (
+                <div key={index}>
+                  <h4>{accommodation.name}</h4>
+                  <p>Price: €{accommodation.price}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div>No accommodations found</div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
