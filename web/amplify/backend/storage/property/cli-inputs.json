@@ -1,0 +1,18 @@
+{
+  "resourceName": "property",
+  "tableName": "property",
+  "partitionKey": {
+    "fieldName": "id",
+    "fieldType": "string"
+  },
+  "gsi": [
+    {
+      "name": "ownerId",
+      "partitionKey": {
+        "fieldName": "ownerId",
+        "fieldType": "string"
+      }
+    }
+  ],
+  "triggerFunctions": []
+}
