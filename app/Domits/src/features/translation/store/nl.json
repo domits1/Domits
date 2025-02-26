@@ -1,4 +1,13 @@
 {
   "translation": {
+    "beds": "Bed(den)",
+    "bathrooms": "Badkamer(s)",
+    "bedrooms": "Slaapkamer(s)",
+    "guests": "Gast(en)",
+    "per night": "per nacht",
+    "bookings": "Boekingen",
+    "logout": "Uitloggen",
+    "delete account": "Verwijder account",
+    "language": "Taal"
   }
 }

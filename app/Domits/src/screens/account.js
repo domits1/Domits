@@ -10,7 +10,6 @@ import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
 import DeleteAccount from '../features/auth/DeleteAccount';
 import LogoutAccount from '../features/auth/LogoutAccount';
-import {useTranslation} from 'react-i18next';
 import TranslatedText from '../features/translation/components/TranslatedText';
 
 const Account = () => {
