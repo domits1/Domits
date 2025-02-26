@@ -5,14 +5,20 @@ import {
   TouchableOpacity,
   StyleSheet,
   Pressable,
+  ActivityIndicator,
 } from 'react-native';
 import {LanguageInfo} from '../services/Languages';
 import {useTranslation} from 'react-i18next';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import {NativeModules} from 'react-native';
+import React, {useState} from 'react';
+
+const {EncryptedSharedPreferences} = NativeModules;
 
 const SelectLanguagePopup = ({isVisible, setIsVisible}) => {
   const {i18n} = useTranslation();
   const languages = LanguageInfo;
+  const [loading, setLoading] = useState(false);
 
   return (
     <Modal
@@ -20,44 +26,67 @@ const SelectLanguagePopup = ({isVisible, setIsVisible}) => {
       transparent={true}
       visible={isVisible}
       onRequestClose={() => setIsVisible(!isVisible)}>
-      <Pressable style={style.overlay} onPress={() => setIsVisible(!isVisible)}>
-        <View style={style.modal}>
-          <View style={style.header}>
-            <Text style={style.title}>Select a Language</Text>
-            <TouchableOpacity
-              style={style.closeButton}
-              onPress={() => setIsVisible(false)}>
-              <MaterialIcons name="close" size={24} color="#333" />
-            </TouchableOpacity>
+      {loading ? (
+        <View style={style.overlay}>
+          <View style={style.loaderContainer}>
+            <ActivityIndicator size="large" color="#0000ff" />
           </View>
-          {languages.map((language, index) => (
-            <TouchableOpacity
-              key={language.code}
-              onPress={async () => {
-                await i18n.changeLanguage(language.code);
-                setIsVisible(!isVisible);
-              }}>
-              <View style={style.languageItemRow}>
-                {language.code == i18n.language ? (
-                  <MaterialIcons
-                    name={'check'}
-                    size={13}
-                    color={'green'}
-                    testID={'checkmark'}
-                  />
-                ) : null}
-                <Text testID={language.name}>{language.name}</Text>
-              </View>
-              {index < languages.length - 1 && <View style={style.separator} />}
-            </TouchableOpacity>
-          ))}
         </View>
-      </Pressable>
+      ) : (
+        <Pressable
+          style={style.overlay}
+          onPress={() => setIsVisible(!isVisible)}>
+          <View style={style.modal}>
+            <View style={style.header}>
+              <Text style={style.title}>Select a Language</Text>
+              <TouchableOpacity
+                style={style.closeButton}
+                onPress={() => setIsVisible(false)}>
+                <MaterialIcons name="close" size={24} color="#333" />
+              </TouchableOpacity>
+            </View>
+            {languages.map((language, index) => (
+              <TouchableOpacity
+                key={language.code}
+                onPress={async () => {
+                  setLoading(true);
+                  await EncryptedSharedPreferences.setItem(
+                    'i18nPreferredLanguage',
+                    language.code,
+                  );
+                  await i18n.changeLanguage(language.code);
+                  setLoading(false);
+                  setIsVisible(!isVisible);
+                }}>
+                <View style={style.languageItemRow}>
+                  {language.code == i18n.language ? (
+                    <MaterialIcons
+                      name={'check'}
+                      size={13}
+                      color={'green'}
+                      testID={'checkmark'}
+                    />
+                  ) : null}
+                  <Text testID={language.name}>{language.name}</Text>
+                </View>
+                {index < languages.length - 1 && (
+                  <View style={style.separator} />
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Pressable>
+      )}
     </Modal>
   );
 };
 
 const style = StyleSheet.create({
+  loaderContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   overlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
