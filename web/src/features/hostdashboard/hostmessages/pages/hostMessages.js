@@ -32,6 +32,7 @@ const HostMessagesContent = () => {
     return (
 
         <main className="page-body">
+            <h2>Messages</h2>
 
             {userId ? (
                 <>
