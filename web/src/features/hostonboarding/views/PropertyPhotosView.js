@@ -3,7 +3,7 @@ import ImagePreview from "../components/ImagePreview";
 import usePhotos from "../hooks/usePhotos";
 import Button from "../components/button";
 import { useRef, useState } from "react";
-import "./PhotoVieuw.css";
+import "../styles/PhotoVieuw.css";
 
 function PhotosView() {
   const { type: accommodationType } = useParams();

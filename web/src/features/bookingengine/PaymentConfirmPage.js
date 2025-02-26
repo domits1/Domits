@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import './paymentconfirmpage.css';
+import './styles/paymentconfirmpage.css';
 import ImageGallery from "./ImageGallery";
 
 const PaymentConfirmPage = () => {

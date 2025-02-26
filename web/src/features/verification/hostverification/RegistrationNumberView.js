@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./hostverification.module.css";
+import styles from "./styles/hostverification.module.css";
 import { useState } from "react";
 import Loading from "./components/Loading";
 import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired";

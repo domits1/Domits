@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import Pages from "./Pages.js";
-import styles from './HostReservations.module.css';
+import styles from './styles/HostReservations.module.css';
 import pageSwitcherStyling from "../../utils/PageSwitcher.module.css";
 import info from "../../images/icons/info.png";
 import {Auth} from "aws-amplify";
