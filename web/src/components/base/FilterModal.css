@@ -1,17 +1,17 @@
-.modal-overlay {
+.modal-overlay-filter {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 9999;
 }
 
-.modal-content {
+.modal-content-filter {
   width: 35vw;
   height: 80vh;
   max-height: 80vh;
@@ -22,7 +22,7 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   position: relative;
 }
-.modal-footer {
+.modal-footer-filter {
   display: flex;
   justify-content: flex-start;
   align-items: center;
@@ -47,7 +47,7 @@
   background-color: #d32f2f;
 }
 
-.modal-content h2 {
+.modal-content-filter h2 {
   margin-top: 0;
   font-size: 1.5rem;
   color: #333;
@@ -159,7 +159,7 @@ cursor: pointer;
 
 .accessibility-option:hover {
 background: #e6f7ff;
-box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+box-shadow: 0 2px 8px rgba(0, 0, 0, 1);
 }
 
 .accessibility-option input[type="checkbox"] {
@@ -175,7 +175,7 @@ color: #333;
 }
 
 @media (max-width: 768px) {
-  .modal-content {
+  .modal-content-filter {
     width: 80vw;
     height: 60vh;
     padding: 15px;
@@ -183,9 +183,9 @@ color: #333;
 }
 
 @media (max-width: 480px) {
-  .modal-content {
-    width: 90vw;
-    height: 50vh;
+  .modal-content-filter {
+    width: 82vw;
+    height: 55vh;
   }
 
   .filter-section {
