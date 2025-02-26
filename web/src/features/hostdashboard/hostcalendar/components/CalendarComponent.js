@@ -4,10 +4,10 @@
  * If you do not understand what is happening here, do not change anything. If something needs to be adjusted, contact me via discord --@marijn3--
  */
 import React, {useState} from "react";
-import leftArrowSVG from './left-arrow-calender.svg';
-import rightArrowSVG from './right-arrow-calender.svg';
-import trashSVG from './trash-calender.svg';
-import './Calendar.scss';
+import leftArrowSVG from './left-arrow.svg';
+import rightArrowSVG from './right-arrow.svg';
+import trashSVG from './trash.svg';
+import './../styles/Calendar.scss';
 
 let selectedDate = null
 let selectedDates = []
@@ -129,8 +129,9 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     }
     
     /**
+     * deleteDate is a function that removes a date from the selectedDates
      * 
-     * @param {[number,number]} date 
+     * @param {[number, number]} date - The date range to be deleted, represented as an array of two numbers.
      */
     function deleteDate(date){
         for (let i = 0; i < selectedDates.length; i++) {
