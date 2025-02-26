@@ -3,12 +3,13 @@ import {Calendar, CalendarUtils} from "react-native-calendars/src/index";
 import {styles} from "../styles/listingDetailStyles";
 import React, {useCallback, useEffect, useState} from "react";
 
-// Currently takes the date of today with several days after as the availability
 const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, property}) => {
     const [firstSelectedDate, setFirstSelectedDate] = useState(null);
     const [lastSelectedDate, setLastSelectedDate] = useState(null);
     const [markedDates, setMarkedDates] = useState({})
     const [initialDate, setInitialDate] = useState({})
+    const [availabilityStartDate, setAvailabilityStartDate] = useState({})
+    const [availabilityEndDate, setAvailabilityEndDate] = useState({})
 
     const getCurrentDate = () => {
         return new Date().toISOString().split('T')[0];
@@ -16,13 +17,28 @@ const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, pro
 
     useEffect(() => {
         setInitialDate(getCurrentDate)
-    }, [initialDate])
+
+        // Set availability to first availability date range of the property
+        const availabilityStartDateFromProperty = new Date(property.DateRanges[0].startDate)
+        const availabilityEndDateFromProperty = new Date(property.DateRanges[0].endDate)
+        setAvailabilityStartDate(availabilityStartDateFromProperty)
+        setAvailabilityEndDate(availabilityEndDateFromProperty)
+
+    }, [initialDate, property])
 
     // Helper test function for setting selectable dates. Can be removed later.
     const getDate = (count) => {
         const date = new Date(initialDate);
         const newDate = date.setDate(date.getDate() + count);
         return CalendarUtils.getCalendarDateString(newDate);
+    };
+
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
     };
 
     /**
@@ -77,13 +93,14 @@ const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, pro
         <View>
             <Calendar
                 style={styles.calendar}
-                minDate={getDate(0)}
-                maxDate={getDate(20)}
+                minDate={availabilityStartDate.toString()}
+                maxDate={availabilityEndDate.toString()}
                 onDayPress={onDayPress}
                 markedDates={markedDates}
                 markingType={"period"}
                 disableAllTouchEventsForDisabledDays
                 hideExtraDays
+
                 theme={{
                     todayTextColor: 'green',
                     arrowColor: 'green',
