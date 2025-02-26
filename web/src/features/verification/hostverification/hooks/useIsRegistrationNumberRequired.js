@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getIfRegistrationNumberIsRequired } from "../services/verificationServices";
+import { getIfRegistrationNumberIsRequired } from "../services/HostVerifyServices";
 
 const useIsRegistrationNumberRequired = (Address) => {
   const [isRegistrationNumberRequired, setIsRegistrationNumberRequired] =
