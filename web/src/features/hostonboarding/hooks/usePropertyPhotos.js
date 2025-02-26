@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import useFormStore from "../stores/formStore.js"; // Import the form store
 
+//Add usefromstore to the import statement
 export default function usePhotos() {
-  const [images, setImages] = useState([]);
+  const { accommodationDetails, updateImage, deleteImage } = useFormStore(); // Get state and update function
   const [isDragOver, setIsDragOver] = useState(false);
 
   const MIN_WIDTH = 500;
@@ -40,20 +42,20 @@ export default function usePhotos() {
   };
 
   const handleFileChange = (files) => {
-    if (images.length >= MAX_IMAGES) {
+    const imageCount = Object.keys(accommodationDetails.images || {}).length;
+    
+    if (imageCount >= MAX_IMAGES) {
       toast.error(`❌ Je kunt maximaal ${MAX_IMAGES} afbeeldingen uploaden.`);
       return;
     }
 
-    let newImages = [...images];
-
-    Array.from(files).forEach((file) => {
-      if (newImages.length < MAX_IMAGES) {
+    Array.from(files).forEach((file, index) => {
+      if (imageCount + index < MAX_IMAGES) {
         validateImage(file, (validFile) => {
           const reader = new FileReader();
           reader.onload = () => {
-            newImages = [...newImages, reader.result];
-            setImages(newImages);
+            const imageUrl = reader.result;
+            updateImage(imageCount + index, imageUrl); // Save to form store
             toast.success("✅ Afbeelding toegevoegd!");
           };
           reader.readAsDataURL(validFile);
@@ -63,32 +65,16 @@ export default function usePhotos() {
       }
     });
   };
-  
 
-  const deleteImage = (index) => {
-    setImages((prev) => {
-      const updatedImages = prev.filter((_, i) => i !== index);
-      return updatedImages;
-    });
+  const removeImage = (index) => {
+    deleteImage(index);
     toast.info("🗑️ Afbeelding verwijderd.");
   };
 
-  const reorderImages = (fromIndex, toIndex) => {
-    setImages((prev) => {
-      const newImages = [...prev];
-      const [movedImage] = newImages.splice(fromIndex, 1);
-      newImages.splice(toIndex, 0, movedImage);
-      return newImages;
-    });
-    toast.info("🔄 Afbeeldingen opnieuw gerangschikt.");
-  };
-  
-
   return {
-    images,
+    images: accommodationDetails.images,
     handleFileChange,
-    deleteImage,
-    reorderImages,
+    removeImage,
     isDragOver,
     setIsDragOver,
   };

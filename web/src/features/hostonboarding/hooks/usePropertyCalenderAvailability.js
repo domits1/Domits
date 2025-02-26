@@ -17,5 +17,14 @@ export const useAvailability = () => {
     }
   };
 
-  return { availability, updateAvailability, updateSelectedDates, incrementAmount, decrementAmount };
+  const handleDateSelection = (selectedDates) => {
+    updateSelectedDates(selectedDates);
+    console.log("Updated Dates:", selectedDates);
+  };
+
+  useEffect(() => {
+    console.log("Updated Store:", useFormStore.getState());
+  }, [availability]);
+
+  return { availability, updateAvailability, updateSelectedDates, incrementAmount, decrementAmount, handleDateSelection };
 };
