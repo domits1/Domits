@@ -93,13 +93,15 @@ const HostFinanceTab = () => {
     console.log("Bank Details Provided:", bankDetailsProvided);
 
     return (
+
         <main className="page-Host">
+            <h2>Finance</h2>
+            <div className='page-Host-content'>
             <div className="sidebar">
                 <Pages />
             </div>
             <section className="host-pc-finance">
                 <div className="finance-content">
-                    <h1>Finance</h1>
                     <h2>Receive payouts in 3 step.</h2>
                     <h3>
                         <ul>
@@ -144,6 +146,7 @@ const HostFinanceTab = () => {
                     </h3>
                 </div>
             </section>
+        </div>
         </main>
     );
 }

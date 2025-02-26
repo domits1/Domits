@@ -63,9 +63,9 @@ import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSetup from "./features/hostdashboard/HostSetup";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
-import HostVerificationView from "./features/verification/hostverification/HostVerificationView.js";
-import PhoneNumberView from './features/verification/hostverification/PhoneNumberView.js';
-import PhoneNumberConfirmView from './features/verification/hostverification/PhoneNumberConfirmView.js';
+import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
+import PhoneNumberView from './features/verification/hostverification/HostVerifyPhoneNumber.js';
+import PhoneNumberConfirmView from './features/verification/hostverification/HostVerifyPhoneNumberConfirm.js';
 import { initializeUserAttributes } from './utils/userAttributes';
 import PageNotFound from "./utils/error/404NotFound";
 import StripeCallback from "./features/stripe/StripeCallback";
@@ -88,8 +88,8 @@ import AccommodationTitleView from './features/hostonboarding/views/PropertyName
 import DescriptionView from './features/hostonboarding/views/PropertyDescriptionView.js';
 import PricingView from './features/hostonboarding/views/PropertyRateView.js';
 import AvailabilityView from './features/hostonboarding/views/PropertyCalendarAvailabilityView.js';
-import RegistrationNumberView from './features/verification/hostverification/RegistrationNumberView.js';
-import SummaryView from './features/hostonboarding/views/SummaryView.js';
+import RegistrationNumberView from './features/verification/hostverification/HostVerifyRegistrationNumber.js'; 
+import SummaryView from './features/hostonboarding/views/PropertyCheckOutAndCompletionView.js';
 
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';

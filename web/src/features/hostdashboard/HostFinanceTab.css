@@ -1,9 +1,7 @@
-.page-Host {
+
+.page-Host-content {
     display: flex;
     flex-direction: row;
-    max-width: 100%;
-    width: 93%;
-    margin: 0 auto;
 }
 
 .finance-span{
@@ -22,7 +20,11 @@
     flex-direction: column;
     max-width: 800px;
     align-items: flex-start;
-    padding: 15px;
+}
+
+.sidebar {
+    margin-left: 67px;
+    margin-top: -20px;
 }
 
 @media (max-width: 768px) {

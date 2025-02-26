@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { getVerificationStatusFromDB } from "../../verification/hostverification/services/verificationServices";
+import { getVerificationStatusFromDB } from "../../verification/hostverification/services/HostVerifyServices";
 
 export const useSetLiveEligibility = ({ userId }) => {
   const [liveEligibility, setLiveEligibility] = useState(false);

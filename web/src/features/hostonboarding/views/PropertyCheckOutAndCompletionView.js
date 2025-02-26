@@ -1,5 +1,5 @@
 import React from "react";
-import { useSummary } from "../hooks/useSummary";
+import { useSummary } from "../hooks/usePropertyCheckOutAndCompletion";
 import SummaryTable from "../components/SummaryTable";
 import SpecificationsTable from "../components/SpecificationsTable";
 import FeatureTable from "../components/FeatureTable";

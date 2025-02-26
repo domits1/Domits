@@ -574,6 +574,7 @@ const HostPricing = () => {
 
   return (
     <div className="containerHostPricing">
+      
       <div className="host-pricing-header">
         <h2 className="host-pricing-title">Pricing</h2>
         <div className="host-pricing-header-buttons">

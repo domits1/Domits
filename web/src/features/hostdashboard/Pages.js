@@ -89,14 +89,13 @@ function Pages() {
       </div>
       <div className="dashboardSection section-1 host-navigation">
         <div
-          className={`wijzer addAcco ${activeTab === "/hostonboarding" ? "active" : ""}`}
+          className={`wijzer ${activeTab === "/hostonboarding" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostonboarding")}
-          style={{ maxWidth: 250 }}
         >
-          {/* <img src={add} alt="add"></img> */}
-          <div className="Mui">
+          {/* created a class for this container because the text is longer than the others, and therefore it doesn’t align properly.*/}
+          <div className="Mui-add">
           <AddIcon/></div>
-          <p>List your property</p>
+          <p className={`list-property-p`}>List your property</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard" ? "active" : ""}`}
@@ -203,7 +202,7 @@ function Pages() {
         {/*  <img src={dashboard} alt="Dashboard" />*/}
         {/*  <p>Screening</p>*/}
         {/*</div>*/}
-        <br />
+
         <div
           className={`wijzer ${activeTab === "/hostdashboard/listings" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/listings")}

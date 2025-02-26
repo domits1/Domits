@@ -3,6 +3,7 @@
 }
 
 .host-pricing-title {
+    margin-left: 40%;
 }
 
 .host-pricing-header {
@@ -10,7 +11,7 @@
     flex-direction: row;
     margin-left: 24%;
     width: 59.2vw;
-    padding-bottom: 1%;
+    max-height: 4.1rem;
     bottom: 100%;
     justify-content: space-between;
     align-items: center;
@@ -87,6 +88,8 @@
 .hostdashboard-container {
     display: flex;
     flex-direction: row;
+    width: 93%;
+    margin: 0 auto;
 }
 
 .host-pricing-container {
@@ -1482,7 +1485,6 @@
 
 .containerHostPricing {
     text-align: center;
-    padding: 20px;
 }
 
 .host-pricing-title {
