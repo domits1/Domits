@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import "../styles/guestWishlist.css";
 import WishlistList from "../components/WishlistList";
-import GuestRoomSelector from "../components/GuestRoomSelector"; 
 import { FaPencilAlt, FaTimes } from "react-icons/fa";
 
 import greeceYacht from '../../../images/Greece-Yacht.jpeg';
@@ -23,6 +22,8 @@ const GuestWishlistPage = () => {
   const [createListOpen, setCreateListOpen] = useState(false);
   const [shareListOpen, setShareListOpen] = useState(false);
   const [newListName, setNewListName] = useState("");
+  const [editingList, setEditingList] = useState(null);
+  const [editedName, setEditedName] = useState("");
 
   const dropdownRef = useRef(null);
   const shareButtonRef = useRef(null);
@@ -50,6 +51,33 @@ const GuestWishlistPage = () => {
       setNewListName("");
       setCreateListOpen(false);
     }
+  };
+
+  // Function to delete a list
+  const handleDeleteList = (listName) => {
+    setCategories(categories.filter(category => category.name !== listName));
+    if (selectedCategory === listName) {
+      setSelectedCategory(categories.length > 1 ? categories[0].name : ""); // Reset selection if deleted
+    }
+  };
+
+  // Function to edit a list name
+  const handleEditList = (listName) => {
+    setEditingList(listName);
+    setEditedName(listName);
+  };
+
+  //  Function to save edited list name
+  const handleSaveEdit = () => {
+    if (editedName.trim() !== "" && !categories.find(cat => cat.name === editedName)) {
+      setCategories(categories.map(category => 
+        category.name === editingList ? { ...category, name: editedName } : category
+      ));
+      if (selectedCategory === editingList) {
+        setSelectedCategory(editedName);
+      }
+    }
+    setEditingList(null);
   };
 
   // Automatically close dropdowns & pop-ups when clicking outside
@@ -112,10 +140,29 @@ const GuestWishlistPage = () => {
                     setDropdownOpen(false);
                   }}
                 >
-                  <span>{category.name} <span className="list-count">{category.count}</span></span>
+                  {editingList === category.name ? (
+                    <input 
+                      type="text" 
+                      value={editedName} 
+                      onChange={(e) => setEditedName(e.target.value)} 
+                      onBlur={handleSaveEdit} 
+                      onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit()}
+                      autoFocus
+                    />
+                  ) : (
+                    <span>{category.name} <span className="list-count">{category.count}</span></span>
+                  )}
                   <div className="dropdown-icons">
-                    <FaPencilAlt className="edit-icon" />
-                    <FaTimes className="delete-icon" />
+                    {/* Edit List Name */}
+                    <FaPencilAlt className="edit-icon" onClick={(e) => {
+                      e.stopPropagation();
+                      handleEditList(category.name);
+                    }} />
+                    {/* Delete List */}
+                    <FaTimes className="delete-icon" onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteList(category.name);
+                    }} />
                   </div>
                 </div>
               ))}
@@ -127,62 +174,16 @@ const GuestWishlistPage = () => {
         <button ref={shareButtonRef} className="list-button" onClick={() => setShareListOpen(!shareListOpen)}>
           Share List
         </button>
-        <button ref={createButtonRef} className="list-button" onClick={() => setCreateListOpen(!createListOpen)}>
+        <button ref={createButtonRef} className="list-button" onClick={() => {
+          setCreateListOpen(!createListOpen);
+          handleCreateList();
+        }}>
           Create List
         </button>
       </div>
 
-      {/* Wishlist Header */}
-      <div className="wishlist-header">
-        <h1>{selectedCategory}</h1>
-        <div className="wishlist-info">
-          <p>❤️ {filteredAccommodations.length} saved accommodations</p>
-          <input type="date" className="date-picker" />
-          <GuestRoomSelector />
-          <button className="map-button">Show on Map</button>
-        </div>
-      </div>
-
       {/* Wishlist Items */}
       <WishlistList accommodations={filteredAccommodations} removeLike={removeLike} />
-
-      {/* Share List Pop-up */}
-      {shareListOpen && shareButtonRef.current && (
-        <div 
-          ref={sharePopupRef}
-          className="popup" 
-          style={{
-            top: shareButtonRef.current.offsetTop + shareButtonRef.current.offsetHeight + 5, 
-            left: shareButtonRef.current.offsetLeft
-          }}
-        >
-          <div className="popup-arrow"></div>
-          <p>Copy the link to share this list:</p>
-          <input type="text" readOnly value={window.location.href} />
-        </div>
-      )}
-
-      {/* Create List Pop-up */}
-      {createListOpen && createButtonRef.current && (
-        <div 
-          ref={createPopupRef}
-          className="popup" 
-          style={{
-            top: createButtonRef.current.offsetTop + createButtonRef.current.offsetHeight + 5, 
-            left: createButtonRef.current.offsetLeft
-          }}
-        >
-          <div className="popup-arrow"></div>
-          <h2>Create a New List</h2>
-          <input
-            type="text"
-            placeholder="Enter a new list name"
-            value={newListName}
-            onChange={(e) => setNewListName(e.target.value)}
-          />
-          <button onClick={handleCreateList} className="create-list-button">Create</button>
-        </div>
-      )}
     </div>
   );
 };
