@@ -110,7 +110,7 @@ function HostDashboard() {
                                         onClick={() => navigate("/hostdashboard/listings")}>Go to
                                     listing
                                 </button>
-                                <button className={styles.greenBtn} onClick={() => navigate("/enlist")}>Add
+                                <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>Add
                                     accommodation
                                 </button>
                             </div>
