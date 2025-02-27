@@ -18,12 +18,11 @@ export const connectWebSocket = (userId, onMessageReceived) => {
 
     socket.onopen = () => {
         console.log("✅ WebSocket connected");
-        //ping so that it doesnt disconnect
         pingInterval = setInterval(() => {
             if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(JSON.stringify({ type: "ping" }));  // Send a "ping" message
+                socket.send(JSON.stringify({ type: "ping" }));  
             }
-        }, 5 * 60 * 1000); // 5 minutes
+        }, 5 * 60 * 1000);
     };
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
@@ -31,7 +30,7 @@ export const connectWebSocket = (userId, onMessageReceived) => {
     };
     socket.onclose = () => {
         console.log("❌ WebSocket closed");
-        clearInterval(pingInterval); // Stop pings 
+        clearInterval(pingInterval);
     };
     socket.onerror = (error) => console.error("⚠️ WebSocket error:", error);
 };

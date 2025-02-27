@@ -86,7 +86,6 @@ const useFetchContacts = (userId) => {
 
       const acceptedContacts = await fetchUserInfoForContacts(
         JSONData.accepted
-        // .filter(contact => contact.userId !== userId)
       );
       const pendingContacts = await fetchUserInfoForContacts(
         JSONData.pending.filter(contact => contact.userId !== userId)
