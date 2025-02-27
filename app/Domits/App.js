@@ -8,6 +8,7 @@ import {
     StyleSheet,
     ActivityIndicator,
 } from 'react-native';
+import SplashScreen from "react-native-splash-screen"
 
 function App() {
     const [isI18nInitialized, setIsI18nInitialized] = React.useState(false);
@@ -16,6 +17,7 @@ function App() {
         const init = async () => {
             await InitializeI18n();
             setIsI18nInitialized(true);
+            SplashScreen.hide()
         };
         init();
     }, []);
