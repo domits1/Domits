@@ -4,35 +4,65 @@ import ContactItem from './hostContactItem';
 import { WebSocketContext } from '../context/webSocketContext';
 import '../styles/hostContactList.css';
 
-const ContactList = ({ userId, onContactClick }) => {
+const ContactList = ({ userId, onContactClick, message }) => {
     const { contacts, pendingContacts, loading, error, setContacts } = useFetchContacts(userId);
     const { messages: wsMessages } = useContext(WebSocketContext);
     const [displayType, setDisplayType] = useState('contacts');
 
-    // useEffect(() => {
-    //     if (!wsMessages || wsMessages.length === 0) return;
+    useEffect(() => {
+        const updateContactsFromWS = async () => {
+            if (wsMessages.length === 0) return;
 
-    //     setContacts((prevContacts) => {
-    //         const updatedContacts = prevContacts.map((contact) => {
-    //             const newMessage = wsMessages.find(msg => msg.recipientId === contact.userId);
-    //             if (newMessage) {
-    //                 return {
-    //                     ...contact,
-    //                     latestMessage: {
-    //                         message: newMessage.message,
-    //                         createdAt: newMessage.createdAt,
-    //                     },
-    //                 };
-    //             }
-    //             return contact;
-    //         });
+            setContacts((prevContacts) => {
+                const updatedContacts = [...prevContacts];
 
-    //         return updatedContacts.sort((a, b) =>
-    //             new Date(b.latestMessage?.createdAt || 0) - new Date(a.latestMessage?.createdAt || 0)
-    //         );
-    //     });
+                wsMessages.forEach((msg) => {
+                    const existingContact = updatedContacts.find(c => c.recipientId === msg.userId || c.recipientId === msg.recipientId);
 
-    // }, [wsMessages, setContacts]);
+                    if (existingContact) {
+                        existingContact.latestMessage = msg;
+                    } else {
+                        const newContact = {
+                            userId: msg.userId,
+                            recipientId: msg.userId,
+                            givenName: msg.senderName || "New Contact",
+                            text: msg,
+                        };
+                        updatedContacts.push(newContact);
+                    }
+                });
+
+
+                return updatedContacts;
+            });
+        };
+
+        updateContactsFromWS();
+    }, [wsMessages, setContacts]);
+
+    useEffect(() => {
+        if (message) {
+            setContacts((prevContacts) => {
+                const updatedContacts = [...prevContacts];
+
+                const contactIndex = updatedContacts.findIndex((contact) => contact.recipientId === message.recipientId);
+
+                if (contactIndex !== -1) {
+                    updatedContacts[contactIndex] = {
+                        ...updatedContacts[contactIndex],
+                        latestMessage: { text: message.text, createdAt: message.createdAt }
+                    };
+                }
+
+                updatedContacts.sort((a, b) => {
+                    const dateA = a.latestMessage?.createdAt ? new Date(a.latestMessage.createdAt) : 0;
+                    const dateB = b.latestMessage?.createdAt ? new Date(b.latestMessage.createdAt) : 0;
+                    return dateB - dateA;
+                });
+                return updatedContacts;
+            });
+        }
+    }, [message, setContacts]);
 
     if (error) {
         return <p className="contact-list-error-text">{error}</p>;

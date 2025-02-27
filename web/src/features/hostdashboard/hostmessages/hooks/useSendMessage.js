@@ -8,7 +8,7 @@ export const useSendMessage = (userId) => {
     const sendMessageHandler = async (recipientId, text, connectionId) => {
         if (!userId || !recipientId || !text) {
             setError("Invalid message parameters");
-            return;
+            return { success: false, error: errorMsg };
         }
         
         const channelID = [userId, recipientId].sort().join("_");
@@ -26,10 +26,12 @@ export const useSendMessage = (userId) => {
         setSending(true);
 
         try {
-            sendMessage(message); // Uses WebSocket to send message
+            sendMessage(message); 
+            return { success: true };
         } catch (err) {
             console.error("⚠️ Error sending message:", err);
             setError(err);
+            return { success: false, error: err.message };
         } finally {
             setSending(false);
         }

@@ -21,6 +21,8 @@ const HostMessagesContent = () => {
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
     const { connectionId } = useFetchConnectionId(selectedContactId) || { connectionId: null };
+    const [message, setMessage] = useState([]);
+
     useEffect(() => {
         if (connectionId) {
             console.log("Connection ID:", connectionId);
@@ -30,6 +32,9 @@ const HostMessagesContent = () => {
     const handleContactClick = (contactId, contactName) => {
         setSelectedContactId(contactId);
         setSelectedContactName(contactName);
+    };
+    const handleContactListMessage = (sentMessage) => {
+        setMessage(sentMessage)
     };
 
     return (
@@ -41,8 +46,8 @@ const HostMessagesContent = () => {
                         <div className="host-chat-components">
                             <Pages />
 
-                            <ContactList userId={userId} onContactClick={handleContactClick} />
-                            <HostChatScreen userId={userId} contactId={selectedContactId} connectionId={connectionId} contactName={selectedContactName} />
+                            <ContactList userId={userId} onContactClick={handleContactClick} message={message} />
+                            <HostChatScreen userId={userId} handleContactListMessage={handleContactListMessage} contactId={selectedContactId} connectionId={connectionId} contactName={selectedContactName} />
                         </div>
                     </>
                 ) : (
