@@ -38,9 +38,9 @@ const HostMessagesContent = () => {
     };
 
     return (
-        <WebSocketProvider userId={userId} token={token}>
+        <WebSocketProvider userId={userId}>
             <main className="page-body">
-
+                <h2>Messages</h2>
                 {userId ? (
                     <>
                         <div className="host-chat-components">
