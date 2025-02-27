@@ -5,7 +5,7 @@ import PageSwitcher from '../../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
-import FilterUi from "./FilterUi";  // Import toegevoegd voor FilterUi
+import FilterUi from "./FilterUi";  
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
