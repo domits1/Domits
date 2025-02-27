@@ -7,7 +7,6 @@ export const useUser = () => useContext(UserContext);
 
 export const UserProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
-  const [token, setToken] = useState(null);
 
   useEffect(() => {
     async function getCurrentUser() {
@@ -15,9 +14,6 @@ export const UserProvider = ({ children }) => {
         const user = await Auth.currentAuthenticatedUser();
         setUserId(user.attributes.sub);
 
-        const session = await Auth.currentSession();
-        const idToken = session.getIdToken().getJwtToken();
-        setToken(idToken);
       } catch (error) {
         console.error('Error fetching authenticated user:', error);
       }
@@ -26,7 +22,7 @@ export const UserProvider = ({ children }) => {
   }, []);
 
   return (
-    <UserContext.Provider value={{ userId, token }}>
+    <UserContext.Provider value={{ userId }}>
       {children}
     </UserContext.Provider>
   );
