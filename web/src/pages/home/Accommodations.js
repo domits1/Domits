@@ -30,7 +30,6 @@ const Accommodations = ({ searchResults }) => {
   };
 
   const handleFilterApplied = (filteredResults) => {
-    console.log('Received filtered results:', filteredResults);
     setAccolist(filteredResults);
     setCurrentPage(1); 
   };
