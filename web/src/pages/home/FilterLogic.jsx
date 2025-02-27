@@ -1,7 +1,10 @@
 import { useState } from 'react';
 
-export const FilterLogic = () => {
+export const FilterLogic = (props) => {
+  // [15, 400] are the minimum and maximum price values for the filter
   const [priceValues, setPriceValues] = useState([15, 400]);
+  // This callback receives the filtered results and sends them to Accommodations.js
+  const { onFilterApplied } = props || {};
 
   const [selectedFacilities, setSelectedFacilities] = useState({
     wifi: false,
@@ -42,10 +45,12 @@ export const FilterLogic = () => {
     5: false,
   });
 
-  const [accommodationResults, setAccommodationResults] = useState([]); // Default to an empty array
+  const [accommodationResults, setAccommodationResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Retrieves filtered accommodations from the API based on user selections
+  // Called when the user clicks 'Apply Filters'
   const fetchFilteredAccommodations = async () => {
     try {
       setLoading(true);
@@ -54,6 +59,7 @@ export const FilterLogic = () => {
       const minPrice = priceValues[0];
       const maxPrice = priceValues[1];
 
+      // API endpoint for the filter service
       const url = new URL('https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction');
       url.searchParams.append('minPrice', minPrice);
       url.searchParams.append('maxPrice', maxPrice);
@@ -61,18 +67,31 @@ export const FilterLogic = () => {
       const response = await fetch(url);
       const data = await response.json();
 
-      if (response.ok && data.items) {
+      // API may return data directly as an array or within an 'items' property
+      if (data && Array.isArray(data) && data.length > 0) {
+        setAccommodationResults(data);
+
+        if (onFilterApplied && typeof onFilterApplied === 'function') {
+          onFilterApplied(data);
+        }
+      } else if (data && data.items && Array.isArray(data.items)) {
         setAccommodationResults(data.items);
+
+        if (onFilterApplied && typeof onFilterApplied === 'function') {
+          onFilterApplied(data.items);
+        }
       } else {
-        throw new Error(data.message || 'Failed to fetch accommodations');
+        throw new Error('No accommodations found for these criteria');
       }
     } catch (err) {
       setError(err.message);
+      console.error("Error fetching accommodations:", err);
     } finally {
       setLoading(false);
     }
   };
 
+  // Ensures that the minimum price is never higher than the maximum price
   const handlePriceChange = (index, value) => {
     const newValues = [...priceValues];
     newValues[index] = Number(value);
@@ -102,6 +121,7 @@ export const FilterLogic = () => {
     });
   };
 
+  // Exposes all necessary state and functions for use in the FilterUi component
   return {
     priceValues,
     setPriceValues,
@@ -116,9 +136,9 @@ export const FilterLogic = () => {
     selectedRatings,
     handleRatingChange,
     handlePriceChange,
-    accommodationResults, // Include the accommodationResults state
+    accommodationResults,
     loading,
     error,
-    fetchFilteredAccommodations, // Expose the fetch function
+    fetchFilteredAccommodations,
   };
 };

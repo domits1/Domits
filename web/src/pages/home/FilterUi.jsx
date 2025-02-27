@@ -1,9 +1,9 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import Slider from '@mui/material/Slider';
 import { FilterLogic } from './FilterLogic';
 import './FilterMain.css';
 
-const FilterUi = () => {
+const FilterUi = ({ onFilterApplied }) => {
   const {
     priceValues,
     setPriceValues,
@@ -17,20 +17,56 @@ const FilterUi = () => {
     setShowMorePropertyTypes,
     selectedRatings,
     handleRatingChange,
-    accommodationResults,
-    loading,
-    error,
-    fetchFilteredAccommodations,
     handlePriceChange,
-  } = FilterLogic();
+    loading,
+    fetchFilteredAccommodations,
+  } = FilterLogic({ onFilterApplied });
 
-  // Gebruik een effect om de filtering uit te voeren wanneer de prijs verandert
+  const [minInputValue, setMinInputValue] = useState(`€${priceValues[0]}`);
+  const [maxInputValue, setMaxInputValue] = useState(`€${priceValues[1]}`);
+
   useEffect(() => {
-    fetchFilteredAccommodations();
-  }, [priceValues]); // Het effect wordt geactiveerd wanneer priceValues verandert
+    setMinInputValue(`€${priceValues[0]}`);
+    setMaxInputValue(`€${priceValues[1]}`);
+  }, [priceValues]);
 
   const handleSliderChange = (e, newValues) => {
     setPriceValues(newValues);
+  };
+
+  const handleMinInputChange = (e) => {
+
+    const rawValue = e.target.value;
+    setMinInputValue(rawValue);
+
+    const numericValue = rawValue.replace(/[^0-9]/g, '');
+
+    if (numericValue) {
+      const newValue = parseInt(numericValue, 10);
+      if (newValue >= 15 && newValue <= priceValues[1]) {
+        handlePriceChange(0, newValue);
+      }
+    }
+  };
+
+  const handleMaxInputChange = (e) => {
+    const rawValue = e.target.value;
+    setMaxInputValue(rawValue);
+
+    const numericValue = rawValue.replace(/[^0-9]/g, '');
+
+    if (numericValue) {
+      const newValue = parseInt(numericValue, 10);
+      if (newValue <= 400 && newValue >= priceValues[0]) {
+        handlePriceChange(1, newValue);
+      }
+    }
+  };
+
+  
+  const handleBlur = () => {
+    setMinInputValue(`€${priceValues[0]}`);
+    setMaxInputValue(`€${priceValues[1]}`);
   };
 
   return (
@@ -58,7 +94,7 @@ const FilterUi = () => {
               },
             }}
             value={priceValues}
-            onChange={handleSliderChange} // Slider verandering
+            onChange={handleSliderChange}
             valueLabelDisplay="auto"
             min={15}
             max={400}
@@ -71,27 +107,24 @@ const FilterUi = () => {
               <label>Min:</label>
               <input
                 type="text"
-                value={`€${priceValues[0] || ''}`}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  handlePriceChange(0, value);
-                }}
+                value={minInputValue}
+                onChange={handleMinInputChange}
+                onBlur={handleBlur}
               />
             </div>
             <div>
               <label>Max:</label>
               <input
                 type="text"
-                value={`€${priceValues[1] || ''}`}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  handlePriceChange(1, value);
-                }}
+                value={maxInputValue}
+                onChange={handleMaxInputChange}
+                onBlur={handleBlur}
               />
             </div>
           </div>
         </div>
       </div>
+
       <div className="filter-section">
         <div className='FilterTitle'>Facilities</div>
         <div className="facility-list">
@@ -187,28 +220,12 @@ const FilterUi = () => {
           ))}
         </div>
       </div>
-
-      {loading ? (
-        <div>Loading...</div>
-      ) : error ? (
-        <div>Error: {error}</div>
-      ) : (
-        <div>
-          <h3>Filtered Accommodations</h3>
-          {accommodationResults && accommodationResults.length > 0 ? (
-            <div>
-              {accommodationResults.map((accommodation, index) => (
-                <div key={index}>
-                  <h4>{accommodation.name}</h4>
-                  <p>Price: €{accommodation.price}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div>No accommodations found</div>
-          )}
-        </div>
-      )}
+      <button
+        className="apply-filters-button"
+        onClick={fetchFilteredAccommodations}
+      >
+        Apply Filters
+      </button>
     </div>
   );
 };

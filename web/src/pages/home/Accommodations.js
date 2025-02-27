@@ -29,6 +29,13 @@ const Accommodations = ({ searchResults }) => {
     }
   };
 
+  // Deze functie wordt aangeroepen wanneer filters worden toegepast
+  const handleFilterApplied = (filteredResults) => {
+    console.log('Received filtered results:', filteredResults);
+    setAccolist(filteredResults);
+    setCurrentPage(1); // Reset naar eerste pagina wanneer filters worden toegepast
+  };
+
   const fetchAllAccommodations = async () => {
     try {
       setLoading(true);
@@ -80,6 +87,10 @@ const Accommodations = ({ searchResults }) => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
+  const handleClick = (accommodation) => {
+    navigate(`/accommodation/${accommodation.ID}`);
+  };
+
   if (loading || loadingImages) {
     return (
       <div className="full-visibility">
@@ -92,22 +103,11 @@ const Accommodations = ({ searchResults }) => {
     );
   }
 
-  const handleClick = (e, ID) => {
-    if (!e || !e.target) {
-      console.error('Event or event target is undefined.');
-      return;
-    }
-    if (e.target.closest('.swiper-button-next') || e.target.closest('.swiper-button-prev')) {
-      e.stopPropagation();
-      return;
-    }
-    navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
-  };
-
   return (
     <div id="container">
       <div id="filters-sidebar">
-        <FilterUi />
+        {/* Geef de handleFilterApplied functie door aan FilterUi */}
+        <FilterUi onFilterApplied={handleFilterApplied} />
       </div>
       <div id="card-visibility">
         {displayedAccolist.length > 0 ? (
@@ -124,7 +124,9 @@ const Accommodations = ({ searchResults }) => {
             );
           })
         ) : (
-          <div className="no-results">No accommodations found for your search.</div>
+          <div className="no-results">
+            Geen accommodaties gevonden die aan je zoekcriteria voldoen.
+          </div>
         )}
         <div className={PageSwitcher.pagination}>
           <button
