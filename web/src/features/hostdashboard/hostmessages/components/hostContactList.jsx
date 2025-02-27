@@ -101,7 +101,12 @@ const ContactList = ({ userId, onContactClick, message }) => {
                     <p className="contact-list-empty-text">{noContactsMessage}</p>
                 ) : (
                     contactList
-                        .sort((a, b) => new Date(b.latestMessage.createdAt) - new Date(a.latestMessage.createdAt))
+                        .filter(contact => contact.latestMessage?.createdAt)
+                        .sort((a, b) => {
+                            const dateA = a.latestMessage?.createdAt ? new Date(a.latestMessage.createdAt) : 0;
+                            const dateB = b.latestMessage?.createdAt ? new Date(b.latestMessage.createdAt) : 0;
+                            return dateB - dateA;
+                        })
                         .map((contact) => (
                             <li key={contact.userId} className="contact-list-list-item" onClick={() => handleContactClick(contact.recipientId, contact.givenName)}>
                                 <ContactItem
