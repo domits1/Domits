@@ -23,12 +23,6 @@ const HostMessagesContent = () => {
     const { connectionId } = useFetchConnectionId(selectedContactId) || { connectionId: null };
     const [message, setMessage] = useState([]);
 
-    useEffect(() => {
-        if (connectionId) {
-            console.log("Connection ID:", connectionId);
-        }
-    }, [connectionId]);
-
     const handleContactClick = (contactId, contactName) => {
         setSelectedContactId(contactId);
         setSelectedContactName(contactName);
