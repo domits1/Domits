@@ -10,17 +10,17 @@ import {
     View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import featureIcons from '../../ui-components/FeatureIcons';
-import FetchOwnerData from '../../features/search/FetchOwnerData';
-import FetchAccommodation from '../../features/search/FetchAccommodation';
+import featureIcons from '../../../ui-components/FeatureIcons';
+import FetchOwnerData from '../../../features/search/FetchOwnerData';
+import FetchAccommodation from '../../../features/search/FetchAccommodation';
 import Ionicons from "react-native-vector-icons/Ionicons";
-import {styles} from "./styles/listingDetailStyles";
-import AmenitiesPopup from "./views/AmenitiesPopup";
-import SelectBookingDateCalendar from "./components/SelectBookingDateCalendar";
-import BookingPopup from "./components/BookingPopup";
-import TranslatedText from "../../features/translation/components/TranslatedText";
+import {styles} from "../styles/propertyDetailsStyles";
+import AmenitiesPopup from "../components/AmenitiesPopup";
+import SelectBookingDateCalendar from "../components/SelectBookingDateCalendar";
+import BookingPopup from "../components/BookingPopup";
+import TranslatedText from "../../../features/translation/components/TranslatedText";
 
-const ListingDetailScreen = ({route, navigation}) => {
+const PropertyDetailsScreen = ({route, navigation}) => {
     const accommodationId = route.params.accommodation.id;
     const [parsedAccommodation, setParsedAccommodation] = useState({});
     const [owner, setOwner] = useState();
@@ -81,9 +81,19 @@ const ListingDetailScreen = ({route, navigation}) => {
     };
 
     const handleOnBookPress = () => {
-        if (!firstSelectedDate || !lastSelectedDate) {
-            ToastAndroid.show("No dates have been selected", ToastAndroid.SHORT)
-        } else toggleBookingModal();
+        // if (!firstSelectedDate || !lastSelectedDate) {
+        //     ToastAndroid.show("No dates have been selected", ToastAndroid.SHORT)
+        // } else {
+        // toggleBookingModal()
+        // };
+
+        navigation.navigate('BookingProcess', {
+            firstSelectedDate,
+            lastSelectedDate,
+            parsedAccommodation,
+            images,
+        });
+
     };
     const handleScroll = event => {
         const page = Math.round(
@@ -334,4 +344,4 @@ const ListingDetailScreen = ({route, navigation}) => {
     );
 };
 
-export default ListingDetailScreen;
+export default PropertyDetailsScreen;

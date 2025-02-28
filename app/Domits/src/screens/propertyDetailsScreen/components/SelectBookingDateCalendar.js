@@ -1,6 +1,6 @@
 import {ActivityIndicator, View} from "react-native";
 import {Calendar, CalendarUtils} from "react-native-calendars/src/index";
-import {styles} from "../styles/listingDetailStyles";
+import {styles} from "../styles/propertyDetailsStyles";
 import React, {useCallback, useEffect, useState} from "react";
 
 const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, property}) => {

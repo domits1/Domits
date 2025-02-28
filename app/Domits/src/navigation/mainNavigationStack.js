@@ -7,8 +7,8 @@ import Scan from "../header/scan";
 import Pay from "../header/pay";
 import Bookings from "../header/bookings";
 import Pocket from "../header/pocket";
-import ListingDetailScreen from "../screens/listingDetailScreen/listingDetailScreen";
-import onBoarding1 from "../screens/bookingprocess/bookingProcess";
+import PropertyDetailsScreen from "../screens/propertyDetailsScreen/screens/propertyDetailsScreen";
+import BookingProcess from "../screens/bookingprocess/BookingProcessScreen";
 import personalDetailsForm from "../screens/bookingprocess/personalDetailsForm";
 import finalBookingOverview from "../screens/bookingprocess/finalBookingOverview";
 import simulateStripe from "../screens/bookingprocess/simulateStripe";
@@ -50,8 +50,8 @@ function MainNavigationStack() {
             <Stack.Screen name="Pay" component={Pay} />
             <Stack.Screen name="Bookings" component={Bookings} />
             <Stack.Screen name="Pocket" component={Pocket} />
-            <Stack.Screen name="Detailpage" component={ListingDetailScreen} />
-            <Stack.Screen name="onBoarding1" component={onBoarding1} />
+            <Stack.Screen name="Detailpage" component={PropertyDetailsScreen} />
+            <Stack.Screen name="BookingProcess" component={BookingProcess} />
             <Stack.Screen
                 name="personalDetailsForm"
                 component={personalDetailsForm}

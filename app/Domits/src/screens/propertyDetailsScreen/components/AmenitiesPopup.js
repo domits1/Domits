@@ -1,5 +1,5 @@
 import {Image, Modal, ScrollView, Text, TouchableOpacity, View} from "react-native";
-import {styles} from "../styles/listingDetailStyles";
+import {styles} from "../styles/propertyDetailsStyles";
 import featureIcons from "../../../ui-components/FeatureIcons";
 import React from "react";
 import TranslatedText from "../../../features/translation/components/TranslatedText";

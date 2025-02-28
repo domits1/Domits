@@ -1,5 +1,5 @@
 import {Modal, Text, ToastAndroid, TouchableOpacity, View} from "react-native";
-import {styles} from "../styles/listingDetailStyles";
+import {styles} from "../styles/propertyDetailsStyles";
 import React from "react";
 import Ionicons from "react-native-vector-icons/Ionicons";
 import MaterialIcons from "react-native-vector-icons/MaterialIcons";
