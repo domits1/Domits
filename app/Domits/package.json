@@ -19,6 +19,7 @@
     "@aws-amplify/storage": "^6.7.1",
     "@aws-amplify/ui-react-core": "^3.1.1",
     "@aws-amplify/ui-react-native": "^2.2.2",
+    "@jest/globals": "^29.7.0",
     "@react-native-async-storage/async-storage": "^1.23.1",
     "@react-native-community/checkbox": "^0.5.17",
     "@react-native-community/masked-view": "^0.1.11",

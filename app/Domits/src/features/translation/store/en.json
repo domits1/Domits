@@ -8,6 +8,7 @@
     "bookings": "Bookings",
     "logout": "Logout",
     "delete account": "Delete account",
-    "language": "Language"
+    "language": "Language",
+    "select a language": "Select a language"
   }
 }
