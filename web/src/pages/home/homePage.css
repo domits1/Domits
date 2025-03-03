@@ -179,10 +179,6 @@ body.hide-header .app-header {
   padding-left: 38vw;
 }
 
-@media (max-width: 1024px) {
-
-}
-
 @media (max-width: 1440px) {
   .domits-accocard {
     height: auto;
