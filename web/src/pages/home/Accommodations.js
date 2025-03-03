@@ -13,6 +13,7 @@ const Accommodations = ({ searchResults }) => {
   const [loading, setLoading] = useState(true);
   const [loadingImages, setLoadingImages] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15; // Number of items per page
@@ -80,8 +81,12 @@ const Accommodations = ({ searchResults }) => {
   useEffect(() => {
     // If there are search results, update the list, otherwise fetch all accommodations
     if (searchResults && searchResults.length > 0) {
-      setAccolist(searchResults);
-      setCurrentPage(1); // Reset to the first page for new search results
+      setSearchLoading(true);
+      setTimeout(() => {
+        setAccolist(searchResults);
+        setCurrentPage(1);
+        setSearchLoading(false);
+      }, 500);
     } else {
       fetchAllAccommodations();
       fetchAccommodationImages();
@@ -92,7 +97,7 @@ const Accommodations = ({ searchResults }) => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
-  if (loading || loadingImages || filterLoading) {
+  if (loading || loadingImages || filterLoading || searchLoading) {
     return (
       <div id="container">
         <div id="filters-sidebar">

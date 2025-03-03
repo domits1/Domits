@@ -91,16 +91,15 @@
   }
 }
 
-/* Add loading animation */
 @keyframes loading {
   0% {
-    opacity: 0.6;
+    background-color: #f0f0f0;
   }
   50% {
-    opacity: 0.8;
+    background-color: #e0e0e0;
   }
   100% {
-    opacity: 0.6;
+    background-color: #f0f0f0;
   }
 }
 
