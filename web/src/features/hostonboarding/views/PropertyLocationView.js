@@ -38,8 +38,8 @@ function AddressInputView() {
       </section>
 
       <nav className="onboarding-button-box">
-        <Button routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
-        <Button routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Proceed" />
+        <Button routePath={`/hostonboarding/${accommodationType}/title`} btnText="Go back" />
+        <Button routePath={`/hostonboarding/${accommodationType}/description`} btnText="Proceed" />
       </nav>
     </main>
   );

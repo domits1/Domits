@@ -101,7 +101,7 @@ function PhotosView() {
           btnText="Go back"
         />
         <Button
-          routePath={`/hostonboarding/${accommodationType}/title`}
+          routePath={`/hostonboarding/${accommodationType}/pricing`}
           btnText="Proceed"
         />
       </nav>

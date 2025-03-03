@@ -39,7 +39,7 @@ function AccommodationTitleView() {
                     btnText="Go back"
                 />
                 <Button
-                    routePath={`/hostonboarding/${accommodationType}/description`}
+                    routePath={`/hostonboarding/${accommodationType}/address`}
                     btnText="Proceed"
                 />
             </nav>
