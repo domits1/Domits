@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import "../styles/guestWishlist.css";
 import WishlistList from "../components/WishlistList";
+import GuestRoomSelector from "../components/GuestRoomSelector";
 import { FaPencilAlt, FaTimes } from "react-icons/fa";
 
 import greeceYacht from '../../../images/Greece-Yacht.jpeg';
@@ -24,10 +25,9 @@ const GuestWishlistPage = () => {
   const [newListName, setNewListName] = useState("");
   const [editingList, setEditingList] = useState(null);
   const [editedName, setEditedName] = useState("");
+  const [sharedLink, setSharedLink] = useState("");
 
   const dropdownRef = useRef(null);
-  const shareButtonRef = useRef(null);
-  const createButtonRef = useRef(null);
   const sharePopupRef = useRef(null);
   const createPopupRef = useRef(null);
 
@@ -53,21 +53,18 @@ const GuestWishlistPage = () => {
     }
   };
 
-  // Function to delete a list
   const handleDeleteList = (listName) => {
     setCategories(categories.filter(category => category.name !== listName));
     if (selectedCategory === listName) {
-      setSelectedCategory(categories.length > 1 ? categories[0].name : ""); // Reset selection if deleted
+      setSelectedCategory(categories.length > 1 ? categories[0].name : "");
     }
   };
 
-  // Function to edit a list name
   const handleEditList = (listName) => {
     setEditingList(listName);
     setEditedName(listName);
   };
 
-  //  Function to save edited list name
   const handleSaveEdit = () => {
     if (editedName.trim() !== "" && !categories.find(cat => cat.name === editedName)) {
       setCategories(categories.map(category => 
@@ -80,31 +77,20 @@ const GuestWishlistPage = () => {
     setEditingList(null);
   };
 
-  // Automatically close dropdowns & pop-ups when clicking outside
+  const handleShareList = () => {
+    setSharedLink(window.location.href);
+    setShareListOpen(true);
+  };
+
   useEffect(() => {
     function handleClickOutside(event) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target)
-      ) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
       }
-
-      if (
-        sharePopupRef.current &&
-        !sharePopupRef.current.contains(event.target) &&
-        shareButtonRef.current &&
-        !shareButtonRef.current.contains(event.target)
-      ) {
+      if (sharePopupRef.current && !sharePopupRef.current.contains(event.target)) {
         setShareListOpen(false);
       }
-
-      if (
-        createPopupRef.current &&
-        !createPopupRef.current.contains(event.target) &&
-        createButtonRef.current &&
-        !createButtonRef.current.contains(event.target)
-      ) {
+      if (createPopupRef.current && !createPopupRef.current.contains(event.target)) {
         setCreateListOpen(false);
       }
     }
@@ -123,7 +109,7 @@ const GuestWishlistPage = () => {
       {/* Wishlist Navigation Bar */}
       <div className="wishlist-navbar">
         <span className="favorites-label">Favorites</span>
-        
+
         {/* Dropdown Button */}
         <div className="dropdown" ref={dropdownRef}>
           <button className="dropdown-select" onClick={() => setDropdownOpen(!dropdownOpen)}>
@@ -153,12 +139,10 @@ const GuestWishlistPage = () => {
                     <span>{category.name} <span className="list-count">{category.count}</span></span>
                   )}
                   <div className="dropdown-icons">
-                    {/* Edit List Name */}
                     <FaPencilAlt className="edit-icon" onClick={(e) => {
                       e.stopPropagation();
                       handleEditList(category.name);
                     }} />
-                    {/* Delete List */}
                     <FaTimes className="delete-icon" onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteList(category.name);
@@ -171,19 +155,52 @@ const GuestWishlistPage = () => {
         </div>
 
         {/* Share List & Create List Buttons */}
-        <button ref={shareButtonRef} className="list-button" onClick={() => setShareListOpen(!shareListOpen)}>
+        <button className="list-button" onClick={handleShareList}>
           Share List
         </button>
-        <button ref={createButtonRef} className="list-button" onClick={() => {
-          setCreateListOpen(!createListOpen);
-          handleCreateList();
-        }}>
+        <button className="list-button" onClick={() => setCreateListOpen(!createListOpen)}>
           Create List
         </button>
       </div>
 
+      {/* Wishlist Header */}
+      <div className="wishlist-header">
+        <h1>{selectedCategory}</h1>
+        <div className="wishlist-info">
+          <p>❤️ {filteredAccommodations.length} saved accommodations</p>
+          <input type="date" className="date-picker" />
+          <GuestRoomSelector />
+          <button className="map-button">Show on Map</button>
+        </div>
+      </div>
+
       {/* Wishlist Items */}
       <WishlistList accommodations={filteredAccommodations} removeLike={removeLike} />
+
+      {/* Share List Pop-up */}
+      {shareListOpen && (
+        <div ref={sharePopupRef} className="popup">
+          <div className="popup-arrow"></div>
+          <p>Copy the link to share this list:</p>
+          <input type="text" readOnly value={sharedLink} />
+          <button onClick={() => navigator.clipboard.writeText(sharedLink)}>Copy</button>
+        </div>
+      )}
+
+      {/* Create List Pop-up */}
+      {createListOpen && (
+        <div ref={createPopupRef} className="popup">
+          <div className="popup-arrow"></div>
+          <h2>Create a New List</h2>
+          <input
+            type="text"
+            placeholder="Enter a new list name"
+            value={newListName}
+            onChange={(e) => setNewListName(e.target.value)}
+          />
+          <button onClick={handleCreateList} className="create-list-button">Create</button>
+        </div>
+      )}
     </div>
   );
 };
