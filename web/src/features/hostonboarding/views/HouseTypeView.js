@@ -26,7 +26,7 @@ function GuestAccessView() {
 
       <nav className="onboarding-button-box">
         <Button routePath="/hostonboarding" btnText="Go back" />
-        <Button routePath="/hostonboarding/accommodation/address" btnText="Proceed" />
+        <Button routePath="/hostonboarding/accommodation/title" btnText="Proceed" />
       </nav>
     </main>
   );

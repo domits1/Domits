@@ -23,7 +23,7 @@ function CamperTypeView() {
       />
       <nav className="onboarding-button-box">
         <Button routePath="/hostonboarding" btnText="Back" />
-        <Button routePath="/hostonboarding/camper/address" btnText="Proceed" />
+        <Button routePath="/hostonboarding/camper/title" btnText="Proceed" />
       </nav>
     </main>
   );
