@@ -1,88 +1,79 @@
-// code gemaakt door: @kacperfl 
-//importeren van de benodigde modules
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Slider from '@mui/material/Slider';
+import { FilterLogic } from './FilterLogic';
 import './FilterMain.css';
 
-const FilterModal = () => {
-  const [priceValues, setPriceValues] = useState([15, 400]);
-  const [selectedFacilities, setSelectedFacilities] = useState({
-    // Alle mogelijke faciliteiten die een accommodatie kan hebben
-    wifi: false,
-    parking: false,
-    gym: false,
-    spa: false,
-    swimmingPool: false,
-    restaurant: false,
-    petFriendly: false,
-    airConditioning: false,
-    breakfast: false,
-    bar: false,
-  });
-// Alle mogelijke soorten accommodaties die een accommodatie kan hebben
-  const [selectedPropertyTypes, setSelectedPropertyTypes] = useState({
-    apartment: false,
-    villa: false,
-    bungalow: false,
-    studio: false,
-    penthouse: false,
-    cottage: false,
-    townhouse: false,
-    cabin: false,
-    chalet: false,
-    duplex: false,
-    mansion: false,
-    farmstay: false,
-  });
-  //op default staat de optie voor tonen van meer opties op false
-  const [showMoreFacilities, setShowMoreFacilities] = useState(false);
-  const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
+const FilterUi = ({ onFilterApplied }) => {
+  const {
+    priceValues,
+    setPriceValues,
+    selectedFacilities,
+    handleFacilityChange,
+    selectedPropertyTypes,
+    handlePropertyTypeChange,
+    showMoreFacilities,
+    setShowMoreFacilities,
+    showMorePropertyTypes,
+    setShowMorePropertyTypes,
+    selectedRatings,
+    handleRatingChange,
+    handlePriceChange,
+    loading,
+    fetchFilteredAccommodations,
+  } = FilterLogic({ onFilterApplied });
 
-  //Zorgt ervoor dat de ingevoerde prijs waarden correct worden bijgewerkt maar voorkomt dat de minimumprijs hoger wordt dan de maximumprijs.
-  const handleInputChange = (index, value) => {
-    const newValues = [...priceValues];
-    newValues[index] = Number(value);
-    if (newValues[0] <= newValues[1]) {
-      setPriceValues(newValues);
+  const [minInputValue, setMinInputValue] = useState(`€${priceValues[0]}`);
+  const [maxInputValue, setMaxInputValue] = useState(`€${priceValues[1]}`);
+
+  useEffect(() => {
+    setMinInputValue(`€${priceValues[0]}`);
+    setMaxInputValue(`€${priceValues[1]}`);
+  }, [priceValues]);
+
+  const handleSliderChange = (e, newValues) => {
+    setPriceValues(newValues);
+  };
+
+  const handleMinInputChange = (e) => {
+
+    const rawValue = e.target.value;
+    setMinInputValue(rawValue);
+
+    const numericValue = rawValue.replace(/[^0-9]/g, '');
+
+    if (numericValue) {
+      const newValue = parseInt(numericValue, 10);
+      if (newValue >= 15 && newValue <= priceValues[1]) {
+        handlePriceChange(0, newValue);
+      }
     }
   };
-//Functie om de geselecteerde faciliteiten aan te passen
-  const handleFacilityChange = (event) => {
-    setSelectedFacilities({
-      ...selectedFacilities,
-      [event.target.name]: event.target.checked,
-    });
+
+  const handleMaxInputChange = (e) => {
+    const rawValue = e.target.value;
+    setMaxInputValue(rawValue);
+
+    const numericValue = rawValue.replace(/[^0-9]/g, '');
+
+    if (numericValue) {
+      const newValue = parseInt(numericValue, 10);
+      if (newValue <= 400 && newValue >= priceValues[0]) {
+        handlePriceChange(1, newValue);
+      }
+    }
   };
-//Functie om de geselecteerde soorten accommodaties aan te passen
-  const handlePropertyTypeChange = (event) => {
-    setSelectedPropertyTypes({
-      ...selectedPropertyTypes,
-      [event.target.name]: event.target.checked,
-    });
-  };
-//Functie dat de checkoxes voor de ratings op default uit zet
-  const [selectedRatings, setSelectedRatings] = useState({
-    1: false,
-    2: false,
-    3: false,
-    4: false,
-    5: false,
-  });
-//Functie om de geselecteerde ratings aan te passen
-  const handleRatingChange = (event) => {
-    setSelectedRatings({
-      ...selectedRatings,
-      [event.target.name]: event.target.checked,
-    });
+
+  
+  const handleBlur = () => {
+    setMinInputValue(`€${priceValues[0]}`);
+    setMaxInputValue(`€${priceValues[1]}`);
   };
 
   return (
     <div>
-      {/* Prijsfilter met een slider*/}
       <div className="filter-section">
         <div className='FilterTitle'>Price Range</div>
         <div className="slider-container">
-          {/* Slider voor het selecteren van de prijs met styling er in */}
           <Slider
             sx={{
               '& .MuiSlider-thumb': {
@@ -102,9 +93,8 @@ const FilterModal = () => {
                 backgroundColor: '#e2e2e2',
               },
             }}
-            //waarden voor de slider en de functie die de waarden bijwerkt
             value={priceValues}
-            onChange={(e, newValues) => setPriceValues(newValues)}
+            onChange={handleSliderChange}
             valueLabelDisplay="auto"
             min={15}
             max={400}
@@ -114,39 +104,30 @@ const FilterModal = () => {
           />
           <div className="price-inputs">
             <div>
-              {/* Input veld voor de minimale prijs */}
               <label>Min:</label>
               <input
                 type="text"
-                value={`€${priceValues[0] || ''}`}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  handleInputChange(0, value);
-                }}
+                value={minInputValue}
+                onChange={handleMinInputChange}
+                onBlur={handleBlur}
               />
             </div>
             <div>
-              {/* Input veld voor de maximale prijs */}
               <label>Max:</label>
               <input
                 type="text"
-                value={`€${priceValues[1] || ''}`}
-                onChange={(e) => {
-                  const value = e.target.value.replace(/[^0-9]/g, '');
-                  handleInputChange(1, value);
-                }}
+                value={maxInputValue}
+                onChange={handleMaxInputChange}
+                onBlur={handleBlur}
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Facility filter met checkboxes */}
       <div className="filter-section">
         <div className='FilterTitle'>Facilities</div>
         <div className="facility-list">
-
-          {/* Alle mogelijke faciliteiten die een accommodatie kan hebben */}
           {Object.keys(selectedFacilities).slice(0, 5).map((facility) => (
             <label key={facility} className="facility-item">
               <input
@@ -159,7 +140,6 @@ const FilterModal = () => {
               {facility.charAt(0).toUpperCase() + facility.slice(1)}
             </label>
           ))}
-          {/* Als er meer dan 5 faciliteiten zijn, dan worden de overige faciliteiten verborgen en kan de gebruiker deze tonen door op de tekst te klikken */}
           {showMoreFacilities &&
             Object.keys(selectedFacilities)
               .slice(5)
@@ -176,7 +156,6 @@ const FilterModal = () => {
                 </label>
               ))}
         </div>
-        {/* Functie om meer opties aan gebruiker te laten tonen */}
         <span
           onClick={() => setShowMoreFacilities(!showMoreFacilities)}
           className="show-more-text"
@@ -185,11 +164,9 @@ const FilterModal = () => {
         </span>
       </div>
 
-      {/* Property type filter met checkboxes */}
       <div className="filter-section">
         <div className='FilterTitle'>Property Type</div>
         <div className="facility-list">
-          {/* Alle mogelijke soorten accommodaties die een accommodatie kan hebben */}
           {Object.keys(selectedPropertyTypes).slice(0, 5).map((propertyType) => (
             <label key={propertyType} className="facility-item">
               <input
@@ -202,7 +179,6 @@ const FilterModal = () => {
               {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
             </label>
           ))}
-           {/* Als er meer dan 5 soorten accommodaties zijn, dan worden de overige soorten accommodaties verborgen en kan de gebruiker deze tonen door op de tekst te klikken */}
           {showMorePropertyTypes &&
             Object.keys(selectedPropertyTypes)
               .slice(5)
@@ -219,7 +195,6 @@ const FilterModal = () => {
                 </label>
               ))}
         </div>
-        {/* Functie om meer opties aan gebruiker te laten tonen */}
         <span
           onClick={() => setShowMorePropertyTypes(!showMorePropertyTypes)}
           className="show-more-text"
@@ -228,7 +203,6 @@ const FilterModal = () => {
         </span>
       </div>
 
-      {/* Rating filter met checkboxes */}
       <div className="filter-section">
         <div className='FilterTitle'>Property Rating</div>
         <div className="facility-list">
@@ -246,8 +220,14 @@ const FilterModal = () => {
           ))}
         </div>
       </div>
+      <button
+        className="apply-filters-button"
+        onClick={fetchFilteredAccommodations}
+      >
+        Apply Filters
+      </button>
     </div>
   );
 };
 
-export default FilterModal;
+export default FilterUi;

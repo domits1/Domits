@@ -5,7 +5,7 @@ import PageSwitcher from '../../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
-import FiltersMain from "./FiltersMain";
+import FilterUi from "./FilterUi";  
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
@@ -27,6 +27,11 @@ const Accommodations = ({ searchResults }) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const handleFilterApplied = (filteredResults) => {
+    setAccolist(filteredResults);
+    setCurrentPage(1); 
   };
 
   const fetchAllAccommodations = async () => {
@@ -103,11 +108,10 @@ const Accommodations = ({ searchResults }) => {
     }
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
-
   return (
     <div id="container">
       <div id="filters-sidebar">
-        <FiltersMain />
+        <FilterUi onFilterApplied={handleFilterApplied} />
       </div>
       <div id="card-visibility">
         {displayedAccolist.length > 0 ? (
