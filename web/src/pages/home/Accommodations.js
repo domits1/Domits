@@ -5,13 +5,14 @@ import PageSwitcher from '../../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
-import FiltersMain from "./FiltersMain";
+import FilterUi from "./FilterUi";  
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
   const [accommodationImages, setAccommodationImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingImages, setLoadingImages] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15; // Number of items per page
@@ -27,6 +28,17 @@ const Accommodations = ({ searchResults }) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const handleFilterApplied = (filteredResults) => {
+    setFilterLoading(true);
+    
+    // Small timeout to ensure the loader is displayed
+    setTimeout(() => {
+      setAccolist(filteredResults);
+      setCurrentPage(1);
+      setFilterLoading(false);
+    }, 500);
   };
 
   const fetchAllAccommodations = async () => {
@@ -80,14 +92,19 @@ const Accommodations = ({ searchResults }) => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
-  if (loading || loadingImages) {
+  if (loading || loadingImages || filterLoading) {
     return (
-      <div className="full-visibility">
-        {Array(8)
-          .fill()
-          .map((_, index) => (
-            <SkeletonLoader key={index} />
-          ))}
+      <div id="container">
+        <div id="filters-sidebar">
+          <FilterUi onFilterApplied={handleFilterApplied} />
+        </div>
+        <div id="card-visibility">
+          {Array(12)
+            .fill()
+            .map((_, index) => (
+              <SkeletonLoader key={index} />
+            ))}
+        </div>
       </div>
     );
   }
@@ -103,11 +120,10 @@ const Accommodations = ({ searchResults }) => {
     }
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
-
   return (
     <div id="container">
       <div id="filters-sidebar">
-        <FiltersMain />
+        <FilterUi onFilterApplied={handleFilterApplied} />
       </div>
       <div id="card-visibility">
         {displayedAccolist.length > 0 ? (

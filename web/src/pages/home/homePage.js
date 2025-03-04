@@ -156,18 +156,7 @@ const Homepage = () => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
 
-  if (loading || loadingImages) {
-    return (
-      <div className="domits-full-visibility">
-        {Array(8)
-          .fill()
-          .map((_, index) => (
-            <SkeletonLoader key={index} />
-          ))}
-      </div>
-    );
-  }
-
+ 
   return (
     <>
       <Header />
