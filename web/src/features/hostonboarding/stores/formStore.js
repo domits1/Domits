@@ -70,6 +70,9 @@ const useFormStore = create((set) => ({
       selectedDates: [],
     },
     registrationNumber: "",
+    ReservationsID: "",
+    paymentBeforeBookingHours: "3",
+    paymentBeforeCheckInHours: "36",
     OwnerId: "",
   },
   setAccommodationType: (type) =>
@@ -319,6 +322,7 @@ const useFormStore = create((set) => ({
       },
     }),
   submitAccommodation: async (navigate) => {
+    
     const { accommodationDetails } = useFormStore.getState();
 
     const isBoat = accommodationDetails.type === "boat";
@@ -331,8 +335,9 @@ const useFormStore = create((set) => ({
       : {};
 
     try {
+      let UUID = generateUUID(); // Generates a UUID to share with both tables, accomodation and reservations.
       const formattedData = {
-        ID: generateUUID(),
+        ID: UUID,
         Title: accommodationDetails.title || "",
         Subtitle: accommodationDetails.subtitle || "",
         AccommodationType: accommodationDetails.type || "",
@@ -354,7 +359,7 @@ const useFormStore = create((set) => ({
         Country: (isBoat ? accommodationDetails.boatDetails?.country : accommodationDetails.camperDetails?.country) || accommodationDetails.address.country,
         CreatedAt: new Date().toISOString(),
         Description: accommodationDetails.description || "",
-        Drafted: true,
+        Drafted: "true",
         Features: accommodationDetails.Features || [],
         FuelTank: specifications?.FuelTank || 0,
         FWD: specifications?.FWD || false,
@@ -373,10 +378,13 @@ const useFormStore = create((set) => ({
         MinimumBookingPeriod: accommodationDetails.minimumBookingPeriod || 0,
         Model: specifications?.Model || "",
         OwnerId: accommodationDetails.ownerId || "",
+        ReservationsId: UUID,
+        PaymentBeforeBookingHours: 24,
+        PaymentBeforeCheckInHours: 36,
         PostalCode: (isBoat ? accommodationDetails.boatDetails?.zipCode : accommodationDetails.camperDetails?.zipCode) || accommodationDetails.address.zipCode,
         RegistrationNumber: accommodationDetails.registrationNumber || "",
         Renovated: specifications?.Renovated || 0,
-        Rent: accommodationDetails.Rent || 0,
+        Rent: 540,
         RentedWithSkipper: specifications?.RentedWithSkipper || false,
         Requirement: specifications?.Requirement || "",
         Rooms: accommodationDetails.rooms || 0,
