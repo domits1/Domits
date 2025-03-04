@@ -68,6 +68,9 @@ const useFormStore = create((set) => ({
       MinimumAdvancedReservation: 1,
       MaximumAdvancedReservation: 1,
       selectedDates: [],
+      PaymentDeadlineAfterBooking: 24,
+      PaymentDeadlineBeforeCheckIn: 48,
+      ExpirationTime: 72,
     },
     registrationNumber: "",
     OwnerId: "",
@@ -351,7 +354,11 @@ const useFormStore = create((set) => ({
         CheckIn: accommodationDetails.houseRules?.CheckIn || "",
         CheckOut: accommodationDetails.houseRules?.CheckOut || "",
         CleaningFee: accommodationDetails.CleaningFee || 0,
-        Country: (isBoat ? accommodationDetails.boatDetails?.country : accommodationDetails.camperDetails?.country) || accommodationDetails.address.country,
+        Country:
+          (isBoat
+            ? accommodationDetails.boatDetails?.country
+            : accommodationDetails.camperDetails?.country) ||
+          accommodationDetails.address.country,
         CreatedAt: new Date().toISOString(),
         Description: accommodationDetails.description || "",
         Drafted: true,
@@ -369,11 +376,16 @@ const useFormStore = create((set) => ({
         Length: specifications?.Length || 0,
         LicensePlate: isCamper ? specifications?.LicensePlate || "" : "",
         Manufacturer: specifications?.Manufacturer || "",
-        MinimumAdvancedReservation: accommodationDetails.availability?.MinimumAdvancedReservation || 0,
+        MinimumAdvancedReservation:
+          accommodationDetails.availability?.MinimumAdvancedReservation || 0,
         MinimumBookingPeriod: accommodationDetails.minimumBookingPeriod || 0,
         Model: specifications?.Model || "",
         OwnerId: accommodationDetails.ownerId || "",
-        PostalCode: (isBoat ? accommodationDetails.boatDetails?.zipCode : accommodationDetails.camperDetails?.zipCode) || accommodationDetails.address.zipCode,
+        PostalCode:
+          (isBoat
+            ? accommodationDetails.boatDetails?.zipCode
+            : accommodationDetails.camperDetails?.zipCode) ||
+          accommodationDetails.address.zipCode,
         RegistrationNumber: accommodationDetails.registrationNumber || "",
         Renovated: specifications?.Renovated || 0,
         Rent: accommodationDetails.Rent || 0,
@@ -383,7 +395,11 @@ const useFormStore = create((set) => ({
         SelfBuilt: specifications?.SelfBuilt || false,
         ServiceFee: accommodationDetails.ServiceFee || 0,
         Speed: specifications?.Speed || 0,
-        Street: (isBoat ? accommodationDetails.boatDetails?.street : accommodationDetails.camperDetails?.street) || accommodationDetails.address.street,
+        Street:
+          (isBoat
+            ? accommodationDetails.boatDetails?.street
+            : accommodationDetails.camperDetails?.street) ||
+          accommodationDetails.address.street,
         Transmission: specifications?.Transmission || "",
         Type: accommodationDetails.type || "",
         UpdatedAt: new Date().toISOString(),
@@ -394,7 +410,10 @@ const useFormStore = create((set) => ({
         headers: { "Content-Type": "application/json" },
       });
 
-      console.log("Submitting accommodation data:", JSON.stringify(formattedData, null, 2));
+      console.log(
+        "Submitting accommodation data:",
+        JSON.stringify(formattedData, null, 2)
+      );
       console.log("Accommodation uploaded successfully:", response.data); //Remove this line if you don't want to log the response
       if (response.data.statusCode === 200) {
         navigate("/hostdashboard");
