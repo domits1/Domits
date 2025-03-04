@@ -16,7 +16,8 @@ function SummaryView() {
   const submitAccommodation = useFormStore((state) => state.submitAccommodation);
 
   const handleSubmit = () => {
-    submitAccommodation(navigate);
+    submitAccommodation();
+    navigate("/hostdashboard/listings"); // Navigate after submission
   };
 
   return (
