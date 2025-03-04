@@ -81,19 +81,16 @@ const PropertyDetailsScreen = ({route, navigation}) => {
     };
 
     const handleOnBookPress = () => {
-        // if (!firstSelectedDate || !lastSelectedDate) {
-        //     ToastAndroid.show("No dates have been selected", ToastAndroid.SHORT)
-        // } else {
-        // toggleBookingModal()
-        // };
-
-        navigation.navigate('BookingProcess', {
-            firstSelectedDate,
-            lastSelectedDate,
-            parsedAccommodation,
-            images,
-        });
-
+        if (!firstSelectedDate || !lastSelectedDate) {
+            ToastAndroid.show("Please select a start and end date", ToastAndroid.SHORT)
+        } else {
+            navigation.navigate('BookingProcess', {
+                firstSelectedDate,
+                lastSelectedDate,
+                parsedAccommodation,
+                images,
+            });
+        }
     };
     const handleScroll = event => {
         const page = Math.round(

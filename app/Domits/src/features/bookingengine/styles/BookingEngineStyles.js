@@ -123,8 +123,11 @@ export const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 10,
         textAlign: 'center',
+    },
+    modalSubTitle: {
+        textAlign: 'center',
+        marginBottom: 20,
     },
     guestRow: {
         flexDirection: 'row',
@@ -149,11 +152,7 @@ export const styles = StyleSheet.create({
         marginHorizontal: 10,
     },
     closeButton: {
-        backgroundColor: 'red',
-        paddingVertical: 10,
-        alignItems: 'center',
-        borderRadius: 5,
-        marginTop: 10,
+        alignSelf: 'flex-end',
     },
     closeButtonText: {
         color: 'white',

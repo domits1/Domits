@@ -1,11 +1,12 @@
 import {Modal, Text, TouchableOpacity, View} from "react-native";
-import {styles} from "../styles/BookingProcessStyles";
+import {styles} from "../styles/BookingEngineStyles";
 import React, {useCallback, useEffect, useState} from "react";
-import DateFormatterYYYY_MM_DD from "../../utils/DateFormatterYYYY_MM_DD";
+import DateFormatterYYYY_MM_DD from "../../../screens/utils/DateFormatterYYYY_MM_DD";
 import {Calendar} from "react-native-calendars";
 import {CalendarUtils} from "react-native-calendars/src/index";
+import MaterialIcons from "react-native-vector-icons/MaterialIcons";
 
-const BookingProcessCalendarPopup = ({onClose, onConfirm, dateRanges, bookedDates, property}) => {
+const BookingEngineCalendarPopup = ({onClose, onConfirm, dateRanges, bookedDates, property}) => {
 
     const today = DateFormatterYYYY_MM_DD(new Date());
     const [selectedRange, setSelectedRange] = useState({
@@ -320,6 +321,11 @@ const BookingProcessCalendarPopup = ({onClose, onConfirm, dateRanges, bookedDate
         <Modal transparent={true} visible={true} animationType="slide">
             <View style={styles.modalOverlay}>
                 <View style={styles.calendarModalContent}>
+                    <TouchableOpacity
+                        style={styles.closeButton}
+                        onPress={onClose}>
+                        <MaterialIcons name="close" size={24} color="#333"/>
+                    </TouchableOpacity>
                     <Text style={styles.modalTitle}>Select Dates</Text>
                     <Calendar
                         markingType="period"
@@ -361,4 +367,4 @@ const BookingProcessCalendarPopup = ({onClose, onConfirm, dateRanges, bookedDate
     );
 }
 
-export default BookingProcessCalendarPopup;
+export default BookingEngineCalendarPopup;
