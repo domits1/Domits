@@ -14,6 +14,10 @@
 		<string>Ionicons.ttf</string>
 		<string>MaterialCommunityIcons.ttf</string>
 		<string>MaterialIcons.ttf</string>
+		<string>MotivaSansBlack.woff.ttf</string>
+		<string>MotivaSansBold.woff.ttf</string>
+		<string>MotivaSansRegular.woff.ttf</string>
+		<string>KanitRegular.woff.ttf</string>
 	</array>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
@@ -45,9 +49,9 @@
 		<true/>
 	</dict>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string/>
 	<key>NSCameraUsageDescription</key>
-  <string>Toegang tot de camera is nodig om QR-codes te scannen.</string>
+	<string>Toegang tot de camera is nodig om QR-codes te scannen.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Test</string>
 	<key>UILaunchStoryboardName</key>

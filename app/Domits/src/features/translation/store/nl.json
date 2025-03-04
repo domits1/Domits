@@ -9,6 +9,8 @@
     "logout": "Uitloggen",
     "delete account": "Verwijder account",
     "language": "Taal",
-    "select a language": "Kies een taal"
+    "select a language": "Kies een taal",
+    "account dashboard title": "Welkom ",
+    "account dashboard subtitle": "Beheer je profiel, bekijk je betalingen, voeg reviews toe of verwijder ze en wijzig de app-instellingen."
   }
 }

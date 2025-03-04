@@ -9,6 +9,8 @@
     "logout": "Logout",
     "delete account": "Delete account",
     "language": "Language",
-    "select a language": "Select a language"
+    "select a language": "Select a language",
+    "account dashboard title": "Welcome ",
+    "account dashboard subtitle": "Manage your profile, see your payments, add or remove reviews and change app settings."
   }
 }

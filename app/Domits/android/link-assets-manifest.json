@@ -2,6 +2,10 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "assets/fonts/KanitRegular.woff.ttf",
+      "sha1": "4d7b70e9717ae0adecc332fac9af7457063886a4"
+    },
+    {
       "path": "assets/fonts/MotivaSansBlack.woff.ttf",
       "sha1": "178d9e063e672b6f63c195014b66d6fc36b88e4e"
     },

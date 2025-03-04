@@ -1,7 +1,6 @@
 import React from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
-import {View, Text} from 'react-native';
+import {View, Text, Image} from 'react-native';
 import MessagesStackNavigator from './messagesStackNavigator';
 import MainNavigationStack from './mainNavigationStack';
 import AccountNavigationStack from './accountNavigationStack';
@@ -10,40 +9,35 @@ import {useAuth} from '../context/AuthContext';
 const Tab = createBottomTabNavigator();
 
 function BottomTabNavigator() {
-  const {isAuthenticated, user, userAttributes, checkAuth} = useAuth();
+  const {isAuthenticated} = useAuth();
 
   return (
     <Tab.Navigator
       screenOptions={({route}) => ({
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: '#f0f0f0',
-          borderTopColor: 'transparent',
-          height: 60,
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 0.5,
+          borderTopColor: '#000000',
+          height: 70,
           paddingBottom: 10,
         },
         tabBarIcon: ({focused, color, size}) => {
-          let iconName;
-          switch (route.name) {
-            case 'Home':
-              iconName = 'home';
-              break;
-            case 'Messages':
-              iconName = 'message';
-              break;
-            case 'Account':
-              iconName = 'account-circle';
-              break;
-            default:
-              iconName = 'circle';
-          }
+          const icons = {
+            Home: require('../images/icons/app-home-icon-black.png'),
+            Messages: require('../images/icons/app-messages-icon-black.png'),
+            Account: require('../images/icons/app-account-icon-black.png'),
+          };
 
           return (
             <View style={{alignItems: 'center', justifyContent: 'center'}}>
-              <MaterialIcons
-                name={iconName}
-                size={30}
-                color={focused ? '#007AFF' : '#8e8e93'}
+              <Image
+                source={icons[route.name]}
+                style={{
+                  width: 30,
+                  height: 30,
+                  tintColor: focused ? 'green' : 'black',
+                }}
               />
               <Text
                 style={{color: focused ? '#007AFF' : '#8e8e93', fontSize: 12}}>
@@ -65,7 +59,7 @@ function BottomTabNavigator() {
           name="Messages"
           component={MessagesStackNavigator}
           options={{
-          headerShown: false,
+            headerShown: false,
           }}
         />
       )}
