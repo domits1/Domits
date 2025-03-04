@@ -1,38 +1,64 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useContext } from 'react';
 import useFetchMessages from '../hooks/useFetchMessages';
 import { useSendMessage } from '../hooks/useSendMessage';
 import ChatMessage from './chatMessage';
+import { WebSocketContext } from '../context/webSocketContext';
 import '../styles/hostChatScreen.css';
+import { v4 as uuidv4 } from 'uuid';
 
-const HostChatScreen = ({ userId, contactId, contactName }) => {
-    const { messages, loading, error, fetchMessages } = useFetchMessages(userId);
+
+const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleContactListMessage }) => {
+    const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
-
-
+    const { messages: wsMessages } = useContext(WebSocketContext);
 
     useEffect(() => {
         if (contactId) {
-            fetchMessages(contactId)
-            console.log(contactName)
+            fetchMessages(contactId);
         }
-    }, [userId, contactId]);
+    }, [userId, contactId, fetchMessages]);
 
     useEffect(() => {
-        console.log("Fetched messages:", messages);
-    }, [messages]);
+        wsMessages.forEach((msg) => {
+            if (
+                (msg.userId === userId && msg.recipientId === contactId) ||
+                (msg.userId === contactId && msg.recipientId === userId)
+            ) {
+                addNewMessage(msg);
+            }
+        });
+    }, [wsMessages, userId, contactId]);
 
     const handleSendMessage = async () => {
         if (newMessage.trim()) {
             try {
-                const message = await sendMessage(contactId, newMessage);
+                const response = await sendMessage(contactId, newMessage, connectionId);
+
+                if (!response || !response.success) {
+                    alert(`Fout bij verzenden: ${response.error || "Probeer het later opnieuw."}`);
+                    return;
+                }
+
+                const sentMessage = {
+                    id: uuidv4(),
+                    userId,
+                    recipientId: contactId,
+                    text: newMessage,
+                    createdAt: new Date().toISOString(),
+                    isSent: true,
+                };
+
+                handleContactListMessage(sentMessage);
+
+                addNewMessage(sentMessage);
+
                 setNewMessage('');
             } catch (error) {
-                console.error('Error sending message:', error);
+                console.error("Onverwachte fout bij verzenden:", error);
             }
         }
     };
-
 
     return (
         <div className="host-chat-screen">

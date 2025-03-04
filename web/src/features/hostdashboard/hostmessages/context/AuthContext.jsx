@@ -13,6 +13,7 @@ export const UserProvider = ({ children }) => {
       try {
         const user = await Auth.currentAuthenticatedUser();
         setUserId(user.attributes.sub);
+
       } catch (error) {
         console.error('Error fetching authenticated user:', error);
       }

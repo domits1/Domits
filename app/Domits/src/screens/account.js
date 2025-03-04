@@ -1,7 +1,6 @@
 import React, {useState} from 'react';
 import {
   View,
-  Text,
   SafeAreaView,
   StyleSheet,
   TouchableOpacity,
@@ -11,6 +10,7 @@ import {useNavigation, useFocusEffect} from '@react-navigation/native';
 import {useAuth} from '../context/AuthContext';
 import DeleteAccount from '../features/auth/DeleteAccount';
 import LogoutAccount from '../features/auth/LogoutAccount';
+import TranslatedText from '../features/translation/components/TranslatedText';
 
 const Account = () => {
   const navigation = useNavigation();
@@ -40,12 +40,12 @@ const Account = () => {
         <TouchableOpacity
           onPress={() => LogoutAccount(navigation, checkAuth)}
           style={styles.listItem}>
-          <Text>Logout</Text>
+          <TranslatedText textToTranslate={'logout'} />
         </TouchableOpacity>
         <TouchableOpacity
           onPress={() => DeleteAccount(user.userId, navigation)}
           style={styles.listItem}>
-          <Text>Delete Account</Text>
+          <TranslatedText textToTranslate={'delete account'} />
         </TouchableOpacity>
       </SafeAreaView>
     );

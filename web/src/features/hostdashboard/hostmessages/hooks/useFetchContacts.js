@@ -86,13 +86,10 @@ const useFetchContacts = (userId) => {
 
       const acceptedContacts = await fetchUserInfoForContacts(
         JSONData.accepted
-        // .filter(contact => contact.userId !== userId)
       );
       const pendingContacts = await fetchUserInfoForContacts(
         JSONData.pending.filter(contact => contact.userId !== userId)
       );
-      console.log('Accepted contacts:', acceptedContacts);
-      console.log('Pending contacts:', pendingContacts);
 
       setContacts(acceptedContacts);
       setPendingContacts(pendingContacts);
@@ -103,7 +100,7 @@ const useFetchContacts = (userId) => {
     }
   };
 
-  return { contacts, pendingContacts, loading, error };
+  return { contacts, pendingContacts, loading, error, setContacts };
 };
 
 export default useFetchContacts;

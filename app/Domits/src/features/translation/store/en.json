@@ -1,0 +1,14 @@
+{
+  "translation": {
+    "beds": "Bed(s)",
+    "bathrooms": "Bathroom(s)",
+    "bedrooms": "Bedroom(s)",
+    "guests": "Guest(s)",
+    "per night": "per night",
+    "bookings": "Bookings",
+    "logout": "Logout",
+    "delete account": "Delete account",
+    "language": "Language",
+    "select a language": "Select a language"
+  }
+}
