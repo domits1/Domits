@@ -321,6 +321,9 @@ const useFormStore = create((set) => ({
   submitAccommodation: async (navigate) => {
     const { accommodationDetails } = useFormStore.getState();
 
+    const savedImages = localStorage.getItem("images");
+    const images = savedImages ? JSON.parse(savedImages) : [];
+
     const isBoat = accommodationDetails.type === "boat";
     const isCamper = accommodationDetails.type === "camper";
 
@@ -330,7 +333,6 @@ const useFormStore = create((set) => ({
       ? accommodationDetails.camperSpecifications
       : {};
 
-    try {
       const formattedData = {
         ID: generateUUID(),
         Title: accommodationDetails.title || "",
@@ -364,8 +366,7 @@ const useFormStore = create((set) => ({
         HasLicense: specifications?.HasLicense || false,
         Height: specifications?.Height || 0,
         HouseRules: accommodationDetails.houseRules || {},
-        Images: Object.values(accommodationDetails.images) || [], //Remove this line if you don't want to upload images
-        IsPro: specifications?.IsPro || false,
+        Images: images, // Use images retrieved from local storage
         Length: specifications?.Length || 0,
         LicensePlate: isCamper ? specifications?.LicensePlate || "" : "",
         Manufacturer: specifications?.Manufacturer || "",
@@ -390,19 +391,31 @@ const useFormStore = create((set) => ({
         YOC: specifications?.YOC || 0,
       };
 
-      const response = await axios.post(API_BASE_URL, formattedData, {
-        headers: { "Content-Type": "application/json" },
-      });
-
-      console.log("Submitting accommodation data:", JSON.stringify(formattedData, null, 2));
-      console.log("Accommodation uploaded successfully:", response.data); //Remove this line if you don't want to log the response
-      if (response.data.statusCode === 200) {
-        navigate("/hostdashboard");
-      }
-    } catch (error) {
-      console.error("Error uploading accommodation:", error);
-    }
-  },
-}));
-
-export default useFormStore;
+      const submitData = async (retryCount = 3) => {
+        try {
+          const response = await axios.post(API_BASE_URL, formattedData, {
+            headers: { "Content-Type": "application/json" },
+            timeout: 10000, // Set a timeout of 10 seconds
+          });
+  
+          console.log("Submitting accommodation data:", JSON.stringify(formattedData, null, 2));
+          console.log("Accommodation uploaded successfully:", response.data);
+  
+          if (response.data.statusCode === 200) {
+            navigate("/hostdashboard");
+          }
+        } catch (error) {
+          if (retryCount > 0) {
+            console.warn(`Retrying... (${3 - retryCount + 1})`);
+            await submitData(retryCount - 1);
+          } else {
+            console.error("Error uploading accommodation:", error);
+          }
+        }
+      };
+  
+      await submitData();
+    },
+  }));
+  
+  export default useFormStore;

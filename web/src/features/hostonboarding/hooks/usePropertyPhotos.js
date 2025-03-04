@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 export default function usePhotos() {
-  const [images, setImages] = useState([]);
+  const [images, setImages] = useState(() => {
+    const savedImages = localStorage.getItem("images");
+    return savedImages ? JSON.parse(savedImages) : [];
+  });
+
   const [isDragOver, setIsDragOver] = useState(false);
 
   const MIN_WIDTH = 500;
@@ -12,8 +16,14 @@ export default function usePhotos() {
   const allowedFormats = ["image/jpeg", "image/png", "image/webp"];
   const MAX_IMAGES = 5;
 
+  useEffect(() => {
+    localStorage.setItem("images", JSON.stringify(images));
+  }, [images]);
+
   const validateImage = (file, callback) => {
     if (!file) return;
+
+    console.log("validating file:", file);
 
     if (!allowedFormats.includes(file.type)) {
       toast.error("❌ Alleen JPG, PNG of WEBP toegestaan.");
@@ -31,6 +41,7 @@ export default function usePhotos() {
       if (img.width < MIN_WIDTH || img.height < MIN_HEIGHT) {
         toast.error(`❌ Afbeelding moet minimaal ${MIN_WIDTH}x${MIN_HEIGHT} pixels zijn.`);
       } else {
+        console.log("image validated:", file);
         callback(file);
       }
     };
@@ -45,6 +56,8 @@ export default function usePhotos() {
       return;
     }
 
+    console.log("files received:", files);
+
     let newImages = [...images];
 
     Array.from(files).forEach((file) => {
@@ -54,6 +67,9 @@ export default function usePhotos() {
           reader.onload = () => {
             newImages = [...newImages, reader.result];
             setImages(newImages);
+
+            console.log("new images array:", newImages);
+
             toast.success("✅ Afbeelding toegevoegd!");
           };
           reader.readAsDataURL(validFile);
@@ -66,18 +82,30 @@ export default function usePhotos() {
   
 
   const deleteImage = (index) => {
+
+    console.log("deleting image at index:", index);
+
     setImages((prev) => {
       const updatedImages = prev.filter((_, i) => i !== index);
+
+      console.log("updated images array after deletion:", updatedImages);
+
       return updatedImages;
     });
     toast.info("🗑️ Afbeelding verwijderd.");
   };
 
   const reorderImages = (fromIndex, toIndex) => {
+
+    console.log("reordering images from:", fromIndex, "to:", toIndex);
+
     setImages((prev) => {
       const newImages = [...prev];
       const [movedImage] = newImages.splice(fromIndex, 1);
       newImages.splice(toIndex, 0, movedImage);
+
+      console.log("updated images array after reordering:", newImages);
+
       return newImages;
     });
     toast.info("🔄 Afbeeldingen opnieuw gerangschikt.");
