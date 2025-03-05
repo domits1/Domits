@@ -11,7 +11,7 @@ import { vatRates, touristTaxRates } from "../../../../utils/CountryVATRatesAndT
 
 import * as tf from '@tensorflow/tfjs';
 import { Line } from 'react-chartjs-2';
-import { format } from 'date-fns';
+import { format, compareAsc } from 'date-fns';
 
 import {
   Chart as ChartJS,
@@ -203,6 +203,99 @@ const HostPricing = () => {
       </div>
     );
   };
+
+  function getMinDate(priceHistory) {
+    if (!priceHistory.length) return null;
+    return priceHistory.reduce((minDate, item) =>
+      compareAsc(item.date, minDate) < 0 ? item.date : minDate,
+      priceHistory[0].date
+    );
+  }
+  
+  function getMaxDate(priceHistory) {
+    if (!priceHistory.length) return null;
+    return priceHistory.reduce((maxDate, item) =>
+      compareAsc(item.date, maxDate) > 0 ? item.date : maxDate,
+      priceHistory[0].date
+    );
+  }
+  
+  function createDateRange(start, end) {
+    let dates = [];
+    let current = new Date(start);
+    while (current <= end) {
+      dates.push(new Date(current));
+      current.setDate(current.getDate() + 1);
+    }
+    return dates;
+  }
+  
+  function toYMD(date) {
+    return format(date, 'yyyy-MM-dd');
+  }
+  
+  function chunkIntoWeeks(dates) {
+    const weeks = [];
+    for (let i = 0; i < dates.length; i += 7) {
+      weeks.push(dates.slice(i, i + 7));
+    }
+    return weeks;
+  }
+  
+  function getPriceForDate(date, priceHistory) {
+    const dayKey = toYMD(date);
+    const found = priceHistory.find(
+      (item) => toYMD(item.date) === dayKey
+    );
+    return found ? found.price : null;
+  }
+
+  function CalendarPricingView({ priceHistory }) {
+    const minDate = getMinDate(priceHistory);
+    const maxDate = getMaxDate(priceHistory);
+    if (!minDate || !maxDate) return null;
+  
+    const allDates = createDateRange(minDate, maxDate);
+  
+    const weeks = chunkIntoWeeks(allDates);
+  
+    const weekDayHeaders = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  
+    return (
+      <div className="calendar-wrapper">
+        <h3>Calendar View</h3>
+        <table className="calendar-table">
+          <thead>
+            <tr>
+              {weekDayHeaders.map((dayName) => (
+                <th key={dayName}>{dayName}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {weeks.map((week, wIndex) => (
+              <tr key={wIndex}>
+                {week.map((date, dIndex) => {
+                  const price = getPriceForDate(date, priceHistory);
+                  return (
+                    <td key={dIndex} style={{ verticalAlign: 'top' }}>
+                      <div>{format(date, 'dd/MM')}</div>
+                      {price != null && (
+                        <div style={{ fontWeight: 'bold' }}>
+                          €{price}
+                        </div>
+                      )}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  }
+  
 
   const handleEditMode = () => setEditMode(!editMode);
   const handleRateChange = (e, index) => {
@@ -397,6 +490,26 @@ const HostPricing = () => {
     return [];
   };
 
+  function seededRandom(seed) {
+    var x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+  
+  function smoothPrices(prices, windowSize = 7) {
+    let smoothed = [];
+    for (let i = 0; i < prices.length; i++) {
+      let start = Math.max(0, i - (windowSize - 1));
+      let subset = prices.slice(start, i + 1);
+      let sum = subset.reduce((acc, val) => acc + val.price, 0);
+      let avg = sum / subset.length;
+      smoothed.push({
+        date: prices[i].date,
+        price: parseFloat(avg.toFixed(2))
+      });
+    }
+    return smoothed;
+  }
+
   const predictFuturePrices = async (
     trainedModel,
     basePrice,
@@ -429,20 +542,20 @@ const HostPricing = () => {
     };
 
     const seed = accommodationId
-      .split('')
-      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    .split('')
+    .reduce((acc, char) => acc + char.charCodeAt(0), 0);
 
-    for (let i = 1; i <= 365; i++) {
-      let day = new Date(today);
-      day.setDate(today.getDate() + i);
+  for (let i = 1; i <= 365; i++) {
+    let day = new Date(today);
+    day.setDate(today.getDate() + i);
 
-      const rand1 = seededRandom(seed + i * 0.11);
-      const rand2 = seededRandom(seed + i * 0.22);
-      const rand3 = seededRandom(seed + i * 0.33);
-      const rand4 = seededRandom(seed + i * 0.44);
+    const rand1 = seededRandom(seed + i * 0.11);
+    const rand2 = seededRandom(seed + i * 0.22);
+    const rand3 = seededRandom(seed + i * 0.33);
+    const rand4 = seededRandom(seed + i * 0.44);
 
-      let month = day.getMonth() + 1;
-      let dayOfWeek = day.getDay();
+    let month = day.getMonth() + 1;
+    let dayOfWeek = day.getDay();
 
       let seasonalMultiplier = 1.0;
       if (month >= 6 && month <= 8 && countrySeason.summer) {
@@ -474,12 +587,10 @@ const HostPricing = () => {
           eventMultiplier = eventToday.factor || 1.3;
         }
       }
+      let occupancyRate = 0.75 + rand3 * 0.2;
+      let localAttractionsPopularity = 0.9 + rand4 * 0.2;
 
-      let occupancyRate = 0.5 + rand3 * 0.5;
-      let localAttractionsPopularity = 0.8 + rand4 * 0.4;
-
-      let competitorPrice = basePrice + (rand3 - 0.5) * 60;
-
+      let competitorPrice = basePrice + (rand3 - 0.5) * 20;
       let adjustedPrice =
         basePrice *
         seasonalMultiplier *
@@ -510,7 +621,10 @@ const HostPricing = () => {
         price: parseFloat(finalPredictedPrice.toFixed(2))
       });
     }
-    return future;
+
+    const smoothed = smoothPrices(future, 7);
+    return smoothed;
+
   };
 
   const openModal = async (accommodation) => {
@@ -825,6 +939,7 @@ const HostPricing = () => {
                 <div style={{ width: '100%', overflowX: 'auto', margin: '20px auto' }}>
                   <div style={{ width: '3000px', height: '300px' }}>
                     <Line data={priceData} options={chartOptions} />
+                    <CalendarPricingView priceHistory={priceHistory} />
                   </div>
                 </div>
 
