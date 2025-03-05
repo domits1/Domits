@@ -1496,11 +1496,12 @@
     background-color: #2ecc71;
     color: white;
     border: none;
-    padding: 10px 20px;
+    padding: 5px 10px;
     font-size: 16px;
     cursor: pointer;
     border-radius: 5px;
     transition: background 0.3s;
+    width: 100px;
 }
 
 .dynamic-pricing-button:hover {

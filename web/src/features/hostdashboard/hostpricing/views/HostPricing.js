@@ -1,14 +1,12 @@
-import React, { useEffect, useState, useMemo, useRef, useCallback } from 'react';
-import Pages from '../../Pages.js';
-import '../styles/HostPricing.css';
-
-import detailsIcon from '../../../../images/icons/content-view-detail-list-icon.svg';
-import tableIcon from '../../../../images/icons/content-view-table-list-icon.svg';
-import spinner from '../../../../images/spinnner.gif';
-import taxFeeIcon from '../../../../images/icons/tax-fee-icon.png';
-
-import { Auth } from 'aws-amplify';
-
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import Pages from "../../Pages.js";
+import "../styles/HostPricing.css";
+import detailsIcon from "../../../../images/icons/content-view-detail-list-icon.svg";
+import tableIcon from "../../../../images/icons/content-view-table-list-icon.svg";
+import { Auth } from "aws-amplify";
+import spinner from "../../../../images/spinnner.gif";
+import taxFeeIcon from "../../../../images/icons/tax-fee-icon.png";
+import { vatRates, touristTaxRates } from "../../../../utils/CountryVATRatesAndTouristTaxes.js";
 import * as tf from '@tensorflow/tfjs';
 import { Line } from 'react-chartjs-2';
 import { format } from 'date-fns';
@@ -23,298 +21,45 @@ import {
   Legend
 } from 'chart.js';
 
-import { vatRates, touristTaxRates } from '../../../../utils/CountryVATRatesAndTouristTaxes.js';
-
 ChartJS.register(LineElement, PointElement, CategoryScale, LinearScale, Tooltip, Legend);
 
-const itemsPerPageDetails = 3;
-const itemsPerPageTable = 7;
-
-function generateRandomTrainingData(basePrice, length = 60) {
-  const data = [];
-  for (let i = 0; i < length; i++) {
-    data.push({
-      seasonFactor: Math.random() * 2,
-      weekendFactor: Math.random() * 2,
-      competitorPrice: basePrice + (Math.random() * 50 - 25),
-      eventFactor: Math.random() * 2,
-      reviewsFactor: Math.random() * 2,
-      occupancyRate: Math.random(),
-      propertyTypeFactor: Math.random() + 0.5,
-      price: basePrice + (Math.random() * 20 - 10),
-    });
-  }
-  return data;
-}
-
-const TaxFeePopup = ({ onClose, rent, cleaningFee, vat, touristTax, domitsFee }) => {
-  const totalCost = (
-    parseFloat(rent) +
-    parseFloat(cleaningFee) +
-    parseFloat(domitsFee) +
-    parseFloat(vat) +
-    parseFloat(touristTax)
-  ).toFixed(2);
-
-  return (
-    <div className="pricing-taxFee-popup-container">
-      <div className="pricing-taxFee-popup-overlay" onClick={onClose} />
-      <div className="pricing-taxFee-popup-content">
-        <div className="pricing-taxFee-popup-header">
-          <h3>Estimate Costs</h3>
-          <button className="pricing-taxFee-popup-close-button" onClick={onClose}>
-            ✖
-          </button>
-        </div>
-        <div className="pricing-taxFee-popup-body">
-          <p>Rates per night: <span>€{rent}</span></p>
-          <p>Cleaning fee: <span>€{cleaningFee}</span></p>
-          <p>Domits Service fee (15%): <span>€{domitsFee}</span></p>
-          <p>VAT: <span>€{vat}</span></p>
-          <p>Tourist Tax: <span>€{touristTax}</span></p>
-          <hr />
-          <p>Total Cost: <span>€{totalCost}</span></p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const AIPricingModal = ({
-  isLoading,
-  basePrice,
-  dynamicPrice,
-  predictedPrice,
-  priceData,
-  chartOptions,
-  onClose
-}) => (
-  <div className="modal-overlay">
-    <div className="modal-content">
-      <h2>AI Dynamic Pricing</h2>
-      <label>Base Price (€): </label>
-      <input
-        disabled
-        type="number"
-        step="0.01"
-        value={basePrice}
-        onChange={() => {}}
-      />
-      <p>Dynamic Price: €{dynamicPrice}</p>
-      <p>Laatste dagvoorspelling (AI): €{predictedPrice}</p>
-
-      {isLoading ? (
-        <div style={{ textAlign: 'center', margin: '2rem 0' }}>
-          <img src={spinner} alt="Loading..." width="50" height="50" />
-        </div>
-      ) : (
-        <div style={{ width: '100%', overflowX: 'auto', margin: '20px auto' }}>
-          <div style={{ width: '3000px', height: '300px' }}>
-            <Line data={priceData} options={chartOptions} />
-          </div>
-        </div>
-      )}
-
-      <button className="close-modal-button" onClick={onClose}>
-        Close
-      </button>
-    </div>
-  </div>
-);
-
-const AccommodationCard = ({
-  accommodation,
-  globalIndex,
-  editMode,
-  editedRates,
-  handleRateChange,
-  editedCleaningFees,
-  handleCleaningFeeChange,
-  toggleTaxFeePopup,
-  openModal
-}) => {
-  const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
-  const cleaningFeeIncluded = extraServices.some(
-    service => service.S === 'Cleaning service (add service fee manually)'
-  );
-
-  return (
-    <div className="accommodation-card">
-      <img
-        className="accommodation-card-img"
-        src={accommodation.Images?.M?.image1?.S}
-        alt={accommodation.Title?.S || 'Accommodation'}
-      />
-      <div className="accommodation-card-details">
-        <div className="pricing-column">
-          <p className="pricing-title">{accommodation.Title?.S}</p>
-          <p>{accommodation.Country?.S}</p>
-          <p>Guests: {accommodation.GuestAmount?.N}</p>
-        </div>
-
-        <div className="pricing-column">
-          <p className="pricing-rate-input">
-            Rate:{' '}
-            {editMode ? (
-              <input
-                type="number"
-                step="0.1"
-                value={editedRates[globalIndex] || ''}
-                onChange={(e) => handleRateChange(e, globalIndex)}
-              />
-            ) : (
-              editedRates[globalIndex] ||
-              (accommodation.Rent?.N || accommodation.Rent?.S)
-            )}
-          </p>
-          <button
-            className="dynamic-pricing-button"
-            onClick={() => openModal(accommodation)}
-          >
-            Configure Dynamic Pricing
-          </button>
-          <p className="pricing-rate-input">
-            Cleaning Fee:{' '}
-            {cleaningFeeIncluded ? (
-              editMode ? (
-                <input
-                  type="number"
-                  step="0.1"
-                  value={editedCleaningFees[globalIndex] || ''}
-                  onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
-                />
-              ) : (
-                editedCleaningFees[globalIndex] ||
-                (accommodation.CleaningFee?.N || accommodation.CleaningFee?.S)
-              )
-            ) : (
-              0
-            )}
-          </p>
-          <p>
-            Availability:{' '}
-            {accommodation.Drafted?.BOOL ? 'Unavailable' : 'Available'}
-          </p>
-        </div>
-      </div>
-      <div className="pricing-taxFee-container">
-        <img
-          className="pricing-taxFee-icon-details"
-          src={taxFeeIcon}
-          alt="Tax & Fee Button"
-          onClick={() => toggleTaxFeePopup(accommodation)}
-        />
-      </div>
-    </div>
-  );
-};
-
-const AccommodationTableRow = ({
-  accommodation,
-  globalIndex,
-  editMode,
-  editedRates,
-  handleRateChange,
-  editedCleaningFees,
-  handleCleaningFeeChange,
-  toggleTaxFeePopup
-}) => {
-  const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
-  const cleaningFeeIncluded = extraServices.some(
-    service => service.S === 'Cleaning service (add service fee manually)'
-  );
-
-  return (
-    <tr>
-      <td className="pricing-table-title">{accommodation.Title?.S}</td>
-      <td>{accommodation.Country?.S}</td>
-      <td>{accommodation.GuestAmount?.N}</td>
-      <td>
-        {editMode ? (
-          <input
-            type="number"
-            step="0.1"
-            value={editedRates[globalIndex] || ''}
-            onChange={(e) => handleRateChange(e, globalIndex)}
-          />
-        ) : (
-          editedRates[globalIndex] ||
-          (accommodation.Rent?.N || accommodation.Rent?.S)
-        )}
-      </td>
-      <td>
-        {cleaningFeeIncluded ? (
-          editMode ? (
-            <input
-              type="number"
-              step="0.1"
-              value={editedCleaningFees[globalIndex] || ''}
-              onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
-            />
-          ) : (
-            editedCleaningFees[globalIndex] ||
-            (accommodation.CleaningFee?.N || accommodation.CleaningFee?.S)
-          )
-        ) : (
-          0
-        )}
-      </td>
-      <td>{accommodation.Drafted?.BOOL ? 'Unavailable' : 'Available'}</td>
-      <td>
-        <img
-          className="pricing-taxFee-icon-table"
-          src={taxFeeIcon}
-          alt="Tax & Fee Button"
-          onClick={() => toggleTaxFeePopup(accommodation)}
-        />
-      </td>
-    </tr>
-  );
-};
-
 const HostPricing = () => {
+  const [viewMode, setViewMode] = useState('details');
   const [userId, setUserId] = useState(null);
   const [accommodations, setAccommodations] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-
-  const [currentPanel, setCurrentPanel] = useState(1);
-  const [viewMode, setViewMode] = useState('details');
+  const [currentPannel, setCurrentPannel] = useState(1);
 
   const [editMode, setEditMode] = useState(false);
   const [editedRates, setEditedRates] = useState([]);
   const [originalRates, setOriginalRates] = useState([]);
   const [editedCleaningFees, setEditedCleaningFees] = useState([]);
   const [originalCleaningFees, setOriginalCleaningFees] = useState([]);
-
   const [taxFeePopup, setTaxFeePopup] = useState(false);
   const [selectedAccommodation, setSelectedAccommodation] = useState(null);
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [basePrice, setBasePrice] = useState(0);
   const [dynamicPrice, setDynamicPrice] = useState(0);
   const [priceHistory, setPriceHistory] = useState([]);
   const [predictedPrice, setPredictedPrice] = useState(0);
-
   const modelRef = useRef(null);
 
-  const [minVals, setMinVals] = useState(null);
-  const [maxVals, setMaxVals] = useState(null);
-
   useEffect(() => {
-    async function fetchUserId() {
+    const setUserIdAsync = async () => {
       try {
         const userInfo = await Auth.currentUserInfo();
         setUserId(userInfo.attributes.sub);
       } catch (error) {
-        console.error('Error retrieving user ID:', error);
+        console.error("Error setting user id:", error);
       }
-    }
-    fetchUserId();
+    };
+    setUserIdAsync();
   }, []);
 
-  const fetchAccommodationsRates = useCallback(async () => {
-    if (!userId) return;
+  const fetchAccommodationsRates = async () => {
     setIsLoading(true);
+    if (!userId) return;
+
     try {
       const response = await fetch(
         'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Read-AccommodationRatesByOwner',
@@ -326,7 +71,9 @@ const HostPricing = () => {
           }
         }
       );
+
       const data = await response.json();
+
       if (data.body && typeof data.body === 'string') {
         const parsedBody = JSON.parse(data.body);
         if (Array.isArray(parsedBody)) {
@@ -336,22 +83,20 @@ const HostPricing = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching accommodation data:', error);
+      console.error("Error fetching accommodation data:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  useEffect(() => {
+    fetchAccommodationsRates();
   }, [userId]);
 
   useEffect(() => {
-    if (userId) {
-      fetchAccommodationsRates();
-    }
-  }, [userId, fetchAccommodationsRates]);
-
-  useEffect(() => {
     if (accommodations.length > 0) {
-      const initialRates = accommodations.map(acc => acc.Rent?.N || acc.Rent?.S || '');
-      const initialCleaningFees = accommodations.map(acc => acc.CleaningFee?.N || acc.CleaningFee?.S || '');
+      const initialRates = accommodations.map(acc => acc.Rent.N || acc.Rent.S || '');
+      const initialCleaningFees = accommodations.map(acc => acc.CleaningFee.N || acc.CleaningFee.S || '');
       setEditedRates(initialRates);
       setOriginalRates(initialRates);
       setEditedCleaningFees(initialCleaningFees);
@@ -359,15 +104,19 @@ const HostPricing = () => {
     }
   }, [accommodations]);
 
-  const accommodationsCount = accommodations.length;
+  const accommodationsLength = accommodations.length;
+  const itemsPerPageDetails = 3;
+  const itemsPerPageTable = 7;
   const activeItemsPerPage = viewMode === 'details' ? itemsPerPageDetails : itemsPerPageTable;
-  const startIndex = (currentPanel - 1) * activeItemsPerPage;
-  const endIndex = currentPanel * activeItemsPerPage;
+
+  const startIndex = (currentPannel - 1) * activeItemsPerPage;
+  const endIndex = currentPannel * activeItemsPerPage;
   const currentAccommodations = accommodations.slice(startIndex, endIndex);
 
+  const pricingPannel = (pannelNumber) => setCurrentPannel(pannelNumber);
   const handlePageRange = () => {
-    const totalPages = Math.ceil(accommodationsCount / activeItemsPerPage);
-    let startPage = currentPanel - 2;
+    const totalPages = Math.ceil(accommodationsLength / activeItemsPerPage);
+    let startPage = currentPannel - 2;
     if (startPage < 1) startPage = 1;
     let endPage = startPage + 4;
     if (endPage > totalPages) {
@@ -380,30 +129,25 @@ const HostPricing = () => {
 
   const toggleView = (mode) => {
     setViewMode(mode);
-    setCurrentPanel(1);
+    setCurrentPannel(1);
   };
   const handleDetailsView = () => toggleView('details');
   const handleTableView = () => toggleView('table');
 
-  const toggleTaxFeePopupHandler = (accommodation) => {
+  const toggleTaxFeePopup = (accommodation) => {
     setSelectedAccommodation(accommodation);
-    setTaxFeePopup((prev) => !prev);
+    setTaxFeePopup(!taxFeePopup);
   };
-  const handleClosePopUp = () => {
-    setTaxFeePopup(false);
-    setSelectedAccommodation(null);
-  };
+  const handleClosePopUp = () => setTaxFeePopup(false);
 
   const handleTaxFeePopup = (details, globalIndex) => {
-    const countryVAT = vatRates.find(rate => rate.country === details.Country?.S)?.vat || '0';
+    const countryVAT = vatRates.find(rate => rate.country === details.Country?.S)?.vat || "0";
     const vatRate = parseFloat(countryVAT) / 100;
 
-    const countryTouristTax = touristTaxRates.find(
-      rate => rate.country === details.Country?.S
-    )?.touristTax || '0';
+    const countryTouristTax = touristTaxRates.find(rate => rate.country === details.Country?.S)?.touristTax || "0";
 
     const rent = parseFloat(
-      editedRates[globalIndex] || details.Rent?.N || details.Rent?.S || 0
+      editedRates[globalIndex] || details.Rent.N || details.Rent.S || 0
     ).toFixed(2);
 
     const cleaningFee = parseFloat(
@@ -413,31 +157,51 @@ const HostPricing = () => {
     const domitsFee = (parseFloat(rent) * 0.15).toFixed(2);
     const vatTax = (parseFloat(rent) * vatRate).toFixed(2);
 
-    let touristTaxValue = 0;
+    let touristTax;
     if (countryTouristTax.includes('%')) {
       const taxRate = parseFloat(countryTouristTax.replace('%', '')) / 100;
-      touristTaxValue = (parseFloat(rent) * taxRate).toFixed(2);
+      touristTax = (parseFloat(rent) * taxRate).toFixed(2);
     } else if (
       countryTouristTax.includes('EUR') ||
       countryTouristTax.includes('USD') ||
       countryTouristTax.includes('GBP')
     ) {
-      touristTaxValue = parseFloat(countryTouristTax.replace(/[^\d.]/g, '') || 0).toFixed(2);
+      touristTax = parseFloat(countryTouristTax.replace(/[^\d.]/g, '') || 0).toFixed(2);
+    } else {
+      touristTax = "0.00";
     }
 
+    const totalCost = (
+      parseFloat(rent) +
+      parseFloat(cleaningFee) +
+      parseFloat(domitsFee) +
+      parseFloat(vatTax) +
+      parseFloat(touristTax)
+    ).toFixed(2);
+
     return (
-      <TaxFeePopup
-        onClose={handleClosePopUp}
-        rent={rent}
-        cleaningFee={cleaningFee}
-        vat={vatTax}
-        touristTax={touristTaxValue}
-        domitsFee={domitsFee}
-      />
+      <div className="pricing-taxFee-popup-container">
+        <div className="pricing-taxFee-popup-overlay" onClick={handleClosePopUp}></div>
+        <div className="pricing-taxFee-popup-content">
+          <div className="pricing-taxFee-popup-header">
+            <h3>Estimate Costs</h3>
+            <button className="pricing-taxFee-popup-close-button" onClick={handleClosePopUp}>✖</button>
+          </div>
+          <div className="pricing-taxFee-popup-body">
+            <p>Rates per night: <span>€{rent}</span></p>
+            <p>Cleaning fee: <span>€{cleaningFee}</span></p>
+            <p>Domits Service fee 15%: <span>€{domitsFee}</span></p>
+            <p>VAT Tax ({countryVAT}%): <span>€{vatTax}</span></p>
+            <p>Tourist Tax: <span>€{touristTax}</span></p>
+            <hr />
+            <p>Total Cost: <span>€{totalCost}</span></p>
+          </div>
+        </div>
+      </div>
     );
   };
 
-  const handleEditMode = () => setEditMode((prev) => !prev);
+  const handleEditMode = () => setEditMode(!editMode);
 
   const handleRateChange = (e, index) => {
     const updatedRates = [...editedRates];
@@ -459,21 +223,21 @@ const HostPricing = () => {
           service => service.S === 'Cleaning service (add service fee manually)'
         );
 
-        if (!editedRates[i]) {
-          throw new Error('Rent is missing or empty for an accommodation.');
+        if (editedRates[i] === undefined || editedRates[i] === '') {
+          throw new Error(`Rent is missing or empty for accommodation.`);
         }
 
-        if (cleaningFeeIncluded && !editedCleaningFees[i]) {
-          throw new Error(
-            'CleaningFee is missing or empty for an accommodation that needs cleaning.'
-          );
+        if (cleaningFeeIncluded && (editedCleaningFees[i] === undefined || editedCleaningFees[i] === '')) {
+          throw new Error(`CleaningFee is missing or empty for accommodation.`);
         }
 
         const rent = parseFloat(editedRates[i]);
         const cleaningFee = cleaningFeeIncluded ? parseFloat(editedCleaningFees[i]) : 0;
 
         if (rent < 0 || cleaningFee < 0) {
-          throw new Error('Negative values detected for Rent or CleaningFee.');
+          throw new Error(
+            `Negative value detected for accommodation. Rent: ${rent}, CleaningFee: ${cleaningFee}`
+          );
         }
 
         const roundedRent = Math.max(0, rent).toFixed(2);
@@ -504,22 +268,19 @@ const HostPricing = () => {
       const parsedBody = JSON.parse(data.body);
 
       if (parsedBody && typeof parsedBody === 'object') {
-        const updatedRatesList = parsedBody.map(
-          (acc) => acc.Rent?.N || acc.Rent?.S || ''
-        );
-        const updatedCleaningFeesList = parsedBody.map(
-          (acc) => acc.CleaningFee?.N || acc.CleaningFee?.S || ''
-        );
-        setOriginalRates(updatedRatesList);
-        setOriginalCleaningFees(updatedCleaningFeesList);
+        const updatedRates = parsedBody.map(acc => acc.Rent.N || acc.Rent.S || '');
+        const updatedCleaningFees = parsedBody.map(acc => acc.CleaningFee.N || acc.CleaningFee.S || '');
+        setOriginalRates(updatedRates);
+        setOriginalCleaningFees(updatedCleaningFees);
         setEditMode(false);
-        console.log('Rates updated successfully');
+        alert('Rates updated successfully');
         fetchAccommodationsRates();
       } else {
         console.error('Rates update failed:', parsedBody);
       }
     } catch (error) {
-      console.error('Rates update failed:', error);
+      alert('Rates update failed');
+      console.error("Error updating rates:", error);
     }
   };
 
@@ -528,234 +289,217 @@ const HostPricing = () => {
     setEditedCleaningFees([...originalCleaningFees]);
   };
 
-  const trainAIModel = async (data) => {
-    const features = [
-      'seasonFactor', 'weekendFactor', 'competitorPrice', 'eventFactor',
-      'reviewsFactor', 'occupancyRate', 'propertyTypeFactor', 'price'
-    ];
+  const generateRandomTrainingData = (basePrice, numDays = 60) => {
+    let data = [];
+    let startDate = new Date();
+    for (let i = 0; i < numDays; i++) {
+      const day = new Date(startDate);
+      day.setDate(startDate.getDate() - (numDays - i));
 
-    const mins = {};
-    const maxs = {};
-    features.forEach(feature => {
-      const values = data.map(d => d[feature]);
-      mins[feature] = Math.min(...values);
-      maxs[feature] = Math.max(...values);
-    });
-    setMinVals(mins);
-    setMaxVals(maxs);
+      let month = day.getMonth() + 1;
+      let dayOfWeek = day.getDay();
 
+      let seasonalFactor = 1.0;
+      if (month >= 6 && month <= 8) {
+        seasonalFactor = 1.2;
+      } else if (month >= 9 && month <= 11) {
+        seasonalFactor = 0.9;
+      } else if (month === 12 || month <= 2) {
+        seasonalFactor = 1.05;
+      } else if (month >= 3 && month <= 5) {
+        seasonalFactor = 1.1;
+      }
+
+      let weekendFactor = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.15 : 1.0;
+      let eventFactor = Math.random() < 0.1 ? 1.2 : 1.0;
+      let competitorPrice = basePrice + (Math.random() - 0.5) * 60;
+      let noiseFactor = 1 + (Math.random() - 0.5) * 0.1;
+
+      let finalPrice =
+        basePrice *
+        seasonalFactor *
+        weekendFactor *
+        eventFactor *
+        (0.5 + competitorPrice / (basePrice * 2)) *
+        noiseFactor;
+
+      data.push({
+        date: day,
+        seasonalFactor,
+        weekendFactor,
+        competitorPrice,
+        eventFactor,
+        price: parseFloat(finalPrice.toFixed(2))
+      });
+    }
+    return data;
+  };
+
+  const trainAIModel = async (trainingData) => {
     if (modelRef.current) {
       modelRef.current.dispose();
       modelRef.current = null;
     }
 
     const newModel = tf.sequential();
-    newModel.add(tf.layers.dense({ units: 16, inputShape: [7], activation: 'relu' }));
+    newModel.add(tf.layers.dense({ units: 16, inputShape: [4], activation: 'relu' }));
     newModel.add(tf.layers.dense({ units: 8, activation: 'relu' }));
     newModel.add(tf.layers.dense({ units: 1 }));
 
-    newModel.compile({
-      optimizer: 'adam',
-      loss: 'meanSquaredError',
-    });
+    newModel.compile({ optimizer: 'adam', loss: 'meanSquaredError' });
 
-    const scaleValue = (value, min, max) => {
-      return (max === min) ? 0.5 : (value - min) / (max - min);
-    };
+    const xs = tf.tensor2d(
+      trainingData.map(d => [
+        d.seasonalFactor,
+        d.weekendFactor,
+        d.competitorPrice,
+        d.eventFactor
+      ])
+    );
+    const ys = tf.tensor2d(trainingData.map(d => [d.price]));
 
-    const xsArray = data.map(d => ([
-      scaleValue(d.seasonFactor, mins.seasonFactor, maxs.seasonFactor),
-      scaleValue(d.weekendFactor, mins.weekendFactor, maxs.weekendFactor),
-      scaleValue(d.competitorPrice, mins.competitorPrice, maxs.competitorPrice),
-      scaleValue(d.eventFactor, mins.eventFactor, maxs.eventFactor),
-      scaleValue(d.reviewsFactor, mins.reviewsFactor, maxs.reviewsFactor),
-      scaleValue(d.occupancyRate, mins.occupancyRate, maxs.occupancyRate),
-      scaleValue(d.propertyTypeFactor, mins.propertyTypeFactor, maxs.propertyTypeFactor)
-    ]));
-    const ysArray = data.map(d => ([
-      scaleValue(d.price, mins.price, maxs.price)
-    ]));
+    await newModel.fit(xs, ys, { epochs: 100 });
+    xs.dispose();
+    ys.dispose();
 
-    const xs = tf.tensor2d(xsArray);
-    const ys = tf.tensor2d(ysArray);
+    modelRef.current = newModel;
+    return newModel;
+  };
 
-    const earlyStopping = tf.callbacks.earlyStopping({
-      monitor: 'val_loss',
-      patience: 10,
-      restoreBestWeights: true
-    });
-
+  const fetchEventsInLocation = async (location) => {
     try {
-      await newModel.fit(xs, ys, {
-        epochs: 150,
-        batchSize: 32,
-        validationSplit: 0.2,
-        callbacks: [earlyStopping]
-      });
-      modelRef.current = newModel;
-      return newModel;
-    } catch (error) {
-      console.error('Error training model:', error);
-      throw error;
-    } finally {
-      xs.dispose();
-      ys.dispose();
+      const response = await fetch(`/api/events?location=${location}`);
+      if (!response.ok) {
+        console.warn("No events found or error fetching events");
+        return [];
+      }
+      const events = await response.json();
+      return events;
+    } catch (err) {
+      console.error("Error fetching events data:", err);
+      return [];
     }
   };
 
-  const predictFuturePrices = async (trainedModel, basePrice, country, events = []) => {
-    if (!trainedModel || !minVals || !maxVals) {
-      console.warn('Model of min/max waarden niet beschikbaar.');
-      return [];
-    }
-
-    const scaleValue = (value, min, max) => {
-      return (max === min) ? 0.5 : (value - min) / (max - min);
-    };
-
-    const predictions = [];
-    const today = new Date();
+  const predictFuturePrices = async (trainedModel, basePrice, country, events) => {
+    let future = [];
+    let today = new Date();
 
     const seasonalMultipliers = {
-      default: { summer: [1.1, 1.2], autumn: [0.9, 1.0], winter: [1.0, 1.1], spring: [1.0, 1.1] },
-      Zwitserland: { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
-      Oostenrijk: { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
-      Australië: { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
-      Argentinië: { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "default": { summer: [1.1, 1.2], autumn: [0.9, 1.0], winter: [1.0, 1.1], spring: [1.0, 1.1] },
+      "Zwitserland": { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Oostenrijk": { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Australië": { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Argentinië": { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] }
     };
 
+    const countrySeason = seasonalMultipliers[country] || seasonalMultipliers["default"];
     const holidayMultipliers = {
-      '01-01': 1.3,
-      '12-25': 1.5,
-      '12-26': 1.5,
-      '12-31': 1.4,
-      '14-02': 1.4,
-      '05-05': 1.1,
-      '05-12': 1.2,
-      '04-27': 1.2
-    };
-
-    const defaultReviewsFactor = 1.0;
-    const defaultOccupancyRate = 0.5;
-    const defaultPropertyTypeFactor = 1.0;
-
-    const getSeason = (month) => {
-      if (month >= 6 && month <= 8) return 'summer';
-      if (month >= 9 && month <= 11) return 'autumn';
-      if (month === 12 || month <= 2) return 'winter';
-      return 'spring';
+      "01-01": 1.3,
+      "12-25": 1.5,
+      "12-26": 1.5,
+      "12-31": 1.4,
+      "14-02": 1.4,
+      "05-05": 1.1,
+      "05-12": 1.2,
+      "04-27": 1.2
     };
 
     for (let i = 1; i <= 365; i++) {
-      const futureDate = new Date(today);
-      futureDate.setDate(today.getDate() + i);
+      let day = new Date(today);
+      day.setDate(today.getDate() + i);
 
-      const month = futureDate.getMonth() + 1;
-      const dayOfWeek = futureDate.getDay();
-      const dateKey = `${String(month).padStart(2, '0')}-${String(futureDate.getDate()).padStart(2, '0')}`;
+      let month = day.getMonth() + 1;
+      let dayOfWeek = day.getDay();
 
-      const season = getSeason(month);
-      const countrySeasons = seasonalMultipliers[country] || seasonalMultipliers.default;
-      const seasonalMultiplier = (countrySeasons[season][0] + countrySeasons[season][1]) / 2;
-      const holidayFactor = holidayMultipliers[dateKey] || 1.0;
-      const weekendMultiplier = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.1 : 1.0;
+      let seasonalMultiplier = 1.0;
+      if (month >= 6 && month <= 8 && countrySeason.summer) {
+        seasonalMultiplier = countrySeason.summer[0] + Math.random() * (countrySeason.summer[1] - countrySeason.summer[0]);
+      } else if (month >= 9 && month <= 11 && countrySeason.autumn) {
+        seasonalMultiplier = countrySeason.autumn[0] + Math.random() * (countrySeason.autumn[1] - countrySeason.autumn[0]);
+      } else if ((month === 12 || month <= 2) && countrySeason.winter) {
+        seasonalMultiplier = countrySeason.winter[0] + Math.random() * (countrySeason.winter[1] - countrySeason.winter[0]);
+      } else if (month >= 3 && month <= 5 && countrySeason.spring) {
+        seasonalMultiplier = countrySeason.spring[0] + Math.random() * (countrySeason.spring[1] - countrySeason.spring[0]);
+      }
+
+      let dateKey = `${month.toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
+      let holidayMultiplier = holidayMultipliers[dateKey] || 1.0;
+      let weekendMultiplier = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.1 + Math.random() * 0.05 : 1.0;
 
       let eventMultiplier = 1.0;
-      const eventToday = events.find(ev => {
-        const evDate = new Date(ev.date);
-        return evDate.toDateString() === futureDate.toDateString();
-      });
-      if (eventToday) {
-        eventMultiplier = eventToday.factor || 1.2;
+      if (Array.isArray(events) && events.length > 0) {
+        let eventToday = events.find(event => {
+          let eventDate = new Date(event.date);
+          return eventDate.toDateString() === day.toDateString();
+        });
+        if (eventToday) {
+          eventMultiplier = eventToday.factor || 1.3;
+        }
       }
 
-      const adjustedPrice = basePrice *
+      let noiseFactor = 1 + (Math.random() - 0.5) * 0.05;
+
+      let adjustedPrice =
+        basePrice *
         seasonalMultiplier *
-        holidayFactor *
+        holidayMultiplier *
         weekendMultiplier *
-        eventMultiplier;
+        eventMultiplier *
+        noiseFactor;
 
-      const input = [
-        scaleValue(seasonalMultiplier, minVals.seasonFactor, maxVals.seasonFactor),
-        scaleValue(weekendMultiplier, minVals.weekendFactor, maxVals.weekendFactor),
-        scaleValue(basePrice, minVals.competitorPrice, maxVals.competitorPrice),
-        scaleValue(eventMultiplier, minVals.eventFactor, maxVals.eventFactor),
-        scaleValue(defaultReviewsFactor, minVals.reviewsFactor, maxVals.reviewsFactor),
-        scaleValue(defaultOccupancyRate, minVals.occupancyRate, maxVals.occupancyRate),
-        scaleValue(defaultPropertyTypeFactor, minVals.propertyTypeFactor, maxVals.propertyTypeFactor),
-      ];
+      const inputTensor = tf.tensor2d([[
+        seasonalMultiplier,
+        weekendMultiplier,
+        basePrice,
+        eventMultiplier
+      ]], [1, 4]);
 
-      try {
-        const inputTensor = tf.tensor2d([input], [1, 7]);
-        const outputTensor = trainedModel.predict(inputTensor);
-        const aiPriceScaled = (await outputTensor.data())[0];
+      const modelOutput = trainedModel.predict(inputTensor);
+      const aiPriceTensor = await modelOutput.data();
+      const aiPrice = aiPriceTensor[0];
 
-        const aiPrice = aiPriceScaled * (maxVals.price - minVals.price) + minVals.price;
+      let finalPredictedPrice = (adjustedPrice + aiPrice) / 2;
 
-        const finalPrice = (adjustedPrice + aiPrice) / 2;
+      inputTensor.dispose();
+      modelOutput.dispose();
 
-        predictions.push({
-          date: futureDate,
-          price: parseFloat(finalPrice.toFixed(2))
-        });
-
-        inputTensor.dispose();
-        outputTensor.dispose();
-      } catch (error) {
-        console.error(`Error during prediction for day ${i}:`, error);
-        predictions.push({
-          date: futureDate,
-          price: parseFloat(adjustedPrice.toFixed(2)),
-          error: true
-        });
-      }
+      future.push({
+        date: day,
+        price: parseFloat(finalPredictedPrice.toFixed(2))
+      });
     }
-
-    return predictions;
+    return future;
   };
+  
 
   const openModal = async (accommodation) => {
     setSelectedAccommodation(accommodation);
+
     if (!accommodation?.ID?.S) {
-      console.error('No valid ID for the accommodation:', accommodation);
+      console.error("No ID found in accommodation:", accommodation);
       return;
     }
 
-    try {
-      const accommodationIndex = accommodations.indexOf(accommodation);
-      const storedRent = parseFloat(
-        editedRates[accommodationIndex] ??
-        accommodation?.Rent?.N ??
-        accommodation?.Rent?.S
-      ) || 100;
-      setBasePrice(storedRent);
+    const storedRent = parseFloat(
+      editedRates[accommodations.indexOf(accommodation)] ??
+      accommodation?.Rent?.N ??
+      accommodation?.Rent?.S
+    ) || 100;
 
-      const trainingData = generateRandomTrainingData(storedRent, 60);
+    setBasePrice(storedRent);
 
-      setIsLoading(true);
-      const trainedModel = await trainAIModel(trainingData);
+    const events = await fetchEventsInLocation(accommodation.Country?.S || "Unknown");
 
-      const events = [];
-      const future = await predictFuturePrices(
-        trainedModel,
-        storedRent,
-        accommodation.Country?.S || 'default',
-        events
-      );
+    const trainingData = generateRandomTrainingData(storedRent, 60);
+    const trainedModel = await trainAIModel(trainingData);
 
-      if (future.length > 0) {
-        setPredictedPrice(future[future.length - 1].price);
-      } else {
-        setPredictedPrice(0);
-      }
-      setPriceHistory(future);
+    const future = await predictFuturePrices(trainedModel, storedRent, accommodation.Country?.S, events);
+    setPriceHistory(future);
 
-    } catch (error) {
-      console.error('Error opening modal:', error);
-    } finally {
-      setIsLoading(false);
-      setIsModalOpen(true);
-    }
+    const lastDayPrice = future[future.length - 1].price;
+    setPredictedPrice(lastDayPrice);
+    setIsModalOpen(true);
   };
 
   const closeModal = () => {
@@ -770,28 +514,21 @@ const HostPricing = () => {
   }, [basePrice]);
 
   const priceData = useMemo(() => {
-    if (!priceHistory || priceHistory.length === 0) {
-      return {
-        labels: [],
-        datasets: []
-      };
-    }
-
-    const labels = priceHistory.map((entry) => format(new Date(entry.date), 'dd MMM yyyy'));
+    const labels = priceHistory.map((entry) => format(entry.date, "dd MMM yyyy"));
     const data = priceHistory.map((entry) => entry.price);
 
     return {
       labels,
       datasets: [
         {
-          label: 'Predicted Price (€)',
-          data,
-          borderColor: '#3498db',
-          backgroundColor: 'rgba(52, 152, 219, 0.2)',
+          label: "Predicted Price (€)",
+          data: data,
+          borderColor: "#3498db",
+          backgroundColor: "rgba(52, 152, 219, 0.2)",
           borderWidth: 2,
           pointRadius: 2,
           fill: true,
-          tension: 0.3,
+          tension: 0.3
         }
       ]
     };
@@ -811,19 +548,25 @@ const HostPricing = () => {
         beginAtZero: false,
         title: {
           display: true,
-          text: 'Price (€)'
+          text: "Price (€)"
         }
       }
     },
     plugins: {
       legend: {
-        position: 'top'
+        position: "top"
       },
       tooltip: {
         enabled: true,
         callbacks: {
-          title: (tooltipItems) => tooltipItems[0].label,
-          label: (tooltipItem) => `Price: €${tooltipItem.parsed.y}`,
+          title: (tooltipItems) => {
+            const item = tooltipItems[0];
+            return item.label;
+          },
+          label: (tooltipItem) => {
+            const price = tooltipItem.parsed.y;
+            return `Price: €${price}`;
+          }
         }
       }
     }
@@ -831,12 +574,14 @@ const HostPricing = () => {
 
   return (
     <div className="containerHostPricing">
+      
       <div className="host-pricing-header">
         <h2 className="host-pricing-title">Pricing</h2>
         <div className="host-pricing-header-buttons">
           <button className="refresh-accommodation-button" onClick={fetchAccommodationsRates}>
             Refresh
           </button>
+
           <div className="pricing-switch-layout-button">
             <button className="details-switch-button" onClick={handleDetailsView}>
               <img src={detailsIcon} alt="detailsView" />
@@ -861,19 +606,76 @@ const HostPricing = () => {
               <div className="accommodation-cards">
                 {currentAccommodations.map((accommodation, index) => {
                   const globalIndex = startIndex + index;
+                  const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
+                  const cleaningFeeIncluded = extraServices.some(
+                    service => service.S === 'Cleaning service (add service fee manually)'
+                  );
+
                   return (
-                    <AccommodationCard
-                      key={accommodation.ID?.S || index}
-                      accommodation={accommodation}
-                      globalIndex={globalIndex}
-                      editMode={editMode}
-                      editedRates={editedRates}
-                      handleRateChange={handleRateChange}
-                      editedCleaningFees={editedCleaningFees}
-                      handleCleaningFeeChange={handleCleaningFeeChange}
-                      toggleTaxFeePopup={toggleTaxFeePopupHandler}
-                      openModal={openModal}
-                    />
+                    <div key={globalIndex} className="accommodation-card">
+                      <img
+                        className="accommodation-card-img"
+                        src={accommodation.Images.M.image1.S}
+                        alt="Accommodation"
+                      />
+                      <div className="accommodation-card-details">
+                        <div className="pricing-column">
+                          <p className="pricing-title">{accommodation.Title.S}</p>
+                          <p>{accommodation.Country.S}</p>
+                          <p>Guests: {accommodation.GuestAmount.N}</p>
+                        </div>
+
+                        <div className="pricing-column">
+                          <p className="pricing-rate-input">
+                          <button
+                            className="dynamic-pricing-button"
+                            onClick={() => openModal(accommodation)}
+                          >
+                            Dynamic
+                          </button>
+                            Rate:{' '}
+                            {editMode ? (
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={editedRates[globalIndex] || ''}
+                                onChange={(e) => handleRateChange(e, globalIndex)}
+                              />
+                            ) : (
+                              editedRates[globalIndex] ||
+                              (accommodation.Rent.N || accommodation.Rent.S)
+                            )}
+                          </p>
+                          <p className="pricing-rate-input">
+                            Cleaning Fee:{' '}
+                            {cleaningFeeIncluded ? (
+                              editMode ? (
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  value={editedCleaningFees[globalIndex] || ''}
+                                  onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
+                                />
+                              ) : (
+                                editedCleaningFees[globalIndex] ||
+                                (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
+                              )
+                            ) : (
+                              0
+                            )}
+                          </p>
+                          <p>Availability: {accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</p>
+                        </div>
+                      </div>
+                      <div className="pricing-taxFee-container">
+                        <img
+                          className="pricing-taxFee-icon-details"
+                          src={taxFeeIcon}
+                          alt="Tax & Fee Button"
+                          onClick={() => toggleTaxFeePopup(accommodation)}
+                        />
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -895,18 +697,56 @@ const HostPricing = () => {
                 <tbody>
                   {currentAccommodations.map((accommodation, index) => {
                     const globalIndex = startIndex + index;
+                    const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
+                    const cleaningFeeIncluded = extraServices.some(
+                      service => service.S === 'Cleaning service (add service fee manually)'
+                    );
+
                     return (
-                      <AccommodationTableRow
-                        key={accommodation.ID?.S || index}
-                        accommodation={accommodation}
-                        globalIndex={globalIndex}
-                        editMode={editMode}
-                        editedRates={editedRates}
-                        handleRateChange={handleRateChange}
-                        editedCleaningFees={editedCleaningFees}
-                        handleCleaningFeeChange={handleCleaningFeeChange}
-                        toggleTaxFeePopup={toggleTaxFeePopupHandler}
-                      />
+                      <tr key={globalIndex}>
+                        <td className="pricing-table-title">{accommodation.Title.S}</td>
+                        <td>{accommodation.Country.S}</td>
+                        <td>{accommodation.GuestAmount.N}</td>
+                        <td>
+                          {editMode ? (
+                            <input
+                              type="number"
+                              step="0.1"
+                              value={editedRates[globalIndex] || ''}
+                              onChange={(e) => handleRateChange(e, globalIndex)}
+                            />
+                          ) : (
+                            editedRates[globalIndex] ||
+                            (accommodation.Rent.N || accommodation.Rent.S)
+                          )}
+                        </td>
+                        <td>
+                          {cleaningFeeIncluded ? (
+                            editMode ? (
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={editedCleaningFees[globalIndex] || ''}
+                                onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
+                              />
+                            ) : (
+                              editedCleaningFees[globalIndex] ||
+                              (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
+                            )
+                          ) : (
+                            0
+                          )}
+                        </td>
+                        <td>{accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</td>
+                        <td>
+                          <img
+                            className="pricing-taxFee-icon-table"
+                            src={taxFeeIcon}
+                            alt="Tax & Fee Button"
+                            onClick={() => toggleTaxFeePopup(accommodation)}
+                          />
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -914,41 +754,59 @@ const HostPricing = () => {
             </div>
           )}
 
-          {taxFeePopup && selectedAccommodation && handleTaxFeePopup(
-            selectedAccommodation,
-            accommodations.indexOf(selectedAccommodation)
+          {taxFeePopup && selectedAccommodation && (
+            handleTaxFeePopup(
+              selectedAccommodation,
+              accommodations.indexOf(selectedAccommodation)
+            )
           )}
 
           {isModalOpen && selectedAccommodation && (
-            <AIPricingModal
-              isLoading={isLoading}
-              basePrice={basePrice}
-              dynamicPrice={dynamicPrice}
-              predictedPrice={predictedPrice}
-              priceData={priceData}
-              chartOptions={chartOptions}
-              onClose={closeModal}
-            />
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <h2>AI Dynamic Pricing</h2>
+
+                <label>Base Price (€): </label>
+                <input
+                  disabled
+                  type="number"
+                  step="0.01"
+                  value={basePrice}
+                  onChange={(e) => setBasePrice(parseFloat(e.target.value) || 0)}
+                />
+
+                <p>Dynamic Price: €{dynamicPrice}</p>
+                <p>Laatste dagvoorspelling (AI): €{predictedPrice}</p>
+
+                <div style={{ width: '100%', overflowX: 'auto', margin: '20px auto' }}>
+                  <div style={{ width: '3000px', height: '300px' }}>
+                    <Line data={priceData} options={chartOptions} />
+                  </div>
+                </div>
+
+                <button className="close-modal-button" onClick={closeModal}>
+                  Close
+                </button>
+              </div>
+            </div>
           )}
 
           <div className="pricing-bottom-buttons">
             <div className="pricing-navigation-buttons">
               <button
                 className="pricing-prev-nav-button"
-                onClick={() => setCurrentPanel(Math.max(currentPanel - 1, 1))}
-                disabled={currentPanel === 1}
+                onClick={() => pricingPannel(currentPannel > 1 ? currentPannel - 1 : 1)}
+                disabled={currentPannel === 1}
               >
                 Previous
               </button>
-              {[...Array(endPage - startPage + 1)].map((_, idx) => {
-                const pageIndex = startPage + idx;
+              {[...Array(endPage - startPage + 1)].map((_, index) => {
+                const pageIndex = startPage + index;
                 return (
                   <button
                     key={pageIndex}
-                    className={`pricing-pagenumber-nav-button ${
-                      currentPanel === pageIndex ? 'active' : ''
-                    }`}
-                    onClick={() => setCurrentPanel(pageIndex)}
+                    className={`pricing-pagenumber-nav-button ${currentPannel === pageIndex ? 'active' : ''}`}
+                    onClick={() => pricingPannel(pageIndex)}
                   >
                     {pageIndex}
                   </button>
@@ -957,31 +815,27 @@ const HostPricing = () => {
               <button
                 className="pricing-next-nav-button"
                 onClick={() =>
-                  setCurrentPanel(
-                    Math.min(
-                      currentPanel + 1,
-                      Math.ceil(accommodationsCount / activeItemsPerPage)
-                    )
+                  pricingPannel(
+                    currentPannel < Math.ceil(accommodationsLength / activeItemsPerPage)
+                      ? currentPannel + 1
+                      : currentPannel
                   )
                 }
-                disabled={
-                  currentPanel === Math.ceil(accommodationsCount / activeItemsPerPage)
-                }
+                disabled={currentPannel === Math.ceil(accommodationsLength / activeItemsPerPage)}
               >
                 Next
               </button>
             </div>
 
             <div className="pricing-action-buttons">
-              <button onClick={handleEditMode}>
-                {editMode ? 'Cancel Edit' : 'Edit'}
-              </button>
+              <button onClick={handleEditMode}>Edit</button>
               <button onClick={handleUndo}>Undo</button>
               <button className="pricing-action-save" onClick={handleSaveRates}>
                 Save
               </button>
             </div>
           </div>
+
         </div>
       </div>
     </div>
