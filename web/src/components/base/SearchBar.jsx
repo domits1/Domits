@@ -179,9 +179,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
       setTimeout(() => {
         performSearch(accommodation, address, totalGuests);
       }, 1);
-    } else {
-      setSearchResults([]);
-    }
+    } 
   }, [location]);
 
   const performSearch = async (accommodation, address, totalGuests) => {
