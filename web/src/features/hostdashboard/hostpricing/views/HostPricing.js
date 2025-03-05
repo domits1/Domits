@@ -6,7 +6,9 @@ import tableIcon from "../../../../images/icons/content-view-table-list-icon.svg
 import { Auth } from "aws-amplify";
 import spinner from "../../../../images/spinnner.gif";
 import taxFeeIcon from "../../../../images/icons/tax-fee-icon.png";
+
 import { vatRates, touristTaxRates } from "../../../../utils/CountryVATRatesAndTouristTaxes.js";
+
 import * as tf from '@tensorflow/tfjs';
 import { Line } from 'react-chartjs-2';
 import { format } from 'date-fns';
@@ -35,14 +37,17 @@ const HostPricing = () => {
   const [originalRates, setOriginalRates] = useState([]);
   const [editedCleaningFees, setEditedCleaningFees] = useState([]);
   const [originalCleaningFees, setOriginalCleaningFees] = useState([]);
+
   const [taxFeePopup, setTaxFeePopup] = useState(false);
   const [selectedAccommodation, setSelectedAccommodation] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
   const [basePrice, setBasePrice] = useState(0);
   const [dynamicPrice, setDynamicPrice] = useState(0);
   const [priceHistory, setPriceHistory] = useState([]);
   const [predictedPrice, setPredictedPrice] = useState(0);
-  const modelRef = useRef(null);
+
+  const modelRefs = useRef({});
 
   useEffect(() => {
     const setUserIdAsync = async () => {
@@ -95,8 +100,8 @@ const HostPricing = () => {
 
   useEffect(() => {
     if (accommodations.length > 0) {
-      const initialRates = accommodations.map(acc => acc.Rent.N || acc.Rent.S || '');
-      const initialCleaningFees = accommodations.map(acc => acc.CleaningFee.N || acc.CleaningFee.S || '');
+      const initialRates = accommodations.map(acc => acc.Rent?.N || acc.Rent?.S || '');
+      const initialCleaningFees = accommodations.map(acc => acc.CleaningFee?.N || acc.CleaningFee?.S || '');
       setEditedRates(initialRates);
       setOriginalRates(initialRates);
       setEditedCleaningFees(initialCleaningFees);
@@ -108,7 +113,6 @@ const HostPricing = () => {
   const itemsPerPageDetails = 3;
   const itemsPerPageTable = 7;
   const activeItemsPerPage = viewMode === 'details' ? itemsPerPageDetails : itemsPerPageTable;
-
   const startIndex = (currentPannel - 1) * activeItemsPerPage;
   const endIndex = currentPannel * activeItemsPerPage;
   const currentAccommodations = accommodations.slice(startIndex, endIndex);
@@ -143,11 +147,10 @@ const HostPricing = () => {
   const handleTaxFeePopup = (details, globalIndex) => {
     const countryVAT = vatRates.find(rate => rate.country === details.Country?.S)?.vat || "0";
     const vatRate = parseFloat(countryVAT) / 100;
-
     const countryTouristTax = touristTaxRates.find(rate => rate.country === details.Country?.S)?.touristTax || "0";
 
     const rent = parseFloat(
-      editedRates[globalIndex] || details.Rent.N || details.Rent.S || 0
+      editedRates[globalIndex] || details.Rent?.N || details.Rent?.S || 0
     ).toFixed(2);
 
     const cleaningFee = parseFloat(
@@ -202,13 +205,11 @@ const HostPricing = () => {
   };
 
   const handleEditMode = () => setEditMode(!editMode);
-
   const handleRateChange = (e, index) => {
     const updatedRates = [...editedRates];
     updatedRates[index] = e.target.value;
     setEditedRates(updatedRates);
   };
-
   const handleCleaningFeeChange = (e, index) => {
     const updatedCleaningFees = [...editedCleaningFees];
     updatedCleaningFees[index] = e.target.value;
@@ -224,11 +225,11 @@ const HostPricing = () => {
         );
 
         if (editedRates[i] === undefined || editedRates[i] === '') {
-          throw new Error(`Rent is missing or empty for accommodation.`);
+          throw new Error(`Rent is missing or empty for accommodation: ${acc.Title?.S}`);
         }
 
         if (cleaningFeeIncluded && (editedCleaningFees[i] === undefined || editedCleaningFees[i] === '')) {
-          throw new Error(`CleaningFee is missing or empty for accommodation.`);
+          throw new Error(`CleaningFee is missing or empty for accommodation: ${acc.Title?.S}`);
         }
 
         const rent = parseFloat(editedRates[i]);
@@ -236,7 +237,7 @@ const HostPricing = () => {
 
         if (rent < 0 || cleaningFee < 0) {
           throw new Error(
-            `Negative value detected for accommodation. Rent: ${rent}, CleaningFee: ${cleaningFee}`
+            `Negative value detected for accommodation: ${acc.Title?.S}. Rent: ${rent}, CleaningFee: ${cleaningFee}`
           );
         }
 
@@ -289,12 +290,26 @@ const HostPricing = () => {
     setEditedCleaningFees([...originalCleaningFees]);
   };
 
-  const generateRandomTrainingData = (basePrice, numDays = 60) => {
+  function seededRandom(seed) {
+    var x = Math.sin(seed) * 10000;
+    return x - Math.floor(x);
+  }
+  const generateTrainingDataForAccommodation = (accommodationId, basePrice, numDays = 60) => {
     let data = [];
     let startDate = new Date();
+
+    const seed = accommodationId
+      .split('')
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
     for (let i = 0; i < numDays; i++) {
       const day = new Date(startDate);
       day.setDate(startDate.getDate() - (numDays - i));
+
+      const rand1 = seededRandom(seed + i * 0.1);
+      const rand2 = seededRandom(seed + i * 0.2);
+      const rand3 = seededRandom(seed + i * 0.3);
+      const rand4 = seededRandom(seed + i * 0.4);
 
       let month = day.getMonth() + 1;
       let dayOfWeek = day.getDay();
@@ -310,16 +325,24 @@ const HostPricing = () => {
         seasonalFactor = 1.1;
       }
 
-      let weekendFactor = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.15 : 1.0;
-      let eventFactor = Math.random() < 0.1 ? 1.2 : 1.0;
-      let competitorPrice = basePrice + (Math.random() - 0.5) * 60;
-      let noiseFactor = 1 + (Math.random() - 0.5) * 0.1;
+      let weekendFactor = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.05 : 1.0;
+
+      let competitorPrice = basePrice + (rand1 - 0.5) * 60;
+
+      let eventFactor = rand2 < 0.1 ? 1.2 : 1.0;
+
+      let occupancyRate = 0.4 + rand3 * 0.6;
+      let localAttractionsPopularity = 0.8 + rand4 * 0.4;
+
+      let noiseFactor = 1 + (rand3 - 0.5) * 0.1;
 
       let finalPrice =
         basePrice *
         seasonalFactor *
         weekendFactor *
         eventFactor *
+        occupancyRate *
+        localAttractionsPopularity *
         (0.5 + competitorPrice / (basePrice * 2)) *
         noiseFactor;
 
@@ -329,20 +352,22 @@ const HostPricing = () => {
         weekendFactor,
         competitorPrice,
         eventFactor,
+        occupancyRate,
+        localAttractionsPopularity,
         price: parseFloat(finalPrice.toFixed(2))
       });
     }
     return data;
   };
 
-  const trainAIModel = async (trainingData) => {
-    if (modelRef.current) {
-      modelRef.current.dispose();
-      modelRef.current = null;
+  const trainOrGetModel = async (accommodationId, trainingData) => {
+    if (modelRefs.current[accommodationId]) {
+      return modelRefs.current[accommodationId];
     }
 
     const newModel = tf.sequential();
-    newModel.add(tf.layers.dense({ units: 16, inputShape: [4], activation: 'relu' }));
+
+    newModel.add(tf.layers.dense({ units: 16, inputShape: [6], activation: 'relu' }));
     newModel.add(tf.layers.dense({ units: 8, activation: 'relu' }));
     newModel.add(tf.layers.dense({ units: 1 }));
 
@@ -353,47 +378,45 @@ const HostPricing = () => {
         d.seasonalFactor,
         d.weekendFactor,
         d.competitorPrice,
-        d.eventFactor
+        d.eventFactor,
+        d.occupancyRate,
+        d.localAttractionsPopularity
       ])
     );
     const ys = tf.tensor2d(trainingData.map(d => [d.price]));
 
-    await newModel.fit(xs, ys, { epochs: 100 });
+    await newModel.fit(xs, ys, { epochs: 80 });
     xs.dispose();
     ys.dispose();
 
-    modelRef.current = newModel;
+    modelRefs.current[accommodationId] = newModel;
     return newModel;
   };
 
   const fetchEventsInLocation = async (location) => {
-    try {
-      const response = await fetch(`/api/events?location=${location}`);
-      if (!response.ok) {
-        console.warn("No events found or error fetching events");
-        return [];
-      }
-      const events = await response.json();
-      return events;
-    } catch (err) {
-      console.error("Error fetching events data:", err);
-      return [];
-    }
+    return [];
   };
 
-  const predictFuturePrices = async (trainedModel, basePrice, country, events) => {
+  const predictFuturePrices = async (
+    trainedModel,
+    basePrice,
+    country,
+    accommodationId,
+    events
+  ) => {
     let future = [];
     let today = new Date();
 
     const seasonalMultipliers = {
       "default": { summer: [1.1, 1.2], autumn: [0.9, 1.0], winter: [1.0, 1.1], spring: [1.0, 1.1] },
       "Zwitserland": { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
-      "Oostenrijk": { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
-      "Australië": { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
-      "Argentinië": { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] }
+      "Oostenrijk":  { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Australië":   { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Argentinië":  { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] }
     };
 
     const countrySeason = seasonalMultipliers[country] || seasonalMultipliers["default"];
+
     const holidayMultipliers = {
       "01-01": 1.3,
       "12-25": 1.5,
@@ -405,27 +428,41 @@ const HostPricing = () => {
       "04-27": 1.2
     };
 
+    const seed = accommodationId
+      .split('')
+      .reduce((acc, char) => acc + char.charCodeAt(0), 0);
+
     for (let i = 1; i <= 365; i++) {
       let day = new Date(today);
       day.setDate(today.getDate() + i);
+
+      const rand1 = seededRandom(seed + i * 0.11);
+      const rand2 = seededRandom(seed + i * 0.22);
+      const rand3 = seededRandom(seed + i * 0.33);
+      const rand4 = seededRandom(seed + i * 0.44);
 
       let month = day.getMonth() + 1;
       let dayOfWeek = day.getDay();
 
       let seasonalMultiplier = 1.0;
       if (month >= 6 && month <= 8 && countrySeason.summer) {
-        seasonalMultiplier = countrySeason.summer[0] + Math.random() * (countrySeason.summer[1] - countrySeason.summer[0]);
+        const [min, max] = countrySeason.summer;
+        seasonalMultiplier = min + rand1 * (max - min);
       } else if (month >= 9 && month <= 11 && countrySeason.autumn) {
-        seasonalMultiplier = countrySeason.autumn[0] + Math.random() * (countrySeason.autumn[1] - countrySeason.autumn[0]);
+        const [min, max] = countrySeason.autumn;
+        seasonalMultiplier = min + rand1 * (max - min);
       } else if ((month === 12 || month <= 2) && countrySeason.winter) {
-        seasonalMultiplier = countrySeason.winter[0] + Math.random() * (countrySeason.winter[1] - countrySeason.winter[0]);
+        const [min, max] = countrySeason.winter;
+        seasonalMultiplier = min + rand1 * (max - min);
       } else if (month >= 3 && month <= 5 && countrySeason.spring) {
-        seasonalMultiplier = countrySeason.spring[0] + Math.random() * (countrySeason.spring[1] - countrySeason.spring[0]);
+        const [min, max] = countrySeason.spring;
+        seasonalMultiplier = min + rand1 * (max - min);
       }
 
       let dateKey = `${month.toString().padStart(2, '0')}-${day.getDate().toString().padStart(2, '0')}`;
       let holidayMultiplier = holidayMultipliers[dateKey] || 1.0;
-      let weekendMultiplier = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.1 + Math.random() * 0.05 : 1.0;
+
+      let weekendMultiplier = (dayOfWeek === 5 || dayOfWeek === 6) ? 1.05 + rand2 * 0.05 : 1.0;
 
       let eventMultiplier = 1.0;
       if (Array.isArray(events) && events.length > 0) {
@@ -438,22 +475,26 @@ const HostPricing = () => {
         }
       }
 
-      let noiseFactor = 1 + (Math.random() - 0.5) * 0.05;
+      let occupancyRate = 0.5 + rand3 * 0.5;
+      let localAttractionsPopularity = 0.8 + rand4 * 0.4;
+
+      let competitorPrice = basePrice + (rand3 - 0.5) * 60;
 
       let adjustedPrice =
         basePrice *
         seasonalMultiplier *
         holidayMultiplier *
         weekendMultiplier *
-        eventMultiplier *
-        noiseFactor;
+        eventMultiplier;
 
       const inputTensor = tf.tensor2d([[
         seasonalMultiplier,
         weekendMultiplier,
-        basePrice,
-        eventMultiplier
-      ]], [1, 4]);
+        competitorPrice,
+        eventMultiplier,
+        occupancyRate,
+        localAttractionsPopularity
+      ]], [1, 6]);
 
       const modelOutput = trainedModel.predict(inputTensor);
       const aiPriceTensor = await modelOutput.data();
@@ -471,7 +512,6 @@ const HostPricing = () => {
     }
     return future;
   };
-  
 
   const openModal = async (accommodation) => {
     setSelectedAccommodation(accommodation);
@@ -491,14 +531,25 @@ const HostPricing = () => {
 
     const events = await fetchEventsInLocation(accommodation.Country?.S || "Unknown");
 
-    const trainingData = generateRandomTrainingData(storedRent, 60);
-    const trainedModel = await trainAIModel(trainingData);
+    const trainingData = generateTrainingDataForAccommodation(accommodation.ID.S, storedRent, 60);
 
-    const future = await predictFuturePrices(trainedModel, storedRent, accommodation.Country?.S, events);
+    const trainedModel = await trainOrGetModel(accommodation.ID.S, trainingData);
+
+    const future = await predictFuturePrices(
+      trainedModel,
+      storedRent,
+      accommodation.Country?.S,
+      accommodation.ID.S,
+      events
+    );
+
     setPriceHistory(future);
 
     const lastDayPrice = future[future.length - 1].price;
     setPredictedPrice(lastDayPrice);
+
+    setDynamicPrice(storedRent);
+
     setIsModalOpen(true);
   };
 
@@ -506,12 +557,6 @@ const HostPricing = () => {
     setIsModalOpen(false);
     setSelectedAccommodation(null);
   };
-
-  useEffect(() => {
-    if (basePrice) {
-      setDynamicPrice(basePrice);
-    }
-  }, [basePrice]);
 
   const priceData = useMemo(() => {
     const labels = priceHistory.map((entry) => format(entry.date, "dd MMM yyyy"));
@@ -574,7 +619,6 @@ const HostPricing = () => {
 
   return (
     <div className="containerHostPricing">
-      
       <div className="host-pricing-header">
         <h2 className="host-pricing-title">Pricing</h2>
         <div className="host-pricing-header-buttons">
@@ -615,24 +659,24 @@ const HostPricing = () => {
                     <div key={globalIndex} className="accommodation-card">
                       <img
                         className="accommodation-card-img"
-                        src={accommodation.Images.M.image1.S}
+                        src={accommodation.Images?.M?.image1?.S}
                         alt="Accommodation"
                       />
                       <div className="accommodation-card-details">
                         <div className="pricing-column">
-                          <p className="pricing-title">{accommodation.Title.S}</p>
-                          <p>{accommodation.Country.S}</p>
-                          <p>Guests: {accommodation.GuestAmount.N}</p>
+                          <p className="pricing-title">{accommodation.Title?.S}</p>
+                          <p>{accommodation.Country?.S}</p>
+                          <p>Guests: {accommodation.GuestAmount?.N}</p>
                         </div>
 
                         <div className="pricing-column">
                           <p className="pricing-rate-input">
-                          <button
-                            className="dynamic-pricing-button"
-                            onClick={() => openModal(accommodation)}
-                          >
-                            Dynamic
-                          </button>
+                            <button
+                              className="dynamic-pricing-button"
+                              onClick={() => openModal(accommodation)}
+                            >
+                              Dynamic
+                            </button>
                             Rate:{' '}
                             {editMode ? (
                               <input
@@ -643,7 +687,7 @@ const HostPricing = () => {
                               />
                             ) : (
                               editedRates[globalIndex] ||
-                              (accommodation.Rent.N || accommodation.Rent.S)
+                              (accommodation.Rent?.N || accommodation.Rent?.S)
                             )}
                           </p>
                           <p className="pricing-rate-input">
@@ -658,13 +702,13 @@ const HostPricing = () => {
                                 />
                               ) : (
                                 editedCleaningFees[globalIndex] ||
-                                (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
+                                (accommodation.CleaningFee?.N || accommodation.CleaningFee?.S)
                               )
                             ) : (
                               0
                             )}
                           </p>
-                          <p>Availability: {accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</p>
+                          <p>Availability: {accommodation.Drafted?.BOOL ? 'Unavailable' : 'Available'}</p>
                         </div>
                       </div>
                       <div className="pricing-taxFee-container">
@@ -704,9 +748,9 @@ const HostPricing = () => {
 
                     return (
                       <tr key={globalIndex}>
-                        <td className="pricing-table-title">{accommodation.Title.S}</td>
-                        <td>{accommodation.Country.S}</td>
-                        <td>{accommodation.GuestAmount.N}</td>
+                        <td className="pricing-table-title">{accommodation.Title?.S}</td>
+                        <td>{accommodation.Country?.S}</td>
+                        <td>{accommodation.GuestAmount?.N}</td>
                         <td>
                           {editMode ? (
                             <input
@@ -717,7 +761,7 @@ const HostPricing = () => {
                             />
                           ) : (
                             editedRates[globalIndex] ||
-                            (accommodation.Rent.N || accommodation.Rent.S)
+                            (accommodation.Rent?.N || accommodation.Rent?.S)
                           )}
                         </td>
                         <td>
@@ -731,13 +775,13 @@ const HostPricing = () => {
                               />
                             ) : (
                               editedCleaningFees[globalIndex] ||
-                              (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
+                              (accommodation.CleaningFee?.N || accommodation.CleaningFee?.S)
                             )
                           ) : (
                             0
                           )}
                         </td>
-                        <td>{accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</td>
+                        <td>{accommodation.Drafted?.BOOL ? 'Unavailable' : 'Available'}</td>
                         <td>
                           <img
                             className="pricing-taxFee-icon-table"
