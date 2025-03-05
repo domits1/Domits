@@ -273,7 +273,7 @@
     align-items: center;
     justify-content: center;
     z-index: 1000;
-    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+    background: rgba(0, 0, 0, 0.5);
 }
 
 .pricing-taxFee-popup-overlay {
@@ -786,7 +786,6 @@
         margin-top: 2vh;
     }
 
-    /* Detail view */
     .pricing-details-view {
         width: 71vw;
         height: auto;
@@ -1130,7 +1129,6 @@
         margin-top: 2vh;
     }
 
-    /* Detail view */
     .pricing-details-view {
         width: 73vw;
         height: auto;
@@ -1182,7 +1180,6 @@
         width: 10vw;
     }
 
-    /* Table view */
     .pricing-table-view {
         margin-left: 6.75vw;
         width: 87%;
@@ -1298,7 +1295,6 @@
         padding: 0;
         margin-left: 2vw;    }
 
-    /* Detail view */
     .pricing-details-view {
         width: 70vw;
         height: auto;
@@ -1347,7 +1343,6 @@
         width: 6vw;
     }
 
-    /* Table view */
     .pricing-table-view {
         margin-left: 2vw;
         width: 72%;
@@ -1438,9 +1433,10 @@
     background: white;
     padding: 20px;
     border-radius: 8px;
-    width: 800px;
+    width: 1400px;
     text-align: center;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+    height: 600px;
 }
 
 .close-modal-button {
@@ -1507,3 +1503,85 @@
 .dynamic-pricing-button:hover {
     background-color: #27ae60;
 }
+
+.enhanced-calendar-wrapper {
+    width: 100%;
+    max-width: 1200px;
+    margin: 20px;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow-x: auto;
+  }
+  
+  .calendar-title {
+    text-align: center;
+    margin-bottom: 16px;
+    font-size: 1.5rem;
+    color: #333;
+  }
+  
+  .enhanced-calendar-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8px; 
+    table-layout: fixed; 
+  }
+  
+  .enhanced-calendar-table th {
+    text-align: center;
+    font-weight: 600;
+    font-size: 1rem;
+    color: #555;
+    padding-bottom: 8px;
+  }
+  
+  .calendar-day {
+    vertical-align: top;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    min-width: 100px;
+    height: 100px;
+    padding: 8px;
+    text-align: center;
+    transition: box-shadow 0.2s ease;
+  }
+  
+  .calendar-day:hover {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .weekend-day {
+    border: 2px dashed #ccc;
+  }
+  
+  .calendar-date {
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-bottom: 6px;
+    display: block;
+  }
+  
+  .calendar-price {
+    font-size: 1rem;
+    color: #333;
+    font-weight: 500;
+    margin-top: 4px;
+  }
+  
+  @media (max-width: 600px) {
+    .calendar-day {
+      min-width: 80px;
+      height: 80px;
+    }
+  
+    .calendar-date {
+      font-size: 0.9rem;
+    }
+  
+    .calendar-price {
+      font-size: 0.85rem;
+    }
+  }
+  

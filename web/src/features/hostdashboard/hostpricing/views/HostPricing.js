@@ -255,16 +255,30 @@ const HostPricing = () => {
     const maxDate = getMaxDate(priceHistory);
     if (!minDate || !maxDate) return null;
   
+    const allPrices = priceHistory.map((item) => item.price);
+    const minPrice = Math.min(...allPrices);
+    const maxPrice = Math.max(...allPrices);
+  
+    const getCellBackgroundColor = (price) => {
+      if (price == null) return "#f7f7f7";
+  
+      if (maxPrice === minPrice) return "#a9d08e";
+      const factor = (price - minPrice) / (maxPrice - minPrice);
+      const hue = 120;
+      const saturation = 45;
+      const lightness = 92 - factor * 45; 
+  
+      return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    };
+  
     const allDates = createDateRange(minDate, maxDate);
-  
     const weeks = chunkIntoWeeks(allDates);
-  
-    const weekDayHeaders = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    const weekDayHeaders = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   
     return (
-      <div className="calendar-wrapper">
-        <h3>Calendar View</h3>
-        <table className="calendar-table">
+      <div className="enhanced-calendar-wrapper">
+        <h3 className="calendar-title">Calendar View</h3>
+        <table className="enhanced-calendar-table">
           <thead>
             <tr>
               {weekDayHeaders.map((dayName) => (
@@ -277,13 +291,19 @@ const HostPricing = () => {
               <tr key={wIndex}>
                 {week.map((date, dIndex) => {
                   const price = getPriceForDate(date, priceHistory);
+                  const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+  
                   return (
-                    <td key={dIndex} style={{ verticalAlign: 'top' }}>
-                      <div>{format(date, 'dd/MM')}</div>
+                    <td
+                      key={dIndex}
+                      className={`calendar-day ${isWeekend ? "weekend-day" : ""}`}
+                      style={{
+                        backgroundColor: getCellBackgroundColor(price),
+                      }}
+                    >
+                      <div className="calendar-date">{format(date, "dd/MM")}</div>
                       {price != null && (
-                        <div style={{ fontWeight: 'bold' }}>
-                          €{price}
-                        </div>
+                        <div className="calendar-price">€{price}</div>
                       )}
                     </td>
                   );
@@ -296,7 +316,6 @@ const HostPricing = () => {
     );
   }
   
-
   const handleEditMode = () => setEditMode(!editMode);
   const handleRateChange = (e, index) => {
     const updatedRates = [...editedRates];
@@ -525,7 +544,22 @@ const HostPricing = () => {
       "Zwitserland": { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
       "Oostenrijk":  { winter: [1.2, 1.3], summer: [0.9, 1.0], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
       "Australië":   { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
-      "Argentinië":  { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] }
+      "Argentinië":  { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Brazilië":    { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Canada":      { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Chili":       { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "China":       { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Frankrijk":   { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Duitsland":   { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "India":       { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Italië":      { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Japan":       { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Mexico":      { summer: [0.8, 0.9], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Nederland":   { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Portugal":    { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Rusland":     { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Spanje":      { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] },
+      "Zweden":      { summer: [1.0, 1.1], winter: [1.1, 1.2], autumn: [0.9, 1.0], spring: [1.0, 1.1] }
     };
 
     const countrySeason = seasonalMultipliers[country] || seasonalMultipliers["default"];
@@ -687,7 +721,7 @@ const HostPricing = () => {
           borderWidth: 2,
           pointRadius: 2,
           fill: true,
-          tension: 0.3
+          tension: 0.3,
         }
       ]
     };
@@ -932,12 +966,8 @@ const HostPricing = () => {
                   value={basePrice}
                   onChange={(e) => setBasePrice(parseFloat(e.target.value) || 0)}
                 />
-
-                <p>Dynamic Price: €{dynamicPrice}</p>
-                <p>Laatste dagvoorspelling (AI): €{predictedPrice}</p>
-
                 <div style={{ width: '100%', overflowX: 'auto', margin: '20px auto' }}>
-                  <div style={{ width: '3000px', height: '300px' }}>
+                  <div style={{ width: '3000px', height: '400px' }}>
                     <Line data={priceData} options={chartOptions} />
                     <CalendarPricingView priceHistory={priceHistory} />
                   </div>
