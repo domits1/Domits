@@ -178,7 +178,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
       const { accommodation, address, totalGuests } = location.state.searchParams;
       setTimeout(() => {
         performSearch(accommodation, address, totalGuests);
-      }, 1000);
+      }, 1);
+    } else {
+      setSearchResults([]);
     }
   }, [location]);
 
