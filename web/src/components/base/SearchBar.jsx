@@ -83,8 +83,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     toggleBar(!isBarActive);
 };
 
-
-  
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
     if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
@@ -296,7 +294,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     }
   }, [selectedDayRange]);
 
-  //voor de date format
+  //voor de date format in calendar
   function formatDateToEnglish(date) {
     const options = { day: 'numeric', month: 'short' };
     return date.toLocaleDateString('en-US', options);

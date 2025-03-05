@@ -1,0 +1,1506 @@
+.containerHostPricing {
+    overflow-x: hidden;
+}
+
+.host-pricing-title {
+}
+
+.host-pricing-header {
+    display: flex;
+    flex-direction: row;
+    margin-left: 24%;
+    width: 59.2vw;
+    padding-bottom: 1%;
+    bottom: 100%;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.host-pricing-header-buttons {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 5%;
+}
+
+.refresh-accommodation-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: none;
+    padding: 0;
+    width: 5vw;
+    height: 4vh;
+    object-fit: contain;
+    border-radius: 20px;
+}
+
+.refresh-accommodation-button:hover {
+    background-color: #f5f5f5;
+    cursor: pointer;
+}
+
+.pricing-switch-layout-button {
+    display: flex;
+    align-items: center;
+    border: 1px solid #ccc;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.details-switch-button, .table-switch-button {
+    width: 3vw;
+    height: 2vw;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+}
+
+.details-switch-button:hover, .table-switch-button:hover {
+    background-color: #f5f5f5;
+    cursor: pointer;
+}
+
+.details-switch-button {
+    border-right: 1px solid #ccc;
+}
+
+.details-switch-button img, .table-switch-button img {
+    width: 50%;
+    height: 50%;
+    object-fit: contain;
+}
+
+.table-switch-button {
+    border-radius: 0 20px 20px 0;
+}
+
+.details-switch-button {
+    border-radius: 20px 0 0 20px;
+}
+
+.hostdashboard-container {
+    display: flex;
+    flex-direction: row;
+}
+
+.host-pricing-container {
+    display: flex;
+    flex-direction: column;
+    width: 100vw;
+    height: 100vh;
+    padding-left: 5%;
+}
+
+/*detail view*/
+.pricing-details-view {
+    display: flex;
+    flex-direction: column;
+    width: 65vw;
+    border: #b9b9b9 1px solid;
+    border-radius: 15px;
+    height: 85vh;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    top: 7.5rem;
+    flex-wrap: wrap;
+}
+
+.accommodation-cards {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+.accommodation-card {
+    display: flex;
+    flex-direction: row;
+    width: 60vw;
+    height: 20vh;
+    border: #b9b9b9 1px solid;
+    border-radius: 15px;
+    padding: 1.2rem;
+    justify-content: space-between;
+    gap: 5vw;
+}
+
+.accommodation-card-img {
+    width: 14rem;
+    height: 20vh;
+    object-fit: cover;
+    border-radius: 15px;
+}
+
+.accommodation-card-details {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    flex-wrap: wrap;
+    overflow: hidden;
+}
+
+.pricing-column {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 45%;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.pricing-column p {
+    margin: 0;
+    height: 8vh;
+    line-height: 1.5;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.pricing-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    max-height: 33%;
+}
+
+.pricing-rate-input input {
+    padding: 0;
+    width: 5vw;
+    max-width: 100%;
+    vertical-align: middle;
+}
+
+.pricing-taxFee-icon-details {
+    width: 2vw;
+    height: 2.5vw;
+    margin-top: -2vh;
+    margin-right: -1vw;
+}
+
+.pricing-taxFee-icon-details:hover {
+    cursor: pointer;
+}
+
+/*table view*/
+.pricing-table-view {
+    display: flex;
+    flex-direction: column;
+    width: 65vw;
+    height: 79vh;
+    overflow-y: hidden;
+    overflow-x: hidden;
+    top: 7.5rem;
+    flex-wrap: wrap;
+}
+
+.pricing-table {
+    margin: 20px 0;
+    padding: 10px;
+    border-radius: 15px;
+    border-collapse: collapse;
+    table-layout: fixed;
+    width: 100%;
+}
+
+.pricing-table .pricing-table-title {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pricing-table th,
+.pricing-table td {
+    padding: 12px 3px;
+    border: 1px solid #ddd;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.pricing-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.pricing-table td input {
+    width: 90%;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    background-color: transparent;
+    font: inherit;
+    text-align: left;
+    height: auto;
+}
+
+.pricing-table tr:hover {
+    background-color: #f1f1f1;
+}
+
+.pricing-taxFee-icon-table {
+    width: 2.5vw;
+    height: 5vh;
+    margin-left: 5%;
+}
+
+.pricing-taxFee-icon-table:hover {
+    cursor: pointer;
+}
+
+/*tax & fee popup*/
+.pricing-taxFee-popup-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.5); /* Semi-transparent background */
+}
+
+.pricing-taxFee-popup-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.pricing-taxFee-popup-content {
+    position: relative;
+    background: #fff;
+    padding: 20px;
+    width: 300px;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    font-family: Arial, sans-serif;
+}
+
+.pricing-taxFee-popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 10px;
+}
+
+.pricing-taxFee-popup-header h3 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.pricing-taxFee-popup-close-button {
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #333;
+}
+
+.pricing-taxFee-popup-close-button:hover {
+    color: #ff0000;
+}
+
+.pricing-taxFee-popup-body p {
+    margin: 8px 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+
+.pricing-taxFee-popup-body span {
+    font-weight: bold;
+}
+
+/*navigation buttons*/
+.pricing-bottom-buttons {
+    display: flex;
+    flex-direction: row;
+}
+
+.pricing-navigation-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 2.5%;
+    margin-left: 21vw;
+}
+
+.pricing-navigation-buttons button {
+    padding: 5px 10px;
+    margin: 0 5px;
+    border: none;
+    background-color: #f4f4f4;
+    border-radius: 15px;
+}
+
+.pricing-navigation-buttons button:hover {
+    cursor: pointer;
+    background-color: #e6e6e6;
+}
+
+.pricing-navigation-buttons button.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.pricing-navigation-buttons button:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.pricing-navigation-buttons button:hover:not(:disabled) {
+    background-color: #ddd;
+}
+
+.pricing-action-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-inline: auto;
+    padding-top: 2.5%;
+    margin-right: 16vw;
+    gap: 1.5vw;
+}
+
+.pricing-action-buttons button {
+    width: 4vw;
+    height: 4vh;
+    border-radius: 5px;
+    border: none;
+}
+
+.pricing-action-buttons button:hover {
+    opacity: 80%;
+    cursor: pointer;
+}
+
+.pricing-action-save {
+    background-color: #4A77FC;
+}
+
+/*mobile view*/
+@media (max-width: 320px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: column;
+        margin-top: 5vh;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .refresh-accommodation-button {
+        width: 50px;
+        height: 40px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 40px;
+        height: 30px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        padding-left: 10px;
+        padding-right: 10px;
+        width: 100%;
+        height: auto;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 17rem;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 10px;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+        padding: 10px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 5px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.2;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 14px;
+    }
+
+    .pricing-rate-input input {
+        width: 20vw;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        width: 94%;
+        height: 100%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 10px 0;
+        padding: 5px;
+        font-size: 12px;
+        border-spacing: 0;
+        width: 100vw;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 6px;
+        word-break: break-word;
+        text-align: center;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 9.5px;
+    }
+
+    .pricing-table td {
+        font-size: 10px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        margin-left: 0;
+        margin-right: 1.5rem;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 5px;
+        font-size: 12px;
+        width: 4rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 10px;
+    }
+
+    .pricing-action-buttons button {
+        width: 40px;
+        height: 30px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 12px;
+    }
+
+    .pricing-taxFee-icon-details,
+    .pricing-taxFee-icon-table {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        margin-left: 26%;
+    }
+
+}
+
+@media (min-width: 321px) and (max-width: 376px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: column;
+        margin-top: 5vh;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 10px;
+    }
+
+    .refresh-accommodation-button {
+        width: 50px;
+        height: 40px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 40px;
+        height: 30px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        padding-left: 10px;
+        padding-right: 10px;
+        width: 100%;
+        height: auto;
+        align-self: center;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 18rem;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 10px;
+        align-self: center;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 10px;
+        padding: 10px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 5px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.2;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 14px;
+    }
+
+    .pricing-rate-input input {
+        width: 20vw;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        margin-left: 5vw;
+        width: 90%;
+        height: 100%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 10px 0;
+        padding: 5px;
+        font-size: 12px;
+        border-spacing: 0;
+        width: 100vw;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 8px;
+        word-break: break-word;
+        text-align: center;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 9.5px;
+    }
+
+    .pricing-table td {
+        font-size: 10px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        margin-left: 1.5rem;
+        margin-right: 1.5rem;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 5px;
+        font-size: 12px;
+        width: 4rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 10px;
+    }
+
+    .pricing-action-buttons button {
+        width: 40px;
+        height: 30px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 12px;
+    }
+
+    .pricing-taxFee-icon-details,
+    .pricing-taxFee-icon-table {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        margin-left: 12%;
+    }
+}
+
+@media (min-width: 376px) and (max-width: 426px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: column;
+        margin-top: 5vh;
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .refresh-accommodation-button {
+        width: 60px;
+        height: 45px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        width: 100%;
+        height: auto;
+        align-self: center;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 71vw;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 15px;
+        align-self: center;
+        margin-right: 3vw;
+        align-items: center;
+        align-content: center;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+        padding: 15px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.4;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .pricing-rate-input input {
+        width: 20vw;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        margin-left: 1vw;
+        width: 93%;
+        height: 110%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 14px;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 7px;
+        word-break: break-word;
+        text-align: center;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 13px;
+    }
+
+    .pricing-table td {
+        font-size: 12px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        margin-left: 3rem;
+        margin-right: 4rem;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 8px;
+        font-size: 14px;
+        width: 5rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 15px;
+    }
+
+    .pricing-action-buttons button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 14px;
+    }
+
+    .pricing-taxFee-icon-details,
+    .pricing-taxFee-icon-table {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        margin-left: 26%;
+    }
+}
+
+@media (min-width: 426px) and (max-width: 481px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: row;
+        margin-top: 5vh;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .refresh-accommodation-button {
+        width: 60px;
+        height: 45px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        width: 100%;
+        height: auto;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 71vw;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 15px;
+        align-self: center;
+        margin-right: 9vw;
+        align-content: center;
+        align-items: center;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+        padding: 15px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.4;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .pricing-rate-input input {
+        width: 15vw;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        width: 90%;
+        height: 110%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 14px;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 7px;
+        word-break: break-word;
+        text-align: center;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 13px;
+    }
+
+    .pricing-table td {
+        font-size: 12px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+        margin-left: 2rem;
+        margin-right: 4rem;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 8px;
+        font-size: 14px;
+        width: 5rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 15px;
+    }
+
+    .pricing-action-buttons button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 14px;
+    }
+
+    .pricing-taxFee-icon-details,
+    .pricing-taxFee-icon-table {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        margin-left: 12%;
+    }
+}
+
+@media (min-width: 481px) and (max-width: 769px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        flex-direction: row;
+        margin-top: 5vh;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .refresh-accommodation-button {
+        width: 60px;
+        height: 45px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: column;
+    }
+
+    .host-pricing-container {
+        width: 100%;
+        height: auto;
+        padding: 0;
+        margin-top: 2vh;
+    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 73vw;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 15px;
+        align-self: center;
+        margin-right: 3vw;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        flex-direction: column;
+        height: auto;
+        gap: 15px;
+        padding: 15px;
+        align-items: center;
+    }
+
+    .accommodation-card-img {
+        width: 100%;
+        height: auto;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-column {
+        width: 100%;
+        gap: 10px;
+    }
+
+    .pricing-column p {
+        height: auto;
+        line-height: 1.4;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .pricing-rate-input input {
+        width: 10vw;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        margin-left: 6.75vw;
+        width: 87%;
+        height: 110%;
+        overflow-x: auto;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 14px;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 8px;
+        word-break: break-word;
+        text-align: center;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 13px;
+    }
+
+    .pricing-table td {
+        font-size: 12px;
+    }
+
+    .pricing-bottom-buttons {
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .pricing-navigation-buttons {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 8px;
+        font-size: 14px;
+        width: 5rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 15px;
+    }
+
+    .pricing-action-buttons button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 14px;
+    }
+
+    .pricing-taxFee-icon-details {
+        width: 10vw;
+        height: 10vw;
+        margin: 0 auto;
+    }
+
+    .pricing-taxFee-icon-table {
+        width: 5vw;
+        height: 5vw;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1025px) {
+    .containerHostPricing {
+        overflow-x: hidden;
+    }
+
+    .host-pricing-header {
+        margin-top: 5vh;
+        width: 71%;
+    }
+
+    .host-pricing-header-buttons {
+        flex-direction: row;
+        gap: 15px;
+    }
+
+    .refresh-accommodation-button {
+        width: 60px;
+        height: 45px;
+    }
+
+    .pricing-switch-layout-button {
+        margin: 0 auto;
+        border-radius: 15px;
+    }
+
+    .details-switch-button, .table-switch-button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .hostdashboard-container {
+        flex-direction: row;
+    }
+
+    .host-pricing-container {
+        width: 100%;
+        height: auto;
+        padding: 0;
+        margin-left: 2vw;    }
+
+    /* Detail view */
+    .pricing-details-view {
+        width: 70vw;
+        height: auto;
+        border-radius: 10px;
+        top: 0;
+        padding: 15px;
+        align-self: center;
+        margin-right: 3vw;
+    }
+
+    .accommodation-cards {
+        align-content: center;
+    }
+
+    .accommodation-card {
+        gap: 2vw;
+        width: 64vw;
+    }
+
+    .accommodation-card-img {
+        width: 15rem;
+        height: 20vh;
+        object-fit: cover;
+        border-radius: 15px;
+    }
+
+    .accommodation-card-details {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .pricing-column {
+        height: 100%;
+    }
+
+    .pricing-column p {
+        line-height: 1.5;
+    }
+
+    .pricing-title {
+        max-width: 100%;
+        font-size: 16px;
+    }
+
+    .pricing-rate-input input {
+        width: 6vw;
+    }
+
+    /* Table view */
+    .pricing-table-view {
+        margin-left: 2vw;
+        width: 72%;
+        height: 65%;
+        overflow-x: auto;
+        margin-top: -1vw;
+    }
+
+    .pricing-table {
+        margin: 15px 0;
+        padding: 10px;
+        font-size: 14px;
+        border-spacing: 0;
+        width: 100%;
+        min-width: 150vw;
+    }
+
+    .pricing-table th, .pricing-table td {
+        padding: 8px;
+        word-break: break-word;
+        text-align: center;
+    }
+
+    .pricing-table th {
+        background-color: #f4f4f4;
+        font-size: 13px;
+    }
+
+    .pricing-table td {
+        font-size: 12px;
+    }
+
+    .pricing-bottom-buttons {
+        gap: 15px;
+    }
+
+    .pricing-navigation-buttons {
+        margin-left: 14%;
+    }
+
+    .pricing-navigation-buttons button {
+        padding: 8px;
+        font-size: 14px;
+        width: 5rem;
+    }
+
+    .pricing-action-buttons {
+        margin: 0 0 2vh 0;
+        gap: 15px;
+    }
+
+    .pricing-action-buttons button {
+        width: 50px;
+        height: 35px;
+    }
+
+    .pricing-action-save {
+        background-color: #4A77FC;
+        color: white;
+        font-size: 14px;
+    }
+
+    .pricing-taxFee-icon-details {
+        width: 3.5vw;
+        height: 4vw;
+    }
+
+    .pricing-taxFee-icon-table {
+        width: 3.5vw;
+        height: 4vw;
+    }
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 800px;
+    text-align: center;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+}
+
+.close-modal-button {
+    background: red;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    cursor: pointer;
+    margin-top: 20px;
+    border-radius: 5px;
+}
+
+.dynamic-pricing-button {
+    margin-top: 20px;
+    padding: 10px 15px;
+    border: none;
+    background-color: green;
+    color: white;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.6s ease;
+}
+
+.dynamic-pricing-button:hover {
+    background-color: lightgreen;
+}
+
+.save-pricing-button {
+    background: green;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-right: 10px;
+}
+
+.modal-content canvas {
+    width: 100% !important;
+    height: auto !important;
+}
+
+.containerHostPricing {
+    text-align: center;
+    padding: 20px;
+}
+
+.host-pricing-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.dynamic-pricing-button {
+    background-color: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: background 0.3s;
+}
+
+.dynamic-pricing-button:hover {
+    background-color: #27ae60;
+}

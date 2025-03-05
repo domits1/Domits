@@ -1,6 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Link, useLocation, useNavigate} from "react-router-dom";
-import "./listing.css";
+import "./styles/listing.css";
 import ImageGallery from './ImageGallery';
 import DateFormatterYYYY_MM_DD from "../../utils/DateFormatterYYYY_MM_DD";
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
@@ -112,7 +112,7 @@ const ListingDetails = () => {
     const [isFormValid, setIsFormValid] = useState(false);
     const [bookedDates, setBookedDates] = useState([]);
     const [totalPrice, setTotalPrice] = useState(0);
-    const [serviceFee, setServiceFee] = useState(0);
+    const [ServiceFee, setServiceFee] = useState(0);
     const [cleaningFee, setCleaningFee] = useState(0);
     const [taxes, setTaxes] = useState(0);
     const [amountOfGuest, setAmountOfGuest] = useState(0);
@@ -709,7 +709,7 @@ const ListingDetails = () => {
             cleaningFee,
             amountOfGuest,
             taxes,
-            serviceFee
+            ServiceFee
         };
         const queryString = new URLSearchParams(details).toString();
         navigate(`/bookingoverview?${queryString}`);
@@ -1221,7 +1221,7 @@ const ListingDetails = () => {
                                     </div>
                                     <div className="price-item">
                                         <p>Domits service fee</p>
-                                        <p>€{serviceFee.toFixed(2)}</p>
+                                        <p>€{ServiceFee.toFixed(2)}</p>
                                     </div>
                                     <div className="price-item">
                                         <p>Taxes</p>

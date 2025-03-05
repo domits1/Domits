@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import './hostchatbot.css';
+import './styles/hostchatbot.css';
 import { useLocation } from 'react-router-dom';
 import { useUser } from '../auth/UserContext';
 import * as pdfjsLib from 'pdfjs-dist';

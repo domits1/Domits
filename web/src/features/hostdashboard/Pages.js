@@ -15,7 +15,7 @@ import SettingsIcon from '@mui/icons-material/Settings';
 import stripe from "../../images/icons/stripe-icon.png";
 import spinner from "../../images/spinnner.gif";
 import { Auth } from "aws-amplify";
-import './HostHomepage.css';
+import './styles/HostHomepage.css';
 import add from "../../images/icons/host-add.png";
 
 function Pages() {
@@ -89,8 +89,8 @@ function Pages() {
       </div>
       <div className="dashboardSection section-1 host-navigation">
         <div
-          className={`wijzer addAcco ${activeTab === "/enlist" ? "active" : ""}`}
-          onClick={() => handleNavigation("/enlist")}
+          className={`wijzer addAcco ${activeTab === "/hostonboarding" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostonboarding")}
           style={{ maxWidth: 250 }}
         >
           {/* <img src={add} alt="add"></img> */}

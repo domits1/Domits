@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Pages from "./Pages";
-import styles from './HostDashboard.module.css';
+import styles from './styles/HostDashboard.module.css';
 import add from "../../images/icons/host-add.png";
 import {useLocation, useNavigate} from 'react-router-dom';
 import { Auth } from "aws-amplify";
@@ -90,7 +90,7 @@ function HostListings() {
     const asyncEditAccommodation = async (accoId, accoTitle) => {
         if (confirm(`Do you wish to edit ${accoTitle}?`)) {
             if (accoId) {
-                navigate(`/enlist?ID=${accoId}`)
+                navigate(`/hostdashboard/property?ID=${accoId}`)
             }
         }
     }
@@ -199,7 +199,7 @@ function HostListings() {
                     ) : (
                         <div className={styles.listingBody}>
                             <div className={styles.buttonBox}>
-                                <button className={styles.greenBtn} onClick={() => navigate("/enlist")}>Add new
+                                <button className={styles.greenBtn} onClick={() => navigate("/hostboarding")}>Add new
                                     accommodation
                                 </button>
                                 <button className={styles.greenBtn} onClick={fetchAccommodations}>Refresh</button>
