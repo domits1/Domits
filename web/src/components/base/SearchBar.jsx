@@ -169,11 +169,17 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
   useEffect(() => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
-    } else if (location.pathname === '/' && location.state && location.state.searchParams) {
+    } 
+    // Previously only checked if (location.pathname === '/' && location.state && location.state.searchParams)
+    else if (
+      (location.pathname === '/' || location.pathname === '/home') &&
+      location.state &&
+      location.state.searchParams
+    ) {
       const { accommodation, address, totalGuests } = location.state.searchParams;
       setTimeout(() => {
         performSearch(accommodation, address, totalGuests);
-      }, 1000);  // Delay of 1000 milliseconds (1 second)
+      }, 1000);
     }
   }, [location]);
 
@@ -235,6 +241,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
       performSearch(accommodation, address, totalGuests);
     }
   };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleSearch();

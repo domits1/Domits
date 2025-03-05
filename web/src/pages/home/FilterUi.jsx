@@ -34,6 +34,10 @@ const FilterUi = ({ onFilterApplied }) => {
     setPriceValues(newValues);
   };
 
+  const handleSliderChangeCommitted = () => {
+    fetchFilteredAccommodations();
+  };
+
   const handleMinInputChange = (e) => {
 
     const rawValue = e.target.value;
@@ -45,6 +49,7 @@ const FilterUi = ({ onFilterApplied }) => {
       const newValue = parseInt(numericValue, 10);
       if (newValue >= 15 && newValue <= priceValues[1]) {
         handlePriceChange(0, newValue);
+        fetchFilteredAccommodations();
       }
     }
   };
@@ -59,6 +64,7 @@ const FilterUi = ({ onFilterApplied }) => {
       const newValue = parseInt(numericValue, 10);
       if (newValue <= 400 && newValue >= priceValues[0]) {
         handlePriceChange(1, newValue);
+        fetchFilteredAccommodations();
       }
     }
   };
@@ -95,6 +101,7 @@ const FilterUi = ({ onFilterApplied }) => {
             }}
             value={priceValues}
             onChange={handleSliderChange}
+            onChangeCommitted={handleSliderChangeCommitted}
             valueLabelDisplay="auto"
             min={15}
             max={400}
@@ -203,29 +210,7 @@ const FilterUi = ({ onFilterApplied }) => {
         </span>
       </div>
 
-      <div className="filter-section">
-        <div className='FilterTitle'>Property Rating</div>
-        <div className="facility-list">
-          {Object.keys(selectedRatings).map((rating) => (
-            <label key={rating} className="facility-item">
-              <input
-                type="checkbox"
-                name={rating}
-                checked={selectedRatings[rating]}
-                onChange={handleRatingChange}
-                className="filter-select-option"
-              />
-              {rating} Star{rating > 1 ? 's' : ''}
-            </label>
-          ))}
-        </div>
-      </div>
-      <button
-        className="apply-filters-button"
-        onClick={fetchFilteredAccommodations}
-      >
-        Apply Filters
-      </button>
+    
     </div>
   );
 };
