@@ -7,6 +7,7 @@ import Button from "../components/button";
 function AccommodationTitleView() {
     const { type: accommodationType } = useParams();
     const { title, subtitle, handleInputChange } = useAccommodationTitle();
+    const isProceedDisabled = !title.trim() || !subtitle.trim();
 
     return (
         <main className="container">
@@ -41,6 +42,8 @@ function AccommodationTitleView() {
                 <Button
                     routePath={`/hostonboarding/${accommodationType}/address`}
                     btnText="Proceed"
+                    disabled={isProceedDisabled}
+                    className={isProceedDisabled ? "button-disabled" : ""}
                 />
             </nav>
         </main>

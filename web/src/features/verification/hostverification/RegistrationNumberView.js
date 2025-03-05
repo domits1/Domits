@@ -47,10 +47,10 @@ const RegistrationNumber = () => {
             <h2>Registration number (optional)</h2>
           )}
           <input
-            type="text"
-            placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
-            value={registrationNumber}
-            onChange={setRegistrationNumber}
+              type="text"
+              placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
+              value={registrationNumber}
+              onChange={(e) => setRegistrationNumber(e.target.value)}
           ></input>
         </div>
         <div className={styles["registrationnumber-address"]}>

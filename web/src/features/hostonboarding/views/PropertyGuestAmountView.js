@@ -1,3 +1,4 @@
+import React from 'react';
 import GuestAmountItem from "../components/GuestAmountItem";
 import { useParams } from "react-router-dom";
 import useFormStore from "../stores/formStore";
@@ -14,7 +15,7 @@ function GuestAmountView() {
         (state) => state.setAccommodationCapacity
     );
 
-    const fields = accommodationFields[accommodationType]
+    const fields = accommodationFields[accommodationType];
 
     const incrementAmount = (key, max) => {
         if (accommodationCapacity[key] < max) {
@@ -34,20 +35,25 @@ function GuestAmountView() {
         <main className="container">
             <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
             <section className="guest-amount">
-                {fields.map(({ key, label, max }) => (
-                    <GuestAmountItem
-                        key={key}
-                        label={label}
-                        value={accommodationCapacity[key]}
-                        increment={() => incrementAmount(key, max)}
-                        decrement={() => decrementAmount(key)}
-                        max={max}
-                    />
+                {fields.map(({ key, label, max }, index) => (
+                    <div key={key} style={{
+                        borderBottom: label === 'Guests' ? '1px solid #ccc' : 'none',
+                        paddingBottom: label === 'Guests' ? '10px' : '0',
+                        marginBottom: label === 'Guests' ? '10px' : '0'
+                    }}>
+                        <GuestAmountItem
+                            label={label}
+                            value={accommodationCapacity[key]}
+                            increment={() => incrementAmount(key, max)}
+                            decrement={() => decrementAmount(key)}
+                            max={max}
+                        />
+                    </div>
                 ))}
             </section>
             <nav className="onboarding-button-box">
                 <Button routePath={`/hostonboarding/${accommodationType}/description`} btnText="Go back" />
-                <Button routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" disabled={isProceedDisabled} className={isProceedDisabled ? "button-disabled" : ""} />
+                <Button routePath={`/hostonboarding/${accommodationType}/specific-amenities`} btnText="Proceed" disabled={isProceedDisabled} className={isProceedDisabled ? "button-disabled" : ""} />
             </nav>
         </main>
     );

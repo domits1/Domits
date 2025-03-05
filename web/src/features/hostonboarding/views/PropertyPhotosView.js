@@ -1,8 +1,8 @@
+import React, { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import ImagePreview from "../components/ImagePreview";
 import usePhotos from "../hooks/usePhotos";
 import Button from "../components/button";
-import { useRef, useState } from "react";
 import "../styles/PhotoVieuw.css";
 
 function PhotosView() {
@@ -37,76 +37,79 @@ function PhotosView() {
     }
   };
 
+  const isProceedDisabled = images.length < 5;
+
   return (
-    <main className="photo-gallery-container">
-      <h2 className="photo-gallery-title">Choose at least 5 photos</h2>
+      <main className="photo-gallery-container">
+        <h2 className="photo-gallery-title">Choose at least 5 photos</h2>
 
-      {!images.length ? (
-        <div
-          className={`drag-drop-area ${isDragOver ? "drag-over" : ""}`}
-          onClick={handleBoxClick}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragOver(true);
-          }}
-          onDragLeave={() => setIsDragOver(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setIsDragOver(false);
-            handleFileChange(e.dataTransfer.files);
-          }}
-        >
-          <p>Drag and drop your files here or click to upload</p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={(e) => handleFileChange(e.target.files)}
-            style={{ display: "none" }}
-          />
-        </div>
-      ) : (
-        <section className="photo-gallery-section">
-          <section className="photo-gallery-images">
-            {images.map((image, index) => (
-              <ImagePreview
-                key={index}
-                image={image}
-                index={index}
-                onDelete={deleteImage}
-                onDragStart={handleDragStart}
-                onDrop={handleDrop}
-              />
-            ))}
-            {images.length < 5 && (
-              <div className="small-photo add-more-box" onClick={handleBoxClick}>
-                <p>Add More +</p>
-              </div>
-            )}
-          </section>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            onChange={(e) => handleFileChange(e.target.files)}
-            accept="image/*"
-            style={{ display: "none" }}
-          />
-        </section>
-      )}
+        {!images.length ? (
+                <div
+                    className={`drag-drop-area ${isDragOver ? "drag-over" : ""}`}
+                    onClick={handleBoxClick}
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      setIsDragOver(true);
+                    }}
+                    onDragLeave={() => setIsDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsDragOver(false);
+                      handleFileChange(e.dataTransfer.files);
+                    }}>
+                    <p>Drag and drop your files here or click to upload</p>
+                      <input
+                          ref={fileInputRef}
+                          type="file"
+                          multiple
+                          onChange={(e) => handleFileChange(e.target.files)}
+                          style={{ display: "none" }}
+                      />
+                    </div>
+                    ) : (
+                          <section className="photo-gallery-section">
+                            <section className="photo-gallery-images">
+                              {images.map((image, index) => (
+                                  <ImagePreview
+                                      key={index}
+                                      image={image}
+                                      index={index}
+                                      onDelete={deleteImage}
+                                      onDragStart={handleDragStart}
+                                      onDrop={handleDrop}
+                                  />
+                              ))}
+                              {images.length < 5 && (
+                                  <div className="small-photo add-more-box" onClick={handleBoxClick}>
+                                    <p>Add More +</p>
+                                  </div>
+                              )}
+                            </section>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                multiple
+                                onChange={(e) => handleFileChange(e.target.files)}
+                                accept="image/*"
+                                style={{ display: "none" }}
+                            />
+                          </section>
+                      )}
 
-      <nav className="photo-gallery-navigation">
-        <Button
-          routePath={`/hostonboarding/${accommodationType}/rules`}
-          btnText="Go back"
-        />
-        <Button
-          routePath={`/hostonboarding/${accommodationType}/pricing`}
-          btnText="Proceed"
-        />
-      </nav>
-    </main>
-  );
-}
+                      <nav className="photo-gallery-navigation">
+                      <Button
+                      routePath={`/hostonboarding/${accommodationType}/rules`}
+                    btnText="Go back"
+                />
+            <Button
+                routePath={`/hostonboarding/${accommodationType}/pricing`}
+                btnText="Proceed"
+                disabled={isProceedDisabled}
+                className={isProceedDisabled ? "button-disabled" : ""}
+            />
+          </nav>
+          </main>
+          );
+        }
 
-export default PhotosView;
+        export default PhotosView;
