@@ -4,7 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 
 export default function usePhotos() {
   const [images, setImages] = useState(() => {
-    const savedImages = localStorage.getItem("images");
+    const savedImages = sessionStorage.getItem("images");
     return savedImages ? JSON.parse(savedImages) : [];
   });
 
@@ -17,7 +17,7 @@ export default function usePhotos() {
   const MAX_IMAGES = 5;
 
   useEffect(() => {
-    localStorage.setItem("images", JSON.stringify(images));
+    sessionStorage.setItem("images", JSON.stringify(images));
   }, [images]);
 
   const validateImage = (file, callback) => {

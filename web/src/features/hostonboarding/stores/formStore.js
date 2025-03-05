@@ -321,7 +321,7 @@ const useFormStore = create((set) => ({
   submitAccommodation: async (navigate) => {
     const { accommodationDetails } = useFormStore.getState();
 
-    const savedImages = localStorage.getItem("images");
+    const savedImages = sessionStorage.getItem("images");
     const images = savedImages ? JSON.parse(savedImages) : [];
 
     const isBoat = accommodationDetails.type === "boat";
@@ -402,6 +402,7 @@ const useFormStore = create((set) => ({
           console.log("Accommodation uploaded successfully:", response.data);
   
           if (response.data.statusCode === 200) {
+            sessionStorage.removeItem("images");
             navigate("/hostdashboard");
           }
         } catch (error) {
