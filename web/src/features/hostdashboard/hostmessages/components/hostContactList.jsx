@@ -1,11 +1,68 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import useFetchContacts from '../hooks/useFetchContacts';
 import ContactItem from './hostContactItem';
+import { WebSocketContext } from '../context/webSocketContext';
 import '../styles/hostContactList.css';
 
-const ContactList = ({ userId, onContactClick }) => {
-    const { contacts, pendingContacts, loading, error } = useFetchContacts(userId);
+const ContactList = ({ userId, onContactClick, message }) => {
+    const { contacts, pendingContacts, loading, error, setContacts } = useFetchContacts(userId);
+    const { messages: wsMessages } = useContext(WebSocketContext);
     const [displayType, setDisplayType] = useState('contacts');
+
+    useEffect(() => {
+        const updateContactsFromWS = async () => {
+            if (wsMessages.length === 0) return;
+
+            setContacts((prevContacts) => {
+                const updatedContacts = [...prevContacts];
+
+                wsMessages.forEach((msg) => {
+                    const existingContact = updatedContacts.find(c => c.recipientId === msg.userId || c.recipientId === msg.recipientId);
+
+                    if (existingContact) {
+                        existingContact.latestMessage = msg;
+                    } else {
+                        const newContact = {
+                            userId: msg.userId,
+                            recipientId: msg.userId,
+                            givenName: msg.senderName || "New Contact",
+                            text: msg,
+                        };
+                        updatedContacts.push(newContact);
+                    }
+                });
+
+
+                return updatedContacts;
+            });
+        };
+
+        updateContactsFromWS();
+    }, [wsMessages, setContacts]);
+
+    useEffect(() => {
+        if (message) {
+            setContacts((prevContacts) => {
+                const updatedContacts = [...prevContacts];
+
+                const contactIndex = updatedContacts.findIndex((contact) => contact.recipientId === message.recipientId);
+
+                if (contactIndex !== -1) {
+                    updatedContacts[contactIndex] = {
+                        ...updatedContacts[contactIndex],
+                        latestMessage: { text: message.text, createdAt: message.createdAt }
+                    };
+                }
+
+                updatedContacts.sort((a, b) => {
+                    const dateA = a.latestMessage?.createdAt ? new Date(a.latestMessage.createdAt) : 0;
+                    const dateB = b.latestMessage?.createdAt ? new Date(b.latestMessage.createdAt) : 0;
+                    return dateB - dateA;
+                });
+                return updatedContacts;
+            });
+        }
+    }, [message, setContacts]);
 
     if (error) {
         return <p className="contact-list-error-text">{error}</p>;
@@ -14,9 +71,6 @@ const ContactList = ({ userId, onContactClick }) => {
     const contactList = displayType === 'contacts' ? contacts : pendingContacts;
     const noContactsMessage = displayType === 'contacts' ? 'No contacts found.' : 'No pending contacts found.';
 
-    // if (filteredContacts.length === 0) {
-    //     return <p className="contact-list-empty-text">No contacts found.</p>;
-    // }
     const handleContactClick = (contactId, contactName) => {
         if (onContactClick) {
             onContactClick(contactId, contactName);
@@ -47,7 +101,12 @@ const ContactList = ({ userId, onContactClick }) => {
                     <p className="contact-list-empty-text">{noContactsMessage}</p>
                 ) : (
                     contactList
-                        .sort((a, b) => new Date(b.latestMessage.createdAt) - new Date(a.latestMessage.createdAt))
+                        .filter(contact => contact.latestMessage?.createdAt)
+                        .sort((a, b) => {
+                            const dateA = a.latestMessage?.createdAt ? new Date(a.latestMessage.createdAt) : 0;
+                            const dateB = b.latestMessage?.createdAt ? new Date(b.latestMessage.createdAt) : 0;
+                            return dateB - dateA;
+                        })
                         .map((contact) => (
                             <li key={contact.userId} className="contact-list-list-item" onClick={() => handleContactClick(contact.recipientId, contact.givenName)}>
                                 <ContactItem

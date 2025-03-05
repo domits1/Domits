@@ -12,10 +12,10 @@ const HostPropertyCare = () => {
     
     return (
         <main className="page-body">
+        <h2>Housekeeping</h2>
             <section className='host-pc-property'>
                 <Pages/>
                 <div className="property-content">
-                    <h1>Housekeeping</h1>
                     <h3 className="property-h3">
                         Are you looking for a cleaner, housekeeper, or maintenance handyman? Our partner Mostpros
                         has a network of home service professionals ready to support you.
