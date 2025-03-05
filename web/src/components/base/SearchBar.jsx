@@ -170,7 +170,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
     } 
-    // Previously only checked if (location.pathname === '/' && location.state && location.state.searchParams)
     else if (
       (location.pathname === '/' || location.pathname === '/home') &&
       location.state &&
