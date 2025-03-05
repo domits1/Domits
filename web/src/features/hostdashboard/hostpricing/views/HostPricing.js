@@ -819,12 +819,12 @@ const HostPricing = () => {
 
                         <div className="pricing-column">
                           <p className="pricing-rate-input">
-                            <button
+                            {/* <button
                               className="dynamic-pricing-button"
                               onClick={() => openModal(accommodation)}
                             >
                               Dynamic
-                            </button>
+                            </button> */}
                             Rate:{' '}
                             {editMode ? (
                               <input
