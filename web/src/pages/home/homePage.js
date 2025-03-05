@@ -156,18 +156,7 @@ const Homepage = () => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
 
-  if (loading || loadingImages) {
-    return (
-      <div className="domits-full-visibility">
-        {Array(8)
-          .fill()
-          .map((_, index) => (
-            <SkeletonLoader key={index} />
-          ))}
-      </div>
-    );
-  }
-
+ 
   return (
     <>
       <Header />
@@ -203,7 +192,7 @@ const Homepage = () => {
           </div>
           <div className="domits-iconTextGroup">
             <img src={checkMark} alt="checkMark" />
-            <p>Domits Quality Guarantee</p>
+            <p>Domits quality guarantee</p>
           </div>
         </div>
       </div>
@@ -214,7 +203,7 @@ const Homepage = () => {
 
           <div className="domits-trendingContainer">
         <div data-popup-text="We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.">
-        🎖️ We offer you the best price guarantee
+        🎖️ Best price guarantee
       </div>
       <div data-popup-text="If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.">
       ✅ Accommodation booking guarantee

@@ -90,8 +90,6 @@ const ChatWidget = () => {
     }
   };
 
-
-
   const handleTileClick = (id) => {
     const url = `${window.location.origin}/listingdetails?ID=${id}`;
     window.location.href = url;
@@ -291,8 +289,8 @@ const ChatWidget = () => {
     }
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  if (isLoading || !user) {
+    return null;
   }
 
   if (role === 'Host') {

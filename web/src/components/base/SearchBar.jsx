@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
 import {
-  FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel, FaDoorClosed,
-  FaShip, FaTree, FaSpinner, FaTimesCircle, FaUmbrellaBeach, FaUser, FaChild, FaBaby, FaPaw, FaSearch,
+  FaTimes, FaSearchLocation, FaHome, FaCaravan,FaDoorClosed,
+  FaShip,FaSpinner, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw,
 } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
@@ -434,13 +434,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                       value={accommodation ? {label: accommodation, value: accommodation} : null}
                       onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
                       options={[
-                        {value: 'Apartment', label: <><FaBuilding/> Apartment</>},
                         {value: 'House', label: <><FaHome/> House</>},
-                        {value: 'Villa', label: <><FaUmbrellaBeach/> Villa</>},
                         {value: 'Boat', label: <><FaShip/> Boat</>},
                         {value: 'Camper', label: <><FaCaravan/> Camper</>},
-                        {value: 'Cottage', label: <><FaTree/> Cottage</>},
-                        {value: 'Hotel', label: <><FaHotel/> Hotel</>},
                       ]}
                       isSearchable={false}
                       isClearable={true}
