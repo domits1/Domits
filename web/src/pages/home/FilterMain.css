@@ -75,19 +75,4 @@
   font-size: 1rem;
   font-weight: 500;
 }
-.apply-filters-button{
-  background-color: #4caf50;
-  color: white;
-  padding: 10px 20px;
-  font-size: 1rem;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  margin-top: 10px;
-  margin-left: 3rem;
-}
-
-.apply-filters-button:hover{
-background-color: #45a049;
-}
 
