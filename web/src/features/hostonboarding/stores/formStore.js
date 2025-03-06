@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import axios from "axios";
-import { generateUUID } from "../utils/generateAccomodationId";
 
 const API_BASE_URL =
   "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation";
@@ -73,6 +72,9 @@ const useFormStore = create((set) => ({
       ExpirationTime: 72,
     },
     registrationNumber: "",
+    ReservationsID: "",
+    paymentBeforeBookingHours: "3",
+    paymentBeforeCheckInHours: "36",
     OwnerId: "",
   },
   setAccommodationType: (type) =>
@@ -322,6 +324,7 @@ const useFormStore = create((set) => ({
       },
     }),
   submitAccommodation: async (navigate) => {
+    
     const { accommodationDetails } = useFormStore.getState();
 
     const isBoat = accommodationDetails.type === "boat";
@@ -335,7 +338,6 @@ const useFormStore = create((set) => ({
 
     try {
       const formattedData = {
-        ID: generateUUID(),
         Title: accommodationDetails.title || "",
         Subtitle: accommodationDetails.subtitle || "",
         AccommodationType: accommodationDetails.type || "",
@@ -361,7 +363,7 @@ const useFormStore = create((set) => ({
           accommodationDetails.address.country,
         CreatedAt: new Date().toISOString(),
         Description: accommodationDetails.description || "",
-        Drafted: true,
+        Drafted: accommodationDetails.Drafted || true,
         Features: accommodationDetails.Features || [],
         FuelTank: specifications?.FuelTank || 0,
         FWD: specifications?.FWD || false,
@@ -386,6 +388,8 @@ const useFormStore = create((set) => ({
             ? accommodationDetails.boatDetails?.zipCode
             : accommodationDetails.camperDetails?.zipCode) ||
           accommodationDetails.address.zipCode,
+        PaymentBeforeBookingHours: 24, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
+        PaymentBeforeCheckInHours: 36, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
         RegistrationNumber: accommodationDetails.registrationNumber || "",
         Renovated: specifications?.Renovated || 0,
         Rent: accommodationDetails.Rent || 0,
