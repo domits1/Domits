@@ -1,6 +1,10 @@
 name: Cypress and Jest Tests
 
 on:
+  pull_request:
+    branches:
+      - 'acceptance'
+      - 'main'
   push:
     branches:
       - 'acceptance'
