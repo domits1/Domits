@@ -58,7 +58,7 @@ jobs:
 
       # Download the Jest coverage report
       - name: Download Jest Coverage Report
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: jest-coverage
           path: web/src/coverage
