@@ -35,8 +35,6 @@ jobs:
         with:
           working-directory: web/src/tests
           start: npx vite --host
-          config: video=false
-          options: --no-exit
 
       # Upload Jest coverage report as an artifact (so SonarQube can use it)
       - name: Save Jest Coverage Report
