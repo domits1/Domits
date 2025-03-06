@@ -42,7 +42,7 @@ jobs:
 
       # Upload Jest coverage report as an artifact (so SonarQube can use it)
       - name: Save Jest Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: jest-coverage
           path: web/src/coverage/lcov.info
