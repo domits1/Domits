@@ -61,20 +61,19 @@ const useFormStore = create((set) => ({
     Features: {
       ExtraServices: [],
     },
-    availability: {
+    availability: {     
+      ExpirationTime: 72,
       MinimumStay: 1,
       MaximumStay: 30,
       MinimumAdvancedReservation: 1,
       MaximumAdvancedReservation: 1,
+      PaymentDeadlineAfterBooking: "24",
+      PaymentDeadlineBeforeCheckIn: "36",
       selectedDates: [],
-      PaymentDeadlineAfterBooking: 24,
-      PaymentDeadlineBeforeCheckIn: 48,
-      ExpirationTime: 72,
     },
     registrationNumber: "",
     ReservationsID: "",
-    paymentBeforeBookingHours: "3",
-    paymentBeforeCheckInHours: "36",
+
     OwnerId: "",
   },
   setAccommodationType: (type) =>
@@ -388,13 +387,14 @@ const useFormStore = create((set) => ({
             ? accommodationDetails.boatDetails?.zipCode
             : accommodationDetails.camperDetails?.zipCode) ||
           accommodationDetails.address.zipCode,
-        PaymentBeforeBookingHours: 24, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
-        PaymentBeforeCheckInHours: 36, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
+        PaymentAfterBookingHours: accommodationDetails.availability.PaymentDeadlineAfterBooking || 24, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
+        PaymentBeforeCheckInHours: accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
         RegistrationNumber: accommodationDetails.registrationNumber || "",
         Renovated: specifications?.Renovated || 0,
         Rent: accommodationDetails.Rent || 0,
         RentedWithSkipper: specifications?.RentedWithSkipper || false,
         Requirement: specifications?.Requirement || "",
+        ReservationExpirationTime: accommodationDetails.availability.ExpirationTime || 72,
         Rooms: accommodationDetails.rooms || 0,
         SelfBuilt: specifications?.SelfBuilt || false,
         ServiceFee: accommodationDetails.ServiceFee || 0,
