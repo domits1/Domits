@@ -5,6 +5,7 @@ on:
     branches:
       - 'acceptance'
       - 'main'
+      - '1630-sonarqube-setup-in-github-cipipeline'
 
 jobs:
   sonarqube:
