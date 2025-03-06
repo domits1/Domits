@@ -22,7 +22,7 @@ import Bekir from '../../images/about-img/Bekir.png';
 import Kacper from '../../images/about-img/Kacper.png';
 import Etka from '../../images/about-img/Etka.jpg';
 import Sebastiaan from '../../images/about-img/Sebastiaan.png';
-import Raman from '../../images/about-img/Raman.jng';
+import Raman from '../../images/about-img/Raman.jpg';
 
 // Handy tool for editing the images:
 // https://imageresizer.com/image-compressor
@@ -125,7 +125,7 @@ function About() {
                         {name: 'Muhammed', src: muhammed, role: 'Developer'},
                         {name: 'Nick Ryan', src: nick, role: 'Developer'},
                         {name: 'Randy', src: standard, role: 'Developer Distribution'},
-                        {name: 'Raman', src: standard, role: 'Developer'},
+                        {name: 'Raman', src: Raman, role: 'Developer'},
                         {name: 'Robin', src: Robin, role: 'Security'},
                         {name: 'Roozbeh', src: Roozbeh, role: 'Developer Revenue'},
                         {name: 'Ryan', src: Ryan, role: 'Developer'},
