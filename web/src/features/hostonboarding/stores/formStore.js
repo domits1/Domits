@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import axios from "axios";
-import { generateUUID } from "../utils/generateAccomodationId";
 
 const API_BASE_URL =
   "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation";
@@ -335,9 +334,7 @@ const useFormStore = create((set) => ({
       : {};
 
     try {
-      let UUID = generateUUID(); // Generates a UUID to share with both tables, accomodation and reservations.
       const formattedData = {
-        ID: UUID,
         Title: accommodationDetails.title || "",
         Subtitle: accommodationDetails.subtitle || "",
         AccommodationType: accommodationDetails.type || "",
@@ -378,13 +375,12 @@ const useFormStore = create((set) => ({
         MinimumBookingPeriod: accommodationDetails.minimumBookingPeriod || 0,
         Model: specifications?.Model || "",
         OwnerId: accommodationDetails.ownerId || "",
-        ReservationsId: UUID,
-        PaymentBeforeBookingHours: 24,
-        PaymentBeforeCheckInHours: 36,
+        PaymentBeforeBookingHours: 24, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
+        PaymentBeforeCheckInHours: 36, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
         PostalCode: (isBoat ? accommodationDetails.boatDetails?.zipCode : accommodationDetails.camperDetails?.zipCode) || accommodationDetails.address.zipCode,
         RegistrationNumber: accommodationDetails.registrationNumber || "",
         Renovated: specifications?.Renovated || 0,
-        Rent: 540,
+        Rent: accommodationDetails.Rent || 0,
         RentedWithSkipper: specifications?.RentedWithSkipper || false,
         Requirement: specifications?.Requirement || "",
         Rooms: accommodationDetails.rooms || 0,
