@@ -3,6 +3,7 @@ import {ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity
 import {useNavigation} from '@react-navigation/native';
 import FetchAccommodationsData from '../features/search/FetchAccommodationsData'
 import FormatAccommodationData from "../components/utils/mappings/FormatAccommodationData";
+import TranslatedText from "../features/translation/components/TranslatedText";
 
 const Accommodations = ({searchResults}) => {
     const [accommodationsList, setAccommodationsList] = useState([]);
@@ -40,7 +41,7 @@ const Accommodations = ({searchResults}) => {
      * @returns {JSX.Element|null} - A text component or null if the value is undefined
      */
     const renderSpecText = (value, suffix = '') => {
-        return value !== undefined ? <Text style={styles.spec}>{value}{suffix}</Text> : null;
+        return value !== undefined ? <Text style={styles.spec}>{value} {suffix}</Text> : null;
     };
 
     return (
@@ -55,14 +56,13 @@ const Accommodations = ({searchResults}) => {
                         <Text style={styles.title}>
                             {accommodation.city}, {accommodation.country}
                         </Text>
-                        <Text style={styles.price}>€{accommodation.price} per night</Text>
+                        <Text style={styles.price}>€{accommodation.price} <TranslatedText textToTranslate={'per night'}/></Text>
                         <Text style={styles.details} numberOfLines={3}>{accommodation.details}</Text>
                         <View style={styles.specs}>
-                            {renderSpecText(accommodation.size, 'm²')}
-                            {renderSpecText(accommodation.beds, ' Bed(s)')}
-                            {renderSpecText(accommodation.bedrooms, ' Bedroom(s)')}
-                            {renderSpecText(accommodation.bathrooms, ' Bathroom(s)')}
-                            {renderSpecText(accommodation.persons, ' Guest(s)')}
+                            {renderSpecText(accommodation.beds, <TranslatedText textToTranslate={'beds'} />)}
+                            {renderSpecText(accommodation.bedrooms, <TranslatedText textToTranslate={'bedrooms'} />)}
+                            {renderSpecText(accommodation.bathrooms, <TranslatedText textToTranslate={'bathrooms'} />)}
+                            {renderSpecText(accommodation.guests, <TranslatedText textToTranslate={'guests'} />)}
                         </View>
                     </View>
                 </TouchableOpacity>

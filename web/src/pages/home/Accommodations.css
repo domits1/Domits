@@ -156,12 +156,14 @@
 }
 
 @media (max-width: 856px) {
-  .accocard {
+
+  /* voor nu hoeft deze niet te gebruikt te worden omdat het voor problemen zorgt op homepage, kan leter wel gebruikt worden na aanpassingen */
+  /* .accocard {
     width: 100%;
     height: auto;
     margin: 0 auto;
     display: block;
-  }
+  } */
 
   .accocard-specs {
     display: flex;
