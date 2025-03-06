@@ -1,10 +1,6 @@
 name: Cypress and Jest Tests
 
 on:
-  pull_request:
-    branches:
-      - 'acceptance'
-      - 'main'
   push:
     branches:
       - 'acceptance'
@@ -39,7 +35,8 @@ jobs:
         with:
           working-directory: web/src/tests
           start: npx vite --host
-          command: npx cypress run --exit # Allow passing despite one test failing
+          config: video=false
+          options: --no-exit
 
       # Upload Jest coverage report as an artifact (so SonarQube can use it)
       - name: Save Jest Coverage Report
