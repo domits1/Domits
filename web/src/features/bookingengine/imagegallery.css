@@ -13,7 +13,7 @@
 }
 
 .selected-image img {
-  width: 100%;
+  width: auto;
   height: auto;
   margin-bottom: 10px;
   border-radius: 15px;
@@ -23,7 +23,7 @@
 
 .image-thumbnails {
   display: flex;
-  flex-wrap: wrap; 
+  flex-wrap: wrap;
   gap: 10px; 
 }
 

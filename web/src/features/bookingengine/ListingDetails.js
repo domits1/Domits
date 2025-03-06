@@ -988,7 +988,7 @@ const ListingDetails = () => {
                                 )}
 
                                 <section className="listing-host-info">
-                                    <h2>Host profile</h2>
+                                    {/* <h2>Host profile</h2> */}
                                     {host && (
                                         <div className="host-card">
                                             <section className="card-top">
@@ -1012,7 +1012,7 @@ const ListingDetails = () => {
                     <aside className='detailSummary'>
                         <div className="summary-section">
                             <h2 className='price-per-night'>
-                                €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
+                                €{accommodation.Rent} {accommodation.Type === "Boat" ? "per day" : "per night"}
                             </h2>
 
 
