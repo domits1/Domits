@@ -356,7 +356,7 @@ const useFormStore = create((set) => ({
         Country: (isBoat ? accommodationDetails.boatDetails?.country : accommodationDetails.camperDetails?.country) || accommodationDetails.address.country,
         CreatedAt: new Date().toISOString(),
         Description: accommodationDetails.description || "",
-        Drafted: "true",
+        Drafted: accommodationDetails.Drafted || true,
         Features: accommodationDetails.Features || [],
         FuelTank: specifications?.FuelTank || 0,
         FWD: specifications?.FWD || false,
