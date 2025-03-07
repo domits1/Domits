@@ -64,7 +64,8 @@ const useFormStore = create((set) => ({
     availability: {     
       ExpirationTime: 72,
       MinimumStay: 1,
-      MaximumStay: 30,
+      MinimumBookingPeriod: 3,
+      MaximumStay: 10,
       MinimumAdvancedReservation: 1,
       MaximumAdvancedReservation: 1,
       PaymentDeadlineAfterBooking: "24",
@@ -73,7 +74,6 @@ const useFormStore = create((set) => ({
     },
     registrationNumber: "",
     ReservationsID: "",
-
     OwnerId: "",
   },
   setAccommodationType: (type) =>
@@ -321,6 +321,17 @@ const useFormStore = create((set) => ({
         Bathrooms: 0,
         Beds: 0,
       },
+      availability: {
+        ExpirationTime: 72,
+        MinimumStay: 1,
+        MinimumBookingPeriod: 3,
+        MaximumStay: 10,
+        MinimumAdvancedReservation: 1,
+        MaximumAdvancedReservation: 1,
+        PaymentDeadlineAfterBooking: "24",
+        PaymentDeadlineBeforeCheckIn: "36",
+        selectedDates: [],
+      }
     }),
   submitAccommodation: async (navigate) => {
     
@@ -379,7 +390,7 @@ const useFormStore = create((set) => ({
         Manufacturer: specifications?.Manufacturer || "",
         MinimumAdvancedReservation:
           accommodationDetails.availability?.MinimumAdvancedReservation || 0,
-        MinimumBookingPeriod: accommodationDetails.minimumBookingPeriod || 0,
+        MinimumBookingPeriod: accommodationDetails.MinimumBookingPeriod || 0,
         Model: specifications?.Model || "",
         OwnerId: accommodationDetails.ownerId || "",
         PostalCode:
@@ -387,8 +398,8 @@ const useFormStore = create((set) => ({
             ? accommodationDetails.boatDetails?.zipCode
             : accommodationDetails.camperDetails?.zipCode) ||
           accommodationDetails.address.zipCode,
-        PaymentAfterBookingHours: accommodationDetails.availability.PaymentDeadlineAfterBooking || 24, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
-        PaymentBeforeCheckInHours: accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36, //EDIT SOON IF FRONTEND FUNCTIONALITY IS INTACT!
+        PaymentAfterBookingHours: accommodationDetails.availability.PaymentDeadlineAfterBooking || 24, 
+        PaymentBeforeCheckInHours: accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36,
         RegistrationNumber: accommodationDetails.registrationNumber || "",
         Renovated: specifications?.Renovated || 0,
         Rent: accommodationDetails.Rent || 0,
