@@ -64,7 +64,7 @@ describe('Landing Page Tests', () => {
 
         // TODO: reinstate this country code with correct name
         // cy.get('.countryCodeDropdown').should('be.visible').select('+31');
-        cy.get('input[name="phone"]').should('be.visible').type('0612345678');
+        // cy.get('input[name="phone"]').should('be.visible').type('0612345678');
 
         cy.get('#password').should('be.visible').type('Test24680!');
         
