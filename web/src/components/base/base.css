@@ -288,6 +288,12 @@
     overflow: visible;
     white-space: normal;
 }
+.footer-lists-socials-icons {
+    display: flex;
+    gap: 10px; 
+    list-style-type: none; 
+    padding: 0;
+}
 
 .footer-links {
 
@@ -311,11 +317,10 @@
 }
 
 .footer-icons img {
-    width: 2.3rem;
-    height: auto;
-    margin-left: 1.2rem;
-    margin-bottom: 0.6rem;
-    border-radius: 25%;
+    width: 2.5rem; 
+    height:  2.5rem; 
+    border-radius: 0.5rem;
+    margin: 10px;
 }
 
 .footer-copyright-text {
@@ -413,4 +418,5 @@ a:hover {
         border-right: none;
         padding-right: 0px;
     }
+    
 }
