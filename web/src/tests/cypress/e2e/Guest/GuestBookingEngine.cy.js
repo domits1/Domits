@@ -14,7 +14,6 @@ describe('Booking Engine Test - Aventura Yachts A45', () => {
     });
 
     it('Should log in as a guest', () => {
-        // Step 1: Verify that the user is logged in correctly
         cy.get('.header-links > .headerHostButton').click();
         cy.get('.edit-icon-background').click();
         
@@ -31,7 +30,7 @@ describe('Booking Engine Test - Aventura Yachts A45', () => {
         cy.get('.edit-icon-background').click();
         cy.wait(2000);
 
-        // Simulate API response for logged-in user
+        
         cy.intercept('GET', '**/currentUserInfo', {
             statusCode: 200,
             body: {
@@ -47,16 +46,16 @@ describe('Booking Engine Test - Aventura Yachts A45', () => {
        
        cy.wait(3000); 
 
-       // Click on the correct accommodation "Aventura Yachts A45"
+       
        cy.get(':nth-child(3) > .swiper > .swiper-wrapper > .swiper-slide-visible > img')
            .should('be.visible')
            .click({ force: true });
 
-       // Verify that we are on the accommodation page
+       
        cy.url().should('include', '/listingdetails?ID=16426fb5-378d-420a-87a7-a1a509e91677');
        cy.wait(2000);
 
-       // Open the guest selection dropdown and select guests
+       
        cy.get('.dropdown-button').click();
        cy.wait(1000);
        
@@ -73,21 +72,21 @@ describe('Booking Engine Test - Aventura Yachts A45', () => {
        cy.get('.dropdown-button').click();
        cy.wait(1000);
 
-       // Click the reserve button
+       
        cy.get('.reserve-button').should('be.visible').click();
        cy.wait(3000);
 
-       // Verify that we are on the correct booking overview page
+       
        cy.url().should('include', '/bookingoverview');
-       cy.wait(2000); // Extra wait to ensure the page is fully loaded
+       cy.wait(2000); 
 
        cy.visit('https://acceptance.domits.com/bookingoverview/?id=16426fb5-378d-420a-87a7-a1a509e91677&checkIn=null&checkOut=null&adults=1&kids=0&pets=0&cleaningFee=0&amountOfGuest=1&taxes=0&ServiceFee=0', { failOnStatusCode: false });
        cy.wait(3000);
 
-       // Verify that the "Confirm & Pay" button is visible
+       
        cy.get('.confirm-pay-button').should('be.visible');
 
-       // Click the "Confirm & Pay" button
+       
         cy.get('.confirm-pay-button').should('be.visible').click();
 
    });
