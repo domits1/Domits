@@ -120,9 +120,6 @@ function About() {
                         {name: 'Justin', src: Justin, role: 'Developer Distribution'},
                         {name: 'Kacper', src: Kacper, role: 'Developer'},
                         {name: 'Martijn', src: standard, role: 'Developer'},
-                        {name: 'Mortada', src: standard, role: 'Developer Revenue'},
-                        {name: 'Mohamed', src: muhammed, role: 'Developer'},
-                        {name: 'Muhammed', src: muhammed, role: 'Developer'},
                         {name: 'Nick Ryan', src: nick, role: 'Developer'},
                         {name: 'Randy', src: standard, role: 'Developer Distribution'},
                         {name: 'Raman', src: Raman, role: 'Developer'},
@@ -151,11 +148,9 @@ function About() {
                 <div className="about__team">
                     {[
                         {name: 'Jared', src: Jared, role: 'Growth'},
-                        {name: 'Lisa', src: standard, role: 'Growth'},
+                        {name: 'Ali', src: standard, role: 'Growth'},
                         {name: 'Maroan', src: standard, role: 'Growth'},
-                        {name: 'Santiago', src: standard, role: 'Growth'},
                         {name: 'Thijmen', src: standard, role: 'Growth'},
-                        {name: 'Vic', src: standard, role: 'Growth'},
                     ]
                         .sort((a, b) => a.name.localeCompare(b.name))
                         .map((member) => (
