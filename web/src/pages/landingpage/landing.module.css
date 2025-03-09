@@ -613,6 +613,31 @@ body {
     padding: 4% 0;
 }
 
+/* Media Queries for responsiveness */
+@media (max-width: 1024px) {
+    .iconsContainer {
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    .iconsContainer {
+        flex-direction: column;
+        height: auto;
+        padding: 5px;
+    }
+}
+
+@media (max-width: 480px) {
+    .iconsContainer {
+        flex-direction: column;
+        height: auto;
+        padding: 2px;
+    }
+}
+
 /* Media Queries */
 @media (max-width: 1024px) {
     .firstPicture {
@@ -1159,6 +1184,40 @@ body {
             width: auto;
             height: auto;
             object-fit: cover;
+        }
+    }
+
+    /* Media Queries for responsiveness */
+    @media (max-width: 1024px) {
+        .checkListItems {
+            grid-template-columns: repeat(2, 1fr);
+            margin: 0 10%;
+        }
+
+        .checkListItem span {
+            max-width: 30vw;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .checkListItems {
+            grid-template-columns: 1fr;
+            margin: 0 5%;
+        }
+
+        .checkListItem span {
+            max-width: 80vw;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .checkListItems {
+            grid-template-columns: 1fr;
+            margin: 0 2%;
+        }
+
+        .checkListItem span {
+            max-width: 90vw;
         }
     }
 

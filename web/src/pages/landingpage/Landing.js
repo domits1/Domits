@@ -282,19 +282,7 @@ function Landing() {
           </div>
         </div>
       </div>
-      <div className={styles.RegisterBlock}>
-        {isAuthenticated && group !== "Host" ? (
-          <div className={styles.updateGroupButtonDiv}>
-            <button onClick={updateUserGroup} className={styles.nextButtons}>
-              Become a Host
-            </button>
-          </div>
-        ) : (
-          <div id="Register">
-            <Register />
-          </div>
-        )}
-      </div>
+
       <div className={styles.easyHosting}>
         <div className={styles.easyHosting_text}>
           <h1>

@@ -345,6 +345,12 @@ body {
     font-size: 1rem;
     font-weight: 300;
     line-height: 150%;
+    margin-left: 10px;
+}
+
+.footer-links>a {
+    text-decoration: none;
+    margin-left: 3px;
 }
 
 .footer-copyright {

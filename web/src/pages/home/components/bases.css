@@ -14,6 +14,10 @@
     transition: opacity 0.3s ease;
 }
 
+.iconTextGroup {
+    background: red;
+}
+
 .search-bar-hidden.visible {
     display: block;
     opacity: 1;

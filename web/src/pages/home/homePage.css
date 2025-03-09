@@ -17,6 +17,10 @@ body.hide-header .app-header {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
+  /* Added for responsiveness */
+  gap: 20px;
+  /* Added for spacing */
 }
 
 .domits-searchContainer {
@@ -130,9 +134,11 @@ body.hide-header .app-header {
   gap: 25px;
   margin-left: 7vw;
   padding-bottom: 2vh;
+  flex-wrap: wrap;
+  /* Added for responsiveness */
 }
 
-.domits-trendingContainer > div {
+.domits-trendingContainer>div {
   width: 12vw;
   padding: 8px;
   background-color: #f9f9f9;
@@ -144,9 +150,11 @@ body.hide-header .app-header {
   color: #555;
   font-size: 16px;
   margin-left: 4%;
+  position: relative;
+  /* Added for positioning the tooltip */
 }
 
-.domits-trendingContainer > div:hover::after {
+.domits-trendingContainer>div:hover::after {
   content: attr(data-popup-text);
   display: block;
   background: rgba(0, 0, 0, 0.8);
@@ -173,14 +181,9 @@ body.hide-header .app-header {
 .domits-communityGroup {
   font-size: 1.5vw;
   font-weight: 300;
-  width: 25%;
   height: 15vh;
   text-align: left;
-  padding-left: 38vw;
-}
-
-@media (max-width: 1024px) {
-
+  padding-left: 27.2vw;
 }
 
 @media (max-width: 1440px) {
@@ -204,14 +207,14 @@ body.hide-header .app-header {
 }
 
 @media (max-width: 768px) {
-    .domits-accocard {
-      width: 40%;
-      height: auto;
-    }
+  .domits-accocard {
+    width: 40%;
+    height: auto;
+  }
 
-    .domits-searchText {
-      font-size: 0.6em;
-    }
+  .domits-searchText {
+    font-size: 0.6em;
+  }
 
   .domits-searchTextCon {
     font-size: 3em;
@@ -225,9 +228,7 @@ body.hide-header .app-header {
     flex-direction: column;
     gap: 1rem;
   }
-}
 
-@media (max-width: 768px) {
   .domits-subHead {
     font-size: 2rem;
     margin-left: 2vw;
@@ -237,7 +238,7 @@ body.hide-header .app-header {
   .domits-accommodationGroup {
     padding-left: 0vh;
     flex-direction: column;
-}
+  }
 
   .domits-trendingContainer {
     flex-direction: column;
@@ -247,7 +248,7 @@ body.hide-header .app-header {
     padding: 10px 0;
   }
 
-  .domits-trendingContainer > div {
+  .domits-trendingContainer>div {
     width: 90%;
     font-size: 16px;
   }
@@ -327,7 +328,7 @@ body.hide-header .app-header {
     text-align: center;
   }
 
-  .domits-trendingContainer > div {
+  .domits-trendingContainer>div {
     font-size: 14px;
   }
 
@@ -349,10 +350,9 @@ body.hide-header .app-header {
     height: 50vh;
   }
 
-  .domits-trendingContainer > div:hover::after {
+  .domits-trendingContainer>div:hover::after {
     width: 60%;
     transform: translateX(0%);
     transform: translateY(0%);
   }
 }
-
