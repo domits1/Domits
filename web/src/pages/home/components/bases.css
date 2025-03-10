@@ -4,6 +4,10 @@
     text-align: center;
     background-color: white;
     position: fixed;
+    top: 0;
+    /* Ensure the header is at the top */
+    left: 0;
+    /* Ensure the header spans the full width */
     width: 100%;
     z-index: 1000;
 }
