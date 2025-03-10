@@ -1,3 +1,18 @@
+/* General Styling */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    overflow-x: hidden;
+    font-family: Kanit, sans-serif;
+}
+
+/* Header Styling */
 .header-app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 20px 1% 5px 1%;
@@ -5,9 +20,7 @@
     background-color: white;
     position: fixed;
     top: 0;
-    /* Ensure the header is at the top */
     left: 0;
-    /* Ensure the header spans the full width */
     width: 100%;
     z-index: 1000;
 }
@@ -16,10 +29,6 @@
     display: none;
     opacity: 0;
     transition: opacity 0.3s ease;
-}
-
-.iconTextGroup {
-    background: red;
 }
 
 .search-bar-hidden.visible {
@@ -40,6 +49,19 @@
     align-items: center;
     flex-wrap: wrap;
     width: 95%;
+    margin: auto;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.header-logo img {
+    max-width: 100%;
+    height: auto;
 }
 
 .header-right {
@@ -149,10 +171,6 @@
     box-shadow: none;
 }
 
-.swiper-button-prev.swiper-button-disabled {
-    opacity: 0;
-}
-
 .header-dropdown-logout-button {
     margin-top: 20px;
 }
@@ -179,6 +197,7 @@
     word-wrap: break-word;
 }
 
+/* Media Queries */
 @media screen and (max-width: 1024px) {
     .header-app-header {
         height: 15vh;
@@ -267,7 +286,14 @@
     }
 
     .header-logo {
-        display: none;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+    }
+
+    .header-logo img {
+        max-width: 80%;
+        height: auto;
     }
 
     .header-right {
@@ -281,5 +307,16 @@
     .header-buttons {
         width: 100%;
         margin-bottom: 10px;
+    }
+
+    .header-personal-menu-dropdown-content {
+        width: 100%;
+        left: 0;
+        right: 0;
+        margin: auto;
+    }
+
+    .header-personal-menu-dropdown-content button {
+        width: 100%;
     }
 }
