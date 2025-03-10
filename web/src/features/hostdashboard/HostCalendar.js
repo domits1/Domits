@@ -3,7 +3,7 @@ import Pages from "./Pages";
 import './HostHomepage.css'
 import {Auth} from "aws-amplify";
 import spinner from "../../images/spinnner.gif";
-import CalendarComponent from "./components/Calender/CalendarComponent.js";
+import CalendarComponent from "./CalendarComponent";
 import styles from "./HostDashboard.module.css";
 import calenderStyles from "./HostCalendar.module.css";
 import {generateUUID} from "../../utils/generateUUID.js";
@@ -162,6 +162,7 @@ function HostCalendar() {
 
     return (
         <div className="page-body">
+            <h2>Calendar</h2>
             <div className={styles.dashboardHost}>
                 <Pages/>
                 {isLoading ? (
@@ -181,7 +182,6 @@ function HostCalendar() {
                     ) :
                     <div className={calenderStyles.contentContainerCalendar}>
                         <div className={calenderStyles.calendarHeader}>
-                            <h2>Calendar</h2>
                             <button className={calenderStyles.exportICal} onClick={handleICal}>
                                 Export to calender
                             </button>

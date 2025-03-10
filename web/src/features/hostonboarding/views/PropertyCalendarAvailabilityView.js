@@ -1,10 +1,10 @@
 import React from "react";
-import CalendarComponent from "../../hostdashboard/components/Calender/CalendarComponent";
+import CalendarComponent from "../../hostdashboard/CalendarComponent";
 import { useParams } from "react-router-dom";
 import StayControl from "../components/StayControl";
-import { useAvailability } from "../hooks/useAvailability";
+import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
 import Button from "../components/button";
-import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
+import { useHandleLegalProceed } from "../hooks/usePropertyRegistrationNumber";
 
 function AvailabilityView() {
     const { type: accommodationType } = useParams();

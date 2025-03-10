@@ -23,6 +23,7 @@ function Header({ setSearchResults, setLoading }) {
   const [currentView, setCurrentView] = useState("guest"); // 'guest' or 'host'
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
 
+
   useEffect(() => {
     checkAuthentication();
   }, []);
@@ -30,6 +31,20 @@ function Header({ setSearchResults, setLoading }) {
   useEffect(() => {
     setDropdownVisible(false);
   }, [location]);
+
+    // useEffect(() => {
+    //     // Voeg het Trustpilot-script toe
+    //     const script = document.createElement('script');
+    //     script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
+    //     script.async = true;
+    //     document.head.appendChild(script);
+
+    //     // Verwijder het script bij demontage van de component
+    //     return () => {
+    //         document.head.removeChild(script);
+    //     };
+    // }, []);
+
 
   const checkAuthentication = async () => {
     try {
@@ -309,6 +324,7 @@ function Header({ setSearchResults, setLoading }) {
       </header>
     </div>
   );
+
 }
 
 export default Header;

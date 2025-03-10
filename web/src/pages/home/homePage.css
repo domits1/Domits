@@ -57,7 +57,8 @@ body.hide-header .app-header {
 .domits-subHead {
   font-size: 2.5rem;
   font-weight: bold;
-  padding-left: 9.5rem;
+  text-align: center;
+  padding-left: 0;
 }
 
 .domits-iconsContainer {
@@ -130,9 +131,11 @@ body.hide-header .app-header {
 .domits-trendingContainer {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 25px;
-  margin-left: 7vw;
+  margin-left: auto;
+  margin-right: auto;
   padding-bottom: 2vh;
   flex-wrap: wrap;
   /* Added for responsiveness */
@@ -196,6 +199,13 @@ body.hide-header .app-header {
   .domits-accocard {
     width: clamp(220px, 20vw, 300px);
   }
+  .domits-iconsContainerText {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 1.2rem;
+    text-align: center;
+  }
 
   .domits-searchTextCon {
     font-size: 5em;
@@ -238,6 +248,8 @@ body.hide-header .app-header {
   .domits-accommodationGroup {
     padding-left: 0vh;
     flex-direction: column;
+    margin-left: 15px;
+    margin-right: 15px;
   }
 
   .domits-trendingContainer {
@@ -292,13 +304,6 @@ body.hide-header .app-header {
     padding: 10px 5vw;
   }
 
-  .domits-iconsContainerText {
-    flex-direction: column;
-    gap: 10px;
-    font-size: 1.2rem;
-    text-align: center;
-  }
-
   .domits-communityHead {
     font-size: 1.8rem;
   }
@@ -324,7 +329,7 @@ body.hide-header .app-header {
 
   .domits-subHead {
     font-size: 1.5rem;
-    margin: 10px auto;
+    margin: 20px auto;
     text-align: center;
   }
 

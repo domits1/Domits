@@ -338,8 +338,6 @@ const Support = () => {
               <TouchableOpacity
                 style={styles.dropdownItem}
                 onPress={() => {
-                  // Handle download chat
-                  console.log('Download Chat');
                   downloadChatHistory();
                   setIsDropdownVisible(false);
                 }}
@@ -355,7 +353,6 @@ const Support = () => {
               <TouchableOpacity
                 style={styles.dropdownItem}
                 onPress={() => {
-                  console.log('share Chat');
                   shareChatHistory();
                   setIsDropdownVisible(false);
                 }}

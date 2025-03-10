@@ -20,7 +20,10 @@ import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
 import HostOnboarding from "./pages/landingpage/OnboardingHost";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostMessages from "./features/hostdashboard/HostMessages";
+
+import HostProperty from "./features/hostdashboard/HostProperty";
+// import HostMessages from "./features/hostdashboard/HostMessages";
+import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
@@ -61,6 +64,7 @@ import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSetup from "./features/hostdashboard/HostSetup";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
+
 import HostVerificationView from "./features/verification/hostverification/HostVerificationView.js";
 import PhoneNumberView from "./features/verification/hostverification/PhoneNumberView.js";
 import PhoneNumberConfirmView from "./features/verification/hostverification/PhoneNumberConfirmView.js";
@@ -88,8 +92,26 @@ import AvailabilityView from "./features/hostonboarding/views/PropertyCalendarAv
 import RegistrationNumberView from "./features/verification/hostverification/RegistrationNumberView.js";
 import SummaryView from "./features/hostonboarding/views/SummaryView.js";
 
+
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
+import AccommodationTypeView from './features/hostonboarding/views/PropertyTypeView.js';
+import GuestAccessView from './features/hostonboarding/views/HouseTypeView.js';
+import BoatTypeView from './features/hostonboarding/views/BoatTypeView.js';
+import CamperTypeView from './features/hostonboarding/views/CamperTypeView.js';
+import AddressInputView from './features/hostonboarding/views/PropertyLocationView.js';
+import CapacityView from './features/hostonboarding/views/PropertyGuestAmountView.js';
+import AmenitiesView from './features/hostonboarding/views/PropertyAmenitiesView.js';
+import HouseRulesView from './features/hostonboarding/views/PropertyHouseRulesView.js';
+import PhotosView from './features/hostonboarding/views/PropertyPhotosView.js';
+import AccommodationTitleView from './features/hostonboarding/views/PropertyNameView.js';
+import DescriptionView from './features/hostonboarding/views/PropertyDescriptionView.js';
+import PricingView from './features/hostonboarding/views/PropertyRateView.js';
+import AvailabilityView from './features/hostonboarding/views/PropertyCalendarAvailabilityView.js';
+import RegistrationNumberView from './features/verification/hostverification/HostVerifyRegistrationNumber.js'; 
+import SummaryView from './features/hostonboarding/views/PropertyCheckOutAndCompletionView.js';
+
 
 import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
 
@@ -272,13 +294,14 @@ function App() {
                     element={
                       <HostProtectedRoute>
                         <Routes>
+                        <Route path="property" element={<HostProperty />} />
                           <Route path="listings" element={<HostListings />} />
                           <Route path="calendar" element={<HostCalendar />} />
                           <Route path="messages" element={<HostMessages />} />
                           <Route path="reporting" element={<HostPayments />} />
                           <Route path="settings" element={<HostSettings />} />
                           <Route path="reviews" element={<HostReviews />} />
-                          <Route path="chat" element={<Hostchat />} />
+                          <Route path="chat" element={<HostMessages />} />
                           <Route
                             path="reservations"
                             element={<HostReservations />}
