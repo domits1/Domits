@@ -15,8 +15,6 @@ const FilterUi = ({ onFilterApplied }) => {
     setShowMoreFacilities,
     showMorePropertyTypes,
     setShowMorePropertyTypes,
-    selectedRatings,
-    handleRatingChange,
     handlePriceChange,
     loading,
     fetchFilteredAccommodations,

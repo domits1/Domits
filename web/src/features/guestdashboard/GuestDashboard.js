@@ -164,7 +164,7 @@ const GuestDashboard = () => {
         <div className="page-body">
             <h2>Dashboard</h2>
             <div className="dashboards">
-                <Pages />
+                {/* <Pages /> */}
                 <div className="content">
                     <div className="personalInfoContent">
                         <div className="personal-info-header">
