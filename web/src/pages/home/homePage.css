@@ -199,6 +199,7 @@ body.hide-header .app-header {
   .domits-accocard {
     width: clamp(220px, 20vw, 300px);
   }
+
   .domits-iconsContainerText {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -359,5 +360,10 @@ body.hide-header .app-header {
     width: 60%;
     transform: translateX(0%);
     transform: translateY(0%);
+  }
+
+  .domits-communityContainer {
+    padding: 4vh 5vw;
+    /* Increase padding for more space */
   }
 }

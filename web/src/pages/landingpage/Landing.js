@@ -262,6 +262,7 @@ function Landing() {
           <img src={MainTextpicture} alt="House" />
         </div>
       </div>
+
       <div className={styles.iconsContainer}>
         <div className={styles.iconsContainerText}>
           <div className={styles.iconTextGroup}>
@@ -281,6 +282,20 @@ function Landing() {
             <p>Domits Quality Guarantee</p>
           </div>
         </div>
+      </div>
+
+      <div className={styles.RegisterBlock}>
+        {isAuthenticated && group !== "Host" ? (
+          <div className={styles.updateGroupButtonDiv}>
+            <button onClick={updateUserGroup} className={styles.nextButtons}>
+              Become a Host
+            </button>
+          </div>
+        ) : (
+          <div id="Register">
+            <Register />
+          </div>
+        )}
       </div>
 
       <div className={styles.easyHosting}>
@@ -321,6 +336,7 @@ function Landing() {
           </div>
         </div>
       </div>
+
       <div className={styles.whyHost}>
         <div className={styles.SecPicture}>
           <img src={whyHostpicture} alt="House" />
@@ -353,6 +369,7 @@ function Landing() {
           </button>
         </div>
       </div>
+
       <div className={styles.simpleSafe}>
         <div className={styles.simpleSafeAll}>
           <h1>
@@ -426,6 +443,46 @@ function Landing() {
           </div>
         </div>
       </div>
+
+      <div className={styles.clientReviewMobile}>
+        <h1>
+          What others say about{" "}
+          <span className={styles.highlightText}>Domits</span>
+        </h1>
+        <Slider
+          dots={true}
+          infinite={true}
+          speed={500}
+          slidesToShow={1}
+          slidesToScroll={1}
+          autoplay={true}
+          autoplaySpeed={30000}
+          prevArrow={
+            <button type="button" className="slick-prev">
+              Previous
+            </button>
+          }
+          nextArrow={
+            <button type="button" className="slick-next">
+              Next
+            </button>
+          }
+        >
+          {reviews.map((review) => (
+            <div key={review.id} className={styles.reviewSlide}>
+              <p className={styles.reviewText}>"{review.text}"</p>
+              <div className={styles.clientDetails}>
+                <img src={review.img} alt={review.author} />
+                <div className={styles.clientInfo}>
+                  <h2>{review.author}</h2>
+                  <p>{review.location}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </Slider>
+      </div>
+
       <div className={styles.clientRevieuw}>
         <h1>
           {" "}
@@ -587,6 +644,7 @@ function Landing() {
           </div>
         </div>
       </div>
+
       <div className={styles.checkList}>
         <h1>
           Is your property suitable for{" "}
@@ -656,6 +714,7 @@ function Landing() {
           </div>
         </div>
       </div>
+
       <div className={styles.faq}>
         <div className={styles.faq__header}>
           <img src={supportLogo} alt="support" />
@@ -676,6 +735,7 @@ function Landing() {
           ))}
         </div>
       </div>
+
       <div className={styles.personal__advice}>
         <div className={styles.personal__advice__left}>
           <h1>
