@@ -2,9 +2,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 100vh;
     background: #f9f9f9;
-    padding: 60px 20px;
+    padding: 20px;
 }
 
 .amenity-container {
@@ -20,10 +19,25 @@
 
 .amenity-groups {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 30px;
     margin-top: 30px;
     justify-content: center;
+}
+
+.amenity-category {
+    border: 2px solid #ccc;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.amenity-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 20px;
+    justify-items: center;
 }
 
 .amenity-item {
@@ -31,15 +45,10 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 20px;
+    padding: 10px;
     border-radius: 10px;
-    background: #f9f9f9;
+    background: #fff;
     transition: all 0.3s ease;
-}
-
-.amenity-item:hover {
-    background: #f5f7fa;
-    border-color: #4a90e2;
 }
 
 .amenity-item label {

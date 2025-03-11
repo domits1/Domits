@@ -1,9 +1,9 @@
 import React from "react";
-import AmenityCategory from "../components/AmenityCategory";
 import useFormStore from "../stores/formStore";
 import { useParams } from "react-router-dom";
 import Button from "../components/button";
 import { amenities } from "../constants/amenitiesData";
+import "../styles/OtherAmenityStyles.css";
 
 function OtherAmenitiesView() {
     const { type: accommodationType } = useParams();
@@ -34,26 +34,38 @@ function OtherAmenitiesView() {
     const isProceedDisabled = Object.keys(selectedAmenities).every((category) => selectedAmenities[category].length === 0);
 
     return (
-        <main className="page-body" style={{ padding: "20px", backgroundColor: "#f9f9f9" }}>
-            <h2 className="onboardingSectionTitle">Select Other Amenities</h2>
-            <p className="onboardingSectionSubtitle">
-                Choose the other amenities that your property offers.
-            </p>
-            <div className="amenity-groups" style={{ display: "grid", gap: "20px" }}>
-                {Object.keys(otherAmenities).map((category) => (
-                    <AmenityCategory
-                        key={category}
-                        category={category}
-                        amenities={otherAmenities[category]}
-                        selectedAmenities={selectedAmenities[category] || []}
-                        handleAmenityChange={handleAmenityChange}
-                    />
-                ))}
+        <main className="page-body centered-amenities">
+            <div className="container amenity-container">
+                <h2 className="onboardingSectionTitle">Select Other Amenities</h2>
+                <p className="onboardingSectionSubtitle">
+                    Choose the other amenities that your property offers.
+                </p>
+                <div className="amenity-groups">
+                    {Object.keys(otherAmenities).map((category) => (
+                        <div key={category} className="amenity-category">
+                            <h3>{category}</h3>
+                            <div className="amenity-items">
+                                {otherAmenities[category].map((amenity) => (
+                                    <div key={amenity} className="amenity-item">
+                                        <label>
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedAmenities[category]?.includes(amenity) || false}
+                                                onChange={(e) => handleAmenityChange(category, amenity, e.target.checked)}
+                                            />
+                                            {amenity}
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <nav className="onboarding-button-box">
+                    <Button routePath={`/hostonboarding/${accommodationType}/specific-amenities`} btnText="Go back" />
+                    <Button routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" disabled={isProceedDisabled} className={isProceedDisabled ? "button-disabled" : ""} />
+                </nav>
             </div>
-            <nav className="onboarding-button-box" style={{ marginTop: "20px" }}>
-                <Button routePath={`/hostonboarding/${accommodationType}/specific-amenities`} btnText="Go back" />
-                <Button routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" disabled={isProceedDisabled} className={isProceedDisabled ? "button-disabled" : ""} />
-            </nav>
         </main>
     );
 }

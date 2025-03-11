@@ -28,21 +28,22 @@ function SpecificAmenitiesView() {
     const isProceedDisabled = Object.keys(selectedAmenities).every((category) => selectedAmenities[category].length === 0);
 
     return (
-        <main className="page-body">
-            <div className="container">
+        <main className="page-body centered-amenities">
+            <div className="container amenity-container">
                 <h2 className="onboardingSectionTitle">Select Specific Amenities</h2>
                 <p className="onboardingSectionSubtitle">
                     Choose the specific amenities that your property offers.
                 </p>
                 <div className="amenity-groups">
                     {Object.keys(specificAmenities).map((category) => (
-                        <AmenityCategory
-                            key={category}
-                            category={category}
-                            amenities={specificAmenities[category]}
-                            selectedAmenities={selectedAmenities[category] || []}
-                            handleAmenityChange={handleAmenityChange}
-                        />
+                        <div key={category} className="amenity-item">
+                            <AmenityCategory
+                                category={category}
+                                amenities={specificAmenities[category]}
+                                selectedAmenities={selectedAmenities[category] || []}
+                                handleAmenityChange={handleAmenityChange}
+                            />
+                        </div>
                     ))}
                 </div>
                 <nav className="onboarding-button-box">
