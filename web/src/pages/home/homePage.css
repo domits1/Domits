@@ -46,6 +46,34 @@ body.hide-header .app-header {
   padding-bottom: 2vh;
 }
 
+.domits-trendingContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+}
+
+.popup-trigger {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  position: relative;
+}
+
+.popup-box {
+  position: absolute;
+  background: white;
+  border: 1px solid #ddd;
+  padding: 8px;
+  border-radius: 5px;
+  top: 100%;
+  left: 0;
+  width: 250px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+}
+
 
 .domits-searchbarCon {
   padding-top: 1vw;

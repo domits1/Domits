@@ -20,21 +20,15 @@ const Homepage = () => {
   const [accommodationImages, setAccommodationImages] = useState([]);
   const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
   const [isBarActive, setIsBarActive] = useState(false);
+  const [isFixed, setIsFixed] = useState(false);
+  const [activePopup, setActivePopup] = useState(null);
+
+  const searchBarRef = useRef(null);
+  const navigate = useNavigate();
 
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
   };
-
-  useEffect(() => {
-    document.body.classList.add("hide-header");
-
-    return () => {
-      document.body.classList.remove("hide-header");
-    };
-  }, []);
-
-  const [isFixed, setIsFixed] = useState(false);
-  const searchBarRef = useRef(null);
 
   const handleScroll = () => {
     if (!searchBarRef.current) return;
@@ -56,7 +50,13 @@ const Homepage = () => {
     };
   }, [isFixed]);
 
-  const navigate = useNavigate();
+  useEffect(() => {
+    document.body.classList.add("hide-header");
+
+    return () => {
+      document.body.classList.remove("hide-header");
+    };
+  }, []);
 
   const fetchBoatAccommodations = async () => {
     try {
@@ -170,6 +170,10 @@ const Homepage = () => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
 
+  const handlePopupClick = (text) => {
+    setActivePopup(activePopup === text ? null : text); // Toggle popup
+  };
+
   return (
     <>
       <Header />
@@ -218,35 +222,35 @@ const Homepage = () => {
             </h3>
 
             <div className="domits-trendingContainer">
-              <div data-popup-text="We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.">
-                🎖️ Best price guarantee
-              </div>
-              <div data-popup-text="If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.">
-                ✅ Accommodation booking guarantee
-              </div>
-              <div data-popup-text="If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.">
-                🤝 Guarantee of stay at the accommodation
-              </div>
+              {[
+                {
+                  emoji: "🎖️",
+                  title: "Best price guarantee",
+                  text: "We strive to offer you the best possible price. If you find a cheaper option somewhere, we will adjust it for you in consultation.",
+                },
+                {
+                  emoji: "✅",
+                  title: "Accommodation booking guarantee",
+                  text: "If changes are made after your stay has been confirmed, Domits will do its best to coordinate your stay.",
+                },
+                {
+                  emoji: "🤝",
+                  title: "Guarantee of stay at the accommodation",
+                  text: "If upon arrival at the property you are unable to get the rooms you have arranged, Domits will do its best to coordinate your stay.",
+                },
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="popup-trigger"
+                  onClick={() => handlePopupClick(item.text)}
+                >
+                  {item.emoji} {item.title}
+                  {activePopup === item.text && (
+                    <div className="popup-box">{item.text}</div>
+                  )}
+                </div>
+              ))}
             </div>
-          </div>
-          <div className="domits-accommodationGroup">
-            {byTypeAccommodations.length > 0 ? (
-              byTypeAccommodations.map((accommodation) => {
-                const images =
-                  accommodationImages.find((img) => img.ID === accommodation.ID)
-                    ?.Images || [];
-                return (
-                  <AccommodationCard
-                    key={accommodation.ID}
-                    accommodation={accommodation}
-                    images={Object.values(images)}
-                    onClick={handleClick}
-                  />
-                );
-              })
-            ) : (
-              <div>No accommodations available.</div>
-            )}
           </div>
         </div>
 
