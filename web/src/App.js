@@ -89,7 +89,6 @@ import PricingView from './features/hostonboarding/views/PropertyRateView.js';
 import AvailabilityView from './features/hostonboarding/views/PropertyCalendarAvailabilityView.js';
 import RegistrationNumberView from './features/verification/hostverification/HostVerifyRegistrationNumber.js'; 
 import SummaryView from './features/hostonboarding/views/PropertyCheckOutAndCompletionView.js';
-
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
