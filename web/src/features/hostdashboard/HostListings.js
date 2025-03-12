@@ -58,7 +58,7 @@ function HostListings() {
     const fetchAccommodations = async () => {
         setIsLoading(true);
         if (!userId) {
-            return;
+
         } else {
             try {
                 const response = await fetch('https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/FetchAccommodation', {
@@ -90,7 +90,7 @@ function HostListings() {
     const asyncEditAccommodation = async (accoId, accoTitle) => {
         if (confirm(`Do you wish to edit ${accoTitle}?`)) {
             if (accoId) {
-                navigate(`/hostdashboard/property?ID=${accoId}`)
+                navigate(`/enlist?ID=${accoId}`)
             }
         }
     }
@@ -199,7 +199,7 @@ function HostListings() {
                     ) : (
                         <div className={styles.listingBody}>
                             <div className={styles.buttonBox}>
-                                <button className={styles.greenBtn} onClick={() => navigate("/hostboarding")}>Add new
+                                <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>Add new
                                     accommodation
                                 </button>
                                 <button className={styles.greenBtn} onClick={fetchAccommodations}>Refresh</button>
