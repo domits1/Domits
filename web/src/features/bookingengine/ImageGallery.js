@@ -6,7 +6,7 @@ import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlin
 
 const ImageGallery = ({ images }) => {
     // Slice the first 5 images if available
-    const limitedImages = images.slice(0, 5);
+    const limitedImages = images.slice(0, 4);
     const [selectedImg, setSelectedImg] = useState(limitedImages[0]);
     const [liked, setLiked] = useState(false);
 

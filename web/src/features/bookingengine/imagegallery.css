@@ -2,20 +2,23 @@
   width: 100%;
   display: flex;
   flex-direction: column;
+  justify-content: flex-start;
   gap: 5px;
 }
 
 .selected-image {
   position: relative;
   width: 100%;
+  max-width: 516px;
   border-radius: 15px;
   overflow: hidden;
 }
 
 .selected-image img {
   width: 100%;
+  max-width: 516px;
   height: auto;
-  margin-bottom: 10px;
+  max-height: 340px;
   border-radius: 15px;
   object-fit: cover;
   aspect-ratio: 16 / 9; 
@@ -121,14 +124,30 @@
 }
 
 @media (min-width: 1201px) {
-  .selected-image img {
+  .image-gallery-container {
+    display: flex;
+    flex-direction: row;
+    gap: 20px; /* Adjust gap as needed */
+  }
+
+  .selected-image {
+    flex: 1;
+  }
+
+  .image-thumbnails {
+    display: flex;
+    flex-wrap: wrap;
     width: 100%;
-    height: auto;
+    max-width: 300px; /* Adjust width as needed */
+    gap: 10px;
+    max-height: 300px;
   }
 
   .image-thumbnails img {
-    width: 150px;
-    height: 150px;
+    width: calc(50% - 5px); /* Adjust width to fit two images per row with gap */
+    max-width: 165px;
+    height: calc(50% - 5px); /* Adjust height to fit two images per row with gap */
+    max-height: 165px;
   }
 
   .share-button,
