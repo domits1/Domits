@@ -21,7 +21,6 @@ import HostOnboarding from "./pages/landingpage/OnboardingHost";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
 
 import HostProperty from "./features/hostdashboard/HostProperty";
-// import HostMessages from "./features/hostdashboard/HostMessages";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostListings from "./features/hostdashboard/HostListings";
@@ -46,7 +45,7 @@ import GuestBooking from './features/guestdashboard/GuestBooking';
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
-import Chat from "./features/guestdashboard/chat/Chat.js";
+import GuestMessages from './features/guestdashboard/guestmessages/pages/guestMessages.js';
 import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from './features/guestaiagent/EmployeeChat';
@@ -63,9 +62,9 @@ import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSetup from "./features/hostdashboard/HostSetup";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
-import HostVerificationView from "./features/verification/hostverification/HostVerificationView.js";
-import PhoneNumberView from './features/verification/hostverification/PhoneNumberView.js';
-import PhoneNumberConfirmView from './features/verification/hostverification/PhoneNumberConfirmView.js';
+import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
+import PhoneNumberView from './features/verification/hostverification/HostVerifyPhoneNumber.js';
+import PhoneNumberConfirmView from './features/verification/hostverification/HostVerifyPhoneNumberConfirm.js';
 import { initializeUserAttributes } from './utils/userAttributes';
 import PageNotFound from "./utils/error/404NotFound";
 import StripeCallback from "./features/stripe/StripeCallback";
@@ -88,9 +87,8 @@ import AccommodationTitleView from './features/hostonboarding/views/PropertyName
 import DescriptionView from './features/hostonboarding/views/PropertyDescriptionView.js';
 import PricingView from './features/hostonboarding/views/PropertyRateView.js';
 import AvailabilityView from './features/hostonboarding/views/PropertyCalendarAvailabilityView.js';
-import RegistrationNumberView from './features/verification/hostverification/RegistrationNumberView.js';
-import SummaryView from './features/hostonboarding/views/SummaryView.js';
-
+import RegistrationNumberView from './features/verification/hostverification/HostVerifyRegistrationNumber.js'; 
+import SummaryView from './features/hostonboarding/views/PropertyCheckOutAndCompletionView.js';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -190,7 +188,7 @@ function App() {
                                     <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
 
                                     {/* Chat */}
-                                    <Route path="/chat" element={<Chat />} />
+                                    <Route path="/chat" element={<GuestMessages />} />
                                     <Route path="/employeechat" element={<EmployeeChat />} />
                                     <Route path="/chatbot" element={<Chatbot />} />
 
@@ -212,7 +210,7 @@ function App() {
                           <Route path="reviews" element={<GuestReviews />} />
                           <Route path="bookings" element={<GuestBooking />} />
                           <Route path="settings" element={<GuestSettings />} />
-                          <Route path="chat" element={<Chat />} />
+                          <Route path="chat" element={<GuestMessages />} />
                         </Routes>
                       </GuestProtectedRoute>
                     }

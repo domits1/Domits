@@ -55,6 +55,8 @@ dependencies {
     implementation("com.facebook.react:react-android:+")
     implementation("com.facebook.react:flipper-integration:+")
     implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation project(":react-native-splash-screen")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-engine:+")

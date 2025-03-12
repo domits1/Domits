@@ -1,4 +1,4 @@
-import '../../support/commands'
+import '../../support/commands';
 
 describe('Landing Page Tests', () => {
     beforeEach(() => {
@@ -9,9 +9,14 @@ describe('Landing Page Tests', () => {
         cy.loginAsGuest();
         cy.get('.header-links > .headerHostButton').click();
         cy.get('.edit-icon-background').click();
-        cy.get(':nth-child(2) > .guest-edit-input').should('be.visible').clear().type(' testpersoondomits@gmail.com ' , { force: true });
+        cy.get(':nth-child(2) > .guest-edit-input')
+            .should('be.visible')
+            .clear()
+            .type('testpersoondomits@gmail.com', { force: true });
         cy.wait(1000);
-        cy.get(':nth-child(3) > .guest-edit-input').clear().type('Test', { force: true });
+        cy.get(':nth-child(3) > .guest-edit-input')
+            .clear()
+            .type('Test', { force: true });
         cy.wait(2000);
         cy.get('.edit-icon-background').click();
         cy.wait(2000);
@@ -40,7 +45,12 @@ describe('Landing Page Tests', () => {
                     },
                 },
             });
-            cy.get('.header-links > .headerHostButton').click();
+            
+            cy.get('.header-links > .headerHostButton')
+                .should('be.visible')
+                .scrollIntoView()
+                .click({ force: true });
+            
             cy.wait(5000);
 
             cy.contains('Email:').next().should('contain', 'testpersoondomits@gmail.com');
@@ -52,7 +62,12 @@ describe('Landing Page Tests', () => {
         it('should toggle edit mode for email and name', () => {
             cy.loginAsGuest();
             cy.wait(2000);
-            cy.get('.header-links > .headerHostButton').click();
+            
+            cy.get('.header-links > .headerHostButton')
+                .should('be.visible')
+                .scrollIntoView()
+                .click({ force: true });
+            
             cy.wait(2000);
             cy.get('.edit-icon-background').click();
         });

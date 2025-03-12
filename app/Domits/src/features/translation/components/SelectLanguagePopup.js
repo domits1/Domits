@@ -12,6 +12,7 @@ import {useTranslation} from 'react-i18next';
 import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
 import {NativeModules} from 'react-native';
 import React, {useState} from 'react';
+import TranslatedText from './TranslatedText';
 
 const {EncryptedSharedPreferences} = NativeModules;
 
@@ -38,7 +39,9 @@ const SelectLanguagePopup = ({isVisible, setIsVisible}) => {
           onPress={() => setIsVisible(!isVisible)}>
           <View style={style.modal}>
             <View style={style.header}>
-              <Text style={style.title}>Select a Language</Text>
+              <Text style={style.title} testID={'title'}>
+                <TranslatedText textToTranslate={'select a language'} />
+              </Text>
               <TouchableOpacity
                 style={style.closeButton}
                 onPress={() => setIsVisible(false)}>
@@ -64,7 +67,7 @@ const SelectLanguagePopup = ({isVisible, setIsVisible}) => {
                       name={'check'}
                       size={13}
                       color={'green'}
-                      testID={'checkmark'}
+                      testID={`checkmark ${language.code}`}
                     />
                   ) : null}
                   <Text testID={language.name}>{language.name}</Text>

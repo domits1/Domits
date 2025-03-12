@@ -1,51 +1,46 @@
 import { useState } from 'react';
-
+import { sendMessage } from '../services/websocket';
 
 export const useSendMessage = (userId) => {
     const [sending, setSending] = useState(false);
     const [error, setError] = useState(null);
 
+    const sendMessageHandler = async (recipientId, text, connectionId) => {
+        if (!userId || !recipientId || !text) {
+            const errorMsg = "Invalid message parameters";
+            setError(errorMsg);
+            return { success: false, error: errorMsg };
+        }
+        
+        const channelID = [userId, recipientId].sort().join("_");
 
-
-    const sendMessage = async (recipientId, text) => {
-        const channelID = [userId, recipientId].sort().join('_');
+        const message = {
+            action: "sendMessage",
+            recipientConnectionId: connectionId,
+            userId: userId,
+            recipientId: recipientId,
+            text: text,
+            channelId: channelID,
+        };
+        
 
         setSending(true);
+
         try {
-            const response = await fetch('https://qkptcbb445.execute-api.eu-north-1.amazonaws.com/ChatSendMessageFunction', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    userId: userId,
-                    recipientId: recipientId,
-                    text: text,
-                    channelId: channelID,
-                })
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to send message');
-            }
-
-            const data = await response.json();
-            if (data.status === 'sent') {
-                console.log('Message sent successfully');
-                
-            }
-        } catch (error) {
-            console.error("Error sending message:", error);
-            setError(error);
-            throw error;
+            sendMessage(message); 
+            return { success: true };
+        } catch (err) {
+            console.error("⚠️ Error sending message:", err);
+            setError(err);
+            return { success: false, error: err.message };
         } finally {
             setSending(false);
         }
     };
 
     return {
-        sendMessage,
+        sendMessage: sendMessageHandler,
         sending,
-        error
+        error,
     };
 };
