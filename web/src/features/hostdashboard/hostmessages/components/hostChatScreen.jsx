@@ -1,18 +1,27 @@
 import React, { useEffect, useState, useCallback, useContext } from 'react';
 import useFetchMessages from '../hooks/useFetchMessages';
 import { useSendMessage } from '../hooks/useSendMessage';
+import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
 import ChatMessage from './chatMessage';
 import { WebSocketContext } from '../context/webSocketContext';
-import '../styles/hostChatScreen.css';
 import { v4 as uuidv4 } from 'uuid';
+import '../styles/hostChatScreen.css';
+import profileImage from '../domits-logo.jpg';
+import { FaAngleUp, FaAngleDown, FaHome, FaUsers, FaCalendar } from 'react-icons/fa';
+
 
 
 const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleContactListMessage }) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
+    const [isChatVisible, setIsChatVisible] = useState(true);
+    const { bookingDetails } = useFetchBookingDetails(userId, contactId);
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
     const { messages: wsMessages } = useContext(WebSocketContext);
 
+    const toggleChatVisibility = () => {
+        setIsChatVisible(!isChatVisible);  // Toggle the state
+    };
     useEffect(() => {
         if (contactId) {
             fetchMessages(contactId);
@@ -60,53 +69,79 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
         }
     };
 
-    return (
-        <div className="host-chat-screen">
-            <div className="chat-header">
-                <h2>{contactName}</h2>
-            </div>
+    return contactId ?  (
 
-            <div className="chat-screen">
-                {loading ? (
-                    <p>Loading messages...</p>
-                ) : error ? (
-                    <p>{error}</p>
-                ) : (
-                    messages.map((message) => (
-                        <ChatMessage
-                            key={message.id}
-                            message={message}
-                            userId={userId}
-                            contactName={contactName}
-                        />
-                    ))
-                )}
-            </div>
+            <div className="host-chat-screen">
+                <div className="host-chat-header">
+                    {/* <img src={contactImage} alt={contactName} className="profile-img" /> */}
+                    <img src={profileImage} alt={contactName} className="profile-img" />
+                    <div className="host-chat-header-info">
 
-            <div className="chat-input">
-                <textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder=""
-                    className="message-input-textarea"
-                    onKeyUp={(e) => {
-                        if (e.key === "Enter") {
-                            handleSendMessage();
-                        }
-                    }}
-                />
-                <button
-                    onClick={handleSendMessage}
-                    className="message-input-send-button"
-                    disabled={sending}
-                >
-                    {sending ? 'Sending...' : 'Send'}
-                </button>
-            </div>
+                        <div className="host-chat-header-grid">
+                            <h3>{contactName}</h3>
+                            <p style={{ visibility: bookingDetails?.Title ? 'visible' : 'hidden' }}>
+                                <FaHome style={{ marginRight: '8px' }} /> {bookingDetails?.Title}
+                            </p>
 
-            {sendError && <p className="error-message">{sendError.message}</p>}
-        </div>
-    );
+                            <p style={{ visibility: bookingDetails?.AmountOfGuest ? 'visible' : 'hidden' }}>
+                                <FaUsers style={{ marginRight: '8px' }} /> {bookingDetails?.AmountOfGuest} Guests
+                            </p>
+
+                            <p style={{ visibility: bookingDetails?.StartDate && bookingDetails?.EndDate ? 'visible' : 'hidden' }}>
+                                <FaCalendar style={{ marginRight: '8px' }} /> {bookingDetails?.StartDate} / {bookingDetails?.EndDate}
+                            </p>
+
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <div className="chat-screen">
+                    {loading ? (
+                        <p>Loading messages...</p>
+                    ) : error ? (
+                        <p>{error}</p>
+                    ) : (
+                        messages.map((message) => (
+                            <ChatMessage
+                                key={message.id}
+                                message={message}
+                                userId={userId}
+                                contactName={contactName}
+                            />
+                        ))
+                    )}
+                </div>
+
+                <div className="chat-input">
+                    <textarea
+                        value={newMessage}
+                        onChange={(e) => setNewMessage(e.target.value)}
+                        placeholder=""
+                        className="message-input-textarea"
+                        onKeyUp={(e) => {
+                            if (e.key === "Enter") {
+                                handleSendMessage();
+                            }
+                        }}
+                    />
+                    <button
+                        onClick={handleSendMessage}
+                        className="message-input-send-button"
+                        disabled={sending}
+                    >
+                        {sending ? 'Sending...' : 'Send'}
+                    </button>
+                </div>
+
+                {sendError && <p className="error-message">{sendError.message}</p>}
+
+            </div>
+            
+    ) : null;
+
 };
+
 
 export default HostChatScreen;

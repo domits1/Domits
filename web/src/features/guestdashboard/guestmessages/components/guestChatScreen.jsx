@@ -1,14 +1,20 @@
 import React, { useEffect, useState, useCallback, useContext } from 'react';
 import useFetchMessages from '../hooks/useFetchMessages';
 import { useSendMessage } from '../hooks/useSendMessage';
+import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
 import ChatMessage from './chatMessage';
 import { WebSocketContext } from '../context/webSocketContext';
-import '../styles/guestChatScreen.css'
 import { v4 as uuidv4 } from 'uuid';
+import '../styles/guestChatScreen.css'
+import { FaHome, FaUsers, FaCalendar, } from 'react-icons/fa';
+
+import profileImage from '../domits-logo.jpg';
+
 
 
 const GuestChatScreen = ({ userId, contactId, contactName, connectionId, handleContactListMessage }) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
+    const { bookingDetails } = useFetchBookingDetails(contactId, userId);
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
     const { messages: wsMessages } = useContext(WebSocketContext);
@@ -61,10 +67,29 @@ const GuestChatScreen = ({ userId, contactId, contactName, connectionId, handleC
         }
     };
 
-    return (
+    return contactId ? (
         <div className="guest-chat-screen">
-            <div className="guest-chat-header">
-                <h2>{contactName}</h2>
+            <div className="host-chat-header">
+                {/* <img src={contactImage} alt={contactName} className="profile-img" /> */}
+                <img src={profileImage} alt={contactName} className="profile-img" />
+                <div className="host-chat-header-info">
+
+                    <div className="host-chat-header-grid">
+                        <h3>{contactName}</h3>
+                        <p style={{ visibility: bookingDetails?.Title ? 'visible' : 'hidden' }}>
+                            <FaHome style={{ marginRight: '8px' }} /> {bookingDetails?.Title}
+                        </p>
+
+                        <p style={{ visibility: bookingDetails?.AmountOfGuest ? 'visible' : 'hidden' }}>
+                            <FaUsers style={{ marginRight: '8px' }} /> {bookingDetails?.AmountOfGuest} Travelers
+                        </p>
+
+                        <p style={{ visibility: bookingDetails?.StartDate && bookingDetails?.EndDate ? 'visible' : 'hidden' }}>
+                            <FaCalendar style={{ marginRight: '8px' }} /> {bookingDetails?.StartDate} / {bookingDetails?.EndDate}
+                        </p>
+
+                    </div>
+                </div>
             </div>
 
             <div className="chat-screen">
@@ -107,7 +132,7 @@ const GuestChatScreen = ({ userId, contactId, contactName, connectionId, handleC
 
             {sendError && <p className="error-message">{sendError.message}</p>}
         </div>
-    );
+    ): null;
 
 };
 
