@@ -37,6 +37,8 @@
         }
     }
 }
+
+/* Calendar styling*/
 .calendar {
     margin: 0px;
     width: 23.75rem;
@@ -303,12 +305,13 @@
     text-align: center;
 }
 
+/* Tooltip Styling*/
 .toolTip {
     position: relative;
     display: inline-block;
-  }
+}
   
-  .toolTip .toolTipText {
+.toolTip .toolTipText {
     visibility: hidden;
     width: 15rem;
     background-color: black;
@@ -323,13 +326,12 @@
     margin-left: -7.5rem;
     opacity: 0;
     transition: opacity 0.4s;
-  }
+}
   
   .toolTip:hover .toolTipText {
     visibility: visible;
     opacity: 0.9;
-  }
-
+}
 @media only screen and (max-width: 768px) {
     .body {
         padding: 0.5rem;
@@ -388,3 +390,4 @@
         height: 1rem;
     }
 }
+/* Calender Styling End*/

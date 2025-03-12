@@ -1,9 +1,9 @@
 import React, {useEffect, useState} from "react";
-import styles from './Calendar.module.css';
+import styles from './CalendarModuleDashboard.css';
 import {isSameDay} from "date-fns";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";
-import HostCalendar from "./HostCalendar";
+import infoIcon from "../../../../images/icons/info.png";
 
 /**
  * TEST
@@ -37,10 +37,15 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     const [minimumAdvanceReservation, setMinimumAdvanceReservation] = useState(passedProp.MinimumAdvanceReservation || 0);
     const [maximumStay, setMaximumStay] = useState(passedProp.MaximumStay || 0);
     const [maximumAdvanceReservation, setMaximumAdvanceReservation] = useState(passedProp.MaximumAdvanceReservation || 0);
+    const [reservationExpiratonTime, setReservationExpirationTime] = useState(passedProp.ReservationExpirationTime || 0);
+    const [paymentBeforeCheckInHours, setPaymentBeforeCheckInHours] = useState(passedProp.PaymentBeforeCheckInHours || 0);
     const [originalMinimumStay, setOriginalMinimumStay] = useState(passedProp.MinimumStay || 0);
     const [originalMinimumAdvanceReservation, setOriginalMinimumAdvanceReservation] = useState(passedProp.MinimumAdvanceReservation || 0);
     const [originalMaximumStay, setOriginalMaximumStay] = useState(passedProp.MaximumStay || 0);
     const [originalMaximumAdvanceReservation, setOriginalMaximumAdvanceReservation] = useState(passedProp.MaximumAdvanceReservation || 0);
+    const [originalReservationExpiratonTime, originalSetReservationExpirationTime] = useState(passedProp.ReservationExpirationTime || 0);
+    const [originalPaymentBeforeCheckInHours, originalSetPaymentBeforeCheckInHours] = useState(passedProp.PaymentBeforeCheckInHours || 0);
+    
 
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
@@ -50,8 +55,11 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             setMinimumAdvanceReservation(passedProp.MinimumAdvanceReservation || 0);
             setMaximumStay(passedProp.MaximumStay || 0);
             setMaximumAdvanceReservation(passedProp.MaximumAdvanceReservation || 0);
+            setReservationExpirationTime(passedProp.ReservationExpirationTime || 0);
+            setPaymentBeforeCheckInHours(passedProp.PaymentBeforeCheckInHours || 0);
         }
-    }, [passedProp.ID, passedProp.DateRanges, passedProp.MinimumStay, passedProp.MinimumAdvanceReservation, passedProp.MaximumStay, passedProp.MaximumAdvanceReservation]);
+    }, [passedProp.ID, passedProp.DateRanges, passedProp.MinimumStay, passedProp.MinimumAdvanceReservation, passedProp.MaximumStay,
+        passedProp.MaximumAdvanceReservation, passedProp.ReservationExpirationTime, passedProp.PaymentBeforeCheckInHours]);
     useEffect(() => {
         if (passedProp && passedProp.DateRanges) {
             setOriginalRanges(passedProp.DateRanges);
@@ -97,10 +105,10 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
             newDates.push(
                 <li
                     key={`active-${i}`}
-                    className={`${styles.date} ${isActiveDay ? styles.today : ''}
-                        ${isSelected ? styles.selected : ''}
-                        ${isStartDate ? styles.startDate : ''}
-                        ${isEndDate ? styles.endDate : ''}
+                    className={`${styles.date} ${isActiveDay ? styles.today : ''} 
+                        ${isSelected ? styles.selected : ''} 
+                        ${isStartDate ? styles.startDate : ''} 
+                        ${isEndDate ? styles.endDate : ''} 
                         ${currentDate < today ? styles.disabled : ''}`}
                     onClick={() => handleDateClick(currentDate)}
                 >
@@ -268,6 +276,8 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         setMinimumAdvanceReservation(originalMinimumAdvanceReservation);
         setMaximumStay(originalMaximumStay);
         setMaximumAdvanceReservation(originalMaximumAdvanceReservation);
+        setReservationExpirationTime(originalReservationExpirationTime || 0);
+        setPaymentBeforeCheckInHours(originalPaymentBeforeCheckInHours || 0);
     }
 
     useEffect(() => {
@@ -388,6 +398,58 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
                                         <button
                                             className={styles.roundButton}
                                             onClick={() => incrementAmount(setMaximumAdvanceReservation, maximumAdvanceReservation, 365)}
+                                        >
+                                            +
+                                        </button>
+                                    </div>
+                                </div>
+                                <div className={styles.stayMinMaxField}>
+                                <label className={styles.minMaxLabel}>Reservation Expiration Time (Days):</label>                                   
+                                         <div class={styles.toolTip}>
+                                            <img className={styles.infoIcon} 
+                                                src={infoIcon}
+                                                alt="Test Information" 
+                                                width="16" 
+                                                height="16"/> 
+                                                <span class={styles.toolTipText}>The reservation will expire after {reservationExpiratonTime} hours if the guest does not complete the payment.</span>
+                                         </div>
+                                        <div className={styles.minMaxButtons}>
+                                            <button
+                                                className={styles.roundButton}
+                                                onClick={() => decrementAmount(setReservationExpirationTime, reservationExpiratonTime)}
+                                            >
+                                                -
+                                            </button>
+                                            {reservationExpiratonTime}
+                                            <button
+                                                className={styles.roundButton}
+                                                onClick={() => incrementAmount(setReservationExpirationTime, reservationExpiratonTime)}
+                                            >
+                                                +
+                                            </button>
+                                    </div>
+                                </div>
+                                <div className={styles.stayMinMaxField}>
+                                    <label className={styles.minMaxLabel}>Payment Deadline Before Check In (Days):</label>
+                                        <div class={styles.toolTip}>
+                                             <img className={styles.infoIcon} 
+                                                src={infoIcon}
+                                                alt="Test Information" 
+                                                width="16" 
+                                                height="16"/> 
+                                                <span class={styles.toolTipText}>The reservation will expire after {paymentBeforeCheckInHours} hours before Check-In the guest does not complete the payment.</span>
+                                        </div>
+                                    <div className={styles.minMaxButtons}>
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => decrementAmount(setPaymentBeforeCheckInHours, paymentBeforeCheckInHours)}
+                                        >
+                                            -
+                                        </button>
+                                        {paymentBeforeCheckInHours}
+                                        <button
+                                            className={styles.roundButton}
+                                            onClick={() => incrementAmount(setPaymentBeforeCheckInHours, paymentBeforeCheckInHours)}
                                         >
                                             +
                                         </button>
