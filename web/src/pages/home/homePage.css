@@ -349,6 +349,10 @@ body.hide-header .app-header {
     padding: 10px 5vw;
   }
 
+  .domits-iconsContainer p {
+    font-size: 1.2rem;
+  }
+
   .domits-communityHead {
     font-size: 1.8rem;
   }
