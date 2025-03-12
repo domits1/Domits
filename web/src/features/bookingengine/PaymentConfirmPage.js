@@ -33,7 +33,7 @@ const BookingConfirmationOverview = () => {
                     throw new Error(`Error fetching booking details: ${response.statusText}`);
                 }
 
-                const data = await response.json(); //response
+                const data = await response.json(); 
 
                 const parsedBody = data.body ? JSON.parse(data.body) : data;
 
