@@ -987,46 +987,8 @@ const ListingDetails = () => {
                                     <FeaturePopup features={accommodation.Features} onClose={toggleModal}/>
                                 )}
 
-                                {/*<section className="listing-reviews">*/}
-                                {/*    <hr className="pageDividerr" />*/}
-                                {/*    <h2>Reviews</h2>*/}
-                                {/*    {reviews.length > 0 ? (*/}
-                                {/*        reviews.map((review, index) => (*/}
-                                {/*            <div key={index} className="review-card">*/}
-                                {/*                <div className="stars-div">*/}
-                                {/*                    {renderStars(review)}*/}
-                                {/*                </div>*/}
-                                {/*                <h2 className="review-header">{review.title}</h2>*/}
-                                {/*                <p className="review-content">{review.content}</p>*/}
-                                {/*                <p className="review-date">Written*/}
-                                {/*                    on: {dateFormatterDD_MM_YYYY(review.date)} by {review.usernameFrom}</p>*/}
-                                {/*            </div>*/}
-                                {/*        ))*/}
-                                {/*    ) : (*/}
-                                {/*        <p className="review-alert">This accommodation does not have any reviews*/}
-                                {/*            yet...</p>*/}
-                                {/*    )}*/}
-                                {/*    <div style={{*/}
-                                {/*        display: 'flex',*/}
-                                {/*        flexDirection: 'row',*/}
-                                {/*        justifyContent: 'flex-start',*/}
-                                {/*        gap: '2rem'*/}
-                                {/*    }}>*/}
-                                {/*        <button className='backButton'>Show more</button>*/}
-                                {/*        <button className='backButton'*/}
-                                {/*                onClick={addUserToContactList}*/}
-                                {/*                style={{*/}
-                                {/*                    backgroundColor: !userID ? 'gray' : '',*/}
-                                {/*                    cursor: !userID ? 'not-allowed' : 'pointer'*/}
-                                {/*                }}*/}
-                                {/*                disabled={!userID}*/}
-                                {/*        >Add to contact list*/}
-                                {/*        </button>*/}
-                                {/*    </div>*/}
-                                {/*</section>*/}
-
                                 <section className="listing-host-info">
-                                    <h2>Host profile</h2>
+                                    {/* <h2>Host profile</h2> */}
                                     {host && (
                                         <div className="host-card">
                                             <section className="card-top">
@@ -1048,19 +1010,9 @@ const ListingDetails = () => {
 
                 {accommodation && (
                     <aside className='detailSummary'>
-                        <div className="booking-info">
-                            <p>Booking Info</p>
-                            <div className="booking-info-tooltip">Stay
-                                for {accommodation.MinimumStay} – {accommodation.MaximumStay} nights.
-                                <br/>
-                                Book {accommodation.MinimumAdvanceReservation} – {accommodation.MaximumAdvanceReservation} days
-                                in
-                                advance.
-                            </div>
-                        </div>
                         <div className="summary-section">
                             <h2 className='price-per-night'>
-                                €{accommodation.Rent} {accommodation.Type === "Boat" ? "Day" : "Night"}
+                                €{accommodation.Rent} {accommodation.Type === "Boat" ? "per day" : "per night"}
                             </h2>
 
 
@@ -1191,18 +1143,7 @@ const ListingDetails = () => {
 
 
                             {/* Price and Reserve Section */}
-                            <button className="reserve-button" onClick={handleBooking}
-                                // disabled={
-                                //     !isFormValid || accommodation.Drafted === true || isDemo
-                                // }
-                                // style={{
-                                //     backgroundColor: isFormValid ? 'green' : 'green',
-                                //     cursor: isFormValid && !isDemo ? 'pointer' : 'not-allowed',
-                                //     opacity: isFormValid && !isDemo ? 1 : 0.5
-                                // }}
-                            >
-                                Reserve
-                            </button>
+                            <button className="reserve-button" onClick={handleBooking}>Reserve</button>
                             {isDemo ? (
                                 <p className="disclaimer">*This is a demo post and not bookable</p>
                             ) : (
