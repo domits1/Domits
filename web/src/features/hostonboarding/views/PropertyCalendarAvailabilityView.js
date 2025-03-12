@@ -51,17 +51,7 @@ function AvailabilityView() {
             onDecrement={() => decrementAmount("MaximumStay", 1, 1)}
           />
           <StayControl
-            label="Payment Deadline After Booking (Hours):"
-            value={availability.PaymentDeadlineAfterBooking}
-            onIncrement={() =>
-              incrementAmount("PaymentDeadlineAfterBooking", 1, 168)
-            }
-            onDecrement={() =>
-              decrementAmount("PaymentDeadlineAfterBooking", 1, 1)
-            }
-          />
-          <StayControl
-            label="Payment Deadline Before Check-In (Hours):"
+            label="Payment Deadline Before Check-In (Days):"
             value={availability.PaymentDeadlineBeforeCheckIn}
             onIncrement={() =>
               incrementAmount("PaymentDeadlineBeforeCheckIn", 1, 168)
@@ -71,7 +61,7 @@ function AvailabilityView() {
             }
           />
           <StayControl
-            label="Reservation Expiration Time (Hours):"
+            label="Reservation Expiration Time (Days):"
             value={availability.ExpirationTime}
             onIncrement={() => incrementAmount("ExpirationTime", 1, 168)}
             onDecrement={() => decrementAmount("ExpirationTime", 1, 1)}
