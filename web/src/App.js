@@ -92,7 +92,6 @@ import SummaryView from "./features/hostonboarding/views/PropertyCheckOutAndComp
 
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
 import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
 
 import { Auth } from "aws-amplify";
