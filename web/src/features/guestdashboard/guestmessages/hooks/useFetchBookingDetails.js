@@ -6,7 +6,6 @@ const useFetchBookingDetails = (hostID, guestID) => {
     const [error, setError] = useState(null);
 
     useEffect(() => {
-        console.log('hello')
         if (!hostID || !guestID) {
             return;
         }

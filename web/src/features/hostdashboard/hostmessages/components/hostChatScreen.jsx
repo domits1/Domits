@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useContext } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 import useFetchMessages from '../hooks/useFetchMessages';
 import { useSendMessage } from '../hooks/useSendMessage';
 import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
@@ -7,21 +7,17 @@ import { WebSocketContext } from '../context/webSocketContext';
 import { v4 as uuidv4 } from 'uuid';
 import '../styles/hostChatScreen.css';
 import profileImage from '../domits-logo.jpg';
-import { FaAngleUp, FaAngleDown, FaHome, FaUsers, FaCalendar } from 'react-icons/fa';
+import { FaHome, FaUsers, FaCalendar } from 'react-icons/fa';
 
 
 
 const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleContactListMessage }) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
-    const [isChatVisible, setIsChatVisible] = useState(true);
     const { bookingDetails } = useFetchBookingDetails(userId, contactId);
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
     const { messages: wsMessages } = useContext(WebSocketContext);
 
-    const toggleChatVisibility = () => {
-        setIsChatVisible(!isChatVisible);  // Toggle the state
-    };
     useEffect(() => {
         if (contactId) {
             fetchMessages(contactId);

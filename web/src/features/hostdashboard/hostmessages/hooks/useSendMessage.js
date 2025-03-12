@@ -7,7 +7,8 @@ export const useSendMessage = (userId) => {
 
     const sendMessageHandler = async (recipientId, text, connectionId) => {
         if (!userId || !recipientId || !text) {
-            setError("Invalid message parameters");
+            const errorMsg = "Invalid message parameters";
+            setError(errorMsg);
             return { success: false, error: errorMsg };
         }
         

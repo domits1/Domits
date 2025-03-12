@@ -10,8 +10,6 @@ import { FaHome, FaUsers, FaCalendar, } from 'react-icons/fa';
 
 import profileImage from '../domits-logo.jpg';
 
-
-
 const GuestChatScreen = ({ userId, contactId, contactName, connectionId, handleContactListMessage }) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const { bookingDetails } = useFetchBookingDetails(contactId, userId);
