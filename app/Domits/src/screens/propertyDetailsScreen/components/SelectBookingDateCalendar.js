@@ -9,7 +9,7 @@ const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, pro
     const [markedDates, setMarkedDates] = useState({})
     const [initialDate, setInitialDate] = useState({})
     const [availableDates, setAvailableDates] = useState({})
-    const [loading, setLoading] = useState(true)
+    const [calendarLoading, setCalendarLoading] = useState(true)
 
     const getCurrentDate = () => {
         return new Date().toISOString().split('T')[0];
@@ -22,7 +22,7 @@ const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, pro
 
         // Load calendar
         setAvailabilityRanges()
-        setLoading(false)
+        setCalendarLoading(false)
 
     }, [initialDate, property])
 
@@ -128,7 +128,7 @@ const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, pro
     }, [firstSelectedDate, lastSelectedDate, availableDates]);
 
     // Loading view for calendar
-    if (loading) {
+    if (calendarLoading) {
         return (
             <View style={styles.loaderContainer}>
                 <ActivityIndicator size="large" color="#0000ff"/>

@@ -57,6 +57,10 @@ const BookingEngineScreen = ({navigation, route}) => {
     setShowGuestAmountPopUp(!showGuestAmountPopUp);
   };
 
+  /**
+   * Calculate the number of nights for selected date range.
+   * @returns {number} - Amount of nights.
+   */
   const calculateNights = () => {
     const start = new Date(selectedDates.startDate);
     const end = new Date(selectedDates.endDate);
@@ -66,6 +70,10 @@ const BookingEngineScreen = ({navigation, route}) => {
     return days;
   };
 
+  /**
+   * Calculate the total cost of a booking.
+   * @returns {string} - Summed up costs of a booking.
+   */
   const calculateCost = () => {
     return (
       parsedAccommodation.Rent * nights +
@@ -148,13 +156,13 @@ const BookingEngineScreen = ({navigation, route}) => {
               {(parsedAccommodation.Rent * nights).toFixed(2)}
             </Text>
 
-            <Text style={styles.fee}>
+            <Text style={styles.priceDetailText}>
               Cleaning fee - €{parsedAccommodation.CleaningFee.toFixed(2)}
             </Text>
 
-            <Text style={styles.tax}>Cat tax - €0.00</Text>
+            <Text style={styles.priceDetailText}>Cat tax - €0.00</Text>
 
-            <Text style={styles.serviceFee}>
+            <Text style={styles.priceDetailText}>
               Domits service fee - €{parsedAccommodation.ServiceFee.toFixed(2)}
             </Text>
 
@@ -164,6 +172,9 @@ const BookingEngineScreen = ({navigation, route}) => {
         <TouchableOpacity onPress={handleBookButton} style={styles.bookButton}>
           <Text style={styles.bookButtonText}>Confirm & Pay</Text>
         </TouchableOpacity>
+        <Text style={styles.stripeText}>
+          Secure payment gateway powered by Stripe.com
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
