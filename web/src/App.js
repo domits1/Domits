@@ -103,6 +103,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import ReleaseUpdates from './pages/productupdates/ReleaseUpdates.js'
+import Callback from "./Callback"; 
 
 Modal.setAppElement("#root");
 
@@ -372,6 +373,12 @@ function App() {
                     element={<SummaryView />}
                   />
                 </Routes>
+
+                <Routes>
+                   {/* Andere routes */}
+                      <Route path="/callback" element={<Callback />} />
+                </Routes>
+
                 {renderFooter()}
                 {currentPath !== "/admin" && <MenuBar />}
                 {renderChatWidget()}
@@ -380,7 +387,7 @@ function App() {
             </UserProvider>
           </AuthProvider>
         </Router>
-      </FlowContext.Provider>
+      </FlowContext.Provider> 
     </ApolloProvider>
   );
 }
