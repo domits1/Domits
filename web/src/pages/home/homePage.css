@@ -53,13 +53,29 @@ body.hide-header .app-header {
   cursor: pointer;
 }
 
-.popup-trigger {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 5px;
-  background-color: #f9f9f9;
-  position: relative;
+.domits-trendingContainer {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
+
+.popup-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 250px;
+  /* Adjust this width as needed */
+  height: 60px;
+  /* Adjust this height as needed */
+  text-align: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 14px;
+  background-color: white;
+  box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
 
 .popup-box {
   position: absolute;
