@@ -18,7 +18,6 @@ body.hide-header .app-header {
   justify-content: center;
   align-items: center;
   flex-wrap: wrap;
-  /* Added for responsiveness */
   gap: 20px;
   /* Added for spacing */
 }
