@@ -102,13 +102,17 @@
     background-color: var(--secondary-color);
     border-radius: 15px;
     padding: 0.4rem;
-    margin-left: 2%;
+    margin-left: 5%;
     width: 2rem;
     height: 2rem;
     position: relative;
     text-align: center;
     cursor: pointer;
   }
+
+.host-icon-background:hover {
+    background-color: #5a9bc7;
+}
 
 @media (max-width: 768px) {
     .horizontalOptions {

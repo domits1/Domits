@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { startVerificationAPI } from "../services/verificationServices";
-import { getVerificationStatusFromDB } from "../services/verificationServices";
+import { startVerificationAPI } from "../services/HostVerifyServices";
+import { getVerificationStatusFromDB } from "../services/HostVerifyServices";
 
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 

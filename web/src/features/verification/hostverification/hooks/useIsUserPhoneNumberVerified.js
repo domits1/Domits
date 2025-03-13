@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getPhoneNumberVerificationStatus } from "../services/verificationServices"; // Import your API function
+import { getPhoneNumberVerificationStatus } from "../services/HostVerifyServices"; // Import your API function
 import { useNavigate } from "react-router-dom";
 
 function useIsUserPhoneNumberVerified(userId) {
