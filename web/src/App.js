@@ -21,7 +21,6 @@ import HostOnboarding from "./pages/landingpage/OnboardingHost";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
 
 import HostProperty from "./features/hostdashboard/HostProperty";
-// import HostMessages from "./features/hostdashboard/HostMessages";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostListings from "./features/hostdashboard/HostListings";
@@ -46,7 +45,7 @@ import GuestBooking from "./features/guestdashboard/GuestBooking";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
-import Chat from "./features/guestdashboard/chat/Chat.js";
+import GuestMessages from './features/guestdashboard/guestmessages/pages/guestMessages.js';
 import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
@@ -216,10 +215,10 @@ function App() {
                     element={<PaymentConfirmPage />}
                   />
 
-                  {/* Chat */}
-                  <Route path="/chat" element={<Chat />} />
-                  <Route path="/employeechat" element={<EmployeeChat />} />
-                  <Route path="/chatbot" element={<Chatbot />} />
+                                    {/* Chat */}
+                                    <Route path="/chat" element={<GuestMessages />} />
+                                    <Route path="/employeechat" element={<EmployeeChat />} />
+                                    <Route path="/chatbot" element={<Chatbot />} />
 
                   {/* Host Chatbot */}
                   <Route path="/hostchatbot" element={<Hostchatbot />} />
@@ -239,7 +238,7 @@ function App() {
                           <Route path="reviews" element={<GuestReviews />} />
                           <Route path="bookings" element={<GuestBooking />} />
                           <Route path="settings" element={<GuestSettings />} />
-                          <Route path="chat" element={<Chat />} />
+                          <Route path="chat" element={<GuestMessages />} />
                         </Routes>
                       </GuestProtectedRoute>
                     }

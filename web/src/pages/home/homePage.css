@@ -198,6 +198,10 @@ body.hide-header .app-header {
   background-color: #003366;
   color: white;
 }
+.domits-hostButton a, .domits-SearchButton a {
+  text-decoration: none;
+  color: white;
+}
 
 .domits-SearchButton {
   background-color: #0d9813;
