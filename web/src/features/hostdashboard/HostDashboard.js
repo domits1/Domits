@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Pages from "./Pages.js";
-import './HostHomepage.css';
-import './PagesDropdown.css';
-import styles from './HostDashboard.module.css'
+import './styles/HostHomepage.css';
+import './styles/PagesDropdown.css';
+import styles from './styles/HostDashboard.module.css'
 import StripeModal from './StripeModal.js';
 import { Auth } from 'aws-amplify';
 import {useNavigate} from "react-router-dom";

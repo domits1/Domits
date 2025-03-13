@@ -1,0 +1,98 @@
+.centered-amenities {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #f9f9f9;
+    padding: 20px;
+}
+
+.amenity-container {
+    width: 90%;
+    max-width: 900px;
+    text-align: center;
+    padding: 40px;
+    border: 2px solid #bfc6d0;
+    border-radius: 15px;
+    background: #f9f9f9;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.amenity-groups {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    margin-top: 30px;
+    justify-content: center;
+}
+
+.amenity-category {
+    border: 2px solid #ccc;
+    padding: 20px;
+    border-radius: 10px;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.amenity-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 20px;
+    justify-items: center;
+}
+
+.amenity-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    border-radius: 10px;
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.amenity-item label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    color: #333;
+}
+
+.amenity-item input[type="checkbox"] {
+    transform: scale(1.2);
+    cursor: pointer;
+}
+
+.onboarding-button-box {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 40px;
+    max-width: 600px;
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+button {
+    width: 45%;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    border-radius: 8px;
+    border: none;
+    background: #1d3b5e;
+    color: #fff;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover {
+    background: #27466c;
+}
+
+.button-disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}

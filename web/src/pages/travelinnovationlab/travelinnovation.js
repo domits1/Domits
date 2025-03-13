@@ -1,7 +1,7 @@
 import React from "react";
 import huis from "../../images/til-hero.png";
 import travel from "../../images/icons/Travel.png";
-import './ninedots.css';
+import './styles/ninedots.css';
 
 function TravelInnovation() {
     return (

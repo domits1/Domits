@@ -3,7 +3,7 @@ import { Auth } from 'aws-amplify';
 import {Link, useNavigate} from 'react-router-dom';
 import { FlowProvider } from '../../services/FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
-import "./bookingoverview.css";
+import "./styles/bookingoverview.css";
 import Register from "../auth/Register";
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
