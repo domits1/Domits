@@ -9,7 +9,7 @@
     display: flex;
     flex-direction: column;
     width: 90%;
-    margin: 5vw; 
+    margin: auto;
     margin-top: 0px;
     margin-bottom: 30px
 }
@@ -307,6 +307,7 @@
     margin-bottom: 15px;
     border-radius: 5px;
     border: 1px solid #ccc;
+    max-width: 100px;
 }
 
 .extraDetails {
@@ -395,6 +396,7 @@
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: auto;
 }
 
 .checkIn, .checkOut {
@@ -601,6 +603,10 @@
 
     .price-item p, .total p {
         margin: 5px 0;
+    }
+
+    .checkInCheckOut {
+        max-width: 300px;
     }
 }
 
