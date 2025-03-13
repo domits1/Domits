@@ -48,15 +48,50 @@ body.hide-header .app-header {
 
 .domits-trendingContainer {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  cursor: pointer;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 25px;
+  margin-left: auto;
+  margin-right: auto;
+  padding-bottom: 2vh;
+  flex-wrap: wrap;
+  /* Added for responsiveness */
 }
 
-.domits-trendingContainer {
+.domits-trendingContainer>div {
+  width: 12vw;
+  padding: 8px;
+  background-color: #f9f9f9;
+  border-radius: 4px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
   display: flex;
-  justify-content: center;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  color: #555;
+  font-size: 16px;
+  margin-left: 2%;
+  margin-right: 2%;
+  position: relative;
+}
+
+.domits-trendingContainer>div:hover::after {
+  content: attr(data-popup-text);
+  display: block;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 5px 10px;
+  border-radius: 5px;
+  font-size: 15px;
+  position: absolute;
+  white-space: normal;
+  z-index: 10;
+  width: 20%;
+  height: auto;
+  overflow: auto;
+  transform: translateX(50%);
+  transform: translateY(90%);
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .popup-trigger {
@@ -65,7 +100,7 @@ body.hide-header .app-header {
   justify-content: center;
   width: 250px;
   /* Adjust this width as needed */
-  height: 60px;
+  height: 90px;
   /* Adjust this height as needed */
   text-align: center;
   border: 1px solid #ddd;
@@ -75,7 +110,6 @@ body.hide-header .app-header {
   background-color: white;
   box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
 }
-
 
 .popup-box {
   position: absolute;
@@ -89,7 +123,6 @@ body.hide-header .app-header {
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
   z-index: 10;
 }
-
 
 .domits-searchbarCon {
   padding-top: 1vw;
@@ -170,54 +203,6 @@ body.hide-header .app-header {
 .domits-SearchButton {
   background-color: #0d9813;
   color: white;
-}
-
-.domits-trendingContainer {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 25px;
-  margin-left: auto;
-  margin-right: auto;
-  padding-bottom: 2vh;
-  flex-wrap: wrap;
-  /* Added for responsiveness */
-}
-
-.domits-trendingContainer>div {
-  width: 12vw;
-  padding: 8px;
-  background-color: #f9f9f9;
-  border-radius: 4px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #555;
-  font-size: 16px;
-  margin-left: 4%;
-  position: relative;
-  /* Added for positioning the tooltip */
-}
-
-.domits-trendingContainer>div:hover::after {
-  content: attr(data-popup-text);
-  display: block;
-  background: rgba(0, 0, 0, 0.8);
-  color: white;
-  padding: 5px 10px;
-  border-radius: 5px;
-  font-size: 15px;
-  position: absolute;
-  white-space: normal;
-  z-index: 10;
-  width: 20%;
-  height: auto;
-  overflow: auto;
-  transform: translateX(50%);
-  transform: translateY(90%);
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .domits-communityHead {

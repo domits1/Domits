@@ -209,6 +209,7 @@ body {
 
     .header-right {
         margin-left: 3vw;
+        gap: 35px;
     }
 
     .header-buttons.header-host-button {
@@ -235,9 +236,6 @@ body {
         width: 100%;
     }
 
-    .header-right {
-        width: 100%;
-    }
 
     .header-personal-menu {
         width: 100%;
