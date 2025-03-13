@@ -199,10 +199,6 @@ body {
 
 /* Media Queries */
 @media screen and (max-width: 1024px) {
-    .header-app-header {
-        height: 15vh;
-    }
-
     .header-nav {
         flex-wrap: nowrap;
     }
@@ -235,7 +231,6 @@ body {
     .header-nav {
         width: 100%;
     }
-
 
     .header-personal-menu {
         width: 100%;
