@@ -13,9 +13,6 @@ body {
 }
 
 /* Header Styling */
-
-/* CSS for the header */
-
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 20px 50px 5px 50px;
@@ -228,19 +225,6 @@ body {
         padding: 0;
     }
 
-    .App,
-    .header-nav {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background: white;
-        width: 100%;
-    }
-
-    .header-nav {
-        width: auto;
-    }
-
     .headerRight {
         display: none;
     }
@@ -253,10 +237,7 @@ body {
         padding: 10px 20px;
     }
 
-    .SearchBarContainer.inactive {
-        display: none;
-    }
-
+    .SearchBarContainer.inactive,
     .Search-bar.inactive {
         display: none;
     }
@@ -273,28 +254,6 @@ body {
 }
 
 @media screen and (max-width: 480px) {
-
-    .header-nav,
-    .headerRight {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .headerButtons,
-    .personalMenu {
-        width: 100%;
-        margin-top: 10px;
-        justify-content: center;
-    }
-
-    .personalMenuDropdown .personalMenuDropdownContent {
-        width: 90%;
-        left: 5%;
-        right: 5%;
-    }
-}
-
-@media screen and (max-width: 320px) {
 
     .header-nav,
     .headerRight {
