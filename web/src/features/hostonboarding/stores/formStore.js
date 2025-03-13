@@ -394,13 +394,13 @@ const useFormStore = create((set) => ({
             ? accommodationDetails.boatDetails?.zipCode
             : accommodationDetails.camperDetails?.zipCode) ||
           accommodationDetails.address.zipCode,
-        PaymentBeforeCheckInDays: accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 1,
+        PaymentBeforeCheckInDays: accommodationDetails.PaymentDeadlineBeforeCheckIn || 1,
         RegistrationNumber: accommodationDetails.registrationNumber || "",
         Renovated: specifications?.Renovated || 0,
         Rent: accommodationDetails.Rent || 0,
         RentedWithSkipper: specifications?.RentedWithSkipper || false,
         Requirement: specifications?.Requirement || "",
-        ReservationExpirationTime: accommodationDetails.availability.ExpirationTime || 3,
+        ReservationExpirationTime: accommodationDetails.ExpirationTime || 3,
         Rooms: accommodationDetails.rooms || 0,
         SelfBuilt: specifications?.SelfBuilt || false,
         ServiceFee: accommodationDetails.ServiceFee || 0,

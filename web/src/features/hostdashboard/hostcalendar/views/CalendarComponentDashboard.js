@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
-import styles from './CalendarModuleDashboard.css';
+import styles from '../styles/CalendarDashboard.module.scss';
 import {isSameDay} from "date-fns";
-import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
+import DateFormatterDD_MM_YYYY from "../../../../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";
 import infoIcon from "../../../../images/icons/info.png";
 
@@ -13,7 +13,7 @@ import infoIcon from "../../../../images/icons/info.png";
  * @returns {Element}
  * @constructor
  */
-function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
+function CalendarComponentDashboard({passedProp, isNew, updateDates, componentView}) {
     const navigate = useNavigate();
     const [month, setMonth] = useState(new Date().getMonth());
     const [year, setYear] = useState(new Date().getFullYear());
@@ -468,4 +468,4 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
     );
 }
 
-export default CalendarComponent;
+export default CalendarComponentDashboard;
