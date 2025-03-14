@@ -22,17 +22,11 @@ jobs:
           cd web/src
           npm ci --verbose
 
-      # # Run Jest tests with coverage
-      # - name: Run Jest tests
-      #   run: |
-      #     cd web/src
-      #     npm test -- --coverage
       # Run Jest tests with coverage
       - name: Run Jest tests
         run: |
           cd web/src
-            npm test
-
+          npm test -- --coverage --coverageDirectory=coverage
 
       # Run Cypress tests
       - name: Cypress run
@@ -47,7 +41,7 @@ jobs:
         with:
           name: jest-coverage
           path: web/src/coverage/lcov.info
-
+          
   sonarqube:
     name: SonarQube
     runs-on: ubuntu-latest
@@ -56,15 +50,24 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
+  
       # Download the Jest coverage report
       - name: Download Jest Coverage Report
         uses: actions/download-artifact@v4
         with:
           name: jest-coverage
           path: web/src/coverage
-
+  
+      # Check if coverage report exists before proceeding with SonarQube
+      - name: Check Coverage Report
+        run: |
+          if [ ! -f "web/src/coverage/lcov.info" ]; then
+            echo "Coverage report not found. Skipping SonarQube."
+            exit 0
+          fi
+  
       - name: SonarQube Scan
+        if: success()
         uses: SonarSource/sonarqube-scan-action@v5
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
