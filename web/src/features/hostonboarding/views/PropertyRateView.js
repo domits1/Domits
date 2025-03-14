@@ -52,7 +52,6 @@ function PricingView() {
       <section className="accommodation-pricing">
         <PricingRow label="You earn" value={totalEarnings} readonly />
       </section>
-
       <nav className="onboarding-button-box">
         <Button
           routePath={`/hostonboarding/${accommodationType}/description`}

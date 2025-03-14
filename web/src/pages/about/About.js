@@ -22,7 +22,7 @@ import Bekir from '../../images/about-img/Bekir.png';
 import Kacper from '../../images/about-img/Kacper.png';
 import Etka from '../../images/about-img/Etka.jpg';
 import Sebastiaan from '../../images/about-img/Sebastiaan.png';
-import Raman from '../../images/about-img/Raman.jng';
+import Raman from '../../images/about-img/Raman.jpg';
 
 // Handy tool for editing the images:
 // https://imageresizer.com/image-compressor
