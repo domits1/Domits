@@ -11,7 +11,7 @@ export const useSendMessage = (userId) => {
             setError(errorMsg);
             return { success: false, error: errorMsg };
         }
-        
+
         const channelID = [userId, recipientId].sort().join("_");
 
         const message = {
@@ -22,12 +22,11 @@ export const useSendMessage = (userId) => {
             text: text,
             channelId: channelID,
         };
-        
 
         setSending(true);
 
         try {
-            sendMessage(message); 
+            sendMessage(message);
             return { success: true };
         } catch (err) {
             console.error("⚠️ Error sending message:", err);

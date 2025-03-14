@@ -29,7 +29,6 @@ describe('Booking Engine Test - Aventura Yachts A45', () => {
         cy.wait(2000);
         cy.get('.edit-icon-background').click();
         cy.wait(2000);
-
         
         cy.intercept('GET', '**/currentUserInfo', {
             statusCode: 200,
