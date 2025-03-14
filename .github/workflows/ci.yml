@@ -22,11 +22,17 @@ jobs:
           cd web/src
           npm ci --verbose
 
+      # # Run Jest tests with coverage
+      # - name: Run Jest tests
+      #   run: |
+      #     cd web/src
+      #     npm test -- --coverage
       # Run Jest tests with coverage
       - name: Run Jest tests
         run: |
           cd web/src
-          npm test -- --coverage
+            npm test
+
 
       # Run Cypress tests
       - name: Cypress run
