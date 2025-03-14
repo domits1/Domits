@@ -37,14 +37,6 @@ export const FilterLogic = (props) => {
   const [showMoreFacilities, setShowMoreFacilities] = useState(false);
   const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
 
-  const [selectedRatings, setSelectedRatings] = useState({
-    1: false,
-    2: false,
-    3: false,
-    4: false,
-    5: false,
-  });
-
   const [accommodationResults, setAccommodationResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -114,12 +106,7 @@ export const FilterLogic = (props) => {
     });
   };
 
-  const handleRatingChange = (event) => {
-    setSelectedRatings({
-      ...selectedRatings,
-      [event.target.name]: event.target.checked,
-    });
-  };
+
 
   // Exposes all necessary state and functions for use in the FilterUi component
   return {
@@ -133,8 +120,6 @@ export const FilterLogic = (props) => {
     setShowMoreFacilities,
     showMorePropertyTypes,
     setShowMorePropertyTypes,
-    selectedRatings,
-    handleRatingChange,
     handlePriceChange,
     accommodationResults,
     loading,
