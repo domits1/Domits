@@ -5,10 +5,7 @@ const Sustainability = () => {
     <div className="sustainability">
       <h1>Sustainability</h1>
       <hr />
-      <input type="text" placeholder="Search within this page..." />
-      <br />
       <h2>Why choose Domits for sustainability?</h2>
-      <h2>Our goals</h2>
       <hr />
 
       <h3>
