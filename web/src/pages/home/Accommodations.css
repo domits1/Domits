@@ -13,7 +13,7 @@
   margin-right: 20px;
 }
 
-#card-visibility {
+.card-visibility {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 20px;
@@ -27,7 +27,7 @@
 
 .accocard {
   width: 100%;
-  height: auto;
+  height: fit-content;
   max-width: 450px;
   margin: 1%;
   margin-top: 10px;

@@ -589,6 +589,8 @@ function OnboardingHost() {
             const response = await fetch(
                 `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
                     address
+                    
+                    //Wat doet de key hier :(
                 )}&key=AIzaSyDsc4bZSQfuPkpluzSPfT5eYnVRzPWD-ow`
             );
 

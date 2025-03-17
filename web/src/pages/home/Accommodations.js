@@ -5,7 +5,7 @@ import PageSwitcher from '../../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
-import FilterUi from "./FilterUi";  
+import FilterUi from "./FilterUi";
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
@@ -33,7 +33,7 @@ const Accommodations = ({ searchResults }) => {
 
   const handleFilterApplied = (filteredResults) => {
     setFilterLoading(true);
-    
+
     // Small timeout to ensure the loader is displayed
     setTimeout(() => {
       setAccolist(filteredResults);
@@ -103,7 +103,7 @@ const Accommodations = ({ searchResults }) => {
         <div id="filters-sidebar">
           <FilterUi onFilterApplied={handleFilterApplied} />
         </div>
-        <div id="card-visibility">
+        <div className="card-visibility">
           {Array(12)
             .fill()
             .map((_, index) => (
@@ -125,12 +125,12 @@ const Accommodations = ({ searchResults }) => {
     }
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
-  return (
+  return ( <>
     <div id="container">
       <div id="filters-sidebar">
         <FilterUi onFilterApplied={handleFilterApplied} />
       </div>
-      <div id="card-visibility">
+      <div className="card-visibility">
         {displayedAccolist.length > 0 ? (
           displayedAccolist.map((accommodation) => {
             const images =
@@ -147,31 +147,33 @@ const Accommodations = ({ searchResults }) => {
         ) : (
           <div className="no-results">No accommodations found for your search.</div>
         )}
-        <div className={PageSwitcher.pagination}>
-          <button
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-          >
-            &lt; Previous
-          </button>
-          {Array.from({ length: totalPages }, (_, i) => (
-            <button
-              key={i}
-              onClick={() => handlePageChange(i + 1)}
-              className={`${currentPage === i + 1 ? PageSwitcher.active : ''}`}
-            >
-              {i + 1}
-            </button>
-          ))}
-          <button
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-          >
-            Next &gt;
-          </button>
-        </div>
+
       </div>
     </div>
+
+    <div className={PageSwitcher.pagination}>
+    <button
+      onClick={() => handlePageChange(currentPage - 1)}
+      disabled={currentPage === 1}
+    >
+      &lt; Previous
+    </button>
+    {Array.from({ length: totalPages }, (_, i) => (
+      <button
+        key={i}
+        onClick={() => handlePageChange(i + 1)}
+        className={`${currentPage === i + 1 ? PageSwitcher.active : ''}`}
+      >
+        {i + 1}
+      </button>
+    ))}
+    <button
+      onClick={() => handlePageChange(currentPage + 1)}
+      disabled={currentPage === totalPages}
+    >
+      Next &gt;
+    </button>
+  </div></>
   );
 };
 
