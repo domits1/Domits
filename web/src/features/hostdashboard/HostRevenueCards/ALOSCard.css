@@ -1,21 +1,21 @@
 .alos-card {
-  background-color: #fff;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 16px;
-  margin: 16px 0;
-  text-align: center;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 12px;
+  margin: 12px 0;
+  text-align: left;
 }
 
 .alos-card h3 {
-  font-size: 1.5em;
-  margin-bottom: 8px;
-  color: #333;
+  font-size: 1.2em;
+  margin-bottom: 6px;
+  color: #444;
 }
 
 .alos-details {
-  font-size: 1.2em;
-  color: #666;
+  font-size: 1em;
+  color: #888;
 }
 
 .alos-details p {
