@@ -9,6 +9,7 @@ import Home from "./pages/home/Accommodations";
 import Homepage from "./pages/home/homePage.js";
 import About from "./pages/about/About";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
+import Security from "./pages/security/security.js";
 import Release from "./pages/productupdates/release.js";
 import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import Datasafety from "./pages/datasafety/datasafety.js";
@@ -192,6 +193,7 @@ function App() {
                   />
                   <Route path="/how-it-works" element={<Howitworks />} />
                   <Route path="/why-domits" element={<Whydomits />} />
+                  <Route path="/security" element={<Security />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route
                     path="/travelinnovation"
