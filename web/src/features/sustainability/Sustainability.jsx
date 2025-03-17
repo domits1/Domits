@@ -1,6 +1,6 @@
 import React from "react";
 
-const Terms = () => {
+const Sustainability = () => {
   return (
     <div className="sustainability">
       <h1>Sustainability</h1>
@@ -50,4 +50,4 @@ const Terms = () => {
   );
 };
 
-export default Terms;
+export default Sustainability;
