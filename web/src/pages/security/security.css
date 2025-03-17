@@ -31,7 +31,6 @@
   color: #333;
 }
 
-
 .security__list {
   list-style-type: disc;
   margin: 15px 0 0 20px;
@@ -42,7 +41,6 @@
 .security__list li {
   margin-bottom: 10px;
 }
-
 
 .security__factsbox {
   display: flex;
@@ -85,7 +83,6 @@
   color: #666;
 }
 
-
 .security__footer {
   text-align: center;
   margin-top: 40px;
@@ -115,7 +112,7 @@
   text-decoration: underline;
 }
 
-
+/* Media Queries */
 @media (max-width: 768px) {
   .security {
     padding: 0 10px;
