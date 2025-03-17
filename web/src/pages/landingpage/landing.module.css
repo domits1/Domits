@@ -166,6 +166,10 @@
     justify-content: center;
     font-size: 1rem;
 }
+.nextButtons a {
+    text-decoration: none;
+    color: white;
+}
 
 .headerTwoText{
     width: 100%;
