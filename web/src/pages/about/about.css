@@ -7,7 +7,8 @@
     font-style: normal;
 }
 
-.about__subtitle-container h3, .about__subtitle-container h4{
+.about__subtitle-container h3,
+.about__subtitle-container h4 {
     font-family: 'Kanit', sans-serif;
     font-weight: 400;
     font-size: 1em;
@@ -29,11 +30,12 @@
     gap: 3.75rem;
 }
 
-.ref{
+.ref {
     text-decoration: underline;
 }
 
-.about__title-container h2, h3 {
+.about__title-container h2,
+h3 {
     flex-direction: column;
     font-family: 'Kanit', sans-serif;
     font-weight: 400;
@@ -43,7 +45,7 @@
     padding-right: 0.5rem;
 }
 
-.about__title{
+.about__title {
     text-align: left;
 }
 
@@ -83,6 +85,11 @@
     margin: 0rem;
 }
 
+.about__text a {
+    color: black;
+}
+
+
 .about__who-we-are-title {
     text-align: left;
 }
@@ -105,6 +112,9 @@
 
 .about__fact-text {
     margin-top: 20px;
+}
+
+.about__fact-text a {
     color: white;
 }
 
