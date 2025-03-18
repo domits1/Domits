@@ -82,14 +82,14 @@ const PropertyDetailsScreen = ({route, navigation}) => {
 
     useEffect(() => {
         CalculateNumberOfNights(firstSelectedDate, lastSelectedDate, setAmountOfNights);
-    }, [firstSelectedDate, lastSelectedDate]);
+    }, [lastSelectedDate]);
 
     useEffect(() => {
         const totalCostOfNights = parsedAccommodation.Rent * amountOfNights
         setCostOfNights(totalCostOfNights);
         const totalCostOfBooking = totalCostOfNights + parsedAccommodation.CleaningFee + parsedAccommodation.ServiceFee;
         setTotalCost(totalCostOfBooking);
-    }, [amountOfNights]);
+    }, [amountOfNights, parsedAccommodation]);
 
     const handleHomeScreenPress = () => {
         navigation.navigate('HomeScreen');

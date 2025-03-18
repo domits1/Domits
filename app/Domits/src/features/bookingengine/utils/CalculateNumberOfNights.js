@@ -8,9 +8,14 @@
 const CalculateNumberOfNights = (startDate, endDate, setNumberOfNights)  => {
     const start = new Date(startDate)
     const end = new Date(endDate)
-    const timeDifference = end.getTime() - start.getTime();
-    const days = timeDifference / (1000 * 3600 * 24);
-    setNumberOfNights(days);
+
+    if (endDate != null){
+        const timeDifference = end.getTime() - start.getTime();
+        const days = timeDifference / (1000 * 3600 * 24);
+        setNumberOfNights(days);
+    } else {
+        setNumberOfNights(0)
+    }
 }
 
 export default CalculateNumberOfNights;
