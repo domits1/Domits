@@ -1,5 +1,5 @@
 import React from "react";
-import "./Sustainability.css";
+import "./Sustainability.scss";
 
 const Sustainability = () => {
   return (
