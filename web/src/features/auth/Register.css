@@ -94,20 +94,6 @@ label {
     display: inline-flex;
 }
 
-.PhoneRegisterInput {
-    /* width: 100%;
-    height: auto;
-    padding: 8px 15px;
-    margin-top: 5px;
-    margin-bottom: 12px;
-    background: white;
-    box-shadow: none;
-    border-radius: 5px;
-    border: 1px solid #999;
-    justify-content: flex-start;
-    align-items: center;
-    display: inline-flex; */
-}
 
 .form-control {
     width: 120%;
