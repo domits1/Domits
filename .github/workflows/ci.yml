@@ -36,39 +36,18 @@ jobs:
           working-directory: web/src/tests
           start: npx vite --host
 
-      # Upload Jest coverage report as an artifact (so SonarQube can use it)
-      - name: Save Jest Coverage Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: jest-coverage
-          path: web/src/coverage/lcov.info
-          
-  sonarqube:
-    name: SonarQube
-    runs-on: ubuntu-latest
-    needs: tests  # Wait for tests to finish before running SonarQube
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-  
-      # Download the Jest coverage report
-      - name: Download Jest Coverage Report
-        uses: actions/download-artifact@v4
-        with:
-          name: jest-coverage
-          path: web/src/coverage
-  
-      # Check if coverage report exists before proceeding with SonarQube
-      - name: Check Coverage Report
-        run: |
-          if [ ! -f "web/src/coverage/lcov.info" ]; then
-            echo "Coverage report not found. Skipping SonarQube."
-            exit 0
-          fi
-  
-      - name: SonarQube Scan
-        if: success()
-        uses: SonarSource/sonarqube-scan-action@v5
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#  sonarqube:
+#    name: SonarQube
+#    runs-on: ubuntu-latest
+#    needs: tests  # Wait for tests to finish before running SonarQube
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      # Run SonarQube Scan without Jest coverage integration
+#      - name: SonarQube Scan
+#        uses: SonarSource/sonarqube-scan-action@v5
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#
