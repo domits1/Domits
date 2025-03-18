@@ -64,6 +64,7 @@
     border: 1px solid #ccc;
     border-radius: 5px;
     position: relative;
+    cursor: pointer;
 }
 
 .photo-gallery-images .add-more {

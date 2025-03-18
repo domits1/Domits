@@ -199,7 +199,7 @@ function HostListings() {
                     ) : (
                         <div className={styles.listingBody}>
                             <div className={styles.buttonBox}>
-                                <button className={styles.greenBtn} onClick={() => navigate("/hostboarding")}>Add new
+                                <button className={styles.greenBtn} onClick={() => navigate("/hostonboarding")}>Add new
                                     accommodation
                                 </button>
                                 <button className={styles.greenBtn} onClick={fetchAccommodations}>Refresh</button>
