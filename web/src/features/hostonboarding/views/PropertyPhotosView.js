@@ -78,7 +78,7 @@ function PhotosView() {
                 onDrop={handleDrop}
               />
             ))}
-            {images.length < 5 && (
+            {images.length < 10 && (
               <div className="small-photo add-more-box" onClick={handleBoxClick}>
                 <p>Add More +</p>
               </div>
