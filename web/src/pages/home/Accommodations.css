@@ -1,15 +1,15 @@
-#container {
+#container-accommodation-card {
   display: flex;
   justify-content: center;
   padding: 20px;
-  max-width: 1200px;
+  max-width: 1300px;
   margin: 0 auto;
 }
 
 /* dit is een tijdelijke aanpassing om te kijken of de huidige filters goed passen */
 /* op het moment dat de filters klaar zijn kan deze waardens aangepast worden om meer ruimte te creëren */
 #filters-sidebar {
-  flex: 0 0 240px;
+  /* flex: 0 0 240px; */
   margin-right: 20px;
 }
 

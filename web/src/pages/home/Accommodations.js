@@ -99,7 +99,7 @@ const Accommodations = ({ searchResults }) => {
 
   if (loading || loadingImages || filterLoading || searchLoading) {
     return (
-      <div id="container">
+      <div id="container-accommodation-card">
         <div id="filters-sidebar">
           <FilterUi onFilterApplied={handleFilterApplied} />
         </div>
@@ -126,7 +126,7 @@ const Accommodations = ({ searchResults }) => {
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
   return ( <>
-    <div id="container">
+    <div id="container-accommodation-card">
       <div id="filters-sidebar">
         <FilterUi onFilterApplied={handleFilterApplied} />
       </div>
