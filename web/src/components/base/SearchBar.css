@@ -344,19 +344,19 @@
 
 @media (min-width: 2500px) {
   .responsive-calendar {
-    font-size: 1rem !important;
+    font-size: 0.7rem !important;
   }
 }
 
 @media (max-width: 1500px) {
   .responsive-calendar {
-    font-size: 0.9rem !important;
+    font-size: 0.6rem !important;
   }
 }
 
 @media (max-width: 1200px) {
   .responsive-calendar {
-    font-size: 0.7rem !important;
+    font-size: 0.5rem !important;
   }
 }
 
