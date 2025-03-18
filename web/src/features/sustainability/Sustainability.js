@@ -41,7 +41,9 @@ const Sustainability = () => {
       </section>
       <hr />
       <section id={"sustainable-guest-experience"}>
-        <h3>3. Sustainable Guest Experience</h3>
+        <h3>
+          3. Sustainable <strong>Guest Experience</strong>
+        </h3>
         <p>
           From the first touch point with Domits for guest we want to let them
           feel that they are traveling as sustainable as possible. Domits begins
