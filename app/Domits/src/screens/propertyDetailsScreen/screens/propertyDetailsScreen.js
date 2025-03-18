@@ -19,6 +19,7 @@ import AmenitiesPopup from "../components/AmenitiesPopup";
 import SelectBookingDateCalendar from "../components/SelectBookingDateCalendar";
 import BookingPopup from "../components/BookingPopup";
 import TranslatedText from "../../../features/translation/components/TranslatedText";
+import CalculateNumberOfNights from "../../../features/bookingengine/utils/CalculateNumberOfNights";
 
 const PropertyDetailsScreen = ({route, navigation}) => {
     const accommodationId = route.params.accommodation.id;
@@ -33,6 +34,9 @@ const PropertyDetailsScreen = ({route, navigation}) => {
     const imageWidth = Dimensions.get('window').width;
     const [firstSelectedDate, setFirstSelectedDate] = useState(null);
     const [lastSelectedDate, setLastSelectedDate] = useState(null);
+    const [amountOfNights, setAmountOfNights] = useState(null);
+    const [costOfNights, setCostOfNights] = useState(null);
+    const [totalCost, setTotalCost] = useState(null);
 
     const handleFirstDateSelected = (date) => {
         setFirstSelectedDate(date);
@@ -75,6 +79,17 @@ const PropertyDetailsScreen = ({route, navigation}) => {
             console.warn('No Images object found in parsed accommodation data.');
         }
     }, [parsedAccommodation, loading]);
+
+    useEffect(() => {
+        CalculateNumberOfNights(firstSelectedDate, lastSelectedDate, setAmountOfNights);
+    }, [firstSelectedDate, lastSelectedDate]);
+
+    useEffect(() => {
+        const totalCostOfNights = parsedAccommodation.Rent * amountOfNights
+        setCostOfNights(totalCostOfNights);
+        const totalCostOfBooking = totalCostOfNights + parsedAccommodation.CleaningFee + parsedAccommodation.ServiceFee;
+        setTotalCost(totalCostOfBooking);
+    }, [amountOfNights]);
 
     const handleHomeScreenPress = () => {
         navigation.navigate('HomeScreen');
@@ -285,6 +300,13 @@ const PropertyDetailsScreen = ({route, navigation}) => {
                             onLastDateSelected={handleLastDateSelected}
                             property={parsedAccommodation}
                         ></SelectBookingDateCalendar>
+
+                        <View>
+                            <Text>Nights: €{Number(parsedAccommodation.Rent * amountOfNights).toFixed(2)}</Text>
+                            <Text>Cleaning fee: €{parsedAccommodation.CleaningFee.toFixed(2)}</Text>
+                            <Text>Service fee: €{parsedAccommodation.ServiceFee.toFixed(2)}</Text>
+                            <Text>Total cost: {totalCost.toFixed(2)}</Text>
+                        </View>
 
                         <View style={styles.bookingButtonContainer}>
                             <View style={styles.bookingButton}>

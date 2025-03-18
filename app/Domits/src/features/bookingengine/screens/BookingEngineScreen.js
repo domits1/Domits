@@ -6,6 +6,7 @@ import BookingEngineCalendarPopup from "../components/BookingEngineCalendarPopup
 import {styles} from "../styles/BookingEngineStyles";
 import BookingEngineGuestsPopup from "../components/BookingEngineGuestsPopup";
 import FetchBookingsByProperty from "../hooks/FetchBookingsByProperty";
+import CalculateNumberOfNights from "../utils/CalculateNumberOfNights";
 
 const BookingEngineScreen = ({navigation, route}) => {
   const parsedFirstSelectedDate = route.params.firstSelectedDate;
@@ -27,7 +28,7 @@ const BookingEngineScreen = ({navigation, route}) => {
     }, [parsedFirstSelectedDate, parsedLastSelectedDate])
 
     useEffect(() => {
-        calculateNights()
+      CalculateNumberOfNights(selectedDates.startDate, selectedDates.endDate, setNights)
     }, [selectedDates])
 
     useEffect(() => {
@@ -55,19 +56,6 @@ const BookingEngineScreen = ({navigation, route}) => {
 
   const handleGuestAmountPopUp = () => {
     setShowGuestAmountPopUp(!showGuestAmountPopUp);
-  };
-
-  /**
-   * Calculate the number of nights for selected date range.
-   * @returns {number} - Amount of nights.
-   */
-  const calculateNights = () => {
-    const start = new Date(selectedDates.startDate);
-    const end = new Date(selectedDates.endDate);
-    const timeDifference = end.getTime() - start.getTime();
-    const days = timeDifference / (1000 * 3600 * 24);
-    setNights(days);
-    return days;
   };
 
   /**
