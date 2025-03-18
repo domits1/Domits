@@ -1,19 +1,19 @@
 import React from "react";
-import "./Sustainability.scss";
+import "./Sustainability.css";
 
 const Sustainability = () => {
   return (
-    <div class="sustainability">
+    <div className="sustainability">
       <h1>Sustainability</h1>
       <hr />
       <h2>Why choose Domits for sustainability?</h2>
       <hr />
 
-      <div id={"Sustainabile business"}>
+      <section id={"sustainable-business"}>
         <h3>
-          1. Sustainable <span className="bold">Business</span>
+          1. Sustainable <strong>Business</strong>
         </h3>
-        <span className="bold">Recycling plan with bins</span>
+        <strong>Recycling plan with bins</strong>
         <p>
           Domits is starting out simple with making conscious decisions like
           choosing more energy-saving appliances and will continue to improve
@@ -23,14 +23,14 @@ const Sustainability = () => {
           eat more organic food, use Eco-friendly cleaning products and have
           paperless procedures.
         </p>
-      </div>
+      </section>
 
       <hr />
-      <div id={"Sustainabile Accommodations"}>
+      <section id={"sustainable-accommodations"}>
         <h3>
-          2. Sustainable <span className="bold">Accommodations</span>
+          2. Sustainable <strong>Accommodations</strong>
         </h3>
-        <span className="bold">Certification</span>
+        <strong>Certification</strong>
         <p>
           Domits is actively focusing on onboarding hosts that are already
           sustainable. If they’re not yet, we’re supporting them step-by-step to
@@ -38,9 +38,9 @@ const Sustainability = () => {
           certifications as a proof of sustainability with energy, waste,
           biodiversity, ecosystems, destinations and community.
         </p>
-      </div>
+      </section>
       <hr />
-      <div id={"Sustainabile  Guest Experience"}>
+      <section id={"sustainable-guest-experience"}>
         <h3>3. Sustainable Guest Experience</h3>
         <p>
           From the first touch point with Domits for guest we want to let them
@@ -49,7 +49,7 @@ const Sustainability = () => {
           eco-friendly amenities.
         </p>
         <br />
-      </div>
+      </section>
       <hr />
     </div>
   );
