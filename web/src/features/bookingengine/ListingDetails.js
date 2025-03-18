@@ -91,7 +91,7 @@ import SevereColdIcon from '@mui/icons-material/SevereCold';
 import ChairAltIcon from '@mui/icons-material/ChairAlt';
 import {touristTaxRates, vatRates} from "../../utils/CountryVATRatesAndTouristTaxes";
 import RegisterModule from "../auth/RegisterModule";
-import LoginModule from '../auth/LoginModule';
+// import LoginModule from '../auth/LoginModule';
 
 const ListingDetails = () => {
     const navigate = useNavigate();
