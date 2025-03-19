@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import PricingRow from "../components/PricingRow";
-import { usePricing } from "../hooks/usePricing";
+import { usePricing } from "../hooks/useProperyRate";
 import Button from "../components/button";
 
 function PricingView() {
@@ -52,7 +52,6 @@ function PricingView() {
       <section className="accommodation-pricing">
         <PricingRow label="You earn" value={totalEarnings} readonly />
       </section>
-
       <nav className="onboarding-button-box">
         <Button
           routePath={`/hostonboarding/${accommodationType}/photos`}

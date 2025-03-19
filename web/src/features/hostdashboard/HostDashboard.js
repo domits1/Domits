@@ -95,10 +95,11 @@ function HostDashboard() {
     };
     return (
         <main className="page-body">
-            <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)}/>
+            <h2>Dashboard</h2>
             <div className={styles.dashboardHost}>
                 <Pages/>
                 <div>
+                <StripeModal isOpen={isStripeModalOpen} onClose={() => setIsStripeModalOpen(false)}/>
                 <div className={styles.dashboardContainer}>
                     <div className={styles.dashboardLeft}>
                         <h3 className={styles.welcomeMsg}>Welcome {user.name}</h3>

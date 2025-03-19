@@ -2,7 +2,7 @@ import React from "react";
 import { useParams } from "react-router-dom";
 import AddressFormFields from "../components/AddressFormFields";
 import Button from "../components/button";
-import { useAddressInput } from "../hooks/useAddressInput";
+import { useAddressInput } from "../hooks/usePropertyLocation";
 
 function AddressInputView() {
     const { type: accommodationType } = useParams();

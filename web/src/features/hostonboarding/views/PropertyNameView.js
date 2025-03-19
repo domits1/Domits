@@ -1,7 +1,7 @@
 import React from "react";
 import { useParams } from "react-router-dom";
 import TextAreaField from "../components/TextAreaField";
-import { useAccommodationTitle } from "../hooks/useAccommodationTitle";
+import { useAccommodationTitle } from "../hooks/usePropertyName";
 import Button from "../components/button";
 
 function AccommodationTitleView() {

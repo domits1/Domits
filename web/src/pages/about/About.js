@@ -17,7 +17,15 @@ import Sam from '../../images/about-img/Sam.jpg';
 import Jared from '../../images/about-img/Jared.jpg';
 import Ryan from '../../images/about-img/Ryan-compressed.png';
 import Santosh from '../../images/about-img/Santosh.png';
+import Sander from '../../images/about-img/Sander.png';
+import Bekir from '../../images/about-img/Bekir.png';
+import Kacper from '../../images/about-img/Kacper.png';
+import Etka from '../../images/about-img/Etka.jpg';
+import Sebastiaan from '../../images/about-img/Sebastiaan.png';
+import Raman from '../../images/about-img/Raman.jpg';
 
+// Handy tool for editing the images:
+// https://imageresizer.com/image-compressor
 
 function About() {
     return (
@@ -103,27 +111,28 @@ function About() {
 
                     {[
                         {name: 'Ales', src: Ales, role: 'Developer'},
-                        {name: 'Bekir', src: standard, role: 'Developer'},
+                        {name: 'Bekir', src: Bekir, role: 'Developer'},
                         {name: 'Chant', src: Chant, role: 'Developer'},
-                        {name: 'Etka', src: standard, role: 'Developer'},
+                        {name: 'Etka', src: Etka, role: 'Developer'},
                         {name: 'Fejsal', src: standard, role: 'Developer'},
                         {name: 'Hamza H.', src: standard, role: 'Developer AI Agents'},
                         {name: 'Hamza Z.', src: standard, role: 'Developer'},
                         {name: 'Justin', src: Justin, role: 'Developer Distribution'},
-                        {name: 'Kacper', src: standard, role: 'Developer'},
+                        {name: 'Kacper', src: Kacper, role: 'Developer'},
                         {name: 'Martijn', src: standard, role: 'Developer'},
                         {name: 'Mortada', src: standard, role: 'Developer Revenue'},
                         {name: 'Mohamed', src: muhammed, role: 'Developer'},
                         {name: 'Muhammed', src: muhammed, role: 'Developer'},
                         {name: 'Nick Ryan', src: nick, role: 'Developer'},
                         {name: 'Randy', src: standard, role: 'Developer Distribution'},
+                        {name: 'Raman', src: standard, role: 'Developer'},
                         {name: 'Robin', src: Robin, role: 'Security'},
                         {name: 'Roozbeh', src: Roozbeh, role: 'Developer Revenue'},
                         {name: 'Ryan', src: Ryan, role: 'Developer'},
                         {name: 'Sam', src: Sam, role: 'Developer'},
                         {name: 'Santosh', src: Santosh, role: 'Developer'},
-                        {name: 'Sander', src: standard, role: 'Developer'},
-                        {name: 'Sebastiaan', src: standard, role: 'Developer'},
+                        {name: 'Sander', src: Sander, role: 'Developer'},
+                        {name: 'Sebastiaan', src: Sebastiaan, role: 'Developer'},
                         {name: 'Sem', src: standard, role: 'Developer'},
                     ]
                         .sort((a, b) => a.name.localeCompare(b.name))

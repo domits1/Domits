@@ -2,7 +2,7 @@ import React from 'react';
 import GuestAmountItem from "../components/GuestAmountItem";
 import { useParams } from "react-router-dom";
 import useFormStore from "../stores/formStore";
-import { accommodationFields } from "../constants/guestAmountFields";
+import { accommodationFields } from "../constants/propertyAmountofGuestData";
 import Button from "../components/button";
 
 function GuestAmountView() {

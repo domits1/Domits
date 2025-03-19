@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import ImagePreview from "../components/ImagePreview";
-import usePhotos from "../hooks/usePhotos";
+import usePhotos from "../hooks/usePropertyPhotos";
 import Button from "../components/button";
 import "../styles/PhotoVieuw.css";
 

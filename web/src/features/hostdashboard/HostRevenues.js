@@ -129,8 +129,12 @@ const HostRevenues = () => {
     }, [cognitoUserId]);
 
     return (
+        
         <main className="hr-page-body hr-container">
+            <h2>Revenues</h2>
+
             <section className="hr-host-revenues">
+
                 <div className="hr-pages">
                     <Pages />
                 </div>

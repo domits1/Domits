@@ -38,12 +38,12 @@
         border: none;
         cursor: pointer;
         transition: background-color 0.3s ease;
-        margin: 1em 0;
+        margin-left: 8.2rem;
     }
     .calendarHeader {
         display: flex;
         flex-direction: row;
-        justify-content: center;
+        justify-content: left;
         align-items: center;
         width: 100%;
         margin: 1em 0;

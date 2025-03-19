@@ -1,12 +1,8 @@
 import React from 'react';
 import logo from "../../images/logo.svg";
-import Appstorebadge from '../../images/assets/appstorebadge.svg';
-import Playstorebadge from '../../images/assets/playstorebadge.svg';
-import Instagram from '../../images/icons/Instagram.jpg'
 import linkedinIcon from '../../images/icons/LinkedIn.png';
 import instagramIcon from '../../images/icons/Instagram.jpg';
 import xIcon from '../../images/icons/x.png';
-import { ReactComponent as InstagramIcon } from '../../images/instagram.svg';
 import { Link } from 'react-router-dom';
 import './base.css'
 
@@ -28,6 +24,10 @@ const Footer = () => {
                         <li><Link to="/travelinnovation" className='footer-links'>Travel innovation</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
                         <li><Link to="/career" className='footer-links'>Jobs</Link></li>
+                        <li><Link to="/careers" className='footer-links'>Careers</Link></li>
+                        <li><Link to="/security" className='footer-links'>Security</Link></li>
+                        <li><Link to="/sustainability" className='footer-links'>Sustainability</Link></li>
+                        <li><Link to="/domitsai" className='footer-links'>Domits Ai</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
                         <br />
                     </ul>
@@ -73,7 +73,7 @@ const Footer = () => {
                 <div className="footer-section-grid">
                     <div className="footer-section">
                         <h4 className='footer-headers'>Socials</h4>
-                        <ul className='footer-lists'>
+                        <ul className='footer-lists-socials-icons'>
                             <li>
                                 <a href="https://www.linkedin.com/company/domits" target="_blank" rel="noopener noreferrer" className='footer-icons'>
                                     <img src={linkedinIcon} alt="LinkedIn" />
@@ -122,7 +122,6 @@ const Footer = () => {
                 <a><Link to="/policy" className='footer-links'>Privacy policy</Link></a>
                 <a><Link to="/terms" className='footer-links'>Terms and Conditions</Link></a>
                 <a><Link to="/disclaimers" className='footer-links'>Disclaimer</Link></a>
-                <a href="" target="_blank" rel="noopener noreferrer" className='footer-links'>Sitemap</a>
             </div>
 
             {/* Copyright Block */}

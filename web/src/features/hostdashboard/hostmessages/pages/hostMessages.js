@@ -1,13 +1,11 @@
-import React, { useEffect, useState, useRef } from "react";
-import { API, graphqlOperation } from "aws-amplify";
-import { withAuthenticator } from "@aws-amplify/ui-react";
+import React, { useEffect, useState } from "react";
+import { WebSocketProvider } from "../context/webSocketContext";
 import Pages from "../../Pages";
-import { Auth } from 'aws-amplify';
-import { useLocation, useNavigate } from 'react-router-dom';
 import { UserProvider } from "../context/AuthContext";
 import { useAuth } from "../hooks/useAuth";
 import ContactList from "../components/hostContactList";
 import HostChatScreen from "../components/hostChatScreen";
+import useFetchConnectionId from '../hooks/useFetchConnectionId';
 import "../styles/hostMessages.css";
 
 const HostMessages = () => {
@@ -22,30 +20,35 @@ const HostMessagesContent = () => {
     const { userId } = useAuth();
     const [selectedContactId, setSelectedContactId] = useState(null);
     const [selectedContactName, setSelectedContactName] = useState(null);
+    const { connectionId } = useFetchConnectionId(selectedContactId) || { connectionId: null };
+    const [message, setMessage] = useState([]);
 
     const handleContactClick = (contactId, contactName) => {
-        console.log('Contact ID:', contactId);
         setSelectedContactId(contactId);
         setSelectedContactName(contactName);
     };
+    const handleContactListMessage = (sentMessage) => {
+        setMessage(sentMessage)
+    };
 
     return (
+        <WebSocketProvider userId={userId}>
+            <main className="page-body">
+                <h2>Messages</h2>
+                {userId ? (
+                    <>
+                        <div className="host-chat-components">
+                            <Pages />
 
-        <main className="page-body">
-
-            {userId ? (
-                <>
-                    <div className="host-chat-components">
-                        <Pages />
-
-                        <ContactList userId={userId} onContactClick={handleContactClick} />
-                        <HostChatScreen userId={userId} contactId={selectedContactId} contactName={selectedContactName} />
-                    </div>
-                </>
-            ) : (
-                <div>Loading user info...</div>
-            )}
-        </main>
+                            <ContactList userId={userId} onContactClick={handleContactClick} message={message} />
+                            <HostChatScreen userId={userId} handleContactListMessage={handleContactListMessage} contactId={selectedContactId} connectionId={connectionId} contactName={selectedContactName} />
+                        </div>
+                    </>
+                ) : (
+                    <div>Loading user info...</div>
+                )}
+            </main>
+        </WebSocketProvider>
     );
 };
 

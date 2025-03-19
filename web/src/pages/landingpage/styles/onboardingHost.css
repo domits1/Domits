@@ -506,6 +506,11 @@ h2{
     height: 1px;
   }
 }
+.onboardingSectionTitle{
+  margin: 0;
+  padding: 0;
+}
+
 .pricing-input {
   width: 20%;
 }
