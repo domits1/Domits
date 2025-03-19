@@ -239,7 +239,7 @@ function App() {
                           <Route path="/" element={<GuestDashboard />} />
                           <Route path="messages" element={<ListingDetails />} />
                           <Route path="payments" element={<GuestPayments />} />
-                          <Route path="reviews" element={<GuestReviews />} />
+                          {/* <Route path="reviews" element={<GuestReviews />} /> */}
                           <Route path="bookings" element={<GuestBooking />} />
                           <Route path="settings" element={<GuestSettings />} />
                           <Route path="chat" element={<GuestMessages />} />
@@ -281,7 +281,7 @@ function App() {
                           <Route path="messages" element={<HostMessages />} />
                           <Route path="reporting" element={<HostPayments />} />
                           <Route path="settings" element={<HostSettings />} />
-                          <Route path="reviews" element={<HostReviews />} />
+                          {/* <Route path="reviews" element={<HostReviews />} /> */}
                           <Route path="chat" element={<HostMessages />} />
                           <Route
                             path="reservations"
