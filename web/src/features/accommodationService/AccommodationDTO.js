@@ -35,7 +35,7 @@ class PropertyDTO {
     this.pricing = new PropertyPricingDTO(data.propertyPricing);
     this.rules =
       data.propertyRules?.map((rule) => new PropertyRulesDTO(rule)) || [];
-    this.type = new PropertyTypeDTO(data.propertyType);
+    this.propertyType = new PropertyTypeDTO(data.propertyType);
     this.images =
       data.propertyImages?.map((image) => new PropertyImagesDTO(image)) || [];
     this.technicalDetails = new PropertyTechnicalDetailsDTO(
@@ -162,7 +162,7 @@ const propertyData = {
   },
   propertyPricing: { roomRate: 100, cleaning: 10, service: 5 },
   propertyRules: [{ rule: "No smoking", value: true }],
-  propertyType: { property_type: "Apartment", spaceType: "Shared" },
+  propertyType: { propertyType: "Apartment", spaceType: "Shared" },
   propertyImages: [{ key: "image1.jpg" }],
   propertyTechnicalDetails: {
     length: 10,
