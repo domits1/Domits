@@ -63,7 +63,7 @@ function CalendarComponent({passedProp, isNew, updateDates, componentView}) {
         for(let i = 0; i < selectedDates.length(); i++){
             let newDate = []
             for(let j = 0; j < 2; j++){
-                let date = selectedDates[i][j]
+                let date = selectedDates[i][j].toString()
 
                 const year = date.substring(0, 4);
                 const month = date.substring(4, 6) - 1;
