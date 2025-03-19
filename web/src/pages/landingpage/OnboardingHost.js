@@ -27,7 +27,6 @@ import BoatWithoutLicense from "../../images/boat_types/boat-without-license.png
 import CalendarComponent from "../../features/hostdashboard/CalendarComponent";
 import imageCompression from 'browser-image-compression';
 import RegistrationNumber from "../../features/verification/hostverification/HostVerifyRegistrationNumber";
-
 const S3_BUCKET_NAME = 'accommodation';
 const region = 'eu-north-1';
 
@@ -590,6 +589,8 @@ function OnboardingHost() {
             const response = await fetch(
                 `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
                     address
+                    
+                    //Wat doet de key hier :(
                 )}&key=AIzaSyDsc4bZSQfuPkpluzSPfT5eYnVRzPWD-ow`
             );
 

@@ -1,14 +1,22 @@
-/* CSS for the header */
+/* General Styling */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    overflow-x: hidden;
+    font-family: Kanit, sans-serif;
+}
+
+/* Header Styling */
 .app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 20px 50px 5px 50px;
     text-align: center;
-}
-
-.trustpilot-bar {
-    display: flex;
-    justify-content: center;
-    margin-top: 2px;
 }
 
 .header-nav {
@@ -20,21 +28,18 @@
 }
 
 .headerRight {
-    float: right;
     display: flex;
     align-items: center;
 }
 
-.headerButtons, .personalMenu {
-    float: left;
+.headerButtons,
+.personalMenu {
     color: black;
     text-align: center;
     padding: 12px;
     font-size: 18px;
     border-radius: 10px;
-    margin-top: 0;
     display: inline-flex;
-    font-family: Kanit, sans-serif;
     cursor: pointer;
     width: auto;
     box-shadow: 0 0 5px hsl(0 0% 78%);
@@ -49,7 +54,8 @@
     display: flex;
 }
 
-.headerHostButton, .headerButtons {
+.headerHostButton,
+.headerButtons {
     border: none;
     background: none;
     box-shadow: none;
@@ -71,7 +77,7 @@
 }
 
 .personalMenuDropdown .personalMenuDropdownContent {
-    padding: 20px 25px 20px 25px;
+    padding: 20px 25px;
     position: absolute;
     background-color: white;
     width: auto;
@@ -93,7 +99,6 @@
     width: 100%;
     color: white;
     font-size: 16px;
-    font-family: Kanit, sans-serif;
     font-weight: 400;
     line-height: 24px;
     word-wrap: break-word;
@@ -108,7 +113,8 @@
     cursor: pointer;
 }
 
-.dropdownRegisterButton, .dropdownLogoutButton {
+.dropdownRegisterButton,
+.dropdownLogoutButton {
     margin-top: 10px;
     background-color: var(--secondary-color);
     border: none;
@@ -150,25 +156,51 @@
 .helloUsername {
     margin-bottom: 10px;
     font-size: 18px;
-    font-family: Kanit, sans-serif;
     font-weight: 400;
     line-height: 24px;
     word-wrap: break-word;
 }
 
+/* Media Queries */
+@media screen and (max-width: 1024px) {
+    .header-nav {
+        flex-wrap: nowrap;
+    }
+
+    .App,
+    .header-nav {
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        background: white;
+        width: 100%;
+    }
+
+    .logo {
+        margin: 0 1vw 0 -4vw;
+    }
+
+    .headerRight {
+        margin-left: 3vw;
+    }
+
+    .headerButtons.headerHostButton {
+        margin-left: -15%;
+        font-size: 13px;
+    }
+
+    .personalMenu {
+        margin-left: -15%;
+    }
+}
+
 @media screen and (max-width: 768px) {
-    .trustpilot-bar {
-        margin: 0 auto 0 auto;
-        padding-bottom: 10px;
-    }
-    .trustpilot-widget {
-        display: flex;
-        justify-content: center;
-    }
     .logo {
         padding-top: 2vh;
     }
-    .header-nav, .headerRight {
+
+    .header-nav,
+    .headerRight {
         flex-direction: row;
         justify-content: center;
         width: 100%;
@@ -179,7 +211,9 @@
         margin-top: 20px;
     }
 
-    .headerButtons, .personalMenu, .Search-bar {
+    .headerButtons,
+    .personalMenu,
+    .Search-bar {
         width: 100%;
         margin-top: 10px;
         margin-right: 0;
@@ -189,18 +223,6 @@
 
     .app-header {
         padding: 0;
-    }
-
-    .App, .header-nav {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background: white;
-        width: 100%;
-    }
-
-    .header-nav {
-        width: auto;
     }
 
     .headerRight {
@@ -215,10 +237,7 @@
         padding: 10px 20px;
     }
 
-    .SearchBarContainer.inactive {
-        display: none;
-    }
-
+    .SearchBarContainer.inactive,
     .Search-bar.inactive {
         display: none;
     }
@@ -232,35 +251,31 @@
         align-content: center;
         margin: 4vh 0 31vh 4vw;
     }
-
 }
 
-@media screen and (min-width: 769px) and (max-width: 1024px){
-    .header-nav {
-        flex-wrap: nowrap;
-    }
-    .App, .header-nav {
-        position: sticky;
-        top: 0;
-        z-index: 1000;
-        background: white;
-        width: 100%;
-    }
-    .logo {
-        margin: 0 1vw 0 -4vw;
-    }
+@media screen and (max-width: 480px) {
+
+    .header-nav,
     .headerRight {
-        margin-left: 3vw;
+        flex-direction: column;
+        align-items: center;
     }
-    .headerButtons.headerHostButton {
-        margin-left: -15%;
-        font-size: 13px;
-    }
+
+    .headerButtons,
     .personalMenu {
-        margin-left: -15%;
+        width: 100%;
+        margin-top: 10px;
+        justify-content: center;
+    }
+
+    .personalMenuDropdown .personalMenuDropdownContent {
+        width: 90%;
+        left: 5%;
+        right: 5%;
     }
 }
 
+/* Footer Styling */
 .main-footer {
     background-color: #f8f8f8;
 }
@@ -275,9 +290,7 @@
 
 .footer-headers {
     color: var(--primary-color);
-    font-family: Kanit, sans-serif;
     font-size: 24px;
-    font-style: normal;
     font-weight: 400;
     line-height: 150%;
 }
@@ -288,25 +301,27 @@
     overflow: visible;
     white-space: normal;
 }
+
 .footer-lists-socials-icons {
     display: flex;
-    gap: 10px; 
-    list-style-type: none; 
+    gap: 10px;
+    list-style-type: none;
     padding: 0;
 }
 
 .footer-links {
-
     color: #000;
-    font-family: Kanit, sans-serif;
     font-size: 1rem;
-    font-style: normal;
     font-weight: 300;
     line-height: 150%;
 }
 
-.footer-copyright {
+.footer-links>a {
+    text-decoration: none;
+    margin-left: 3px;
+}
 
+.footer-copyright {
     background-color: var(--primary-color);
     flex-shrink: 0;
     margin-top: auto;
@@ -317,17 +332,15 @@
 }
 
 .footer-icons img {
-    width: 2.5rem; 
-    height:  2.5rem; 
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 0.5rem;
     margin: 10px;
 }
 
 .footer-copyright-text {
     color: #fff;
-    font-family: Kanit, sans-serif;
     font-size: 16px;
-    font-style: normal;
     font-weight: 300;
     line-height: 150%;
 }
@@ -352,10 +365,7 @@
     border: 0.5px solid var(--primary-color);
 }
 
-#appstorebadge {
-    margin-top: 20px;
-}
-
+#appstorebadge,
 #playstorebadge {
     margin-top: 20px;
 }
@@ -363,7 +373,6 @@
 .footer-column ul li {
     margin: 10px 0;
     color: var(--colors-font-interactive, #0A760F);
-    font-family: Inter;
     font-size: 16px;
     font-weight: 400;
     line-height: 24px;
@@ -396,18 +405,20 @@ a:hover {
 }
 
 @media screen and (max-width: 830px) {
-
     .footer-content {
         display: flex;
         flex-direction: column;
         justify-content: center;
+        align-items: center;
     }
 
-    .footer-section, .footer-endsection {
+    .footer-section,
+    .footer-endsection {
         margin: 0;
         border-top: 1px solid var(--primary-color);
         margin-bottom: 20px;
-        width: 80%;
+        width: 100%;
+        text-align: center;
     }
 
     .footer-headers {
@@ -418,5 +429,44 @@ a:hover {
         border-right: none;
         padding-right: 0px;
     }
-    
+}
+
+@media screen and (max-width: 480px) {
+    .footer-content {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .footer-section,
+    .footer-endsection {
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    .footer-headers {
+        font-size: 20px;
+    }
+
+    .footer-links {
+        font-size: 0.9rem;
+    }
+
+    .footer-icons img {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .footer-copyright-text {
+        font-size: 14px;
+    }
+
+    .footer-terms {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .footer-terms a {
+        margin: 5px 0;
+    }
 }

@@ -599,13 +599,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                         onIncrement={() => incrementGuests(pets, setPets)}
                         onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
                     />
-                    <GuestCounter
-                        label={<><FaDoorClosed/> Rooms</>}
-                        description="Amount of rooms in the Accommodation"
-                        value={rooms}
-                        onIncrement={() => incrementGuests(rooms, setRooms)}
-                        onDecrement={() => setRooms(rooms > 0 ? rooms - 1 : rooms)}
-                    />
                   </div>
                 </div>
 

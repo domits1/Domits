@@ -32,6 +32,10 @@
     color: black;
 }
 
+.why-domits__p .ref {
+    color: black;
+}
+
 .why-domits__cards-container {
     min-height: 20rem;
     display: flex;
@@ -69,6 +73,11 @@
     display: flex;
     justify-content: center;
     gap: 10%;
+}
+
+.why-domits-bar a{
+    text-decoration: none;
+    color: white;
 }
 
 .why-domits__flex-container.guest,
@@ -118,12 +127,16 @@
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     z-index: 1000;
 }
+.navigation-arrows a{
+    text-decoration: none;
+    color: #003366;    
+
+}
 
 .navigation-arrows {
-    text-decoration: none;
-    font-size: 1.25rem;
-    color: #003366;
     font-weight: bold;
+    font-size: 1.25rem;
+
 }
 
 .navigation-arrows:hover {
@@ -151,7 +164,7 @@
     .why-domits__card-p {
         font-size: 1.125rem;
     }
-} 
+}
 
 @media (max-width: 955px) {
     .why-domits__cards-container {
