@@ -75,7 +75,7 @@ const ImageGallery = ({ images }) => {
             {/* Show all button */}
             {images.length > 4 && (
                 <button className="show-all-button" onClick={handleOverlayToggle}>
-                    Show All Pictures
+                    Show All
                 </button>
             )}
 

@@ -90,8 +90,6 @@ import NavigationIcon from '@mui/icons-material/Navigation';
 import SevereColdIcon from '@mui/icons-material/SevereCold';
 import ChairAltIcon from '@mui/icons-material/ChairAlt';
 import {touristTaxRates, vatRates} from "../../utils/CountryVATRatesAndTouristTaxes";
-import RegisterModule from "../auth/RegisterModule";
-// import LoginModule from '../auth/LoginModule';
 
 const ListingDetails = () => {
     const navigate = useNavigate();
@@ -945,7 +943,8 @@ const ListingDetails = () => {
                                     <p className="backButton">Go Back</p>
                                 </Link>
                                 <h1 className='accommodationTitle'>
-                                    {accommodation.Title} {isDemo && "(DEMO)"}
+                                    {accommodation.Title} 
+                                    {isDemo && " *"}
                                 </h1>
                             </div>
                             <div>
@@ -1026,7 +1025,6 @@ const ListingDetails = () => {
                 </section>
 
                 {accommodation && (
-                    isAuthenticated ? (
                         <aside className='detailSummary'>
                             <div className="summary-section">
                                 <h2 className='price-per-night'>
@@ -1162,11 +1160,11 @@ const ListingDetails = () => {
 
                                 {/* Price and Reserve Section */}
                                 <button className="reserve-button" onClick={handleBooking}>Reserve</button>
-                                {isDemo ? (
+                                {/* {isDemo ? (
                                     <p className="disclaimer">*This is a demo post and not bookable</p>
                                 ) : (
                                     <p className="disclaimer">*You won't be charged yet</p>
-                                )}
+                                )} */}
                                 {(checkIn && checkOut) ? (
                                     <div className="price-details">
                                         <div className="price-item">
@@ -1196,9 +1194,6 @@ const ListingDetails = () => {
                                 )}
                             </div>
                         </aside>
-                    ) : (
-                        <RegisterModule />
-                    )
                 )}
             </section>
         </main>

@@ -23,14 +23,12 @@
 
 .left {
     display: flex;
-    flex-direction: column;
     gap: 2px;
-    border: 1px solid #ddd;
     border-radius: 8px;
     padding: 16px;
     width: 100%;
-    max-width: 400px;
     justify-content: center;
+    margin: auto;
 }
 
 .resend-confirmation {
@@ -80,4 +78,11 @@
 }
 .view-booking-button button{
     align-self: auto;
+}
+
+@media (max-width: 768px) {
+    .left {
+        display: none;
+    }
+    
 }

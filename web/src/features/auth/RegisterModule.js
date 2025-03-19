@@ -325,13 +325,6 @@ const RegisterModule = () => {
                                 </label>
                             </div>
                         </div>
-                        <label className="module-hostCheckbox">
-                            <input
-                                type="checkbox"
-                                checked={flowState.isHost}
-                                onChange={handleHostChange}
-                            /> Become a Host
-                        </label>
                         <div className="module-alreadyAccountText">
                             Already have an account? <a href="/web/src/features/auth/Login">Log in here</a>
                         </div>

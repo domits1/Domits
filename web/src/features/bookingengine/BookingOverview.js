@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import {Link, useNavigate} from 'react-router-dom';
-import { FlowProvider } from '../../services/FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
-import Register from "../auth/Register";
+import RegisterModule from "../auth/RegisterModule";
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
 import People from '@mui/icons-material/PeopleAltOutlined';
@@ -279,7 +278,7 @@ const BookingOverview = () => {
                 {!isLoggedIn ? (
                     <div>
                         <h2>Please Register or Log In to Continue</h2>
-                        <Register />
+                        <RegisterModule />
                     </div>
                 ) : (
                     <button
