@@ -209,7 +209,7 @@ describe('Testing Why Domits Page Navigation', () => {
     
     it('should navigate to Helpdesk for guests page from footer links', () => {
         cy.get(':nth-child(2) > .footer-lists > :nth-child(2) > .footer-links').click();
-        cy.url().should('include','https://www.domits.com/helpdesk-host');
+        cy.url().should('include','https://www.domits.com/helpdesk-guest');
     });
 
     

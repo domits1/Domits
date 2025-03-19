@@ -17,6 +17,7 @@ body.hide-header .app-header {
   display: flex;
   justify-content: center;
   align-items: center;
+
 }
 
 .domits-searchContainer {
@@ -53,7 +54,8 @@ body.hide-header .app-header {
 .domits-subHead {
   font-size: 2.5rem;
   font-weight: bold;
-  padding-left: 9.5rem;
+  text-align: center;
+  padding-left: 0;
 }
 
 .domits-iconsContainer {
@@ -117,6 +119,10 @@ body.hide-header .app-header {
   background-color: #003366;
   color: white;
 }
+.domits-hostButton a, .domits-SearchButton a {
+  text-decoration: none;
+  color: white;
+}
 
 .domits-SearchButton {
   background-color: #0d9813;
@@ -126,13 +132,15 @@ body.hide-header .app-header {
 .domits-trendingContainer {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 25px;
-  margin-left: 7vw;
+  margin-left: auto;
+  margin-right: auto;
   padding-bottom: 2vh;
 }
 
-.domits-trendingContainer > div {
+.domits-trendingContainer>div {
   width: 12vw;
   padding: 8px;
   background-color: #f9f9f9;
@@ -146,7 +154,7 @@ body.hide-header .app-header {
   margin-left: 4%;
 }
 
-.domits-trendingContainer > div:hover::after {
+.domits-trendingContainer>div:hover::after {
   content: attr(data-popup-text);
   display: block;
   background: rgba(0, 0, 0, 0.8);
@@ -179,10 +187,6 @@ body.hide-header .app-header {
   padding-left: 38vw;
 }
 
-@media (max-width: 1024px) {
-
-}
-
 @media (max-width: 1440px) {
   .domits-accocard {
     height: auto;
@@ -192,6 +196,13 @@ body.hide-header .app-header {
 @media (max-width: 1024px) {
   .domits-accocard {
     width: clamp(220px, 20vw, 300px);
+  }
+  .domits-iconsContainerText {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    font-size: 1.2rem;
+    text-align: center;
   }
 
   .domits-searchTextCon {
@@ -204,14 +215,14 @@ body.hide-header .app-header {
 }
 
 @media (max-width: 768px) {
-    .domits-accocard {
-      width: 40%;
-      height: auto;
-    }
+  .domits-accocard {
+    width: 40%;
+    height: auto;
+  }
 
-    .domits-searchText {
-      font-size: 0.6em;
-    }
+  .domits-searchText {
+    font-size: 0.6em;
+  }
 
   .domits-searchTextCon {
     font-size: 3em;
@@ -237,7 +248,9 @@ body.hide-header .app-header {
   .domits-accommodationGroup {
     padding-left: 0vh;
     flex-direction: column;
-}
+    margin-left: 15px;
+    margin-right: 15px;
+  }
 
   .domits-trendingContainer {
     flex-direction: column;
@@ -247,7 +260,7 @@ body.hide-header .app-header {
     padding: 10px 0;
   }
 
-  .domits-trendingContainer > div {
+  .domits-trendingContainer>div {
     width: 90%;
     font-size: 16px;
   }
@@ -291,13 +304,6 @@ body.hide-header .app-header {
     padding: 10px 5vw;
   }
 
-  .domits-iconsContainerText {
-    flex-direction: column;
-    gap: 10px;
-    font-size: 1.2rem;
-    text-align: center;
-  }
-
   .domits-communityHead {
     font-size: 1.8rem;
   }
@@ -323,11 +329,11 @@ body.hide-header .app-header {
 
   .domits-subHead {
     font-size: 1.5rem;
-    margin: 10px auto;
+    margin: 20px auto;
     text-align: center;
   }
 
-  .domits-trendingContainer > div {
+  .domits-trendingContainer>div {
     font-size: 14px;
   }
 
@@ -349,7 +355,7 @@ body.hide-header .app-header {
     height: 50vh;
   }
 
-  .domits-trendingContainer > div:hover::after {
+  .domits-trendingContainer>div:hover::after {
     width: 60%;
     transform: translateX(0%);
     transform: translateY(0%);
