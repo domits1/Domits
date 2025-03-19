@@ -322,6 +322,7 @@
     margin-bottom: 5px;
     color: black;
     font-size: medium;
+    margin-top: 10px;
 }
 
 .price {
@@ -371,7 +372,7 @@
 }
 
 .description {
-    margin-top: 20px;
+    margin: auto;
     font-size: 18px;
     color: #333;
     line-height: 1.5;

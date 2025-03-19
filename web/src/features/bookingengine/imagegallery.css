@@ -1,6 +1,9 @@
 /* imagegallery.css */
 .image-gallery-container {
   width: 100%;
+  max-width: 1000px;
+  height: auto;
+  max-height: 300px;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
@@ -16,13 +19,14 @@
 }
 
 .selected-image img {
-  width: 100%;
-  max-width: 516px;
-  height: auto;
-  max-height: 340px;
-  border-radius: 15px;
-  object-fit: cover;
-  aspect-ratio: 16 / 9; 
+  width: 100%; /* Ensure the image takes the full width of its container */
+  max-width: 516px; /* Limit the maximum width */
+  height: 100%; /* Force the image to fill the height */
+  max-height: 340px; /* Set the maximum height */
+  border-radius: 15px; /* Optional: Add rounded corners */
+  object-fit: cover; /* Ensure the image fills the area while maintaining its aspect ratio */
+  aspect-ratio: 16 / 9;
+  margin: auto;
 }
 
 .image-thumbnails {
@@ -87,13 +91,13 @@
   margin-top: 10px;
   padding: 10px 20px;
   background-color: transparent;
-  color: white;
   border: 2px solid white;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease, transform 0.2s ease;
   color: black;
   box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
+  align-self: flex-end;
 }
 
 .show-all-button:hover {
@@ -208,6 +212,10 @@
       height: auto;
   }
 
+
+  .image-thumbnails {
+      display: none;
+  }
   .image-thumbnails img {
       width: 120px;
       height: 120px;
@@ -251,5 +259,15 @@
   .like-button {
       width: 40px;
       height: 40px;
+  }
+}
+
+@media (max-width: 600px) {
+  .image-thumbnails {
+    display: none; /* Hide thumbnails on phone screens */
+  }
+
+  .show-all-button {
+    display: none;
   }
 }

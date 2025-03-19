@@ -214,9 +214,7 @@
     display: inline-block;
     white-space: nowrap;
 
-}  button {
-    align-self: start;
-}
+}  
 
 .MainText p{
     color: black;

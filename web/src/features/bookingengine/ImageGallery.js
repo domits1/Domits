@@ -24,6 +24,13 @@ const ImageGallery = ({ images }) => {
         setShowOverlay(!showOverlay);
     };
 
+    const handleSelectedThumbnailClick = () => {
+        if (window.innerWidth <= 600) {
+            // If the screen width is less than or equal to 600px, toggle the overlay
+            setShowOverlay(!showOverlay);
+        }
+    };
+
     return (
         <div className="image-gallery-container">
             {/* Selected image */}
@@ -35,6 +42,7 @@ const ImageGallery = ({ images }) => {
                     sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     alt="Selected"
                     loading="lazy"
+                    onClick={handleSelectedThumbnailClick} // Add click handler
                 />
                 <button className="share-button" onClick={handleShare}>
                     <IosShareIcon />
