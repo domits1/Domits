@@ -27,7 +27,7 @@
 // export default Helpdesk;
 
 import React, { useState } from 'react';
-import './helpdesk.css';
+import './styles/helpdesk.css';
 import FAQ from "../landingpage/Faq";
 
 const Helpdesk = ({ category }) => {

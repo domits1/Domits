@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./hostverification.module.css";
+import styles from "./styles/hostverification.module.css";
 import { useState } from "react";
 import Loading from "./components/Loading";
 import useIsRegistrationNumberRequired from "./hooks/useIsRegistrationNumberRequired";
@@ -47,10 +47,10 @@ const RegistrationNumber = () => {
             <h2>Registration number (optional)</h2>
           )}
           <input
-            type="text"
-            placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
-            value={registrationNumber}
-            onChange={setRegistrationNumber}
+              type="text"
+              placeholder="For example: 'Abcd 1234 AB12 89EF A0F9'"
+              value={registrationNumber}
+              onChange={(e) => setRegistrationNumber(e.target.value)}
           ></input>
         </div>
         <div className={styles["registrationnumber-address"]}>

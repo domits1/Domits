@@ -2,7 +2,7 @@ import React, {useState, useMemo, useEffect} from "react";
 import {useLocation, useNavigate} from 'react-router-dom';
 import spinner from "../../images/spinnner.gif";
 import info from "../../images/icons/info.png";
-import './onboardingHost.css';
+import './styles/onboardingHost.css';
 import Select from 'react-select'
 import countryList from 'react-select-country-list'
 import MapComponent from "./data/MapComponent";

@@ -8,7 +8,7 @@ import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
 import FlowContext from '../../services/FlowContext';
 import { Auth } from 'aws-amplify';
-import './components/bases.css';
+import './styles/bases.css';
 import { SearchBar } from '../../components/base/SearchBar';
 
 function Header({ setSearchResults, setLoading }) {
