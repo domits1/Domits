@@ -72,6 +72,8 @@ import ReviewPage from "./features/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
+import PropertyGuestAmountView from './features/hostonboarding/views/PropertyGuestAmountView';
+import PropertyAmenitiesView from './features/hostonboarding/views/PropertyAmenitiesView';
 
 import AccommodationTypeView from './features/hostonboarding/views/PropertyTypeView.js';
 import GuestAccessView from './features/hostonboarding/views/HouseTypeView.js';
@@ -79,8 +81,6 @@ import BoatTypeView from './features/hostonboarding/views/BoatTypeView.js';
 import CamperTypeView from './features/hostonboarding/views/CamperTypeView.js';
 import AddressInputView from './features/hostonboarding/views/PropertyLocationView.js';
 import CapacityView from './features/hostonboarding/views/PropertyGuestAmountView.js';
-import SpecificAmenitiesView from './features/hostonboarding/views/SpecificAmenitiesView.js';
-import OtherAmenitiesView from './features/hostonboarding/views/OtherAmenitiesView.js';
 import HouseRulesView from './features/hostonboarding/views/PropertyHouseRulesView.js';
 import PhotosView from './features/hostonboarding/views/PropertyPhotosView.js';
 import AccommodationTitleView from './features/hostonboarding/views/PropertyNameView.js';
@@ -183,6 +183,8 @@ function App() {
                                     <Route path="/bookingoverview" element={<BookingOverview />} />
                                     <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
                                     <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
+                                    <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
+                                    <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
 
                                     {/* Chat */}
                                     <Route path="/chat" element={<Chat />} />
@@ -276,8 +278,6 @@ function App() {
                                     <Route path="/hostonboarding/camper" element={<StepGuard step="type"><CamperTypeView /></StepGuard>} />
                                     <Route path="/hostonboarding/:type/address" element={<AddressInputView />} />
                                     <Route path="/hostonboarding/:type/capacity" element={<CapacityView />} />
-                                    <Route path="/hostonboarding/:type/specific-amenities" element={<SpecificAmenitiesView />} />
-                                    <Route path="/hostonboarding/:type/other-amenities" element={<OtherAmenitiesView />} />
                                     <Route path="/hostonboarding/:type/rules" element={<HouseRulesView />} />
                                     <Route path="/hostonboarding/:type/photos" element={<PhotosView />} />
                                     <Route path="/hostonboarding/:type/title" element={<AccommodationTitleView />} />

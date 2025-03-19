@@ -35,7 +35,7 @@ function GuestAmountView() {
         <main className="container">
             <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
             <section className="guest-amount">
-                {fields.map(({ key, label, max }, index) => (
+                {fields.map(({ key, label, max }) => (
                     <div key={key} style={{
                         borderBottom: label === 'Guests' ? '1px solid #ccc' : 'none',
                         paddingBottom: label === 'Guests' ? '10px' : '0',
@@ -53,7 +53,7 @@ function GuestAmountView() {
             </section>
             <nav className="onboarding-button-box">
                 <Button routePath={`/hostonboarding/${accommodationType}/description`} btnText="Go back" />
-                <Button routePath={`/hostonboarding/${accommodationType}/specific-amenities`} btnText="Proceed" disabled={isProceedDisabled} className={isProceedDisabled ? "button-disabled" : ""} />
+                <Button routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" disabled={isProceedDisabled} className={isProceedDisabled ? "button-disabled" : ""} />
             </nav>
         </main>
     );

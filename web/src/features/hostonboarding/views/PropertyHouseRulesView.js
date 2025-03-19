@@ -57,7 +57,7 @@ function HouseRulesView() {
             </div>
             <nav className="onboarding-button-box">
                 <Button
-                    routePath={`/hostonboarding/${accommodationType}/other-amenities`}
+                    routePath={`/hostonboarding/${accommodationType}/amenities`}
                     btnText="Go back"
                 />
                 <Button

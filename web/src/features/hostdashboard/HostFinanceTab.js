@@ -11,6 +11,7 @@ const HostFinanceTab = () => {
     const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
     const [bankDetailsProvided, setBankDetailsProvided] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [payouts, setPayouts] = useState([]);
 
     const handleEnlistNavigation = () => {
         navigate('/hostonboarding');
@@ -18,6 +19,28 @@ const HostFinanceTab = () => {
 
     const handleNavigation = (value) => {
         navigate(value);
+    };
+
+    const fetchHostPayouts = async (sub) => {
+        try {
+            const response = await fetch("https://eu-north-1.console.aws.amazon.com/lambda/home?region=eu-north-1#/functions/General-Payments-Production-CRUD-fetchHostPayout", {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8',
+                },
+                body: JSON.stringify({ sub }),
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return JSON.parse(data.body);
+        } catch (error) {
+            console.error("Error fetching host payouts:", error);
+            return [];
+        }
     };
 
     useEffect(() => {
@@ -40,13 +63,15 @@ const HostFinanceTab = () => {
                 }
 
                 const data = await response.json();
-
                 const parsedBody = JSON.parse(data.body);
 
                 if (parsedBody.hasStripeAccount) {
                     setStripeLoginUrl(parsedBody.loginLinkUrl);
                     setBankDetailsProvided(parsedBody.bankDetailsProvided);
                 }
+
+                const payoutData = await fetchHostPayouts(userInfo.attributes.sub);
+                setPayouts(payoutData);
             } catch (error) {
                 console.error("Error fetching user data or Stripe status:", error);
             } finally {
@@ -89,9 +114,6 @@ const HostFinanceTab = () => {
         return <div>Loading...</div>;
     }
 
-    console.log("Stripe Login URL:", stripeLoginUrl);
-    console.log("Bank Details Provided:", bankDetailsProvided);
-
     return (
         <main className="page-Host">
             <div className="sidebar">
@@ -100,11 +122,11 @@ const HostFinanceTab = () => {
             <section className="host-pc-finance">
                 <div className="finance-content">
                     <h1>Finance</h1>
-                    <h2>Receive payouts in 3 step.</h2>
+                    <h2>Receive payouts in 3 steps.</h2>
                     <h3>
                         <ul>
                             <li>
-                                Step 1:{" "} 
+                                Step 1:{" "}
                                 <span className="finance-span" onClick={handleEnlistNavigation}>
                                  List your property.
                                 </span>
@@ -121,7 +143,7 @@ const HostFinanceTab = () => {
                                                 onClick={handleStripeAction}
                                             >
                                                 Stripe.
-                                            </span> 
+                                            </span>
                                         </>
                                     )
                                 ) : (
@@ -134,14 +156,28 @@ const HostFinanceTab = () => {
                             </li>
                             <br />
                             <li>
-                            Step 3: Set your property live{" "}  
+                                Step 3: Set your property live{" "}
                                 <span onClick={() => handleNavigation("/hostdashboard/listings")} className="finance-span">
-                                 here 
+                                 here
                                 </span>
                                 {" "}to receive payouts.
                             </li>
                         </ul>
                     </h3>
+                    {payouts.length > 0 && (
+                        <div className="payout-details">
+                            <h2>Payout Details</h2>
+                            <ul>
+                                {payouts.map((payout, index) => (
+                                    <li key={index}>
+                                        <p>Amount: {payout.amount}</p>
+                                        <p>Date: {new Date(payout.date).toLocaleDateString()}</p>
+                                        <p>Status: {payout.status}</p>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </section>
         </main>

@@ -26,15 +26,28 @@
     justify-content: center;
 }
 
+.amenity-category {
+
+}
+
+.amenity-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    justify-content: start;
+    align-items: center;
+}
+
 .amenity-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    padding: 20px;
+    justify-content: flex-start;
+    padding: 10px;
     border-radius: 10px;
     background: #f9f9f9;
     transition: all 0.3s ease;
+    width: fit-content;
 }
 
 .amenity-item:hover {
@@ -45,15 +58,18 @@
 .amenity-item label {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
     font-size: 16px;
     font-weight: 500;
     color: #333;
+    white-space: nowrap;
 }
 
 .amenity-item input[type="checkbox"] {
     transform: scale(1.2);
     cursor: pointer;
+    margin: 0;
+    vertical-align: middle;
 }
 
 .onboarding-button-box {
