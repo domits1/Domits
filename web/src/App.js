@@ -193,7 +193,7 @@ function App() {
                                     <Route path="/chatbot" element={<Chatbot />} />
 
                                     {/* Host Chatbot */}
-                                    <Route path="/hostchatbot" element={<Hostchatbot />} />
+                                    {/* <Route path="/hostchatbot" element={<Hostchatbot />} /> */}
 
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
@@ -370,8 +370,8 @@ function App() {
                 </Routes>
                 {renderFooter()}
                 {currentPath !== "/admin" && <MenuBar />}
-                {renderChatWidget()}
-                <Hostchatbot />
+                {/* {renderChatWidget()} */}
+                {/* <Hostchatbot />  */}
               </div>
             </UserProvider>
           </AuthProvider>
