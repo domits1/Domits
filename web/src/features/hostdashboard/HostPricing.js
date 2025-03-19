@@ -606,78 +606,36 @@ const HostPricing = () => {
               <div className="accommodation-cards">
                 {currentAccommodations.map((accommodation, index) => {
                   const globalIndex = startIndex + index;
-                  const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
-                  const cleaningFeeIncluded = extraServices.some(
-                    service => service.S === 'Cleaning service (add service fee manually)'
-                  );
+                  const guestAmount = accommodation.GuestAmount?.N || 'N/A';
 
                   return (
-                    <div key={globalIndex} className="accommodation-card">
-                      <img
-                        className="accommodation-card-img"
-                        src={accommodation.Images.M.image1.S}
-                        alt="Accommodation"
-                      />
-                      <div className="accommodation-card-details">
-                        <div className="pricing-column">
-                          <p className="pricing-title">{accommodation.Title.S}</p>
-                          <p>{accommodation.Country.S}</p>
-                          <p>Guests: {accommodation.GuestAmount.N}</p>
+                      <div key={globalIndex} className="accommodation-card">
+                        {accommodation.Images?.M?.image1?.S ? (
+                            <img
+                                className="accommodation-card-img"
+                                src={accommodation.Images.M.image1.S}
+                                alt="Accommodation"
+                            />
+                        ) : (
+                            <div className="accommodation-card-img-placeholder">No Image Available</div>
+                        )}
+                        <div className="accommodation-card-details">
+                          <div className="pricing-column">
+                            <p className="pricing-title">{accommodation.Title.S}</p>
+                            <p>{accommodation.Country.S}</p>
+                            <p>Guests: {guestAmount}</p>
+                          </div>
+                          {/* Rest of the code */}
                         </div>
-
-                        <div className="pricing-column">
-                          <p className="pricing-rate-input">
-                            Rate:{' '}
-                            {editMode ? (
-                              <input
-                                type="number"
-                                step="0.1"
-                                value={editedRates[globalIndex] || ''}
-                                onChange={(e) => handleRateChange(e, globalIndex)}
-                              />
-                            ) : (
-                              editedRates[globalIndex] ||
-                              (accommodation.Rent.N || accommodation.Rent.S)
-                            )}
-                          </p>
-
-                          {/* <button
-                            className="dynamic-pricing-button"
-                            onClick={() => openModal(accommodation)}
-                          >
-                            Configure Dynamic Pricing
-                          </button> */}
-
-                          <p className="pricing-rate-input">
-                            Cleaning Fee:{' '}
-                            {cleaningFeeIncluded ? (
-                              editMode ? (
-                                <input
-                                  type="number"
-                                  step="0.1"
-                                  value={editedCleaningFees[globalIndex] || ''}
-                                  onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
-                                />
-                              ) : (
-                                editedCleaningFees[globalIndex] ||
-                                (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
-                              )
-                            ) : (
-                              0
-                            )}
-                          </p>
-                          <p>Availability: {accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</p>
+                        <div className="pricing-taxFee-container">
+                          <img
+                              className="pricing-taxFee-icon-details"
+                              src={taxFeeIcon}
+                              alt="Tax & Fee Button"
+                              onClick={() => toggleTaxFeePopup(accommodation)}
+                          />
                         </div>
                       </div>
-                      <div className="pricing-taxFee-container">
-                        <img
-                          className="pricing-taxFee-icon-details"
-                          src={taxFeeIcon}
-                          alt="Tax & Fee Button"
-                          onClick={() => toggleTaxFeePopup(accommodation)}
-                        />
-                      </div>
-                    </div>
                   );
                 })}
               </div>
@@ -697,60 +655,79 @@ const HostPricing = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {currentAccommodations.map((accommodation, index) => {
-                    const globalIndex = startIndex + index;
-                    const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
-                    const cleaningFeeIncluded = extraServices.some(
+                {currentAccommodations.map((accommodation, index) => {
+                  const globalIndex = startIndex + index;
+                  const extraServices = accommodation.Features?.M?.ExtraServices?.L || [];
+                  const cleaningFeeIncluded = extraServices.some(
                       service => service.S === 'Cleaning service (add service fee manually)'
-                    );
+                  );
 
-                    return (
-                      <tr key={globalIndex}>
-                        <td className="pricing-table-title">{accommodation.Title.S}</td>
-                        <td>{accommodation.Country.S}</td>
-                        <td>{accommodation.GuestAmount.N}</td>
-                        <td>
-                          {editMode ? (
-                            <input
-                              type="number"
-                              step="0.1"
-                              value={editedRates[globalIndex] || ''}
-                              onChange={(e) => handleRateChange(e, globalIndex)}
+                  return (
+                      <div key={globalIndex} className="accommodation-card">
+                        {accommodation.Images?.M?.image1?.S ? (
+                            <img
+                                className="accommodation-card-img"
+                                src={accommodation.Images.M.image1.S}
+                                alt="Accommodation"
                             />
-                          ) : (
-                            editedRates[globalIndex] ||
-                            (accommodation.Rent.N || accommodation.Rent.S)
-                          )}
-                        </td>
-                        <td>
-                          {cleaningFeeIncluded ? (
-                            editMode ? (
-                              <input
-                                type="number"
-                                step="0.1"
-                                value={editedCleaningFees[globalIndex] || ''}
-                                onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
-                              />
-                            ) : (
-                              editedCleaningFees[globalIndex] ||
-                              (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
-                            )
-                          ) : (
-                            0
-                          )}
-                        </td>
-                        <td>{accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</td>
-                        <td>
+                        ) : (
+                            <div className="accommodation-card-img-placeholder">No Image Available</div>
+                        )}
+                        <div className="accommodation-card-details">
+                          <div className="pricing-column">
+                            <p className="pricing-title">{accommodation.Title.S}</p>
+                            <p>{accommodation.Country.S}</p>
+                            <p>Guests: {accommodation.GuestAmount.N}</p>
+                          </div>
+
+                          <div className="pricing-column">
+                            <p className="pricing-rate-input">
+                              Rate:{' '}
+                              {editMode ? (
+                                  <input
+                                      type="number"
+                                      step="0.1"
+                                      value={editedRates[globalIndex] || ''}
+                                      onChange={(e) => handleRateChange(e, globalIndex)}
+                                  />
+                              ) : (
+                                  editedRates[globalIndex] ||
+                                  (accommodation.Rent.N || accommodation.Rent.S)
+                              )}
+                            </p>
+
+                            <p className="pricing-rate-input">
+                              Cleaning Fee:{' '}
+                              {cleaningFeeIncluded ? (
+                                  editMode ? (
+                                      <input
+                                          type="number"
+                                          step="0.1"
+                                          value={editedCleaningFees[globalIndex] || ''}
+                                          onChange={(e) => handleCleaningFeeChange(e, globalIndex)}
+                                      />
+                                  ) : (
+                                      editedCleaningFees[globalIndex] ||
+                                      (accommodation.CleaningFee.N || accommodation.CleaningFee.S)
+                                  )
+                              ) : (
+                                  0
+                              )}
+                            </p>
+                            <p>Availability: {accommodation.Drafted.BOOL ? 'Unavailable' : 'Available'}</p>
+                          </div>
+                        </div>
+                        <div className="pricing-taxFee-container">
                           <img
-                            className="pricing-taxFee-icon-table"
-                            src={taxFeeIcon}
-                            alt="Tax & Fee Button"
-                            onClick={() => toggleTaxFeePopup(accommodation)}
+                              className="pricing-taxFee-icon-details"
+                              src={taxFeeIcon}
+                              alt="Tax & Fee Button"
+                              onClick={() => toggleTaxFeePopup(accommodation)}
                           />
-                        </td>
-                      </tr>
-                    );
-                  })}
+                        </div>
+                      </div>
+                  );
+                })}
                 </tbody>
               </table>
             </div>
