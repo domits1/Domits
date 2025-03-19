@@ -23,11 +23,10 @@ const Footer = () => {
                         <li><Link to="/release" className='footer-links'>Product Updates</Link></li>
                         <li><Link to="/travelinnovation" className='footer-links'>Travel innovation</Link></li>
                         <li><Link to="/about" className='footer-links'>About</Link></li>
-                        <li><Link to="/career" className='footer-links'>Jobs</Link></li>
-                        <li><Link to="/careers" className='footer-links'>Careers</Link></li>
+                        <li><Link to="/careers" className='footer-links'>Career</Link></li>
                         <li><Link to="/security" className='footer-links'>Security</Link></li>
                         <li><Link to="/sustainability" className='footer-links'>Sustainability</Link></li>
-                        <li><Link to="/domitsai" className='footer-links'>Domits Ai</Link></li>
+                        <li><Link to="/domitsai" className='footer-links'>Domits AI</Link></li>
                         <li><Link to="/contact" className='footer-links'>Contact</Link></li>
                         <br />
                     </ul>

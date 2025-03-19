@@ -1,9 +1,7 @@
 import { useState } from 'react';
 
 export const FilterLogic = (props) => {
-  // [15, 400] are the minimum and maximum price values for the filter
   const [priceValues, setPriceValues] = useState([15, 400]);
-  // This callback receives the filtered results and sends them to Accommodations.js
   const { onFilterApplied } = props || {};
 
   const [selectedFacilities, setSelectedFacilities] = useState({
@@ -49,8 +47,7 @@ export const FilterLogic = (props) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Retrieves filtered accommodations from the API based on user selections
-  // Called when the user clicks 'Apply Filters'
+ 
   const fetchFilteredAccommodations = async () => {
     try {
       setLoading(true);
@@ -59,7 +56,6 @@ export const FilterLogic = (props) => {
       const minPrice = priceValues[0];
       const maxPrice = priceValues[1];
 
-      // API endpoint for the filter service
       const url = new URL('https://t0a6yt5e83.execute-api.eu-north-1.amazonaws.com/default/General-Accommodation-FilterFunction');
       url.searchParams.append('minPrice', minPrice);
       url.searchParams.append('maxPrice', maxPrice);
@@ -67,7 +63,6 @@ export const FilterLogic = (props) => {
       const response = await fetch(url);
       const data = await response.json();
 
-      // API may return data directly as an array or within an 'items' property
       if (data && Array.isArray(data) && data.length > 0) {
         setAccommodationResults(data);
 
@@ -91,7 +86,6 @@ export const FilterLogic = (props) => {
     }
   };
 
-  // Ensures that the minimum price is never higher than the maximum price
   const handlePriceChange = (index, value) => {
     const newValues = [...priceValues];
     newValues[index] = Number(value);
@@ -121,7 +115,6 @@ export const FilterLogic = (props) => {
     });
   };
 
-  // Exposes all necessary state and functions for use in the FilterUi component
   return {
     priceValues,
     setPriceValues,
