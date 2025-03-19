@@ -10,7 +10,6 @@ class PropertyDTO {
         this.status = data.status;
         this.createdAt = data.createdAt;
         this.updatedAt = data.updatedAt;
-
         this.amenities = data.propertyAmenities?.map(amenity => new PropertyAmenitiesDTO(amenity)) || [];
         this.availability = data.propertyAvailability?.map(avail => new PropertyAvailabilityDTO(avail)) || [];
         this.availabilityRestrictions = data.propertyAvailabilityRestrictions?.map(restriction => new PropertyAvailabilityRestrictionsDTO(restriction)) || [];
