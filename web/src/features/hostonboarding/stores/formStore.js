@@ -576,9 +576,14 @@ const useFormStore = create((set) => ({
         YOC: specifications?.YOC || 0,
       };
 
-      const response = await axios.post(API_BASE_URL, formattedData, {
-        headers: { "Content-Type": "application/json" },
-      });
+      // The Fetch itself!
+      const response = await axios.post(
+        API_BASE_URL,
+        new AccommodationDTO(newFormat),
+        {
+          headers: { "Content-Type": "application/json" },
+        },
+      );
 
       console.log(
         "Submitting accommodation data:",
