@@ -447,8 +447,7 @@ const useFormStore = create((set) => ({
         API_BASE_URL,
         new AccommodationDTO(newFormat),
         {
-          headers: { "Content-Type": "application/json" }
-          method: "POST",
+          headers: { "Content-Type": "application/json" },
         },
       );
 
