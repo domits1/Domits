@@ -22,6 +22,15 @@ const HostMessagesContent = () => {
     const [selectedContactName, setSelectedContactName] = useState(null);
     const { connectionId } = useFetchConnectionId(selectedContactId) || { connectionId: null };
     const [message, setMessage] = useState([]);
+    const [screenWidth, setScreenWidth] = useState(window.innerWidth);
+
+    const isMobile = screenWidth < 768;
+    const isTablet = screenWidth >= 768 && screenWidth < 1145;
+    useEffect(() => {
+        const handleResize = () => setScreenWidth(window.innerWidth);
+        window.addEventListener("resize", handleResize);
+        return () => window.removeEventListener("resize", handleResize);
+    }, []);
 
     const handleContactClick = (contactId, contactName) => {
         setSelectedContactId(contactId);
@@ -31,6 +40,22 @@ const HostMessagesContent = () => {
         setMessage(sentMessage)
     };
 
+    const handleBackToContacts = () => {
+        setSelectedContactId(null);
+        setSelectedContactName(null);
+    };
+
+    const showContactList =
+        isMobile ? !selectedContactId :
+            isTablet ? !selectedContactId :
+                true;
+
+    const showChatScreen =
+        isMobile ? !!selectedContactId :
+            isTablet ? !!selectedContactId :
+                true;
+
+
     return (
         <WebSocketProvider userId={userId}>
             <main className="page-body">
@@ -38,10 +63,33 @@ const HostMessagesContent = () => {
                 {userId ? (
                     <>
                         <div className="host-chat-components">
-                            <Pages />
-
-                            <ContactList userId={userId} onContactClick={handleContactClick} message={message} />
-                            <HostChatScreen userId={userId} handleContactListMessage={handleContactListMessage} contactId={selectedContactId} connectionId={connectionId} contactName={selectedContactName} />
+                            <div className="host-chat-side">
+                                <Pages className="host-chat-side" />
+                            </div>
+                            
+                            {showContactList && (
+                                <ContactList
+                                    userId={userId}
+                                    onContactClick={handleContactClick}
+                                    message={message}
+                                />
+                            )}
+                            {isMobile && selectedContactId && (
+                                <button onClick={handleBackToContacts} className="ContactsBack-button">
+                                    ← Back to contacts
+                                </button>
+                            )}
+                            {showChatScreen && (
+                                <HostChatScreen
+                                    userId={userId}
+                                    handleContactListMessage={handleContactListMessage}
+                                    contactId={selectedContactId}
+                                    connectionId={connectionId}
+                                    contactName={selectedContactName}
+                                    onBack={isMobile ? handleBackToContacts : null}
+                                    onClose={isTablet ? handleBackToContacts : null}
+                                />
+                            )}
                         </div>
                     </>
                 ) : (

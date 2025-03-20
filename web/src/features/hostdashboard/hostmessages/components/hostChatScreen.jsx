@@ -3,20 +3,26 @@ import useFetchMessages from '../hooks/useFetchMessages';
 import { useSendMessage } from '../hooks/useSendMessage';
 import useFetchBookingDetails from '../hooks/useFetchBookingDetails';
 import ChatMessage from './chatMessage';
+import ChatUploadAttachment from './chatUploadAttachment';
 import { WebSocketContext } from '../context/webSocketContext';
 import { v4 as uuidv4 } from 'uuid';
 import '../styles/hostChatScreen.css';
 import profileImage from '../domits-logo.jpg';
-import { FaHome, FaUsers, FaCalendar } from 'react-icons/fa';
+import { FaHome, FaUsers, FaCalendar, FaTimes } from 'react-icons/fa';
 
 
 
-const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleContactListMessage }) => {
+const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleContactListMessage, onClose }) => {
     const { messages, loading, error, fetchMessages, addNewMessage } = useFetchMessages(userId);
     const { bookingDetails } = useFetchBookingDetails(userId, contactId);
     const { sendMessage, sending, error: sendError } = useSendMessage(userId);
     const [newMessage, setNewMessage] = useState('');
     const { messages: wsMessages } = useContext(WebSocketContext);
+    const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
+
+    const handleUploadComplete = (url) => {
+        setUploadedFileUrls((prev) => [...prev, url]);
+      };
 
     useEffect(() => {
         if (contactId) {
@@ -50,6 +56,7 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
                     userId,
                     recipientId: contactId,
                     text: newMessage,
+                    fileUrls: uploadedFileUrls,
                     createdAt: new Date().toISOString(),
                     isSent: true,
                 };
@@ -64,11 +71,19 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
             }
         }
     };
+    const handleAddAttachment = async () => {
 
-    return contactId ?  (
+    };
 
+    const handleSendReviewLink = async () => {
+
+    };
+
+    return contactId ? (
+        <div className='host-chat'>
             <div className="host-chat-screen">
                 <div className="host-chat-header">
+
                     {/* <img src={contactImage} alt={contactName} className="profile-img" /> */}
                     <img src={profileImage} alt={contactName} className="profile-img" />
                     <div className="host-chat-header-info">
@@ -89,7 +104,11 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
 
                         </div>
                     </div>
-
+                    {onClose && (
+                        <button className="close-chat-button" onClick={onClose} title="Close Chat">
+                            <FaTimes />
+                        </button>
+                    )}
                 </div>
 
 
@@ -134,7 +153,20 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
                 {sendError && <p className="error-message">{sendError.message}</p>}
 
             </div>
-            
+            <div className='host-chat-buttons'>
+
+                {/* <button
+                    onClick={handleAddAttachment}
+                    className="add-file-button"
+                >Add files</button> */}
+
+                <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
+                <button
+                    onClick={handleSendReviewLink}
+                    className="review-link-button"
+                >Send review link</button>
+            </div>
+        </div>
     ) : null;
 
 };
