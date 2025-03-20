@@ -35,7 +35,7 @@ function Pages() {
               <option value="/guestdashboard/bookings">Bookings</option>
               <option value="/guestdashboard/chat">Messages</option>
               {/* <option value="/guestdashboard/payments">Payments</option> */}
-              <option value="/guestdashboard/reviews">Reviews</option>
+              {/* <option value="/guestdashboard/reviews">Reviews</option> */}
               <option value="/guestdashboard/settings">Settings</option>
             </select>
           </div>
@@ -74,14 +74,14 @@ function Pages() {
           <FinanceIcon/></div>
           <p>Payments</p>
         </div> */}
-        <div
+        {/* <div
           className={`wijzers ${activeTab === "/guestdashboard/reviews" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/reviews")}
         >
           <div className="Mui">
           <RevieuwsIcon/></div>
           <p>Reviews</p>
-        </div>
+        </div> */}
         <div
           className={`wijzers ${activeTab === "/guestdashboard/settings" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/settings")}
