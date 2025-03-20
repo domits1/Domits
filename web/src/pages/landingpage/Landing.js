@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
-import styles from "./landing.module.css";
+import styles from "./styles/landing.module.css";
 import Register from "../../features/auth/Register";
 import MainTextpicture from "../../images/host-landing-example.png";
 import whyHostpicture from "../../images/host-landing-example2.jpg";
@@ -175,7 +175,7 @@ function Landing() {
 
   const toggleOpen = (index) => {
     const updatedFaqs = faqs.map((faq, i) =>
-      i === index ? { ...faq, isOpen: !faq.isOpen } : faq
+      i === index ? { ...faq, isOpen: !faq.isOpen } : faq,
     );
     setFaqs(updatedFaqs);
   };
@@ -283,8 +283,6 @@ function Landing() {
           </div>
         </div>
       </div>
-
-
 
       <div className={styles.easyHosting}>
         <div className={styles.easyHosting_text}>

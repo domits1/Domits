@@ -1,4 +1,4 @@
-import "./App.css";
+import "./styles/App.css";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
 import { UserProvider } from "./features/auth/UserContext";
 import Header from "./components/base/Header";
@@ -46,7 +46,7 @@ import GuestBooking from "./features/guestdashboard/GuestBooking";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
-import GuestMessages from './features/guestdashboard/guestmessages/pages/guestMessages.js';
+import GuestMessages from "./features/guestdashboard/guestmessages/pages/guestMessages.js";
 import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
@@ -217,15 +217,14 @@ function App() {
                     element={<PaymentConfirmPage />}
                   />
 
-                                    {/* Chat */}
-                                    <Route path="/chat" element={<GuestMessages />} />
-                                    <Route path="/employeechat" element={<EmployeeChat />} />
-                                    <Route path="/chatbot" element={<Chatbot />} />
-
+                  {/* Chat */}
+                  <Route path="/chat" element={<GuestMessages />} />
+                  <Route path="/employeechat" element={<EmployeeChat />} />
+                  <Route path="/chatbot" element={<Chatbot />} />
 
                   <Route path="/hostchatbot" element={<Hostchatbot />} />
-                    {/* Host Chatbot */}
-                    {/* <Route path="/hostchatbot" element={<Hostchatbot />} /> */}
+                  {/* Host Chatbot */}
+                  {/* <Route path="/hostchatbot" element={<Hostchatbot />} /> */}
 
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
