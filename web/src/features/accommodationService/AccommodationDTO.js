@@ -2,9 +2,10 @@
 
 // const [formData, setFormData] = useState({});
 
-class PropertyDTO {
+class AccommodationDTO {
   constructor(data) {
     this.property = new PropertyModel({
+      data.id,
       data.hostId,
       data.title,
       data.subtitle,
@@ -207,3 +208,5 @@ const propertyData = {
 const propertyDTOInstance = new PropertyDTO(propertyData)
 
 console.log(JSON.stringify(propertyDTOInstance, null, 2))
+
+export default AccommodationDTO;

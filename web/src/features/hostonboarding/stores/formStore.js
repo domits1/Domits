@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import axios from "axios";
+import AccommodationDTO from "../../accommodationService/AccommodationDTO";
 
 const API_BASE_URL =
   "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation";
@@ -346,7 +347,158 @@ const useFormStore = create((set) => ({
         : {};
 
     try {
-      const newFormattedData = new AccommodationDTO();
+      const newFormat = new AccommodationDTO({
+        id: "0",
+        hostId: "0",
+        title: accommodationDetails.title,
+        subtitle: accommodationDetails.subtitle,
+        description: accommodationDetails.description,
+        guestCapacity:
+          accommodationDetails.accommodationCapacity?.GuestAmount || 1,
+        registrationNumber: accommodationDetails.registrationNumber,
+        status: "INACTIVE",
+        // TODO: remove hardcoded Amenities web/src/pages/landingpage/OnboardingHost.js:312
+        propertyAmenities: [{ amenityId: "1" }],
+        // TODO: remove hardcoded propertyAvailability
+        propertyAvailability: [
+          {
+            availableStartDate: 2042483993580,
+            availableEndDate: 2142483993580,
+          },
+        ],
+        propertyAvailabilityRestrictions: [
+          { restriction: "MinimumStay", value: 5 },
+        ],
+        // TODO: remove hardcoded propertyCheckIn
+        propertyCheckIn: {
+          checkIn: { from: 1, till: 5 },
+          checkOut: { from: 5, till: 10 },
+        },
+        // GENERAL DETAILS
+        propertyGeneralDetails: [
+          {
+            detail: "Bathrooms",
+            value: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
+          },
+          {
+            detail: "Bedrooms",
+            value: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
+          },
+          {
+            detail: "Beds",
+            value: accommodationDetails.accommodationCapacity?.Beds || 0,
+          },
+          {
+            detail: "Guests",
+            value: accommodationDetails.accommodationCapacity?.GuestAmount || 1,
+          },
+        ],
+        propertyLocation: {
+          country: "Dummy",
+          city: "Dummy",
+          street: "Dummy",
+          houseNumber: 1,
+          houseNumberExtension: "a",
+          postalCode: "0000AB",
+        },
+        propertyPricing: {
+          roomRate: accommodationDetails.Rent,
+          cleaning: 0,
+          service: 0,
+        },
+        // TODO: remove hardcoded propertyrules
+        propertyRules: [
+          {
+            rule: "PetsAllowed",
+            value: true,
+          },
+          {
+            rule: "SmokingAllowed",
+            value: true,
+          },
+          {
+            rule: "PartiesEventsAllowed",
+            value: false,
+          },
+        ],
+        propertyType: {
+          property_type: accommodationDetails.type,
+          spaceType:
+        },
+
+        AccommodationType: accommodationDetails.type,
+        AllowParties: accommodationDetails.houseRules?.AllowParties || false,
+        AllowPets: accommodationDetails.houseRules?.AllowPets || false,
+        AllowSmoking: accommodationDetails.houseRules?.AllowSmoking || false,
+        Availability: accommodationDetails.availability || {},
+        Bathrooms: accommodationDetails.accommodationCapacity?.Bathrooms || 0,
+        Bedrooms: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
+        Beds: accommodationDetails.accommodationCapacity?.Beds || 0,
+        BookedDates: accommodationDetails.bookedDates || [],
+        Cabins: accommodationDetails.accommodationCapacity?.Cabins || 0,
+        CamperBrand: isCamper ? specifications?.CamperBrand || "" : "",
+        Capacity: accommodationDetails.accommodationCapacity?.GuestAmount || 0,
+        Category: accommodationDetails.category || "",
+        CheckIn: accommodationDetails.houseRules?.CheckIn || "",
+        CheckOut: accommodationDetails.houseRules?.CheckOut || "",
+        CleaningFee: accommodationDetails.CleaningFee || 0,
+        Country:
+          (isBoat
+            ? accommodationDetails.boatDetails?.country
+            : accommodationDetails.camperDetails?.country) ||
+          accommodationDetails.address.country,
+        CreatedAt: new Date().toISOString(),
+        Description: accommodationDetails.description || "",
+        Drafted: accommodationDetails.Drafted || true,
+        Features: accommodationDetails.Features || [],
+        FuelTank: specifications?.FuelTank || 0,
+        FWD: specifications?.FWD || false,
+        GPI: specifications?.GPI || "",
+        GuestAccess: accommodationDetails.guestAccessType || "",
+        Harbor: isBoat ? accommodationDetails.boatDetails?.harbor || "" : "",
+        HasLicense: specifications?.HasLicense || false,
+        Height: specifications?.Height || 0,
+        HouseRules: accommodationDetails.houseRules || {},
+        Images: Object.values(accommodationDetails.images) || [], //Remove this line if you don't want to upload images
+        IsPro: specifications?.IsPro || false,
+        Length: specifications?.Length || 0,
+        LicensePlate: isCamper ? specifications?.LicensePlate || "" : "",
+        Manufacturer: specifications?.Manufacturer || "",
+        MinimumAdvancedReservation:
+          accommodationDetails.availability?.MinimumAdvancedReservation || 0,
+        MinimumBookingPeriod: accommodationDetails.MinimumBookingPeriod || 0,
+        Model: specifications?.Model || "",
+        OwnerId: accommodationDetails.ownerId || "",
+        PostalCode:
+          (isBoat
+            ? accommodationDetails.boatDetails?.zipCode
+            : accommodationDetails.camperDetails?.zipCode) ||
+          accommodationDetails.address.zipCode,
+        PaymentAfterBookingHours:
+          accommodationDetails.availability.PaymentDeadlineAfterBooking || 24,
+        PaymentBeforeCheckInHours:
+          accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36,
+        RegistrationNumber: accommodationDetails.registrationNumber || "",
+        Renovated: specifications?.Renovated || 0,
+        Rent: accommodationDetails.Rent || 0,
+        RentedWithSkipper: specifications?.RentedWithSkipper || false,
+        Requirement: specifications?.Requirement || "",
+        ReservationExpirationTime:
+          accommodationDetails.availability.ExpirationTime || 72,
+        Rooms: accommodationDetails.rooms || 0,
+        SelfBuilt: specifications?.SelfBuilt || false,
+        ServiceFee: accommodationDetails.ServiceFee || 0,
+        Speed: specifications?.Speed || 0,
+        Street:
+          (isBoat
+            ? accommodationDetails.boatDetails?.street
+            : accommodationDetails.camperDetails?.street) ||
+          accommodationDetails.address.street,
+        Transmission: specifications?.Transmission || "",
+        Type: accommodationDetails.type || "",
+        UpdatedAt: new Date().toISOString(),
+        YOC: specifications?.YOC || 0,
+      });
       const formattedData = {
         Title: accommodationDetails.title || "",
         Subtitle: accommodationDetails.subtitle || "",
@@ -433,8 +585,11 @@ const useFormStore = create((set) => ({
         JSON.stringify(formattedData, null, 2),
       );
 
+      const formattyyy = new AccommodationDTO(formattedData);
+
       /// THIS is the result of the form:
       console.log("Accommodation uploaded successfully:", response.data); //Remove this line if you don't want to log the response
+      console.log("Testing formattedData:", formattyyy); //Remove this line if you don't want to log the response
       if (response.data.statusCode === 200) {
         navigate("/hostdashboard");
       }
