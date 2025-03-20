@@ -284,7 +284,7 @@ function Landing() {
         </div>
       </div>
 
-      
+
 
       <div className={styles.easyHosting}>
         <div className={styles.easyHosting_text}>

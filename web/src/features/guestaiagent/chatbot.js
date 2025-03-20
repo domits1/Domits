@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import './chatbot.css';
+import './styles/chatbot.css';
 import { useUser } from '../auth/UserContext';
 import { Auth } from 'aws-amplify';
 

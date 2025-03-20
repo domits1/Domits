@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./paymentconfirmpage.css";
+import "./styles/paymentconfirmpage.css";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ImageGallery from "./ImageGallery";
 
@@ -64,17 +64,17 @@ const BookingConfirmationOverview = () => {
         const taxes = parseFloat(bookingDetails?.Taxes) || 0;
         const cleaningFee = parseFloat(bookingDetails?.CleaningFee) || 0;
         const serviceFee = parseFloat(bookingDetails?.ServiceFee) || 0;
-    
+
         return price + taxes + cleaningFee + serviceFee;
     };
-    
+
 
     if (loading) return <p>Loading booking details...</p>;
     if (error) return <p>{error}</p>
 
     return (
         <main className="PaymentOverview">
-            
+
             <div className="left">
                     {accommodationDetails?.Images && Object.keys(accommodationDetails.Images).length > 0 ? (
                         <>
@@ -103,7 +103,7 @@ const BookingConfirmationOverview = () => {
                         <p><strong>Check-in:</strong> {accommodationDetails?.StartDate ? new Date(accommodationDetails.StartDate).toLocaleDateString() : 'N/A'}</p>
                         <p><strong>Check-out:</strong> {accommodationDetails?.EndDate ? new Date(accommodationDetails.EndDate).toLocaleDateString() : 'N/A'}</p>
                     </div>
-                    
+
                     <div className="right">
                         <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 50, color: "green" }} />
                     </div>
@@ -111,11 +111,11 @@ const BookingConfirmationOverview = () => {
 
                 <div className="priceContainer">
                     <h3>Price Details</h3>
-                    
-                    <div className="price-breakdown">            
+
+                    <div className="price-breakdown">
                     <div className="row">
                             <p>Guests:</p>
-                            <p>{bookingDetails?.AmountOfGuest}</p>  
+                            <p>{bookingDetails?.AmountOfGuest}</p>
                         </div>
 
                     <div className="row">
@@ -136,7 +136,7 @@ const BookingConfirmationOverview = () => {
                         </div>
                         <div className="row">
                             <p>Cleaning fee</p>
-                            <p>€ {bookingDetails?.CleaningFee}</p>   
+                            <p>€ {bookingDetails?.CleaningFee}</p>
                         </div>
 
                         <div className="row">

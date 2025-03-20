@@ -1,5 +1,5 @@
 import React from "react";
-import '../about/about.css'
+import '../about/styles/about.css'
 import FAQ from "../landingpage/Faq";
 import barchart from '../../images/icons/bar-chart.png';
 

@@ -226,7 +226,7 @@ function App() {
                   <Route path="/hostchatbot" element={<Hostchatbot />} />
                     {/* Host Chatbot */}
                     {/* <Route path="/hostchatbot" element={<Hostchatbot />} /> */}
-                  
+
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
 
