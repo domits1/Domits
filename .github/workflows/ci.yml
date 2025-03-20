@@ -5,32 +5,49 @@ on:
     branches:
       - 'acceptance'
       - 'main'
+      - '1630-sonarqube-setup-in-github-cipipeline'
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     env:
-      REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}  # Moved here
+      REACT_APP_GOOGLE_MAPS_API_KEY: ${{ secrets.REACT_APP_GOOGLE_MAPS_API_KEY }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Install NPM dependencies, cache them correctly
+      # Install and Cache NPM dependencies
       - name: Install dependencies
         run: |
           cd web/src
           npm ci --verbose
 
-      # Run your Cypress tests
+      # Run Jest tests with coverage
+      - name: Run Jest tests
+        run: |
+          cd web/src
+          npm test -- --coverage --coverageDirectory=coverage
+
+      # Run Cypress tests
       - name: Cypress run
         uses: cypress-io/github-action@v6
         with:
           working-directory: web/src/tests
           start: npx vite --host
 
-      # Run Jest tests
-      - name: Run Jest tests
-        run: |
-          cd web/src
-
+#  sonarqube:
+#    name: SonarQube
+#    runs-on: ubuntu-latest
+#    needs: tests  # Wait for tests to finish before running SonarQube
+#    steps:
+#      - uses: actions/checkout@v4
+#        with:
+#          fetch-depth: 0
+#
+#      # Run SonarQube Scan without Jest coverage integration
+#      - name: SonarQube Scan
+#        uses: SonarSource/sonarqube-scan-action@v5
+#        env:
+#          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+#
