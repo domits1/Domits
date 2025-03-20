@@ -3,7 +3,7 @@ import axios from "axios";
 import AccommodationDTO from "../../accommodationService/AccommodationDTO";
 
 const API_BASE_URL =
-  "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation";
+  "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
 const useFormStore = create((set) => ({
   completedSteps: [],
@@ -423,178 +423,43 @@ const useFormStore = create((set) => ({
         ],
         propertyType: {
           property_type: accommodationDetails.type,
-          spaceType:
+          spaceType: "Full house",
         },
-
-        AccommodationType: accommodationDetails.type,
-        AllowParties: accommodationDetails.houseRules?.AllowParties || false,
-        AllowPets: accommodationDetails.houseRules?.AllowPets || false,
-        AllowSmoking: accommodationDetails.houseRules?.AllowSmoking || false,
-        Availability: accommodationDetails.availability || {},
-        Bathrooms: accommodationDetails.accommodationCapacity?.Bathrooms || 0,
-        Bedrooms: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
-        Beds: accommodationDetails.accommodationCapacity?.Beds || 0,
-        BookedDates: accommodationDetails.bookedDates || [],
-        Cabins: accommodationDetails.accommodationCapacity?.Cabins || 0,
-        CamperBrand: isCamper ? specifications?.CamperBrand || "" : "",
-        Capacity: accommodationDetails.accommodationCapacity?.GuestAmount || 0,
-        Category: accommodationDetails.category || "",
-        CheckIn: accommodationDetails.houseRules?.CheckIn || "",
-        CheckOut: accommodationDetails.houseRules?.CheckOut || "",
-        CleaningFee: accommodationDetails.CleaningFee || 0,
-        Country:
-          (isBoat
-            ? accommodationDetails.boatDetails?.country
-            : accommodationDetails.camperDetails?.country) ||
-          accommodationDetails.address.country,
-        CreatedAt: new Date().toISOString(),
-        Description: accommodationDetails.description || "",
-        Drafted: accommodationDetails.Drafted || true,
-        Features: accommodationDetails.Features || [],
-        FuelTank: specifications?.FuelTank || 0,
-        FWD: specifications?.FWD || false,
-        GPI: specifications?.GPI || "",
-        GuestAccess: accommodationDetails.guestAccessType || "",
-        Harbor: isBoat ? accommodationDetails.boatDetails?.harbor || "" : "",
-        HasLicense: specifications?.HasLicense || false,
-        Height: specifications?.Height || 0,
-        HouseRules: accommodationDetails.houseRules || {},
-        Images: Object.values(accommodationDetails.images) || [], //Remove this line if you don't want to upload images
-        IsPro: specifications?.IsPro || false,
-        Length: specifications?.Length || 0,
-        LicensePlate: isCamper ? specifications?.LicensePlate || "" : "",
-        Manufacturer: specifications?.Manufacturer || "",
-        MinimumAdvancedReservation:
-          accommodationDetails.availability?.MinimumAdvancedReservation || 0,
-        MinimumBookingPeriod: accommodationDetails.MinimumBookingPeriod || 0,
-        Model: specifications?.Model || "",
-        OwnerId: accommodationDetails.ownerId || "",
-        PostalCode:
-          (isBoat
-            ? accommodationDetails.boatDetails?.zipCode
-            : accommodationDetails.camperDetails?.zipCode) ||
-          accommodationDetails.address.zipCode,
-        PaymentAfterBookingHours:
-          accommodationDetails.availability.PaymentDeadlineAfterBooking || 24,
-        PaymentBeforeCheckInHours:
-          accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36,
-        RegistrationNumber: accommodationDetails.registrationNumber || "",
-        Renovated: specifications?.Renovated || 0,
-        Rent: accommodationDetails.Rent || 0,
-        RentedWithSkipper: specifications?.RentedWithSkipper || false,
-        Requirement: specifications?.Requirement || "",
-        ReservationExpirationTime:
-          accommodationDetails.availability.ExpirationTime || 72,
-        Rooms: accommodationDetails.rooms || 0,
-        SelfBuilt: specifications?.SelfBuilt || false,
-        ServiceFee: accommodationDetails.ServiceFee || 0,
-        Speed: specifications?.Speed || 0,
-        Street:
-          (isBoat
-            ? accommodationDetails.boatDetails?.street
-            : accommodationDetails.camperDetails?.street) ||
-          accommodationDetails.address.street,
-        Transmission: specifications?.Transmission || "",
-        Type: accommodationDetails.type || "",
-        UpdatedAt: new Date().toISOString(),
-        YOC: specifications?.YOC || 0,
+        propertyImages: [
+          {
+            key: "images/1/1/Image-1.webp",
+          },
+        ],
+        propertyTechnicalDetails: {
+          length: 1,
+          height: 1,
+          fuelConsumption: 1,
+          speed: 1,
+          renovationYear: 2020,
+          transmission: "Manuel",
+          generalPeriodicInspection: 2024,
+          fourWheelDrive: true,
+        },
       });
-      const formattedData = {
-        Title: accommodationDetails.title || "",
-        Subtitle: accommodationDetails.subtitle || "",
-        AccommodationType: accommodationDetails.type || "",
-        AllowParties: accommodationDetails.houseRules?.AllowParties || false,
-        AllowPets: accommodationDetails.houseRules?.AllowPets || false,
-        AllowSmoking: accommodationDetails.houseRules?.AllowSmoking || false,
-        Availability: accommodationDetails.availability || {},
-        Bathrooms: accommodationDetails.accommodationCapacity?.Bathrooms || 0,
-        Bedrooms: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
-        Beds: accommodationDetails.accommodationCapacity?.Beds || 0,
-        BookedDates: accommodationDetails.bookedDates || [],
-        Cabins: accommodationDetails.accommodationCapacity?.Cabins || 0,
-        CamperBrand: isCamper ? specifications?.CamperBrand || "" : "",
-        Capacity: accommodationDetails.accommodationCapacity?.GuestAmount || 0,
-        Category: accommodationDetails.category || "",
-        CheckIn: accommodationDetails.houseRules?.CheckIn || "",
-        CheckOut: accommodationDetails.houseRules?.CheckOut || "",
-        CleaningFee: accommodationDetails.CleaningFee || 0,
-        Country:
-          (isBoat
-            ? accommodationDetails.boatDetails?.country
-            : accommodationDetails.camperDetails?.country) ||
-          accommodationDetails.address.country,
-        CreatedAt: new Date().toISOString(),
-        Description: accommodationDetails.description || "",
-        Drafted: accommodationDetails.Drafted || true,
-        Features: accommodationDetails.Features || [],
-        FuelTank: specifications?.FuelTank || 0,
-        FWD: specifications?.FWD || false,
-        GPI: specifications?.GPI || "",
-        GuestAccess: accommodationDetails.guestAccessType || "",
-        Harbor: isBoat ? accommodationDetails.boatDetails?.harbor || "" : "",
-        HasLicense: specifications?.HasLicense || false,
-        Height: specifications?.Height || 0,
-        HouseRules: accommodationDetails.houseRules || {},
-        Images: Object.values(accommodationDetails.images) || [], //Remove this line if you don't want to upload images
-        IsPro: specifications?.IsPro || false,
-        Length: specifications?.Length || 0,
-        LicensePlate: isCamper ? specifications?.LicensePlate || "" : "",
-        Manufacturer: specifications?.Manufacturer || "",
-        MinimumAdvancedReservation:
-          accommodationDetails.availability?.MinimumAdvancedReservation || 0,
-        MinimumBookingPeriod: accommodationDetails.MinimumBookingPeriod || 0,
-        Model: specifications?.Model || "",
-        OwnerId: accommodationDetails.ownerId || "",
-        PostalCode:
-          (isBoat
-            ? accommodationDetails.boatDetails?.zipCode
-            : accommodationDetails.camperDetails?.zipCode) ||
-          accommodationDetails.address.zipCode,
-        PaymentAfterBookingHours:
-          accommodationDetails.availability.PaymentDeadlineAfterBooking || 24,
-        PaymentBeforeCheckInHours:
-          accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36,
-        RegistrationNumber: accommodationDetails.registrationNumber || "",
-        Renovated: specifications?.Renovated || 0,
-        Rent: accommodationDetails.Rent || 0,
-        RentedWithSkipper: specifications?.RentedWithSkipper || false,
-        Requirement: specifications?.Requirement || "",
-        ReservationExpirationTime:
-          accommodationDetails.availability.ExpirationTime || 72,
-        Rooms: accommodationDetails.rooms || 0,
-        SelfBuilt: specifications?.SelfBuilt || false,
-        ServiceFee: accommodationDetails.ServiceFee || 0,
-        Speed: specifications?.Speed || 0,
-        Street:
-          (isBoat
-            ? accommodationDetails.boatDetails?.street
-            : accommodationDetails.camperDetails?.street) ||
-          accommodationDetails.address.street,
-        Transmission: specifications?.Transmission || "",
-        Type: accommodationDetails.type || "",
-        UpdatedAt: new Date().toISOString(),
-        YOC: specifications?.YOC || 0,
-      };
 
       // The Fetch itself!
       const response = await axios.post(
         API_BASE_URL,
         new AccommodationDTO(newFormat),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" }
+          method: "POST",
         },
       );
 
       console.log(
         "Submitting accommodation data:",
-        JSON.stringify(formattedData, null, 2),
+        JSON.stringify(newFormat, null, 2),
       );
-
-      const formattyyy = new AccommodationDTO(formattedData);
 
       /// THIS is the result of the form:
       console.log("Accommodation uploaded successfully:", response.data); //Remove this line if you don't want to log the response
-      console.log("Testing formattedData:", formattyyy); //Remove this line if you don't want to log the response
+      console.log("Testing formattedData:", newFormat); //Remove this line if you don't want to log the response
       if (response.data.statusCode === 200) {
         navigate("/hostdashboard");
       }
