@@ -23,7 +23,7 @@ function Pages() {
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('/hostdashboard');
+  const [activeTab, setActiveTab] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
