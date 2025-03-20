@@ -46,7 +46,7 @@ import GuestBooking from "./features/guestdashboard/GuestBooking";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
-import GuestMessages from "./features/guestdashboard/guestmessages/pages/guestMessages.js";
+import GuestMessages from './features/guestdashboard/guestmessages/pages/guestMessages.js';
 import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
@@ -73,25 +73,6 @@ import ReviewPage from "./features/review/ReviewPage";
 import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
-import Sustainability from "./features/sustainability/Sustainability";
-
-import AccommodationTypeView from "./features/hostonboarding/views/PropertyTypeView.js";
-import GuestAccessView from "./features/hostonboarding/views/HouseTypeView.js";
-import BoatTypeView from "./features/hostonboarding/views/BoatTypeView.js";
-import CamperTypeView from "./features/hostonboarding/views/CamperTypeView.js";
-import AddressInputView from "./features/hostonboarding/views/PropertyLocationView.js";
-import CapacityView from "./features/hostonboarding/views/PropertyGuestAmountView.js";
-import AmenitiesView from "./features/hostonboarding/views/PropertyAmenitiesView.js";
-import HouseRulesView from "./features/hostonboarding/views/PropertyHouseRulesView.js";
-import PhotosView from "./features/hostonboarding/views/PropertyPhotosView.js";
-import AccommodationTitleView from "./features/hostonboarding/views/PropertyNameView.js";
-import DescriptionView from "./features/hostonboarding/views/PropertyDescriptionView.js";
-import PricingView from "./features/hostonboarding/views/PropertyRateView.js";
-import AvailabilityView from "./features/hostonboarding/views/PropertyCalendarAvailabilityView.js";
-import RegistrationNumberView from "./features/verification/hostverification/HostVerifyRegistrationNumber.js";
-import SummaryView from "./features/hostonboarding/views/PropertyCheckOutAndCompletionView.js";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 
 import AccommodationTypeView from "./features/hostonboarding/views/PropertyTypeView.js";
 import GuestAccessView from "./features/hostonboarding/views/HouseTypeView.js";
@@ -109,7 +90,6 @@ import AvailabilityView from "./features/hostonboarding/views/PropertyCalendarAv
 import RegistrationNumberView from "./features/verification/hostverification/HostVerifyRegistrationNumber.js";
 import SummaryView from "./features/hostonboarding/views/PropertyCheckOutAndCompletionView.js";
 
-import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
@@ -123,119 +103,6 @@ import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
 Modal.setAppElement("#root");
 
 function App() {
-  const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  // Apollo Client
-  const client = new ApolloClient({
-    uri: "https://73nglmrsoff5xd5i7itszpmd44.appsync-api.eu-north-1.amazonaws.com/graphql", //
-    cache: new InMemoryCache(),
-    headers: {
-      "x-api-key": "da2-r65bw6jphfbunkqyyok5kn36cm", // Replace with your AppSync API key
-    },
-  });
-
-  useEffect(() => {
-    document.title = "Domits";
-  }, [searchResults]);
-
-  useEffect(() => {
-    initializeUserAttributes();
-  }, []);
-
-  const currentPath = window.location.pathname;
-
-  const renderFooter = () => {
-    if (
-      ["/admin", "/bookingoverview", "/bookingpayment"].includes(currentPath) ||
-      currentPath.startsWith("/verify")
-    ) {
-      return null;
-    }
-    return <Footer />;
-  };
-
-  const renderChatWidget = () => {
-    if (currentPath.startsWith("/verify")) {
-      return null;
-    }
-    return <ChatWidget />;
-  };
-
-  const [flowState, setFlowState] = useState({ isHost: false });
-
-  return (
-    <ApolloProvider client={client}>
-      {" "}
-      {/* ApolloProvider */}
-      <ToastContainer
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
-      <FlowContext.Provider value={{ flowState, setFlowState }}>
-        <Router>
-          <ScrollToTop />
-          <AuthProvider>
-            <UserProvider>
-              <div className="App">
-                {currentPath !== "/admin" && (
-                  <Header
-                    setSearchResults={setSearchResults}
-                    setLoading={setLoading}
-                  />
-                )}
-                <Routes>
-                  <Route
-                    path="/home"
-                    element={<Home searchResults={searchResults} />}
-                  />
-                  <Route path="/" element={<Homepage />} />
-                  <Route path="/about" element={<About />} />
-                  {/* <Route path="/release" element={<Release />} /> */}
-                  <Route path="/releaseTwo" element={<ReleaseTwo />} />
-                  <Route path="/data-safety" element={<Datasafety />} />
-                  <Route
-                    path="/helpdesk-guest"
-                    element={<Helpdesk category="guest" />}
-                  />
-                  <Route
-                    path="/helpdesk-host"
-                    element={<Helpdesk category="host" />}
-                  />
-                  <Route path="/how-it-works" element={<Howitworks />} />
-                  <Route path="/why-domits" element={<Whydomits />} />
-                  <Route path="/contact" element={<Contact />} />
-                  <Route
-                    path="/travelinnovation"
-                    element={<Travelinnovation />}
-                  />
-                  <Route path="/release" element={<ReleaseUpdates />} />
-                  <Route path="/landing" element={<Landing />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/sustainability" element={<Sustainability />} />
-                  <Route path="/confirm-email" element={<ConfirmRegister />} />
-                  <Route path="/listingdetails" element={<ListingDetails />} />
-                  <Route
-                    path="/bookingoverview"
-                    element={<BookingOverview />}
-                  />
-                  <Route
-                    path="/bookingconfirmation"
-                    element={<BookingConfirmation />}
-                  />
-                  <Route
-                    path="/paymentconfirmpage"
-                    element={<PaymentConfirmPage />}
-                  />
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
 
@@ -350,19 +217,16 @@ function App() {
                     element={<PaymentConfirmPage />}
                   />
 
-                  {/* Chat */}
-                  <Route path="/chat" element={<GuestMessages />} />
-                  <Route path="/employeechat" element={<EmployeeChat />} />
-                  <Route path="/chatbot" element={<Chatbot />} />
-
-                  {/* Host Chatbot */}
-                  <Route path="/hostchatbot" element={<Hostchatbot />} />
+                                    {/* Chat */}
+                                    <Route path="/chat" element={<GuestMessages />} />
+                                    <Route path="/employeechat" element={<EmployeeChat />} />
+                                    <Route path="/chatbot" element={<Chatbot />} />
 
 
                   <Route path="/hostchatbot" element={<Hostchatbot />} />
                     {/* Host Chatbot */}
                     {/* <Route path="/hostchatbot" element={<Hostchatbot />} /> */}
-
+                  
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
 
