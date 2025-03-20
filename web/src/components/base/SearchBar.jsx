@@ -14,6 +14,7 @@ import { countries } from 'country-data';
 import './SearchBar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Script from 'react-load-script';
+import FilterButton from './FilterButton';
 
 export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -658,6 +659,8 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                 </button>
 
               </div>
+              {/* momenteel niet te gebruiken omdat de styling er voor moet aangepast worden */}
+              {/* {isBarActive && <FilterButton />} */}
             </div>
         )}
       </div>
