@@ -27,7 +27,7 @@
 
 .accocard {
   width: 100%;
-  height: auto;
+  height: fit-content;
   max-width: 450px;
   margin: 1%;
   margin-top: 10px;
