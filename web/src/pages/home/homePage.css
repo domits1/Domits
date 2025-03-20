@@ -147,6 +147,879 @@ body.hide-header .app-header {
   padding: 0 4%;
 }
 
+@import url("https://fonts.googleapis.com/css2?family=Kanit:wght@200;400;700&display=swap");
+
+.App-header {
+  background-color: rgb(255, 255, 255);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-size: calc(10px + 2vmin);
+  color: black;
+  padding-left: 10px;
+}
+
+h1 {
+  color: rgb(0, 0, 0);
+  margin-left: 60px;
+  margin-bottom: 20px;
+}
+
+.countries-container,
+.more-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.small-countries-container,
+.more-small-countries-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.country-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.country-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.country-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.country-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.small-country-card h3 {
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 500;
+}
+
+.small-country-card p {
+  display: none;
+}
+
+.small-country-card img {
+  height: 150px;
+}
+
+/*nederland*/
+.countries-container> :nth-child(1),
+.more-countries-container> :nth-child(1) {
+  grid-column: span 2;
+}
+
+/*frankrijk*/
+.countries-container> :nth-child(2),
+.more-countries-container> :nth-child(2) {
+  grid-column: span 1;
+}
+
+/*spanje*/
+.countries-container> :nth-child(3),
+.more-countries-container> :nth-child(3) {
+  grid-column: span 1;
+}
+
+/* Asia specific styles */
+.asia-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.small-asia-countries-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.asia-country-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.asia-country-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.asia-country-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.asia-country-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.small-asia-country-card h3 {
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 500;
+}
+
+.small-asia-country-card p {
+  display: none;
+}
+
+.small-asia-country-card img {
+  height: 150px;
+}
+
+/*philippines*/
+.asia-countries-container> :nth-child(1) {
+  grid-column: span 2;
+}
+
+/*thailand*/
+.asia-countries-container> :nth-child(2) {
+  grid-column: span 1;
+}
+
+/*indonesia*/
+.asia-countries-container> :nth-child(3) {
+  grid-column: span 1;
+}
+
+.caribbean-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.small-caribbean-countries-container {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.caribbean-country-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.caribbean-country-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.caribbean-country-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.caribbean-country-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.small-caribbean-country-card h3 {
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 500;
+}
+
+.small-caribbean-country-card p {
+  display: none;
+}
+
+.small-caribbean-country-card img {
+  height: 150px;
+}
+
+/*aruba*/
+.caribbean-countries-container> :nth-child(1) {
+  grid-column: span 1;
+}
+
+/*bonaire*/
+.caribbean-countries-container> :nth-child(2) {
+  grid-column: span 1;
+}
+
+/*curacao*/
+.caribbean-countries-container> :nth-child(3) {
+  grid-column: span 2;
+}
+
+/* Ski specific styles */
+.ski-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.small-ski-countries-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.ski-country-card,
+.small-ski-country-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.ski-country-card img,
+.small-ski-country-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.ski-country-card h3,
+.small-ski-country-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.ski-country-card p,
+.small-ski-country-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+/*austria*/
+.ski-countries-container> :nth-child(1) {
+  grid-column: span 1;
+}
+
+/*french alps*/
+.ski-countries-container> :nth-child(2) {
+  grid-column: span 1;
+}
+
+/*switzerland*/
+.ski-countries-container> :nth-child(3) {
+  grid-column: span 2;
+}
+
+/*chamonix-mont-blanc*/
+.ski-countries-container> :nth-child(4) {
+  grid-column: span 2;
+}
+
+/*black forest*/
+.ski-countries-container> :nth-child(5) {
+  grid-column: span 1;
+}
+
+/*italy trentino*/
+.ski-countries-container> :nth-child(6) {
+  grid-column: span 1;
+}
+
+/* Seasons specific styles */
+.seasons-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.season-card {
+  overflow: hidden;
+}
+
+.season-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.season-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.interest-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.interest-container:nth-child(2) {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.interest-container:nth-child(3) {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.interest-card {
+  overflow: hidden;
+}
+
+.interest-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.interest-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.interest-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.interests-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.interest-card {
+  overflow: hidden;
+}
+
+.interest-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.interest-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.interest-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+/* Specific spans for items */
+.interests-container> :nth-child(1) {
+  grid-column: span 1;
+  /* Luxury */
+}
+
+.interests-container> :nth-child(2) {
+  grid-column: span 1;
+  /* Beach */
+}
+
+.interests-container> :nth-child(3) {
+  grid-column: span 2;
+  /* Last minute */
+}
+
+.interests-container> :nth-child(4) {
+  grid-column: span 1;
+  /* Wellness */
+}
+
+.interests-container> :nth-child(5) {
+  grid-column: span 1;
+  /* Romantic */
+}
+
+.interests-container> :nth-child(6) {
+  grid-column: span 1;
+  /* Adventure */
+}
+
+.interests-container> :nth-child(7) {
+  grid-column: span 1;
+  /* Nature */
+}
+
+.interests-container> :nth-child(8) {
+  grid-column: span 2;
+  /* Culture */
+}
+
+.interests-container> :nth-child(9) {
+  grid-column: span 2;
+  /* Culinary */
+}
+
+.groups-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  padding: 20px;
+}
+
+.group-card {
+  overflow: hidden;
+  text-align: left;
+}
+
+.group-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  border-radius: 15px;
+  padding: 0;
+}
+
+.group-card h3 {
+  margin: 1px;
+  font-size: 1.2em;
+  color: black;
+  font-size: 25px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.group-card p {
+  margin: 1px;
+  color: #494949;
+  font-size: 15px;
+  font-family: "Kanit", sans-serif;
+  font-weight: 400;
+}
+
+.groups-container> :nth-child(1) {
+  grid-column: span 1;
+  /* Friends */
+}
+
+.groups-container> :nth-child(2) {
+  grid-column: span 1;
+  /* Couples */
+}
+
+.groups-container> :nth-child(3) {
+  grid-column: span 2;
+  /* Family & child friendly */
+}
+
+.groups-container> :nth-child(4) {
+  grid-column: span 2;
+  /* Solo */
+}
+
+.groups-container> :nth-child(5) {
+  grid-column: span 1;
+  /* Senior */
+}
+
+.groups-container> :nth-child(6) {
+  grid-column: span 1;
+  /* Pet Friendly */
+}
+
+/* Media query for mobile devices */
+@media (max-width: 767px) {
+
+  /* Countries */
+  .countries-container,
+  .more-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-countries-container,
+  .more-small-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-countries-container,
+  .more-small-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  /* Asia */
+  .asia-countries-container,
+  .more-asia-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-asia-countries-container,
+  .more-small-asia-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-asia-countries-container,
+  .more-small-asia-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  /* Caribbean */
+  .caribbean-countries-container,
+  .more-caribbean-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-caribbean-countries-container,
+  .more-small-caribbean-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-caribbean-countries-container,
+  .more-small-caribbean-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  /* Ski */
+  .ski-countries-container,
+  .more-ski-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-ski-countries-container,
+  .more-small-ski-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-ski-countries-container,
+  .more-small-ski-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  /* Seasons */
+  .seasons-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .season-card img {
+    height: 150px;
+  }
+
+  .season-card h3 {
+    font-size: 18px;
+  }
+
+  /* Great Picks by Interest */
+  .interests-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .interest-card img {
+    height: 150px;
+  }
+
+  .interest-card h3 {
+    font-size: 18px;
+  }
+
+  .interest-card p {
+    font-size: 14px;
+  }
+
+  /* Accommodation by Group */
+  .groups-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .group-card img {
+    height: 150px;
+  }
+
+  .group-card h3 {
+    font-size: 18px;
+  }
+
+  .group-card p {
+    font-size: 14px;
+  }
+}
+
+.show-more-button {
+  border: none;
+  padding: 10px 20px;
+  text-align: center;
+  text-decoration: none;
+  display: block;
+  font-size: 13px;
+  margin: 20px auto;
+  cursor: pointer;
+  border-radius: 5px;
+  width: calc(100% / 5 - 16px);
+  background-color: transparent;
+}
+
+/* Media query for mobile devices */
+@media (max-width: 400px) {
+
+  /* Countries */
+  .countries-container,
+  .more-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-countries-container,
+  .more-small-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-countries-container,
+  .more-small-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .country-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 15px;
+    padding: 0;
+  }
+
+  .small-country-card img {
+    height: 75px;
+  }
+
+  /* Asia */
+  .asia-countries-container,
+  .more-asia-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .asia-country-card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 15px;
+    padding: 0;
+  }
+
+  .small-asia-country-card img {
+    height: 75px;
+  }
+
+  .small-asia-countries-container,
+  .more-small-asia-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-asia-countries-container,
+  .more-small-asia-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  /* Caribbean */
+  .caribbean-countries-container,
+  .more-caribbean-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-caribbean-countries-container,
+  .more-small-caribbean-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-caribbean-countries-container,
+  .more-small-caribbean-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .small-caribbean-country-card img {
+    height: 75px;
+  }
+
+  /* Ski */
+  .ski-countries-container,
+  .more-ski-countries-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .small-ski-countries-container,
+  .more-small-ski-countries-container {
+    grid-template-columns: 1fr;
+  }
+
+  .small-ski-countries-container,
+  .more-small-ski-countries-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  /* Seasons */
+  .seasons-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .season-card img {
+    height: 150px;
+  }
+
+  .season-card h3 {
+    font-size: 18px;
+  }
+
+  .season-card img {
+    height: 120px;
+  }
+
+  /* Great Picks by Interest */
+  .interests-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .interest-card img {
+    height: 150px;
+  }
+
+  .interest-card h3 {
+    font-size: 18px;
+  }
+
+  .interest-card p {
+    font-size: 14px;
+  }
+
+  .interest-card img {
+    height: 120px;
+  }
+
+  /* Accommodation by Group */
+  .groups-container {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .group-card img {
+    height: 150px;
+  }
+
+  .group-card h3 {
+    font-size: 18px;
+  }
+
+  .group-card p {
+    font-size: 14px;
+  }
+
+  .group-card img {
+    height: 125px;
+  }
+}
+
+@media (max-width: 400px) {
+  h1 {
+    color: rgb(0, 0, 0);
+    margin-left: 0px;
+    margin-bottom: 20px;
+  }
+}
+
+
 .domits-iconsContainerText {
   font-size: 1.2rem;
   display: flex;
@@ -198,7 +1071,9 @@ body.hide-header .app-header {
   background-color: #003366;
   color: white;
 }
-.domits-hostButton a, .domits-SearchButton a {
+
+.domits-hostButton a,
+.domits-SearchButton a {
   text-decoration: none;
   color: white;
 }
@@ -401,5 +1276,154 @@ body.hide-header .app-header {
   .domits-communityContainer {
     padding: 4vh 5vw;
     /* Increase padding for more space */
+  }
+}
+
+.become-host-section {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: white;
+  padding: 4.5rem;
+  border-radius: 1rem;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin: auto;
+  flex-wrap: wrap;
+  /* Allows wrapping on smaller screens */
+  gap: 2rem;
+}
+
+.become-host-content {
+  text-align: left;
+  max-width: 350px;
+  flex: 1;
+}
+
+.become-host-content h1 {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.become-host-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: #555;
+}
+
+.become-host-content li {
+  margin-bottom: 0.5rem;
+}
+
+.list-property-button {
+  margin-top: 1rem;
+  padding: 0.5rem 1.5rem;
+  background-color: #1d4ed8;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2);
+  transition: background 0.3s;
+}
+
+.list-property-button:hover {
+  background-color: #1e40af;
+}
+
+/* ---- Image Styling (Always Overlapping) ---- */
+.host-images {
+  position: relative;
+  width: 300px;
+  /* Adjust width to maintain image overlap */
+  height: 250px;
+  /* Fixed height to prevent layout shifts */
+}
+
+.host-image {
+  width: 180px;
+  border-radius: 0.75rem;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  position: absolute;
+}
+
+/* First image (background) */
+.host-image:first-child {
+  position: relative;
+  z-index: 1;
+  width: 220px;
+}
+
+/* Second image (foreground, overlapping) */
+.host-image:last-child {
+  position: absolute;
+  top: -80px;
+  /* Keeps overlap */
+  left: 120px;
+  /* Keeps overlap */
+  z-index: 2;
+  width: 270px;
+}
+
+/* ---- RESPONSIVE DESIGN ---- */
+@media (max-width: 768px) {
+  .become-host-section {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem;
+  }
+
+  .become-host-content {
+    max-width: 100%;
+  }
+
+  .host-images {
+    width: 280px;
+    /* Maintain overlap */
+    height: 230px;
+  }
+
+  .host-image {
+    width: 160px;
+  }
+
+  .host-image:first-child {
+    width: 200px;
+    margin-top: 110px;
+  }
+}
+
+.host-image:last-child {
+  width: 250px;
+  top: -60px;
+  left: 100px;
+}
+
+
+@media (max-width: 480px) {
+  .become-host-section {
+    padding: 1.5rem;
+  }
+
+  .host-images {
+    width: 250px;
+    height: 200px;
+  }
+
+  .host-image {
+    width: 140px;
+  }
+
+  .host-image:first-child {
+    width: 180px;
+  }
+
+  .host-image:last-child {
+    width: 230px;
+    top: -60px;
+    left: 90px;
   }
 }
