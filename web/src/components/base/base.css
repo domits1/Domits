@@ -1,6 +1,6 @@
 /* General Styling */
+/* Waarom wordt er in global styling aangemaakt dit is echt bad code practice en moet echt niet gebruikt worden binnen een project, dit veroorzaken weer css problemen */
 * {
-    box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
