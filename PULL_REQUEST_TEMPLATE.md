@@ -28,7 +28,7 @@ Description: [Please add detailed description of the changes here]
 - [ ] Did you check for vulnerabilities using "npm audit"?
 
 ## Checklist
-- [ ] Check if you didn't use global styling
+- [ ] Check if you didn't use global styling -- for more explanation view https://github.com/domits1/Domits/issues/1691
 - [ ] Console.logs are deleted
 - [ ] Comments are deleted
 - [ ] Jest tests are included

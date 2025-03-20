@@ -5,10 +5,9 @@ import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';
 
 const ImageGallery = ({ images }) => {
-    // Slice the first 5 images if available
-    const limitedImages = images.slice(0, 5);
-    const [selectedImg, setSelectedImg] = useState(limitedImages[0]);
+    const [selectedImg, setSelectedImg] = useState(images[0]);
     const [liked, setLiked] = useState(false);
+    const [showOverlay, setShowOverlay] = useState(false);
 
     const handleShare = () => {
         navigator.clipboard
@@ -21,18 +20,30 @@ const ImageGallery = ({ images }) => {
             });
     };
 
+    const handleOverlayToggle = () => {
+        setShowOverlay(!showOverlay);
+    };
+
+    const handleSelectedThumbnailClick = () => {
+        if (window.innerWidth <= 600) {
+            // If the screen width is less than or equal to 600px, toggle the overlay
+            setShowOverlay(!showOverlay);
+        }
+    };
+
     return (
         <div className="image-gallery-container">
             {/* Selected image */}
             <div className="selected-image">
-            <img
-            className="selected-thumbnail"
-            src={selectedImg}
-            srcSet={`${selectedImg}?w=800 800w, ${selectedImg}?w=1200 1200w, ${selectedImg}?w=1600 1600w`}
-            sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            alt="Selected"
-            loading="lazy"
-            />
+                <img
+                    className="selected-thumbnail"
+                    src={selectedImg}
+                    srcSet={`${selectedImg}?w=800 800w, ${selectedImg}?w=1200 1200w, ${selectedImg}?w=1600 1600w`}
+                    sizes="(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    alt="Selected"
+                    loading="lazy"
+                    onClick={handleSelectedThumbnailClick} // Add click handler
+                />
                 <button className="share-button" onClick={handleShare}>
                     <IosShareIcon />
                 </button>
@@ -47,7 +58,7 @@ const ImageGallery = ({ images }) => {
 
             {/* Image thumbnails */}
             <div className="image-thumbnails">
-                {limitedImages.map((img, index) => (
+                {images.slice(0, 4).map((img, index) => (
                     <img
                         key={index}
                         src={img}
@@ -60,6 +71,35 @@ const ImageGallery = ({ images }) => {
                     />
                 ))}
             </div>
+
+            {/* Show all button */}
+            {images.length > 4 && (
+                <button className="show-all-button" onClick={handleOverlayToggle}>
+                    Show All
+                </button>
+            )}
+
+            {/* Overlay */}
+            {showOverlay && (
+                <div className="overlay">
+                    <div className="overlay-content">
+                        <button className="close-overlay-button" onClick={handleOverlayToggle}>
+                            Close
+                        </button>
+                        <div className="overlay-images">
+                            {images.map((img, index) => (
+                                <img
+                                    key={index}
+                                    src={img}
+                                    alt={`Overlay Thumbnail ${index}`}
+                                    onClick={() => setSelectedImg(img)}
+                                    className="overlay-thumbnail"
+                                />
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
