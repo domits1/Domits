@@ -3,8 +3,7 @@ export const FetchAllPropertyTypes = async () => {
     if (!response.ok) {
         throw new Error(`Something went wrong while fetching AllPropertyTypes: ${response}`);
     }
-    const data = await response.json();
-    return data.slice(6, 9);
+    return await response.json();
 }
 
 export const FetchPropertyType = async (type) => {
@@ -12,6 +11,5 @@ export const FetchPropertyType = async (type) => {
     if (!response.ok) {
         throw new Error(`Something went wrong while fetching PropertyType: ${response}`);
     }
-    const data = await response.json();
-    return data.slice(0, 3);
+    return await response.json();
 }
