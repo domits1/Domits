@@ -5,12 +5,13 @@ import PageSwitcher from '../../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
-import FilterUi from "./FilterUi";
-import {FetchAllPropertyTypes} from "./services/fetchProperties";
+import FilterUi from "./FilterUi";  
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
   const [accommodationImages, setAccommodationImages] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingImages, setLoadingImages] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
@@ -41,30 +42,62 @@ const Accommodations = ({ searchResults }) => {
     }, 500);
   };
 
-  useEffect(() => {
-    async function loadData() {
-      setSearchLoading(true);
-      // If there are search results, update the list, otherwise fetch all accommodations
-      if (searchResults && searchResults.length > 0) {
-        setTimeout(() => {
-          setAccolist(searchResults);
-          setCurrentPage(1);
-          setSearchLoading(false);
-        }, 500);
-      } else {
-        const properties = await FetchAllPropertyTypes();
-        setAccolist(properties);
+  const fetchAllAccommodations = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(
+        'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation'
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch accommodation data');
       }
-      setSearchLoading(false);
+      const data = JSON.parse((await response.json()).body);
+      setAccolist(data);
+    } catch (error) {
+      console.error('Error fetching accommodation data:', error);
+    } finally {
+      setLoading(false);
     }
-    loadData();
+  };
+
+  const fetchAccommodationImages = async () => {
+    try {
+      setLoadingImages(true);
+      const response = await fetch(
+        'https://lhp0t08na7.execute-api.eu-north-1.amazonaws.com/prod/getAllAccommodationImages'
+      );
+      if (!response.ok) {
+        throw new Error('Failed to fetch accommodation images');
+      }
+      const data = await response.json();
+      setAccommodationImages(data);
+    } catch (error) {
+      console.error('Error fetching accommodation images:', error);
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  useEffect(() => {
+    // If there are search results, update the list, otherwise fetch all accommodations
+    if (searchResults && searchResults.length > 0) {
+      setSearchLoading(true);
+      setTimeout(() => {
+        setAccolist(searchResults);
+        setCurrentPage(1);
+        setSearchLoading(false);
+      }, 500);
+    } else {
+      fetchAllAccommodations();
+      fetchAccommodationImages();
+    }
   }, [searchResults]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
-  if (filterLoading || searchLoading) {
+  if (loading || loadingImages || filterLoading || searchLoading) {
     return (
       <div id="container">
         <div id="filters-sidebar">
@@ -100,10 +133,13 @@ const Accommodations = ({ searchResults }) => {
       <div id="card-visibility">
         {displayedAccolist.length > 0 ? (
           displayedAccolist.map((accommodation) => {
+            const images =
+              accommodationImages.find((img) => img.ID === accommodation.ID)?.Images || [];
             return (
               <AccommodationCard
                 key={accommodation.ID}
                 accommodation={accommodation}
+                images={Object.values(images)}
                 onClick={handleClick}
               />
             );
