@@ -61,7 +61,7 @@ const useFormStore = create((set) => ({
     Features: {
       ExtraServices: [],
     },
-    availability: {     
+    availability: {
       ExpirationTime: 72,
       MinimumStay: 1,
       MinimumBookingPeriod: 3,
@@ -331,10 +331,9 @@ const useFormStore = create((set) => ({
         PaymentDeadlineAfterBooking: "24",
         PaymentDeadlineBeforeCheckIn: "36",
         selectedDates: [],
-      }
+      },
     }),
   submitAccommodation: async (navigate) => {
-    
     const { accommodationDetails } = useFormStore.getState();
 
     const isBoat = accommodationDetails.type === "boat";
@@ -343,10 +342,11 @@ const useFormStore = create((set) => ({
     const specifications = isBoat
       ? accommodationDetails.boatSpecifications
       : isCamper
-      ? accommodationDetails.camperSpecifications
-      : {};
+        ? accommodationDetails.camperSpecifications
+        : {};
 
     try {
+      const newFormattedData = new AccommodationDTO();
       const formattedData = {
         Title: accommodationDetails.title || "",
         Subtitle: accommodationDetails.subtitle || "",
@@ -398,14 +398,17 @@ const useFormStore = create((set) => ({
             ? accommodationDetails.boatDetails?.zipCode
             : accommodationDetails.camperDetails?.zipCode) ||
           accommodationDetails.address.zipCode,
-        PaymentAfterBookingHours: accommodationDetails.availability.PaymentDeadlineAfterBooking || 24, 
-        PaymentBeforeCheckInHours: accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36,
+        PaymentAfterBookingHours:
+          accommodationDetails.availability.PaymentDeadlineAfterBooking || 24,
+        PaymentBeforeCheckInHours:
+          accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36,
         RegistrationNumber: accommodationDetails.registrationNumber || "",
         Renovated: specifications?.Renovated || 0,
         Rent: accommodationDetails.Rent || 0,
         RentedWithSkipper: specifications?.RentedWithSkipper || false,
         Requirement: specifications?.Requirement || "",
-        ReservationExpirationTime: accommodationDetails.availability.ExpirationTime || 72,
+        ReservationExpirationTime:
+          accommodationDetails.availability.ExpirationTime || 72,
         Rooms: accommodationDetails.rooms || 0,
         SelfBuilt: specifications?.SelfBuilt || false,
         ServiceFee: accommodationDetails.ServiceFee || 0,
@@ -427,8 +430,10 @@ const useFormStore = create((set) => ({
 
       console.log(
         "Submitting accommodation data:",
-        JSON.stringify(formattedData, null, 2)
+        JSON.stringify(formattedData, null, 2),
       );
+
+      /// THIS is the result of the form:
       console.log("Accommodation uploaded successfully:", response.data); //Remove this line if you don't want to log the response
       if (response.data.statusCode === 200) {
         navigate("/hostdashboard");
