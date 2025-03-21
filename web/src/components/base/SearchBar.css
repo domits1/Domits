@@ -1,12 +1,11 @@
 .Search-bar {
-  width: 42.5rem;
+  width: 42rem;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 1.875rem;
-  border: solid 1px #7171716a;
+  border: solid 1px #0202026a;
   display: flex;
   height: 3.43rem;
-  box-sizing: border-box;
   background-color: white;
 }
 
@@ -50,7 +49,7 @@
 }
 
 .Search-location {
-  width: 34%;
+  width: 36%;
 }
 
 .input-calendar {
@@ -173,7 +172,7 @@
   cursor: pointer;
   padding: 1.625rem;
   border-radius: 1.25rem;
-  width: 13.2%;
+  width: 10%;
 }
 
 .Search-error-message {
@@ -350,25 +349,25 @@
 
 @media (min-width: 2500px) {
   .responsive-calendar {
-    font-size: 1rem !important;
+    font-size: 0.8rem !important;
   }
 }
 
 @media (max-width: 1500px) {
   .responsive-calendar {
-    font-size: 0.9rem !important;
+    font-size: 0.7rem !important;
   }
 }
 
 @media (max-width: 1200px) {
   .responsive-calendar {
-    font-size: 0.7rem !important;
+    font-size: 0.6rem !important;
   }
 }
 
 @media (max-width: 768px) {
   .responsive-calendar {
-    font-size: 0.7rem !important;
+    font-size: 0.5rem !important;
   }
 }
 

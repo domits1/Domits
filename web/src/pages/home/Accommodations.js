@@ -125,7 +125,7 @@ const Accommodations = ({ searchResults }) => {
     }
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
-  return (
+  return <>(
     <div id="container">
       <div id="filters-sidebar">
         <FilterUi onFilterApplied={handleFilterApplied} />
@@ -147,7 +147,11 @@ const Accommodations = ({ searchResults }) => {
         ) : (
           <div className="no-results">No accommodations found for your search.</div>
         )}
-        <div className={PageSwitcher.pagination}>
+       
+      </div>
+    </div>
+  );
+  <div className={PageSwitcher.pagination}>
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
@@ -170,9 +174,7 @@ const Accommodations = ({ searchResults }) => {
             Next &gt;
           </button>
         </div>
-      </div>
-    </div>
-  );
+  </>
 };
 
 export default Accommodations;

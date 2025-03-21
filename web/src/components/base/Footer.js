@@ -47,7 +47,7 @@ const Footer = () => {
             </li>
             <li>
               <Link to="/career" className="footer-links">
-                Jobs
+                Careers
               </Link>
             </li>
             <li>
