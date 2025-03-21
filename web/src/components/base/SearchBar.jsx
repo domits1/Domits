@@ -27,7 +27,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
   const [pets, setPets] = useState(0);
-  const [rooms, setRooms] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [startDate, endDate] = dateRange;
   const [error, setError] = useState("");
@@ -90,9 +89,8 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
     if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
     if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
-    if (rooms > 0) parts.push(`${rooms} Room${rooms > 1 ? 's' : ''}`);
     return parts.join(', ');
-  }, [adults, children, infants, pets, rooms]);
+  }, [adults, children, infants, pets,]);
 
   const guestDropdownRef = useRef();
   const resetGuests = useCallback((e) => {
@@ -101,7 +99,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     setChildren(0);
     setInfants(0);
     setPets(0);
-    setRooms(0);
   }, []);
 
   const toggleGuestDropdown = useCallback((e) => {
@@ -528,7 +525,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
 
                 <div className={`Search-button-section ${showGuestDropdown ? 'active' : ''}`}
                      onClick={toggleGuestDropdown}>
-                  <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests • Rooms</p>
+                  <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests</p>
                   {totalGuests > 0 && (
                       <button
                           className="Search-clear-guests"
@@ -600,13 +597,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                         onIncrement={() => incrementGuests(pets, setPets)}
                         onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
                     />
-                    <GuestCounter
-                        label={<><FaDoorClosed/> Rooms</>}
-                        description="Amount of rooms in the Accommodation"
-                        value={rooms}
-                        onIncrement={() => incrementGuests(rooms, setRooms)}
-                        onDecrement={() => setRooms(rooms > 0 ? rooms - 1 : rooms)}
-                    />
+                    
                   </div>
                 </div>
 
