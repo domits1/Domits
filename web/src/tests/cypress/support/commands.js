@@ -49,7 +49,7 @@ Cypress.Commands.add('loginAsGuest', () => {
   cy.wait(1000);
   cy.reload();
   cy.get('.header-links > .headerHostButton').click();
-  cy.wait(1000);
+  cy.wait(100);
 });
 
 // Depreciated

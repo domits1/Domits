@@ -5,6 +5,9 @@ function generateRandomText(length) {
 describe('Testing Messaging feature as a Host', () => {
     
     beforeEach(() => {
+        cy.clearCookies();
+        cy.clearLocalStorage();
+        cy.reload();
         cy.viewport(1920, 1080);
         cy.loginAsHost();
     });
@@ -99,6 +102,9 @@ describe('Testing Messaging feature as a Host', () => {
 describe('Testing message feature as a Guest', () => {
 
     beforeEach(() => {
+        cy.clearCookies();
+        cy.clearLocalStorage();
+        cy.reload();
         cy.viewport(1920, 1080);
         cy.loginAsGuest();
     });    
@@ -186,5 +192,86 @@ describe('Testing message feature as a Guest', () => {
         cy.get('.dashboardSections > :nth-child(3)').click();
         cy.get('.guest-contact-list-list-item').click();
         cy.get(':nth-child(1) > .guest-message-content').should('have.text', randomText);   
+    });
+});
+
+describe('Testing interaction between Host and Guest', () => {
+
+    const randomText = generateRandomText(10000);
+
+    beforeEach(() => {
+        cy.clearCookies();
+        cy.clearLocalStorage();
+        cy.reload();
+        cy.viewport(1920, 1080);
+    });
+
+    it('should be able to login as a Guest', () => {    
+        cy.loginAsGuest();    
+        cy.url().should('eq', 'https://acceptance.domits.com/guestdashboard');
+        cy.get('.header-links > .headerHostButton')
+        .should('contain.text','Switch to Host');
+    });   
+
+    
+    it('should generate random text example and send to host', () => { 
+        cy.loginAsGuest();    
+
+        cy.get('.dashboardSections > :nth-child(3)').click();
+        cy.get('.guest-contact-list-list-item').click();
+        cy.get('.guest-message-input-textarea').type('Hello I am guest, ' +randomText);
+        cy.get('.guest-message-input-send-button').click();
+        cy.reload();
+        
+        cy.get('.dashboardSections > :nth-child(3)').click();
+        cy.get('.guest-contact-list-list-item').click();
+        cy.get(':nth-child(1) > .guest-message-content').should('have.text', 'Hello I am guest, '+randomText);   
+    });
+
+    it('should log in as a Host', () => {
+        cy.loginAsHost();
+        cy.url().should('eq', 'https://acceptance.domits.com/hostdashboard/');
+        cy.get('.header-links > .headerHostButton').should('contain.text', 'Switch to Guest');
+    });
+
+    
+    it('should be able open the first host chat and verify the message from the Guest', () => {
+        cy.loginAsHost();
+        cy.get('.dashboardSection > :nth-child(5)').click();
+        cy.wait(100);
+        cy.get('.contact-list-list-item').click();
+        cy.get('.host-chat-screen').should('be.visible');
+        cy.get('h3').first().then(($person) => {
+            cy.get('.contact-item-full-name').should('contain.text', $person.text());
+        });
+        cy.get(':nth-child(1) > .message-content').should('contain.text', 'Hello I am guest, ' +randomText);
+    });
+    
+
+    it('should generate random text example and send a reply to guest as a Host', () => {
+        cy.loginAsHost();
+
+        cy.get('.dashboardSection > :nth-child(5)').click();
+        cy.get('.contact-list-list-item').click();
+        cy.get('.message-input-textarea').type('Hi I am host, ' +randomText);
+        cy.get('.message-input-send-button').click();
+        cy.reload();
+
+        cy.get('.dashboardSection > :nth-child(5)').click();
+        cy.get('.contact-list-list-item').click();
+        cy.get(':nth-child(1) > .message-content').should('have.text', 'Hi I am host, ' +randomText);   
+    });
+
+    it('should be able login as a Guest and verify the message from the Host as a Guest', () => {
+        cy.loginAsGuest();
+
+        cy.get('.dashboardSections > :nth-child(3)').click();
+        cy.wait(100);
+        cy.get('.guest-contact-list-list-item').click();
+        cy.get('.guest-chat-screen').should('be.visible');
+        cy.get('h3').first().then(($person) => {
+            cy.get('.guest-contact-item-full-name').should('contain.text', $person.text());
+        });
+        cy.get(':nth-child(1) > .guest-message-content').should('contain.text', 'Hi I am host, ' +randomText);
     });
 });
