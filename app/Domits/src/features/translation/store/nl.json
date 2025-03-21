@@ -6,9 +6,14 @@
     "guests": "Gast(en)",
     "per night": "per nacht",
     "bookings": "Boekingen",
+    "book": "Boek",
     "logout": "Uitloggen",
     "delete account": "Verwijder account",
     "language": "Taal",
-    "select a language": "Kies een taal"
+    "select a language": "Kies een taal",
+    "amenities": "Voorzieningen",
+    "show all amenities": "Toon alle voorzieningen",
+    "hosted by": "Aangeboden door",
+    "what does this place have to offer?": "Wat voor voorzieningen biedt deze plek?"
   }
 }
