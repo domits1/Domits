@@ -159,7 +159,7 @@ body.hide-header .app-header {
   padding-left: 10px;
 }
 
-h1 {
+.Places-text {
   color: rgb(0, 0, 0);
   margin-left: 60px;
   margin-bottom: 20px;
@@ -1012,7 +1012,7 @@ h1 {
 }
 
 @media (max-width: 400px) {
-  h1 {
+  .Places-text {
     color: rgb(0, 0, 0);
     margin-left: 0px;
     margin-bottom: 20px;

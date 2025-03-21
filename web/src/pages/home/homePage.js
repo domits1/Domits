@@ -417,7 +417,7 @@ const Homepage = () => {
           </div>
         </div>
 
-        <h1>Countries in Europe</h1>
+        <h1 className="Places-text">Countries in Europe</h1>
         <div className="countries-container">
           {countries.map((country, index) => (
             <div className="country-card" key={index}>
@@ -440,7 +440,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1>Destinations in Asia</h1>
+        <h1 className="Places-text">Destinations in Asia</h1>
         <div className="asia-countries-container">
           {asiaCountries.map((country, index) => (
             <div className="country-card asia-country-card" key={index}>
@@ -462,7 +462,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1>Islands in the Caribbean</h1>
+        <h1 className="Places-text">Islands in the Caribbean</h1>
         <div className="caribbean-countries-container">
           {caribbeanCountries.map((country, index) => (
             <div className="country-card caribbean-country-card" key={index}>
@@ -484,7 +484,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1>Popular ski destinations</h1>
+        <h1 className="Places-text">Popular ski destinations</h1>
         <div className="ski-countries-container">
           {skiCountries.map((country, index) => (
             <div className="country-card ski-country-card" key={index}>
@@ -496,7 +496,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1>Favorites by Season</h1>
+        <h1 className="Places-text">Favorites by Season</h1>
         <div className="seasons-container">
           {seasons.map((season, index) => (
             <div className="season-card" key={index}>
@@ -507,7 +507,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1>Great picks by interest</h1>
+        <h1 className="Places-text">Great picks by interest</h1>
         <div className="interests-container">
           {interests.map((interest, index) => (
             <div className="interest-card" key={index}>
@@ -519,7 +519,7 @@ const Homepage = () => {
             </div>
           ))}
         </div>
-        <h1>Accommodations by group</h1>
+        <h1 className="Places-text">Accommodations by group</h1>
         <div className="groups-container">
           {groups.map((group, index) => (
             <div className="group-card" key={index}>

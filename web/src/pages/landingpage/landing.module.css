@@ -35,6 +35,10 @@ body {
     /* Override the filter styles */
 }
 
+.lol {
+    background: red;
+}
+
 .iconsContainer {
     display: flex;
     justify-content: space-between;
@@ -48,10 +52,7 @@ body {
 
 /* Responsive First Section */
 .firstSection {
-    display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 5%;
 }
 
 .firstPicture {
@@ -331,8 +332,6 @@ body {
     /* Stack icons vertically */
     justify-content: flex-start;
     align-items: center;
-    background-color: #f9f9f9;
-    height: 100vh;
     /* Full height of the viewport */
     padding: 10px;
     overflow-y: auto;
@@ -504,6 +503,7 @@ body {
     width: 50%;
     margin-left: 10%;
     text-align: left;
+    margin-top: 105px;
 }
 
 .whyHostText h1 {
@@ -680,6 +680,7 @@ body {
     text-align: center;
     border: 2px solid #003366;
     border-radius: 1px;
+    margin-left: 750px;
 }
 
 .clientReviewMobile img {

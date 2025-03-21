@@ -230,7 +230,7 @@ function Landing() {
     <main className={styles.container}>
       <div className={styles.firstSection}>
         <div className={styles.MainText}>
-          <h1>
+          <h1 className="lol">
             List your{" "}
             <span className={styles.textContainer}>
               <div className={styles.textAnimated}>
