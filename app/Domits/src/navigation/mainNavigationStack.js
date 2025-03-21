@@ -12,7 +12,7 @@ import BookingProcess from "../features/bookingengine/screens/BookingEngineScree
 import simulateStripe from "../features/bookingengine/simulateStripe";
 import paymentAccepted from "../features/bookingengine/screens/PaymentAcceptedScreen";
 import paymentDeclined from "../features/bookingengine/screens/PaymentDeclinedScreen";
-import guestBookings from "../screens/guestdashboard/GuestBookingsTab";
+import guestBookings from "../screens/guestdashboard/screens/GuestBookingsTab";
 import Landing from "../screens/Landing";
 import profile from "../screens/guestdashboard/GuestProfileTab";
 import paymentMethods from "../screens/guestdashboard/GuestPaymentsTab";
