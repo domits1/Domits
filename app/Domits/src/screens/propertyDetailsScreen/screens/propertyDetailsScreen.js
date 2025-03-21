@@ -11,8 +11,8 @@ import {
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
 import featureIcons from '../../../ui-components/FeatureIcons';
-import FetchOwnerData from '../../../features/search/FetchOwnerData';
-import FetchAccommodation from '../../../features/search/FetchAccommodation';
+import FetchOwnerData from '../../../features/search/hooks/FetchOwnerData';
+import FetchAccommodation from '../../../features/search/hooks/FetchAccommodation';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {styles} from "../styles/propertyDetailsStyles";
 import AmenitiesPopup from "../components/AmenitiesPopup";
