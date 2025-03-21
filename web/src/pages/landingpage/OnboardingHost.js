@@ -1052,12 +1052,7 @@ function OnboardingHost() {
         const file = imageFiles[i];
         if (file) {
           await uploadImagesInDifferentSizes(file, userId, AccoID, i);
-          updatedFormData.Images[`image${i + 1}`] = constructURL(
-            userId,
-            AccoID,
-            i,
-            "mobile",
-          );
+          updatedFormData.Images[`imageda
           updatedFormData.Images[`image${i + 1}`] = constructURL(
             userId,
             AccoID,
@@ -1080,15 +1075,14 @@ function OnboardingHost() {
       const method = isNew ? "POST" : "PUT";
 
       const response = await fetch(
-        `https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/${endpoint}`,
-        {
-          method: method,
+        `{
+          method,
           body: JSON.stringify(updatedFormData),
           headers: {
             "Content-Type": "application/json",
           },
         },
-      );
+      )
 
       if (response.ok) {
         console.log(
@@ -1104,7 +1098,7 @@ function OnboardingHost() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   const [imageFiles, setImageFiles] = useState(
     Array.from({ length: 5 }, () => null),
