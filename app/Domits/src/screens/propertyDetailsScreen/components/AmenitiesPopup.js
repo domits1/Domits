@@ -1,7 +1,8 @@
 import {Image, Modal, ScrollView, Text, TouchableOpacity, View} from "react-native";
-import {styles} from "../styles/listingDetailStyles";
+import {styles} from "../styles/propertyDetailsStyles";
 import featureIcons from "../../../ui-components/FeatureIcons";
 import React from "react";
+import TranslatedText from "../../../features/translation/components/TranslatedText";
 
 const AmenitiesPopup = ({features, onClose}) => {
     return (
@@ -12,7 +13,7 @@ const AmenitiesPopup = ({features, onClose}) => {
                         <Text style={styles.closeButtonText}>✖</Text>
                     </TouchableOpacity>
                     <Text style={styles.modalTitle}>
-                        What does this place have to offer?
+                        <TranslatedText textToTranslate={"what does this place have to offer?"}/>
                     </Text>
                     <ScrollView>
                         {Object.keys(features).map(category => {
