@@ -6,9 +6,14 @@
     "guests": "Guest(s)",
     "per night": "per night",
     "bookings": "Bookings",
+    "book": "Book",
     "logout": "Logout",
     "delete account": "Delete account",
     "language": "Language",
-    "select a language": "Select a language"
+    "select a language": "Select a language",
+    "amenities": "Amenities",
+    "show all amenities": "Show all amenities",
+    "hosted by": "Hosted by",
+    "what does this place have to offer?": "What does this place have to offer?"
   }
 }
