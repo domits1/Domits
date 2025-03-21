@@ -1,7 +1,5 @@
-/* Login.css */
-
-.registerButton {
-    width: 110%;
+.module-registerButton {
+    width: 100%;
     padding: 8px 15px;
     margin-top: 15px;
     background: var(--secondary-color);
@@ -16,11 +14,11 @@
     cursor: pointer;
 }
 
-.registerButton:hover {
+.module-registerButton:hover {
     background: #4a86c3;
 }
 
-.registerTitle {
+.module-registerTitle {
     color: black;
     font-size: 30px;
     font-family: 'Kanit', sans-serif;
@@ -30,18 +28,16 @@
     margin-top: 30px;
 }
 
-.registerContainer {
+.module-registerContainer {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: center;
-
 }
 
-.registerForm {
+.module-registerForm {
     margin-top: 20px;
-    min-width: 300px;
-    width: 25%;
+    max-width: 300px;
+    width: 100%;
     padding: 10px 30px;
     margin-bottom: 50px;
     box-sizing: border-box;
@@ -51,8 +47,9 @@ label {
     font-size: 18px;
 }
 
-.registerInput {
+.module-registerInput {
     width: 100%;
+    max-width: 200px;
     height: auto;
     padding: 8px 15px;
     margin-top: 5px;
@@ -65,15 +62,8 @@ label {
     align-items: center;
     display: inline-flex;
 }
-.selected-flag{
-    background-color: white;
-}
-.flag-dropdown {
-    border: 5px solid #cacaca;
-    /* border-radius: 3px 0 0 3px; */
-}
 
-.alreadyAccountText {
+.module-alreadyAccountText {
     color: black;
     margin-top: 10px;
     font-size: 14px;
@@ -84,12 +74,12 @@ label {
     align-self: flex-start;
 }
 
-.inputError {
+.module-inputError {
     animation: shake 0.3s linear;
     border-color: red;
 }
 
-.inputShake {
+.module-inputShake {
     animation: shake 0.5s;
 }
 
@@ -111,13 +101,13 @@ label {
     }
 }
 
-.errorText {
+.module-errorText {
     color: rgb(255, 255, 255);
     font-size: 16px;
     margin-top: 5px;
 }
 
-.signOutButton {
+.module-signOutButton {
     background-color: #003366;
     color: #fff;
     height: 45px;
@@ -133,13 +123,13 @@ label {
     font-size: 1rem;
 }
 
-.signOutButton:hover {
+.module-signOutButton:hover {
     background-color: #335e89;
     cursor: pointer;
     transition: background-color .3s ease-out;
 }
 
-.signOutDiv {
+.module-signOutDiv {
     display: flex;
     width: 100%;
     justify-content: center;
@@ -147,7 +137,7 @@ label {
     padding-top: 4%;
 }
 
-.strength-container {
+.module-strength-container {
     display: none;
     margin-top: 10px;
     padding: 10px;
@@ -156,47 +146,25 @@ label {
     background-color: #f9f9f9;
 }
 
-#strength-bar {
+#module-strength-bar {
     height: 10px;
     border-radius: 5px;
     transition: width 0.3s ease;
 }
 
-.strength-text {
+.module-strength-text {
     margin-top: 5px;
     font-size: 10px;
     color: #333;
 }
 
-
-.requirements {
+.module-requirements {
     margin-top: 5px;
 }
 
-.requirements label {
+.module-requirements label {
     display: flex;
     align-items: center;
     margin: 3px 0;
     font-size: 10px;
-}
-
-
-.bad {
-    width: 10%;
-    background-color: red;
-}
-
-.weak {
-    width: 33%;
-    background-color: red;
-}
-
-.medium {
-    width: 66%;
-    background-color: orange;
-}
-
-.strong {
-    width: 100%;
-    background-color: green;
 }

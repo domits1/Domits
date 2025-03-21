@@ -201,9 +201,9 @@ function Header({ setSearchResults, setLoading }) {
           <button onClick={navigateToPayments} className="dropdownLoginButton">
             Payments
           </button>
-          <button onClick={navigateToReviews} className="dropdownLoginButton">
+          {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
             Reviews
-          </button>
+          </button> */}
           <button onClick={navigateToSettings} className="dropdownLoginButton">
             Settings
           </button>
