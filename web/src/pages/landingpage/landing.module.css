@@ -680,7 +680,7 @@ body {
     text-align: center;
     border: 2px solid #003366;
     border-radius: 1px;
-    margin-left: 750px;
+    margin-left: 710px;
 }
 
 .clientReviewMobile img {
@@ -801,671 +801,159 @@ body {
     padding: 4% 0;
 }
 
-/* Media Queries for responsiveness */
+/* Responsive Styles for Client Elements */
 @media (max-width: 1024px) {
-    .iconsContainer {
-        flex-direction: column;
-        height: auto;
-        padding: 10px;
-    }
-}
-
-@media (max-width: 768px) {
-    .iconsContainer {
-        flex-direction: column;
-        height: auto;
-        padding: 5px;
-    }
-}
-
-@media (max-width: 480px) {
-    .iconsContainer {
-        flex-direction: column;
-        height: auto;
-        padding: 2px;
-    }
-}
-
-/* Media Queries */
-@media (max-width: 1024px) {
-    .firstPicture {
-        width: 39%;
-    }
-}
-
-@media (max-width: 768px) {
-    .container {
-        width: auto;
-        margin: 0.625rem 0;
-    }
-
-    .MainText h1,
-    .WhyHow_text h1 {
-        font-size: 1.6rem;
-    }
-
-    .SecPicture {
-        width: 45%;
-        height: 60%;
-    }
-
-    .checkListItem__header {
-        text-align: center;
-    }
-
-    .personal__advice img {
-        width: 50%;
-        height: auto;
-    }
-
-    .clientRevieuw {
-        display: none;
-    }
-
-    .clientReviewMobile {
-        visibility: visible;
-        height: 40vh;
-    }
-
     .client_text {
-        width: 100%;
-        margin: 1rem 0;
-        padding: 1.25rem;
-    }
-
-    .client_text p {
-        font-size: 1rem;
+        width: 40%;
+        padding: 1.5rem;
     }
 
     .client_text h2 {
-        font-size: 1.2rem;
-    }
-
-    .clientReview {
-        width: 100%;
-    }
-
-    .firstPicture {
-        width: 46%;
-    }
-
-    .clientReview .reviewSlide {
-        flex-direction: column;
-    }
-
-    .reviewText {
-        margin-bottom: 1rem;
-    }
-
-    .clientDetails {
-        flex-direction: column;
-    }
-
-    .clientInfo {
-        margin: 10px 0 0;
-    }
-
-    .clientReview img {
-        width: 60px;
-        height: 60px;
-    }
-
-    .clientReviewMobile {
-        width: auto;
-    }
-
-    .clientReviewMobile .reviewSlide {
-        flex-direction: column;
-    }
-}
-
-@media (max-width: 480px) {
-    .container {
-        width: auto;
-    }
-
-    .firstSection {
-        display: flex;
-        flex-direction: column-reverse;
-    }
-
-    .MainText {
-        width: 85vw;
-        margin: 10px;
-        padding: 5%;
-        backdrop-filter: blur(0.25rem);
-        border-radius: 1.5rem;
-        background: rgba(0, 0, 0, 0.383);
-        position: absolute;
-        left: 47%;
-        transform: translateX(-50%);
-    }
-
-    .MainText h1 {
-        font-size: 1.5rem;
-        color: white;
-    }
-
-    .MainText p {
-        font-size: 1rem;
-        color: white;
-    }
-
-    .firstPicture img {
-        border-radius: 0;
-        width: 100vw;
-        object-fit: contain;
-    }
-
-    .easyHosting .easyHosting_text h1 {
-        font-size: 1.5rem;
-    }
-
-    .threeSteps {
-        flex-direction: column;
-    }
-
-    .steps {
-        width: auto;
-        margin: 0 5%;
-    }
-
-    .whyHost {
-        flex-direction: column;
-    }
-
-    .SecPicture img {
-        border-radius: 0;
-        width: 100vw;
-        object-fit: contain;
-    }
-
-    .whyHostText h1,
-    .whyHostText p {
-        width: 80vw;
-    }
-
-    .simpleSafe .SimpleSafeAllCards {
-        flex-direction: column;
-    }
-
-    .simpleSafeCards {
-        margin-bottom: 2%;
-    }
-
-    .simpleSafeCards img {
-        width: 10vw;
-        height: auto;
-        max-width: none;
-        align-self: start;
-    }
-
-    .safeMiniText h3 {
-        margin: 0;
-    }
-
-    .checkList h1 {
-        font-size: 1.5rem;
-    }
-
-    .checkList .subText {
-        font-size: 0.8rem;
-    }
-
-    .checkListItems {
-        flex-direction: column;
-        margin: 0 5%;
-    }
-
-    .checkListItem {
-        width: 80vw;
-    }
-
-    .checkListItem__text {
-        max-width: none;
-    }
-
-    .faq .faq__header img {
-        max-width: none;
-        width: auto;
-    }
-
-    .faq .faq__header h1 {
-        font-size: 1.5rem;
-    }
-
-    .faq .landing__faq {
-        width: 80vw;
-    }
-
-    .personal__advice {
-        flex-direction: column;
-    }
-
-    .personal__advice__left {
-        position: absolute;
-        padding: 0.5rem;
-        backdrop-filter: blur(0.25rem);
-        background: rgba(0, 0, 0, 0.383);
-        width: 80%;
-        height: auto;
-        left: 50%;
-        transform: translateX(-50%);
-        margin: 0;
-        border-radius: 0 0 2rem 2rem;
-        color: white;
-    }
-
-    .personal__advice__left h1 {
-        font-size: 1.75rem;
-    }
-
-    .personal__advice__left h3 {
-        font-size: 0.75rem;
-    }
-
-    .personal__advice img {
-        width: auto;
-        height: auto;
-        object-fit: cover;
-    }
-}
-
-@media (max-width: 320px) {
-    .clientReviewMobile {
-        visibility: visible;
-        height: 40vh;
-    }
-
-    .clientRevieuw {
-        display: none;
-    }
-
-    .client_text {
-        padding: 1rem;
+        font-size: 1.3rem;
     }
 
     .client_text p {
         font-size: 0.9rem;
     }
 
-    .client_text h2 {
-        font-size: 1rem;
-    }
-
-    .clientReview {
-        width: 100%;
-    }
-
-    .firstPicture {
-        width: 46%;
-    }
-
-    .clientReview .reviewSlide {
-        flex-direction: column;
-    }
-
-    .reviewText {
-        margin-bottom: 1rem;
-    }
-
-    .clientDetails {
-        flex-direction: column;
-    }
-
-    .clientInfo {
-        margin: 10px 0 0;
-    }
-
-    .clientReview img {
+    .client_text img {
         width: 60px;
         height: 60px;
     }
 
-    .clientReviewMobile {
-        width: auto;
+    .clientRevieuw {
+        gap: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .client_text {
+        width: 80%;
+        padding: 1rem;
+        margin: 1rem auto;
     }
 
-    .clientReviewMobile .reviewSlide {
+    .client_text h2 {
+        font-size: 1.2rem;
+    }
+
+    .client_text p {
+        font-size: 0.85rem;
+    }
+
+    .client_text img {
+        width: 50px;
+        height: 50px;
+    }
+
+    .clientRevieuw {
         flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .client_text {
+        width: 100%;
+        padding: 0.8rem;
+        margin: 1rem auto;
     }
 
-    /* Additional Media Queries for better responsiveness */
-    @media (max-width: 1024px) {
-        .firstPicture {
-            width: 39%;
-        }
+    .client_text h2 {
+        font-size: 1rem;
     }
 
-    @media (max-width: 768px) {
-        .container {
-            width: auto;
-            margin: 0.625rem 0;
-        }
-
-        .MainText h1,
-        .WhyHow_text h1 {
-            font-size: 1.6rem;
-        }
-
-        .SecPicture {
-            width: 45%;
-            height: 60%;
-        }
-
-        .checkListItem__header {
-            text-align: center;
-        }
-
-        .personal__advice img {
-            width: 50%;
-            height: auto;
-        }
-
-        .clientRevieuw {
-            display: none;
-        }
-
-        .clientReviewMobile {
-            visibility: visible;
-            height: 40vh;
-        }
-
-        .client_text {
-            width: 100%;
-            margin: 1rem 0;
-            padding: 1.25rem;
-        }
-
-        .client_text p {
-            font-size: 1rem;
-        }
-
-        .client_text h2 {
-            font-size: 1.2rem;
-        }
-
-        .clientReview {
-            width: 100%;
-        }
-
-        .firstPicture {
-            width: 46%;
-        }
-
-        .clientReview .reviewSlide {
-            flex-direction: column;
-        }
-
-        .reviewText {
-            margin-bottom: 1rem;
-        }
-
-        .clientDetails {
-            flex-direction: column;
-        }
-
-        .clientInfo {
-            margin: 10px 0 0;
-        }
-
-        .clientReview img {
-            width: 60px;
-            height: 60px;
-        }
-
-        .clientReviewMobile {
-            width: auto;
-        }
-
-        .clientReviewMobile .reviewSlide {
-            flex-direction: column;
-        }
+    .client_text p {
+        font-size: 0.8rem;
     }
 
-    @media (max-width: 480px) {
-        .container {
-            width: auto;
-        }
-
-        .firstSection {
-            display: flex;
-            flex-direction: column-reverse;
-        }
-
-        .MainText {
-            width: 85vw;
-            margin: 10px;
-            padding: 5%;
-            backdrop-filter: blur(0.25rem);
-            border-radius: 1.5rem;
-            background: rgba(0, 0, 0, 0.383);
-            position: absolute;
-            left: 47%;
-            transform: translateX(-50%);
-        }
-
-        .MainText h1 {
-            font-size: 1.5rem;
-            color: white;
-        }
-
-        .MainText p {
-            font-size: 1rem;
-            color: white;
-        }
-
-        .firstPicture img {
-            border-radius: 0;
-            width: 100vw;
-            object-fit: contain;
-        }
-
-        .easyHosting .easyHosting_text h1 {
-            font-size: 1.5rem;
-        }
-
-        .threeSteps {
-            flex-direction: column;
-        }
-
-        .steps {
-            width: auto;
-            margin: 0 5%;
-        }
-
-        .whyHost {
-            flex-direction: column;
-        }
-
-        .SecPicture img {
-            border-radius: 0;
-            width: 100vw;
-            object-fit: contain;
-        }
-
-        .whyHostText h1,
-        .whyHostText p {
-            width: 80vw;
-        }
-
-        .simpleSafe .SimpleSafeAllCards {
-            flex-direction: column;
-        }
-
-        .simpleSafeCards {
-            margin-bottom: 2%;
-        }
-
-        .simpleSafeCards img {
-            width: 10vw;
-            height: auto;
-            max-width: none;
-            align-self: start;
-        }
-
-        .safeMiniText h3 {
-            margin: 0;
-        }
-
-        .checkList h1 {
-            font-size: 1.5rem;
-        }
-
-        .checkList .subText {
-            font-size: 0.8rem;
-        }
-
-        .checkListItems {
-            flex-direction: column;
-            margin: 0 5%;
-        }
-
-        .checkListItem {
-            width: 80vw;
-        }
-
-        .checkListItem__text {
-            max-width: none;
-        }
-
-        .faq .faq__header img {
-            max-width: none;
-            width: auto;
-        }
-
-        .faq .faq__header h1 {
-            font-size: 1.5rem;
-        }
-
-        .faq .landing__faq {
-            width: 80vw;
-        }
-
-        .personal__advice {
-            flex-direction: column;
-        }
-
-        .personal__advice__left {
-            position: absolute;
-            padding: 0.5rem;
-            backdrop-filter: blur(0.25rem);
-            background: rgba(0, 0, 0, 0.383);
-            width: 80%;
-            height: auto;
-            left: 50%;
-            transform: translateX(-50%);
-            margin: 0;
-            border-radius: 0 0 2rem 2rem;
-            color: white;
-        }
-
-        .personal__advice__left h1 {
-            font-size: 1.75rem;
-        }
-
-        .personal__advice__left h3 {
-            font-size: 0.75rem;
-        }
-
-        .personal__advice img {
-            width: auto;
-            height: auto;
-            object-fit: cover;
-        }
+    .client_text img {
+        width: 40px;
+        height: 40px;
     }
 
-    /* Media Queries for responsiveness */
-    @media (max-width: 1024px) {
-        .checkListItems {
-            grid-template-columns: repeat(2, 1fr);
-            margin: 0 10%;
-        }
-
-        .checkListItem span {
-            max-width: 30vw;
-        }
+    .clientRevieuw h1 {
+        font-size: 1.5rem;
     }
 
-    @media (max-width: 768px) {
-        .checkListItems {
-            grid-template-columns: 1fr;
-            margin: 0 5%;
-        }
+    .clientRevieuw {
+        gap: 0.8rem;
+    }
+}
 
-        .checkListItem span {
-            max-width: 80vw;
-        }
+/* Responsive Styles for WhyHost Section */
+@media (max-width: 1024px) {
+    .whyHost {
+        flex-direction: column;
+        align-items: center;
+        padding: 3% 0;
     }
 
-    @media (max-width: 480px) {
-        .checkListItems {
-            grid-template-columns: 1fr;
-            margin: 0 2%;
-        }
-
-        .checkListItem span {
-            max-width: 90vw;
-        }
+    .SecPicture {
+        width: 70%;
+        height: auto;
+        margin-bottom: 2rem;
     }
 
-    @media (max-width: 320px) {
-        .clientReviewMobile {
-            visibility: visible;
-            height: 40vh;
-        }
+    .whyHostText {
+        width: 80%;
+        margin: 0 auto;
+        text-align: center;
+    }
 
-        .clientRevieuw {
-            display: none;
-        }
+    .whyHostText h1 {
+        font-size: 1.8rem;
+    }
 
-        .client_text {
-            padding: 1rem;
-        }
+    .whyHostText p {
+        font-size: 1rem;
+    }
+}
 
-        .client_text p {
-            font-size: 0.9rem;
-        }
+@media (max-width: 768px) {
+    .whyHost {
+        padding: 2% 0;
+    }
 
-        .client_text h2 {
-            font-size: 1rem;
-        }
+    .SecPicture {
+        width: 90%;
+    }
 
-        .clientReview {
-            width: 100%;
-        }
+    .whyHostText {
+        width: 90%;
+    }
 
-        .firstPicture {
-            width: 46%;
-        }
+    .whyHostText h1 {
+        font-size: 1.6rem;
+    }
 
-        .clientReview .reviewSlide {
-            flex-direction: column;
-        }
+    .whyHostText p {
+        font-size: 0.95rem;
+    }
+}
 
-        .reviewText {
-            margin-bottom: 1rem;
-        }
+@media (max-width: 480px) {
+    .whyHost {
+        padding: 1% 0;
+    }
 
-        .clientDetails {
-            flex-direction: column;
-        }
+    .SecPicture {
+        width: 100%;
+    }
 
-        .clientInfo {
-            margin: 10px 0 0;
-        }
+    .whyHostText {
+        width: 100%;
+        padding: 5%;
+        background: rgba(0, 0, 0, 0.05);
+        border-radius: 1rem;
+    }
 
-        .clientReview img {
-            width: 60px;
-            height: 60px;
-        }
+    .whyHostText h1 {
+        font-size: 1.4rem;
+    }
 
-        .clientReviewMobile {
-            width: auto;
-        }
-
-        .clientReviewMobile .reviewSlide {
-            flex-direction: column;
-        }
+    .whyHostText p {
+        font-size: 0.85rem;
     }
 }
