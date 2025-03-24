@@ -12,7 +12,7 @@ describe('Testing the About page of Domits', () => {
         cy.get('.main-footer').scrollIntoView();
     });
 
-    it.only('should load the About page successfully', () => {
+    it('should load the About page successfully', () => {
         cy.url().should('eq','https://www.domits.com/about');
         cy.title().should('not.be.empty').then((pageTitle) => {
             cy.log('The page title is: ' + pageTitle);
