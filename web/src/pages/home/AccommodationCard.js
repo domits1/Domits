@@ -1,6 +1,6 @@
-import React, {useState} from "react";
-import {Swiper, SwiperSlide} from 'swiper/react';
-import './Accommodations.css';
+import React, { useState } from "react";
+import { Swiper, SwiperSlide } from 'swiper/react';
+import './styles/Accommodations.css';
 import 'swiper/css';
 import 'swiper/css/effect-fade';
 import 'swiper/css/navigation';
@@ -81,7 +81,7 @@ const AccommodationCard = ({ accommodation, onClick} ) => {
             </div>
         </div>
     );
-};
-
+  };
+  
 
 export default AccommodationCard;

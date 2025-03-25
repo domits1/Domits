@@ -4,7 +4,7 @@ import {useNavigate} from 'react-router-dom';
 import dateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 
 import Pages from './Pages.js';
-import './paymentsguestdashboard.css';
+import './styles/paymentsguestdashboard.css';
 
 const BookingGuestDashboard = () => {
     const navigate = useNavigate();

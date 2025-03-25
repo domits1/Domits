@@ -34,3 +34,4 @@ amplifytools.xcconfig
 .vscode/
 app/.idea/
 
+package-lock.json

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import styles from "./ReviewPage.module.css";
+import styles from "./styles/ReviewPage.module.css";
 import { Auth } from "aws-amplify";
 import { useLocation, useNavigate } from "react-router-dom";
 import spinner from "../../images/spinnner.gif";

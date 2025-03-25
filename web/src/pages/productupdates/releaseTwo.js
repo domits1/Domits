@@ -1,5 +1,5 @@
 import React from 'react';
-import './releaseTwo.css';
+import './styles/releaseTwo.css';
 import note1 from '../../images/house.jpeg';
 import note2 from '../../images/phone1.webp';
 import search from '../../images/search.webp';
