@@ -169,11 +169,11 @@ const HostReservations = () => {
         }
     }, [userId]);
     return (
-                    <main className="page-body">
-                        <section className={styles.reservationContainer}>
+            <main className="page-body">
+                <h2>Reservations</h2>
+                <section className={styles.reservationContainer}>
                 <Pages />
                 <section className={styles.reservationContent}>
-                    <h1 className={styles.header}>Manage reservations</h1>
                     <div className={styles.reservationInfo}>
                         <img src={info} className={styles.infoIcon}/>
                         <p>You can manage your reservations or booking requests here</p>

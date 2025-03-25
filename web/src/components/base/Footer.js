@@ -207,7 +207,11 @@ const Footer = () => {
       {/* Copyright Block */}
       <div className="footer-copyright">
         <p className="footer-copyright-text">
+<<<<<<< HEAD
           Rights reserved, Domits.com Â© {currentYear}
+=======
+          Rights reserved, Domits.com © {currentYear}
+>>>>>>> 911b193906330fcbf2f3b19157799a3d37c77f27
         </p>
       </div>
     </footer>

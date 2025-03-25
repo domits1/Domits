@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { Auth } from "aws-amplify"; // Import the Auth module
 import { validatePhoneNumber } from "../utils/validation";
 
-import { sendVerificationCode } from "../services/verificationServices"; // Import the service function
+import { sendVerificationCode } from "../services/HostVerifyServices"; // Import the service function
 
 export const usePhoneNumberForm = () => {
     const navigate = useNavigate(); // Initialize useNavigate

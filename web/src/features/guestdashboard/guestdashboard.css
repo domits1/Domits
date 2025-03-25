@@ -28,15 +28,20 @@
     flex-direction: row;
     justify-content: space-between;
     cursor: pointer;
-    margin-bottom: 10px;
+    margin-bottom: 15px;
     align-items: center;
-    min-width: 10vw;
-    width: 12.5rem;
-    border: 0.5px solid black;
+    width: 200px;
+    border: 0.1px solid black;
     border-radius: 15px;
     padding: 5px;
     box-sizing: border-box;
     transition: all 0.3s ease;
+    text-align: center;
+    height: 8vh;
+    padding-left: 1vh;
+    font-size: 1rem;
+    padding-right: 1rem;
+    justify-content: flex-start;
 }
 
 .wijzers img {
@@ -201,6 +206,8 @@
 
 .viewAllBooking {
     color: #0D9813;
+    text-decoration: none;
+
 }
 
 .bookingBox,
@@ -295,9 +302,9 @@
 
 .edit-icon-background {
     background-color: #0D9813;
-    border: 1px solid #0D9813;
     border-radius: 15px;
     padding: 0.4rem;
+    margin-left: 5%;
     width: 2rem;
     height: 2rem;
     text-align: center;

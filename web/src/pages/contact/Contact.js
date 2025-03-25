@@ -113,6 +113,48 @@ function Contact() {
 
     return (
         <div className="contact">
+            <div className="questionsContainer">
+                <h1>Frequently Asked Questions (FAQ)</h1>
+            <div className="buttonContactContainer">                
+            <button className="Contact-button">
+                <a href="/helpdesk-guest">Guest</a>
+            </button>
+      
+
+            <button className="Contact-button">
+                <a href="/helpdesk-host">Host</a>
+            </button>
+            </div>
+
+                <h1>Questions about a holiday home, boat or camper?</h1>
+                <p className="quistionText">
+                    Do you have a question about a holiday accommodation, booking, or payment? Check our Frequently Asked Questions (FAQ). Domits is an intermediary so you rent the holiday accommodation from the host.
+                </p>
+
+                <h1>Are you a host, property owner, or manager?</h1>
+                <p className="quistionText">
+                    We're always open for new holiday homes, boats, and campers. See on our hosting page how you can start within a couple of minutes for free. Or check our FAQ for hosts.
+                </p>
+
+                <h1>Address</h1>
+                <p className="quistionText">
+                    Domits<br />
+                    Kinderhuissingel 6k<br />
+                    2013 AS, Haarlem
+                </p>
+
+                <h1>Opening hours</h1>
+                <p className="quistionText">
+                    Monday to Friday via mail, chat, and phone between 09:00 and 17:00
+                </p>
+
+                <h1>Contact</h1>
+                <p className="quistionText">
+                    We are available to ensure optimal reachability across all time zones. The more specific you are in your reach out, the faster we can assist you! We always get back to you as soon as possible. Not received any response from us yet? Check your spam inbox.
+                </p>
+                <p className="quistionText">Mail: teamdomits@gmail.com</p>
+            </div>
+
             <div className="contactFormContainer">
                 <h1>Contact Form</h1>
                 <p>
@@ -172,48 +214,6 @@ function Contact() {
                         </ul>
                     </div>
                 </form>
-            </div>
-
-            <div className="questionsContainer">
-                <h1>Frequently Asked Questions (FAQ)</h1>
-            <div className="buttonContactContainer">                
-            <button className="Contact-button">
-                <a href="/helpdesk-guest">Guest</a>
-            </button>
-      
-
-            <button className="Contact-button">
-                <a href="/helpdesk-host">Host</a>
-            </button>
-            </div>
-
-                <h1>Questions about a holiday home, boat or camper?</h1>
-                <p className="quistionText">
-                    Do you have a question about a holiday accommodation, booking, or payment? Check our Frequently Asked Questions (FAQ). Domits is an intermediary so you rent the holiday accommodation from the host.
-                </p>
-
-                <h1>Are you a host, property owner, or manager?</h1>
-                <p className="quistionText">
-                    We're always open for new holiday homes, boats, and campers. See on our hosting page how you can start within a couple of minutes for free. Or check our FAQ for hosts.
-                </p>
-
-                <h1>Address</h1>
-                <p className="quistionText">
-                    Domits<br />
-                    Kinderhuissingel 6k<br />
-                    2013 AS, Haarlem
-                </p>
-
-                <h1>Opening hours</h1>
-                <p className="quistionText">
-                    Monday to Friday via mail, chat, and phone between 09:00 and 17:00
-                </p>
-
-                <h1>Contact</h1>
-                <p className="quistionText">
-                    We are available to ensure optimal reachability across all time zones. The more specific you are in your reach out, the faster we can assist you! We always get back to you as soon as possible. Not received any response from us yet? Check your spam inbox.
-                </p>
-                <p className="quistionText">Mail: teamdomits@gmail.com</p>
             </div>
         </div>
     );

@@ -10,6 +10,7 @@ import Homepage from "./pages/home/homePage.js";
 import About from "./pages/about/About";
 import Security from "./pages/security/security";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
+import Security from "./pages/security/security.js";
 import Release from "./pages/productupdates/release.js";
 import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import Datasafety from "./pages/datasafety/datasafety.js";
@@ -20,7 +21,9 @@ import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
 import HostOnboarding from "./pages/landingpage/OnboardingHost";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
-import HostMessages from "./features/hostdashboard/HostMessages";
+
+import HostProperty from "./features/hostdashboard/HostProperty";
+import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";
 import HostPayments from "./features/hostdashboard/HostPayments";
 import HostListings from "./features/hostdashboard/HostListings";
 import HostCalendar from "./features/hostdashboard/HostCalendar";
@@ -44,7 +47,7 @@ import GuestBooking from "./features/guestdashboard/GuestBooking";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
-import Chat from "./features/guestdashboard/chat/Chat.js";
+import GuestMessages from './features/guestdashboard/guestmessages/pages/guestMessages.js';
 import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
@@ -61,9 +64,15 @@ import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
 import HostSetup from "./features/hostdashboard/HostSetup";
 import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
+<<<<<<< HEAD
 import HostVerificationView from "./features/verification/hostverification/HostVerificationView.js";
 import PhoneNumberView from "./features/verification/hostverification/PhoneNumberView.js";
 import PhoneNumberConfirmView from "./features/verification/hostverification/PhoneNumberConfirmView.js";
+=======
+import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
+import PhoneNumberView from "./features/verification/hostverification/HostVerifyPhoneNumber.js";
+import PhoneNumberConfirmView from "./features/verification/hostverification/HostVerifyPhoneNumberConfirm.js";
+>>>>>>> 911b193906330fcbf2f3b19157799a3d37c77f27
 import { initializeUserAttributes } from "./utils/userAttributes";
 import PageNotFound from "./utils/error/404NotFound";
 import StripeCallback from "./features/stripe/StripeCallback";
@@ -85,6 +94,7 @@ import AccommodationTitleView from "./features/hostonboarding/views/PropertyName
 import DescriptionView from "./features/hostonboarding/views/PropertyDescriptionView.js";
 import PricingView from "./features/hostonboarding/views/PropertyRateView.js";
 import AvailabilityView from "./features/hostonboarding/views/PropertyCalendarAvailabilityView.js";
+<<<<<<< HEAD
 import RegistrationNumberView from "./features/verification/hostverification/RegistrationNumberView.js";
 import SummaryView from "./features/hostonboarding/views/SummaryView.js";
 
@@ -93,6 +103,15 @@ import "react-toastify/dist/ReactToastify.css";
 
 import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
 
+=======
+import RegistrationNumberView from "./features/verification/hostverification/HostVerifyRegistrationNumber.js";
+import SummaryView from "./features/hostonboarding/views/PropertyCheckOutAndCompletionView.js";
+
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import StepGuard from "./features/hostonboarding/hooks/StepGuard.js";
+
+>>>>>>> 911b193906330fcbf2f3b19157799a3d37c77f27
 import { Auth } from "aws-amplify";
 import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
@@ -191,6 +210,7 @@ function App() {
                   />
                   <Route path="/how-it-works" element={<Howitworks />} />
                   <Route path="/why-domits" element={<Whydomits />} />
+                  <Route path="/security" element={<Security />} />
                   <Route path="/contact" element={<Contact />} />
                   <Route path="/security" element={<Security />} />
                   <Route
@@ -212,18 +232,20 @@ function App() {
                     element={<BookingConfirmation />}
                   />
                   <Route
-                    path="/bookingconfirmationoverview"
+                    path="/paymentconfirmpage"
                     element={<PaymentConfirmPage />}
                   />
 
-                  {/* Chat */}
-                  <Route path="/chat" element={<Chat />} />
-                  <Route path="/employeechat" element={<EmployeeChat />} />
-                  <Route path="/chatbot" element={<Chatbot />} />
+                                    {/* Chat */}
+                                    <Route path="/chat" element={<GuestMessages />} />
+                                    <Route path="/employeechat" element={<EmployeeChat />} />
+                                    <Route path="/chatbot" element={<Chatbot />} />
 
-                  {/* Host Chatbot */}
+
                   <Route path="/hostchatbot" element={<Hostchatbot />} />
-
+                    {/* Host Chatbot */}
+                    {/* <Route path="/hostchatbot" element={<Hostchatbot />} /> */}
+                  
                   {/* Review */}
                   <Route path="/review" element={<ReviewPage />} />
 
@@ -236,10 +258,10 @@ function App() {
                           <Route path="/" element={<GuestDashboard />} />
                           <Route path="messages" element={<ListingDetails />} />
                           <Route path="payments" element={<GuestPayments />} />
-                          <Route path="reviews" element={<GuestReviews />} />
+                          {/* <Route path="reviews" element={<GuestReviews />} /> */}
                           <Route path="bookings" element={<GuestBooking />} />
                           <Route path="settings" element={<GuestSettings />} />
-                          <Route path="chat" element={<Chat />} />
+                          <Route path="chat" element={<GuestMessages />} />
                         </Routes>
                       </GuestProtectedRoute>
                     }
@@ -272,13 +294,14 @@ function App() {
                     element={
                       <HostProtectedRoute>
                         <Routes>
+                          <Route path="property" element={<HostProperty />} />
                           <Route path="listings" element={<HostListings />} />
                           <Route path="calendar" element={<HostCalendar />} />
                           <Route path="messages" element={<HostMessages />} />
                           <Route path="reporting" element={<HostPayments />} />
                           <Route path="settings" element={<HostSettings />} />
-                          <Route path="reviews" element={<HostReviews />} />
-                          <Route path="chat" element={<Hostchat />} />
+                          {/* <Route path="reviews" element={<HostReviews />} /> */}
+                          <Route path="chat" element={<HostMessages />} />
                           <Route
                             path="reservations"
                             element={<HostReservations />}
@@ -398,8 +421,8 @@ function App() {
                 </Routes>
                 {renderFooter()}
                 {currentPath !== "/admin" && <MenuBar />}
-                {renderChatWidget()}
-                <Hostchatbot />
+                {/* {renderChatWidget()} */}
+                {/* <Hostchatbot />  */}
               </div>
             </UserProvider>
           </AuthProvider>

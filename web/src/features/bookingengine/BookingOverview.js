@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Auth } from 'aws-amplify';
 import {Link, useNavigate} from 'react-router-dom';
-import { FlowProvider } from '../../services/FlowContext';
 import { loadStripe } from '@stripe/stripe-js';
 import "./bookingoverview.css";
-import Register from "../auth/Register";
+import RegisterModule from "../auth/RegisterModule";
 import DateFormatterDD_MM_YYYY from '../../utils/DateFormatterDD_MM_YYYY';
 import Calender from '@mui/icons-material/CalendarTodayOutlined';
 import People from '@mui/icons-material/PeopleAltOutlined';
@@ -41,10 +40,10 @@ const BookingOverview = () => {
     const adults = parseInt(searchParams.get('adults'), 10);
     const kids = parseInt(searchParams.get('kids'), 10);
     const pets = searchParams.get('pets');
-    const cleaningFee = parseFloat(searchParams.get('cleaningFee')) * 100;
+    const cleaningFee = parseFloat(searchParams.get('cleaningFee'));
     const amountOfGuest = searchParams.get('amountOfGuest');
-    const taxes = parseFloat(searchParams.get('taxes')) * 100;
-    const serviceFee = parseFloat(searchParams.get('serviceFee')) * 100;
+    const taxes = parseFloat(searchParams.get('taxes')); 
+    const ServiceFee = parseFloat(searchParams.get('ServiceFee'));
 
 
     const currentDomain = `${window.location.protocol}//${window.location.hostname}${window.location.port ? `:${window.location.port}` : ''}`;
@@ -132,13 +131,9 @@ const BookingOverview = () => {
         checkAuthentication();
     }, []);
 
-
-
-
     if (!bookingDetails || !accommodation) {
         return <div>Loading...</div>;
     }
-
 
     const calculateDaysBetweenDates = (startDate, endDate) => {
         const start = new Date(startDate);
@@ -164,7 +159,7 @@ const BookingOverview = () => {
         const accommodationId = id;
         const ownerId = accommodation.OwnerId;
         const basePrice = Math.round(accommodation.Rent * numberOfDays * 100);
-        const totalAmount = Math.round(basePrice * 1.15 + cleaningFee + taxes);
+        const totalAmount = Math.round(basePrice + cleaningFee * 100 + ServiceFee * 100 + taxes * 100);
         const startDate = checkIn;
         const endDate = checkOut;
 
@@ -175,12 +170,13 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Accepted",
-            price: totalAmount / 100,
+            price: accommodationPrice,
             startDate,
             endDate,
             cleaningFee,
             amountOfGuest,
-            taxes
+            taxes,
+            ServiceFee
         }).toString();
         const cancelQueryParams = new URLSearchParams({
             paymentID,
@@ -189,12 +185,13 @@ const BookingOverview = () => {
             accommodationId,
             ownerId,
             State: "Failed",
-            price: totalAmount / 100,
+            price: accommodationPrice,
             startDate,
             endDate,
             cleaningFee,
             amountOfGuest,
-            taxes
+            taxes,
+            ServiceFee
         }).toString();
 
         const successUrl = `${currentDomain}/bookingconfirmation?${successQueryParams}`;
@@ -245,7 +242,7 @@ const BookingOverview = () => {
         setIsProcessing(true);
         initiateStripeCheckout();
     };
-
+    
     return (
         <main className="booking-container" style={{ cursor: isProcessing ? 'wait' : 'default' }}>
         <div className="booking-header">
@@ -281,7 +278,7 @@ const BookingOverview = () => {
                 {!isLoggedIn ? (
                     <div>
                         <h2>Please Register or Log In to Continue</h2>
-                        <Register />
+                        <RegisterModule />
                     </div>
                 ) : (
                     <button
@@ -318,40 +315,33 @@ const BookingOverview = () => {
 
                     <div className="detail-row">
                         <span className="detail-label">Taxes:</span>
-                        <span className="detail-value">€ {(taxes / 100).toFixed(2)}</span>
+                        <span className="detail-value">€ {(taxes).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
-                        <span className="detail-label">Cleaning Fee:</span>
-                        <span className="detail-value">€ {(cleaningFee / 100).toFixed(2)}</span>
+                        <span className="detail-label">Cleaning fee:</span>
+                        <span className="detail-value">€ {(cleaningFee).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row">
-                        <span className="detail-label">Service Fee:</span>
-                        <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
-                    </div>
-                    <div className="detail-row">
-                        <span className="detail-label">Domits fee:</span>
-                        <span className="detail-value">€ {(serviceFee / 100).toFixed(2)}</span>
+                        <span className="detail-label">Service fee:</span>
+                        <span className="detail-value">€ {(ServiceFee).toFixed(2)}</span>
                     </div>
 
                     <div className="detail-row total-price">
                         <span className="detail-label">Total:</span>
                         <span className="detail-value">
-                        € {(accommodationPrice + cleaningFee/ 100 + taxes / 100 + serviceFee / 100).toFixed(2)}
+                            € {(accommodationPrice + cleaningFee / 100 + taxes + ServiceFee).toFixed(2)}
                         </span>
                     </div>
-                </div>
+                </div>  
             </div>
         </div>
     </main>
 
 
 
-
     );
-
-
 };
 
 export default BookingOverview;

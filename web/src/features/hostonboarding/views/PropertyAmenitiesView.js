@@ -1,4 +1,4 @@
-import { amenities } from "../constants/amenitiesData";
+import { amenities } from "../constants/propertyAmenitiesData";
 import AmenityCategory from "../components/AmenityCategory";
 import useFormStore from "../stores/formStore";
 import { useParams } from "react-router-dom";

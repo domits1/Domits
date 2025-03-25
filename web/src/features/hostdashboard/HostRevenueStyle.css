@@ -6,7 +6,6 @@
 
 .hr-container {
     margin: 0 auto;
-    padding: 20px;
     flex: 1; /* Takes up available space */
 }
 
@@ -19,13 +18,11 @@
 .hr-host-revenues {
     display: flex;
     flex-direction: row;
-    /* Remove the fixed height of 125vh */
-    min-height: 0; /* Allows content to fit properly */
-    height: 100%; /* Takes full height of container */
 }
 
 .hr-pages {
     margin-right: 20px;
+    margin-left: 67px;
 }
 
 .hr-content {

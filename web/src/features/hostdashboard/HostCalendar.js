@@ -162,6 +162,7 @@ function HostCalendar() {
 
     return (
         <div className="page-body">
+            <h2>Calendar</h2>
             <div className={styles.dashboardHost}>
                 <Pages/>
                 {isLoading ? (
@@ -181,7 +182,6 @@ function HostCalendar() {
                     ) :
                     <div className={calenderStyles.contentContainerCalendar}>
                         <div className={calenderStyles.calendarHeader}>
-                            <h2>Calendar</h2>
                             <button className={calenderStyles.exportICal} onClick={handleICal}>
                                 Export to calender
                             </button>

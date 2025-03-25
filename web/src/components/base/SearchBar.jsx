@@ -4,8 +4,8 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
 import {
-  FaTimes, FaSearchLocation, FaBuilding, FaHome, FaCaravan, FaHotel, FaDoorClosed,
-  FaShip, FaTree, FaSpinner, FaTimesCircle, FaUmbrellaBeach, FaUser, FaChild, FaBaby, FaPaw, FaSearch,
+  FaTimes, FaSearchLocation, FaHome, FaCaravan,FaDoorClosed,
+  FaShip,FaSpinner, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw,
 } from 'react-icons/fa';
 import ReactCountryFlag from "react-country-flag";
 import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
@@ -83,8 +83,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     toggleBar(!isBarActive);
 };
 
-
-  
   const totalGuestsDescription = useMemo(() => {
     const parts = [];
     if (adults > 0) parts.push(`${adults} Adult${adults > 1 ? 's' : ''}`);
@@ -171,12 +169,17 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
   useEffect(() => {
     if (location.state && location.state.searchResults) {
       setSearchResults(location.state.searchResults);
-    } else if (location.pathname === '/' && location.state && location.state.searchParams) {
+    } 
+    else if (
+      (location.pathname === '/' || location.pathname === '/home') &&
+      location.state &&
+      location.state.searchParams
+    ) {
       const { accommodation, address, totalGuests } = location.state.searchParams;
       setTimeout(() => {
         performSearch(accommodation, address, totalGuests);
-      }, 1000);  // Delay of 1000 milliseconds (1 second)
-    }
+      }, 1);
+    } 
   }, [location]);
 
   const performSearch = async (accommodation, address, totalGuests) => {
@@ -237,6 +240,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
       performSearch(accommodation, address, totalGuests);
     }
   };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleSearch();
@@ -296,7 +300,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     }
   }, [selectedDayRange]);
 
-  //voor de date format
+  //voor de date format in calendar
   function formatDateToEnglish(date) {
     const options = { day: 'numeric', month: 'short' };
     return date.toLocaleDateString('en-US', options);
@@ -436,13 +440,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                       value={accommodation ? {label: accommodation, value: accommodation} : null}
                       onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
                       options={[
-                        {value: 'Apartment', label: <><FaBuilding/> Apartment</>},
                         {value: 'House', label: <><FaHome/> House</>},
-                        {value: 'Villa', label: <><FaUmbrellaBeach/> Villa</>},
                         {value: 'Boat', label: <><FaShip/> Boat</>},
                         {value: 'Camper', label: <><FaCaravan/> Camper</>},
-                        {value: 'Cottage', label: <><FaTree/> Cottage</>},
-                        {value: 'Hotel', label: <><FaHotel/> Hotel</>},
                       ]}
                       isSearchable={false}
                       isClearable={true}

@@ -62,7 +62,7 @@ function Pages() {
                     <option value="/hostdashboard/calendar">Reservations</option>
                     <option value="/hostdashboard/chat">Messages</option>
                     <option value="/hostdashboard/reporting">Revenues</option>
-                    <option value="/hostdashboard/reviews">Reviews</option>
+                    {/* <option value="/hostdashboard/reviews">Reviews</option> */}
                     <option value="/hostdashboard/calendar">Housekeeping</option>
                     <option value="/hostdashboard/calendar">Finance</option>
                     <option value="/hostdashboard/pricing">Pricing</option>
@@ -89,14 +89,13 @@ function Pages() {
       </div>
       <div className="dashboardSection section-1 host-navigation">
         <div
-          className={`wijzer addAcco ${activeTab === "/enlist" ? "active" : ""}`}
-          onClick={() => handleNavigation("/enlist")}
-          style={{ maxWidth: 250 }}
+          className={`wijzer ${activeTab === "/hostonboarding" ? "active" : ""}`}
+          onClick={() => handleNavigation("/hostonboarding")}
         >
-          {/* <img src={add} alt="add"></img> */}
-          <div className="Mui">
+          {/* created a class for this container because the text is longer than the others, and therefore it doesn’t align properly.*/}
+          <div className="Mui-add">
           <AddIcon/></div>
-          <p>List your property</p>
+          <p className={`list-property-p`}>List your property</p>
         </div>
         <div
           className={`wijzer ${activeTab === "/hostdashboard" ? "active" : ""}`}
@@ -139,7 +138,7 @@ function Pages() {
           <RevenueIcon/></div>
           <p>Revenues</p>
         </div>
-        <div
+        {/* <div
           className={`wijzer ${activeTab === "/hostdashboard/reviews" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/reviews")}
         >
@@ -147,7 +146,7 @@ function Pages() {
           <div className="Mui">
           <RevieuwsIcon/></div>
           <p>Reviews</p>
-        </div>
+        </div> */}
         <div
           className={`wijzer ${activeTab === "/hostdashboard/housekeeping" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/housekeeping")}
@@ -203,7 +202,7 @@ function Pages() {
         {/*  <img src={dashboard} alt="Dashboard" />*/}
         {/*  <p>Screening</p>*/}
         {/*</div>*/}
-        <br />
+
         <div
           className={`wijzer ${activeTab === "/hostdashboard/listings" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/listings")}

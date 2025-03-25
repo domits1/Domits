@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import HouseRuleCheckbox from "../components/HouseRuleCheckbox";
 import TimeSelector from "../components/TimeSelector";
-import { useHouseRules } from "../hooks/useHouseRules";
+import { useHouseRules } from "../hooks/usePropertyHouseRules";
 import Button from "../components/button";
 
 function HouseRulesView() {

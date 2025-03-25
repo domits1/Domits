@@ -8,7 +8,8 @@
     align-items: center;
 }
 
-.headerButtons, .personalMenu {
+.headerButtons,
+.personalMenu {
     float: left;
     color: black;
     text-align: center;
@@ -23,16 +24,13 @@
     box-shadow: 0 0 5px hsl(0 0% 78%);
 }
 
-
-.textMenu{
+.textMenu {
     font-size: 11px;
 }
 
-.imgMenu{
+.imgMenu {
     font-size: 70px;
-
 }
-
 
 .personalMenu {
     border: none;
@@ -43,13 +41,13 @@
     display: flex;
 }
 
-.headerHostButton, .headerButtons {
+.headerHostButton,
+.headerButtons {
     border: none;
     background: none;
     box-shadow: none;
     margin-right: 10px;
 }
-
 
 .bottomPersonalMenuDropdownContent {
     position: relative;
@@ -102,7 +100,8 @@
     box-shadow: none;
 }
 
-.dropdownRegisterButton, .dropdownLogoutButton {
+.dropdownRegisterButton,
+.dropdownLogoutButton {
     margin-top: 10px;
     background-color: var(--secondary-color);
     border: none;
@@ -119,11 +118,11 @@
 
 .headerButtons {
     display: flex;
-    flex-direction: column; 
+    flex-direction: column;
     align-items: center;
-    justify-content: center; 
+    justify-content: center;
     margin: 10px;
-    gap: 8px; 
+    gap: 8px;
     color: black;
     text-align: center;
     padding: 12px;
@@ -132,18 +131,16 @@
     font-family: Kanit, sans-serif;
     cursor: pointer;
     width: auto;
-
 }
 
-.headerButtons img, .personalMenu img {
-    width: 24px; 
+.headerButtons img,
+.personalMenu img {
+    width: 24px;
     height: 24px;
 }
 
-.headerButtons:hover, .personalMenu
-
-
-.headerButtons:hover {
+.headerButtons:hover,
+.personalMenu:hover {
     background: #3fb3663a;
     padding: 12px;
 }
@@ -178,22 +175,21 @@
         width: auto;
         padding: 0 0 0 5px;
         margin: -23px 10px 0 20px;
-        gap: 1px ;
+        gap: 1px;
     }
 
     .menuButtons {
         flex-direction: row;
         justify-content: center;
-    }
-
-    .menuButtons {
         width: 100%;
         margin-top: 20px;
         align-items: center;
         margin-right: 15%;
     }
 
-    .headerButtons, .personalMenu, .Search-bar {
+    .headerButtons,
+    .personalMenu,
+    .Search-bar {
         width: 100%;
         margin-top: 10px;
         margin-right: 0;
@@ -264,6 +260,7 @@
     .personalMenu {
         width: 85%;
     }
+
     .nineDotsButton {
         margin-right: 4%;
         margin-left: -15%;
