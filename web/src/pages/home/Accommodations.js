@@ -5,13 +5,12 @@ import PageSwitcher from '../../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
-import FilterUi from "./FilterUi";  
+import FilterUi from "./FilterUi";
+import {FetchAllPropertyTypes} from "./services/fetchProperties";
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
   const [accommodationImages, setAccommodationImages] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingImages, setLoadingImages] = useState(true);
   const [filterLoading, setFilterLoading] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
 
@@ -42,62 +41,30 @@ const Accommodations = ({ searchResults }) => {
     }, 500);
   };
 
-  const fetchAllAccommodations = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/ReadAccommodation'
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch accommodation data');
-      }
-      const data = JSON.parse((await response.json()).body);
-      setAccolist(data);
-    } catch (error) {
-      console.error('Error fetching accommodation data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAccommodationImages = async () => {
-    try {
-      setLoadingImages(true);
-      const response = await fetch(
-        'https://lhp0t08na7.execute-api.eu-north-1.amazonaws.com/prod/getAllAccommodationImages'
-      );
-      if (!response.ok) {
-        throw new Error('Failed to fetch accommodation images');
-      }
-      const data = await response.json();
-      setAccommodationImages(data);
-    } catch (error) {
-      console.error('Error fetching accommodation images:', error);
-    } finally {
-      setLoadingImages(false);
-    }
-  };
-
   useEffect(() => {
-    // If there are search results, update the list, otherwise fetch all accommodations
-    if (searchResults && searchResults.length > 0) {
+    async function loadData() {
       setSearchLoading(true);
-      setTimeout(() => {
-        setAccolist(searchResults);
-        setCurrentPage(1);
-        setSearchLoading(false);
-      }, 500);
-    } else {
-      fetchAllAccommodations();
-      fetchAccommodationImages();
+      // If there are search results, update the list, otherwise fetch all accommodations
+      if (searchResults && searchResults.length > 0) {
+        setTimeout(() => {
+          setAccolist(searchResults);
+          setCurrentPage(1);
+          setSearchLoading(false);
+        }, 500);
+      } else {
+        const properties = await FetchAllPropertyTypes();
+        setAccolist(properties);
+      }
+      setSearchLoading(false);
     }
+    loadData();
   }, [searchResults]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
-  if (loading || loadingImages || filterLoading || searchLoading) {
+  if (filterLoading || searchLoading) {
     return (
       <div id="container">
         <div id="filters-sidebar">
@@ -125,7 +92,7 @@ const Accommodations = ({ searchResults }) => {
     }
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
-  return (
+  return <>(
     <div id="container">
       <div id="filters-sidebar">
         <FilterUi onFilterApplied={handleFilterApplied} />
@@ -133,13 +100,10 @@ const Accommodations = ({ searchResults }) => {
       <div id="card-visibility">
         {displayedAccolist.length > 0 ? (
           displayedAccolist.map((accommodation) => {
-            const images =
-              accommodationImages.find((img) => img.ID === accommodation.ID)?.Images || [];
             return (
               <AccommodationCard
                 key={accommodation.ID}
                 accommodation={accommodation}
-                images={Object.values(images)}
                 onClick={handleClick}
               />
             );
@@ -147,7 +111,11 @@ const Accommodations = ({ searchResults }) => {
         ) : (
           <div className="no-results">No accommodations found for your search.</div>
         )}
-        <div className={PageSwitcher.pagination}>
+       
+      </div>
+    </div>
+  );
+  <div className={PageSwitcher.pagination}>
           <button
             onClick={() => handlePageChange(currentPage - 1)}
             disabled={currentPage === 1}
@@ -170,9 +138,7 @@ const Accommodations = ({ searchResults }) => {
             Next &gt;
           </button>
         </div>
-      </div>
-    </div>
-  );
+  </>
 };
 
 export default Accommodations;
