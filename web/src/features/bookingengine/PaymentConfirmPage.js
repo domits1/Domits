@@ -11,6 +11,16 @@ const BookingConfirmationOverview = () => {
     const [accommodationDetails, setAccommodationDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [isMobileView, setIsMobileView] = useState(window.innerWidth < 768); // State to track screen size
+
+    useEffect(() => {
+        const handleResize = () => {
+            setIsMobileView(window.innerWidth < 768); // Update state on screen resize
+        };
+
+        window.addEventListener("resize", handleResize); // Add event listener for window resize
+        return () => window.removeEventListener("resize", handleResize); // Cleanup event listener
+    }, []);
 
     useEffect(() => {
         const fetchBookingDetails = async () => {
@@ -22,7 +32,6 @@ const BookingConfirmationOverview = () => {
                 setLoading(false);
                 return;
             }
-
 
             try {
                 const response = await fetch(
@@ -57,75 +66,93 @@ const BookingConfirmationOverview = () => {
     const formatDate = (date) => {
         if (!date) return "";
         return new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-      };
+    };
 
-      const calculateTotalPrice = (bookingDetails) => {
+    const calculateTotalPrice = (bookingDetails) => {
         const price = parseFloat(bookingDetails?.Price) || 0;
         const taxes = parseFloat(bookingDetails?.Taxes) || 0;
         const cleaningFee = parseFloat(bookingDetails?.CleaningFee) || 0;
         const serviceFee = parseFloat(bookingDetails?.ServiceFee) || 0;
-    
+
         return price + taxes + cleaningFee + serviceFee;
     };
-    
 
     if (loading) return <p>Loading booking details...</p>;
-    if (error) return <p>{error}</p>
+    if (error) return <p>{error}</p>;
 
     return (
         <main className="PaymentOverview">
-            
-            <div className="left">
+            {/* Conditionally render the left element */}
+            {!isMobileView && (
+                <div className="left">
                     {accommodationDetails?.Images && Object.keys(accommodationDetails.Images).length > 0 ? (
-                        <>
-                            <ImageGallery images={Object.values(accommodationDetails.Images)} />
-                        </>
+                        <ImageGallery images={Object.values(accommodationDetails.Images)} />
                     ) : (
-                        <>
-                            {console.warn("No images found in accommodationDetails:", accommodationDetails)}
-                            <p>No images available for this accommodation.</p>
-                        </>
+                        <p>No images available for this accommodation.</p>
                     )}
                 </div>
+            )}
 
             <div className="right-panel">
                 <h1>Payment Confirmation</h1>
 
-                {bookingDetails && (
-                        <h3>{bookingDetails.Title}</h3>
-                )}
+                {bookingDetails && <h3>{bookingDetails.Title}</h3>}
 
+                {isMobileView && (
+                    <div className="left mobile-left">
+                        {accommodationDetails?.Images && Object.keys(accommodationDetails.Images).length > 0 ? (
+                            <ImageGallery images={Object.values(accommodationDetails.Images)} />
+                        ) : (
+                            <p>No images available for this accommodation.</p>
+                        )}
+                    </div>
+                )}
                 <div className="confirmInformation">
                     <div>
-                    <h3>
-                    Booking {bookingDetails.Status === "Confirmed" ? "Confirmed" : bookingDetails.Status === "Failed" ? "Failed" : "Pending"}
-                    </h3>
-                        <p><strong>Check-in:</strong> {accommodationDetails?.StartDate ? new Date(accommodationDetails.StartDate).toLocaleDateString() : 'N/A'}</p>
-                        <p><strong>Check-out:</strong> {accommodationDetails?.EndDate ? new Date(accommodationDetails.EndDate).toLocaleDateString() : 'N/A'}</p>
+                        <h3>
+                            Booking{" "}
+                            {bookingDetails.Status === "Confirmed"
+                                ? "Confirmed"
+                                : bookingDetails.Status === "Failed"
+                                    ? "Failed"
+                                    : "Pending"}
+                        </h3>
+                        <p>
+                            <strong>Check-in:</strong>{" "}
+                            {accommodationDetails?.StartDate
+                                ? new Date(accommodationDetails.StartDate).toLocaleDateString()
+                                : "N/A"}
+                        </p>
+                        <p>
+                            <strong>Check-out:</strong>{" "}
+                            {accommodationDetails?.EndDate
+                                ? new Date(accommodationDetails.EndDate).toLocaleDateString()
+                                : "N/A"}
+                        </p>
                     </div>
-                    
+
                     <div className="right">
                         <CheckCircleOutlineOutlinedIcon sx={{ fontSize: 50, color: "green" }} />
                     </div>
                 </div>
-
                 <div className="priceContainer">
                     <h3>Price Details</h3>
-                    
-                    <div className="price-breakdown">            
-                    <div className="row">
+
+                    <div className="price-breakdown">
+                        <div className="row">
                             <p>Guests:</p>
-                            <p>{bookingDetails?.AmountOfGuest}</p>  
+                            <p>{bookingDetails?.AmountOfGuest}</p>
                         </div>
 
-                    <div className="row">
-                    <p>Date</p>
-                    <p>{formatDate(bookingDetails?.StartDate)} - {formatDate(bookingDetails?.EndDate)}</p>
+                        <div className="row">
+                            <p>Date</p>
+                            <p>
+                                {formatDate(bookingDetails?.StartDate)} - {formatDate(bookingDetails?.EndDate)}
+                            </p>
                         </div>
                     </div>
 
                     <div className="price-breakdown">
-
                         <div className="row">
                             <p>Price</p>
                             <p>€ {bookingDetails?.Price}</p>
@@ -136,7 +163,7 @@ const BookingConfirmationOverview = () => {
                         </div>
                         <div className="row">
                             <p>Cleaning fee</p>
-                            <p>€ {bookingDetails?.CleaningFee}</p>   
+                            <p>€ {bookingDetails?.CleaningFee}</p>
                         </div>
 
                         <div className="row">
@@ -147,10 +174,8 @@ const BookingConfirmationOverview = () => {
 
                     <div className="total-price">
                         <strong>Total:</strong>
-                        <strong></strong>
                         <strong>€ {calculateTotalPrice(bookingDetails)}</strong>
                     </div>
-
                 </div>
 
                 <button className="view-booking-button" onClick={() => navigate("/guestdashboard/bookings")}>
