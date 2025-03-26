@@ -100,6 +100,13 @@ export const styles = StyleSheet.create({
         textAlign: 'center',
         fontFamily: 'MotivaSansRegular.woff',
     },
+    // Calendar
+    calendar: {
+        borderWidth: 1,
+        borderColor: 'grey',
+        borderRadius: 10,
+        marginVertical: 10,
+    },
     // Booking button
     bookingButtonContainer: {
         marginHorizontal: 20,

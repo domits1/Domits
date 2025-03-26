@@ -60,3 +60,160 @@
     }
 }
 
+/* Keep Sidebar As-Is (Do Not Touch It) */
+.sidebar {
+    /* No changes to sidebar placement */
+}
+
+/* Finance Main Content */
+.host-pc-finance {
+    flex: 1;
+    max-width: 900px;
+    padding: 30px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Add Distance from Sidebar */
+.page-Host-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 80px; /* Add spacing between sidebar and finance section */
+    padding: 20px;
+}
+
+/* Finance Steps Section */
+.finance-steps {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.finance-steps h2 {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 12px;
+}
+
+.finance-steps ul {
+    list-style: none;
+    padding-left: 0;
+}
+
+.finance-steps li {
+    padding: 12px 0;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+}
+
+/* Links */
+.finance-span {
+    color: #007bff;
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.finance-span:hover {
+    text-decoration: none;
+}
+
+/* Payouts Section */
+.payouts-section {
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.payouts-section h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+/* Payout Table */
+.payout-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
+
+.payout-table th, .payout-table td {
+    padding: 12px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+}
+
+.payout-table th {
+    background-color: #f1f1f1;
+    font-weight: bold;
+}
+
+/* Payout Frequency Section */
+.payout-frequency {
+    margin: 20px 0;
+    background: #f8f9fa;
+    padding: 12px;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.payout-frequency select {
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    width: 100%;
+}
+
+/* Payout Status */
+.payout-status {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.status-active {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.status-pending {
+    color: #ffc107;
+    font-weight: bold;
+}
+
+.status-error {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.status-none {
+    color: #6c757d;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .page-Host-content {
+        flex-direction: column;
+        align-items: center;
+        padding: 15px;
+    }
+
+    .host-pc-finance {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .finance-steps, .payouts-section, .payout-status {
+        width: 100%;
+    }
+}

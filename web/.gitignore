@@ -34,6 +34,8 @@ yarn-error.log*
 /node_modules/.cache/default-development/
 
 # amplify-do-not-edit-begin
+/amplify/
+amplify/
 amplify/#current-cloud-backend
 amplify/.config/local-*
 amplify/logs

@@ -10,24 +10,41 @@ import {
     View,
 } from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import featureIcons from '../../ui-components/FeatureIcons';
-import FetchOwnerData from '../../features/search/FetchOwnerData';
-import FetchAccommodation from '../../features/search/FetchAccommodation';
+import featureIcons from '../../../ui-components/FeatureIcons';
+import FetchOwnerData from '../../../features/search/FetchOwnerData';
+import FetchAccommodation from '../../../features/search/FetchAccommodation';
 import Ionicons from "react-native-vector-icons/Ionicons";
-import {styles} from "./styles/listingDetailStyles";
-import AmenitiesPopup from "./views/AmenitiesPopup"
+import {styles} from "../styles/propertyDetailsStyles";
+import AmenitiesPopup from "../components/AmenitiesPopup";
+import SelectBookingDateCalendar from "../components/SelectBookingDateCalendar";
+import BookingPopup from "../components/BookingPopup";
+import TranslatedText from "../../../features/translation/components/TranslatedText";
+import CalculateNumberOfNights from "../../../features/bookingengine/utils/CalculateNumberOfNights";
 
-const ListingDetailScreen = ({route, navigation}) => {
+const PropertyDetailsScreen = ({route, navigation}) => {
     const accommodationId = route.params.accommodation.id;
     const [parsedAccommodation, setParsedAccommodation] = useState({});
     const [owner, setOwner] = useState();
     const [loading, setLoading] = useState(true);
     const [images, setImages] = useState([]);
-    const [showModal, setShowModal] = useState(false);
+    const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+    const [showBookingModal, setShowBookingModal] = useState(false);
     const [currentPage, setCurrentPage] = useState(0);
     // Dynamically calculate image width based on screen width
     const imageWidth = Dimensions.get('window').width;
+    const [firstSelectedDate, setFirstSelectedDate] = useState(null);
+    const [lastSelectedDate, setLastSelectedDate] = useState(null);
+    const [amountOfNights, setAmountOfNights] = useState(null);
+    const [costOfNights, setCostOfNights] = useState(null);
+    const [totalCost, setTotalCost] = useState(null);
 
+    const handleFirstDateSelected = (date) => {
+        setFirstSelectedDate(date);
+    };
+
+    const handleLastDateSelected = (date) => {
+        setLastSelectedDate(date);
+    }
     /**
      * Fetch current accommodation data.
      */
@@ -63,19 +80,32 @@ const ListingDetailScreen = ({route, navigation}) => {
         }
     }, [parsedAccommodation, loading]);
 
+    useEffect(() => {
+        CalculateNumberOfNights(firstSelectedDate, lastSelectedDate, setAmountOfNights);
+    }, [lastSelectedDate]);
+
+    useEffect(() => {
+        const totalCostOfNights = parsedAccommodation.Rent * amountOfNights
+        setCostOfNights(totalCostOfNights);
+        const totalCostOfBooking = totalCostOfNights + parsedAccommodation.CleaningFee + parsedAccommodation.ServiceFee;
+        setTotalCost(totalCostOfBooking);
+    }, [amountOfNights, parsedAccommodation]);
+
     const handleHomeScreenPress = () => {
         navigation.navigate('HomeScreen');
     };
 
-    const handleOnBoardingPress = () => {
-        //TODO Remove ToastAndroid message after working booking system
-        ToastAndroid.show("Sorry, we currently do not accept bookings.", ToastAndroid.SHORT)
-//    navigation.navigate('onBoarding1', {
-//      accommodation,
-//      parsedAccommodation,
-//      images,
-//    });
-
+    const handleOnBookPress = () => {
+        if (!firstSelectedDate || !lastSelectedDate) {
+            ToastAndroid.show("Please select a start and end date", ToastAndroid.SHORT)
+        } else {
+            navigation.navigate('BookingProcess', {
+                firstSelectedDate,
+                lastSelectedDate,
+                parsedAccommodation,
+                images,
+            });
+        }
     };
     const handleScroll = event => {
         const page = Math.round(
@@ -85,8 +115,12 @@ const ListingDetailScreen = ({route, navigation}) => {
         setCurrentPage(page);
     };
 
-    const toggleModal = () => {
-        setShowModal(!showModal);
+    const toggleBookingModal = () => {
+        setShowBookingModal(!showBookingModal);
+    }
+
+    const toggleAmenitiesModal = () => {
+        setShowAmenitiesModal(!showAmenitiesModal);
     };
 
     const renderAmenities = () => {
@@ -212,8 +246,10 @@ const ListingDetailScreen = ({route, navigation}) => {
                             <Text style={styles.subtitleText}>
                                 {parsedAccommodation.Subtitle.trim()}
                             </Text>
-                            <Text style={styles.costPerNightText}>€{Number(parsedAccommodation.Rent).toFixed(2)} per
-                                night</Text>
+                            <Text style={styles.costPerNightText}>
+                                €{Number(parsedAccommodation.Rent).toFixed(2)} {" "}
+                                <TranslatedText textToTranslate={"per night"}/>
+                            </Text>
                             <Text>{renderDateRange()}</Text>
                         </View>
 
@@ -223,7 +259,7 @@ const ListingDetailScreen = ({route, navigation}) => {
                                     {featureIcons["Multiple guests"]}
                                 </View>
                                 <Text style={styles.mainAmenitiesText}>
-                                    {parsedAccommodation.GuestAmount} guest(s)
+                                    {parsedAccommodation.GuestAmount} <TranslatedText textToTranslate={"guests"}/>
                                 </Text>
                             </View>
                             <View style={styles.mainAmenityContainer}>
@@ -231,7 +267,7 @@ const ListingDetailScreen = ({route, navigation}) => {
                                     {featureIcons["Bedroom"]}
                                 </View>
                                 <Text style={styles.mainAmenitiesText}>
-                                    {parsedAccommodation.bedrooms || 0} bedroom(s)
+                                    {parsedAccommodation.bedrooms || 0} <TranslatedText textToTranslate={"bedrooms"}/>
                                 </Text>
                             </View>
                             <View style={styles.mainAmenityContainer}>
@@ -239,7 +275,7 @@ const ListingDetailScreen = ({route, navigation}) => {
                                     {featureIcons["Bed"]}
                                 </View>
                                 <Text style={styles.mainAmenitiesText}>
-                                    {parsedAccommodation.Beds} bed(s)
+                                    {parsedAccommodation.Beds} <TranslatedText textToTranslate={"beds"}/>
                                 </Text>
                             </View>
                             <View style={styles.mainAmenityContainer}>
@@ -247,20 +283,11 @@ const ListingDetailScreen = ({route, navigation}) => {
                                     {featureIcons["Bathroom"]}
                                 </View>
                                 <Text style={styles.mainAmenitiesText}>
-                                    {parsedAccommodation.Bathrooms} bathroom(s)
+                                    {parsedAccommodation.Bathrooms} <TranslatedText textToTranslate={"bathrooms"}/>
                                 </Text>
                             </View>
                         </View>
 
-                        <View style={styles.bookingButtonContainer}>
-                            <View style={styles.bookingButton}>
-                                <TouchableOpacity onPress={handleOnBoardingPress} style={styles.bookingButtonContent}>
-                                    <Text style={styles.bookingButtonText}>Book</Text>
-                                    <Ionicons name={'arrow-forward-circle-outline'} size={24}
-                                              style={styles.bookingButtonIcon}></Ionicons>
-                                </TouchableOpacity>
-                            </View>
-                        </View>
 
                         <View style={styles.descriptionContainer}>
                             <Text style={styles.descriptionText}>
@@ -268,27 +295,59 @@ const ListingDetailScreen = ({route, navigation}) => {
                             </Text>
                         </View>
 
+                        <SelectBookingDateCalendar
+                            onFirstDateSelected={handleFirstDateSelected}
+                            onLastDateSelected={handleLastDateSelected}
+                            property={parsedAccommodation}
+                        ></SelectBookingDateCalendar>
+
+                        <View>
+                            <Text>Nights: €{Number(parsedAccommodation.Rent * amountOfNights).toFixed(2)}</Text>
+                            <Text>Cleaning fee: €{parsedAccommodation.CleaningFee.toFixed(2)}</Text>
+                            <Text>Service fee: €{parsedAccommodation.ServiceFee.toFixed(2)}</Text>
+                            <Text>Total cost: {totalCost.toFixed(2)}</Text>
+                        </View>
+
+                        <View style={styles.bookingButtonContainer}>
+                            <View style={styles.bookingButton}>
+                                <TouchableOpacity onPress={handleOnBookPress} style={styles.bookingButtonContent}>
+                                    <Text style={styles.bookingButtonText}><TranslatedText
+                                        textToTranslate={"book"}/></Text>
+                                    <Ionicons name={'arrow-forward-circle-outline'} size={24}
+                                              style={styles.bookingButtonIcon}/>
+                                </TouchableOpacity>
+                                {showBookingModal && (
+                                    <BookingPopup
+                                        onClose={toggleBookingModal}
+                                        startDate={firstSelectedDate}
+                                        endDate={lastSelectedDate}
+                                    />
+                                )}
+                            </View>
+                        </View>
+
                         <View style={styles.categoryDivider}/>
 
-                        <Text style={styles.categoryTitle}>Amenities</Text>
+                        <Text style={styles.categoryTitle}><TranslatedText textToTranslate={"amenities"}/></Text>
                         <View style={styles.amenities}>{renderAmenities()}</View>
                         <View>
                             <TouchableOpacity
-                                onPress={toggleModal}
+                                onPress={toggleAmenitiesModal}
                                 style={styles.ShowAllAmenitiesButton}>
-                                <Text style={styles.ShowAllAmenitiesButtonText}>Show all amenities</Text>
+                                <Text style={styles.ShowAllAmenitiesButtonText}><TranslatedText
+                                    textToTranslate={"show all amenities"}/></Text>
                             </TouchableOpacity>
-                            {showModal && (
+                            {showAmenitiesModal && (
                                 <AmenitiesPopup
                                     features={parsedAccommodation.Features}
-                                    onClose={toggleModal}
+                                    onClose={toggleAmenitiesModal}
                                 />
                             )}
                         </View>
 
                         <View style={styles.categoryDivider}/>
 
-                        <Text style={styles.categoryTitle}>Hosted by</Text>
+                        <Text style={styles.categoryTitle}><TranslatedText textToTranslate={"hosted by"}/></Text>
                         <View style={styles.hostInfoContainer}>
                             <View style={styles.nameButton}>
                                 <Text style={styles.nameText}>{owner}</Text>
@@ -304,4 +363,4 @@ const ListingDetailScreen = ({route, navigation}) => {
     );
 };
 
-export default ListingDetailScreen;
+export default PropertyDetailsScreen;

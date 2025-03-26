@@ -1,7 +1,7 @@
 /* Login.css */
 
 .registerButton {
-    width: 110%;
+    width: 100%;
     padding: 8px 15px;
     margin-top: 15px;
     background: var(--secondary-color);
@@ -109,12 +109,26 @@ label {
     align-items: center;
     display: inline-flex;
 }
+
+.react-tel-input .form-control {
+    /* !Important wordt hier gebruikt om de css van de packages te overwriten met deze aanpassingen */
+    width: 100% !important;
+    height: auto !important;
+    background: white !important;
+    box-shadow: none !important;
+    border-radius: 5px !important;
+    border: 1px solid #999 !important;
+    justify-content: flex-start !important;
+    align-items: center !important;
+    display: inline-flex !important;
+    box-sizing: border-box;
+  }
+
 .selected-flag{
     background-color: white;
 }
 .flag-dropdown {
     border: 5px solid #cacaca;
-    /* border-radius: 3px 0 0 3px; */
 }
 
 .alreadyAccountText {

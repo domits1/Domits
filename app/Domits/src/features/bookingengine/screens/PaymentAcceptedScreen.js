@@ -1,15 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {styles} from '../styles/PaymentStyles';
 
-const BookingConfirmationPage = ({navigation, route}) => {
+const PaymentAcceptedScreen = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
   const calculateCost = route.params.calculateCost;
   const adults = route.params.adults;
@@ -18,7 +13,7 @@ const BookingConfirmationPage = ({navigation, route}) => {
   const nights = route.params.nights;
 
   const handleButton = () => {
-    navigation.navigate('bookedAccommodation', {
+    navigation.navigate('guestBookings', {
       parsedAccommodation: parsedAccommodation,
       calculateCost: calculateCost,
       adults: adults,
@@ -99,146 +94,17 @@ const BookingConfirmationPage = ({navigation, route}) => {
           </Text>
         </View>
 
-        {/*<TouchableOpacity*/}
-        {/*  style={styles.viewBookingButton}*/}
-        {/*  onPress={() => {*/}
-        {/*    handleButton();*/}
-        {/*  }}>*/}
-        {/*  <Text style={styles.viewBookingButtonText}>View booking</Text>*/}
-        {/*</TouchableOpacity>*/}
+        <TouchableOpacity
+          style={styles.viewBookingButton}
+          onPress={() => {
+            handleButton();
+          }}>
+          <Text style={styles.viewBookingButtonText}>View booking</Text>
+        </TouchableOpacity>
 
-        <View style={styles.navbar}>
-          {/* Place navigation bar icons here */}
-        </View>
       </ScrollView>
     </SafeAreaView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  backButton: {
-    marginTop: 10,
-    marginLeft: 10,
-  },
-  confirmationContainer: {
-    backgroundColor: 'green',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  confirmationIcon: {
-    position: 'absolute',
-    top: 10,
-    right: 10,
-  },
-  confirmationTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  confirmationSubtitle: {
-    marginTop: 10,
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  cardInfo: {
-    fontSize: 16,
-    color: '#FFFFFF',
-  },
-  priceDetailsContainer: {
-    backgroundColor: '#F4F4F4',
-    padding: 20,
-    borderRadius: 8,
-    marginHorizontal: 20,
-  },
-  priceDetailsTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  priceDetailsText: {
-    fontSize: 16,
-    marginBottom: 10,
-  },
-  priceItemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  priceItem: {
-    fontSize: 16,
-    color: '#000',
-  },
-  priceValue: {
-    fontSize: 16,
-    color: '#000',
-  },
-  separator: {
-    borderTopColor: '#E2E2E2',
-    borderTopWidth: 1,
-    marginVertical: 10,
-  },
-  totalRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  totalText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  totalAmount: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  moreInfoButton: {
-    alignItems: 'flex-end',
-    marginRight: 20,
-    marginTop: 10,
-  },
-  moreInfoText: {
-    fontSize: 16,
-    color: '#0056b3',
-  },
-  propertyDetailsContainer: {
-    backgroundColor: '#F4F4F4',
-    padding: 20,
-    borderRadius: 8,
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  propertyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  propertyDescription: {
-    fontSize: 16,
-    color: '#666',
-  },
-  viewBookingButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 8,
-    marginHorizontal: 20,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  viewBookingButtonText: {
-    fontSize: 18,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-});
-
-export default BookingConfirmationPage;
+export default PaymentAcceptedScreen;

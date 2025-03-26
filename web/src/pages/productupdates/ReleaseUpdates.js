@@ -8,6 +8,7 @@ function ReleaseUpdates() {
   // Array of Twitter URLs
   const twitterUrls = [
     // Add more Tweet IDs here
+    "1897981256601645559",
     "1879062001433112582",
     "1871785101635592671",
     "1862071434496950433",

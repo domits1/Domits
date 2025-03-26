@@ -1,15 +1,10 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import {SafeAreaView} from 'react-native-safe-area-context';
+import {styles} from '../styles/PaymentStyles';
 
-const BookingDeclinedPage = ({navigation, route}) => {
+const PaymentDeclinedScreen = ({navigation, route}) => {
   const parsedAccommodation = route.params.parsedAccommodation;
   const handleGoBack = () => {
     navigation.navigate('Home');
@@ -69,7 +64,6 @@ const BookingDeclinedPage = ({navigation, route}) => {
         </TouchableOpacity>
 
         <View style={styles.propertyDetailsContainer}>
-          {/* Property details code from your previous BookingConfirmationPage component goes here */}
           <Text style={styles.propertyTitle}>{parsedAccommodation.Title}</Text>
           <Text style={styles.propertyDescription}>
             {parsedAccommodation.Description}
@@ -84,96 +78,4 @@ const BookingDeclinedPage = ({navigation, route}) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  backButton: {
-    marginTop: 10,
-    marginLeft: 10,
-  },
-  declinedContainer: {
-    backgroundColor: 'red',
-    flexDirection: 'column',
-    alignItems: 'flex-start',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-
-  declinedTitle: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-    marginLeft: 10,
-  },
-  declinedSubtitle: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginLeft: 10,
-  },
-  cardInfo: {
-    fontSize: 16,
-    color: '#FFFFFF',
-    marginLeft: 10,
-  },
-  moreInfoButton: {
-    alignItems: 'flex-end',
-    marginRight: 20,
-    marginTop: 10,
-  },
-  moreInfoText: {
-    fontSize: 16,
-    color: '#0056b3',
-  },
-  priceDetailsContainer: {
-    backgroundColor: '#F4F4F4',
-    padding: 20,
-    borderRadius: 8,
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  goBackButton: {
-    backgroundColor: '#4CAF50',
-    padding: 15,
-    borderRadius: 8,
-    marginHorizontal: 20,
-    alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  goBackButtonText: {
-    fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
-  },
-  navbar: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    borderColor: '#cccccc',
-    backgroundColor: '#f9f9f9',
-  },
-  propertyDetailsContainer: {
-    backgroundColor: '#F4F4F4',
-    padding: 20,
-    borderRadius: 8,
-    marginHorizontal: 20,
-    marginTop: 20,
-  },
-  propertyTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  propertyDescription: {
-    fontSize: 16,
-    color: '#666',
-  },
-});
-
-export default BookingDeclinedPage;
+export default PaymentDeclinedScreen;

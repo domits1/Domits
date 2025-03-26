@@ -20,7 +20,7 @@ function Header({ setSearchResults, setLoading }) {
   const [group, setGroup] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [currentView, setCurrentView] = useState("guest"); // 'guest' or 'host'
+  const [currentView, setCurrentView] = useState("guest"); 
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
 
 
