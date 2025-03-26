@@ -20,7 +20,7 @@ function Header({ setSearchResults, setLoading }) {
   const [group, setGroup] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [currentView, setCurrentView] = useState("guest"); // 'guest' or 'host'
+  const [currentView, setCurrentView] = useState("guest"); 
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
 
 
@@ -201,9 +201,9 @@ function Header({ setSearchResults, setLoading }) {
           <button onClick={navigateToPayments} className="dropdownLoginButton">
             Payments
           </button>
-          <button onClick={navigateToReviews} className="dropdownLoginButton">
+          {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
             Reviews
-          </button>
+          </button> */}
           <button onClick={navigateToSettings} className="dropdownLoginButton">
             Settings
           </button>

@@ -2,7 +2,7 @@
   display: flex;
   justify-content: center;
   padding: 20px;
-  max-width: 1200px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
@@ -27,7 +27,7 @@
 
 .accocard {
   width: 100%;
-  height: auto;
+  height: fit-content;
   max-width: 450px;
   margin: 1%;
   margin-top: 10px;

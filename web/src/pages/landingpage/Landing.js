@@ -279,24 +279,12 @@ function Landing() {
           </div>
           <div className={styles.iconTextGroup}>
             <img src={checkMark} alt="checkMark"></img>
-            <p>Domits Quality Guarantee</p>
+            <p>Domits quality guarantee</p>
           </div>
         </div>
       </div>
 
-      <div className={styles.RegisterBlock}>
-        {isAuthenticated && group !== "Host" ? (
-          <div className={styles.updateGroupButtonDiv}>
-            <button onClick={updateUserGroup} className={styles.nextButtons}>
-              Become a Host
-            </button>
-          </div>
-        ) : (
-          <div id="Register">
-            <Register />
-          </div>
-        )}
-      </div>
+      
 
       <div className={styles.easyHosting}>
         <div className={styles.easyHosting_text}>

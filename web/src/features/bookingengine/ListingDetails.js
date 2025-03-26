@@ -93,7 +93,7 @@ import {touristTaxRates, vatRates} from "../../utils/CountryVATRatesAndTouristTa
 
 const ListingDetails = () => {
     const navigate = useNavigate();
-    const {search} = useLocation();
+    const { search } = useLocation();
     const searchParams = new URLSearchParams(search);
     const id = searchParams.get('ID');
     const [accommodation, setAccommodation] = useState(null);
@@ -121,9 +121,11 @@ const ListingDetails = () => {
     const [showModal, setShowModal] = useState(false);
     const [userID, setUserID] = useState('');
     const [showGuestPopup, setShowGuestPopup] = useState(false);
+    const [isAuthenticated, setIsAuthenticated] = useState(false); // Add this line
     const guestSummary = `${adults} Adult${adults > 1 ? 's' : ''}, ${children} Child${children !== 1 ? 'ren' : ''}, ${pets} Pet${pets > 1 ? 's' : ''}`;
     const popupRef = useRef(null);
     const [bookings, setBookings] = useState([]);
+
 
     function generateUUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -296,6 +298,19 @@ const ListingDetails = () => {
         'Snow chains': <SevereColdIcon sx={{color: 'var(--primary-color)'}}/>,
         'Winter tires': <SevereColdIcon sx={{color: 'var(--primary-color)'}}/>,
     };
+    
+    useEffect(() => {
+        const checkAuthStatus = async () => {
+            try {
+                await Auth.currentAuthenticatedUser();
+                setIsAuthenticated(true);
+            } catch (error) {
+                setIsAuthenticated(false);
+            }
+        };
+
+        checkAuthStatus();
+    }, []);
 
     useEffect(() => {
         function handleClickOutside(event) {
@@ -929,7 +944,8 @@ const ListingDetails = () => {
                                     <p className="backButton">Go Back</p>
                                 </Link>
                                 <h1 className='accommodationTitle'>
-                                    {accommodation.Title} {isDemo && "(DEMO)"}
+                                    {accommodation.Title} 
+                                    {isDemo && " *"}
                                 </h1>
                             </div>
                             <div>
@@ -1010,175 +1026,175 @@ const ListingDetails = () => {
                 </section>
 
                 {accommodation && (
-                    <aside className='detailSummary'>
-                        <div className="summary-section">
-                            <h2 className='price-per-night'>
-                                €{accommodation.Rent} {accommodation.Type === "Boat" ? "per day" : "per night"}
-                            </h2>
+                        <aside className='detailSummary'>
+                            <div className="summary-section">
+                                <h2 className='price-per-night'>
+                                    €{accommodation.Rent} {accommodation.Type === "Boat" ? "per day" : "per night"}
+                                </h2>
 
 
-                            <div className="dates" style={{display: 'flex', justifyContent: 'space-between'}}>
-                                <div className="summaryBlock dateInput"
-                                     style={{flex: '1', position: 'relative', marginRight: '10px'}}>
-                                    <label htmlFor="checkIn">Check In</label>
-                                    <DatePicker
-                                        id="checkIn"
-                                        selected={checkIn}
-                                        className='datePickerLD'
-                                        onChange={(date) => setCheckIn(date)}
-                                        minDate={minStart && new Date(minStart)}
-                                        maxDate={maxStart && new Date(maxStart)}
-                                        filterDate={combinedCheckInDateFilter}
-                                        dateFormat="yyyy-MM-dd"
-                                        placeholderText="DD/MM/YYYY"
-                                    />
-                                    {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
-                                                         style={{
-                                                             position: 'absolute',
-                                                             right: '10px',
-                                                             top: '50%',
-                                                             cursor: 'pointer'
-                                                         }}/>}
-                                </div>
-                                <div className="summaryBlock dateInput" style={{flex: '1', position: 'relative'}}>
-                                    <label htmlFor="checkOut">Check Out</label>
-                                    <DatePicker
-                                        id="checkOut"
-                                        selected={checkOut}
-                                        className="datePickerLD"
-                                        onChange={(date) => setCheckOut(date)}
-                                        minDate={
-                                            checkIn
-                                                ? accommodation.MinimumStay > 0
-                                                    ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
+                                <div className="dates" style={{display: 'flex', justifyContent: 'space-between'}}>
+                                    <div className="summaryBlock dateInput"
+                                         style={{flex: '1', position: 'relative', marginRight: '10px'}}>
+                                        <label htmlFor="checkIn">Check In</label>
+                                        <DatePicker
+                                            id="checkIn"
+                                            selected={checkIn}
+                                            className='datePickerLD'
+                                            onChange={(date) => setCheckIn(date)}
+                                            minDate={minStart && new Date(minStart)}
+                                            maxDate={maxStart && new Date(maxStart)}
+                                            filterDate={combinedCheckInDateFilter}
+                                            dateFormat="yyyy-MM-dd"
+                                            placeholderText="DD/MM/YYYY"
+                                        />
+                                        {checkIn && <FaTimes className="clear-button" onClick={() => setCheckIn(null)}
+                                                             style={{
+                                                                 position: 'absolute',
+                                                                 right: '10px',
+                                                                 top: '50%',
+                                                                 cursor: 'pointer'
+                                                             }}/>}
+                                    </div>
+                                    <div className="summaryBlock dateInput" style={{flex: '1', position: 'relative'}}>
+                                        <label htmlFor="checkOut">Check Out</label>
+                                        <DatePicker
+                                            id="checkOut"
+                                            selected={checkOut}
+                                            className="datePickerLD"
+                                            onChange={(date) => setCheckOut(date)}
+                                            minDate={
+                                                checkIn
+                                                    ? accommodation.MinimumStay > 0
+                                                        ? new Date(checkIn.getTime() + accommodation.MinimumStay * 24 * 60 * 60 * 1000)
+                                                        : minEnd && new Date(minEnd)
                                                     : minEnd && new Date(minEnd)
-                                                : minEnd && new Date(minEnd)
-                                        }
-                                        maxDate={
-                                            checkIn
-                                                ? accommodation.MaximumStay > 0
-                                                    ? new Date(checkIn.getTime() + accommodation.MaximumStay * 24 * 60 * 60 * 1000)
-                                                    : maxEnd && new Date(maxEnd)
-                                                : maxEnd && new Date(maxEnd)
-                                        }
-                                        filterDate={(date) => {
-                                            if (checkIn) {
-                                                return combinedCheckOutDateFilter(date);
-                                            } else {
-                                                return combinedCheckInDateFilter(date);
                                             }
-                                        }}
-                                        dateFormat="yyyy-MM-dd"
-                                        placeholderText="DD/MM/YYYY"
-                                    />
-                                    {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
-                                                          style={{
-                                                              position: 'absolute',
-                                                              right: '10px',
-                                                              top: '50%',
-                                                              cursor: 'pointer'
-                                                          }}/>}
-                                </div>
-                            </div>
-
-                            {/* Guest Popup */}
-                            <div className="guests">
-                                <div className="dropdown">
-                                    <label>Guests</label>
-                                    <div
-                                        className="dropdown-button"
-                                        onClick={toggleDropdown}
-                                    >
-                                        {guestSummary} {showGuestPopup ? '▲' : '▼'}
+                                            maxDate={
+                                                checkIn
+                                                    ? accommodation.MaximumStay > 0
+                                                        ? new Date(checkIn.getTime() + accommodation.MaximumStay * 24 * 60 * 60 * 1000)
+                                                        : maxEnd && new Date(maxEnd)
+                                                    : maxEnd && new Date(maxEnd)
+                                            }
+                                            filterDate={(date) => {
+                                                if (checkIn) {
+                                                    return combinedCheckOutDateFilter(date);
+                                                } else {
+                                                    return combinedCheckInDateFilter(date);
+                                                }
+                                            }}
+                                            dateFormat="yyyy-MM-dd"
+                                            placeholderText="DD/MM/YYYY"
+                                        />
+                                        {checkOut && <FaTimes className="clear-button" onClick={() => setCheckOut(null)}
+                                                              style={{
+                                                                  position: 'absolute',
+                                                                  right: '10px',
+                                                                  top: '50%',
+                                                                  cursor: 'pointer'
+                                                              }}/>}
                                     </div>
-                                    {showGuestPopup && (
-                                        <div ref={popupRef} className="dropdown-content">
-                                            <div className="counter">
-                                                <span>Adults</span>
-                                                <div className="button__box">
-                                                    <button
-                                                        onClick={() => setAdults(Math.max(adults - 1, 0))}
-                                                        disabled={adults <= 0}
-                                                    >
-                                                        -
-                                                    </button>
-                                                    <div className="label__text">{adults}</div>
-                                                    <button
-                                                        onClick={() => {
-                                                            if (adults + children + pets < accommodation.GuestAmount) {
-                                                                setAdults(adults + 1);
-                                                            }
-                                                        }}
-                                                        disabled={adults + children + pets >= accommodation.GuestAmount}
-                                                    >
-                                                        +
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div className="counter">
-                                                <span>Children</span>
-                                                <div className="button__box">
-                                                    <button onClick={() => setChildren(Math.max(children - 1, 0))}>-
-                                                    </button>
-                                                    {children}
-                                                    <button onClick={() => setChildren(children + 1)}>+</button>
-                                                </div>
-                                            </div>
-                                            <div className="counter">
-                                                <span>Pets</span>
-                                                <div className="button__box">
-                                                    <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
-                                                    {pets}
-                                                    <button onClick={() => setPets(pets + 1)}>+</button>
-                                                </div>
-                                            </div>
-                                            <div className="closeButtonContainer">
-                                                <p onClick={() => setShowGuestPopup(false)}
-                                                   className="closeButton">Close</p>
-                                            </div>
+                                </div>
+
+                                {/* Guest Popup */}
+                                <div className="guests">
+                                    <div className="dropdown">
+                                        <label>Guests</label>
+                                        <div
+                                            className="dropdown-button"
+                                            onClick={toggleDropdown}
+                                        >
+                                            {guestSummary} {showGuestPopup ? '▲' : '▼'}
                                         </div>
-                                    )}
+                                        {showGuestPopup && (
+                                            <div ref={popupRef} className="dropdown-content">
+                                                <div className="counter">
+                                                    <span>Adults</span>
+                                                    <div className="button__box">
+                                                        <button
+                                                            onClick={() => setAdults(Math.max(adults - 1, 0))}
+                                                            disabled={adults <= 0}
+                                                        >
+                                                            -
+                                                        </button>
+                                                        <div className="label__text">{adults}</div>
+                                                        <button
+                                                            onClick={() => {
+                                                                if (adults + children + pets < accommodation.GuestAmount) {
+                                                                    setAdults(adults + 1);
+                                                                }
+                                                            }}
+                                                            disabled={adults + children + pets >= accommodation.GuestAmount}
+                                                        >
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="counter">
+                                                    <span>Children</span>
+                                                    <div className="button__box">
+                                                        <button onClick={() => setChildren(Math.max(children - 1, 0))}>-
+                                                        </button>
+                                                        {children}
+                                                        <button onClick={() => setChildren(children + 1)}>+</button>
+                                                    </div>
+                                                </div>
+                                                <div className="counter">
+                                                    <span>Pets</span>
+                                                    <div className="button__box">
+                                                        <button onClick={() => setPets(Math.max(pets - 1, 0))}>-</button>
+                                                        {pets}
+                                                        <button onClick={() => setPets(pets + 1)}>+</button>
+                                                    </div>
+                                                </div>
+                                                <div className="closeButtonContainer">
+                                                    <p onClick={() => setShowGuestPopup(false)}
+                                                       className="closeButton">Close</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
                                 </div>
-                                <p>Maximum amount of guests: {accommodation.GuestAmount}</p>
+
+
+                                {/* Price and Reserve Section */}
+                                <button className="reserve-button" onClick={handleBooking}>Reserve</button>
+                                {/* {isDemo ? (
+                                    <p className="disclaimer">*This is a demo post and not bookable</p>
+                                ) : (
+                                    <p className="disclaimer">*You won't be charged yet</p>
+                                )} */}
+                                {(checkIn && checkOut) ? (
+                                    <div className="price-details">
+                                        <div className="price-item">
+                                            <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights x
+                                                €{accommodation.Rent} a night</p>
+                                            <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
+                                        </div>
+                                        <div className="price-item">
+                                            <p>Cleaning fee</p>
+                                            <p>&euro;{cleaningFee}</p>
+                                        </div>
+                                        <div className="price-item">
+                                            <p>Domits service fee</p>
+                                            <p>€{ServiceFee.toFixed(2)}</p>
+                                        </div>
+                                        <div className="price-item">
+                                            <p>Taxes</p>
+                                            <p>€{taxes.toFixed(2)}</p>
+                                        </div>
+                                        <div className="total">
+                                            <p>Total</p>
+                                            <p>€{totalPrice.toFixed(2)}</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div>Please choose your Check-in date and Check-out date</div>
+                                )}
                             </div>
-
-
-                            {/* Price and Reserve Section */}
-                            <button className="reserve-button" onClick={handleBooking}>Reserve</button>
-                            {isDemo ? (
-                                <p className="disclaimer">*This is a demo post and not bookable</p>
-                            ) : (
-                                <p className="disclaimer">*You won't be charged yet</p>
-                            )}
-                            {(checkIn && checkOut) ? (
-                                <div className="price-details">
-                                    <div className="price-item">
-                                        <p>{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24)} nights x
-                                            €{accommodation.Rent} a night</p>
-                                        <p>€{(new Date(checkOut) - new Date(checkIn)) / (1000 * 60 * 60 * 24) * accommodation.Rent}</p>
-                                    </div>
-                                    <div className="price-item">
-                                        <p>Cleaning fee</p>
-                                        <p>&euro;{cleaningFee}</p>
-                                    </div>host
-                                    <div className="price-item">
-                                        <p>Domits service fee</p>
-                                        <p>€{ServiceFee.toFixed(2)}</p>
-                                    </div>
-                                    <div className="price-item">
-                                        <p>Taxes</p>
-                                        <p>€{taxes.toFixed(2)}</p>
-                                    </div>
-                                    <div className="total">
-                                        <p>Total</p>
-                                        <p>€{totalPrice.toFixed(2)}</p>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div>Please choose your Check-in date and Check-out date</div>
-                            )}
-                        </div>
-                    </aside>
+                        </aside>
                 )}
             </section>
         </main>
