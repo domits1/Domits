@@ -10,17 +10,19 @@ android {
         applicationId "com.domitstest.domits"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 4
-        versionName "4.5"
+        versionCode 5
+        versionName "0.1"
         missingDimensionStrategy 'react-native-camera', 'general' // Specify the dimension strategy for react-native-camera
     }
 
     signingConfigs {
         release {
-            storeFile file("my-release-key.keystore")
-            storePassword "Domits123"
-            keyAlias "my-key-alias"
-            keyPassword "Domits123"
+            if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+                storeFile file(MYAPP_UPLOAD_STORE_FILE)
+                storePassword MYAPP_UPLOAD_STORE_PASSWORD
+                keyAlias MYAPP_UPLOAD_KEY_ALIAS
+                keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+            }
         }
     }
 
@@ -52,6 +54,9 @@ android {
 dependencies {
     implementation("com.facebook.react:react-android:+")
     implementation("com.facebook.react:flipper-integration:+")
+    implementation("androidx.security:security-crypto:1.1.0-alpha06")
+    implementation project(":react-native-splash-screen")
+    implementation("androidx.core:core-splashscreen:1.0.1")
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-engine:+")

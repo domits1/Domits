@@ -5,12 +5,15 @@ import PageSwitcher from '../../utils/PageSwitcher.module.css';
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
+import FilterUi from "./FilterUi";  
 
 const Accommodations = ({ searchResults }) => {
   const [accolist, setAccolist] = useState([]);
   const [accommodationImages, setAccommodationImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [loadingImages, setLoadingImages] = useState(true);
+  const [filterLoading, setFilterLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15; // Number of items per page
@@ -26,6 +29,17 @@ const Accommodations = ({ searchResults }) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
     }
+  };
+
+  const handleFilterApplied = (filteredResults) => {
+    setFilterLoading(true);
+    
+    // Small timeout to ensure the loader is displayed
+    setTimeout(() => {
+      setAccolist(filteredResults);
+      setCurrentPage(1);
+      setFilterLoading(false);
+    }, 500);
   };
 
   const fetchAllAccommodations = async () => {
@@ -67,8 +81,12 @@ const Accommodations = ({ searchResults }) => {
   useEffect(() => {
     // If there are search results, update the list, otherwise fetch all accommodations
     if (searchResults && searchResults.length > 0) {
-      setAccolist(searchResults);
-      setCurrentPage(1); // Reset to the first page for new search results
+      setSearchLoading(true);
+      setTimeout(() => {
+        setAccolist(searchResults);
+        setCurrentPage(1);
+        setSearchLoading(false);
+      }, 500);
     } else {
       fetchAllAccommodations();
       fetchAccommodationImages();
@@ -79,14 +97,19 @@ const Accommodations = ({ searchResults }) => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentPage]);
 
-  if (loading || loadingImages) {
+  if (loading || loadingImages || filterLoading || searchLoading) {
     return (
-      <div className="full-visibility">
-        {Array(8)
-          .fill()
-          .map((_, index) => (
-            <SkeletonLoader key={index} />
-          ))}
+      <div id="container">
+        <div id="filters-sidebar">
+          <FilterUi onFilterApplied={handleFilterApplied} />
+        </div>
+        <div id="card-visibility">
+          {Array(12)
+            .fill()
+            .map((_, index) => (
+              <SkeletonLoader key={index} />
+            ))}
+        </div>
       </div>
     );
   }
@@ -102,48 +125,51 @@ const Accommodations = ({ searchResults }) => {
     }
     navigate(`/listingdetails?ID=${encodeURIComponent(ID)}`);
   };
-
-
   return (
-    <div id="card-visibility">
-      {displayedAccolist.length > 0 ? (
-        displayedAccolist.map((accommodation) => {
-          const images =
-            accommodationImages.find((img) => img.ID === accommodation.ID)?.Images || [];
-          return (
-            <AccommodationCard
-              key={accommodation.ID}
-              accommodation={accommodation}
-              images={Object.values(images)}
-              onClick={handleClick}
-            />
-          );
-        })
-      ) : (
-        <div className="no-results">No accommodations found for your search.</div>
-      )}
-      <div className={PageSwitcher.pagination}>
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          disabled={currentPage === 1}
-        >
-          &lt; Previous
-        </button>
-        {Array.from({ length: totalPages }, (_, i) => (
+    <div id="container">
+      <div id="filters-sidebar">
+        <FilterUi onFilterApplied={handleFilterApplied} />
+      </div>
+      <div id="card-visibility">
+        {displayedAccolist.length > 0 ? (
+          displayedAccolist.map((accommodation) => {
+            const images =
+              accommodationImages.find((img) => img.ID === accommodation.ID)?.Images || [];
+            return (
+              <AccommodationCard
+                key={accommodation.ID}
+                accommodation={accommodation}
+                images={Object.values(images)}
+                onClick={handleClick}
+              />
+            );
+          })
+        ) : (
+          <div className="no-results">No accommodations found for your search.</div>
+        )}
+        <div className={PageSwitcher.pagination}>
           <button
-            key={i}
-            onClick={() => handlePageChange(i + 1)}
-            className={`${currentPage === i + 1 ? PageSwitcher.active : ''}`}
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
           >
-            {i + 1}
+            &lt; Previous
           </button>
-        ))}
-        <button
-          onClick={() => handlePageChange(currentPage + 1)}
-          disabled={currentPage === totalPages}
-        >
-          Next &gt;
-        </button>
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              onClick={() => handlePageChange(i + 1)}
+              className={`${currentPage === i + 1 ? PageSwitcher.active : ''}`}
+            >
+              {i + 1}
+            </button>
+          ))}
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+          >
+            Next &gt;
+          </button>
+        </div>
       </div>
     </div>
   );
