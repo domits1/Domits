@@ -518,7 +518,7 @@ body {
 
 .simpleSafe {
     background-color: #f9f9f9;
-    padding: 5% 0;
+    padding: 11% 0;
 }
 
 .Cards {
@@ -769,40 +769,137 @@ body {
     border-radius: 50%;
 }
 
+/* Checklist Section */
 .checkList {
     margin: 5% 0;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
-
-
 .checkList h1 {
-    font-size: 4rem;
-    margin: 0;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
 }
 
 .checkList .subText {
-    font-size: 1.5rem;
-    margin-top: 0;
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+    color: #333;
 }
 
 .checkListItems {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    margin: 0 20%;
+    gap: 20px;
+    width: 80%;
+    margin: 0 auto;
 }
 
 .checkListItem {
     display: flex;
     flex-direction: column;
-    text-align: left;
+    align-items: center;
+    text-align: center;
+    padding: 15px;
+    border: 1px solid #003366;
+    border-radius: 10px;
+    background-color: #f9f9f9;
+}
+
+.checkListItem h3 {
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: #003366;
 }
 
 .checkListItem span {
-    max-width: 15vw;
+    font-size: 1rem;
+    color: #333;
+    max-width: 90%;
 }
 
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .checkList h1 {
+        font-size: 2rem;
+    }
+
+    .checkList .subText {
+        font-size: 1rem;
+    }
+
+    .checkListItems {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+        width: 90%;
+    }
+
+    .checkListItem h3 {
+        font-size: 1.1rem;
+    }
+
+    .checkListItem span {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .checkList h1 {
+        font-size: 1.8rem;
+    }
+
+    .checkList .subText {
+        font-size: 0.95rem;
+    }
+
+    .checkListItems {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .checkListItem {
+        padding: 10px;
+    }
+
+    .checkListItem h3 {
+        font-size: 1rem;
+    }
+
+    .checkListItem span {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .checkList h1 {
+        font-size: 1.5rem;
+    }
+
+    .checkList .subText {
+        font-size: 0.85rem;
+    }
+
+    .checkListItems {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        width: 100%;
+    }
+
+    .checkListItem {
+        padding: 8px;
+    }
+
+    .checkListItem h3 {
+        font-size: 0.95rem;
+    }
+
+    .checkListItem span {
+        font-size: 0.85rem;
+    }
+}
 .faq .landing__faq {
     width: 50%;
     border: 2px solid #003366;
@@ -812,43 +909,139 @@ body {
     cursor: pointer;
     transition: max-height 0.4s ease;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
 .faq .landing__faq__body {
     display: flex;
     justify-content: space-between;
-}
-
-.faq .landing__faq__body p {
-    color: black;
+    align-items: center; /* Ensures proper vertical alignment */
 }
 
 .faq .landing__faq__question {
     font-weight: bold;
+    font-size: 1.2rem;
+    flex: 1; /* Ensures the question takes up available space */
+    text-align: left;
+}
+
+.faq .landing__faq__arrow {
+    font-size: 1.5rem;
+    color: #003366;
+    margin-left: 10px;
 }
 
 .faq .landing__faq__answer {
     text-align: left;
+    font-size: 1rem;
+    color: #333;
+    margin-top: 10px;
 }
 
+/* FAQ Header */
 .faq .faq__header {
     display: flex;
     justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
 }
 
 .faq .faq__header img {
-    max-width: 3vw;
-    max-height: 3vh;
+    max-width: 50px;
+    max-height: 50px;
+    margin-right: 10px;
 }
 
 .faq .faq__header h1 {
+    font-size: 2rem;
     margin: 0;
 }
 
+/* FAQ List */
 .faq .faq__list {
     display: flex;
     flex-direction: column;
     align-items: center;
+    gap: 10px;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .faq .landing__faq {
+        width: 90%;
+    }
+
+    .faq .landing__faq__question {
+        font-size: 1.1rem;
+    }
+
+    .faq .landing__faq__arrow {
+        font-size: 1.3rem;
+    }
+
+    .faq .landing__faq__answer {
+        font-size: 0.95rem;
+    }
+
+    .faq .faq__header h1 {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .faq .faq__header {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .faq .faq__header img {
+        margin-bottom: 10px;
+    }
+
+    .faq .faq__header h1 {
+        font-size: 1.6rem;
+    }
+
+    .faq .landing__faq {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .faq .landing__faq__question {
+        font-size: 1rem;
+    }
+
+    .faq .landing__faq__arrow {
+        font-size: 1.2rem;
+    }
+
+    .faq .landing__faq__answer {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .faq .faq__header h1 {
+        font-size: 1.4rem;
+    }
+
+    .faq .landing__faq {
+        padding: 8px;
+    }
+
+    .faq .landing__faq__question {
+        font-size: 0.95rem;
+    }
+
+    .faq .landing__faq__arrow {
+        font-size: 1rem;
+    }
+
+    .faq .landing__faq__answer {
+        font-size: 0.85rem;
+    }
 }
 
 .personal__advice {
