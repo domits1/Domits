@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Slider from '@mui/material/Slider';
-import { FilterLogic } from './FilterLogic';
+import FilterLogic from './FilterLogic';
 import './FilterMain.css';
 
 const FilterUi = ({ onFilterApplied }) => {
