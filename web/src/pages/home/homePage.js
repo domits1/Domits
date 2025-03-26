@@ -19,6 +19,8 @@ const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [propertyLoading, setPropertyLoading] = useState(false);
+  const [boatLoading, setBoatLoading] = useState(false);
+  const [camperLoading, setCamperLoading] = useState(false);
   const [boatAccommodations, setBoatAccommodations] = useState([]);
   const [camperAccommodations, setCamperAccommodations] = useState([]);
   const [allAccommodations, setAllAccommodations] = useState([]);
@@ -32,16 +34,20 @@ const Homepage = () => {
   useEffect(() => {
     async function loadData() {
       setPropertyLoading(true);
-      const [boatProperties, camperProperties, allProperties] =
-        await Promise.all([
-          FetchPropertyType("Boat"),
-          FetchPropertyType("Camper"),
-          FetchAllPropertyTypes(),
-        ]);
-      setBoatAccommodations(boatProperties);
-      setCamperAccommodations(camperProperties);
-      setAllAccommodations(allProperties);
-      setPropertyLoading(false);
+      setBoatLoading(true);
+      setCamperLoading(true);
+      FetchPropertyType("Boat").then((data) => {
+        setBoatAccommodations(data.slice(0, 3));
+        setBoatLoading(false);
+      });
+      FetchPropertyType("Camper").then((data) => {
+        setCamperAccommodations(data.slice(0, 3));
+        setCamperLoading(false);
+      });
+      FetchAllPropertyTypes().then((data) => {
+        setAllAccommodations(data.slice(6, 9));
+        setPropertyLoading(false);
+      });
     }
 
     loadData();
@@ -187,10 +193,12 @@ const Homepage = () => {
                   />
                 ))
               ) : (
-                <div>No properties available.</div>
+                <div>No trending properties available.</div>
               )
             ) : (
-              <progress value={null} />
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
             )}
           </div>
         </div>
@@ -200,7 +208,7 @@ const Homepage = () => {
             <h3 className="domits-subHead">Rent a boat for any occasion</h3>
           </div>
           <div className="domits-accommodationGroup">
-            {propertyLoading === false ? (
+            {boatLoading === false ? (
               boatAccommodations.length > 0 ? (
                 boatAccommodations.map((boat) => (
                   <AccommodationCard
@@ -213,7 +221,9 @@ const Homepage = () => {
                 <div>No boats available.</div>
               )
             ) : (
-              <progress value={null} />
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
             )}
           </div>
         </div>
@@ -221,7 +231,7 @@ const Homepage = () => {
         <div className="domits-boatContainer">
           <h3 className="domits-subHead">Discover Beautiful Campers</h3>
           <div className="domits-accommodationGroup">
-            {propertyLoading === false ? (
+            {camperLoading === false ? (
               camperAccommodations.length > 0 ? (
                 camperAccommodations.map((camper) => {
                   return (
@@ -236,7 +246,9 @@ const Homepage = () => {
                 <div>No campers available.</div>
               )
             ) : (
-              <progress value={null} />
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
             )}
           </div>
         </div>
