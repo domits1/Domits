@@ -1,0 +1,112 @@
+// Variables
+$primary-color: #4CAF50;
+$secondary-color: #fff;
+$border-color: #ddd;
+$border-radius: 8px;
+$font-size-large: 18px;
+$font-size-medium: 16px;
+$font-size-small: 14px;
+
+// Payment Overview
+.PaymentOverview {
+  display: flex;
+  justify-content: center;
+}
+
+// Confirm Information
+.confirmInformation {
+  background-color: $primary-color;
+  color: $secondary-color;
+  padding: 15px;
+  border-radius: $border-radius;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  h3 {
+    padding-left: 0px;
+  }
+
+  .right {
+    width: 8vh;
+  }
+}
+
+// Left Section
+.left {
+  display: flex;
+  gap: 2px;
+  border-radius: $border-radius;
+  padding: 16px;
+  width: 100%;
+  justify-content: center;
+  margin: auto;
+}
+
+// Resend Confirmation
+.resend-confirmation {
+  color: $primary-color;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+// Price Container
+.priceContainer {
+  background-color: $secondary-color;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 16px;
+
+  h3 {
+    padding-left: 0px;
+  }
+
+  .price-breakdown {
+    .row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+    }
+  }
+
+  .total-price {
+    display: flex;
+    justify-content: space-between;
+    font-size: $font-size-large;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+}
+
+// View Booking Button
+.view-booking-button {
+  background-color: $primary-color;
+  color: $secondary-color;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  font-size: $font-size-medium;
+  cursor: pointer;
+  text-align: center;
+  align-self: auto;
+
+  button {
+    align-self: auto;
+  }
+}
+
+// Mobile Left Section
+.mobile-left {
+  width: 100%; // Make it take the full width
+  order: 0; // Ensure it appears below the confirmInformation section
+}
+
+// Media Queries
+@media (max-width: 768px) {
+  .left {
+    display: none;
+  }
+}
