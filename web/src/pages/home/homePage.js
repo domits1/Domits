@@ -10,21 +10,48 @@ import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import "swiper/css/pagination";
 import Header from "./Header";
+import {
+  FetchAllPropertyTypes,
+  FetchPropertyType,
+} from "./services/fetchProperties";
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [loadingImages, setLoadingImages] = useState(false);
+  const [propertyLoading, setPropertyLoading] = useState(false);
+  const [boatLoading, setBoatLoading] = useState(false);
+  const [camperLoading, setCamperLoading] = useState(false);
   const [boatAccommodations, setBoatAccommodations] = useState([]);
   const [camperAccommodations, setCamperAccommodations] = useState([]);
-  const [accommodationImages, setAccommodationImages] = useState([]);
-  const [byTypeAccommodations, setByTypeAccommodations] = useState([]);
+  const [allAccommodations, setAllAccommodations] = useState([]);
   const [isBarActive, setIsBarActive] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function loadData() {
+      setPropertyLoading(true);
+      setBoatLoading(true);
+      setCamperLoading(true);
+      FetchPropertyType("Boat").then((data) => {
+        setBoatAccommodations(data.slice(0, 3));
+        setBoatLoading(false);
+      });
+      FetchPropertyType("Camper").then((data) => {
+        setCamperAccommodations(data.slice(0, 3));
+        setCamperLoading(false);
+      });
+      FetchAllPropertyTypes().then((data) => {
+        setAllAccommodations(data.slice(6, 9));
+        setPropertyLoading(false);
+      });
+    }
+
+    loadData();
+  }, []);
 
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
@@ -56,103 +83,6 @@ const Homepage = () => {
     return () => {
       document.body.classList.remove("hide-header");
     };
-  }, []);
-
-  const fetchBoatAccommodations = async () => {
-    try {
-      setLoading(true);
-
-      const response = await fetch(
-        "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Onboarding-Production-Read-AllBoatAccommodations"
-      );
-
-      if (!response.ok) throw new Error("Failed to fetch boat accommodations");
-      const jsonResponse = await response.json();
-      const data =
-        typeof jsonResponse.body === "string"
-          ? JSON.parse(jsonResponse.body)
-          : jsonResponse.body;
-      const filteredData = data.filter((item) => item.Drafted === false);
-      const limitedData = filteredData.slice(0, 4);
-
-      setBoatAccommodations(limitedData);
-    } catch (error) {
-      console.error("Error fetching boat accommodations:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAccommodationsByType = async () => {
-    try {
-      setLoading(true);
-
-      const response = await fetch(
-        "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Onboarding-Production-Read-MixAccommodations"
-      );
-      if (!response.ok)
-        throw new Error(
-          `Failed to fetch accommodations: ${response.statusText}`
-        );
-
-      const data = await response.json();
-
-      const accommodations =
-        typeof data.body === "string" ? JSON.parse(data.body) : data.body;
-
-      setByTypeAccommodations(accommodations);
-    } catch (error) {
-      console.error(
-        "Error fetching mixed accommodations:",
-        error.message,
-        error.stack
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchCamperAccommodations = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch(
-        "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Onboarding-Production-Read-AllCamperAccommodations"
-      );
-      if (!response.ok)
-        throw new Error("Failed to fetch camper accommodations");
-      const data = JSON.parse((await response.json()).body);
-
-      const limitedData = data.slice(0, 4);
-
-      setCamperAccommodations(limitedData);
-    } catch (error) {
-      console.error("Error fetching camper accommodations:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchAccommodationImages = async () => {
-    try {
-      setLoadingImages(true);
-      const response = await fetch(
-        "https://lhp0t08na7.execute-api.eu-north-1.amazonaws.com/prod/getAllAccommodationImages"
-      );
-      if (!response.ok) throw new Error("Failed to fetch accommodation images");
-      const data = await response.json();
-      setAccommodationImages(data);
-    } catch (error) {
-      console.error("Error fetching accommodation images:", error);
-    } finally {
-      setLoadingImages(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchBoatAccommodations();
-    fetchCamperAccommodations();
-    fetchAccommodationsByType();
-    fetchAccommodationImages();
   }, []);
 
   const handleClick = (e, ID) => {
@@ -252,6 +182,25 @@ const Homepage = () => {
               ))}
             </div>
           </div>
+          <div className="domits-accommodationGroup">
+            {propertyLoading === false ? (
+              allAccommodations.length > 0 ? (
+                allAccommodations.map((property) => (
+                  <AccommodationCard
+                    key={property.property.id}
+                    accommodation={property}
+                    onClick={handleClick}
+                  />
+                ))
+              ) : (
+                <div>No trending properties available.</div>
+              )
+            ) : (
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
+            )}
+          </div>
         </div>
 
         <div className="domits-boatContainer">
@@ -259,22 +208,22 @@ const Homepage = () => {
             <h3 className="domits-subHead">Rent a boat for any occasion</h3>
           </div>
           <div className="domits-accommodationGroup">
-            {boatAccommodations.length > 0 ? (
-              boatAccommodations.map((boat) => {
-                const images =
-                  accommodationImages.find((img) => img.ID === boat.ID)
-                    ?.Images || [];
-                return (
+            {boatLoading === false ? (
+              boatAccommodations.length > 0 ? (
+                boatAccommodations.map((boat) => (
                   <AccommodationCard
-                    key={boat.ID}
+                    key={boat.property.id}
                     accommodation={boat}
-                    images={Object.values(images)}
                     onClick={handleClick}
                   />
-                );
-              })
+                ))
+              ) : (
+                <div>No boats available.</div>
+              )
             ) : (
-              <div>No boats available.</div>
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
             )}
           </div>
         </div>
@@ -282,22 +231,24 @@ const Homepage = () => {
         <div className="domits-boatContainer">
           <h3 className="domits-subHead">Discover Beautiful Campers</h3>
           <div className="domits-accommodationGroup">
-            {camperAccommodations.length > 0 ? (
-              camperAccommodations.map((camper) => {
-                const images =
-                  accommodationImages.find((img) => img.ID === camper.ID)
-                    ?.Images || [];
-                return (
-                  <AccommodationCard
-                    key={camper.ID}
-                    accommodation={camper}
-                    images={Object.values(images)}
-                    onClick={handleClick}
-                  />
-                );
-              })
+            {camperLoading === false ? (
+              camperAccommodations.length > 0 ? (
+                camperAccommodations.map((camper) => {
+                  return (
+                    <AccommodationCard
+                      key={camper.property.id}
+                      accommodation={camper}
+                      onClick={handleClick}
+                    />
+                  );
+                })
+              ) : (
+                <div>No campers available.</div>
+              )
             ) : (
-              <div>No campers available.</div>
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
             )}
           </div>
         </div>
