@@ -756,13 +756,11 @@ body {
 }
 
 .clientReviewMobile {
-    width: 25vw;
     align-items: center;
     padding: 0;
     text-align: center;
     border: 2px solid #003366;
     border-radius: 1px;
-    margin-left: 710px;
 }
 
 .clientReviewMobile img {
@@ -855,23 +853,110 @@ body {
 
 .personal__advice {
     display: flex;
-    margin: 0 5%;
     justify-content: space-between;
+    align-items: center;
+    padding: 5%;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 
 .personal__advice__left {
-    margin: 10% 0;
+    width: 50%;
     text-align: left;
 }
 
 .personal__advice__left h1 {
-    font-size: 3.5rem;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.personal__advice__left h3 {
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.personal__advice__left button {
+    background-color: #003366;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.personal__advice__left button:hover {
+    background-color: #4c7cac;
 }
 
 .personal__advice img {
-    width: auto;
+    width: 40%;
+    max-width: 300px;
     height: auto;
     object-fit: cover;
+    border-radius: 10px;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .personal__advice {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .personal__advice__left {
+        width: 100%;
+    }
+
+    .personal__advice img {
+        width: 60%;
+        margin-top: 20px;
+    }
+
+    .personal__advice__left h1 {
+        font-size: 2rem;
+    }
+
+    .personal__advice__left h3 {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .personal__advice img {
+        width: 80%;
+    }
+
+    .personal__advice__left h1 {
+        font-size: 1.8rem;
+    }
+
+    .personal__advice__left h3 {
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .personal__advice__left h1 {
+        font-size: 1.5rem;
+    }
+
+    .personal__advice__left h3 {
+        font-size: 0.85rem;
+    }
+
+    .personal__advice img {
+        width: 100%;
+    }
+
+    .personal__advice__left button {
+        font-size: 0.9rem;
+        padding: 8px 16px;
+    }
 }
 
 .WhyHow_text {
