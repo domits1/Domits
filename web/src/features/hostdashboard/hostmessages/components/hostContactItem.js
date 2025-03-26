@@ -32,7 +32,7 @@ const ContactItem = ({ contact, isPending, setContacts }) => {
                     <p className="contact-item-subtitle">
                         {contact.latestMessage.text
                             ? contact.latestMessage.text || "No message yet" 
-                            : "No message available"}
+                            : "No message history yet"}
                     </p>
                 )}
                 {isPending && (

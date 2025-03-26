@@ -71,7 +71,6 @@ const BookingConfirmationOverview = () => {
         return price + taxes + cleaningFee + serviceFee;
     };
     useEffect(() => {
-        console.log(bookingDetails)
         if (
             bookingDetails?.HostID &&
             bookingDetails?.GuestID &&
