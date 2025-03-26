@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import "./paymentconfirmpage.css";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ImageGallery from "./ImageGallery";
+import useAddUserToContactList from "./hooks/useAddUserToContactList";
 
 const BookingConfirmationOverview = () => {
     const location = useLocation();
@@ -11,6 +12,8 @@ const BookingConfirmationOverview = () => {
     const [accommodationDetails, setAccommodationDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const { success, addUserToContactList } = useAddUserToContactList();
+    const [contactAdded, setContactAdded] = useState(false);
 
     useEffect(() => {
         const fetchBookingDetails = async () => {
@@ -67,6 +70,25 @@ const BookingConfirmationOverview = () => {
     
         return price + taxes + cleaningFee + serviceFee;
     };
+    useEffect(() => {
+        console.log(bookingDetails)
+        if (
+            bookingDetails?.HostID &&
+            bookingDetails?.GuestID &&
+            bookingDetails?.AccoID &&
+            bookingDetails.Status === "Accepted" &&
+            !contactAdded
+        ) {
+            
+            addUserToContactList(
+                bookingDetails.GuestID,
+                bookingDetails.HostID,
+                "accepted",
+                bookingDetails.AccoID
+            );
+            setContactAdded(true);
+        }
+    }, [bookingDetails]);
     
 
     if (loading) return <p>Loading booking details...</p>;
