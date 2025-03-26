@@ -248,7 +248,7 @@ function Landing() {
             daily rate.
           </p>
 
-          <button className={styles.nextButtons}>
+          <button className={styles.nextButtons1}>
             <a
               href="#Register"
               onClick={(e) => handleSmoothScroll(e, "Register")}
@@ -347,7 +347,7 @@ function Landing() {
             means aligning with deeply embedded values of health, safety, and
             sustainability, creating a future-proof path for your business.
           </p>
-          <button onClick={updateUserGroup} className={styles.nextButtons}>
+          <button onClick={updateUserGroup} className={styles.nextButtons2}>
             <a
               href="#Register"
               onClick={(e) => handleSmoothScroll(e, "Register")}
@@ -731,7 +731,7 @@ function Landing() {
             <span className={styles.highlightText}>rental expert team</span>
           </h1>
           <h3>Our expert team is ready for support!</h3>
-          <button className={styles.nextButtons}>
+          <button className={styles.nextButtons3}>
             {" "}
             <a href="/contact">Talk to a specialist</a>
           </button>

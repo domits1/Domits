@@ -285,11 +285,13 @@ body {
 
 .buttonHolder {
     display: flex;
-    justify-content: space-between;
+    justify-content: center; /* Centers the button horizontally */
+    align-items: center; /* Centers the button vertically */
     margin-top: 10px;
+    width: 100%; /* Ensures the container spans the full width */
 }
 
-.nextButtons {
+.nextButtons3 {
     background-color: #003366;
     color: #fff;
     height: 45px;
@@ -302,19 +304,169 @@ body {
     align-items: center;
     justify-content: center;
     font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease-out;
 }
 
-.nextButtons a {
+.nextButtons3 a {
     text-decoration: none;
     color: white;
 }
 
-.nextButtons:hover {
+.nextButtons3:hover {
     background-color: #4c7cac;
-    cursor: pointer;
-    transition: background-color .3s ease-out;
 }
 
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .nextButtons3 {
+        width: 140px;
+        height: 40px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .nextButtons3 {
+        width: 120px;
+        height: 38px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .buttonHolder {
+        justify-content: center; /* Ensures the button stays centered */
+    }
+
+    .nextButtons3 {
+        width: 100%; /* Makes the button span the full width */
+        height: 35px;
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+
+    .nextButtons3 a {
+        font-size: 0.85rem;
+    }
+}
+
+.nextButtons2 {
+    background-color: #003366;
+    color: #fff;
+    height: 45px;
+    width: 150px;
+    border-radius: 5px;
+    margin-top: 15px;
+    border: none;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease-out;
+    margin-top: 20px;
+}
+
+.nextButtons2 a {
+    text-decoration: none;
+    color: white;
+}
+
+.nextButtons2:hover {
+    background-color: #4c7cac;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .nextButtons2 {
+        width: 140px;
+        height: 40px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .nextButtons2 {
+        width: 120px;
+        height: 38px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .buttonHolder {
+        justify-content: center; /* Ensures the button stays centered */
+    }
+
+    .nextButtons2 {
+        width: 100%; /* Makes the button span the full width */
+        height: 35px;
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+
+    .nextButtons2 a {
+        font-size: 0.85rem;
+    }
+}
+
+.nextButtons1 {
+    background-color: #003366;
+    color: #fff;
+    height: 45px;
+    width: 150px;
+    border-radius: 5px;
+    padding: 10px;
+    margin-top: 15px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease-out;
+}
+
+.nextButtons1 a {
+    text-decoration: none;
+    color: white;
+}
+
+.nextButtons1:hover {
+    background-color: #4c7cac;
+}
+
+/* Responsive Styles */
+@media (max-width: 1024px) {
+    .nextButtons1 {
+        width: 140px;
+        height: 40px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .nextButtons1 {
+        width: 120px;
+        height: 38px;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .buttonHolder {
+        justify-content: center; /* Ensures the button stays centered */
+    }
+
+    .nextButtons1 {
+        width: 100%; /* Makes the button span the full width */
+        height: 35px;
+        font-size: 0.85rem;
+        padding: 8px;
+    }
+
+    .nextButtons1 a {
+        font-size: 0.85rem;
+    }
+}
 .headerTwoText {
     width: 100%;
 }
@@ -388,7 +540,6 @@ body {
     display: flex;
     flex-direction: column;
     padding-bottom: 4%;
-    margin-left: 7.5%;
     margin-top: 10%;
     text-align: left;
 }
@@ -500,21 +651,7 @@ body {
     margin: 0;
 }
 
-.whyHostText {
-    width: 50%;
-    margin-left: 10%;
-    text-align: left;
-    margin-top: 105px;
-}
 
-.whyHostText h1 {
-    font-size: 2rem;
-}
-
-.whyHostText p {
-    color: black;
-    width: 85%;
-}
 
 .simpleSafe {
     background-color: #f9f9f9;
@@ -556,6 +693,22 @@ body {
 .whyHost {
     display: flex;
     padding: 5% 0;
+}
+
+.whyHostText {
+    width: 50%;
+    margin-left: 10%;
+    text-align: left;
+    margin-top: 105px;
+}
+
+.whyHostText h1 {
+    font-size: 2rem;
+}
+
+.whyHostText p {
+    color: black;
+    width: 85%;
 }
 
 .SecPicture {
@@ -1290,6 +1443,7 @@ body {
 
     .whyHostText p {
         font-size: 0.95rem;
+        margin-left: 40px;
     }
 }
 
