@@ -4,6 +4,19 @@ export const FilterLogic = (props) => {
   const [priceValues, setPriceValues] = useState([15, 400]);
   const { onFilterApplied } = props || {};
 
+
+const [seasonFilter, setSeasonFilter] = useState({
+  Spring: false,
+  Summer: false,
+  Autumn: false,
+  Winter: false,
+  Fall: false,
+  Easter: false,
+  Christmas: false,
+  LowSeason: false,
+  HighSeason: false,
+})
+
   const [selectedFacilities, setSelectedFacilities] = useState({
     wifi: false,
     parking: false,
@@ -34,20 +47,13 @@ export const FilterLogic = (props) => {
 
   const [showMoreFacilities, setShowMoreFacilities] = useState(false);
   const [showMorePropertyTypes, setShowMorePropertyTypes] = useState(false);
-
-  const [selectedRatings, setSelectedRatings] = useState({
-    1: false,
-    2: false,
-    3: false,
-    4: false,
-    5: false,
-  });
+  const [showMoreSeasonTypes, setShowMoreSeasonTypes] = useState(false);
 
   const [accommodationResults, setAccommodationResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
- 
+  
   const fetchFilteredAccommodations = async () => {
     try {
       setLoading(true);
@@ -108,9 +114,10 @@ export const FilterLogic = (props) => {
     });
   };
 
-  const handleRatingChange = (event) => {
-    setSelectedRatings({
-      ...selectedRatings,
+
+  const handleSeasonChange = (event) => {
+    setSeasonFilter({
+      ...seasonFilter,
       [event.target.name]: event.target.checked,
     });
   };
@@ -126,12 +133,15 @@ export const FilterLogic = (props) => {
     setShowMoreFacilities,
     showMorePropertyTypes,
     setShowMorePropertyTypes,
-    selectedRatings,
-    handleRatingChange,
     handlePriceChange,
     accommodationResults,
     loading,
     error,
     fetchFilteredAccommodations,
+    handleSeasonChange,
+    seasonFilter,
+    setSeasonFilter,
+    showMoreSeasonTypes,
+    setShowMoreSeasonTypes,
   };
 };

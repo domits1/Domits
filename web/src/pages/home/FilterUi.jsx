@@ -15,11 +15,15 @@ const FilterUi = ({ onFilterApplied }) => {
     setShowMoreFacilities,
     showMorePropertyTypes,
     setShowMorePropertyTypes,
-    selectedRatings,
-    handleRatingChange,
     handlePriceChange,
     loading,
     fetchFilteredAccommodations,
+    showSeasonTypes,
+    handleSeasonChange,
+    seasonFilter,
+    ShowMoreSeasonTypes,
+    setShowMoreSeasonTypes,
+    showMoreSeasonTypes,
   } = FilterLogic({ onFilterApplied });
 
   const [minInputValue, setMinInputValue] = useState(`€${priceValues[0]}`);
@@ -54,6 +58,7 @@ const FilterUi = ({ onFilterApplied }) => {
     }
   };
 
+
   const handleMaxInputChange = (e) => {
     const rawValue = e.target.value;
     setMaxInputValue(rawValue);
@@ -69,7 +74,6 @@ const FilterUi = ({ onFilterApplied }) => {
     }
   };
 
-  
   const handleBlur = () => {
     setMinInputValue(`€${priceValues[0]}`);
     setMaxInputValue(`€${priceValues[1]}`);
@@ -210,8 +214,49 @@ const FilterUi = ({ onFilterApplied }) => {
         </span>
       </div>
 
-    
-    </div>
+      <div className="filter-section">
+        <div className='FilterTitle'>Seasons</div>
+        <div className="facility-list">
+          {Object.keys(seasonFilter).slice(0, 5).map((season) => (
+            <label key={season} className="facility-item">
+              <input
+                type="checkbox"
+                name={season}
+                checked={seasonFilter[season]}
+                onChange={handleSeasonChange}
+                className="filter-select-option"
+              />
+              {season.charAt(0).toUpperCase() + season.slice(1)}
+            </label>
+          ))}
+          {ShowMoreSeasonTypes &&
+            Object.keys(seasonFilter)
+              .slice(5)
+              .map((season) => (
+                <label key={season} className="facility-item">
+                  <input
+                    type="checkbox"
+                    name={season}
+                    checked={seasonFilter[season]}
+                    onChange={handleSeasonChange}
+                    className="filter-select-option"
+                  />
+                  {season.charAt(0).toUpperCase() + season.slice(1)}
+                </label>
+              ))}
+          <span
+            onClick={() => setShowMoreSeasonTypes(!showMoreSeasonTypes)}
+            className="show-more-text"
+          >
+            {showMoreSeasonTypes ? 'Show Less' : 'Show More'}
+          </span>
+
+        </div>
+      </div>
+
+
+
+    </div >
   );
 };
 
