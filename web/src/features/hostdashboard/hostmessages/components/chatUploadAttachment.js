@@ -95,6 +95,7 @@ const ChatUploadAttachment = () => {
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
                 className="add-file-button"
+                disabled
             >
                 Add files
             </button>

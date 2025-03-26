@@ -155,11 +155,6 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
             </div>
             <div className='host-chat-buttons'>
 
-                {/* <button
-                    onClick={handleAddAttachment}
-                    className="add-file-button"
-                >Add files</button> */}
-
                 <ChatUploadAttachment onUploadComplete={handleUploadComplete} />
                 <button
                     onClick={handleSendReviewLink}
