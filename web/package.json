@@ -125,6 +125,8 @@
     "react-toastify": "^11.0.3",
     "react-twitter-embed": "^4.0.4",
     "recharts": "^2.12.7",
+    "resolve-url-loader": "^5.0.0",
+    "sass-loader": "^16.0.4",
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
     "swiper": "^11.1.14",
