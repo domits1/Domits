@@ -66,7 +66,7 @@ const HostMessagesContent = () => {
                             <div className="host-chat-side">
                                 <Pages className="host-chat-side" />
                             </div>
-                            
+
                             {showContactList && (
                                 <ContactList
                                     userId={userId}

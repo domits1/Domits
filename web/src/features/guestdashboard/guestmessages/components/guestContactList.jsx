@@ -44,7 +44,6 @@ const ContactList = ({ userId, onContactClick, message }) => {
                     <p className="contact-list-empty-text">{noContactsMessage}</p>
                 ) : (
                     contactList
-                        .filter(contact => contact.latestMessage?.createdAt)
                         .sort((a, b) => {
                             const dateA = a.latestMessage?.createdAt ? new Date(a.latestMessage.createdAt) : 0;
                             const dateB = b.latestMessage?.createdAt ? new Date(b.latestMessage.createdAt) : 0;

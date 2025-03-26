@@ -22,7 +22,7 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
 
     const handleUploadComplete = (url) => {
         setUploadedFileUrls((prev) => [...prev, url]);
-      };
+    };
 
     useEffect(() => {
         if (contactId) {
