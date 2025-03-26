@@ -2,13 +2,7 @@
 node_modules/
 
 #amplify-do-not-edit-begin
-amplify/\#current-cloud-backend
-amplify/.config/local-*
-amplify/logs
-amplify/mock-data
-amplify/mock-api-resources
-amplify/backend/amplify-meta.json
-amplify/backend/.temp
+amplify/
 build/
 dist/
 aws-exports.js
