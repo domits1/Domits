@@ -65,6 +65,7 @@ import culture from '../../pages/home/Images/culture.webp';
 import culinary from '../../pages/home/Images/culinary.webp';
 import waterman from '../../pages/home/Images/waterman.webp';
 import sleutelvrouw from '../../pages/home/Images/sleutelvrouw.webp';
+import profilePic from '../../pages/home/Images/sleutelvrouw.webp';
 
 
 const Homepage = () => {
@@ -176,6 +177,15 @@ const Homepage = () => {
     { name: 'Pet Friendly', img: petFriendly, description: 'Vacation Rentals and Apartments' },
   ];
 
+  const reviews = [
+    { name: 'sigma freugd', img: waterman, text: 'Amazing platform! The user interface is sleek, and the customer service is top-notch!' },
+    { name: 'sigma freugd', text: 'I couldnt be happier. The website is intuitive and easy to navigate, making booking seamless. The support team was quick to respond and helpful' },
+    { name: 'sigma freugd', text: 'Amazing experience! Highly recommend.' },
+    { name: 'sigma freugd', text: 'Ill definitely use this platform again!' },
+    { name: 'Jane Smith', text: 'The service was excellent and the property was beautiful.' },
+    { name: 'Alice Johnson', text: 'A perfect getaway. Will book again!' },
+  ];
+
   const handleScroll = () => {
     if (!searchBarRef.current) return;
 
@@ -203,6 +213,23 @@ const Homepage = () => {
       document.body.classList.remove("hide-header");
     };
   }, []);
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const handleNextReview = () => {
+    setCurrentIndex((prev) => (prev + 1) % reviews.length);
+  };
+
+  const handlePreviousReview = () => {
+    setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
+  };
+
+  const visibleReviews = [
+    reviews[currentIndex],
+    reviews[(currentIndex + 1) % reviews.length],
+    reviews[(currentIndex + 2) % reviews.length],
+  ];
+
 
   const fetchBoatAccommodations = async () => {
     try {
@@ -532,6 +559,26 @@ const Homepage = () => {
           ))}
         </div>
       </div>
+      {/* Updated Review Section */}
+      <div className="review-container">
+          <button className="arrow-button" onClick={handlePreviousReview}>
+            &lt;
+          </button>
+          <div className="review-list">
+            {visibleReviews.map((review, index) => (
+              <div className="review-card" key={index}>
+                <img src={profilePic} alt="Reviewer" className="review-profile-pic" />
+                <h3>{review.name}</h3>
+                <p className="review-location">Host from The Netherlands</p>
+                <div className="review-stars">★★★★★</div>
+                <p className="review-text">{review.text}</p>
+              </div>
+            ))}
+          </div>
+          <button className="arrow-button" onClick={handleNextReview}>
+            &gt;
+          </button>
+        </div>
       <div className="domits-communityContainer">
           <h2 className="domits-communityHead">
             Need help? Join the community
