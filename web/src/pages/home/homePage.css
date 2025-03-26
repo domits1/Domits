@@ -19,7 +19,6 @@ body.hide-header .app-header {
   align-items: center;
   flex-wrap: wrap;
   gap: 20px;
-  /* Added for spacing */
 }
 
 .domits-searchContainer {
@@ -55,7 +54,6 @@ body.hide-header .app-header {
   margin-right: auto;
   padding-bottom: 2vh;
   flex-wrap: wrap;
-  /* Added for responsiveness */
 }
 
 .domits-trendingContainer>div {
@@ -98,9 +96,7 @@ body.hide-header .app-header {
   align-items: center;
   justify-content: center;
   width: 250px;
-  /* Adjust this width as needed */
   height: 90px;
-  /* Adjust this height as needed */
   text-align: center;
   border: 1px solid #ddd;
   border-radius: 8px;
@@ -225,25 +221,24 @@ body.hide-header .app-header {
   height: 150px;
 }
 
-/*nederland*/
 .countries-container> :nth-child(1),
 .more-countries-container> :nth-child(1) {
   grid-column: span 2;
 }
 
-/*frankrijk*/
+
 .countries-container> :nth-child(2),
 .more-countries-container> :nth-child(2) {
   grid-column: span 1;
 }
 
-/*spanje*/
+
 .countries-container> :nth-child(3),
 .more-countries-container> :nth-child(3) {
   grid-column: span 1;
 }
 
-/* Asia specific styles */
+
 .asia-countries-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -302,17 +297,17 @@ body.hide-header .app-header {
   height: 150px;
 }
 
-/*philippines*/
+
 .asia-countries-container> :nth-child(1) {
   grid-column: span 2;
 }
 
-/*thailand*/
+
 .asia-countries-container> :nth-child(2) {
   grid-column: span 1;
 }
 
-/*indonesia*/
+
 .asia-countries-container> :nth-child(3) {
   grid-column: span 1;
 }
@@ -375,22 +370,22 @@ body.hide-header .app-header {
   height: 150px;
 }
 
-/*aruba*/
+
 .caribbean-countries-container> :nth-child(1) {
   grid-column: span 1;
 }
 
-/*bonaire*/
+
 .caribbean-countries-container> :nth-child(2) {
   grid-column: span 1;
 }
 
-/*curacao*/
+
 .caribbean-countries-container> :nth-child(3) {
   grid-column: span 2;
 }
 
-/* Ski specific styles */
+
 .ski-countries-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -439,37 +434,37 @@ body.hide-header .app-header {
   font-weight: 400;
 }
 
-/*austria*/
+
 .ski-countries-container> :nth-child(1) {
   grid-column: span 1;
 }
 
-/*french alps*/
+
 .ski-countries-container> :nth-child(2) {
   grid-column: span 1;
 }
 
-/*switzerland*/
+
 .ski-countries-container> :nth-child(3) {
   grid-column: span 2;
 }
 
-/*chamonix-mont-blanc*/
+
 .ski-countries-container> :nth-child(4) {
   grid-column: span 2;
 }
 
-/*black forest*/
+
 .ski-countries-container> :nth-child(5) {
   grid-column: span 1;
 }
 
-/*italy trentino*/
+
 .ski-countries-container> :nth-child(6) {
   grid-column: span 1;
 }
 
-/* Seasons specific styles */
+
 .seasons-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -578,50 +573,49 @@ body.hide-header .app-header {
   font-weight: 400;
 }
 
-/* Specific spans for items */
+
 .interests-container> :nth-child(1) {
   grid-column: span 1;
-  /* Luxury */
 }
 
 .interests-container> :nth-child(2) {
   grid-column: span 1;
-  /* Beach */
+
 }
 
 .interests-container> :nth-child(3) {
   grid-column: span 2;
-  /* Last minute */
+ 
 }
 
 .interests-container> :nth-child(4) {
   grid-column: span 1;
-  /* Wellness */
+  
 }
 
 .interests-container> :nth-child(5) {
   grid-column: span 1;
-  /* Romantic */
+
 }
 
 .interests-container> :nth-child(6) {
   grid-column: span 1;
-  /* Adventure */
+ 
 }
 
 .interests-container> :nth-child(7) {
   grid-column: span 1;
-  /* Nature */
+  
 }
 
 .interests-container> :nth-child(8) {
   grid-column: span 2;
-  /* Culture */
+ 
 }
 
 .interests-container> :nth-child(9) {
   grid-column: span 2;
-  /* Culinary */
+ 
 }
 
 .groups-container {
@@ -663,38 +657,37 @@ body.hide-header .app-header {
 
 .groups-container> :nth-child(1) {
   grid-column: span 1;
-  /* Friends */
+ 
 }
 
 .groups-container> :nth-child(2) {
   grid-column: span 1;
-  /* Couples */
+  
 }
 
 .groups-container> :nth-child(3) {
   grid-column: span 2;
-  /* Family & child friendly */
+  
 }
 
 .groups-container> :nth-child(4) {
   grid-column: span 2;
-  /* Solo */
+ 
 }
 
 .groups-container> :nth-child(5) {
   grid-column: span 1;
-  /* Senior */
+ 
 }
 
 .groups-container> :nth-child(6) {
   grid-column: span 1;
-  /* Pet Friendly */
+ 
 }
 
-/* Media query for mobile devices */
+
 @media (max-width: 767px) {
 
-  /* Countries */
   .countries-container,
   .more-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -713,7 +706,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
-  /* Asia */
+
   .asia-countries-container,
   .more-asia-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -732,7 +725,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
-  /* Caribbean */
+  
   .caribbean-countries-container,
   .more-caribbean-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -751,7 +744,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
-  /* Ski */
+  
   .ski-countries-container,
   .more-ski-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -770,7 +763,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
-  /* Seasons */
+
   .seasons-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -785,7 +778,7 @@ body.hide-header .app-header {
     font-size: 18px;
   }
 
-  /* Great Picks by Interest */
+ 
   .interests-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -804,7 +797,7 @@ body.hide-header .app-header {
     font-size: 14px;
   }
 
-  /* Accommodation by Group */
+ 
   .groups-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -838,10 +831,9 @@ body.hide-header .app-header {
   background-color: transparent;
 }
 
-/* Media query for mobile devices */
+
 @media (max-width: 400px) {
 
-  /* Countries */
   .countries-container,
   .more-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -872,7 +864,7 @@ body.hide-header .app-header {
     height: 75px;
   }
 
-  /* Asia */
+
   .asia-countries-container,
   .more-asia-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -903,7 +895,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
-  /* Caribbean */
+ 
   .caribbean-countries-container,
   .more-caribbean-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -926,7 +918,7 @@ body.hide-header .app-header {
     height: 75px;
   }
 
-  /* Ski */
+
   .ski-countries-container,
   .more-ski-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -945,7 +937,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
-  /* Seasons */
+
   .seasons-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -964,7 +956,7 @@ body.hide-header .app-header {
     height: 120px;
   }
 
-  /* Great Picks by Interest */
+
   .interests-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -987,7 +979,7 @@ body.hide-header .app-header {
     height: 120px;
   }
 
-  /* Accommodation by Group */
+
   .groups-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -1275,7 +1267,6 @@ body.hide-header .app-header {
 
   .domits-communityContainer {
     padding: 4vh 5vw;
-    /* Increase padding for more space */
   }
 }
 
@@ -1290,7 +1281,6 @@ body.hide-header .app-header {
   max-width: 800px;
   margin: auto;
   flex-wrap: wrap;
-  /* Allows wrapping on smaller screens */
   gap: 2rem;
 }
 
@@ -1334,13 +1324,11 @@ body.hide-header .app-header {
   background-color: #1e40af;
 }
 
-/* ---- Image Styling (Always Overlapping) ---- */
+
 .host-images {
   position: relative;
   width: 300px;
-  /* Adjust width to maintain image overlap */
   height: 250px;
-  /* Fixed height to prevent layout shifts */
 }
 
 .host-image {
@@ -1350,25 +1338,22 @@ body.hide-header .app-header {
   position: absolute;
 }
 
-/* First image (background) */
+
 .host-image:first-child {
   position: relative;
   z-index: 1;
   width: 220px;
 }
 
-/* Second image (foreground, overlapping) */
+
 .host-image:last-child {
   position: absolute;
   top: -80px;
-  /* Keeps overlap */
   left: 120px;
-  /* Keeps overlap */
   z-index: 2;
   width: 270px;
 }
 
-/* ---- RESPONSIVE DESIGN ---- */
 @media (max-width: 768px) {
   .become-host-section {
     flex-direction: column;
@@ -1382,7 +1367,6 @@ body.hide-header .app-header {
 
   .host-images {
     width: 280px;
-    /* Maintain overlap */
     height: 230px;
   }
 
