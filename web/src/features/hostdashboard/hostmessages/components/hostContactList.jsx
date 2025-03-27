@@ -8,7 +8,7 @@ const ContactList = ({ userId, onContactClick, message }) => {
     const { contacts, pendingContacts, loading, error, setContacts } = useFetchContacts(userId);
     const { messages: wsMessages } = useContext(WebSocketContext);
     const [displayType, setDisplayType] = useState('contacts');
-
+    
     useEffect(() => {
         const updateContactsFromWS = async () => {
             if (wsMessages.length === 0) return;
@@ -21,14 +21,6 @@ const ContactList = ({ userId, onContactClick, message }) => {
 
                     if (existingContact) {
                         existingContact.latestMessage = msg;
-                    } else {
-                        const newContact = {
-                            userId: msg.userId,
-                            recipientId: msg.userId,
-                            givenName: msg.senderName || "New Contact",
-                            text: msg,
-                        };
-                        updatedContacts.push(newContact);
                     }
                 });
 
@@ -101,17 +93,26 @@ const ContactList = ({ userId, onContactClick, message }) => {
                     <p className="contact-list-empty-text">{noContactsMessage}</p>
                 ) : (
                     contactList
-                        .filter(contact => contact.latestMessage?.createdAt)
                         .sort((a, b) => {
                             const dateA = a.latestMessage?.createdAt ? new Date(a.latestMessage.createdAt) : 0;
                             const dateB = b.latestMessage?.createdAt ? new Date(b.latestMessage.createdAt) : 0;
                             return dateB - dateA;
                         })
                         .map((contact) => (
-                            <li key={contact.userId} className="contact-list-list-item" onClick={() => handleContactClick(contact.recipientId, contact.givenName)}>
+                            <li
+                                key={contact.userId}
+                                className={`contact-list-list-item ${displayType === 'pendingContacts' ? 'disabled' : ''}`}
+                                onClick={() => {
+                                    if (displayType !== 'pendingContacts') {
+                                        handleContactClick(contact.recipientId, contact.givenName);
+                                    }
+                                }}
+                            >
                                 <ContactItem
                                     contact={contact}
                                     isPending={displayType === 'pendingContacts'}
+                                    setContacts={setContacts}
+
                                 />
                             </li>
                         ))
