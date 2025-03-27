@@ -285,10 +285,10 @@ body {
 
 .buttonHolder {
     display: flex;
-    justify-content: center; /* Centers the button horizontally */
-    align-items: center; /* Centers the button vertically */
+    justify-content: center;
+    align-items: center;
     margin-top: 10px;
-    width: 100%; /* Ensures the container spans the full width */
+    width: 100%;
 }
 
 .nextButtons3 {
@@ -317,7 +317,7 @@ body {
     background-color: #4c7cac;
 }
 
-/* Responsive Styles */
+
 @media (max-width: 1024px) {
     .nextButtons3 {
         width: 140px;
@@ -336,11 +336,11 @@ body {
 
 @media (max-width: 480px) {
     .buttonHolder {
-        justify-content: center; /* Ensures the button stays centered */
+        justify-content: center;
     }
 
     .nextButtons3 {
-        width: 100%; /* Makes the button span the full width */
+        width: 100%;
         height: 35px;
         font-size: 0.85rem;
         padding: 8px;
@@ -374,7 +374,7 @@ body {
     background-color: #4c7cac;
 }
 
-/* Responsive Styles */
+
 @media (max-width: 1024px) {
     .nextButtons2 {
         width: 140px;
@@ -393,11 +393,11 @@ body {
 
 @media (max-width: 480px) {
     .buttonHolder {
-        justify-content: center; /* Ensures the button stays centered */
+        justify-content: center;
     }
 
     .nextButtons2 {
-        width: 100%; /* Makes the button span the full width */
+        width: 100%;
         height: 35px;
         font-size: 0.85rem;
         padding: 8px;
@@ -434,7 +434,7 @@ body {
     background-color: #4c7cac;
 }
 
-/* Responsive Styles */
+
 @media (max-width: 1024px) {
     .nextButtons1 {
         width: 140px;
@@ -453,11 +453,11 @@ body {
 
 @media (max-width: 480px) {
     .buttonHolder {
-        justify-content: center; /* Ensures the button stays centered */
+        justify-content: center;
     }
 
     .nextButtons1 {
-        width: 100%; /* Makes the button span the full width */
+        width: 100%;
         height: 35px;
         font-size: 0.85rem;
         padding: 8px;
@@ -467,6 +467,7 @@ body {
         font-size: 0.85rem;
     }
 }
+
 .headerTwoText {
     width: 100%;
 }
@@ -922,7 +923,7 @@ body {
     border-radius: 50%;
 }
 
-/* Checklist Section */
+
 .checkList {
     margin: 5% 0;
     display: flex;
@@ -973,7 +974,7 @@ body {
     max-width: 90%;
 }
 
-/* Responsive Styles */
+
 @media (max-width: 1024px) {
     .checkList h1 {
         font-size: 2rem;
@@ -1053,6 +1054,7 @@ body {
         font-size: 0.85rem;
     }
 }
+
 .faq .landing__faq {
     width: 50%;
     border: 2px solid #003366;
@@ -1070,13 +1072,13 @@ body {
 .faq .landing__faq__body {
     display: flex;
     justify-content: space-between;
-    align-items: center; /* Ensures proper vertical alignment */
+    align-items: center;
 }
 
 .faq .landing__faq__question {
     font-weight: bold;
     font-size: 1.2rem;
-    flex: 1; /* Ensures the question takes up available space */
+    flex: 1;
     text-align: left;
 }
 
@@ -1093,7 +1095,7 @@ body {
     margin-top: 10px;
 }
 
-/* FAQ Header */
+
 .faq .faq__header {
     display: flex;
     justify-content: center;
@@ -1112,7 +1114,7 @@ body {
     margin: 0;
 }
 
-/* FAQ List */
+
 .faq .faq__list {
     display: flex;
     flex-direction: column;
@@ -1120,7 +1122,7 @@ body {
     gap: 10px;
 }
 
-/* Responsive Styles */
+
 @media (max-width: 1024px) {
     .faq .landing__faq {
         width: 90%;
@@ -1245,7 +1247,7 @@ body {
     border-radius: 10px;
 }
 
-/* Responsive Styles */
+
 @media (max-width: 1024px) {
     .personal__advice {
         flex-direction: column;
