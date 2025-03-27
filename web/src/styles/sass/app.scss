@@ -2,9 +2,12 @@
 @use "booking-engine/listing.scss";
 @use "booking-engine/bookingoverview.scss";
 @use "booking-engine/paymentConfirmPage.scss";
+
 @use "base/header.scss";
 @use "base/footer.scss";
 @use "base/MenuBar.scss";
+
+@use "auth/login.scss";
 
 @font-face {
     font-family: "Kanit";
