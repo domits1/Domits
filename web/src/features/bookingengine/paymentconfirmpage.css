@@ -80,9 +80,14 @@
     align-self: auto;
 }
 
-@media (max-width: 768px) {
+.mobile-left {
+    width: 100%; /* Make it take the full width */
+    order: 0; /* Ensure it appears below the confirmInformation section */
+}
+
+/* @media (max-width: 768px) {
     .left {
         display: none;
     }
     
-}
+} */

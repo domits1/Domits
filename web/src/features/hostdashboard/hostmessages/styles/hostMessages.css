@@ -1,4 +1,64 @@
+.host-chat-side {
+    margin-right: 5em;
+}
+
 .host-chat-components {
     display: flex;
     flex-direction: row;
+}
+
+.ContactsBack-button {
+    display: block;
+    width: 100%;
+    max-width: 400px;
+    margin: 1rem auto;
+    background: #f1f1f1;
+    color: #333;
+    border: none;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+}
+
+.close-chat-button {
+    margin-left: auto;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+    display: none;
+}
+
+
+@media (max-width: 1145px) {
+    .host-chat-components {}
+
+}
+
+@media (min-width: 768px) and (max-width: 1145px) {
+    .close-chat-button {
+        display: block;
+        margin-left: auto;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+    }
+}
+
+@media (max-width: 768px) {
+    .host-chat-components {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+
+}
+
+@media (min-width: 769px) {
+    .ContactsBack-button {
+        display: none;
+    }
 }
