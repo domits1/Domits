@@ -34,7 +34,7 @@ body {
 
 }
 
-.lol {
+.List_Names {
     background: red;
 }
 
@@ -291,7 +291,7 @@ body {
     width: 100%;
 }
 
-.nextButtons3 {
+.nextadvice {
     background-color: #003366;
     color: #fff;
     height: 45px;
@@ -308,18 +308,18 @@ body {
     transition: background-color 0.3s ease-out;
 }
 
-.nextButtons3 a {
+.nextadvice a {
     text-decoration: none;
     color: white;
 }
 
-.nextButtons3:hover {
+.nextadvice:hover {
     background-color: #4c7cac;
 }
 
 
 @media (max-width: 1024px) {
-    .nextButtons3 {
+    .nextadvice {
         width: 140px;
         height: 40px;
         font-size: 0.95rem;
@@ -327,7 +327,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    .nextButtons3 {
+    .nextadvice {
         width: 120px;
         height: 38px;
         font-size: 0.9rem;
@@ -339,19 +339,19 @@ body {
         justify-content: center;
     }
 
-    .nextButtons3 {
+    .nextadvice {
         width: 100%;
         height: 35px;
         font-size: 0.85rem;
         padding: 8px;
     }
 
-    .nextButtons3 a {
+    .nextadvice a {
         font-size: 0.85rem;
     }
 }
 
-.nextButtons2 {
+.nexthost {
     background-color: #003366;
     color: #fff;
     height: 45px;
@@ -365,18 +365,18 @@ body {
     margin-top: 20px;
 }
 
-.nextButtons2 a {
+.nexthost a {
     text-decoration: none;
     color: white;
 }
 
-.nextButtons2:hover {
+.nexthost:hover {
     background-color: #4c7cac;
 }
 
 
 @media (max-width: 1024px) {
-    .nextButtons2 {
+    .nexthost {
         width: 140px;
         height: 40px;
         font-size: 0.95rem;
@@ -384,7 +384,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    .nextButtons2 {
+    .nexthost {
         width: 120px;
         height: 38px;
         font-size: 0.9rem;
@@ -396,19 +396,19 @@ body {
         justify-content: center;
     }
 
-    .nextButtons2 {
+    .nexthost {
         width: 100%;
         height: 35px;
         font-size: 0.85rem;
         padding: 8px;
     }
 
-    .nextButtons2 a {
+    .nexthost a {
         font-size: 0.85rem;
     }
 }
 
-.nextButtons1 {
+.nextregister {
     background-color: #003366;
     color: #fff;
     height: 45px;
@@ -425,18 +425,18 @@ body {
     transition: background-color 0.3s ease-out;
 }
 
-.nextButtons1 a {
+.nextregister a {
     text-decoration: none;
     color: white;
 }
 
-.nextButtons1:hover {
+.nextregister:hover {
     background-color: #4c7cac;
 }
 
 
 @media (max-width: 1024px) {
-    .nextButtons1 {
+    .nextregister {
         width: 140px;
         height: 40px;
         font-size: 0.95rem;
@@ -444,7 +444,7 @@ body {
 }
 
 @media (max-width: 768px) {
-    .nextButtons1 {
+    .nextregister {
         width: 120px;
         height: 38px;
         font-size: 0.9rem;
@@ -456,14 +456,14 @@ body {
         justify-content: center;
     }
 
-    .nextButtons1 {
+    .nextregister {
         width: 100%;
         height: 35px;
         font-size: 0.85rem;
         padding: 8px;
     }
 
-    .nextButtons1 a {
+    .nextregister a {
         font-size: 0.85rem;
     }
 }
