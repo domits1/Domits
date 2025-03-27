@@ -1,5 +1,5 @@
 import React, {useState, useEffect, useContext} from 'react';
-import './MenuBar.css';
+// import './MenuBar.css';
 import { HouseOutlined as HouseOutlinedIcon, ForumOutlined as ForumOutlinedIcon, AccountCircleOutlined as AccountCircleOutlinedIcon} from '@mui/icons-material';
 import loginArrow from '../../images/whitearrow.png';
 import logoutArrow from '../../images/log-out-04.svg';
