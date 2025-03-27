@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Slider from '@mui/material/Slider';
 import FilterLogic from './FilterLogic';
 import './FilterMain.css';
