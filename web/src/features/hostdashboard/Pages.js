@@ -23,7 +23,7 @@ function Pages() {
   const [cognitoUserId, setCognitoUserId] = useState(null);
   const [stripeLoginUrl, setStripeLoginUrl] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('/hostdashboard');
+  const [activeTab, setActiveTab] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -62,7 +62,7 @@ function Pages() {
                     <option value="/hostdashboard/calendar">Reservations</option>
                     <option value="/hostdashboard/chat">Messages</option>
                     <option value="/hostdashboard/reporting">Revenues</option>
-                    <option value="/hostdashboard/reviews">Reviews</option>
+                    {/* <option value="/hostdashboard/reviews">Reviews</option> */}
                     <option value="/hostdashboard/calendar">Housekeeping</option>
                     <option value="/hostdashboard/calendar">Finance</option>
                     <option value="/hostdashboard/pricing">Pricing</option>
@@ -138,7 +138,7 @@ function Pages() {
           <RevenueIcon/></div>
           <p>Revenues</p>
         </div>
-        <div
+        {/* <div
           className={`wijzer ${activeTab === "/hostdashboard/reviews" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/reviews")}
         >
@@ -146,7 +146,7 @@ function Pages() {
           <div className="Mui">
           <RevieuwsIcon/></div>
           <p>Reviews</p>
-        </div>
+        </div> */}
         <div
           className={`wijzer ${activeTab === "/hostdashboard/housekeeping" ? "active" : ""}`}
           onClick={() => handleNavigation("/hostdashboard/housekeeping")}

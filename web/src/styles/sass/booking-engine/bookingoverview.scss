@@ -1,0 +1,350 @@
+// Variables
+$primary-color: #4CAF50;
+$secondary-color: #333;
+$background-color: #f9f9f9;
+$border-color: #ddd;
+$font-size-small: 12px;
+$font-size-medium: 14px;
+$font-size-large: 16px;
+$box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+$border-radius: 8px;
+
+// Booking Container
+.booking-container {
+  display: block;
+  padding: 20px;
+
+  @media (max-width: 768px) {
+    padding: 10px;
+  }
+
+  @media (max-width: 375px) {
+    padding: 8px;
+  }
+}
+
+// Booking Header
+.booking-header {
+  display: flex;
+  flex-direction: row;
+  margin-bottom: 20px;
+  gap: 2%;
+  align-items: center;
+  padding-left: 10vh;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+    padding-left: 0;
+  }
+
+  @media (max-width: 375px) {
+    flex-direction: column;
+    text-align: center;
+    padding-left: 0;
+  }
+}
+
+// Booking Container Grid
+.Bookingcontainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15%;
+  padding-left: 15vh;
+
+  @media (max-width: 768px) {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-left: 0;
+  }
+
+  @media (max-width: 375px) {
+    flex-direction: column;
+    gap: 15px;
+    padding-left: 0;
+  }
+}
+
+// Left Panel
+.left-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border: 1px solid $border-color;
+  border-radius: $border-radius;
+  background-color: #ffffff;
+  padding: 16px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: $box-shadow;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+    padding: 10px;
+  }
+
+  @media (max-width: 375px) {
+    width: 100%;
+    padding: 8px;
+    box-shadow: none;
+  }
+}
+
+// Right Panel
+.right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  width: 100%;
+  max-width: 700px;
+
+  @media (max-width: 768px) {
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+    padding: 10px;
+  }
+
+  @media (max-width: 375px) {
+    width: 100%;
+    padding: 8px;
+    box-shadow: none;
+  }
+}
+
+// Booking Details
+.booking-details {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+
+  @media (max-width: 375px) {
+    gap: 10px;
+  }
+}
+
+// Booking Details Name
+.booking-details-name {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-left: 2vh;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: center;
+    padding-left: 0;
+  }
+
+  @media (max-width: 375px) {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+}
+
+// Booking Details Image
+.bookingDetailsImage {
+  width: 80px;
+  height: 80px;
+  border-radius: $border-radius;
+  object-fit: cover;
+
+  @media (max-width: 768px) {
+    width: 100px;
+    height: 100px;
+  }
+
+  @media (max-width: 375px) {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+// Booking Title
+.booking-title {
+  font-size: $font-size-large;
+  font-weight: bold;
+  margin: 0;
+  color: $secondary-color;
+
+  @media (max-width: 768px) {
+    font-size: $font-size-medium;
+  }
+
+  @media (max-width: 375px) {
+    font-size: $font-size-small;
+  }
+}
+
+// Accommodation Title Span
+.acco-title-span {
+  font-size: $font-size-medium;
+  color: #777;
+
+  @media (max-width: 375px) {
+    font-size: $font-size-small;
+  }
+}
+
+// Detail Row
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px;
+  font-size: $font-size-medium;
+  color: $secondary-color;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  @media (max-width: 375px) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+}
+
+// Total Price
+.total-price {
+  font-size: $font-size-large;
+  font-weight: bold;
+  margin-top: 10px;
+  border-top: 1px solid $border-color;
+  padding-top: 10px;
+  color: #000;
+
+  @media (max-width: 375px) {
+    font-size: $font-size-medium;
+    padding-top: 8px;
+  }
+}
+
+// Confirm Pay Button
+.confirm-pay-button {
+  padding: 12px 16px;
+  font-size: $font-size-large;
+  background-color: $primary-color;
+  color: #fff;
+  border: none;
+  border-radius: $border-radius;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+
+  &:hover {
+    background-color: darken($primary-color, 5%);
+  }
+
+  @media (max-width: 768px) {
+    font-size: $font-size-medium;
+    padding: 10px;
+  }
+
+  @media (max-width: 375px) {
+    font-size: $font-size-small;
+    padding: 8px;
+  }
+}
+
+// Login Reserve Form
+.login-reserve-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+  font-family: Arial, sans-serif;
+  background-color: $background-color;
+  border-radius: $border-radius;
+  box-shadow: $box-shadow;
+
+  .form-title {
+    font-size: $font-size-large;
+    font-weight: bold;
+    margin: 0;
+    color: $secondary-color;
+
+    @media (max-width: 375px) {
+      font-size: $font-size-medium;
+    }
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    position: relative;
+
+    @media (max-width: 768px) {
+      gap: 10px;
+    }
+
+    @media (max-width: 375px) {
+      gap: 8px;
+    }
+  }
+
+  .form-label {
+    font-size: $font-size-small;
+    color: #666;
+  }
+
+  .dropdown-wrapper {
+    display: flex;
+    align-items: center;
+    position: relative;
+    background-color: #f2f2f2;
+    border-radius: $border-radius;
+    padding: 10px;
+    border: 1px solid $border-color;
+
+    @media (max-width: 768px) {
+      padding: 8px;
+    }
+
+    @media (max-width: 375px) {
+      padding: 6px;
+    }
+  }
+
+  .country-dropdown {
+    appearance: none;
+    border: none;
+    background: transparent;
+    font-size: $font-size-medium;
+    color: $secondary-color;
+    flex: 1;
+    outline: none;
+    cursor: pointer;
+
+    @media (max-width: 375px) {
+      font-size: $font-size-small;
+    }
+  }
+
+  .phone-input {
+    padding: 10px;
+    border: 1px solid $border-color;
+    border-radius: $border-radius;
+    background-color: #f2f2f2;
+    font-size: $font-size-medium;
+    color: #aaa;
+    outline: none;
+
+    @media (max-width: 768px) {
+      font-size: $font-size-small;
+    }
+
+    @media (max-width: 375px) {
+      font-size: $font-size-small;
+      padding: 8px;
+    }
+  }
+}
