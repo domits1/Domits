@@ -80,7 +80,15 @@ const GuestMessagesContent = () => {
                                     ← Back to contacts
                                 </button>
                             )}
-                            <GuestChatScreen userId={userId} handleContactListMessage={handleContactListMessage} contactId={selectedContactId} connectionId={connectionId} contactName={selectedContactName} />
+                            <GuestChatScreen
+                                userId={userId}
+                                handleContactListMessage={handleContactListMessage}
+                                contactId={selectedContactId}
+                                connectionId={connectionId}
+                                contactName={selectedContactName}
+                                onBack={isMobile ? handleBackToContacts : null}
+                                onClose={isTablet ? handleBackToContacts : null} 
+                                />
                         </div>
                     </>
                 ) : (
