@@ -200,6 +200,7 @@ body.hide-header .app-header {
 }
 
 .country-card p {
+  margin-left: 7px;
   margin: 1px;
   color: #494949;
   font-size: 15px;
@@ -585,12 +586,12 @@ body.hide-header .app-header {
 
 .interests-container> :nth-child(3) {
   grid-column: span 2;
- 
+
 }
 
 .interests-container> :nth-child(4) {
   grid-column: span 1;
-  
+
 }
 
 .interests-container> :nth-child(5) {
@@ -600,22 +601,22 @@ body.hide-header .app-header {
 
 .interests-container> :nth-child(6) {
   grid-column: span 1;
- 
+
 }
 
 .interests-container> :nth-child(7) {
   grid-column: span 1;
-  
+
 }
 
 .interests-container> :nth-child(8) {
   grid-column: span 2;
- 
+
 }
 
 .interests-container> :nth-child(9) {
   grid-column: span 2;
- 
+
 }
 
 .groups-container {
@@ -657,32 +658,32 @@ body.hide-header .app-header {
 
 .groups-container> :nth-child(1) {
   grid-column: span 1;
- 
+
 }
 
 .groups-container> :nth-child(2) {
   grid-column: span 1;
-  
+
 }
 
 .groups-container> :nth-child(3) {
   grid-column: span 2;
-  
+
 }
 
 .groups-container> :nth-child(4) {
   grid-column: span 2;
- 
+
 }
 
 .groups-container> :nth-child(5) {
   grid-column: span 1;
- 
+
 }
 
 .groups-container> :nth-child(6) {
   grid-column: span 1;
- 
+
 }
 
 
@@ -725,7 +726,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
-  
+
   .caribbean-countries-container,
   .more-caribbean-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -744,7 +745,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
-  
+
   .ski-countries-container,
   .more-ski-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -778,7 +779,7 @@ body.hide-header .app-header {
     font-size: 18px;
   }
 
- 
+
   .interests-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -797,7 +798,7 @@ body.hide-header .app-header {
     font-size: 14px;
   }
 
- 
+
   .groups-container {
     grid-template-columns: repeat(2, 1fr);
     gap: 16px;
@@ -895,7 +896,7 @@ body.hide-header .app-header {
     padding: 20px;
   }
 
- 
+
   .caribbean-countries-container,
   .more-caribbean-countries-container {
     grid-template-columns: repeat(2, 1fr);
@@ -1326,7 +1327,7 @@ body.hide-header .app-header {
 
 .host-images {
   display: flex;
-  flex-direction: column; 
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 1rem;
@@ -1351,98 +1352,98 @@ body.hide-header .app-header {
 
 @media (max-width: 1024px) {
   .become-host-section {
-      flex-direction: column;
-      text-align: center;
-      padding: 3rem;
+    flex-direction: column;
+    text-align: center;
+    padding: 3rem;
   }
 
   .become-host-content {
-      max-width: 100%;
+    max-width: 100%;
   }
 
   .host-images {
-      flex-direction: row; 
-      gap: 1rem;
-      width: 100%;
-      justify-content: center;
+    flex-direction: row;
+    gap: 1rem;
+    width: 100%;
+    justify-content: center;
   }
 
   .host-image {
-      width: 160px;
+    width: 160px;
   }
 
   .host-image:first-child {
-      width: 200px;
+    width: 200px;
   }
 
   .host-image:last-child {
-      width: 250px;
+    width: 250px;
   }
 }
 
 @media (max-width: 768px) {
   .become-host-section {
-      padding: 2rem;
+    padding: 2rem;
   }
 
   .become-host-content h1 {
-      font-size: 1.5rem;
+    font-size: 1.5rem;
   }
 
   .list-property-button {
-      font-size: 0.9rem;
-      padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
   }
 
   .host-images {
-      flex-direction: column; 
-      gap: 1rem;
-      width: 100%;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
   }
 
   .host-image {
-      width: 140px;
+    width: 140px;
   }
 
   .host-image:first-child {
-      width: 180px;
+    width: 180px;
   }
 
   .host-image:last-child {
-      width: 230px;
+    width: 230px;
   }
 }
 
 @media (max-width: 480px) {
   .become-host-section {
-      padding: 1.5rem;
+    padding: 1.5rem;
   }
 
   .become-host-content h1 {
-      font-size: 1.25rem;
+    font-size: 1.25rem;
   }
 
   .list-property-button {
-      font-size: 0.8rem;
-      padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
   }
 
   .host-images {
-      flex-direction: column;
-      gap: 1rem;
-      width: 100%;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
   }
 
   .host-image {
-      width: 120px;
+    width: 120px;
   }
 
   .host-image:first-child {
-      width: 160px;
+    width: 160px;
   }
 
   .host-image:last-child {
-      width: 200px;
+    width: 200px;
   }
 }
 
@@ -1463,19 +1464,19 @@ body.hide-header .app-header {
 
 .arrow-button {
   background-color: #D9D9D9;
-    color: black;
-    border: 0.1px solid black;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    font-size: 1.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
+  color: black;
+  border: 0.1px solid black;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .arrow-button:hover {
@@ -1495,25 +1496,26 @@ body.hide-header .app-header {
   gap: 20px;
   overflow: hidden;
   justify-content: center;
-  flex-wrap: nowrap; /* Prevent wrapping */
+  flex-wrap: nowrap;
+  /* Prevent wrapping */
 }
 
 .review-card {
   background-color: #f9f9f9;
-    border-radius: 10px;
-    text-align: center;
-    flex-grow: 0;
-    flex-shrink: 0;
-    flex-basis: calc(33.33% - 20px);
-    margin-right: 20px;
-    box-sizing: border-box;
-    width: 350px;
-    height: 400px;
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    align-items: center;
-    box-sizing: border-box;
+  border-radius: 10px;
+  text-align: center;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: calc(33.33% - 20px);
+  margin-right: 20px;
+  box-sizing: border-box;
+  width: 350px;
+  height: 400px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .review-profile-pic {

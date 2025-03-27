@@ -178,13 +178,26 @@ const Homepage = () => {
   ];
 
   const reviews = [
-    { name: 'sigma freugd', img: waterman, text: 'Amazing platform! The user interface is sleek, and the customer service is top-notch!' },
-    { name: 'sigma freugd', text: 'I couldnt be happier. The website is intuitive and easy to navigate, making booking seamless. The support team was quick to respond and helpful' },
-    { name: 'sigma freugd', text: 'Amazing experience! Highly recommend.' },
-    { name: 'sigma freugd', text: 'Ill definitely use this platform again!' },
-    { name: 'Jane Smith', text: 'The service was excellent and the property was beautiful.' },
-    { name: 'Alice Johnson', text: 'A perfect getaway. Will book again!' },
-  ];
+    { name: 'Oliver Reynolds', img: waterman, text: 'Fantastic platform! Booking was a breeze, and the support team was incredibly helpful.' },
+    { name: 'Sophia Bennett', text: 'Seamless experience from start to finish. Highly recommend!' },
+    { name: 'Liam Anderson', text: 'Super easy to use, and the customer service was excellent!' },
+    { name: 'Emma Carter', text: 'Absolutely loved using this platform. Will definitely book again!' },
+    { name: 'Noah Fitzgerald', text: 'Great experience! Everything was smooth and hassle-free.' },
+    { name: 'Ava Mitchell', text: 'Top-tier service and an intuitive interface. Loved it!' },
+    { name: 'Mason Brooks', text: 'This platform made my trip planning effortless!' },
+    { name: 'Isabella Collins', text: 'User-friendly and reliable. Couldn’t ask for more.' },
+    { name: 'Elijah Thompson', text: 'Exceptional service and very easy to navigate!' },
+    { name: 'Mia Richardson', text: 'Best booking experience I’ve ever had!' },
+    { name: 'James Parker', text: 'A must-use platform for hassle-free travel!' },
+    { name: 'Charlotte Hayes', text: 'Loved the simplicity and efficiency. Highly recommended!' },
+    { name: 'Benjamin Scott', text: 'Flawless experience! The platform was intuitive and responsive.' },
+    { name: 'Amelia Cooper', text: 'Booking was quick and easy. Amazing service!' },
+    { name: 'Lucas Edwards', text: 'Perfect for stress-free trip planning. Five stars!' },
+    { name: 'Harper Morgan', text: 'Superb experience! Will definitely use this again.' },
+    { name: 'Henry Watson', text: 'Everything worked perfectly. I’m very satisfied!' },
+    { name: 'Evelyn Turner', text: 'The best travel booking site I’ve ever used!' },
+];
+
 
   const handleScroll = () => {
     if (!searchBarRef.current) return;
