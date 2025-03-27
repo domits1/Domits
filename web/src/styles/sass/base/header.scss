@@ -1,0 +1,225 @@
+// Variables
+$primary-color: #4CAF50;
+$secondary-color: #fff;
+$border-radius: 10px;
+$font-size-small: 13px;
+$font-size-medium: 18px;
+
+// General Header Styling
+.app-header {
+  box-shadow: 0 2px 6px 0 #0d1a2626;
+  padding: 20px 50px 5px 50px;
+  text-align: center;
+}
+
+.header-nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+
+  .headerRight {
+    display: flex;
+    align-items: center;
+  }
+}
+
+.headerButtons,
+.personalMenu {
+  color: black;
+  text-align: center;
+  padding: 12px;
+  font-size: $font-size-medium;
+  border-radius: $border-radius;
+  display: inline-flex;
+  cursor: pointer;
+  width: auto;
+  box-shadow: 0 0 5px hsl(0 0% 78%);
+}
+
+.personalMenu {
+  border: none;
+  background-color: $primary-color;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.headerHostButton,
+.headerButtons {
+  border: none;
+  background: none;
+  box-shadow: none;
+  margin-right: 10px;
+}
+
+.personalMenuDropdown {
+  position: relative;
+  display: inline-block;
+  z-index: 2;
+
+  .personalMenuDropdownContent {
+    display: none;
+
+    &.show {
+      display: block;
+    }
+
+    padding: 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: auto;
+    min-width: 240px;
+    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+    z-index: 1;
+    top: calc(100% + 5px);
+    right: 0;
+    border-radius: $border-radius;
+
+    button {
+      padding: 8px 15px;
+      border-radius: 15px;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      display: inline-flex;
+      width: 100%;
+      color: white;
+      font-size: 16px;
+      font-weight: 400;
+      line-height: 24px;
+      word-wrap: break-word;
+
+      &:hover {
+        opacity: 90%;
+      }
+    }
+  }
+}
+
+.headerButtons:hover {
+  background: #3fb3663a;
+  padding: 12px;
+}
+
+.personalMenu:hover {
+  opacity: 90%;
+}
+
+.helloUsername {
+  margin-bottom: 10px;
+  font-size: $font-size-medium;
+  font-weight: 400;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+// Media Queries
+@media screen and (max-width: 1024px) {
+  .header-nav {
+    flex-wrap: nowrap;
+  }
+
+  .App,
+  .header-nav {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: white;
+    width: 100%;
+  }
+
+  .logo {
+    margin: 0 1vw 0 -4vw;
+  }
+
+  .headerRight {
+    margin-left: 3vw;
+  }
+
+  .headerButtons.headerHostButton {
+    margin-left: -15%;
+    font-size: $font-size-small;
+  }
+
+  .personalMenu {
+    margin-left: -15%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .logo {
+    padding-top: 2vh;
+  }
+
+  .header-nav,
+  .headerRight {
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .headerRight {
+    width: 69%;
+    margin-top: 20px;
+  }
+
+  .headerButtons,
+  .personalMenu,
+  .Search-bar {
+    width: 100%;
+    margin-top: 10px;
+    margin-right: 0;
+    justify-content: center;
+    float: none;
+  }
+
+  .app-header {
+    padding: 0;
+  }
+
+  .headerRight {
+    display: none;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .header-nav,
+  .headerRight {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .headerButtons,
+  .personalMenu {
+    width: 100%;
+    margin-top: 10px;
+    justify-content: center;
+  }
+
+  .personalMenuDropdown .personalMenuDropdownContent {
+    width: 90%;
+    left: 5%;
+    right: 5%;
+  }
+}
+
+@media screen and (max-width: 768px) {
+    .bar-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 10px 20px;
+    }
+
+    .header-nav {
+        display: none;
+      
+        .headerRight {
+          display: none;
+        }
+      }
+  }
