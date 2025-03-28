@@ -17,7 +17,7 @@ export async function submitAccommodation() {
     }
 
     const API_BASE_URL =
-        "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property?type=Boat";
+        "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
     const request = {
         method: "POST",
@@ -69,7 +69,7 @@ const mockData = {
     property: {
         id: "1",
         hostId: "4e13c251-a3cd-4952-b308-e3572b0b1e6b",
-        title: "Test Property",
+        title: "Test Property RYAN",
         subtitle: "Test Subtitle",
         description: "A simple test property",
         guestCapacity: 2,
