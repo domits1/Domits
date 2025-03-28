@@ -21,7 +21,12 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
     const [uploadedFileUrls, setUploadedFileUrls] = useState([]);
 
     const handleUploadComplete = (url) => {
-        setUploadedFileUrls((prev) => [...prev, url]);
+        setUploadedFileUrls((prev) => {
+            if (!prev.includes(url)) {
+                return [...prev, url];
+            }
+            return prev;
+        });
     };
 
     useEffect(() => {
@@ -42,10 +47,9 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
     }, [wsMessages, userId, contactId]);
 
     const handleSendMessage = async () => {
-        if (newMessage.trim()) {
+        if ((newMessage.trim() || uploadedFileUrls.length > 0) && (uploadedFileUrls.length > 0 || newMessage.trim())) {
             try {
-                const response = await sendMessage(contactId, newMessage, connectionId);
-
+                const response = await sendMessage(contactId, newMessage, connectionId, uploadedFileUrls);
                 if (!response || !response.success) {
                     alert(`Fout bij verzenden: ${response.error || "Probeer het later opnieuw."}`);
                     return;
@@ -66,13 +70,11 @@ const HostChatScreen = ({ userId, contactId, contactName, connectionId, handleCo
                 addNewMessage(sentMessage);
 
                 setNewMessage('');
+                setUploadedFileUrls([]); 
             } catch (error) {
                 console.error("Onverwachte fout bij verzenden:", error);
             }
         }
-    };
-    const handleAddAttachment = async () => {
-
     };
 
     const handleSendReviewLink = async () => {
