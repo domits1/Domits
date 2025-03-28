@@ -1,5 +1,6 @@
 import React from "react";
 import "./Sustainability.css";
+import {submitAccommodation, printAccoInfo} from "../hostonboarding/services/hostonboardingApi";
 
 const Sustainability = () => {
   return (
@@ -9,6 +10,7 @@ const Sustainability = () => {
       <h2>Why choose Domits for sustainability?</h2>
       <hr />
         <button onClick={submitAccommodation}>Submit</button>
+        <button onClick={printAccoInfo}>printAccoInfo</button>
 
       <section id={"sustainable-business"}>
         <h3>
