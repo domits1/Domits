@@ -179,21 +179,15 @@ const Footer = () => {
         <div className="logo">
           <img src={logo} width={100} alt="Logo" />
         </div>
-        <a>
           <Link to="/policy" className="footer-links">
             Privacy policy
           </Link>
-        </a>
-        <a>
           <Link to="/terms" className="footer-links">
             Terms and Conditions
           </Link>
-        </a>
-        <a>
           <Link to="/disclaimers" className="footer-links">
             Disclaimer
           </Link>
-        </a>
         <a
           href=""
           target="_blank"
