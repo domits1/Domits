@@ -3,6 +3,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { startVerificationAPI } from "../services/HostVerifyServices";
 import { getVerificationStatusFromDB } from "../services/HostVerifyServices";
 
+// TODO: fix cause of missing stripe key to remove error
 // const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
 function useStripeVerification(userData) {
