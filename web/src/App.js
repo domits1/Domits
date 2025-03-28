@@ -89,6 +89,7 @@ import PricingView from "./features/hostonboarding/views/PropertyRateView.js";
 import AvailabilityView from "./features/hostonboarding/views/PropertyCalendarAvailabilityView.js";
 import RegistrationNumberView from "./features/verification/hostverification/HostVerifyRegistrationNumber.js";
 import SummaryView from "./features/hostonboarding/views/PropertyCheckOutAndCompletionView.js";
+import Sustainability from "./features/sustainability/Sustainability";
 
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -321,6 +322,7 @@ function App() {
                   <Route path="/policy" element={<Policy />} />
                   <Route path="/terms" element={<Terms />} />
                   <Route path="/disclaimers" element={<Disclaimers />} />
+                  <Route path="/Sustainability" element={<Sustainability />} />
 
                   {/* Error*/}
                   <Route path="/*" element={<PageNotFound />} />
@@ -397,6 +399,10 @@ function App() {
                   <Route
                     path="/hostonboarding/summary"
                     element={<SummaryView />}
+                  />
+                  <Route
+                    path="/*"
+                    element={<Home/>}
                   />
                 </Routes>
                 {renderFooter()}
