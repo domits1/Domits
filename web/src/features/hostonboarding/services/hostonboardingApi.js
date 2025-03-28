@@ -1,13 +1,10 @@
-import axios from "axios";
-
-
-
 export async function printAccoInfo() {
     console.log('test: \n', mockData)
 
     console.log(JSON.stringify(mockData, null, 2));
 
 }
+
 export async function submitAccommodation() {
     // TODO Implement proper cognito security service
     // Retrieve the token from localStorage
