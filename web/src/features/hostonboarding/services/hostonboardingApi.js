@@ -1,4 +1,3 @@
-import {logger} from "../../../services/Logger";
 
 export async function submitAccommodation() {
     // TODO Implement proper cognito security service
@@ -25,8 +24,8 @@ export async function submitAccommodation() {
 
     try {
         // Using Fetch
-        logger.info("Start submitAccommodation, using url: ", API_BASE_URL);
-        logger.log("request:\n", request);
+        console.log("Start submitAccommodation, using url: ", API_BASE_URL);
+        console.log("request:\n", request);
 
         const response2 = await fetch(API_BASE_URL, request);
         const response2Data = await response2.json();
@@ -36,7 +35,7 @@ export async function submitAccommodation() {
         console.log(response2Data)
         return response2Data;
     } catch (error) {
-        logger.error("Error uploading accommodation:", error);
+        console.error("Error uploading accommodation:", error);
         throw error;
     }
 }
