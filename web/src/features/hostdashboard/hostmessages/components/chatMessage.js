@@ -1,7 +1,7 @@
 import React from 'react';
 
 const ChatMessage = ({ message, userId, contactName }) => {
-    const { userId: senderId, text, createdAt, isRead, isSent } = message;
+    const { userId: senderId, text, createdAt, isRead, isSent, fileUrls } = message;
 
     const formatDate = (dateString) => {
         const date = new Date(dateString);
@@ -15,6 +15,14 @@ const ChatMessage = ({ message, userId, contactName }) => {
                 <span className="message-time">{formatDate(createdAt)}</span>
             </div>
             <div className="message-content">{text}</div>
+            
+            {fileUrls && fileUrls.length > 0 && (
+                <div className="message-attachments">
+                    {fileUrls.map((fileUrl, index) => (
+                        <img key={index} src={fileUrl} alt="Attachment" className="message-image" />
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
