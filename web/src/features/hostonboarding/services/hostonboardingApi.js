@@ -61,7 +61,8 @@ export async function submitAccommodation() {
 }
 
 const nowDate = Date.now();
-const futureDate = nowDate + Math.floor(Math.random() * 1000000000); // Some random future date
+const maxFutureRange = 1000000000; // Limit to roughly 31.7 years into the future
+const futureDate = nowDate + Math.floor(Math.random() * maxFutureRange);
 
 
 const mockData = {
@@ -77,8 +78,49 @@ const mockData = {
         createdAt: futureDate,
         updatedAt: futureDate,
     },
+    propertyAmenities: [
+        {
+            id: "1",
+            property_id: "1",
+            amenityId: "1"
+        }
+    ],
+    propertyAvailability: [
+        {
+            property_id: "1",
+            availableStartDate: "1943044811776",
+            availableEndDate: "1943082436364"
+        }
+    ],
+    propertyAvailabilityRestrictions: [
+        {
+            id: 1,
+            property_id: 1,
+            restriction: "MaximumStay",
+            value: 1
+        }
+    ],
+    propertyCheckIn: {
+        property_id: 1,
+        checkIn: {
+            from: 1,
+            till: 2
+        },
+        checkOut: {
+            from: 1,
+            till: 2
+        }
+    },
+    propertyGeneralDetails: [
+        {
+            id: 1,
+            property_id: 1,
+            detail: "Bedrooms",
+            value: 2
+        }
+    ],
     propertyLocation: {
-        property_id: "1",
+        property_id: 1,
         country: "Netherlands",
         city: "Haarlem",
         street: "Kinderhuissingel",
@@ -87,16 +129,38 @@ const mockData = {
         postalCode: "2013 AS",
     },
     propertyPricing: {
-        property_id: "1",
+        property_id: 1,
         roomRate: 100,
         cleaning: 10,
         service: 5,
     },
     propertyRules: [
         {
-            property_id: "1",
+            property_id: 1,
             rule: "PetsAllowed",
             value: true,
         },
     ],
+    propertyType: {
+        property_id: 1,
+        property_type: "Camper",
+        spaceType: "Full house"
+    },
+    propertyImages: [
+        {
+            property_id: 1,
+            key: "images/1/1/1.png"
+        }
+    ],
+    propertyTechnicalDetails: {
+        property_id: 1,
+        length: 500,
+        height: 200,
+        fuelConsumption: 100,
+        speed: 50,
+        renovationYear: 2022,
+        transmission: "Automatic",
+        generalPeriodicInspection: 2020,
+        fourWheelDrive: true
+    }
 };
