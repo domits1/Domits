@@ -8,6 +8,8 @@ import bill from "../../images/icons/bill.png";
 import { SearchBar } from "../../components/base/SearchBar";
 import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
+import { reviews } from "../home/store/constants";
+import { categories as groups } from "../home/store/constants";
 import "swiper/css/pagination";
 import Header from "./Header";
 import greece from "../../pages/home/Images/greece.webp";
@@ -66,6 +68,10 @@ import culinary from "../../pages/home/Images/culinary.webp";
 import waterman from "../../pages/home/Images/waterman.webp";
 import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
 import profilePic from "../../pages/home/Images/sleutelvrouw.webp";
+import {
+  FetchAllPropertyTypes,
+  FetchPropertyType,
+} from "../home/services/fetchProperties";
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);
@@ -78,9 +84,35 @@ const Homepage = () => {
   const [isBarActive, setIsBarActive] = useState(false);
   const [isFixed, setIsFixed] = useState(false);
   const [activePopup, setActivePopup] = useState(null);
+  const [boatLoading, setBoatLoading] = useState(false);
+  const [camperLoading, setCamperLoading] = useState(false);
+  const [propertyLoading, setPropertyLoading] = useState(false);
+  const [allAccommodations, setAllAccommodations] = useState([]);
 
   const searchBarRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    async function loadData() {
+      setPropertyLoading(true);
+      setBoatLoading(true);
+      setCamperLoading(true);
+      FetchPropertyType("Boat").then((data) => {
+        setBoatAccommodations(data.slice(0, 3));
+        setBoatLoading(false);
+      });
+      FetchPropertyType("Camper").then((data) => {
+        setCamperAccommodations(data.slice(0, 3));
+        setCamperLoading(false);
+      });
+      FetchAllPropertyTypes().then((data) => {
+        setAllAccommodations(data.slice(6, 9));
+        setPropertyLoading(false);
+      });
+    }
+
+    loadData();
+  }, []);
 
   const toggleBar = (isActive) => {
     setIsBarActive(isActive);
@@ -342,108 +374,6 @@ const Homepage = () => {
     },
   ];
 
-  const groups = [
-    {
-      name: "Friends",
-      img: friends,
-      description: "Vacation Rentals and Apartments",
-    },
-    {
-      name: "Couples",
-      img: couples,
-      description: "Vacation Rentals and Apartments",
-    },
-    {
-      name: "Family & child friendly",
-      img: family,
-      description: "Vacation Rentals and Apartments",
-    },
-    { name: "Solo", img: solo, description: "Vacation Rentals and Apartments" },
-    {
-      name: "Senior",
-      img: senior,
-      description: "Vacation Rentals and Apartments",
-    },
-    {
-      name: "Pet Friendly",
-      img: petFriendly,
-      description: "Vacation Rentals and Apartments",
-    },
-  ];
-
-  const reviews = [
-    {
-      name: "Oliver Reynolds",
-      img: waterman,
-      text: "Fantastic platform! Booking was a breeze, and the support team was incredibly helpful.",
-    },
-    {
-      name: "Sophia Bennett",
-      text: "Seamless experience from start to finish. Highly recommend!",
-    },
-    {
-      name: "Liam Anderson",
-      text: "Super easy to use, and the customer service was excellent!",
-    },
-    {
-      name: "Emma Carter",
-      text: "Absolutely loved using this platform. Will definitely book again!",
-    },
-    {
-      name: "Noah Fitzgerald",
-      text: "Great experience! Everything was smooth and hassle-free.",
-    },
-    {
-      name: "Ava Mitchell",
-      text: "Top-tier service and an intuitive interface. Loved it!",
-    },
-    {
-      name: "Mason Brooks",
-      text: "This platform made my trip planning effortless!",
-    },
-    {
-      name: "Isabella Collins",
-      text: "User-friendly and reliable. Couldn’t ask for more.",
-    },
-    {
-      name: "Elijah Thompson",
-      text: "Exceptional service and very easy to navigate!",
-    },
-    { name: "Mia Richardson", text: "Best booking experience I’ve ever had!" },
-    {
-      name: "James Parker",
-      text: "A must-use platform for hassle-free travel!",
-    },
-    {
-      name: "Charlotte Hayes",
-      text: "Loved the simplicity and efficiency. Highly recommended!",
-    },
-    {
-      name: "Benjamin Scott",
-      text: "Flawless experience! The platform was intuitive and responsive.",
-    },
-    {
-      name: "Amelia Cooper",
-      text: "Booking was quick and easy. Amazing service!",
-    },
-    {
-      name: "Lucas Edwards",
-      text: "Perfect for stress-free trip planning. Five stars!",
-    },
-    {
-      name: "Harper Morgan",
-      text: "Superb experience! Will definitely use this again.",
-    },
-    {
-      name: "Henry Watson",
-      text: "Everything worked perfectly. I’m very satisfied!",
-    },
-    {
-      name: "Evelyn Turner",
-      text: "The best travel booking site I’ve ever used!",
-    },
-  ];
-
   const handleScroll = () => {
     if (!searchBarRef.current) return;
 
@@ -584,6 +514,75 @@ const Homepage = () => {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="domits-accommodationGroup">
+            {propertyLoading === false ? (
+              allAccommodations.length > 0 ? (
+                allAccommodations.map((property) => (
+                  <AccommodationCard
+                    key={property.property.id}
+                    accommodation={property}
+                    onClick={handleClick}
+                  />
+                ))
+              ) : (
+                <div>No trending properties available.</div>
+              )
+            ) : (
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
+            )}
+          </div>
+        </div>
+
+        <div className="domits-boatContainer">
+          <div className="domits-boatText">
+            <h3 className="domits-subHead">Rent a boat for any occasion</h3>
+          </div>
+          <div className="domits-accommodationGroup">
+            {boatLoading === false ? (
+              boatAccommodations.length > 0 ? (
+                boatAccommodations.map((boat) => (
+                  <AccommodationCard
+                    key={boat.property.id}
+                    accommodation={boat}
+                    onClick={handleClick}
+                  />
+                ))
+              ) : (
+                <div>No boats available.</div>
+              )
+            ) : (
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
+            )}
+          </div>
+        </div>
+
+        <div className="domits-boatContainer">
+          <h3 className="domits-subHead">Discover Beautiful Campers</h3>
+          <div className="domits-accommodationGroup">
+            {camperLoading === false ? (
+              camperAccommodations.length > 0 ? (
+                camperAccommodations.map((camper) => {
+                  return (
+                    <AccommodationCard
+                      key={camper.property.id}
+                      accommodation={camper}
+                      onClick={handleClick}
+                    />
+                  );
+                })
+              ) : (
+                <div>No campers available.</div>
+              )
+            ) : (
+              Array(3)
+                .fill()
+                .map((_, index) => <SkeletonLoader key={index} />)
+            )}
           </div>
         </div>
 
