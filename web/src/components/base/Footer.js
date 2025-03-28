@@ -73,6 +73,11 @@ const Footer = () => {
                 Helpdesk for guests
               </Link>
             </li>
+            <li>
+              <Link to="/sustainability" className="footer-links">
+                Sustainability
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -88,6 +93,11 @@ const Footer = () => {
             <li>
               <Link to="/helpdesk-host" className="footer-links">
                 Helpdesk for hosts
+              </Link>
+            </li>
+            <li>
+              <Link to="/sustainability" className="footer-links">
+                Sustainability
               </Link>
             </li>
           </ul>
