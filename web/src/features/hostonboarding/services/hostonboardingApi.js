@@ -1,9 +1,4 @@
-export async function printAccoInfo() {
-    console.log('test: \n', mockData)
-
-    console.log(JSON.stringify(mockData, null, 2));
-
-}
+import {logger} from "../../../services/Logger";
 
 export async function submitAccommodation() {
     // TODO Implement proper cognito security service
@@ -30,8 +25,8 @@ export async function submitAccommodation() {
 
     try {
         // Using Fetch
-        console.log("Start submitAccommodation, using url: ", API_BASE_URL);
-        console.log("request:\n", request);
+        logger.info("Start submitAccommodation, using url: ", API_BASE_URL);
+        logger.log("request:\n", request);
 
         const response2 = await fetch(API_BASE_URL, request);
         const response2Data = await response2.json();
@@ -39,23 +34,9 @@ export async function submitAccommodation() {
         console.log("response2" + response2)
         console.log("response2.data" + response2.data)
         console.log(response2Data)
-        //
-        //
-        // // Using Axios
-        // const axiosResponse = await axios.post(API_BASE_URL, mockData , {
-        //     headers: {
-        //         "Content-Type": "application/json",
-        //     },
-        // });
-        // const axiosResponseData = await axiosResponse.json()
-        //
-        // console.log(axiosResponse)
-        // console.log(axiosResponseData)
-
-        // return axiosResponse.data;
         return response2Data;
     } catch (error) {
-        console.error("Error uploading accommodation:", error);
+        logger.error("Error uploading accommodation:", error);
         throw error;
     }
 }

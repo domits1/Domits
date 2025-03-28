@@ -3,7 +3,7 @@ import { loadStripe } from "@stripe/stripe-js";
 import { startVerificationAPI } from "../services/HostVerifyServices";
 import { getVerificationStatusFromDB } from "../services/HostVerifyServices";
 
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
+// const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
 function useStripeVerification(userData) {
   const [stripeLoading, setStripeLoading] = useState(false);
