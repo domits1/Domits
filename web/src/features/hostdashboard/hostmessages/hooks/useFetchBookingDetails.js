@@ -36,7 +36,6 @@ const useFetchBookingDetails = (hostID, guestID) => {
 
         fetchBookingDetails();
     }, [hostID, guestID]);
-    console.log(bookingDetails)
     return { bookingDetails, loading, error };
 };
 
