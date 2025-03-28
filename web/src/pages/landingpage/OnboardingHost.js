@@ -1052,7 +1052,13 @@ function OnboardingHost() {
         const file = imageFiles[i];
         if (file) {
           await uploadImagesInDifferentSizes(file, userId, AccoID, i);
-          updatedFormData.Images[`imageda
+          updatedFormData.Images[`image${i + 1}`] = constructURL(
+              userId,
+              AccoID,
+              i,
+              "mobile",
+          );
+
           updatedFormData.Images[`image${i + 1}`] = constructURL(
             userId,
             AccoID,
@@ -1075,7 +1081,7 @@ function OnboardingHost() {
       const method = isNew ? "POST" : "PUT";
 
       const response = await fetch(
-        `{
+        {
           method,
           body: JSON.stringify(updatedFormData),
           headers: {
