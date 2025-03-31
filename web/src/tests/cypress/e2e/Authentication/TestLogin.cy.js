@@ -23,25 +23,32 @@ describe('Login Page Tests', () => {
       cy.get('input[name="email"]').type('invalid@example.com');
       cy.get('input[name="password"]').type('wrongpassword');
       cy.get('.loginButton').click();
-      cy.get('.errorText').should('be.visible').and('contain', 'Invalid username or password. Please try again.');
-    });
+      cy.get('.errorText')
+      .should('be.visible')
+      .and('contain', 'Invalid username or password. Please try again.');
+  });
   
-    it('should navigate to the dashboard on successful login', () => {
-      cy.get('input[name="email"]').type('validuser@example.com');
-      cy.get('input[name="password"]').type('correctpassword');
-      cy.get('.loginButton').click();
-    //   cy.url().should('include', '/dashboard');
-    });
+  it('should navigate to the dashboard on successful login', () => {
+    cy.get('input[name="email"]').type('testpersoondomits@gmail.com');
+    cy.get('input[name="password"]').type('Gmail.com1');
+    cy.get('.loginButton').click();
   
-    it('should allow the user to log out', () => {
-      
-     cy.get('.registerButtonLogin').click();
-      cy.get('input[name="email"]').should('be.visible');
-    });
+    cy.url().should('include', '/hostdashboard'); 
+    cy.contains('button', 'Go to listing').should('be.visible');
+  });
   
+  
+    it('should show register form after clicking register button', () => {
+      cy.get('.registerButtonLogin').click();
+      cy.url().should('include', '/register');
+  
+      cy.get('input[name="email"]').should('exist').and(($el) => {
+        expect($el[0].offsetParent).to.not.be.null;
+      });
+    });
+
     it('should navigate to the register page when clicking register', () => {
-        cy.get('.registerButtonLogin').click();
+      cy.get('.registerButtonLogin').click();
       cy.url().should('include', '/register');
     });
   });
-  
