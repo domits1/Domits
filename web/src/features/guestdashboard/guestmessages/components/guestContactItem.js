@@ -12,8 +12,8 @@ const ContactItem = ({ contact, updateContactRequest, isPending }) => {
                 {!isPending && (
                     <p className="guest-contact-item-subtitle">
                         {contact.latestMessage.text
-                            ? contact.latestMessage.text || "No message yet" // Adjust field name if needed
-                            : "No message available"}
+                            ? contact.latestMessage.text || "No message yet"
+                            : "No message history yet"}
                     </p>
                 )}
             </div>

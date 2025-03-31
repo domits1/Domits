@@ -1,0 +1,503 @@
+$primary-color: #003366;
+$box-shadow: rgba(99, 99, 99, 0.2) 0px 2px 8px 0px;
+$border-radius: 8px;
+$border-color: #ddd;
+$primary-color: var(--primary-color);
+$border-color: #ccc;
+$background-light: #f9f9f9;
+$shadow-light: 0 4px 8px rgba(0, 0, 0, 0.1);
+
+.detailContainer {
+    flex: 1;
+    display: flex;
+    justify-content: space-between;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    width: 90%;
+    margin: auto;
+    margin-top: 0px;
+    margin-bottom: 30px;
+}
+
+.detailInfo {
+    width: 69%;
+}
+
+.accommodationTitle {
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.detailSummary {
+    box-shadow: $box-shadow;
+    margin: 80px 20px 40px 20px;
+    padding: 1.25rem;
+    border-radius: 0.625rem;
+    position: sticky;
+    top: 5%;
+    max-height: 45.313rem;
+}
+
+.guests {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+
+    .modal-contentPopUp {
+        background: white;
+        padding: 20px;
+        border-radius: $border-radius;
+        width: 100%;
+        max-width: 600px;
+        max-height: 80vh;
+        overflow-y: auto;
+        position: relative;
+    }
+}
+
+.close-button {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10;
+}
+
+.popup {
+    position: absolute;
+    background-color: white;
+    border: 1px solid $border-color;
+    padding: 0.625rem;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+    border-radius: $border-radius;
+    width: 15.625rem;
+}
+
+.counter {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.625rem;
+
+    span {
+        font-weight: bold;
+    }
+
+    button {
+        background: #f0f0f0;
+        border: 1px solid #ccc;
+        padding: 0.313rem;
+        cursor: pointer;
+    }
+}
+
+.closeButtonContainer {
+    margin-top: 0.625rem;
+    border-top: 1px solid $border-color;
+    padding-top: 0.625rem;
+    text-align: right;
+}
+
+.dates {
+    display: flex;
+    justify-content: space-between;
+
+    .dateInput {
+        flex: 1;
+        margin-right: 10px;
+        position: relative;
+
+        input {
+            padding-right: 30px;
+        }
+
+        .clear-button {
+            position: absolute;
+            right: 0.625rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+        }
+    }
+}
+
+.travelersTitle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+
+    &-button {
+        cursor: pointer;
+        padding: 0.625rem;
+        background-color: white;
+        border: 1px solid $border-color;
+        border-radius: 4px;
+        margin-top: 5px;
+    }
+
+    &-content {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        z-index: 100;
+        background-color: white;
+        border: 1px solid $border-color;
+        padding: 0.625rem;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: $border-radius;
+        min-width: 200px;
+    }
+}
+
+.summaryBlock {
+    display: flex;
+    flex-direction: column;
+    
+    .dateInput {
+        display: flex;
+        flex-direction: row;
+        justify-content: space-around;
+
+        .disabled {
+            background: gray;
+            cursor: not-allowed;
+
+            &:hover {
+                opacity: 100%;
+            }
+        }
+
+        button {
+            align-self: center;
+            height: 10%;
+            border: none;
+            border-radius: 2rem;
+            background: $primary-color;
+            color: white;
+            cursor: pointer;
+
+            &:hover {
+                opacity: 50%;
+            }
+        }
+    }
+}
+
+.reserve-button {
+    background-color: $primary-color;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 10px;
+    text-align: center;
+    display: block;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease-in-out;
+    width: 100%;
+}
+
+.detailSummary {
+    .datePickerLD {
+        padding: 8px;
+        margin: 5px 0 15px;
+        border-radius: 5px;
+        border: 1px solid $border-color;
+        max-width: 100px;
+    }
+}
+
+.extraDetails {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.details {
+    margin: 10px 0 5px;
+    color: black;
+    font-size: medium;
+}
+
+.price {
+    color: $primary-color;
+}
+
+.placeName {
+    font-size: xx-large;
+    color: black;
+    margin: 0;
+}
+
+.pageDividerr {
+    border: none;
+    border-top: 2px solid #ddd;
+    width: 100%;
+    margin: 20px 0;
+}
+
+%button-base {
+    background-color: white;
+    text-decoration: none;
+    margin-top: 1rem;
+    width: 10vw;
+    height: 3vw;
+    border-radius: 0.3vw;
+    font-size: 1rem;
+    &:hover {
+        background-color: #f3f3f3;
+    }
+}
+
+.showMore, .hostButton {
+    @extend %button-base;
+}
+
+.description {
+    margin: auto;
+    font-size: 18px;
+    color: #333;
+    line-height: 1.5;
+}
+
+.houseRulesTitle {
+    color: #333;
+    font-size: 24px;
+    margin-top: 10px;
+}
+
+.houseRulesDetails {
+    font-size: 16px;
+    color: #666;
+    margin-top: 10px;
+    line-height: 1.5;
+}
+
+.checkInCheckOut {
+    margin: 15px auto 0;
+    background-color: $background-light;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.checkIn, .checkOut {
+    color: #444;
+    font-size: 16px;
+}
+
+.checkIn {
+    margin-bottom: 10px;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 20px;
+    list-style-type: none;
+    padding: 0;
+    margin-top: 20px;
+}
+
+.features-category {
+    font-weight: bold;
+    ul {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        grid-gap: 2%;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+}
+
+.category-item {
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    margin-bottom: 10px;
+    gap: 1.5%;
+    span {
+        font-weight: lighter;
+        font-size: 1rem;
+    }
+}
+
+.acco-feature-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: $shadow-light;
+    transition: transform 0.2s, box-shadow 0.2s;
+    text-align: center;
+}
+
+.feature-item {
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    &.feature-absent {
+        opacity: 0.5;
+        box-shadow: none;
+    }
+    span {
+        font-size: 16px;
+        color: #555;
+    }
+}
+
+.backButton {
+    text-decoration: underline;
+    &:hover {
+        color: $primary-color;
+    }
+}
+
+.disclaimer {
+    font-size: 14px;
+    color: #888;
+    margin: 20px 0 10px;
+    text-align: center;
+}
+
+.booking-info {
+    background-color: $background-light;
+    border: 1px solid gray;
+    margin: -2.7vh 0 0 -1.35vw;
+    width: 5.5vw;
+    padding: 10px;
+    &:hover {
+        background-color: #f0f0f0;
+        cursor: pointer;
+    }
+}
+
+.booking-info-tooltip {
+    visibility: hidden;
+    background-color: rgb(185, 185, 185);
+    color: #fff;
+    text-align: left;
+    border-radius: 4px;
+    padding: 8px;
+    position: absolute;
+    z-index: 1;
+    bottom: 92%;
+    left: 45.5%;
+    transform: translateX(-50%);
+    white-space: wrap;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    max-width: 15vw;
+    max-height: 10vw;
+    .booking-info:hover & {
+        visibility: visible;
+        opacity: 1;
+    }
+}
+
+.price-details {
+    padding: 20px;
+    background-color: $background-light;
+    border-radius: 8px;
+    box-shadow: $shadow-light;
+    margin-top: 20px;
+}
+
+.price-item, .total {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #333;
+}
+
+.total {
+    font-size: 18px;
+    font-weight: bold;
+    border-top: 2px solid #ddd;
+    padding-top: 10px;
+    margin-top: 10px;
+}
+
+.listing-reviews {
+    display: flex;
+    flex-direction: column;
+}
+
+.review-card {
+    padding: 1.5em;
+    box-shadow: $shadow-light;
+    .stars-div {
+        display: flex;
+        justify-content: center;
+        span {
+            color: gold;
+            font-size: 1.5rem;
+        }
+    }
+}
+
+.error {
+    border: 1px solid red !important;
+}
+
+.error-text {
+    color: red;
+}
+
+@media (max-width: 600px) {
+    .price-item, .total {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .checkInCheckOut {
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .detailContainer {
+        display: flex;
+        flex-direction: column;
+    }
+    .detailInfo {
+        width: 100%;
+    }
+    .detailSummary {
+        width: 90%;
+        margin: auto;
+    }
+}

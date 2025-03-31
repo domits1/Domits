@@ -1,0 +1,207 @@
+$primary-color: var(--primary-color);
+$secondary-color: var(--secondary-color);
+$box-shadow: 0 0 5px hsl(0 0% 78%);
+$dropdown-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+$border-radius: 10px;
+$font-family: "Kanit", sans-serif;
+$font-size-small: 10px;
+$font-size-medium: 16px;
+$font-size-large: 18px;
+
+.bottom-menu-bar {
+  display: none;
+
+  @media screen and (max-width: 650px) {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    z-index: 1000;
+    background: white;
+    box-shadow: 0 0 2px 0 #0d1a2626;
+    justify-content: center;
+  }
+
+  @media screen and (min-width: 651px) and (max-width: 768px) {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    z-index: 1000;
+    background: white;
+    width: 100%;
+    box-shadow: 0 0 2px 0 #0d1a2626;
+    justify-content: center;
+  }
+}
+
+.menuButtons {
+  float: right;
+  display: flex;
+  align-items: center;
+
+  @media screen and (max-width: 650px) {
+    flex-direction: row;
+    justify-content: center;
+    width: 100%;
+    margin-top: 20px;
+    align-items: center;
+    margin-right: 15%;
+  }
+
+  @media screen and (min-width: 651px) and (max-width: 768px) {
+    margin: 5% 34% 1% 10%;
+  }
+}
+
+.headerButtons,
+.personalMenu {
+  float: left;
+  color: black;
+  text-align: center;
+  padding: 12px;
+  border-radius: $border-radius;
+  margin-top: 0;
+  display: inline-flex;
+  font-family: $font-family;
+  cursor: pointer;
+  width: auto;
+
+  &:hover {
+    background: #3fb3663a;
+    padding: 12px;
+  }
+
+  img {
+    width: 24px;
+    height: 24px;
+  }
+
+  &.personalMenu {
+    border: none;
+    background-color: $primary-color;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    display: flex;
+
+    &:hover {
+      opacity: 90%;
+    }
+  }
+}
+
+.textMenu {
+  font-size: 11px;
+}
+
+.imgMenu {
+  font-size: 70px;
+}
+
+.bottomPersonalMenuDropdownContent {
+  position: relative;
+  display: inline-block;
+  z-index: 1;
+
+  &.show {
+    display: block;
+  }
+
+  & {
+    display: none;
+    padding: 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: auto;
+    min-width: 240px;
+    box-shadow: $dropdown-shadow;
+    z-index: 1;
+    top: calc(100% + 5px);
+    right: 0;
+    border-radius: $border-radius;
+
+    button {
+      padding: 8px 15px;
+      border-radius: 15px;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      display: inline-flex;
+      width: 100%;
+      color: white;
+      font-size: $font-size-medium;
+      font-family: $font-family;
+      font-weight: 400;
+      line-height: 24px;
+      word-wrap: break-word;
+
+      &:hover {
+        opacity: 90%;
+      }
+    }
+  }
+
+  @media screen and (max-width: 650px) {
+    padding: 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: 40%;
+    min-width: 240px;
+    box-shadow: $dropdown-shadow;
+    bottom: calc(90% + 5px);
+    right: 0;
+    border-radius: $border-radius;
+  }
+
+  @media screen and (min-width: 651px) and (max-width: 768px) {
+    padding: 20px 25px;
+    position: absolute;
+    background-color: white;
+    width: 40%;
+    min-width: 240px;
+    box-shadow: $dropdown-shadow;
+    z-index: 1;
+    bottom: calc(90% + 5px);
+    right: 6%;
+    border-radius: $border-radius;
+  }
+}
+
+.dropdownLoginButton {
+  margin-top: 0;
+  margin-bottom: 10px;
+  background: $primary-color;
+  border: none;
+  box-shadow: none;
+}
+
+.dropdownRegisterButton,
+.dropdownLogoutButton {
+  margin-top: 10px;
+  background-color: $secondary-color;
+  border: none;
+  box-shadow: none;
+}
+
+.dropdownLogoutButton {
+  margin-top: 20px;
+}
+
+.helloUsername {
+  margin-bottom: 10px;
+  font-size: $font-size-large;
+  font-family: $font-family;
+  font-weight: 400;
+  line-height: 24px;
+  word-wrap: break-word;
+}
+
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .personalMenu {
+    width: 85%;
+  }
+
+  .nineDotsButton {
+    margin-right: 4%;
+    margin-left: -15%;
+  }
+}
