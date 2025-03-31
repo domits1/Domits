@@ -240,6 +240,10 @@
       width: 35px;
       height: 35px;
   }
+
+  .show-all-button {
+      display: none;
+  }
 }
 
 @media (min-width: 1201px) {

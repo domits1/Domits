@@ -1,3 +1,10 @@
+.host-chat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
 .host-chat-screen {
     border: 1px solid #dee2e6;
     background-color: #fff;
@@ -5,6 +12,7 @@
     flex-direction: column;
     box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
     width: 100%;
+    min-width: 35rem;
     max-width: 35rem;
     min-height: 30rem;
     max-height: 30rem;
@@ -20,7 +28,7 @@
     width: 90%;
     margin: 0 auto;
     border-bottom: 1px solid #bdbdbd;
-    
+
 }
 
 .profile-img {
@@ -171,4 +179,96 @@
     color: white;
     border: none;
     cursor: pointer;
+}
+
+.host-chat-buttons {
+    display: flex;
+    width: 100%;
+}
+
+.host-chat-buttons button {
+    align-items: flex-start;
+    width: 10em;
+    margin-top: 1em;
+    margin-right: 1em;
+}
+
+.add-attachment {
+    width: auto;
+}
+
+.image-previews {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.image-preview {
+    text-align: center;
+}
+
+.image-preview img {
+    object-fit: cover;
+    border-radius: 5px;
+    margin-bottom: 5px;
+}
+
+.add-file-button {
+    height: 2.5em;
+    align-self: center;
+    border-radius: 0.5rem;
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.review-link-button {
+    height: 2.5em;
+    border-radius: 0.5rem;
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+@media (max-width: 875px) {
+    .host-chat-screen {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+        min-width: 28rem;
+        max-width: 28rem;
+        min-height: 30rem;
+        max-height: 30rem;
+        border-radius: 1rem;
+        justify-content: center;
+        padding: 0 0.25rem 0.25rem 0.25rem;
+    }
+
+}
+
+@media (max-width: 600px) {
+    .host-chat-screen {
+        border: 1px solid #dee2e6;
+        background-color: #fff;
+        display: flex;
+        flex-direction: column;
+        box-shadow: 0 0 10px 0 rgba(0, 0, 0, 0.1);
+        width: 80%;
+        min-width: 30rem;
+        max-width: 35rem;
+        min-height: 30rem;
+        max-height: 30rem;
+        border-radius: 1rem;
+        justify-content: center;
+        padding: 0 0.25rem 0.25rem 0.25rem;
+    }
+
+    .host-chat-buttons {
+        width: 85%;
+    }
+
 }
