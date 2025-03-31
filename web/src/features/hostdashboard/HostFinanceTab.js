@@ -162,7 +162,8 @@ const HostFinanceTab = () => {
                   {stripeLoginUrl ? (
                     bankDetailsProvided ? (
                       <>
-                        ✔ <strong>Step 2: </strong> You are connected to Stripe!
+                        ✔ <strong>Step 2: </strong> You are connected to
+                        Stripe!
                       </>
                     ) : (
                       <>
@@ -220,7 +221,7 @@ const HostFinanceTab = () => {
                   <tbody>
                     {payouts.map((payout) => (
                       <tr key={payout.id}>
-                        <td>${payout.amount}</td>
+                        <td>{(payout.amount / 100).toFixed(2)}</td>
                         <td className={payout.status}>{payout.status}</td>
                         <td>{payout.arrivalDate}</td>
                         <td>
