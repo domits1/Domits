@@ -3,7 +3,8 @@ import { loadStripe } from "@stripe/stripe-js";
 import { startVerificationAPI } from "../services/HostVerifyServices";
 import { getVerificationStatusFromDB } from "../services/HostVerifyServices";
 
-// TODO: fix cause of missing stripe key to remove error
+// TODO: implement a check: local vs production env.
+//   following line causes errors in local environment, this whole function should become a lambda function for security reasons
 // const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLIC_KEY);
 
 function useStripeVerification(userData) {
