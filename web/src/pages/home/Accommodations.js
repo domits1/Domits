@@ -108,7 +108,7 @@ const Accommodations = ({ searchResults }) => {
                         );
                     })
                 ) : (
-                    null 
+                    null
                 )}
             </div>
         </div>

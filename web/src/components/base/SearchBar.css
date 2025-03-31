@@ -59,7 +59,7 @@
   margin: 0 auto;
   margin-top: 0.6rem;
   padding: 10px 5px;
-  width: 90%;
+  width: 85%;
   border: none;
 }
 
@@ -519,7 +519,8 @@
 
   .Search-button-section,
   .searchInputContainer,
-  .Search-check-in {
+  .Search-check-in,
+  .search-places-input {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;

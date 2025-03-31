@@ -18,12 +18,12 @@ const FilterUi = ({ onFilterApplied }) => {
     handlePriceChange,
     loading,
     fetchFilteredAccommodations,
-    showSeasonTypes,
     handleSeasonChange,
     seasonFilter,
     setShowMoreSeasonTypes,
     showMoreSeasonTypes,
   } = FilterLogic({ onFilterApplied });
+
 
   const [minInputValue, setMinInputValue] = useState(`€${priceValues[0]}`);
   const [maxInputValue, setMaxInputValue] = useState(`€${priceValues[1]}`);
