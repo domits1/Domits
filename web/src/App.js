@@ -18,7 +18,6 @@ import Howitworks from "./pages/howitworks/Howitworks.js";
 import Careers from "./pages/careers/Careers";
 import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
-import HostOnboarding from "./pages/landingpage/OnboardingHost";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
 
 import HostProperty from "./features/hostdashboard/HostProperty";

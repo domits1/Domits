@@ -229,8 +229,8 @@ const useFormStore = create((set) => ({
                 description: accommodationDetails.description,
                 guestCapacity: accommodationDetails.accommodationCapacity?.GuestAmount || 1,
                 registrationNumber: accommodationDetails.registrationNumber,
-                status: "INACTIVE", // TODO: remove hardcoded Amenities web/src/pages/landingpage/OnboardingHost.js:312
-                propertyAmenities: [{amenityId: "1"}], // TODO: remove hardcoded propertyAvailability
+                status: "INACTIVE",
+                propertyAmenities: [{amenityId: "1"}],
                 propertyAvailability: [{
                     availableStartDate: 2042483993580, availableEndDate: 2142483993580,
                 },],

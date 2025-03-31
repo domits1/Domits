@@ -1,9 +1,11 @@
+import useFormStore from "../stores/formStore";
 
 export async function submitAccommodation() {
     // TODO Implement proper cognito security service
     // Retrieve the token from localStorage
     const authToken = localStorage.getItem("CognitoIdentityServiceProvider.78jfrfhpded6meevllpfmo73mo.329b44d1-14c7-4af7-94bc-3424af6c535d.accessToken");
-
+    const {accommodationDetails} = useFormStore.getState();
+console.log(accommodationDetails)
     // Check if token is retrieved
     if (!authToken) {
         console.error("User not logged in. Authtoken not found in expected place.");
