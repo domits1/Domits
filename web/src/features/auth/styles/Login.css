@@ -1,0 +1,135 @@
+.loginLogo {
+    width: 15%;
+    margin-top: 25px;
+}
+
+.loginButton {
+    width: 100%;
+    padding: 8px 15px;
+    background: var(--primary-color);
+    border-radius: 5px;
+    border: none;
+    box-shadow: none;
+    color: white;
+    font-size: 18px;
+    cursor: pointer; 
+    margin-top: 15px;
+}
+
+.loginButton:hover {
+    background: #6fb873;
+}
+
+.registerButtonLogin {
+    width: 100%;
+    padding: 8px 15px;
+    background: var(--secondary-color);
+    box-shadow: none;
+    border-radius: 5px;
+    border: none;
+    color: white;
+    font-size: 18px;
+    display: block;
+    text-align: center;
+    text-decoration: none; 
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.registerButtonLogin:hover {
+    background: #4a86c3;
+}
+
+.loginTitle {
+    color: black;
+    font-size: 30px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    line-height: 54px;
+    word-wrap: break-word;
+    margin-top: 40px;
+}
+
+.loginContainer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    
+}
+
+.loginForm {
+    min-width: 373px;
+    width: 100%;
+    padding: 15px 30px;
+    border-radius: 5px;
+    margin-bottom: 50px;
+    box-sizing: border-box;
+}
+
+label {
+    font-size: 18px;
+}
+
+.loginInput {
+    width: 100%;
+    height: auto;
+    padding: 8px 15px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    background: white;
+    border-radius: 5px;
+    border: 1px solid var(--primary-color);
+    justify-content: flex-start;
+    align-items: center;
+    display: inline-flex;
+}
+.emailSection {
+    padding: 6rem;
+    margin-bottom: 15%;
+}
+.forgotPasswordText:hover {
+    color: royalblue;
+    cursor: pointer;
+}
+.noAccountText {
+    color: black;
+    margin-top: 20px;
+    font-size: 14px;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 400;
+    line-height: 18px;
+    word-wrap: break-word;
+    align-self: flex-start;
+}
+
+.errorText {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 8px 15px;
+    text-align: center;
+    border: 1px solid darkred;
+    background: red;
+    opacity: 0.7;
+    color: white;
+    border-radius: 5px;
+}
+.passwordContainer {
+    position: relative;
+}
+
+.loginInput {
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.togglePasswordButton {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+}
