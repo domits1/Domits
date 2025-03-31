@@ -10,6 +10,7 @@ import SkeletonLoader from "../../components/base/SkeletonLoader";
 import AccommodationCard from "./AccommodationCard";
 import { reviews } from "../home/store/constants";
 import { categories as groups } from "../home/store/constants";
+import { img } from "../home/store/constants";
 import "swiper/css/pagination";
 import Header from "./Header";
 import greece from "../../pages/home/Images/greece.webp";
@@ -50,12 +51,6 @@ import spring from "../../pages/home/Images/spring.webp";
 import summer from "../../pages/home/Images/summer.webp";
 import fall from "../../pages/home/Images/fall.webp";
 import winter from "../../pages/home/Images/winter.webp";
-import friends from "../../pages/home/Images/friends.webp";
-import couples from "../../pages/home/Images/couples.webp";
-import family from "../../pages/home/Images/family.webp";
-import solo from "../../pages/home/Images/solo.webp";
-import senior from "../../pages/home/Images/senior.webp";
-import petFriendly from "../../pages/home/Images/petfriendly.webp";
 import luxury from "../../pages/home/Images/luxury.webp";
 import beach from "../../pages/home/Images/beach.webp";
 import lastMinute from "../../pages/home/Images/lastminute.webp";
@@ -67,7 +62,6 @@ import culture from "../../pages/home/Images/culture.webp";
 import culinary from "../../pages/home/Images/culinary.webp";
 import waterman from "../../pages/home/Images/waterman.webp";
 import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
-import profilePic from "../../pages/home/Images/sleutelvrouw.webp";
 import {
   FetchAllPropertyTypes,
   FetchPropertyType,
@@ -775,8 +769,8 @@ const Homepage = () => {
           {visibleReviews.map((review, index) => (
             <div className="review-card" key={index}>
               <img
-                src={profilePic}
-                alt="Reviewer"
+                src={review.img} // Use review.img instead of profilePic
+                alt={review.name}
                 className="review-profile-pic"
               />
               <h3>{review.name}</h3>
