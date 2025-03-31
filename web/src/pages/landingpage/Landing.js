@@ -230,7 +230,7 @@ function Landing() {
     <main className={styles.container}>
       <div className={styles.firstSection}>
         <div className={styles.MainText}>
-          <h1>
+          <h1 className="List_Names">
             List your{" "}
             <span className={styles.textContainer}>
               <div className={styles.textAnimated}>
@@ -248,7 +248,7 @@ function Landing() {
             daily rate.
           </p>
 
-          <button className={styles.nextButtons}>
+          <button className={styles.nextregister}>
             <a
               href="#Register"
               onClick={(e) => handleSmoothScroll(e, "Register")}
@@ -283,8 +283,6 @@ function Landing() {
           </div>
         </div>
       </div>
-
-      
 
       <div className={styles.easyHosting}>
         <div className={styles.easyHosting_text}>
@@ -347,7 +345,7 @@ function Landing() {
             means aligning with deeply embedded values of health, safety, and
             sustainability, creating a future-proof path for your business.
           </p>
-          <button onClick={updateUserGroup} className={styles.nextButtons}>
+          <button onClick={updateUserGroup} className={styles.nexthost}>
             <a
               href="#Register"
               onClick={(e) => handleSmoothScroll(e, "Register")}
@@ -731,7 +729,7 @@ function Landing() {
             <span className={styles.highlightText}>rental expert team</span>
           </h1>
           <h3>Our expert team is ready for support!</h3>
-          <button className={styles.nextButtons}>
+          <button className={styles.nextadvice}>
             {" "}
             <a href="/contact">Talk to a specialist</a>
           </button>
