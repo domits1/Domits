@@ -21,7 +21,6 @@ const FilterUi = ({ onFilterApplied }) => {
     showSeasonTypes,
     handleSeasonChange,
     seasonFilter,
-    ShowMoreSeasonTypes,
     setShowMoreSeasonTypes,
     showMoreSeasonTypes,
   } = FilterLogic({ onFilterApplied });
@@ -57,7 +56,6 @@ const FilterUi = ({ onFilterApplied }) => {
       }
     }
   };
-
 
   const handleMaxInputChange = (e) => {
     const rawValue = e.target.value;
@@ -229,7 +227,7 @@ const FilterUi = ({ onFilterApplied }) => {
               {season.charAt(0).toUpperCase() + season.slice(1)}
             </label>
           ))}
-          {ShowMoreSeasonTypes &&
+          {showMoreSeasonTypes &&
             Object.keys(seasonFilter)
               .slice(5)
               .map((season) => (
@@ -250,12 +248,8 @@ const FilterUi = ({ onFilterApplied }) => {
           >
             {showMoreSeasonTypes ? 'Show Less' : 'Show More'}
           </span>
-
         </div>
       </div>
-
-
-
     </div >
   );
 };

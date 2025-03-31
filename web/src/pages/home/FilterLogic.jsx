@@ -49,13 +49,7 @@ export default function(props) {
 
   const [showMoreSeasonTypes, setShowMoreSeasonTypes] = useState(false);
 
-  const [selectedRatings, setSelectedRatings] = useState({
-    1: false,
-    2: false,
-    3: false,
-    4: false,
-    5: false,
-  });
+
 
     const [accommodationResults, setAccommodationResults] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -122,12 +116,14 @@ export default function(props) {
         });
     };
 
-  const handleSeasonChange = (event) => {
-    setSeasonFilter({
-      ...selectedRatings,
-      [event.target.name]: event.target.checked,
-    });
+    const handleSeasonChange = (event) => {
+      setSeasonFilter({
+          ...seasonFilter,
+          [event.target.name]: event.target.checked,
+      });
   };
+
+
 
   return {
     priceValues,
@@ -140,8 +136,6 @@ export default function(props) {
     setShowMoreFacilities,
     showMorePropertyTypes,
     setShowMorePropertyTypes,
-    selectedRatings,
-    handleRatingChange,
     handlePriceChange,
     accommodationResults,
     loading,

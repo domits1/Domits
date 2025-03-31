@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import './Accommodations.css';
 import PageSwitcher from '../../utils/PageSwitcher.module.css';
-
 import SkeletonLoader from '../../components/base/SkeletonLoader';
 import { useNavigate } from 'react-router-dom';
 import AccommodationCard from "./AccommodationCard";
@@ -109,9 +108,8 @@ const Accommodations = ({ searchResults }) => {
                         );
                     })
                 ) : (
-                    <div className="no-results">No accommodations found for your search.</div>
+                    null 
                 )}
-
             </div>
         </div>
         <div className={PageSwitcher.pagination}>

@@ -52,6 +52,29 @@
   width: 36%;
 }
 
+.search-places-input {
+  display: flex;
+  justify-content: center;
+  align-items: center ;
+  margin: 0 auto;
+  margin-top: 0.6rem;
+  padding: 10px 5px;
+  width: 90%;
+  border: none;
+}
+
+.search-places-input::placeholder {
+  font-family: Kanit, sans-serif;
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-weight: 500;
+}
+.search-places-input:focus {
+  outline: none; 
+  
+}
+
 .input-calendar {
   background: none;
   border: none;
@@ -183,7 +206,7 @@
   border-radius: 16px;
   font-size: 1.2rem;
   position: absolute;
-  z-index: 1;
+  z-index: 999;
   height: auto;
   cursor: pointer;
   transform: translate(60%, 80%);
