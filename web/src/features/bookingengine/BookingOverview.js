@@ -318,21 +318,21 @@ const BookingOverview = () => {
             </div>
           </div>
 
-          {!isLoggedIn ? (
-            <div>
-              <h2>Please Register or Log In to Continue</h2>
-              <RegisterModule />
-            </div>
-          ) : (
-            <button
-              type="submit"
-              className="confirm-pay-button"
-              onClick={handleConfirmAndPay}
-              disabled={loading || !ownerStripeId}
-            >
-              {loading ? "Loading..." : "Confirm & Pay"}
-            </button>
-          )}
+            {!isLoggedIn ? (
+                <div>
+                    <h2>Please Register or Log In to Continue</h2>
+                    <RegisterModule />
+                </div>
+            ) : (
+                <button
+                    type="submit"
+                    className="confirm-pay-button"
+                    onClick={handleConfirmAndPay}
+                    disabled={loading || !ownerStripeId}
+                >
+                    {loading ? "Loading..." : "Confirm & Pay"}
+                </button>
+            )}
         </div>
 
         {/* Left Panel */}
