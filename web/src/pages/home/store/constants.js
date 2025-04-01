@@ -1,11 +1,11 @@
 import waterman from "../Images/waterman.webp";
 import sleutelvrouw from "../Images/sleutelvrouw.webp";
-import friends from "../Images/friends.webp"; // Added missing import for 'friends'
-import couples from "../Images/couples.webp"; // Added missing import for 'couples'
-import family from "../Images/family.webp"; // Added missing import for 'family'
-import solo from "../Images/solo.webp"; // Added missing import for 'solo'
-import senior from "../Images/senior.webp"; // Added missing import for 'senior'
-import petFriendly from "../Images/petfriendly.webp"; // Added missing import for 'petFriendly'
+import friends from "../Images/friends.webp";
+import couples from "../Images/couples.webp";
+import family from "../Images/family.webp";
+import solo from "../Images/solo.webp";
+import senior from "../Images/senior.webp";
+import petFriendly from "../Images/petfriendly.webp";
 import Reviewer1 from "../Images/Reviewer 1.png";
 import Reviewer2 from "../Images/Reviewer 2.png";
 import Reviewer3 from "../Images/Reviewer 3.png";
@@ -28,32 +28,32 @@ import Reviewer18 from "../Images/Reviewer 18.png";
 export const categories = [
   {
     name: "Friends",
-    img: friends, // Use the imported 'friends' image
+    img: friends,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Couples",
-    img: couples, // Use the imported 'couples' image
+    img: couples,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Family & child friendly",
-    img: family, // Use the imported 'family' image
+    img: family,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Solo",
-    img: solo, // Use the imported 'solo' image
+    img: solo,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Senior",
-    img: senior, // Use the imported 'senior' image
+    img: senior,
     description: "Vacation Rentals and Apartments",
   },
   {
     name: "Pet Friendly",
-    img: petFriendly, // Use the imported 'petFriendly' image
+    img: petFriendly,
     description: "Vacation Rentals and Apartments",
   },
 ];

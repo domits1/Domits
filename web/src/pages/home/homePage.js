@@ -428,7 +428,7 @@ const Homepage = () => {
   };
 
   const handlePopupClick = (text) => {
-    setActivePopup(activePopup === text ? null : text); // Toggle popup
+    setActivePopup(activePopup === text ? null : text);
   };
 
   return (
@@ -769,7 +769,7 @@ const Homepage = () => {
           {visibleReviews.map((review, index) => (
             <div className="review-card" key={index}>
               <img
-                src={review.img} // Use review.img instead of profilePic
+                src={review.img}
                 alt={review.name}
                 className="review-profile-pic"
               />
