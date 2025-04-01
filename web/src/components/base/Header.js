@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useContext } from "react";
 import { Link } from "react-router-dom";
-import "./base.css";
 import logo from "../../images/logo.svg";
 import nineDots from "../../images/dots-grid.svg";
 import profile from "../../images/profile-icon.svg";
@@ -20,7 +19,7 @@ function Header({ setSearchResults, setLoading }) {
   const [group, setGroup] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [currentView, setCurrentView] = useState("guest"); // 'guest' or 'host'
+  const [currentView, setCurrentView] = useState("guest"); 
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
 
 

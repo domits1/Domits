@@ -1,19 +1,14 @@
 // For explenation on how search works: https://github.com/domits1/Domits/wiki/Web-Search
-
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import '@hassanmojab/react-modern-calendar-datepicker/lib/DatePicker.css';
 import DatePicker, { utils } from '@hassanmojab/react-modern-calendar-datepicker';
 import {
   FaTimes, FaSearchLocation, FaHome, FaCaravan,FaDoorClosed,
-  FaShip,FaSpinner, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw,
+  FaShip, FaTimesCircle, FaUser, FaChild, FaBaby, FaPaw,
 } from 'react-icons/fa';
-import ReactCountryFlag from "react-country-flag";
-import PlacesAutocomplete, { geocodeByAddress } from 'react-places-autocomplete';
 import Select from 'react-select';
-import { countries } from 'country-data';
 import './SearchBar.css';
 import { useNavigate, useLocation } from 'react-router-dom';
-import Script from 'react-load-script';
 
 export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
   const [checkIn, setCheckIn] = useState(null);
@@ -26,20 +21,13 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
   const [children, setChildren] = useState(0);
   const [infants, setInfants] = useState(0);
   const [pets, setPets] = useState(0);
-  const [rooms, setRooms] = useState(0);
   const [showGuestDropdown, setShowGuestDropdown] = useState(false);
   const [startDate, endDate] = dateRange;
   const [error, setError] = useState("");
   const [selectedDayRange, setSelectedDayRange] = useState({ from: null, to: null, });
   const [isMobile, setIsMobile] = useState(false);
   const [showSearchBar, setShowSearchBar] = useState(false);
-  const [scriptLoaded, setScriptLoaded] = useState(false);
   const [isBarActive, setIsBarActive] = useState(false);
-
-  const handleScriptLoad = () => {
-    setScriptLoaded(true);
-  };
-
   const hasTwoGuests = (adults + children > 0) && (infants + pets === 0);
 
   const handleButtonClick = (e) => {
@@ -89,9 +77,8 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     if (children > 0) parts.push(`${children} Child${children > 1 ? 'ren' : ''}`);
     if (infants > 0) parts.push(`${infants} Infant${infants > 1 ? 's' : ''}`);
     if (pets > 0) parts.push(`${pets} Pet${pets > 1 ? 's' : ''}`);
-    if (rooms > 0) parts.push(`${rooms} Room${rooms > 1 ? 's' : ''}`);
     return parts.join(', ');
-  }, [adults, children, infants, pets, rooms]);
+  }, [adults, children, infants, pets,]);
 
   const guestDropdownRef = useRef();
   const resetGuests = useCallback((e) => {
@@ -100,7 +87,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     setChildren(0);
     setInfants(0);
     setPets(0);
-    setRooms(0);
   }, []);
 
   const toggleGuestDropdown = useCallback((e) => {
@@ -131,38 +117,14 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, [showGuestDropdown]);
 
-  const handleChange = (address) => {
-    setAddress(address);
+  const handleChange = (e) => {
+    setAddress(e.target.value);
   };
 
   const incrementGuests = (guestType, setGuestType) => {
     setGuestType(prev => prev < 13 ? prev + 1 : prev);
     if (adults === 0) {
       setAdults(1);
-    }
-  };
-
-  const handleSelect = async (selectedAddress) => {
-    if (!selectedAddress || !selectedAddress.description) {
-      return;
-    }
-
-    const parts = selectedAddress.description.split(', ');
-    let city, country;
-
-    if (parts.length > 1) {
-      city = parts[0];
-      country = parts[parts.length - 1].trim();
-    } else {
-      country = parts[0];
-    }
-
-    setAddress(`${city ? city + ', ' : ''}${country}`);
-    setShowResults(true);
-
-    try {
-      const results = await geocodeByAddress(selectedAddress.description);
-    } catch (error) {
     }
   };
 
@@ -247,37 +209,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
     }
   };
 
-  //dit is een tijdelijke oplossing voor dat bij sommige landen geen vlaggen te zie zijn
-  const getCountryCode = (countryName) => {
-    const knownAbbreviations = {
-      'USA': 'US',
-      'RUSSIA': 'RU',
-      'UK': 'GB',
-      'PALESTINE': 'PS',
-      'NORTH KOREA': 'KP',
-      'TANZANIA': 'TZ',
-      'UAE': 'AE',
-      'VIETNAM': 'VN',
-      'VATICAN CITY': 'VA',
-      'VENEZUELA': 'VE',
-      //hier kan je landen toevoegen waarvan vlaggen missen
-    };
 
-    let country = countries.all.find((c) => c.name.toUpperCase() === countryName.toUpperCase());
-    if (!country) {
-      country = knownAbbreviations[countryName.toUpperCase()];
-    }
-    if (typeof country === 'string') {
-      return country;
-    }
-    if (!country) {
-      country = countries.all.find((c) => c.name.toUpperCase() === countryName.toUpperCase().replace(/^THE\s+/, ''));
-    }
-
-    return country ? country.alpha2 : "";
-  };
-
-  // calendar gedeelte
   useEffect(() => {
     if (selectedDayRange.from && selectedDayRange.to) {
       const start = new Date(
@@ -326,113 +258,14 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
             <div className={`SearchBarContainer ${isBarActive ? 'active' : 'inactive'}`}>
               <div className="Search-bar">
                 <div className="Search-location">
-
-                  <Script
-                      url={`https://maps.googleapis.com/maps/api/js?key=${process.env.REACT_APP_GOOGLE_MAPS_API_KEY}&libraries=places`}
-                      onLoad={handleScriptLoad}
+                  <input
+                    type="search"
+                    placeholder="Search Destination"
+                    value={address}
+                    onChange={handleChange}
+                    onKeyDown={handleKeyDown}
+                    className="search-places-input"
                   />
-                  {scriptLoaded ? (
-                      <PlacesAutocomplete
-                          value={address}
-                          onChange={handleChange}
-                          onSelect={handleSelect}
-                          searchOptions={{
-                            types: ['locality', 'country'],
-                            language: 'en',
-                          }}
-                      >
-                        {({getInputProps, suggestions, getSuggestionItemProps, loading}) => (
-                            <div className="autocomplete-container"
-                                 style={{marginTop: '10px', position: 'relative'}}>
-                              <input
-                                  {...getInputProps({
-                                    className: 'searchBar_inputfield',
-                                    type: 'search',
-                                    placeholder: 'Search Destination',
-                                    onKeyDown: handleKeyDown
-                                  })}
-                              />
-
-                              {suggestions.length > 0 && (
-                                  <div
-                                      className="suggestions-container"
-                                      style={{
-                                        position: 'absolute',
-                                        top: isMobile ? '120%' : '150%',
-                                        left: isMobile ? -8 : -30,
-                                        width: isMobile ? '100%' : '135%',
-                                        backgroundColor: 'white',
-                                        borderRadius: '1rem',
-                                        padding: isMobile ? '0.5rem' : '1rem',
-                                        boxShadow: '0 6px 6px rgba(0, 0, 0, 0.15)',
-                                        zIndex: '999',
-                                      }}
-                                  >
-                                    {loading && <div>Loading <FaSpinner/></div>}
-                                    {suggestions.map((suggestion, index) => {
-                                      const parts = suggestion.description.split(', ');
-                                      const city = parts[0];
-                                      const country = parts[parts.length - 1].trim();
-                                      const countryCode = getCountryCode(country);
-
-                                      return (
-                                          <div
-                                              key={index}
-                                              {...getSuggestionItemProps(suggestion, {
-                                                style: {
-                                                  backgroundColor: suggestion.active ? '#f0f0f0' : '#fff',
-                                                  padding: isMobile ? '1px 0px' : '20px 10px',
-                                                  cursor: 'pointer',
-                                                  transition: 'background-color 0.2s ease, transform 0.2s ease, border-radius 0.2s ease',
-                                                  fontSize: '1rem',
-                                                  color: '#000',
-                                                  borderBottom: '1px solid #ddd',
-                                                  margin: '0',
-                                                  display: 'flex',
-                                                  flexDirection: 'column',
-                                                  alignItems: 'flex-start',
-                                                  justifyContent: 'flex-start',
-                                                  transform: suggestion.active ? 'scale(1.04)' : 'none',
-                                                  zIndex: suggestion.active ? '1' : '0',
-                                                },
-                                                onMouseEnter: (e) => (e.target.style.borderRadius = '12px'),
-                                                onMouseLeave: (e) => (e.target.style.borderRadius = '0px'),
-                                                onClick: () => handleSelect(suggestion)
-                                              })}
-                                          >
-                                            <div style={{display: 'flex', alignItems: 'center'}}>
-                                              <ReactCountryFlag
-                                                  countryCode={countryCode}
-                                                  svg
-                                                  style={{
-                                                    marginRight: '10px',
-                                                    width: '20px',
-                                                    height: '15px',
-                                                    boxShadow: '2px 2px 10px #777',
-                                                    marginBottom: '-0.8rem'
-                                                  }}
-                                                  title={country}
-                                              />
-                                              <span>{city}</span>
-                                            </div>
-                                            <div style={{
-                                              marginLeft: '30px',
-                                              fontSize: '0.8rem',
-                                              color: '#666'
-                                            }}>
-                                              {country}
-                                            </div>
-                                          </div>
-                                      );
-                                    })}
-                                  </div>
-                              )}
-                            </div>
-                        )}
-                      </PlacesAutocomplete>
-                  ) : (
-                      <div></div>
-                  )}
                 </div>
 
                 <div className="searchInputContainer">
@@ -501,7 +334,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                           overflow: 'hidden',
                           '&:hover': {
                             color: 'black',
-                            backgroundColor: '#e6e6e6',
                             transform: 'scale(1)',
                           },
                         }),
@@ -527,7 +359,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
 
                 <div className={`Search-button-section ${showGuestDropdown ? 'active' : ''}`}
                      onClick={toggleGuestDropdown}>
-                  <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests • Rooms</p>
+                  <p className={`searchTitleGuest ${totalGuests > 0 ? 'hidden' : ''}`}>Guests</p>
                   {totalGuests > 0 && (
                       <button
                           className="Search-clear-guests"
@@ -599,13 +431,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                         onIncrement={() => incrementGuests(pets, setPets)}
                         onDecrement={() => setPets(pets > 0 ? pets - 1 : pets)}
                     />
-                    <GuestCounter
-                        label={<><FaDoorClosed/> Rooms</>}
-                        description="Amount of rooms in the Accommodation"
-                        value={rooms}
-                        onIncrement={() => incrementGuests(rooms, setRooms)}
-                        onDecrement={() => setRooms(rooms > 0 ? rooms - 1 : rooms)}
-                    />
+                    
                   </div>
                 </div>
 
@@ -658,6 +484,8 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar}) => {
                 </button>
 
               </div>
+              {/* momenteel niet te gebruiken omdat de styling er voor moet aangepast worden */}
+              {/* {isBarActive && <FilterButton />} */}
             </div>
         )}
       </div>

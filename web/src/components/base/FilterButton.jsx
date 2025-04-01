@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FaSlidersH  } from 'react-icons/fa';
 import FilterModal from './FilterModal'; 
 import './FilterButton.css';
@@ -9,7 +9,7 @@ const FilterButton = () => {
   return (
     <>
       <button className="filter-button" onClick={() => setModalOpen(true)}>
-        <FaSlidersH  /> 
+        <FaSlidersH  />  Filter
       </button>
       <FilterModal isOpen={isModalOpen} onClose={() => setModalOpen(false)} />
     </>

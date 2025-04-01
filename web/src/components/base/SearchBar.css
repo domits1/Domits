@@ -1,12 +1,11 @@
 .Search-bar {
-  width: 42.5rem;
+  width: 42rem;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 1.875rem;
-  border: solid 1px #7171716a;
+  border: solid 1px #7c7c7c6a;
   display: flex;
   height: 3.43rem;
-  box-sizing: border-box;
   background-color: white;
 }
 
@@ -50,7 +49,30 @@
 }
 
 .Search-location {
-  width: 34%;
+  width: 36%;
+}
+
+.search-places-input {
+  display: flex;
+  justify-content: center;
+  align-items: center ;
+  margin: 0 auto;
+  margin-top: 0.6rem;
+  padding: 10px 5px;
+  width: 85%;
+  border: none;
+}
+
+.search-places-input::placeholder {
+  font-family: Kanit, sans-serif;
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-weight: 500;
+}
+.search-places-input:focus {
+  outline: none; 
+  
 }
 
 .input-calendar {
@@ -173,7 +195,7 @@
   cursor: pointer;
   padding: 1.625rem;
   border-radius: 1.25rem;
-  width: 13.2%;
+  width: 10%;
 }
 
 .Search-error-message {
@@ -184,7 +206,7 @@
   border-radius: 16px;
   font-size: 1.2rem;
   position: absolute;
-  z-index: 1;
+  z-index: 999;
   height: auto;
   cursor: pointer;
   transform: translate(60%, 80%);
@@ -350,25 +372,25 @@
 
 @media (min-width: 2500px) {
   .responsive-calendar {
-    font-size: 1rem !important;
+    font-size: 0.8rem !important;
   }
 }
 
 @media (max-width: 1500px) {
   .responsive-calendar {
-    font-size: 0.9rem !important;
+    font-size: 0.7rem !important;
   }
 }
 
 @media (max-width: 1200px) {
   .responsive-calendar {
-    font-size: 0.7rem !important;
+    font-size: 0.6rem !important;
   }
 }
 
 @media (max-width: 768px) {
   .responsive-calendar {
-    font-size: 0.7rem !important;
+    font-size: 0.5rem !important;
   }
 }
 
@@ -497,7 +519,8 @@
 
   .Search-button-section,
   .searchInputContainer,
-  .Search-check-in {
+  .Search-check-in,
+  .search-places-input {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
