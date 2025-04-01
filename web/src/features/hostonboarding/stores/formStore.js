@@ -1,5 +1,6 @@
 import {create} from "zustand";
 import AccommodationDTO from "../../accommodationService/AccommodationDTO";
+import {submitAccommodation} from "../services/hostonboardingApi";
 
 const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
@@ -285,35 +286,20 @@ const useFormStore = create((set) => ({
                 },
             });
 
-            // TODO: insert new service here
+            console.log(
+                "Submitting accommodation data:",
+                JSON.stringify(newFormat, null, 2),
+            );
 
-
-
-
-            ////////////// OLD BELOW
-
-            //         // The Fetch itself!
-            //         const response = await axios.post(
-            //             API_BASE_URL,
-            //             new AccommodationDTO(newFormat),
-            //             {
-            //                 headers: {"Content-Type": "application/json"},
-            //             },
-            //         );
-            //
-            //         console.log(
-            //             "Submitting accommodation data:",
-            //             JSON.stringify(newFormat, null, 2),
-            //         );
-            //
-            //         /// THIS is the result of the form:
-            //         //Remove this line if you don't want to log the response
-            //         console.log("Accommodation uploaded successfully:", response.data);
-            //         console.log("Testing formattedData:", newFormat);
-            //         //Remove this line if you don't want to log the response
-            //         if (response.data.statusCode === 200) {
-            //             navigate("/hostdashboard");
-            //         }
+            const response = await submitAccommodation()
+            /// THIS is the result of the form:
+            //Remove this line if you don't want to log the response
+            console.log("Accommodation uploaded successfully:", response.data);
+            console.log("Testing formattedData:", newFormat);
+            //Remove this line if you don't want to log the response
+            if (response.data.statusCode === 200) {
+                navigate("/hostdashboard");
+            }
         } catch (error) {
             console.error("Error uploading accommodation:", error);
         }
