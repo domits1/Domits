@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext, useRef } from "react";
+import { useState, useEffect, useContext, useRef } from "react";
 import { Auth } from "aws-amplify";
 import { useNavigate } from "react-router-dom";
 import styles from "./styles/landing.module.css";
