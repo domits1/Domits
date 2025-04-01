@@ -1,5 +1,7 @@
-import {FaSlidersH} from 'react-icons/fa';
-import FilterModal from './FilterModal';
+
+import { useState } from 'react';
+import { FaSlidersH  } from 'react-icons/fa';
+import FilterModal from './FilterModal'; 
 import './FilterButton.css';
 import {useState} from "react";
 
