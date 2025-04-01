@@ -58,14 +58,18 @@ const Homepage = () => {
   }, [isFixed]);
 
   const navigate = useNavigate();
-
   const fetchBoatAccommodations = async () => {
     try {
         setLoading(true);
 
         const response = await fetch(
-            "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Onboarding-Production-Read-AllBoatAccommodations"
+            "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property?type=Boat", { 
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              // mode: 'no-cors'
+            }
         );
+
 
         if (!response.ok) throw new Error("Failed to fetch boat accommodations");
         const jsonResponse = await response.json();
@@ -240,13 +244,14 @@ const Homepage = () => {
           <div className="domits-accommodationGroup">
             {boatAccommodations.length > 0 ? (
               boatAccommodations.map((boat) => {
-                const images =
-                  accommodationImages.find((img) => img.ID === boat.ID)?.Images || [];
+                // const images =
+                //   accommodationImages.find((img) => img.ID === boat.ID)?.Images || [];
+
                 return (
                   <AccommodationCard
-                    key={boat.ID}
-                    accommodation={boat}
-                    images={Object.values(images)}
+                    key={boat.property.id}
+                    accommodation={boat.property}
+                    images={Object.values(boat.propertyImages)}
                     onClick={handleClick}
                   />
                 );

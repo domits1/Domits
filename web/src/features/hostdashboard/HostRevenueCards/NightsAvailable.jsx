@@ -26,7 +26,7 @@ const NightsAvailable = () => {
         console.log('Fetching accommodations for userId:', userId);
 
         const accommodationsResponse = await fetch(
-          'https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/Host-Onboarding-Production-Read-AccommodationsByOwner',
+          '',
           {
             method: 'POST',
             headers: {
