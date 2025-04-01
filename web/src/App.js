@@ -57,7 +57,7 @@ import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
 import HostHousekeeping from "./features/hostdashboard/Housekeeping.js";
 import HostIoTHub from "./features/hostdashboard/HostIoTHub";
-import HostPricing from "./features/hostdashboard/HostPricing";
+import HostPricing from "./features/hostdashboard/hostpricing/views/HostPricing";
 import HostDistribution from "./features/hostdashboard/hostdistribution/pages/HostDistribution";
 import HostMonitoring from "./features/hostdashboard/HostMonitoring";
 import HostScreening from "./features/hostdashboard/HostScreening";
