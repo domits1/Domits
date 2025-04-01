@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {ScrollView, Text, ToastAndroid, TouchableOpacity, View,} from 'react-native';
 import {SafeAreaView} from 'react-native-safe-area-context';
-import FetchOwnerData from '../../../features/search/hooks/FetchOwnerData';
 import FetchAccommodation from '../../../features/search/hooks/FetchAccommodation';
 import Ionicons from "react-native-vector-icons/Ionicons";
 import {styles} from "../styles/propertyDetailsStyles";
@@ -18,7 +17,6 @@ import PropertyDetailsOwnerView from "../views/PropertyDetailsOwnerView";
 const PropertyDetailsScreen = ({route, navigation}) => {
     const accommodationId = route.params.accommodation.id;
     const [parsedAccommodation, setParsedAccommodation] = useState({});
-    const [owner, setOwner] = useState();
     const [loading, setLoading] = useState(true);
     const [images, setImages] = useState([]);
     const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
@@ -36,16 +34,6 @@ const PropertyDetailsScreen = ({route, navigation}) => {
             console.error('Error fetching accommodation:', error);
         });
     }, [accommodationId]);
-
-    /**
-     * Fetch owner data of the current accommodation.
-     */
-    useEffect(() => {
-        const ownerId = parsedAccommodation.OwnerId;
-        FetchOwnerData(ownerId, setOwner).then().catch(error => {
-            console.error('Error fetching owner data:', error);
-        });
-    }, [parsedAccommodation]);
 
     useEffect(() => {
         if (parsedAccommodation && parsedAccommodation.Images) {
@@ -177,12 +165,10 @@ const PropertyDetailsScreen = ({route, navigation}) => {
 
                         <View style={styles.categoryDivider}/>
 
-                        <Text style={styles.categoryTitle}><TranslatedText textToTranslate={"hosted by"}/></Text>
-                        <View style={styles.hostInfoContainer}>
-                            <View style={styles.nameButton}>
-                                <Text style={styles.nameText}>{owner}</Text>
-                            </View>
-                        </View>
+                        <PropertyDetailsOwnerView
+                            ownerId={parsedAccommodation.OwnerId}
+                            navigation={navigation}
+                        />
 
                         <View style={styles.categoryDivider}/>
 

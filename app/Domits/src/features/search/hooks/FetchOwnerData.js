@@ -30,17 +30,35 @@ const FetchOwnerData = async (ownerId, setOwner) => {
             return;
         }
 
-        const attributesObject = data[0].Attributes.reduce((acc, attr) => {
-            acc[attr.Name] = attr.Value;
-            return acc;
-        }, {});
-        setOwner(
-            attributesObject.given_name + ' ' + attributesObject.family_name ||
-            'Unknown Host',
-        );
+        const parsedBody =
+            typeof responseData.body === 'string'
+                ? JSON.parse(responseData.body)
+                : responseData.body;
+        const formattedData = transformRawUserData(parsedBody)
+
+        setOwner(formattedData)
+
     } catch (error) {
         console.error('Error fetching owner data:', error);
     }
+};
+
+/**
+ * Transform host user data to object.
+ * Helper function for GetUserInfo lambda function before DB refactor (March 2025)
+ * @param data - Raw host user data
+ * @returns object
+ */
+const transformRawUserData = (data) => {
+    if (!data || data.length === 0) return null; // Handle empty case
+    const user = data[0];
+
+    const attributesObject = user.Attributes.reduce((acc, attr) => {
+        acc[attr.Name] = attr.Value;
+        return acc;
+    }, {});
+
+    return {...user, ...attributesObject, Attributes: undefined};
 };
 
 export default FetchOwnerData;
