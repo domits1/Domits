@@ -1,17 +1,16 @@
 .Search-bar {
-  width: 42.5rem;
+  width: 42rem;
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 1.875rem;
-  border: solid 1px #7171716a;
+  border: solid 1px #7c7c7c6a;
   display: flex;
   height: 3.43rem;
-  box-sizing: border-box;
   background-color: white;
 }
 
 .css-h3fyes-control {
- text-align: center;
+  text-align: center;
 }
 
 .Search-bar .Search-searchInputContainer {
@@ -33,6 +32,7 @@
 .autocomplete-container input::placeholder {
   text-align: center;
 }
+
 .searchTitle {
   color: var(--primary-color);
   font-size: 1rem;
@@ -42,12 +42,37 @@
   transform: translateY(-15%);
 
 }
+
 .Search-check-in {
   width: 17%;
   cursor: auto;
 }
+
 .Search-location {
-  width: 34%;
+  width: 36%;
+}
+
+.search-places-input {
+  display: flex;
+  justify-content: center;
+  align-items: center ;
+  margin: 0 auto;
+  margin-top: 0.6rem;
+  padding: 10px 5px;
+  width: 85%;
+  border: none;
+}
+
+.search-places-input::placeholder {
+  font-family: Kanit, sans-serif;
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-weight: 500;
+}
+.search-places-input:focus {
+  outline: none; 
+  
 }
 
 .input-calendar {
@@ -141,6 +166,7 @@
   height: 2rem;
   margin-left: 1rem;
 }
+
 .searchBar_inputfield[type="search"]::-webkit-search-cancel-button {
   position: relative;
   color: black;
@@ -169,7 +195,7 @@
   cursor: pointer;
   padding: 1.625rem;
   border-radius: 1.25rem;
-  width: 13.2%;
+  width: 10%;
 }
 
 .Search-error-message {
@@ -180,7 +206,7 @@
   border-radius: 16px;
   font-size: 1.2rem;
   position: absolute;
-  z-index: 1;
+  z-index: 999;
   height: auto;
   cursor: pointer;
   transform: translate(60%, 80%);
@@ -188,6 +214,7 @@
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
 .Search-guest-dropdown {
   display: none;
   position: absolute;
@@ -306,6 +333,7 @@
   font-weight: 500;
   padding-top: 0.3rem;
 }
+
 .Search-guestP {
   text-align: left;
   font-weight: 500;
@@ -344,25 +372,25 @@
 
 @media (min-width: 2500px) {
   .responsive-calendar {
-    font-size: 1rem !important;
+    font-size: 0.8rem !important;
   }
 }
 
 @media (max-width: 1500px) {
   .responsive-calendar {
-    font-size: 0.9rem !important;
+    font-size: 0.7rem !important;
   }
 }
 
 @media (max-width: 1200px) {
   .responsive-calendar {
-    font-size: 0.7rem !important;
+    font-size: 0.6rem !important;
   }
 }
 
 @media (max-width: 768px) {
   .responsive-calendar {
-    font-size: 0.7rem !important;
+    font-size: 0.5rem !important;
   }
 }
 
@@ -406,7 +434,7 @@
   height: 0.1%;
 }
 
-.DatePicker__calendarContainer.-top{
+.DatePicker__calendarContainer.-top {
   height: 4vh;
 }
 
@@ -488,9 +516,11 @@
 }
 
 @media (max-width: 768px) {
+
   .Search-button-section,
   .searchInputContainer,
-  .Search-check-in {
+  .Search-check-in,
+  .search-places-input {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
@@ -521,6 +551,7 @@
     text-overflow: ellipsis;
     margin: auto;
   }
+
   /* kan problemen veroorzaken bij mobile-view */
   .searchBar_inputfield::placeholder {
     transform: translateX(2.5%)
@@ -542,15 +573,18 @@
   .searchInputContainer {
     height: 2.8rem;
   }
+
   .searchTitleGuest {
     transform: translateX(-0%);
     transform: translateY(-15%);
     text-align: center;
     text-overflow: ellipsis;
   }
+
   .Search-guestP {
     position: absolute;
   }
+
   .input-calendar {
     border: none;
     text-align: center;
@@ -558,6 +592,7 @@
     transform: translate(0%);
     height: 3.5rem;
   }
+
   /* tijdelijke oplossing het is nog niet responsive */
   .DatePicker__input {
     border: solid transparent;
@@ -566,6 +601,7 @@
     max-width: 62vw;
     box-sizing: border-box;
   }
+
   .searchbar-button {
     height: 2.7rem;
     width: 100%;
@@ -573,21 +609,26 @@
     transform: translateX(-2.25%);
     margin-top: 0.5rem;
   }
+
   .Search-bar>div::before {
     background: transparent;
   }
+
   .DatePicker__calendarContainer {
     position: absolute;
     top: calc(-20% + -15.7rem);
     left: 48%;
     transform: translateX(-50%);
   }
+
   .DatePicker__calendarArrow {
     border-color: transparent;
   }
+
   .Search-ClearButton {
     margin-top: 0.5rem;
   }
+
   .Search-error-message {
     background-color: #f8d7da;
     color: #721c24;
@@ -621,6 +662,7 @@
     display: inline;
   }
 }
+
 @media (max-width: 768px) {
   .mobile-search-button {
     display: block;
@@ -638,7 +680,7 @@
     overflow: hidden;
     white-space: nowrap;
     transition: transform 0.3s ease-in-out;
-    margin-bottom: 0.5rem ;
+    margin-bottom: 0.5rem;
     text-overflow: ellipsis;
   }
 
@@ -669,7 +711,7 @@
     overflow: hidden;
     white-space: nowrap;
     transition: transform 0.3s ease-in-out;
-    margin-bottom: 0.5rem ;
+    margin-bottom: 0.5rem;
     text-overflow: ellipsis;
   }
 
@@ -693,7 +735,3 @@
     padding-left: 0%;
   }
 }
-
-
-
-

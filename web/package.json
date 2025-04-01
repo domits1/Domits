@@ -40,6 +40,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test --transformIgnorePatterns 'node_modules/(?!axios)/'",
     "eject": "react-scripts eject",
+    "watch": "sass --watch src/styles/sass/app.scss src/index.css",
+    "build-sass": "sass src/styles/sass/app.scss src/index.css",
     "cypress:open": "src/tests/cypress open"
   },
   "devDependencies": {
@@ -99,7 +101,7 @@
     "immer": "^10.0.4",
     "pdfjs-dist": "^2.14.305",
     "prettier": "^3.5.1",
-    "prettier-eslint": "^16.3.0", 
+    "prettier-eslint": "^16.3.0",
     "react-chartjs-2": "^5.3.0",
     "react-country-flag": "^3.1.0",
     "react-date-range": "^2.0.0-alpha.4",
@@ -111,6 +113,7 @@
     "react-toastify": "^11.0.3",
     "react-twitter-embed": "^4.0.4",
     "recharts": "^2.12.7",
+    "sass": "^1.86.0",
     "slick-carousel": "^1.8.1",
     "string-similarity": "^4.0.4",
     "swiper": "^11.1.14",

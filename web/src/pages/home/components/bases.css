@@ -1,9 +1,25 @@
+/* General Styling */
+* {
+    /* box-sizing: border-box; */
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    width: 100%;
+    overflow-x: hidden;
+    font-family: Kanit, sans-serif;
+}
+
 .header-app-header {
     box-shadow: 0 2px 6px 0 #0d1a2626;
     padding: 20px 1% 5px 1%;
     text-align: center;
     background-color: white;
     position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     z-index: 1000;
 }
@@ -32,6 +48,19 @@
     align-items: center;
     flex-wrap: wrap;
     width: 95%;
+    margin: auto;
+}
+
+.header-logo {
+    display: flex;
+    align-items: center;
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.header-logo img {
+    max-width: 100%;
+    height: auto;
 }
 
 .header-right {
@@ -39,7 +68,7 @@
     align-items: center;
 }
 
-.header-buttons, 
+.header-buttons,
 .header-personal-menu {
     float: left;
     color: black;
@@ -66,7 +95,7 @@
     cursor: pointer;
 }
 
-.header-host-button, 
+.header-host-button,
 .header-buttons {
     border: none;
     background: none;
@@ -133,15 +162,12 @@
     box-shadow: none;
 }
 
-.header-dropdown-register-button, 
+.header-dropdown-register-button,
 .header-dropdown-logout-button {
     margin-top: 10px;
     background-color: var(--secondary-color);
     border: none;
     box-shadow: none;
-}
-.swiper-button-prev.swiper-button-disabled{
-    opacity: 0;
 }
 
 .header-dropdown-logout-button {
@@ -170,17 +196,11 @@
     word-wrap: break-word;
 }
 
+/* Media Queries */
 @media screen and (max-width: 1024px) {
-    .header-app-header {
-        height: 15vh;
-    }
-
-    .header-nav {
-        flex-wrap: nowrap;
-    }
-
     .header-right {
         margin-left: 3vw;
+        gap: 35px;
     }
 
     .header-buttons.header-host-button {
@@ -200,16 +220,9 @@
 
     .hide-other-content .header-logo,
     .hide-other-content .header-right {
-    display: none;
+        display: none;
     }
 
-    .header-nav {
-        width: 100%;
-    }
-
-    .header-right {
-        width: 100%;
-    }
 
     .header-personal-menu {
         width: 100%;
@@ -233,12 +246,12 @@
         padding: 10px 20px;
     }
 
-    .header-buttons, 
+    .header-buttons,
     .header-personal-menu {
         width: 100%;
         margin-top: 10px;
         margin-right: 0;
-        justify-content: center;    
+        justify-content: center;
         float: none;
     }
 
@@ -257,11 +270,18 @@
         padding-left: 0vw;
     }
 
-    .header-logo{
-        display: none;
+    .header-logo {
+        display: flex;
+        justify-content: center;
+        width: 100%;
     }
 
-    .header-right{
+    .header-logo img {
+        max-width: 80%;
+        height: auto;
+    }
+
+    .header-right {
         display: none;
     }
 
@@ -273,5 +293,15 @@
         width: 100%;
         margin-bottom: 10px;
     }
-}
 
+    .header-personal-menu-dropdown-content {
+        width: 100%;
+        left: 0;
+        right: 0;
+        margin: auto;
+    }
+
+    .header-personal-menu-dropdown-content button {
+        width: 100%;
+    }
+}
