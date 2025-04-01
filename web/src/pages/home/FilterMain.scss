@@ -19,31 +19,31 @@
   width: 100%;
   margin-top: 10px;
 
+  div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  label {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+  }
+
+  input {
+    width: 60px;
+    padding: 5px;
+    font-size: 14px;
+    text-align: center;
+    border-color: #000;
+    border-radius: 1rem;
+  }
 }
 
-.price-inputs div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.price-inputs label {
-  font-size: 14px;
-  color: #333;
-  margin-bottom: 5px;
-}
-
-.price-inputs input {
-  width: 60px;
-  padding: 5px;
-  font-size: 14px;
-  text-align: center;
-  border-color: #000;
-  border-radius: 1rem;
-}
 .filter-select-option {
-  transform: scale(1.5); 
-  margin-right: 10px; 
+  transform: scale(1.5);
+  margin-right: 10px;
 }
 
 .facility-list {
@@ -56,23 +56,25 @@
   display: flex;
   align-items: center;
   margin-bottom: 5px;
+
+  input {
+    margin-right: 8px;
+  }
 }
 
-.facility-item input {
-  margin-right: 8px;
-}
+
 .show-more-text {
-  color: #007bff; 
-  text-decoration: underline; 
-  cursor: pointer; 
+  color: #007bff;
+  text-decoration: underline;
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: none;
+  }
 }
 
-.show-more-text:hover {
-  text-decoration: none; 
-}
-.FilterTitle{
+.FilterTitle {
   color: #000;
   font-size: 1rem;
   font-weight: 500;
 }
-

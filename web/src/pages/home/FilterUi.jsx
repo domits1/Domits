@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
-import Slider from '@mui/material/Slider';
-import FilterLogic from './FilterLogic';
-import './FilterMain.css';
+import { useState, useEffect } from "react";
+import Slider from "@mui/material/Slider";
+import FilterLogic from "./FilterLogic";
+import "./FilterMain.scss";
 
 const FilterUi = ({ onFilterApplied }) => {
   const {
@@ -24,7 +24,6 @@ const FilterUi = ({ onFilterApplied }) => {
     showMoreSeasonTypes,
   } = FilterLogic({ onFilterApplied });
 
-
   const [minInputValue, setMinInputValue] = useState(`€${priceValues[0]}`);
   const [maxInputValue, setMaxInputValue] = useState(`€${priceValues[1]}`);
 
@@ -42,11 +41,10 @@ const FilterUi = ({ onFilterApplied }) => {
   };
 
   const handleMinInputChange = (e) => {
-
     const rawValue = e.target.value;
     setMinInputValue(rawValue);
 
-    const numericValue = rawValue.replace(/[^0-9]/g, '');
+    const numericValue = rawValue.replace(/[^0-9]/g, "");
 
     if (numericValue) {
       const newValue = parseInt(numericValue, 10);
@@ -61,7 +59,7 @@ const FilterUi = ({ onFilterApplied }) => {
     const rawValue = e.target.value;
     setMaxInputValue(rawValue);
 
-    const numericValue = rawValue.replace(/[^0-9]/g, '');
+    const numericValue = rawValue.replace(/[^0-9]/g, "");
 
     if (numericValue) {
       const newValue = parseInt(numericValue, 10);
@@ -80,25 +78,25 @@ const FilterUi = ({ onFilterApplied }) => {
   return (
     <div>
       <div className="filter-section">
-        <div className='FilterTitle'>Price Range</div>
+        <div className="FilterTitle">Price Range</div>
         <div className="slider-container">
           <Slider
             sx={{
-              '& .MuiSlider-thumb': {
+              "& .MuiSlider-thumb": {
                 width: 27,
                 height: 27,
-                backgroundColor: '#ffffff',
-                border: '1px solid #d3d3d3',
+                backgroundColor: "#ffffff",
+                border: "1px solid #d3d3d3",
               },
-              '& .MuiSlider-rail': {
-                backgroundColor: '#e6e6e6',
+              "& .MuiSlider-rail": {
+                backgroundColor: "#e6e6e6",
               },
-              '& .MuiSlider-track': {
-                backgroundColor: '#4caf50',
-                border: '1px solid #4caf50',
+              "& .MuiSlider-track": {
+                backgroundColor: "#4caf50",
+                border: "1px solid #4caf50",
               },
-              '& .MuiSlider-thumb:hover': {
-                backgroundColor: '#e2e2e2',
+              "& .MuiSlider-thumb:hover": {
+                backgroundColor: "#e2e2e2",
               },
             }}
             value={priceValues}
@@ -135,20 +133,22 @@ const FilterUi = ({ onFilterApplied }) => {
       </div>
 
       <div className="filter-section">
-        <div className='FilterTitle'>Facilities</div>
+        <div className="FilterTitle">Facilities</div>
         <div className="facility-list">
-          {Object.keys(selectedFacilities).slice(0, 5).map((facility) => (
-            <label key={facility} className="facility-item">
-              <input
-                type="checkbox"
-                name={facility}
-                checked={selectedFacilities[facility]}
-                onChange={handleFacilityChange}
-                className="filter-select-option"
-              />
-              {facility.charAt(0).toUpperCase() + facility.slice(1)}
-            </label>
-          ))}
+          {Object.keys(selectedFacilities)
+            .slice(0, 5)
+            .map((facility) => (
+              <label key={facility} className="facility-item">
+                <input
+                  type="checkbox"
+                  name={facility}
+                  checked={selectedFacilities[facility]}
+                  onChange={handleFacilityChange}
+                  className="filter-select-option"
+                />
+                {facility.charAt(0).toUpperCase() + facility.slice(1)}
+              </label>
+            ))}
           {showMoreFacilities &&
             Object.keys(selectedFacilities)
               .slice(5)
@@ -169,25 +169,27 @@ const FilterUi = ({ onFilterApplied }) => {
           onClick={() => setShowMoreFacilities(!showMoreFacilities)}
           className="show-more-text"
         >
-          {showMoreFacilities ? 'Show Less' : 'Show More'}
+          {showMoreFacilities ? "Show Less" : "Show More"}
         </span>
       </div>
 
       <div className="filter-section">
-        <div className='FilterTitle'>Property Type</div>
+        <div className="FilterTitle">Property Type</div>
         <div className="facility-list">
-          {Object.keys(selectedPropertyTypes).slice(0, 5).map((propertyType) => (
-            <label key={propertyType} className="facility-item">
-              <input
-                type="checkbox"
-                name={propertyType}
-                checked={selectedPropertyTypes[propertyType]}
-                onChange={handlePropertyTypeChange}
-                className="filter-select-option"
-              />
-              {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
-            </label>
-          ))}
+          {Object.keys(selectedPropertyTypes)
+            .slice(0, 5)
+            .map((propertyType) => (
+              <label key={propertyType} className="facility-item">
+                <input
+                  type="checkbox"
+                  name={propertyType}
+                  checked={selectedPropertyTypes[propertyType]}
+                  onChange={handlePropertyTypeChange}
+                  className="filter-select-option"
+                />
+                {propertyType.charAt(0).toUpperCase() + propertyType.slice(1)}
+              </label>
+            ))}
           {showMorePropertyTypes &&
             Object.keys(selectedPropertyTypes)
               .slice(5)
@@ -208,25 +210,27 @@ const FilterUi = ({ onFilterApplied }) => {
           onClick={() => setShowMorePropertyTypes(!showMorePropertyTypes)}
           className="show-more-text"
         >
-          {showMorePropertyTypes ? 'Show Less' : 'Show More'}
+          {showMorePropertyTypes ? "Show Less" : "Show More"}
         </span>
       </div>
 
       <div className="filter-section">
-        <div className='FilterTitle'>Seasons</div>
+        <div className="FilterTitle">Seasons</div>
         <div className="facility-list">
-          {Object.keys(seasonFilter).slice(0, 5).map((season) => (
-            <label key={season} className="facility-item">
-              <input
-                type="checkbox"
-                name={season}
-                checked={seasonFilter[season]}
-                onChange={handleSeasonChange}
-                className="filter-select-option"
-              />
-              {season.charAt(0).toUpperCase() + season.slice(1)}
-            </label>
-          ))}
+          {Object.keys(seasonFilter)
+            .slice(0, 5)
+            .map((season) => (
+              <label key={season} className="facility-item">
+                <input
+                  type="checkbox"
+                  name={season}
+                  checked={seasonFilter[season]}
+                  onChange={handleSeasonChange}
+                  className="filter-select-option"
+                />
+                {season.charAt(0).toUpperCase() + season.slice(1)}
+              </label>
+            ))}
           {showMoreSeasonTypes &&
             Object.keys(seasonFilter)
               .slice(5)
@@ -246,11 +250,11 @@ const FilterUi = ({ onFilterApplied }) => {
             onClick={() => setShowMoreSeasonTypes(!showMoreSeasonTypes)}
             className="show-more-text"
           >
-            {showMoreSeasonTypes ? 'Show Less' : 'Show More'}
+            {showMoreSeasonTypes ? "Show Less" : "Show More"}
           </span>
         </div>
       </div>
-    </div >
+    </div>
   );
 };
 
