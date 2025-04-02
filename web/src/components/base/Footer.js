@@ -71,6 +71,11 @@ const Footer = () => {
                 Helpdesk for guests
               </Link>
             </li>
+            <li>
+              <Link to="/sustainability" className="footer-links">
+                Sustainability
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -86,6 +91,11 @@ const Footer = () => {
             <li>
               <Link to="/helpdesk-host" className="footer-links">
                 Helpdesk for hosts
+              </Link>
+            </li>
+            <li>
+              <Link to="/sustainability" className="footer-links">
+                Sustainability
               </Link>
             </li>
           </ul>
@@ -177,21 +187,15 @@ const Footer = () => {
         <div className="logo">
           <img src={logo} width={100} alt="Logo" />
         </div>
-        <a>
           <Link to="/policy" className="footer-links">
             Privacy policy
           </Link>
-        </a>
-        <a>
           <Link to="/terms" className="footer-links">
             Terms and Conditions
           </Link>
-        </a>
-        <a>
           <Link to="/disclaimers" className="footer-links">
             Disclaimer
           </Link>
-        </a>
         <a
           href=""
           target="_blank"

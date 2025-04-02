@@ -29,6 +29,13 @@ const awsmobile = {
     },
     "aws_cognito_verification_mechanisms": [
         "EMAIL"
+    ],
+    "aws_dynamodb_all_tables_region": "eu-north-1",
+    "aws_dynamodb_table_schemas": [
+        {
+            "tableName": "property-develop",
+            "region": "eu-north-1"
+        }
     ]
 };
 

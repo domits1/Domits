@@ -82,7 +82,7 @@ const useFetchData = () => {
             }
 
             const responseData = await response.json();
-            console.log('Raw API response:', responseData);
+            // console.log('Raw API response:', responseData);
 
             setFaqList(responseData);
         } catch (error) {

@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import styles from './Calendar.module.css';
+import styles from './styles/Calendar.module.css';
 import {isSameDay} from "date-fns";
 import DateFormatterDD_MM_YYYY from "../../utils/DateFormatterDD_MM_YYYY";
 import {useNavigate} from "react-router-dom";

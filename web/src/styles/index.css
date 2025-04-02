@@ -1775,32 +1775,32 @@ label {
 
 @font-face {
   font-family: "Kanit";
-  src: local("KanitThin"), url("./fonts/kanit/Kanit-Thin.ttf") format("truetype");
+  src: local("KanitThin"), url("../fonts/kanit/Kanit-Thin.ttf") format("truetype");
   font-weight: 200;
 }
 @font-face {
   font-family: "Kanit";
-  src: local("KanitLight"), url("./fonts/kanit/Kanit-Light.ttf") format("truetype");
+  src: local("KanitLight"), url("../fonts/kanit/Kanit-Light.ttf") format("truetype");
   font-weight: 300;
 }
 @font-face {
   font-family: "Kanit";
-  src: local("KanitRegular"), url("./fonts/kanit/Kanit-Regular.ttf") format("truetype");
+  src: local("KanitRegular"), url("../fonts/kanit/Kanit-Regular.ttf") format("truetype");
   font-weight: 400;
 }
 @font-face {
   font-family: "Kanit";
-  src: local("KanitMedium"), url("./fonts/kanit/Kanit-Medium.ttf") format("truetype");
+  src: local("KanitMedium"), url("../fonts/kanit/Kanit-Medium.ttf") format("truetype");
   font-weight: 500;
 }
 @font-face {
   font-family: "Kanit";
-  src: local("KanitSemiBold"), url("./fonts/kanit/Kanit-SemiBold.ttf") format("truetype");
+  src: local("KanitSemiBold"), url("../fonts/kanit/Kanit-SemiBold.ttf") format("truetype");
   font-weight: 600;
 }
 @font-face {
   font-family: "Kanit";
-  src: local("KanitBold"), url("./fonts/kanit/Kanit-Bold.ttf") format("truetype");
+  src: local("KanitBold"), url("../fonts/kanit/Kanit-Bold.ttf") format("truetype");
   font-weight: 700;
 }
 body {
@@ -1814,4 +1814,3 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
 
-/*# sourceMappingURL=index.css.map */

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './boat.css';
+import '../styles/boat.css';
 import banner from '../../../images/dutch_steamboat_small.png';
 import camper1 from '../../../images/camper1placeholder.png';
 import booking from '../../../images/camper-booking.png';

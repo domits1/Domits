@@ -1,6 +1,6 @@
 import React from 'react';
 import Modal from 'react-modal';
-import './contactModal.css'; 
+import './styles/contactModal.css';
 
 Modal.setAppElement('#root'); 
 

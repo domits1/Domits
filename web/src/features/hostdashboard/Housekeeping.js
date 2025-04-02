@@ -1,6 +1,6 @@
 import React from 'react';
 import Pages from "./Pages.js";
-import './Housekeeping.css';
+import './styles/Housekeeping.css';
 import { useNavigate } from 'react-router-dom';
 
 const HostPropertyCare = () => {
