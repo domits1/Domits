@@ -3,7 +3,7 @@
   margin: auto;
   box-shadow: 0 0 5px hsl(0 0% 78%);
   border-radius: 1.875rem;
-  border: solid 1px #0202026a;
+  border: solid 1px #7c7c7c6a;
   display: flex;
   height: 3.43rem;
   background-color: white;
@@ -50,6 +50,29 @@
 
 .Search-location {
   width: 36%;
+}
+
+.search-places-input {
+  display: flex;
+  justify-content: center;
+  align-items: center ;
+  margin: 0 auto;
+  margin-top: 0.6rem;
+  padding: 10px 5px;
+  width: 85%;
+  border: none;
+}
+
+.search-places-input::placeholder {
+  font-family: Kanit, sans-serif;
+  text-align: center;
+  color: var(--primary-color);
+  font-size: 1rem;
+  font-weight: 500;
+}
+.search-places-input:focus {
+  outline: none; 
+  
 }
 
 .input-calendar {
@@ -183,7 +206,7 @@
   border-radius: 16px;
   font-size: 1.2rem;
   position: absolute;
-  z-index: 1;
+  z-index: 999;
   height: auto;
   cursor: pointer;
   transform: translate(60%, 80%);
@@ -496,7 +519,8 @@
 
   .Search-button-section,
   .searchInputContainer,
-  .Search-check-in {
+  .Search-check-in,
+  .search-places-input {
     background-color: #f0f0f0;
     border-radius: 0.8rem;
     width: 100%;
