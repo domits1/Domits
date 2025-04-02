@@ -181,8 +181,8 @@ const HostRevenues = () => {
                                         <ADRCard hostId={cognitoUserId} />
                                         <RevPARCard />
                                         <BookedNights/>
-                                        <NightsAvailable/>
-                                        <ALOSCard />
+                                        {/* <NightsAvailable/>
+                                        <ALOSCard /> */}
                                         {/*<BookingTrends />*/}
                                     </div>
                                 </>

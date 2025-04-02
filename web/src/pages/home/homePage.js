@@ -795,7 +795,7 @@ const Homepage = () => {
         </div>
       </div>
       {/* Updated Review Section */}
-      {/* <div className="review-container">
+      <div className="review-container">
         <button className="arrow-button" onClick={handlePreviousReview}>
           &lt;
         </button>
@@ -817,7 +817,7 @@ const Homepage = () => {
         <button className="arrow-button" onClick={handleNextReview}>
           &gt;
         </button>
-      </div> */}
+      </div>
       <div className="domits-communityContainer">
         <h2 className="domits-communityHead">Need help? Join the community</h2>
         <p className="domits-communityGroup">
