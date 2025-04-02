@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import "./styles/release-Updates.css";
+import "./release-Updates.css";
 import { TwitterTweetEmbed } from 'react-twitter-embed';
 
 function ReleaseUpdates() {

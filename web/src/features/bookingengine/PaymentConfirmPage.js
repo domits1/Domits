@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import "./styles/paymentconfirmpage.css";
+// import "./paymentconfirmpage.css";
 import CheckCircleOutlineOutlinedIcon from "@mui/icons-material/CheckCircleOutlineOutlined";
 import ImageGallery from "./ImageGallery";
 import useAddUserToContactList from "./hooks/useAddUserToContactList";
@@ -87,7 +87,7 @@ const BookingConfirmationOverview = () => {
             bookingDetails.Status === "Accepted" &&
             !contactAdded
         ) {
-
+            
             addUserToContactList(
                 bookingDetails.GuestID,
                 bookingDetails.HostID,
@@ -97,14 +97,14 @@ const BookingConfirmationOverview = () => {
             setContactAdded(true);
         }
     }, [bookingDetails]);
-
+    
 
     if (loading) return <p>Loading booking details...</p>;
     if (error) return <p>{error}</p>;
 
     return (
         <main className="PaymentOverview">
-{/* Conditionally render the left element */}
+            {/* Conditionally render the left element */}
             {!isMobileView && (
                 <div className="left">
                     {accommodationDetails?.Images && Object.keys(accommodationDetails.Images).length > 0 ? (

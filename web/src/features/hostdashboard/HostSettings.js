@@ -4,7 +4,7 @@ import checkIcon from "../../images/icons/checkPng.png";
 import {API, graphqlOperation, Auth} from "aws-amplify";
 import Pages from "./Pages.js";
 import {confirmEmailChange} from "../guestdashboard/emailSettings";
-import './styles/settingshostdashboard.css';
+import './settingshostdashboard.css';
 
 
 const HostSettings = () => {

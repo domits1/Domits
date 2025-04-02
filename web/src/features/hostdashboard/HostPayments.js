@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Pages from './Pages';
-import './styles/HostReports.css';
+import './HostReports.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import './styles/imagegallery.css';
+// import './imagegallery.css';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined';

@@ -1,6 +1,6 @@
 import React from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
-import './styles/MonthlyComparison.css';
+import './MonthlyComparison.css';
 
 function MonthlyComparison({ data }) {
     return (

@@ -9,7 +9,7 @@ import {
     CartesianGrid,
     ResponsiveContainer,
 } from "recharts";
-import "./styles/ADRCard.css";
+import "./ADRCard.css";
 import { Auth } from "aws-amplify";
 
 const ADRCard = () => {
