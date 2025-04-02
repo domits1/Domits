@@ -82,23 +82,6 @@
     margin-right: auto;
 }
 
-button {
-    width: 45%;
-    padding: 14px;
-    font-size: 16px;
-    font-weight: bold;
-    border-radius: 8px;
-    border: none;
-    background: #1d3b5e;
-    color: #fff;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-button:hover {
-    background: #27466c;
-}
-
 .button-disabled {
     opacity: 0.6;
     cursor: not-allowed;
