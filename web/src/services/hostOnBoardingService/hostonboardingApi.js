@@ -1,4 +1,4 @@
-import useFormStore from "../stores/formStore";
+import useFormStore from "../../features/hostonboarding/stores/formStore";
 
 export async function submitAccommodation(data) {
     // TODO Implement proper cognito security service

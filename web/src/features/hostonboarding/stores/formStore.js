@@ -1,6 +1,6 @@
 import {create} from "zustand";
-import AccommodationDTO from "../../accommodationService/AccommodationDTO";
-import {submitAccommodation} from "../services/hostonboardingApi";
+import AccommodationDTO from "../../../services/accommodationService/AccommodationDTO";
+import {submitAccommodation} from "../../../services/hostOnBoardingService/hostonboardingApi";
 
 const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
@@ -280,7 +280,7 @@ const useFormStore = create((set) => ({
                     fuelConsumption: 1,
                     speed: 1,
                     renovationYear: 2020,
-                    transmission: "Manuel",
+                    transmission: "Manual",
                     generalPeriodicInspection: 2024,
                     fourWheelDrive: true,
                 },

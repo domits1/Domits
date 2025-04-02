@@ -1,6 +1,6 @@
 import "./styles/App.css";
 import HostProtectedRoute from "./features/auth/hostauth/HostProtectedRoute";
-import { UserProvider } from "./features/auth/UserContext";
+import {UserProvider} from "./features/auth/UserContext";
 import Header from "./components/base/Header";
 import Footer from "./components/base/Footer";
 import Landing from "./pages/landingpage/Landing";
@@ -9,8 +9,6 @@ import Home from "./pages/home/Accommodations";
 import Homepage from "./pages/home/homePage.js";
 import About from "./pages/about/About";
 import Whydomits from "./pages/whydomits/Whydomitstwo.js";
-import Security from "./pages/security/security.js";
-import Release from "./pages/productupdates/release.js";
 import ReleaseTwo from "./pages/productupdates/releaseTwo.js";
 import Datasafety from "./pages/datasafety/datasafety.js";
 import Helpdesk from "./pages/helpdesk/Helpdesk.js";
@@ -30,27 +28,24 @@ import HostReviews from "./features/hostdashboard/HostReviews";
 import ListingDetails from "./features/bookingengine/ListingDetails";
 import BookingOverview from "./features/bookingengine/BookingOverview";
 import BookingConfirmation from "./features/bookingengine/PaymentConfirm";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
+import React, {useEffect, useState} from "react";
 import Modal from "react-modal";
 import Disclaimers from "./pages/disclaimers/Disclaimers";
 import Policy from "./pages/policy/Policy";
 import Terms from "./pages/terms/Terms";
 import Login from "./features/auth/Login";
 import Register from "./features/auth/Register";
-import ConfirmRegister from "./features/auth/confirmEmail/ConfirmEmailView.js";
-import { AuthProvider } from "./features/auth/AuthContext";
+import {AuthProvider} from "./features/auth/AuthContext";
 import GuestDashboard from "./features/guestdashboard/GuestDashboard";
 import GuestBooking from "./features/guestdashboard/GuestBooking";
 import GuestPayments from "./features/guestdashboard/GuestPayments";
 import GuestReviews from "./features/guestdashboard/GuestReviews";
 import GuestSettings from "./features/guestdashboard/GuestSettings";
-import GuestMessages from "./features/guestdashboard/guestmessages/pages/guestMessages.js";
 import Chatbot from "./features/guestaiagent/chatbot";
 import ChatWidget from "./features/chatwidget/ChatWidget";
 import EmployeeChat from "./features/guestaiagent/EmployeeChat";
 import FlowContext from "./services/FlowContext";
-import Hostchat from "../src/features/hostaiagent/hostchatbot";
 import ScrollToTop from "./utils/ScrollToTop/ScrollToTop.tsx";
 import HostReservations from "./features/hostdashboard/HostReservations";
 import HostRevenues from "./features/hostdashboard/HostRevenues";
@@ -65,7 +60,7 @@ import HostPromoCodes from "./features/hostdashboard/HostPromoCodes";
 import HostVerificationView from "./features/verification/hostverification/HostVerification.js";
 import PhoneNumberView from "./features/verification/hostverification/HostVerifyPhoneNumber.js";
 import PhoneNumberConfirmView from "./features/verification/hostverification/HostVerifyPhoneNumberConfirm.js";
-import { initializeUserAttributes } from "./utils/userAttributes";
+import {initializeUserAttributes} from "./utils/userAttributes";
 import PageNotFound from "./utils/error/404NotFound";
 import StripeCallback from "./features/stripe/StripeCallback";
 import ReviewPage from "./features/review/ReviewPage";
@@ -89,19 +84,14 @@ import PricingView from './features/hostonboarding/views/PropertyRateView.js';
 import AvailabilityView from './features/hostonboarding/views/PropertyCalendarAvailabilityView.js';
 import RegistrationNumberView from './features/verification/hostverification/HostVerifyRegistrationNumber.js';
 import SummaryView from './features/hostonboarding/views/PropertyCheckOutAndCompletionView.js';
-import { toast, ToastContainer } from 'react-toastify';
+import {ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import Sustainability from "./features/sustainability/Sustainability";
 
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css"
-
 import StepGuard from './features/hostonboarding/hooks/StepGuard.js';
-
-import { Auth } from "aws-amplify";
 import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
-import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
+import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
 
 Modal.setAppElement("#root");
@@ -133,17 +123,17 @@ function App() {
         if (['/admin', '/bookingoverview', '/bookingpayment'].includes(currentPath) || currentPath.startsWith('/verify')) {
             return null;
         }
-        return <Footer />;
+        return <Footer/>;
     };
 
     const renderChatWidget = () => {
         if (currentPath.startsWith('/verify')) {
             return null;
         }
-        return <ChatWidget />;
+        return <ChatWidget/>;
     };
 
-    const [flowState, setFlowState] = useState({ isHost: false });
+    const [flowState, setFlowState] = useState({isHost: false});
 
     return (
         <ApolloProvider client={client}> {/* ApolloProvider */}
@@ -159,46 +149,47 @@ function App() {
                 pauseOnHover
                 theme="colored"
             />
-            <FlowContext.Provider value={{ flowState, setFlowState }}>
+            <FlowContext.Provider value={{flowState, setFlowState}}>
                 <Router>
-                    <ScrollToTop />
+                    <ScrollToTop/>
                     <AuthProvider>
                         <UserProvider>
                             <div className="App">
-                                {currentPath !== '/admin' && <Header setSearchResults={setSearchResults} setLoading={setLoading} />}
+                                {currentPath !== '/admin' &&
+                                    <Header setSearchResults={setSearchResults} setLoading={setLoading}/>}
                                 <Routes>
-                                    <Route path="/home" element={<Home searchResults={searchResults} />} />
-                                    <Route path="/" element={<Homepage />} />
-                                    <Route path="/about" element={<About />} />
-                                    <Route path="/releaseTwo" element={<ReleaseTwo />} />
-                                    <Route path="/data-safety" element={<Datasafety />} />
-                                    <Route path="/helpdesk-guest" element={<Helpdesk category="guest" />} />
-                                    <Route path="/helpdesk-host" element={<Helpdesk category="host" />} />
-                                    <Route path="/how-it-works" element={<Howitworks />} />
-                                    <Route path="/why-domits" element={<Whydomits />} />
-                                    <Route path="/contact" element={<Contact />} />
-                                    <Route path="/travelinnovation" element={<Travelinnovation />} />
-                                    <Route path="/release" element={<ReleaseUpdates />} />
-                                    <Route path="/landing" element={<Landing />} />
-                                    <Route path="/login" element={<Login />} />
-                                    <Route path="/register" element={<Register />} />
-                                    <Route path="/listingdetails" element={<ListingDetails />} />
-                                    <Route path="/bookingoverview" element={<BookingOverview />} />
-                                    <Route path="/bookingconfirmation" element={<BookingConfirmation />} />
-                                    <Route path="/paymentconfirmpage" element={<PaymentConfirmPage />} />
-                                    <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView />} />
-                                    <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView />} />
+                                    <Route path="/home" element={<Home searchResults={searchResults}/>}/>
+                                    <Route path="/" element={<Homepage/>}/>
+                                    <Route path="/about" element={<About/>}/>
+                                    <Route path="/releaseTwo" element={<ReleaseTwo/>}/>
+                                    <Route path="/data-safety" element={<Datasafety/>}/>
+                                    <Route path="/helpdesk-guest" element={<Helpdesk category="guest"/>}/>
+                                    <Route path="/helpdesk-host" element={<Helpdesk category="host"/>}/>
+                                    <Route path="/how-it-works" element={<Howitworks/>}/>
+                                    <Route path="/why-domits" element={<Whydomits/>}/>
+                                    <Route path="/contact" element={<Contact/>}/>
+                                    <Route path="/travelinnovation" element={<Travelinnovation/>}/>
+                                    <Route path="/release" element={<ReleaseUpdates/>}/>
+                                    <Route path="/landing" element={<Landing/>}/>
+                                    <Route path="/login" element={<Login/>}/>
+                                    <Route path="/register" element={<Register/>}/>
+                                    <Route path="/listingdetails" element={<ListingDetails/>}/>
+                                    <Route path="/bookingoverview" element={<BookingOverview/>}/>
+                                    <Route path="/bookingconfirmation" element={<BookingConfirmation/>}/>
+                                    <Route path="/paymentconfirmpage" element={<PaymentConfirmPage/>}/>
+                                    <Route path="/hostonboarding/:type/capacity" element={<PropertyGuestAmountView/>}/>
+                                    <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView/>}/>
 
                                     {/* Chat */}
-                                    <Route path="/chat" element={<Chat />} />
-                                    <Route path="/employeechat" element={<EmployeeChat />} />
-                                    <Route path="/chatbot" element={<Chatbot />} />
+                                    <Route path="/chat" element={<Chat/>}/>
+                                    <Route path="/employeechat" element={<EmployeeChat/>}/>
+                                    <Route path="/chatbot" element={<Chatbot/>}/>
 
                                     {/* Host Chatbot */}
-                                    <Route path="/hostchatbot" element={<Hostchatbot />} />
+                                    <Route path="/hostchatbot" element={<Hostchatbot/>}/>
 
                                     {/* Review */}
-                                    <Route path="/review" element={<ReviewPage />} />
+                                    <Route path="/review" element={<ReviewPage/>}/>
 
                                     {/* Guest Dashboard */}
                                     <Route
@@ -206,13 +197,13 @@ function App() {
                                         element={
                                             <GuestProtectedRoute>
                                                 <Routes>
-                                                    <Route path="/" element={<GuestDashboard />} />
-                                                    <Route path="messages" element={<ListingDetails />} />
-                                                    <Route path="payments" element={<GuestPayments />} />
-                                                    <Route path="reviews" element={<GuestReviews />} />
-                                                    <Route path="bookings" element={<GuestBooking />} />
-                                                    <Route path="settings" element={<GuestSettings />} />
-                                                    <Route path="chat" element={<Chat />} />
+                                                    <Route path="/" element={<GuestDashboard/>}/>
+                                                    <Route path="messages" element={<ListingDetails/>}/>
+                                                    <Route path="payments" element={<GuestPayments/>}/>
+                                                    <Route path="reviews" element={<GuestReviews/>}/>
+                                                    <Route path="bookings" element={<GuestBooking/>}/>
+                                                    <Route path="settings" element={<GuestSettings/>}/>
+                                                    <Route path="chat" element={<Chat/>}/>
                                                 </Routes>
                                             </GuestProtectedRoute>
                                         }
@@ -222,15 +213,15 @@ function App() {
                                     {/* <Route path="/enlist" element={<HostOnboarding />} /> */}
 
                                     {/* Verification */}
-                                    <Route path="/verify" element={<HostVerificationView />} />
-                                    <Route path="/verify/phonenumber" element={<PhoneNumberView />} />
-                                    <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView />} />
+                                    <Route path="/verify" element={<HostVerificationView/>}/>
+                                    <Route path="/verify/phonenumber" element={<PhoneNumberView/>}/>
+                                    <Route path="/verify/phonenumber/confirm" element={<PhoneNumberConfirmView/>}/>
 
                                     <Route
                                         path="/hostdashboard"
                                         element={
                                             <HostProtectedRoute>
-                                                <HostDashboard />
+                                                <HostDashboard/>
                                             </HostProtectedRoute>
                                         }
                                     />
@@ -239,70 +230,75 @@ function App() {
                                         element={
                                             <HostProtectedRoute>
                                                 <Routes>
-                                                    <Route path="property" element={<HostProperty />} />
-                                                    <Route path="listings" element={<HostListings />} />
-                                                    <Route path="calendar" element={<HostCalendar />} />
-                                                    <Route path="messages" element={<HostMessages />} />
-                                                    <Route path="reporting" element={<HostPayments />} />
-                                                    <Route path="settings" element={<HostSettings />} />
-                                                    <Route path="reviews" element={<HostReviews />} />
-                                                    <Route path="chat" element={<HostMessages />} />
-                                                    <Route path="reservations" element={<HostReservations />} />
-                                                    <Route path="revenues" element={<HostRevenues />} /> {/* HostRevenues */}
-                                                    <Route path="housekeeping" element={<HostHousekeeping />} />
-                                                    <Route path="iot-hub" element={<HostIoTHub />} />
-                                                    <Route path="pricing" element={<HostPricing />} />
-                                                    <Route path="distribution" element={<HostDistribution />} />
-                                                    <Route path="monitoring" element={<HostMonitoring />} />
-                                                    <Route path="screening" element={<HostScreening />} />
-                                                    <Route path="setup" element={<HostSetup />} />
-                                                    <Route path="promo-codes" element={<HostPromoCodes />} />
-                                                    <Route path="finance" element={<HostFinanceTab />} />
+                                                    <Route path="property" element={<HostProperty/>}/>
+                                                    <Route path="listings" element={<HostListings/>}/>
+                                                    <Route path="calendar" element={<HostCalendar/>}/>
+                                                    <Route path="messages" element={<HostMessages/>}/>
+                                                    <Route path="reporting" element={<HostPayments/>}/>
+                                                    <Route path="settings" element={<HostSettings/>}/>
+                                                    <Route path="reviews" element={<HostReviews/>}/>
+                                                    <Route path="chat" element={<HostMessages/>}/>
+                                                    <Route path="reservations" element={<HostReservations/>}/>
+                                                    <Route path="revenues"
+                                                           element={<HostRevenues/>}/> {/* HostRevenues */}
+                                                    <Route path="housekeeping" element={<HostHousekeeping/>}/>
+                                                    <Route path="iot-hub" element={<HostIoTHub/>}/>
+                                                    <Route path="pricing" element={<HostPricing/>}/>
+                                                    <Route path="distribution" element={<HostDistribution/>}/>
+                                                    <Route path="monitoring" element={<HostMonitoring/>}/>
+                                                    <Route path="screening" element={<HostScreening/>}/>
+                                                    <Route path="setup" element={<HostSetup/>}/>
+                                                    <Route path="promo-codes" element={<HostPromoCodes/>}/>
+                                                    <Route path="finance" element={<HostFinanceTab/>}/>
                                                 </Routes>
                                             </HostProtectedRoute>
                                         }
                                     />
-                                    <Route path="/stripe/callback" element={<StripeCallback />} />
+                                    <Route path="/stripe/callback" element={<StripeCallback/>}/>
 
                                     {/* Career, Policies, and Terms */}
-                                    <Route path="/career" element={<Careers />} />
-                                    <Route path="/job/:id" element={<JobDetails />} />
-                                    <Route path="/policy" element={<Policy />} />
-                                    <Route path="/terms" element={<Terms />} />
-                                    <Route path="/disclaimers" element={<Disclaimers />} />
-                  <Route path="/Sustainability" element={<Sustainability />} />
+                                    <Route path="/career" element={<Careers/>}/>
+                                    <Route path="/job/:id" element={<JobDetails/>}/>
+                                    <Route path="/policy" element={<Policy/>}/>
+                                    <Route path="/terms" element={<Terms/>}/>
+                                    <Route path="/disclaimers" element={<Disclaimers/>}/>
+                                    <Route path="/Sustainability" element={<Sustainability/>}/>
 
                                     {/* Error*/}
-                                    <Route path="/*" element={<PageNotFound />} />
+                                    <Route path="/*" element={<PageNotFound/>}/>
 
                                     {/* Host Onboarding v3 */}
-                                    <Route path="/hostonboarding" element={<AccommodationTypeView />} />
-                                    <Route path="/hostonboarding/accommodation" element={<StepGuard step="type"><GuestAccessView /></StepGuard>} />
-                                    <Route path="/hostonboarding/boat" element={<StepGuard step="type"><BoatTypeView /></StepGuard>} />
-                                    <Route path="/hostonboarding/camper" element={<StepGuard step="type"><CamperTypeView /></StepGuard>} />
-                                    <Route path="/hostonboarding/:type/address" element={<AddressInputView />} />
-                                    <Route path="/hostonboarding/:type/capacity" element={<CapacityView />} />
-                                    <Route path="/hostonboarding/:type/rules" element={<HouseRulesView />} />
-                                    <Route path="/hostonboarding/:type/photos" element={<PhotosView />} />
-                                    <Route path="/hostonboarding/:type/title" element={<AccommodationTitleView />} />
-                                    <Route path="/hostonboarding/:type/description" element={<DescriptionView />} />
-                                    <Route path="/hostonboarding/:type/pricing" element={<PricingView />} />
-                                    <Route path="/hostonboarding/:type/availability" element={<AvailabilityView />} />
-                                    <Route path="/hostonboarding/legal/registrationnumber" element={<RegistrationNumberView />} />
+                                    <Route path="/hostonboarding" element={<AccommodationTypeView/>}/>
+                                    <Route path="/hostonboarding/accommodation"
+                                           element={<StepGuard step="type"><GuestAccessView/></StepGuard>}/>
+                                    <Route path="/hostonboarding/boat"
+                                           element={<StepGuard step="type"><BoatTypeView/></StepGuard>}/>
+                                    <Route path="/hostonboarding/camper"
+                                           element={<StepGuard step="type"><CamperTypeView/></StepGuard>}/>
+                                    <Route path="/hostonboarding/:type/address" element={<AddressInputView/>}/>
+                                    <Route path="/hostonboarding/:type/capacity" element={<CapacityView/>}/>
+                                    <Route path="/hostonboarding/:type/rules" element={<HouseRulesView/>}/>
+                                    <Route path="/hostonboarding/:type/photos" element={<PhotosView/>}/>
+                                    <Route path="/hostonboarding/:type/title" element={<AccommodationTitleView/>}/>
+                                    <Route path="/hostonboarding/:type/description" element={<DescriptionView/>}/>
+                                    <Route path="/hostonboarding/:type/pricing" element={<PricingView/>}/>
+                                    <Route path="/hostonboarding/:type/availability" element={<AvailabilityView/>}/>
+                                    <Route path="/hostonboarding/legal/registrationnumber"
+                                           element={<RegistrationNumberView/>}/>
 
-                  <Route
-                    path="/hostonboarding/summary"
-                    element={<SummaryView />}
-                  />
-                  <Route
-                    path="/*"
-                    element={<Home/>}
-                  />
-                </Routes>
+                                    <Route
+                                        path="/hostonboarding/summary"
+                                        element={<SummaryView/>}
+                                    />
+                                    <Route
+                                        path="/*"
+                                        element={<Home/>}
+                                    />
+                                </Routes>
                                 {renderFooter()}
-                                {currentPath !== "/admin" && <MenuBar />}
+                                {currentPath !== "/admin" && <MenuBar/>}
                                 {renderChatWidget()}
-                                <Hostchatbot />
+                                <Hostchatbot/>
                             </div>
                         </UserProvider>
                     </AuthProvider>
