@@ -351,23 +351,11 @@
 }
 
 @media (max-width: 768px) {
-  .search-clear-guests {
-    position: 'absolute';
-      padding: '0.3rem';
-      right: '10px';
-      top: '10px';
-      background: 'transparent';
-      border: 'none';
-      cursor: 'pointer';
-      font-size: '1.1rem';
-  }
-
   .Calendar-placeholder {
     display: flex;
     justify-content: center;
     align-items: center;
     text-align: center;
-    /* Ensure text is always centered */
   }
 
   .Search-guest-dropdown {
@@ -396,15 +384,15 @@
   }
 }
 
-@media (max-width: 1200px) {
+/* @media (max-width: 1200px) {
   .responsive-calendar {
     font-size: 0.6rem !important;
   }
-}
+} */
 
 @media (max-width: 768px) {
   .responsive-calendar {
-    font-size: 0.5rem !important;
+    font-size: 0.7rem !important;
   }
 }
 

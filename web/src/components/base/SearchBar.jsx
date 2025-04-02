@@ -210,7 +210,6 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
     }
   };
 
-
   useEffect(() => {
     if (selectedDayRange.from && selectedDayRange.to) {
       const start = new Date(
@@ -302,6 +301,8 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                         <button
                             className="Search-close-guest-dropdown"
                             onClick={closeGuestDropdown}
+                            // momenteel heb ik even problemen met de styling in een aparte bestand te zetten
+                            //ik hou het momenteel hier, ik kom er nog later op terug om dat ook weer in aparte css bestand te zetten
                             style={{
                               position: 'absolute',
                               padding: '0.3rem',
