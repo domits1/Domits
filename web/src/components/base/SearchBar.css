@@ -326,7 +326,7 @@
   color: var(--primary-color);
   font-size: 1rem;
   font-weight: 500;
-  padding-top: 0.3rem;
+  margin-top: 0.1rem;
 }
 
 .Search-guestP {
@@ -351,6 +351,25 @@
 }
 
 @media (max-width: 768px) {
+  .search-clear-guests {
+    position: 'absolute';
+      padding: '0.3rem';
+      right: '10px';
+      top: '10px';
+      background: 'transparent';
+      border: 'none';
+      cursor: 'pointer';
+      font-size: '1.1rem';
+  }
+
+  .Calendar-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    /* Ensure text is always centered */
+  }
+
   .Search-guest-dropdown {
     width: calc(120% - 1.875rem);
     left: 50%;
@@ -824,17 +843,19 @@
   background: transparent;
   cursor: pointer;
 }
+
 .Calendar-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
   position: absolute;
   top: 50%;
-  left: 0%;
-  transform: translate(5%, -36.5%);
+  left: 50%;
+  transform: translate(-50%, -50%);
   color: var(--primary-color);
   font-weight: 500;
   font-size: 1rem;
   white-space: nowrap;
   text-overflow: ellipsis;
+  text-align: center;
 }

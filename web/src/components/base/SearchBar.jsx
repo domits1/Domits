@@ -297,13 +297,25 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   {totalGuestsDescription}
                 </p>
                 <div className={`Search-guest-dropdown ${showGuestDropdown ? 'active' : ''}`}
-                  ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
-                  {isMobile && (
-                    <button
-                      className="search-close-guest-dropdown" onClick={closeGuestDropdown}>
-                      <FaTimes />
-                    </button>
-                  )}
+                       ref={guestDropdownRef} onClick={(e) => e.stopPropagation()}>
+                    {isMobile && (
+                        <button
+                            className="Search-close-guest-dropdown"
+                            onClick={closeGuestDropdown}
+                            style={{
+                              position: 'absolute',
+                              padding: '0.3rem',
+                              right: '10px',
+                              top: '10px',
+                              background: 'transparent',
+                              border: 'none',
+                              cursor: 'pointer',
+                              fontSize: '1.1rem',
+                            }}
+                        >
+                          <FaTimes/>
+                        </button>
+                    )}
 
                   <GuestCounter
                     label={<><FaUser /> Adults</>}
