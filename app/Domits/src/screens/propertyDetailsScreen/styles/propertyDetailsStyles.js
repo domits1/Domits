@@ -143,6 +143,7 @@ export const styles = StyleSheet.create({
         borderColor: 'grey',
         borderRadius: 10,
         marginVertical: 10,
+        maxWidth: 500,
     },
     // Booking button
     bookingButtonContainer: {
@@ -202,20 +203,6 @@ export const styles = StyleSheet.create({
     featureText: {
         fontSize: 14,
         color: 'black',
-    },
-    // Host
-    nameButton: {
-        width: 110,
-        borderWidth: 1,
-        borderColor: 'green',
-        borderRadius: 12,
-        padding: 10,
-    },
-    nameText: {
-        color: 'black',
-        fontSize: 12,
-        fontFamily: 'MotivaSansBold.woff',
-        textAlign: 'center',
     },
     // All amenities modal
     modalOverlay: {

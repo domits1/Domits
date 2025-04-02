@@ -12,7 +12,7 @@ import RenderAmenities from "../hooks/RenderAmenities";
 import PropertyImagesView from "../views/PropertyImagesView";
 import LoadingScreen from "../../loadingscreen/screens/LoadingScreen";
 import PropertyMainDetailsView from "../views/PropertyMainDetailsView";
-import PropertyDetailsOwnerView from "../views/PropertyDetailsOwnerView";
+import HostSectionView from "../../hostdashboard/components/HostSectionView";
 
 const PropertyDetailsScreen = ({route, navigation}) => {
     const accommodationId = route.params.accommodation.id;
@@ -165,7 +165,7 @@ const PropertyDetailsScreen = ({route, navigation}) => {
 
                         <View style={styles.categoryDivider}/>
 
-                        <PropertyDetailsOwnerView
+                        <HostSectionView
                             ownerId={parsedAccommodation.OwnerId}
                             navigation={navigation}
                         />

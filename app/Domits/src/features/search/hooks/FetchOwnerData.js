@@ -2,9 +2,10 @@
  * Fetch the owner data by a given id.
  * @param ownerId - The id of the owner to be fetched.
  * @param setOwner - Function to set the owner.
+ * @param setLoading - Function to update the loading state.
  * @returns - Update the owner.
  */
-const FetchOwnerData = async (ownerId, setOwner) => {
+const FetchOwnerData = async (ownerId, setOwner, setLoading) => {
     if (!ownerId) {
         return;
     }
@@ -20,11 +21,14 @@ const FetchOwnerData = async (ownerId, setOwner) => {
                 body: JSON.stringify({UserId: ownerId}),
             },
         );
+
         if (!response.ok) {
             throw new Error('Failed to fetch owner data');
         }
+
         const responseData = await response.json();
         const data = responseData.body ? JSON.parse(responseData.body) : null;
+
         if (!data) {
             console.error('No data found in response body');
             return;
@@ -40,6 +44,8 @@ const FetchOwnerData = async (ownerId, setOwner) => {
 
     } catch (error) {
         console.error('Error fetching owner data:', error);
+    } finally {
+        setLoading(false);
     }
 };
 
