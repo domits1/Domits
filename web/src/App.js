@@ -181,7 +181,7 @@ function App() {
                                     <Route path="/hostonboarding/:type/amenities" element={<PropertyAmenitiesView/>}/>
 
                                     {/* Chat */}
-                                    <Route path="/chat" element={<Chat/>}/>
+                                    {/*<Route path="/chat" element={<Chat/>}/>*/}
                                     <Route path="/employeechat" element={<EmployeeChat/>}/>
                                     <Route path="/chatbot" element={<Chatbot/>}/>
 
@@ -203,7 +203,7 @@ function App() {
                                                     <Route path="reviews" element={<GuestReviews/>}/>
                                                     <Route path="bookings" element={<GuestBooking/>}/>
                                                     <Route path="settings" element={<GuestSettings/>}/>
-                                                    <Route path="chat" element={<Chat/>}/>
+                                                    {/*<Route path="chat" element={<Chat/>}/>*/}
                                                 </Routes>
                                             </GuestProtectedRoute>
                                         }

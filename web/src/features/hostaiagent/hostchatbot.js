@@ -61,8 +61,8 @@ const HostChatbot = () => {
 
   useEffect(() => {
     const isChromiumBased = !!navigator.userAgent.match(/Chrome|Chromium|Edg|Brave/);
-    console.log('Browser detected:', navigator.userAgent); // Debugging line
-    console.log('Is Chromium-based:', isChromiumBased);    // Debugging line
+    // console.log('Browser detected:', navigator.userAgent); // Debugging line
+    // console.log('Is Chromium-based:', isChromiumBased);    // Debugging line
     if (!isChromiumBased) {
       setIsUnsupportedBrowser(true);
     }
