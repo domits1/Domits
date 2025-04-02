@@ -1,8 +1,4 @@
-// import React, {useState} from "react";
-
-// const [formData, setFormData] = useState({});
-
-class AccommodationDTO {
+export class AccommodationDTO {
   constructor(data) {
     this.property = new PropertyModel({
       id: data.id,
@@ -204,9 +200,5 @@ const propertyData = {
     renovationYear: 2020,
   },
 };
-
-// const propertyDTOInstance = new PropertyDTO(propertyData);
-
-// console.log(JSON.stringify(propertyDTOInstance, null, 2));
 
 export default AccommodationDTO;
