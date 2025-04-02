@@ -3,6 +3,16 @@ import AmenityItem from "./AmenityItem";
 import PropTypes from 'prop-types';
 import "../styles/AmenityStyles.css";
 
+/**
+ * Component voor het weergeven van een categorie van voorzieningen.
+ *
+ * @param {Object} props - De eigenschappen van de component.
+ * @param {string} props.category - De naam van de categorie.
+ * @param {string[]} props.amenities - De lijst met voorzieningen in deze categorie.
+ * @param {string[]} props.selectedAmenities - De lijst met geselecteerde voorzieningen.
+ * @param {function} props.handleAmenityChange - Functie om wijzigingen in de selectie af te handelen.
+ */
+
 function AmenityCategory({ category, amenities, selectedAmenities, handleAmenityChange }) {
     return (
         <div style={{ marginBottom: "20px" }}>
@@ -22,12 +32,5 @@ function AmenityCategory({ category, amenities, selectedAmenities, handleAmenity
         </div>
     );
 }
-
-AmenityCategory.propTypes = {
-    category: PropTypes.string.isRequired,
-    amenities: PropTypes.arrayOf(PropTypes.string).isRequired,
-    selectedAmenities: PropTypes.arrayOf(PropTypes.string).isRequired,
-    handleAmenityChange: PropTypes.func.isRequired,
-};
 
 export default AmenityCategory;
