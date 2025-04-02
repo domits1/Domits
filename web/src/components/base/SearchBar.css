@@ -384,12 +384,6 @@
   }
 }
 
-/* @media (max-width: 1200px) {
-  .responsive-calendar {
-    font-size: 0.6rem !important;
-  }
-} */
-
 @media (max-width: 768px) {
   .responsive-calendar {
     font-size: 0.7rem !important;
@@ -775,13 +769,6 @@
   z-index: 9999;
 }
 
-@media (max-width: 768px) {
-  .custom-select__menu {
-    margin-top: -7.36rem;
-    width: calc(95vw - 40px);
-  }
-}
-
 .searchInputContainer .custom-select__option {
   background-color: white;
   color: #666;
@@ -846,4 +833,15 @@
   white-space: nowrap;
   text-overflow: ellipsis;
   text-align: center;
+}
+
+.Search-close-guest-dropdown{
+  position: absolute;
+  padding: 0.3rem;
+  right: 10px;
+  top: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
 }
