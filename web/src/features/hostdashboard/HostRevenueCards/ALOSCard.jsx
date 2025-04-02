@@ -83,7 +83,7 @@ const ALOSCard = () => {
         {loading ? (
           <p>Loading...</p>
         ) : error ? (
-          <p style={{ color: 'red' }}>Error: {error}</p>
+          <p>Error: {error}</p>
         ) : (
           <p>{averageLengthOfStay} nights</p>
         )}

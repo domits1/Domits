@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Auth } from 'aws-amplify';
 import FlowContext from '../../services/FlowContext';
 import './Register.css';
-// import PhoneInput from 'react-phone-input-2';
-// import 'react-phone-input-2/lib/style.css';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 
 const Register = () => {
     const navigate = useNavigate();

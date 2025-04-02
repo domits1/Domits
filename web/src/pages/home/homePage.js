@@ -388,7 +388,6 @@ const Homepage = () => {
     };
   }, [isFixed]);
 
-  const navigate = useNavigate();
   const fetchBoatAccommodations = async () => {
     try {
         setLoading(true);
@@ -441,11 +440,11 @@ const Homepage = () => {
     setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
   };
 
-  const visibleReviews = [
-    reviews[currentIndex],
-    reviews[(currentIndex + 1) % reviews.length],
-    reviews[(currentIndex + 2) % reviews.length],
-  ];
+  // const visibleReviews = [
+  //   reviews[currentIndex],
+  //   reviews[(currentIndex + 1) % reviews.length],
+  //   reviews[(currentIndex + 2) % reviews.length],
+  // ];
 
   const handleClick = (e, ID) => {
     if (!e || !e.target) {
@@ -572,9 +571,6 @@ const Homepage = () => {
           <div className="domits-accommodationGroup">
             {boatAccommodations.length > 0 ? (
               boatAccommodations.map((boat) => {
-                // const images =
-                //   accommodationImages.find((img) => img.ID === boat.ID)?.Images || [];
-
                 return (
                   <AccommodationCard
                     key={boat.property.id}
@@ -582,10 +578,8 @@ const Homepage = () => {
                     images={Object.values(boat.propertyImages)}
                     onClick={handleClick}
                   />
-                ))
-              ) : (
-                <div>No boats available.</div>
-              )
+                );
+              })
             ) : (
               Array(3)
                 .fill()
@@ -593,6 +587,7 @@ const Homepage = () => {
             )}
           </div>
         </div>
+
 
         <div className="domits-boatContainer">
           <h3 className="domits-subHead">Discover Beautiful Campers</h3>
@@ -800,7 +795,7 @@ const Homepage = () => {
         </div>
       </div>
       {/* Updated Review Section */}
-      <div className="review-container">
+      {/* <div className="review-container">
         <button className="arrow-button" onClick={handlePreviousReview}>
           &lt;
         </button>
@@ -822,7 +817,7 @@ const Homepage = () => {
         <button className="arrow-button" onClick={handleNextReview}>
           &gt;
         </button>
-      </div>
+      </div> */}
       <div className="domits-communityContainer">
         <h2 className="domits-communityHead">Need help? Join the community</h2>
         <p className="domits-communityGroup">
