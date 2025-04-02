@@ -57,6 +57,8 @@ amplifytools.xcconfig
 **.sample
 # amplify-do-not-edit-end
 
+package-lock.json
+
 #amplify-do-not-edit-begin
 amplify/\#current-cloud-backend
 amplify/.config/local-*
