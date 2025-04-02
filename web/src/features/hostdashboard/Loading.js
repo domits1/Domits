@@ -1,6 +1,6 @@
 // Loading.jsx
 import React from 'react';
-import './styles/Loading.css';
+import './Loading.css';
 
 const Loading = () => {
     return (

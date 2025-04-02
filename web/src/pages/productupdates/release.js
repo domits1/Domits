@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import './styles/release.css';
+import './release.css';
 import release from '../../images/release.png';
 import note1 from '../../images/house.jpeg';
 import note2 from '../../images/phone1.webp';

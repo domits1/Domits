@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "../styles/hostverification.module.css";
+import styles from "../hostverification.module.css";
 
 function Option({
   option,

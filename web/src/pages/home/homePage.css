@@ -23,7 +23,7 @@ body.hide-header .app-header {
 
 .domits-searchContainer {
   height: 87vh;
-  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../../images/villaHomepage.jpg");
+  background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url("../../images/villaHomepage.jpg");
   background-size: cover;
   background-position: 70% 100%;
   background-repeat: no-repeat;
