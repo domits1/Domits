@@ -11,7 +11,7 @@ const Sustainability = () => {
             <hr/>
             <button onClick={(event) => submitAccommodation(event)}>Submit</button>
 
-            <section id={"sustainable-business"}>
+            <section id="sustainable-business">
                 <h3>
                     1. Sustainable <strong>Business</strong>
                 </h3>
@@ -28,7 +28,7 @@ const Sustainability = () => {
             </section>
 
             <hr/>
-            <section id={"sustainable-accommodations"}>
+            <section id="sustainable-accommodations">
                 <h3>
                     2. Sustainable <strong>Accommodations</strong>
                 </h3>
@@ -42,7 +42,7 @@ const Sustainability = () => {
                 </p>
             </section>
             <hr/>
-            <section id={"sustainable-guest-experience"}>
+            <section id="sustainable-guest-experience">
                 <h3>
                     3. Sustainable <strong>Guest Experience</strong>
                 </h3>
@@ -52,7 +52,7 @@ const Sustainability = () => {
                     with having sustainability filters and a large overview of all
                     eco-friendly amenities.
                 </p>
-                <br/>
+
             </section>
             <hr/>
         </div>
