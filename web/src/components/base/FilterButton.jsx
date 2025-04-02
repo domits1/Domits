@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { FaSlidersH  } from 'react-icons/fa';
 import FilterModal from './FilterModal'; 
 import './FilterButton.css';
