@@ -1,10 +1,8 @@
-import React, {useState, useEffect, useRef} from 'react';
-import { Auth } from 'aws-amplify';
-import { useNavigate } from 'react-router-dom';
-import './styles/Login.css';
-import logo from "../../images/logo.svg";
-import { FaEye, FaEyeSlash } from 'react-icons/fa';
-import FlowContext from '../../services/FlowContext';
+import React, {useEffect, useRef, useState} from 'react';
+import {Auth} from 'aws-amplify';
+import {useNavigate} from 'react-router-dom';
+import './styles/Login.scss';
+import {FaEye, FaEyeSlash} from 'react-icons/fa';
 import DigitInputs from "../../components/ui/DigitsInputs/DigitsInputs";
 
 const Login = () => {
@@ -36,7 +34,9 @@ const Login = () => {
 
     const submitCodeAndPassword = async () => {
         let code = "";
-        inputRef.current.forEach((input) => { code += input.value });
+        inputRef.current.forEach((input) => {
+            code += input.value
+        });
 
         try {
             const response = await forgotPasswordSubmit(username, code, formData.password);
@@ -90,7 +90,7 @@ const Login = () => {
         if (errorMessage) {
             setErrorMessage('');
         }
-        const { email, password } = formData;
+        const {email, password} = formData;
         try {
             await Auth.signIn(email, password);
             setIsAuthenticated(true);
@@ -169,7 +169,7 @@ const Login = () => {
             const data = await Auth.forgotPasswordSubmit(username, code, newPassword);
         } catch (err) {
             setErrorMessage(err.message);
-        }finally {
+        } finally {
             if (errorMessage === '') {
                 window.alert('Your password has been updated successfully! Sending you back to the login page...');
                 setConfirmCode(false);
@@ -249,7 +249,6 @@ const Login = () => {
                         </main>
                     ) : (
                         <main className="loginContainer">
-                            {/* <img src={logo} alt="Logo Domits" className='loginLogo'/> */}
                             <div className="loginTitle">Good to see you again</div>
                             <div className="loginForm">
                                 <form onSubmit={handleSubmit}>
@@ -287,7 +286,8 @@ const Login = () => {
                                     {errorMessage && (
                                         <div className="errorText">{errorMessage}</div>
                                     )}
-                                    <div className="forgotPasswordText noAccountText" onClick={() => setValueForForgotPassword(true)}>
+                                    <div className="forgotPasswordText noAccountText"
+                                         onClick={() => setValueForForgotPassword(true)}>
                                         I forgot my password
                                     </div>
                                     <button type="submit" className="loginButton">
