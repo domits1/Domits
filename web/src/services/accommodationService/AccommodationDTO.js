@@ -164,41 +164,4 @@ class PropertyTechnicalDetailsDTO {
   }
 }
 
-const propertyData = {
-  hostId: 1,
-  title: "Property Title",
-  subtitle: "Property Subtitle",
-  description: "Property Description",
-  guestCapacity: 4,
-  registrationNumber: "12345",
-  status: "active",
-  createdAt: "2025-03-19",
-  updatedAt: "2025-03-19",
-  propertyAmenities: [{ amenityId: 1 }],
-  propertyAvailability: [
-    { availableStartDate: "2025-04-01", availableEndDate: "2025-04-10" },
-  ],
-  propertyCheckIn: {
-    checkIn: { from: "14:00", till: "22:00" },
-    checkOut: { from: "07:00", till: "11:00" },
-  },
-  propertyLocation: {
-    country: "Country",
-    city: "City",
-    street: "Street",
-    houseNumber: "123",
-  },
-  propertyPricing: { roomRate: 100, cleaning: 10, service: 5 },
-  propertyRules: [{ rule: "No smoking", value: true }],
-  propertyType: { propertyType: "Apartment", spaceType: "Shared" },
-  propertyImages: [{ key: "image1.jpg" }],
-  propertyTechnicalDetails: {
-    length: 10,
-    height: 5,
-    fuelConsumption: 10,
-    speed: 120,
-    renovationYear: 2020,
-  },
-};
-
 export default AccommodationDTO;
