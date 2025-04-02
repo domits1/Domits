@@ -13,13 +13,6 @@
   text-align: center;
 }
 
-.Search-bar .Search-searchInputContainer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-top: 0.3125rem;
-}
-
 .Search-suggestions-container {
   position: relative;
   z-index: 1;
@@ -53,9 +46,10 @@
 }
 
 .search-places-input {
+  background-color: none;
   display: flex;
   justify-content: center;
-  align-items: center ;
+  align-items: center;
   margin: 0 auto;
   margin-top: 0.6rem;
   padding: 10px 5px;
@@ -70,9 +64,10 @@
   font-size: 1rem;
   font-weight: 500;
 }
+
 .search-places-input:focus {
-  outline: none; 
-  
+  outline: none;
+
 }
 
 .input-calendar {
@@ -331,7 +326,7 @@
   color: var(--primary-color);
   font-size: 1rem;
   font-weight: 500;
-  padding-top: 0.3rem;
+  margin-top: 0.1rem;
 }
 
 .Search-guestP {
@@ -356,6 +351,13 @@
 }
 
 @media (max-width: 768px) {
+  .Calendar-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+
   .Search-guest-dropdown {
     width: calc(120% - 1.875rem);
     left: 50%;
@@ -382,15 +384,15 @@
   }
 }
 
-@media (max-width: 1200px) {
+/* @media (max-width: 1200px) {
   .responsive-calendar {
     font-size: 0.6rem !important;
   }
-}
+} */
 
 @media (max-width: 768px) {
   .responsive-calendar {
-    font-size: 0.5rem !important;
+    font-size: 0.7rem !important;
   }
 }
 
@@ -648,7 +650,7 @@
   }
 
   .search-icon {
-    margin-right: 12px;
+    margin-right: 10px;
     transform: translateY(15%);
   }
 }
@@ -734,4 +736,114 @@
   .DatePicker__input {
     padding-left: 0%;
   }
+}
+
+
+/* dit is de css van de react packages:  */
+.searchInputContainer .custom-select__control {
+  width: 8.8rem;
+  height: 2.7rem;
+  border: none;
+  outline: none;
+  box-shadow: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  margin: auto;
+  transform: translateY(7px);
+}
+
+
+@media (max-width: 768px) {
+  .custom-select__control {
+    width: 100%;
+    transform: translateX(0);
+  }
+}
+
+.searchInputContainer .custom-select__menu {
+  background-color: rgb(255, 255, 255);
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+  margin-top: 1rem;
+  width: 15rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+}
+
+@media (max-width: 768px) {
+  .custom-select__menu {
+    margin-top: -7.36rem;
+    width: calc(95vw - 40px);
+  }
+}
+
+.searchInputContainer .custom-select__option {
+  background-color: white;
+  color: #666;
+  font-weight: normal;
+  font-size: 14px;
+  padding: 13.8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border-radius: 10px;
+  gap: 15px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.searchInputContainer .custom-select__option:hover {
+  color: black;
+  background-color: #e6e6e6;
+}
+
+.searchInputContainer .custom-select__option--is-selected {
+  background-color: #f0f0f0;
+  color: black;
+  font-weight: 800;
+}
+
+.searchInputContainer .custom-select__single-value {
+  text-align: center;
+  font-weight: 500;
+  color: #000;
+  font-size: 1rem;
+}
+
+.searchInputContainer .custom-select__clear-indicator {
+  color: black;
+  font-size: 2rem;
+}
+
+.search-clear-guests {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-35%);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.Calendar-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--primary-color);
+  font-weight: 500;
+  font-size: 1rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: center;
 }
