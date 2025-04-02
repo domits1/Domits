@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Slider from '@mui/material/Slider';
-import { FilterLogic } from './FilterLogic';
+import FilterLogic from './FilterLogic';
 import './FilterMain.css';
 
 const FilterUi = ({ onFilterApplied }) => {
@@ -15,12 +15,15 @@ const FilterUi = ({ onFilterApplied }) => {
     setShowMoreFacilities,
     showMorePropertyTypes,
     setShowMorePropertyTypes,
-    selectedRatings,
-    handleRatingChange,
     handlePriceChange,
     loading,
     fetchFilteredAccommodations,
+    handleSeasonChange,
+    seasonFilter,
+    setShowMoreSeasonTypes,
+    showMoreSeasonTypes,
   } = FilterLogic({ onFilterApplied });
+
 
   const [minInputValue, setMinInputValue] = useState(`€${priceValues[0]}`);
   const [maxInputValue, setMaxInputValue] = useState(`€${priceValues[1]}`);
@@ -69,7 +72,6 @@ const FilterUi = ({ onFilterApplied }) => {
     }
   };
 
-  
   const handleBlur = () => {
     setMinInputValue(`€${priceValues[0]}`);
     setMaxInputValue(`€${priceValues[1]}`);
@@ -210,8 +212,45 @@ const FilterUi = ({ onFilterApplied }) => {
         </span>
       </div>
 
-    
-    </div>
+      <div className="filter-section">
+        <div className='FilterTitle'>Seasons</div>
+        <div className="facility-list">
+          {Object.keys(seasonFilter).slice(0, 5).map((season) => (
+            <label key={season} className="facility-item">
+              <input
+                type="checkbox"
+                name={season}
+                checked={seasonFilter[season]}
+                onChange={handleSeasonChange}
+                className="filter-select-option"
+              />
+              {season.charAt(0).toUpperCase() + season.slice(1)}
+            </label>
+          ))}
+          {showMoreSeasonTypes &&
+            Object.keys(seasonFilter)
+              .slice(5)
+              .map((season) => (
+                <label key={season} className="facility-item">
+                  <input
+                    type="checkbox"
+                    name={season}
+                    checked={seasonFilter[season]}
+                    onChange={handleSeasonChange}
+                    className="filter-select-option"
+                  />
+                  {season.charAt(0).toUpperCase() + season.slice(1)}
+                </label>
+              ))}
+          <span
+            onClick={() => setShowMoreSeasonTypes(!showMoreSeasonTypes)}
+            className="show-more-text"
+          >
+            {showMoreSeasonTypes ? 'Show Less' : 'Show More'}
+          </span>
+        </div>
+      </div>
+    </div >
   );
 };
 

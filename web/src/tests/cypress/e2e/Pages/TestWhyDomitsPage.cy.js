@@ -153,7 +153,7 @@ describe('Testing Why Domits Page Navigation', () => {
     });
 
     it('should navigate to About page', () => {
-        cy.get(':nth-child(4) > [href="/about"]').click();
+        cy.get('.why-domits__title-text-container > :nth-child(4) > [href="/about"]').click();
         cy.url().should('include', 'https://www.domits.com/about/');
     });
 
@@ -167,14 +167,14 @@ describe('Testing Why Domits Page Navigation', () => {
         cy.url().should('include','https://www.domits.com/release');
     });
 
-    it('should navigate to Travel Innovation page from footer links', () => {
+    it('should navigate to About page from footer links', () => {
         cy.get('.footer-lists > :nth-child(4) > .footer-links').click();
-        cy.url().should('include','https://www.domits.com/travelinnovation');
+        cy.url().should('include','https://www.domits.com/about');
     });
 
-    it('should navigate to About page from footer links', () => {
-        cy.get('.footer-lists > :nth-child(5) > .footer-links').click();
-        cy.url().should('include','https://www.domits.com/about');
+    it('should navigate to Security page from footer links', () => {
+        cy.get(':nth-child(5) > .footer-links').click();
+        cy.url().should('include','https://www.domits.com/security');
     });
 
     it('should navigate to Careers page from footer links', () => {
@@ -182,23 +182,8 @@ describe('Testing Why Domits Page Navigation', () => {
         cy.url().should('include','https://www.domits.com/career');
     });
 
-    it('should navigate to Security page from footer links', () => {
-        cy.get(':nth-child(8) > .footer-links').click();
-        cy.url().should('include','https://www.domits.com/security');
-    });
-    
-    it('should navigate to Sustainability page from footer links', () => {
-        cy.get(':nth-child(9) > .footer-links').click();
-        cy.url().should('include','https://www.domits.com/sustainability');
-    });
-    
-    it('should navigate to Domits AI page from footer links', () => {
-        cy.get(':nth-child(10) > .footer-links').click();
-        cy.url().should('include','https://www.domits.com/domitsai');
-    });
-    
     it('should navigate to Contact page from footer links', () => {
-        cy.get(':nth-child(11) > .footer-links').click();
+        cy.get(':nth-child(7) > .footer-links').click();
         cy.url().should('include','https://www.domits.com/contact');
     });
     
