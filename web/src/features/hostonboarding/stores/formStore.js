@@ -1,442 +1,310 @@
-import { create } from "zustand";
-import axios from "axios";
+import {create} from "zustand";
+import AccommodationDTO from "../../../services/accommodationService/AccommodationDTO";
+import {submitAccommodation} from "../../../services/hostOnBoardingService/hostonboardingApi";
 
-const API_BASE_URL =
-  "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/CreateAccomodation";
+const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
 const useFormStore = create((set) => ({
-  completedSteps: [],
-  accommodationDetails: {
-    type: "",
-    title: "",
-    subtitle: "",
-    guestAccessType: "",
-    boatType: "",
-    camperType: "",
-    boatDetails: {
-      country: "",
-      city: "",
-      harbor: "",
-    },
-    camperDetails: {
-      country: "",
-      city: "",
-      street: "",
-      zipCode: "",
-    },
-    address: {
-      street: "",
-      city: "",
-      zipCode: "",
-      country: "",
-    },
-    accommodationCapacity: {
-      GuestAmount: 0,
-      Cabins: 0,
-      Bedrooms: 0,
-      Bathrooms: 0,
-      Beds: 0,
-    },
-    selectedAmenities: {},
-    houseRules: {
-      AllowSmoking: false,
-      AllowPets: false,
-      AllowParties: false,
-      CheckIn: {
-        From: "00:00",
-        Til: "00:00",
-      },
-      CheckOut: {
-        From: "00:00",
-        Til: "00:00",
-      },
-    },
-    images: {},
-    description: "",
-    boatSpecifications: {},
-    camperSpecifications: {},
-    Rent: "1",
-    CleaningFee: "",
-    ServiceFee: 0,
-    Features: {
-      ExtraServices: [],
-    },
-    availability: {     
-      ExpirationTime: 72,
-      MinimumStay: 1,
-      MinimumBookingPeriod: 3,
-      MaximumStay: 10,
-      MinimumAdvancedReservation: 1,
-      MaximumAdvancedReservation: 1,
-      PaymentDeadlineAfterBooking: "24",
-      PaymentDeadlineBeforeCheckIn: "36",
-      selectedDates: [],
-    },
-    registrationNumber: "",
-    ReservationsID: "",
-    OwnerId: "",
-  },
-  setAccommodationType: (type) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        type: type,
-      },
-    })),
-  setGuestAccessType: (accessType) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        guestAccessType: accessType,
-      },
-    })),
-  setBoatType: (boatType) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        boatType: boatType,
-      },
-    })),
-  setCamperType: (camperType) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        camperType: camperType,
-      },
-    })),
-  setAddress: (details) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        address: { ...state.accommodationDetails.address, ...details },
-      },
-    })),
-  setBoatDetails: (details) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        boatDetails: { ...state.accommodationDetails.boatDetails, ...details },
-      },
-    })),
-  setCamperDetails: (details) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
+    completedSteps: [], accommodationDetails: {
+        type: "",
+        title: "",
+        subtitle: "",
+        guestAccessType: "",
+        boatType: "",
+        camperType: "",
+        boatDetails: {
+            country: "", city: "", harbor: "",
+        },
         camperDetails: {
-          ...state.accommodationDetails.camperDetails,
-          ...details,
+            country: "", city: "", street: "", zipCode: "",
         },
-      },
-    })),
-  setAccommodationCapacity: (key, value) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
+        address: {
+            street: "", city: "", zipCode: "", country: "",
+        },
         accommodationCapacity: {
-          ...state.accommodationDetails.accommodationCapacity,
-          [key]: value,
+            GuestAmount: 0, Cabins: 0, Bedrooms: 0, Bathrooms: 0, Beds: 0,
         },
-      },
-    })),
-  setAmenities: (category, amenities) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        selectedAmenities: {
-          ...state.accommodationDetails.selectedAmenities,
-          [category]: amenities,
+        selectedAmenities: {},
+        houseRules: {
+            AllowSmoking: false, AllowPets: false, AllowParties: false, CheckIn: {
+                From: "00:00", Til: "00:00",
+            }, CheckOut: {
+                From: "00:00", Til: "00:00",
+            },
         },
-      },
-    })),
-  setHouseRule: (rule, value, subKey) =>
-    set((state) => {
-      const updatedHouseRules = { ...state.accommodationDetails.houseRules };
-
-      if (subKey) {
-        updatedHouseRules[rule][subKey] = value;
-      } else {
-        updatedHouseRules[rule] = value;
-      }
-
-      return {
-        accommodationDetails: {
-          ...state.accommodationDetails,
-          houseRules: updatedHouseRules,
+        images: {},
+        description: "",
+        boatSpecifications: {},
+        camperSpecifications: {},
+        Rent: "1",
+        CleaningFee: "",
+        ServiceFee: 0,
+        Features: {
+            ExtraServices: [],
         },
-      };
-    }),
-  updateImage: (index, fileURL) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        images: {
-          ...state.accommodationDetails.images,
-          [`image${index + 1}`]: fileURL,
-        },
-      },
-    })),
-  deleteImage: (index) =>
-    set((state) => {
-      const updatedImages = { ...state.accommodationDetails.images };
-      delete updatedImages[`image${index + 1}`];
-      return {
-        accommodationDetails: {
-          ...state.accommodationDetails,
-          images: updatedImages,
-        },
-      };
-    }),
-  updateAccommodationDetail: (key, value) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        [key]: value,
-      },
-    })),
-  updateDescription: (value) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        description: value,
-      },
-    })),
-  updateBoatSpecification: (key, value) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        boatSpecifications: {
-          ...state.accommodationDetails.boatSpecifications,
-          [key]: value,
-        },
-      },
-    })),
-  updateCamperSpecification: (key, value) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        camperSpecifications: {
-          ...state.accommodationDetails.camperSpecifications,
-          [key]: value,
-        },
-      },
-    })),
-  updatePricing: (field, value) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        [field]: value,
-      },
-    })),
-  calculateServiceFee: () =>
-    set((state) => {
-      const rent = parseFloat(state.accommodationDetails.Rent) || 0;
-      const cleaningFee =
-        parseFloat(state.accommodationDetails.CleaningFee) || 0;
-      const serviceFee = (rent + cleaningFee) * 0.1;
-      return {
-        accommodationDetails: {
-          ...state.accommodationDetails,
-          ServiceFee: serviceFee,
-        },
-      };
-    }),
-  updateAvailability: (key, value) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
         availability: {
-          ...state.accommodationDetails.availability,
-          [key]: value,
+            ExpirationTime: 72,
+            MinimumStay: 1,
+            MinimumBookingPeriod: 3,
+            MaximumStay: 10,
+            MinimumAdvancedReservation: 1,
+            MaximumAdvancedReservation: 1,
+            PaymentDeadlineAfterBooking: "24",
+            PaymentDeadlineBeforeCheckIn: "36",
+            selectedDates: [],
         },
-      },
-    })),
-  updateSelectedDates: (dates) =>
-    set((state) => {
-      if (!Array.isArray(dates) || !dates[0]?.startDate || !dates[0]?.endDate) {
-        console.error("Invalid dates array or missing properties:", dates);
-        return state;
-      }
-
-      const { startDate, endDate } = dates[0];
-      const formattedDates = {
-        startDate: startDate.toISOString(),
-        endDate: endDate.toISOString(),
-      };
-
-      return {
+        registrationNumber: "",
+        ReservationsID: "",
+        OwnerId: "",
+    }, setAccommodationType: (type) => set((state) => ({
         accommodationDetails: {
-          ...state.accommodationDetails,
-          availability: {
-            ...state.accommodationDetails.availability,
-            selectedDates: formattedDates,
-          },
+            ...state.accommodationDetails, type: type,
         },
-      };
-    }),
-  setRegistrationNumber: (registrationNumber) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        registrationNumber: registrationNumber,
-      },
-    })),
-  markStepComplete: (step) =>
-    set((state) => ({
-      completedSteps: [...state.completedSteps, step],
-    })),
-  setOwnerId: (id) =>
-    set((state) => ({
-      accommodationDetails: {
-        ...state.accommodationDetails,
-        ownerId: id,
-      },
-    })),
-  resetAccommodationDetails: () =>
-    set({
-      accommodationDetails: { type: "" },
-      guestAccessType: "",
-      boatType: "",
-      camperType: "",
-      boatDetails: {
-        country: "",
-        city: "",
-        harbor: "",
-      },
-      camperDetails: {
-        country: "",
-        city: "",
-        street: "",
-        zipCode: "",
-      },
-      address: {
-        street: "",
-        city: "",
-        zipCode: "",
-        country: "",
-      },
-      accommodationCapacity: {
-        GuestAmount: 0,
-        Cabins: 0,
-        Bedrooms: 0,
-        Bathrooms: 0,
-        Beds: 0,
-      },
-      availability: {
-        ExpirationTime: 72,
-        MinimumStay: 1,
-        MinimumBookingPeriod: 3,
-        MaximumStay: 10,
-        MinimumAdvancedReservation: 1,
-        MaximumAdvancedReservation: 1,
-        PaymentDeadlineAfterBooking: "24",
-        PaymentDeadlineBeforeCheckIn: "36",
-        selectedDates: [],
-      }
-    }),
-  submitAccommodation: async (navigate) => {
-    
-    const { accommodationDetails } = useFormStore.getState();
+    })), setGuestAccessType: (accessType) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, guestAccessType: accessType,
+        },
+    })), setBoatType: (boatType) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, boatType: boatType,
+        },
+    })), setCamperType: (camperType) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, camperType: camperType,
+        },
+    })), setAddress: (details) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, address: {...state.accommodationDetails.address, ...details},
+        },
+    })), setBoatDetails: (details) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, boatDetails: {...state.accommodationDetails.boatDetails, ...details},
+        },
+    })), setCamperDetails: (details) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, camperDetails: {
+                ...state.accommodationDetails.camperDetails, ...details,
+            },
+        },
+    })), setAccommodationCapacity: (key, value) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, accommodationCapacity: {
+                ...state.accommodationDetails.accommodationCapacity, [key]: value,
+            },
+        },
+    })), setAmenities: (category, amenities) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, selectedAmenities: {
+                ...state.accommodationDetails.selectedAmenities, [category]: amenities,
+            },
+        },
+    })), setHouseRule: (rule, value, subKey) => set((state) => {
+        const updatedHouseRules = {...state.accommodationDetails.houseRules};
 
-    const isBoat = accommodationDetails.type === "boat";
-    const isCamper = accommodationDetails.type === "camper";
+        if (subKey) {
+            updatedHouseRules[rule][subKey] = value;
+        } else {
+            updatedHouseRules[rule] = value;
+        }
 
-    const specifications = isBoat
-      ? accommodationDetails.boatSpecifications
-      : isCamper
-      ? accommodationDetails.camperSpecifications
-      : {};
+        return {
+            accommodationDetails: {
+                ...state.accommodationDetails, houseRules: updatedHouseRules,
+            },
+        };
+    }), updateImage: (index, fileURL) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, images: {
+                ...state.accommodationDetails.images, [`image${index + 1}`]: fileURL,
+            },
+        },
+    })), deleteImage: (index) => set((state) => {
+        const updatedImages = {...state.accommodationDetails.images};
+        delete updatedImages[`image${index + 1}`];
+        return {
+            accommodationDetails: {
+                ...state.accommodationDetails, images: updatedImages,
+            },
+        };
+    }), updateAccommodationDetail: (key, value) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, [key]: value,
+        },
+    })), updateDescription: (value) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, description: value,
+        },
+    })), updateBoatSpecification: (key, value) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, boatSpecifications: {
+                ...state.accommodationDetails.boatSpecifications, [key]: value,
+            },
+        },
+    })), updateCamperSpecification: (key, value) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, camperSpecifications: {
+                ...state.accommodationDetails.camperSpecifications, [key]: value,
+            },
+        },
+    })), updatePricing: (field, value) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, [field]: value,
+        },
+    })), calculateServiceFee: () => set((state) => {
+        const rent = parseFloat(state.accommodationDetails.Rent) || 0;
+        const cleaningFee = parseFloat(state.accommodationDetails.CleaningFee) || 0;
+        const serviceFee = (rent + cleaningFee) * 0.1;
+        return {
+            accommodationDetails: {
+                ...state.accommodationDetails, ServiceFee: serviceFee,
+            },
+        };
+    }), updateAvailability: (key, value) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, availability: {
+                ...state.accommodationDetails.availability, [key]: value,
+            },
+        },
+    })), updateSelectedDates: (dates) => set((state) => {
+        if (!Array.isArray(dates) || !dates[0]?.startDate || !dates[0]?.endDate) {
+            console.error("Invalid dates array or missing properties:", dates);
+            return state;
+        }
 
-    try {
-      const formattedData = {
-        Title: accommodationDetails.title || "",
-        Subtitle: accommodationDetails.subtitle || "",
-        AccommodationType: accommodationDetails.type || "",
-        AllowParties: accommodationDetails.houseRules?.AllowParties || false,
-        AllowPets: accommodationDetails.houseRules?.AllowPets || false,
-        AllowSmoking: accommodationDetails.houseRules?.AllowSmoking || false,
-        Availability: accommodationDetails.availability || {},
-        Bathrooms: accommodationDetails.accommodationCapacity?.Bathrooms || 0,
-        Bedrooms: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
-        Beds: accommodationDetails.accommodationCapacity?.Beds || 0,
-        BookedDates: accommodationDetails.bookedDates || [],
-        Cabins: accommodationDetails.accommodationCapacity?.Cabins || 0,
-        CamperBrand: isCamper ? specifications?.CamperBrand || "" : "",
-        Capacity: accommodationDetails.accommodationCapacity?.GuestAmount || 0,
-        Category: accommodationDetails.category || "",
-        CheckIn: accommodationDetails.houseRules?.CheckIn || "",
-        CheckOut: accommodationDetails.houseRules?.CheckOut || "",
-        CleaningFee: accommodationDetails.CleaningFee || 0,
-        Country:
-          (isBoat
-            ? accommodationDetails.boatDetails?.country
-            : accommodationDetails.camperDetails?.country) ||
-          accommodationDetails.address.country,
-        CreatedAt: new Date().toISOString(),
-        Description: accommodationDetails.description || "",
-        Drafted: accommodationDetails.Drafted || true,
-        Features: accommodationDetails.Features || [],
-        FuelTank: specifications?.FuelTank || 0,
-        FWD: specifications?.FWD || false,
-        GPI: specifications?.GPI || "",
-        GuestAccess: accommodationDetails.guestAccessType || "",
-        Harbor: isBoat ? accommodationDetails.boatDetails?.harbor || "" : "",
-        HasLicense: specifications?.HasLicense || false,
-        Height: specifications?.Height || 0,
-        HouseRules: accommodationDetails.houseRules || {},
-        Images: Object.values(accommodationDetails.images) || [], //Remove this line if you don't want to upload images
-        IsPro: specifications?.IsPro || false,
-        Length: specifications?.Length || 0,
-        LicensePlate: isCamper ? specifications?.LicensePlate || "" : "",
-        Manufacturer: specifications?.Manufacturer || "",
-        MinimumAdvancedReservation:
-          accommodationDetails.availability?.MinimumAdvancedReservation || 0,
-        MinimumBookingPeriod: accommodationDetails.MinimumBookingPeriod || 0,
-        Model: specifications?.Model || "",
-        OwnerId: accommodationDetails.ownerId || "",
-        PostalCode:
-          (isBoat
-            ? accommodationDetails.boatDetails?.zipCode
-            : accommodationDetails.camperDetails?.zipCode) ||
-          accommodationDetails.address.zipCode,
-        PaymentAfterBookingHours: accommodationDetails.availability.PaymentDeadlineAfterBooking || 24, 
-        PaymentBeforeCheckInHours: accommodationDetails.availability.PaymentDeadlineBeforeCheckIn || 36,
-        RegistrationNumber: accommodationDetails.registrationNumber || "",
-        Renovated: specifications?.Renovated || 0,
-        Rent: accommodationDetails.Rent || 0,
-        RentedWithSkipper: specifications?.RentedWithSkipper || false,
-        Requirement: specifications?.Requirement || "",
-        ReservationExpirationTime: accommodationDetails.availability.ExpirationTime || 72,
-        Rooms: accommodationDetails.rooms || 0,
-        SelfBuilt: specifications?.SelfBuilt || false,
-        ServiceFee: accommodationDetails.ServiceFee || 0,
-        Speed: specifications?.Speed || 0,
-        Street:
-          (isBoat
-            ? accommodationDetails.boatDetails?.street
-            : accommodationDetails.camperDetails?.street) ||
-          accommodationDetails.address.street,
-        Transmission: specifications?.Transmission || "",
-        Type: accommodationDetails.type || "",
-        UpdatedAt: new Date().toISOString(),
-        YOC: specifications?.YOC || 0,
-      };
+        const {startDate, endDate} = dates[0];
+        const formattedDates = {
+            startDate: startDate.toISOString(), endDate: endDate.toISOString(),
+        };
 
-      const response = await axios.post(API_BASE_URL, formattedData, {
-        headers: { "Content-Type": "application/json" },
-      });
+        return {
+            accommodationDetails: {
+                ...state.accommodationDetails, availability: {
+                    ...state.accommodationDetails.availability, selectedDates: formattedDates,
+                },
+            },
+        };
+    }), setRegistrationNumber: (registrationNumber) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, registrationNumber: registrationNumber,
+        },
+    })), markStepComplete: (step) => set((state) => ({
+        completedSteps: [...state.completedSteps, step],
+    })), setOwnerId: (id) => set((state) => ({
+        accommodationDetails: {
+            ...state.accommodationDetails, ownerId: id,
+        },
+    })), resetAccommodationDetails: () => set({
+        accommodationDetails: {type: ""}, guestAccessType: "", boatType: "", camperType: "", boatDetails: {
+            country: "", city: "", harbor: "",
+        }, camperDetails: {
+            country: "", city: "", street: "", zipCode: "",
+        }, address: {
+            street: "", city: "", zipCode: "", country: "",
+        }, accommodationCapacity: {
+            GuestAmount: 0, Cabins: 0, Bedrooms: 0, Bathrooms: 0, Beds: 0,
+        }, availability: {
+            ExpirationTime: 72,
+            MinimumStay: 1,
+            MinimumBookingPeriod: 3,
+            MaximumStay: 10,
+            MinimumAdvancedReservation: 1,
+            MaximumAdvancedReservation: 1,
+            PaymentDeadlineAfterBooking: "24",
+            PaymentDeadlineBeforeCheckIn: "36",
+            selectedDates: [],
+        },
+    }), submitAccommodation: async (navigate) => {
+        const {accommodationDetails} = useFormStore.getState();
 
-      console.log(
-        "Submitting accommodation data:",
-        JSON.stringify(formattedData, null, 2)
-      );
-      console.log("Accommodation uploaded successfully:", response.data); //Remove this line if you don't want to log the response
-      if (response.data.statusCode === 200) {
-        navigate("/hostdashboard");
-      }
-    } catch (error) {
-      console.error("Error uploading accommodation:", error);
+        const isBoat = accommodationDetails.type === "boat";
+        const isCamper = accommodationDetails.type === "camper";
+
+        const boatOrCamperSpecs = isBoat ? accommodationDetails.boatSpecifications : isCamper ? accommodationDetails.camperSpecifications : {};
+
+        try {
+            const newFormat = new AccommodationDTO({
+                id: "0",
+                hostId: "0",
+                title: accommodationDetails.title,
+                subtitle: accommodationDetails.subtitle,
+                description: accommodationDetails.description,
+                guestCapacity: accommodationDetails.accommodationCapacity?.GuestAmount || 1,
+                registrationNumber: accommodationDetails.registrationNumber,
+                status: "INACTIVE",
+                propertyAmenities: [{amenityId: "1"}],
+                propertyAvailability: [{
+                    availableStartDate: 2042483993580, availableEndDate: 2142483993580,
+                },],
+                propertyAvailabilityRestrictions: [{
+                    restriction: "MinimumStay", value: 5
+                },], // TODO: remove hardcoded propertyCheckIn
+                propertyCheckIn: {
+                    checkIn: {from: 1, till: 5}, checkOut: {from: 5, till: 10},
+                }, // GENERAL DETAILS
+                propertyGeneralDetails: [{
+                    detail: "Bathrooms", value: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
+                }, {
+                    detail: "Bedrooms", value: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
+                }, {
+                    detail: "Beds", value: accommodationDetails.accommodationCapacity?.Beds || 0,
+                }, {
+                    detail: "Guests", value: accommodationDetails.accommodationCapacity?.GuestAmount || 1,
+                },],
+                propertyLocation: {
+                    country: "Dummy",
+                    city: "Dummy",
+                    street: "Dummy",
+                    houseNumber: 1,
+                    houseNumberExtension: "a",
+                    postalCode: "0000AB",
+                },
+                propertyPricing: {
+                    roomRate: accommodationDetails.Rent, cleaning: 0, service: 0,
+                }, // TODO: remove hardcoded propertyrules
+                propertyRules: [{
+                    rule: "PetsAllowed", value: true,
+                }, {
+                    rule: "SmokingAllowed", value: true,
+                }, {
+                    rule: "PartiesEventsAllowed", value: false,
+                },],
+                propertyType: {
+                    property_type: accommodationDetails.type, spaceType: "Full house",
+                },
+                propertyImages: [{
+                    key: "images/1/1/Image-1.webp",
+                },],
+                propertyTechnicalDetails: {
+                    length: 1,
+                    height: 1,
+                    fuelConsumption: 1,
+                    speed: 1,
+                    renovationYear: 2020,
+                    transmission: "Manual",
+                    generalPeriodicInspection: 2024,
+                    fourWheelDrive: true,
+                },
+            });
+
+            console.log(
+                "Submitting accommodation data:",
+                JSON.stringify(newFormat, null, 2),
+            );
+
+            const response = await submitAccommodation()
+            /// THIS is the result of the form:
+            //Remove this line if you don't want to log the response
+            console.log("Accommodation uploaded successfully:", response.data);
+            console.log("Testing formattedData:", newFormat);
+            //Remove this line if you don't want to log the response
+            if (response.data.statusCode === 200) {
+                navigate("/hostdashboard");
+            }
+        } catch (error) {
+            console.error("Error uploading accommodation:", error);
+        }
     }
-  },
+    ,
 }));
 
 export default useFormStore;

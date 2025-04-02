@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import styles from './BookingCalendar.module.css';
+import styles from './styles/BookingCalendar.module.css';
 import { isSameDay } from "date-fns";
 
 function BookingCalendar({ passedProp, checkIn, checkOut, onCheckInChange, onCheckOutChange, checkInFilter, checkOutFilter }) {
