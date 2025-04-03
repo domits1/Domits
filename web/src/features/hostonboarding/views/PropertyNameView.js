@@ -17,7 +17,6 @@ function AccommodationTitleView() {
             </p>
 
             <TextAreaField
-                label="Title"
                 value={title}
                 onChange={(value) => handleInputChange("title", value)}
                 maxLength={128}
@@ -27,7 +26,6 @@ function AccommodationTitleView() {
             <h2 className="onboardingSectionTitle">Give it a suitable subtitle</h2>
 
             <TextAreaField
-                label="Subtitle"
                 value={subtitle}
                 onChange={(value) => handleInputChange("subtitle", value)}
                 maxLength={128}

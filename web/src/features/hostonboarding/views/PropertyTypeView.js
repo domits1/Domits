@@ -4,6 +4,7 @@ import Button from "../components/button";
 import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType";
 import { accommodationData } from "../constants/propertyTypeData";
 import useFormStore from "../stores/formStore";
+import '../styles/onboardingHost.css';
 
 function AccommodationTypeView() {
     const selectedAccommodationType = useFormStore(

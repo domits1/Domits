@@ -102,6 +102,20 @@ h2{
   }
 }
 
+.textarea-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: flex-start; /* Aligns them to the left instead of centering */
+  width: 100%;
+}
+
+.textarea-field {
+  width: 100%; /* Ensures both take full width of the container */
+  max-width: 500px; /* Set a max width to keep consistency */
+}
+
+
 .delete-button {
   position: absolute;
   top: 5px;
