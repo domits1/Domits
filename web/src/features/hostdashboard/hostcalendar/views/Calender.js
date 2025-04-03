@@ -4,6 +4,13 @@
  * If you do not understand what is happening here, do not change anything. If something needs to be adjusted, contact me via discord --@marijn3--
  */
 import React, { useState } from "react";
+import convertDatesToDBDates from "../utils/convertToDBDates";
+import decodeDateNumber from "../utils/decodeDateNumber";
+import convertDateToHTML from "../utils/convertDateToHTML";
+import getCalDays from "../utils/getCalDays";
+import newDate from "../utils/newDate";
+import deleteDate from "../utils/deleteDate";
+import getMonthName from "../utils/getMonthName";
 import leftArrowSVG from "./left-arrow.svg";
 import rightArrowSVG from "./right-arrow.svg";
 import trashSVG from "./trash.svg";
@@ -14,29 +21,6 @@ let selectedDates = [];
 let selectedMonth = new Date().getMonth();
 let selectedYear = new Date().getFullYear();
 let editMode = false;
-
-/**
- * this is a list of all the functions that are used in the CalendarComponent
- *
- * convertDatesToDBDates
- * convertToNumDate
- * getCalDays
- * addToDate
- * sortDates
- * deleteDate
- * newDate
- * dayClick
- * decodeDateNumber
- * getDayClassName
- * convertDateToHTML
- * deleteDateBtn
- * getDatesObject
- * getGridObject
- * getMonthName
- * nextMonthBtn
- * previusMonthBtn
- * switchBtn
- */
 
 /**
  * CalendarComponent is a component that displays a calendar
@@ -54,232 +38,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType}) {
     const [editModeClass, setEditMode] = useState("switch-btn");
 
     /**
-     * this function converts the selected dates to the datetypes in the database
-     *
-     * @return {{availableStartDate:number, availableEndDate:number}[]}
-     */
-    function convertDatesToDBDates() {
-        let updatedList = [];
-
-        for (let i = 0; i < selectedDates.length(); i++) {
-            let newDate = [];
-            for (let j = 0; j < 2; j++) {
-                let date = selectedDates[i][j].toString();
-
-                const year = date.substring(0, 4);
-                const month = date.substring(4, 6) - 1;
-                const day = date.substring(6, 8);
-
-                newDate.push(new Date(year, month, day).getTime());
-            }
-            updatedList.push(newDate);
-        }
-    }
-
-    /**
-     * convertToNumDate is a function that converts year, month, and day into a single date number
-     *
-     * @param {number} year
-     * @param {number} month this month count is 1-12 so 1 is January and 12 is December
-     * @param {number} day
-     * @returns {number} the return has a (year month day structure) e.g. 20250112 is 2025 Jan 12
-     */
-    function convertToNumDate(year, month, day) {
-        return Number(
-            `${year}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`,
-        );
-    }
-
-    /**
-     * getCalDays is a function used to retrieve the day numbers of the selected month and year.
-     * these days are used to fill in the calendar days
-     *
-     * @param {number} month the month is stored here from 0-11 so 0 is January and 11 is December
-     * @param {number} year
-     * @returns {{date: number, day: number}[]} the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
-     */
-    function getCalDays(month, year) {
-        const dateArray = [];
-
-        const getDaysInMonth = (y, m) => new Date(y, m + 1, 0).getDate();
-        const getDayOfWeek = (y, m, d) => (new Date(y, m, d).getDay() + 6) % 7; // 0 is Monday, 6 is Sunday
-
-        let prevMonth = (month + 11) % 12;
-        let prevYear = month === 0 ? year - 1 : year;
-        let nextMonth = (month + 1) % 12;
-        let nextYear = month === 11 ? year + 1 : year;
-
-        let prevMonthDays = getDaysInMonth(prevYear, prevMonth);
-        let prevMonthLastDay = getDayOfWeek(prevYear, prevMonth, prevMonthDays);
-        let daysInMonth = getDaysInMonth(year, month);
-
-        // Add the days of the previous month
-        if (prevMonthLastDay != 6) {
-            for (let i = prevMonthDays - prevMonthLastDay; i <= prevMonthDays; i++) {
-                dateArray.push({
-                    date: convertToNumDate(prevYear, prevMonth + 1, i),
-                    day: i,
-                });
-            }
-        }
-
-        // Add the days of the current month
-        for (let i = 1; i <= daysInMonth; i++) {
-            dateArray.push({ date: convertToNumDate(year, month + 1, i), day: i });
-        }
-
-        let remainingDays = 42 - dateArray.length; // This ensures that the calendar always shows 6 weeks
-
-        // Add the days of the next month
-        for (let i = 1; i <= remainingDays; i++) {
-            dateArray.push({
-                date: convertToNumDate(nextYear, nextMonth + 1, i),
-                day: i,
-            });
-        }
-
-        return dateArray;
-    }
-
-    /**
-     * addToDate is a function that adds a specified number of days to a given date
-     *
-     * @param {number} date the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
-     * @param {number} days the number of days to add to the date
-     * @returns {number} the new date after adding the specified number of days, in the same (year month day structure)
-     */
-    function addToDate(date, days) {
-        let decodedDate = decodeDateNumber(date);
-        date = new Date(decodedDate[0], decodedDate[1], decodedDate[2]);
-        date.setDate(date.getDate() + days);
-        return convertToNumDate(
-            date.getFullYear(),
-            date.getMonth() + 1,
-            date.getDate(),
-        );
-    }
-
-    /**
-     * this function sorts the dates in the selectedDates array
-     *
-     */
-    function sortDates() {
-        selectedDates.sort((a, b) => a[0] - b[0]);
-    }
-
-    /**
-     * deleteDate is a function that removes a date from the selectedDates
-     *
-     * @param {[number, number]} date - The date range to be deleted, represented as an array of two numbers.
-     */
-    function deleteDate(date) {
-        for (let i = 0; i < selectedDates.length; i++) {
-            let v = selectedDates[i];
-
-            if (date[0] > v[0] && date[0] <= v[1] && date[1] >= v[1]) {
-                selectedDates[i][1] = addToDate(date[0], -1);
-                continue;
-            }
-
-            if (date[0] <= v[0] && date[1] >= v[0] && date[1] < v[1]) {
-                selectedDates[i][0] = addToDate(date[1], 1);
-                continue;
-            }
-
-            if (date[0] <= v[0] && date[1] >= v[1]) {
-                selectedDates.splice(i, 1);
-                i--;
-                continue;
-            }
-
-            if (date[0] > v[0] && date[1] < v[1]) {
-                selectedDates.push([addToDate(date[1], 1), v[1]]);
-                selectedDates[i][1] = addToDate(date[0], -1);
-                break;
-            }
-        }
-
-        sortDates();
-    }
-
-    /**
-     * this function adds a new date to the selectedDates array it also makes shore that the dates dont overlap
-     *
-     * @param {[number,number]} date
-     */
-    function newDate(date) {
-        let addNewDate = true;
-
-        for (let _ = 0; _ < 2; _++) {
-            for (let i = 0; i < selectedDates.length; i++) {
-                let v = selectedDates[i];
-
-                if (
-                    date[0] >= v[0] &&
-                    date[0] <= v[1] &&
-                    date[1] >= v[0] &&
-                    date[1] <= v[1]
-                ) {
-                    addNewDate = false;
-                    continue;
-                }
-
-                if (date[0] >= v[0] && date[0] <= v[1] && date[1] > v[1]) {
-                    selectedDates[i][1] = date[1];
-                    date[0] = selectedDates[i][0];
-                    addNewDate = false;
-                    continue;
-                }
-
-                if (date[1] >= v[0] && date[1] <= v[1] && date[0] < v[0]) {
-                    selectedDates[i][0] = date[0];
-                    date[1] = selectedDates[i][1];
-                    addNewDate = false;
-                    continue;
-                }
-
-                if (date[0] <= v[0] && date[1] >= v[1]) {
-                    selectedDates[i][0] = date[0];
-                    selectedDates[i][1] = date[1];
-
-                    date[0] = selectedDates[i][0];
-                    date[1] = selectedDates[i][1];
-
-                    addNewDate = false;
-                }
-            }
-        }
-
-        for (let i = 0; i < selectedDates.length; i++) {
-            let v1 = selectedDates[i];
-            if (v1 == null) {
-                break;
-            }
-
-            for (let j = 0; j < selectedDates.length; j++) {
-                let v2 = selectedDates[j];
-                if (v2 == null) {
-                    break;
-                }
-                if (i == j) {
-                    continue;
-                }
-
-                if (v1[0] == v2[0] && v1[1] == v2[1]) {
-                    selectedDates.splice(j, 1);
-                    j--;
-                }
-            }
-        }
-
-        if (addNewDate) {
-            selectedDates.push(date);
-        }
-
-        sortDates();
-    }
-
-    /**
      * this function handles the interaction when a day is clicked, it selects a new date
      *
      * @param {MouseEvent} e
@@ -294,15 +52,15 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType}) {
         } else {
             if (editMode) {
                 if (selectedDate > date) {
-                    deleteDate([date, selectedDate]);
+                    deleteDate([date, selectedDate],selectedDates);
                 } else {
-                    deleteDate([selectedDate, date]);
+                    deleteDate([selectedDate, date],selectedDates);
                 }
             } else {
                 if (selectedDate > date) {
-                    newDate([date, selectedDate]);
+                    newDate([date, selectedDate],selectedDates);
                 } else {
-                    newDate([selectedDate, date]);
+                    newDate([selectedDate, date],selectedDates);
                 }
             }
             selectedDate = null;
@@ -310,20 +68,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType}) {
 
         setDates(getDatesObject(selectedDates));
         setGrid(getGridObject(selectedMonth, selectedYear));
-    }
-
-    /**
-     * this function is used to convert the date number to a date object
-     *
-     * @param {number} date the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
-     * @returns {[number, number, number]} the return is a array with the year, month, and day the month is stored here from 0-11
-     */
-    function decodeDateNumber(date) {
-        const dateString = date.toString();
-        const year = parseInt(dateString.slice(0, 4), 10);
-        const month = parseInt(dateString.slice(4, 6), 10) - 1; // Subtract 1 to convert to 0-based month
-        const day = parseInt(dateString.slice(6, 8), 10);
-        return [year, month, day];
     }
 
     /**
@@ -360,24 +104,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType}) {
         }
 
         return dayClass;
-    }
-
-    /**
-     * this function is used to convert the date number to a HTML element for the dates column.
-     *
-     * @param {number} date the dates have a (year month day structure) e.g. 18890420 is 1889 Apr 20
-     * @param {number} i
-     * @returns {Element}
-     */
-    function convertDateToHTML(date) {
-        let decodeNumber = decodeDateNumber(date);
-        let month = getMonthName(decodeNumber[1]).substring(0, 3);
-
-        return (
-            <span>
-                {decodeNumber[2]} {month} {decodeNumber[0]}
-            </span>
-        );
     }
 
     /**
@@ -452,30 +178,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType}) {
         }
 
         return tableData;
-    }
-
-    /**
-     * this function is used to convert the month number to a string so it can be placed in the HTML code
-     *
-     * @param {number} month the month is stored here from 0-11 so 0 is January and 11 is December
-     * @returns {string}
-     */
-    function getMonthName(month) {
-        const months = [
-            "January",
-            "February",
-            "March",
-            "April",
-            "May",
-            "June",
-            "July",
-            "August",
-            "September",
-            "October",
-            "November",
-            "December",
-        ];
-        return months[month];
     }
 
     /**
