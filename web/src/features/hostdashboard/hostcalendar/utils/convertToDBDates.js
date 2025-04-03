@@ -1,3 +1,4 @@
+//This is written by Marijn Klappe
 /**
  * this function converts the selected dates to the datetypes in the database
  *

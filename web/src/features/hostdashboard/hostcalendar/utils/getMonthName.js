@@ -1,3 +1,4 @@
+//This is written by Marijn Klappe
 /**
  * this function is used to convert the month number to a string so it can be placed in the HTML code
  *

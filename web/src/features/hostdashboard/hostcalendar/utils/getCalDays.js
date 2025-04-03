@@ -1,3 +1,4 @@
+//This is written by Marijn Klappe
 import convertToNumDate from "./convertToDate";
 
 /**

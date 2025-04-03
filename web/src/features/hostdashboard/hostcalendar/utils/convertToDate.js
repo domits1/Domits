@@ -1,3 +1,4 @@
+//This is written by Marijn Klappe
 /**
  * convertToNumDate is a function that converts year, month, and day into a single date number
  *

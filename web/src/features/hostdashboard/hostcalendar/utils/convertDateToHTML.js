@@ -1,3 +1,4 @@
+//This is written by Marijn Klappe
 import decodeDateNumber from "./decodeDateNumber";
 import getMonthName from "./getMonthName";
 

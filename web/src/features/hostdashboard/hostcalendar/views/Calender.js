@@ -25,10 +25,16 @@ let editMode = false;
 /**
  * CalendarComponent is a component that displays a calendar
  * 
- * @param {string} calenderType
+ * @param {Object} props
+ * @param {*} props.passedProp
+ * @param {boolean} props.isNew
+ * @param {*} props.updateDates
+ * @param {"host" | "guest"} props.calenderType
+ * @param {1 | 2} props.displayMonths
+ * 
  * @returns {JSX.Element}
  */
-function CalendarComponent({ passedProp, isNew, updateDates, calenderType}) {
+function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displayMonths = 1 }) {
     const [selectedMonthState, setSelectedMonth] = useState(selectedMonth);
     const [selectedYearState, setSelectedYear] = useState(selectedYear);
     const [calenderGridObject, setGrid] = useState(
@@ -52,15 +58,15 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType}) {
         } else {
             if (editMode) {
                 if (selectedDate > date) {
-                    deleteDate([date, selectedDate],selectedDates);
+                    deleteDate([date, selectedDate], selectedDates);
                 } else {
-                    deleteDate([selectedDate, date],selectedDates);
+                    deleteDate([selectedDate, date], selectedDates);
                 }
             } else {
                 if (selectedDate > date) {
-                    newDate([date, selectedDate],selectedDates);
+                    newDate([date, selectedDate], selectedDates);
                 } else {
-                    newDate([selectedDate, date],selectedDates);
+                    newDate([selectedDate, date], selectedDates);
                 }
             }
             selectedDate = null;
@@ -264,9 +270,11 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType}) {
                         <table className="calender-days">{calenderGridObject}</table>
                     </div>
                 </div>
-                <div className="column">
-                    <div className="wrapper">{datesGridObject}</div>
-                </div>
+                {calenderType === 'host' && (
+                    <div className="column">
+                        <div className="wrapper">{datesGridObject}</div>
+                    </div>
+                )}
             </div>
             <div className="options-column">
                 <div className="option">

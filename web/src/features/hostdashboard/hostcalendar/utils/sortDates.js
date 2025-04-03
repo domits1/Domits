@@ -1,3 +1,5 @@
+//This is written by Marijn Klappe
+
 /**
  * this function sorts the dates in the selectedDates array
  *
