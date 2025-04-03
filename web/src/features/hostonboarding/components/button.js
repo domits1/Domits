@@ -2,7 +2,7 @@
 
 import { useNavigate } from 'react-router-dom';
 
-function Button({ btnText, onClick, routePath, disabled, className }) {
+function Button({ btnText, onClick, routePath }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -11,7 +11,7 @@ function Button({ btnText, onClick, routePath, disabled, className }) {
   };
 
   return (
-    <button onClick={handleClick} className={`onboarding-button ${className} ${disabled ? 'button-disabled' : ''}`} disabled={disabled}>
+    <button onClick={handleClick} className="onboarding-button">
       {btnText}
     </button>
   );

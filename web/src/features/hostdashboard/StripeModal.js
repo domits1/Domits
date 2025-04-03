@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './styles/StripeModal.module.css';
+import styles from './StripeModal.module.css';
 
 const StripeModal = ({ isOpen, onClose }) => {
   return (

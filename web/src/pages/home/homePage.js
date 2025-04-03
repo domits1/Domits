@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import "./styles/homePage.css";
+import "../home/homePage.css";
 import verifiedLogo from "../../images/icons/verify-icon.png";
 import checkMark from "../../images/icons/checkMark.png";
 import question from "../../images/icons/question.png";
@@ -65,7 +65,7 @@ import sleutelvrouw from "../../pages/home/Images/sleutelvrouw.webp";
 import {
   FetchAllPropertyTypes,
   FetchPropertyType,
-} from "./services/fetchProperties";
+} from "../home/services/fetchProperties";
 
 const Homepage = () => {
   const [searchResults, setSearchResults] = useState([]);

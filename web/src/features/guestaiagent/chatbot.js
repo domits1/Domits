@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import './styles/chatbot.css';
+import './chatbot.css';
 import { useUser } from '../auth/UserContext';
 import { Auth } from 'aws-amplify';
 
@@ -54,7 +54,7 @@ const Chat = () => {
   const loadChatHistory = async () => {
     try {
       const params = chatID ? { chatID } : { userID: user.id };
-      // const response = await axios.get('https://pfjspybvsi.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
+      const response = await axios.get('https://pfjspybvsi.execute-api.eu-north-1.amazonaws.com/default/uChatbotFetchChatHistory', { params });
       if (response.data.messages) {
         setMessages(response.data.messages.map(msg => ({
           text: msg.content,
@@ -64,7 +64,7 @@ const Chat = () => {
         scrollToBottom();
       }
     } catch (error) {
-      console.error('Error loading chat history:', error);
+      //console.error('Error loading chat history:', error);
     }
   };
 
@@ -126,7 +126,7 @@ const Chat = () => {
       if (chatID) payload.chatID = chatID;
       if (user) payload.userID = user.id;
 
-      // const response = await axios.post('http://localhost:3001/query', payload);
+      const response = await axios.post('http://localhost:3001/query', payload);
       if (response.data.chatID && !chatID) {
         setChatID(response.data.chatID);
         localStorage.setItem('chatID', response.data.chatID);

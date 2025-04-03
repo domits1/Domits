@@ -1,6 +1,5 @@
 # Node modules
 node_modules/
-package-lock.json
 
 #amplify-do-not-edit-begin
 amplify/

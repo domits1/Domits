@@ -1,5 +1,5 @@
 import React from "react";
-import styles from "./styles/hostverification.module.css";
+import styles from "./hostverification.module.css";
 import { countries } from "./store/countries";
 import { usePhoneNumberForm } from "./hooks/usePhoneNumberForm";
 import Toast from "../../../components/toast/Toast";

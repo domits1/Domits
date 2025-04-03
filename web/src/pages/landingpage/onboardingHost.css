@@ -196,33 +196,13 @@ h2{
 }
 
 .accommodation-types {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 25px;
-  align-items: flex-start;
-  border: 1px solid #ccc;
-  border-radius: 10px;
-  background-color: #f9f9f9;
-  width: 80%; /* Increased from 450px to percentage */
-  max-width: 800px; /* Add max-width to prevent it from getting too wide */
-  margin: 0 40px; /* Changed to equal margins on both sides */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.accommodation-types .option {
-  display: flex;
+  padding: 5%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-gap: 5%;
+  justify-items: center;
   align-items: center;
-  padding: 10px;
-  border-radius: 5px;
-  transition: background-color 0.3s;
-  width: 100%; /* Make the option take the full width */
 }
-
-.accommodation-types .option:hover {
-  background-color: #e0e0e0;
-}
-
 .boat-types {
   padding: 5%;
   margin-bottom: 10%;
@@ -240,44 +220,28 @@ h2{
 }
 .option {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   align-items: center;
   cursor: pointer;
-  padding: 25px;
-  border: 1px solid transparent;
-  transition: all 0.3s;
-  width: 100%;
+  padding: 1em;
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
 }
 
 .option.selected {
-  background-color: #f0f7ff;
-  border-color: #006ce4;
-}
-
-.option:hover {
-  background-color: #f5f5f5;
-  border-color: #e7e7e7;
+  border-color: #003366;
 }
 
 .accommodation-icon {
-  width: 65px;
-  height: 65px;
-  margin-right: 22px;
-  margin-bottom: 0;
+  width: 7.5vw;
+  height: auto;
+  margin-bottom: 5%;
 }
 
 .accommodation-types .option p {
   margin: 0;
   font-size: 14px;
   text-align: center;
-}
-.option-text {
-  flex-grow: 1;
-  text-align: left;
-  font-size: 22px;
-  font-weight: 500;
-  color: #262626;
-  letter-spacing: -0.2px;
 }
 .onboarding-button-box {
   display: flex;

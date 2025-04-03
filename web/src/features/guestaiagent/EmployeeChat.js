@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import './styles/EmployeeChat.css';
+import './EmployeeChat.css';
 import { useUser } from '../auth/UserContext';
 import { Auth } from 'aws-amplify';
 

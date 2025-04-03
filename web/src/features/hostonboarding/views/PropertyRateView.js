@@ -54,7 +54,7 @@ function PricingView() {
       </section>
       <nav className="onboarding-button-box">
         <Button
-          routePath={`/hostonboarding/${accommodationType}/photos`}
+          routePath={`/hostonboarding/${accommodationType}/description`}
           btnText="Go back"
         />
         <Button

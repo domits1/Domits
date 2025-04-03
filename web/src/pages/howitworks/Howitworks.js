@@ -1,5 +1,5 @@
 import React from "react";
-import './styles/howitworksrework.css';
+import './howitworksrework.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch, faCalendarAlt, faUser } from '@fortawesome/free-solid-svg-icons';
 

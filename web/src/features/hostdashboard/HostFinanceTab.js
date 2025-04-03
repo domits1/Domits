@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Pages from "./Pages.js";
-import "./styles/HostFinanceTab.css";
+import "./HostFinanceTab.css";
 import { useNavigate } from "react-router-dom";
 import { Auth } from "aws-amplify";
 
