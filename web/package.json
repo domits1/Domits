@@ -40,8 +40,8 @@
     "build": "react-scripts build",
     "test": "react-scripts test --transformIgnorePatterns 'node_modules/(?!axios)/'",
     "eject": "react-scripts eject",
-    "watch": "sass --watch src/styles/sass/app.scss src/styles/index.css",
-    "build-sass": "sass src/styles/sass/app.scss src/styles/index.css",
+    "watch": "sass --watch src/styles/sass/app.scss src/index.css",
+    "build-sass": "sass src/styles/sass/app.scss src/index.css",
     "cypress:open": "src/tests/cypress open"
   },
   "devDependencies": {
