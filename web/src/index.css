@@ -1661,6 +1661,7 @@
   cursor: pointer;
   margin-top: 15px;
 }
+
 .loginButton:hover {
   background: #6fb873;
 }
@@ -1680,6 +1681,7 @@
   cursor: pointer;
   margin-top: 15px;
 }
+
 .registerButtonLogin:hover {
   background: #4a86c3;
 }
@@ -1727,18 +1729,6 @@ label {
   align-items: center;
   display: inline-flex;
 }
-.loginInput.passwordContainer {
-  position: relative;
-}
-.loginInput.passwordContainer .togglePasswordButton {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-}
 
 .emailSection {
   padding: 6rem;
@@ -1771,6 +1761,26 @@ label {
   opacity: 0.7;
   color: white;
   border-radius: 5px;
+}
+
+.passwordContainer {
+  position: relative;
+}
+
+.loginInput {
+  width: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.togglePasswordButton {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
 }
 
 @font-face {
