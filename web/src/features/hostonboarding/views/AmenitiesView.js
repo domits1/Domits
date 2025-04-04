@@ -3,6 +3,7 @@ import AmenityCategory from "../components/AmenityCategory";
 import useFormStore from "../stores/formStore";
 import { useParams } from "react-router-dom";
 import OnboardingButton from "../components/OnboardingButton";
+import "../styles/onboardingHost.css"
 
 function AmenitiesView() {
   const { type: accommodationType } = useParams();

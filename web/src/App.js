@@ -68,7 +68,7 @@ import MenuBar from "./components/base/MenuBar";
 import HostFinanceTab from "./features/hostdashboard/HostFinanceTab";
 import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
 import PropertyGuestAmountView from './features/hostonboarding/views/PropertyGuestAmountView';
-import PropertyAmenitiesView from './features/hostonboarding/views/PropertyAmenitiesView';
+import PropertyAmenitiesView from './features/hostonboarding/views/AmenitiesView';
 
 import AccommodationTypeView from "./features/hostonboarding/views/AccommodationTypeView.js";
 import GuestAccessView from "./features/hostonboarding/views/HouseTypeView.js";
@@ -76,7 +76,7 @@ import BoatTypeView from "./features/hostonboarding/views/BoatTypeView.js";
 import CamperTypeView from "./features/hostonboarding/views/CamperTypeView.js";
 import AddressInputView from "./features/hostonboarding/views/PropertyLocationView.js";
 import CapacityView from "./features/hostonboarding/views/PropertyGuestAmountView.js";
-import AmenitiesView from "./features/hostonboarding/views/PropertyAmenitiesView.js";
+import AmenitiesView from "./features/hostonboarding/views/AmenitiesView.js";
 import HouseRulesView from "./features/hostonboarding/views/PropertyHouseRulesView.js";
 import PhotosView from "./features/hostonboarding/views/PropertyPhotosView.js";
 import AccommodationTitleView from "./features/hostonboarding/views/PropertyNameView.js";
