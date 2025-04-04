@@ -3,7 +3,7 @@
 import CamperTypeSelector from "../components/TypeSelector";
 import { camperData } from "../constants/camperData";
 import useFormStore from "../stores/formStore";
-import onboardingNextButton from "../components/onboardingNextButton";
+import OnboardingButton from "../components/OnboardingButton";
 
 function CamperTypeView() {
   const setCamperType = useFormStore((state) => state.setCamperType);
@@ -22,8 +22,8 @@ function CamperTypeView() {
         onSelectType={setCamperType}
       />
       <nav className="onboarding-button-box">
-        <onboardingNextButton routePath="/hostonboarding" btnText="Back" />
-        <onboardingNextButton routePath="/hostonboarding/camper/address" btnText="Proceed" />
+        <OnboardingButton routePath="/hostonboarding" btnText="Back" />
+        <OnboardingButton routePath="/hostonboarding/camper/address" btnText="Proceed" />
       </nav>
     </main>
   );

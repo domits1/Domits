@@ -1,10 +1,10 @@
 // Desc: Step 1 - Choose the type of accommodation you want to list on the platform
 
 import AccommodationTypeSelector from "../components/TypeSelector";
-import Button from "../components/button";
 import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType";
 import { accommodationData } from "../constants/propertyTypeData";
 import useFormStore from "../stores/formStore";
+import OnboardingButton from "../components/OnboardingButton";
 
 function AccommodationTypeView() {
   const selectedAccommodationType = useFormStore(
@@ -28,8 +28,8 @@ function AccommodationTypeView() {
         onSelectType={setAccommodationType}
       />
       <nav className="onboarding-button-box">
-        <Button routePath="/hostdashboard" btnText="Go to dashboard" />
-        <Button onClick={handleProceed} btnText="Proceed" />
+        <OnboardingButton routePath="/hostdashboard" btnText="Go to dashboard" />
+        <OnboardingButton onClick={handleProceed} btnText="Proceed" />
       </nav>
     </main>
   );

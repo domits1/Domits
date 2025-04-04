@@ -82,7 +82,7 @@
     margin-right: auto;
 }
 
-.onboardingNextButton {
+.OnboardingButton {
     width: 45%;
     padding: 14px;
     font-size: 16px;
@@ -95,7 +95,7 @@
     transition: background 0.3s;
 }
 
-.onboardingNextButton:hover {
+.OnboardingButton:hover {
     background: #27466c;
 }
 

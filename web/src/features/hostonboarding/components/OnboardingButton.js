@@ -1,8 +1,8 @@
-// Desc: Button component for onboarding
+// Desc: OnboardingButton component for onboarding
 
 import { useNavigate } from 'react-router-dom';
 
-function Button({ btnText, onClick, routePath }) {
+export default function OnboardingButton({ btnText, onClick, routePath }) {
   const navigate = useNavigate();
 
   const handleClick = () => {
@@ -16,5 +16,3 @@ function Button({ btnText, onClick, routePath }) {
     </button>
   );
 }
-
-export default Button;

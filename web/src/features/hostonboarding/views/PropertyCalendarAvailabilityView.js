@@ -3,7 +3,7 @@ import CalendarComponent from "../../hostdashboard/hostcalendar/views/Calender";
 import { useParams } from "react-router-dom";
 import StayControl from "../components/StayControl";
 import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
-import onboardingNextButton from "../components/onboardingNextButton";
+import OnboardingButton from "../components/OnboardingButton";
 import { useHandleLegalProceed } from "../hooks/usePropertyRegistrationNumber";
 
 function AvailabilityView() {
@@ -32,11 +32,11 @@ function AvailabilityView() {
       />
 
       <nav className="onboarding-button-box">
-        <onboardingNextButton
+        <OnboardingButton
           routePath={`/hostonboarding/${accommodationType}/pricing`}
           btnText="Go back"
         />
-        <onboardingNextButton onClick={handleProceed} btnText="Proceed" />
+        <OnboardingButton onClick={handleProceed} btnText="Proceed" />
       </nav>
     </main>
   );

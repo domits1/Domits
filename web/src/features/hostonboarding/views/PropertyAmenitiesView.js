@@ -2,7 +2,7 @@ import { amenities } from "../constants/propertyAmenitiesData";
 import AmenityCategory from "../components/AmenityCategory";
 import useFormStore from "../stores/formStore";
 import { useParams } from "react-router-dom";
-import onboardingNextButton from "../components/onboardingNextButton";
+import OnboardingButton from "../components/OnboardingButton";
 
 function AmenitiesView() {
   const { type: accommodationType } = useParams();
@@ -41,8 +41,8 @@ function AmenitiesView() {
         ))}
       </div>
       <nav className="onboarding-button-box">
-        <onboardingNextButton routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Go back" />
-        <onboardingNextButton routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" />
+        <OnboardingButton routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Go back" />
+        <OnboardingButton routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" />
       </nav>
     </main>
   );
