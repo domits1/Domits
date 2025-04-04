@@ -1,9 +1,10 @@
-import {ActivityIndicator, View} from "react-native";
+import {View} from "react-native";
 import {Calendar, CalendarUtils} from "react-native-calendars/src/index";
 import {styles} from "../styles/propertyDetailsStyles";
 import React, {useCallback, useEffect, useState} from "react";
+import LoadingScreen from "../../loadingscreen/screens/LoadingScreen";
 
-const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, property}) => {
+const SelectBookingDatesCalendarView = ({onFirstDateSelected, onLastDateSelected, property}) => {
     const [firstSelectedDate, setFirstSelectedDate] = useState(null);
     const [lastSelectedDate, setLastSelectedDate] = useState(null);
     const [markedDates, setMarkedDates] = useState({})
@@ -129,11 +130,7 @@ const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, pro
 
     // Loading view for calendar
     if (calendarLoading) {
-        return (
-            <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color="#0000ff"/>
-            </View>
-        );
+        return <LoadingScreen loadingName={"calendar"}/>
     }
 
     return (
@@ -170,4 +167,4 @@ const SelectBookingDateCalendar = ({onFirstDateSelected, onLastDateSelected, pro
     )
 }
 
-export default SelectBookingDateCalendar;
+export default SelectBookingDatesCalendarView;

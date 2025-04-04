@@ -1,7 +1,7 @@
 import React from 'react';
-import {View, ScrollView, StyleSheet, Button, SafeAreaView} from 'react-native';
-import Header from '../header/header';
-import Accommodations from './Acommodations'; // Import the new component
+import {SafeAreaView, ScrollView, StyleSheet} from 'react-native';
+import Header from '../../header/header';
+import PropertiesSearchResultsScreen from './PropertiesSearchResultsScreen';
 
 function HomeScreen() {
 
@@ -9,7 +9,7 @@ function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView stickyHeaderIndices={[0]}>
         <Header />
-        <Accommodations />
+        <PropertiesSearchResultsScreen />
       </ScrollView>
     </SafeAreaView>
   );

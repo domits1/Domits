@@ -1,13 +1,15 @@
 import React, {useEffect, useState} from 'react';
-import {ActivityIndicator, Image, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import FetchAccommodationsData from '../features/search/FetchAccommodationsData'
-import FormatAccommodationData from "../components/utils/mappings/FormatAccommodationData";
-import TranslatedText from "../features/translation/components/TranslatedText";
+import FetchAccommodationsData from './hooks/FetchAccommodationsData'
+import FormatAccommodationData from "../../components/utils/mappings/FormatAccommodationData";
+import TranslatedText from "../translation/components/TranslatedText";
+import {styles} from "./styles/PropertiesSearchResultsStyles";
 
-const Accommodations = ({searchResults}) => {
+const PropertiesSearchResultsScreen = ({searchResults}) => {
     const [accommodationsList, setAccommodationsList] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [containerWidth, setContainerWidth] = useState(null);
     const navigation = useNavigation();
 
     useEffect(() => {
@@ -21,7 +23,7 @@ const Accommodations = ({searchResults}) => {
     if (loading) {
         return (
             <View style={styles.loaderContainer}>
-                <ActivityIndicator size="large" color="#0000ff"/>
+                <ActivityIndicator size="large" color="green"/>
             </View>
         );
     }
@@ -48,10 +50,16 @@ const Accommodations = ({searchResults}) => {
         <ScrollView contentContainerStyle={styles.container}>
             {accommodationsList.map(accommodation => (
                 <TouchableOpacity
-                    style={styles.card}
+                    style={[styles.card, containerWidth ? { width: containerWidth } : null]}
                     key={accommodation.id}
                     onPress={() => handleAccommodationPress(accommodation)}>
-                    <Image source={{uri: accommodation.image}} style={styles.image}/>
+                    <Image source={{uri: accommodation.image}}
+                           style={styles.image}
+                           onLayout={(event) => {
+                               const { width } = event.nativeEvent.layout;
+                               setContainerWidth(width);
+                           }}
+                    />
                     <View style={styles.cardContent}>
                         <Text style={styles.title}>
                             {accommodation.city}, {accommodation.country}
@@ -71,54 +79,4 @@ const Accommodations = ({searchResults}) => {
     );
 };
 
-const styles = StyleSheet.create({
-    container: {
-        padding: 20,
-    },
-    loaderContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    card: {
-        backgroundColor: '#fff',
-        borderRadius: 10,
-        overflow: 'hidden',
-        marginBottom: 20,
-    },
-    image: {
-        width: '100%',
-        maxWidth: 400,
-        borderRadius: 15,
-        aspectRatio: 1,
-        alignSelf: 'center'
-    },
-    cardContent: {
-        padding: 10,
-    },
-    title: {
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
-    price: {
-        fontSize: 16,
-        color: 'black',
-        fontWeight: 'bold',
-        textDecorationLine: 'underline'
-    },
-    details: {
-        fontSize: 14,
-        marginTop: 5,
-    },
-    specs: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginTop: 10,
-    },
-    spec: {
-        fontSize: 12,
-        color: '#555',
-    },
-});
-
-export default Accommodations;
+export default PropertiesSearchResultsScreen;
