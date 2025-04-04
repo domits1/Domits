@@ -13,7 +13,7 @@ export async function submitAccommodation(propertyDTO) {
     const authToken = getAccessToken();
 
     // Retrieve formdata
-    const {accommodationDetails} = useFormStore.getState();
+    const { accommodationDetails} = useFormStore.getState();
 
 
     console.log(
