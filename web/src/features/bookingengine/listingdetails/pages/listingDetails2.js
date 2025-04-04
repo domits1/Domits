@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import Loading from "../../hostdashboard/Loading";
+import Loading from "../../../hostdashboard/Loading";
 import FetchPropertyById from "../hooks/fetchPropertyById";
-import "../styles/listingDetails2.css";
+import "../../styles/listingDetails2.css";
+import ImageGallery from "../components/imageGallery";
 
 const ListingDetails2 = () => {
   const { search } = useLocation();
@@ -30,26 +31,7 @@ const ListingDetails2 = () => {
       <div className="container">
         <div className="left-section">
           <h2 className="title">{property.property.title}</h2>
-          <div className="image-gallery">
-            <img
-              className="main-image"
-              src={`https://accommodation.s3.eu-north-1.amazonaws.com/${property.images[0].key}`}
-              alt="Main"
-            />
-            <div className="small-images-container">
-              {property.images.map((image) => {
-                if (image !== property.images[0]) {
-                  return (
-                    <img
-                      className="small-image"
-                      src={`https://accommodation.s3.eu-north-1.amazonaws.com/${image.key}`}
-                      alt={`Extra ${property.images.indexOf(image)}`}
-                    />
-                  );
-                }
-              })}
-            </div>
-          </div>
+          <ImageGallery property={property} />
           <p className="host-info">
             <span className="rating">★ 4.97</span> | Hosted by{" "}
             <span className="host-name">Huub Homer</span>

@@ -99,7 +99,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
-import ListingDetails2 from "./features/bookingengine/pages/listingDetails2";
+import ListingDetails2 from "./features/bookingengine/listingdetails/pages/listingDetails2";
 
 Modal.setAppElement("#root");
 
