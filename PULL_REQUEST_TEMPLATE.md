@@ -47,5 +47,5 @@ Reviewer(s): @[GitHub username]
 Additional Info: [Add any additional information here]
 
 ## Keep or delete my branch
-- [ ] Delete my branch
+- [x] Delete my branch
 - [ ] Keep my branch
