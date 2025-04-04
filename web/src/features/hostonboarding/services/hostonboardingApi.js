@@ -1,21 +1,17 @@
 import useFormStore from "../stores/formStore";
 import mockData from './data/mockData.json';
+import {getAccessToken} from "../../../services/getAccessToken";
 
 export async function submitAccommodation() {
 
     const onboardingData = mockData;
 
-    // TODO Implement proper cognito security service
     // Retrieve the token from localStorage
-    const authToken = localStorage.getItem("CognitoIdentityServiceProvider.78jfrfhpded6meevllpfmo73mo.329b44d1-14c7-4af7-94bc-3424af6c535d.accessToken");
+    const authToken = getAccessToken;
+
+    // Retrieve formdata
     const {accommodationDetails} = useFormStore.getState();
     console.log("accommodationDetails: ", accommodationDetails)
-
-    // Check if token is retrieved
-    if (!authToken) {
-        console.error("User not logged in. Authtoken not found in expected place.");
-        return;
-    }
 
     const API_BASE_URL =
         "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";

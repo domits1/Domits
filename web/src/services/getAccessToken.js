@@ -12,5 +12,11 @@ export function getAccessToken() {
         return null;
     }
 
+    // Check if token is retrieved
+    if (!keys) {
+        console.error("User not logged in. Authtoken not found in expected place.");
+        return;
+    }
+
     return keys.length === 1 ? localStorage.getItem(keys[0]) : null;
 };
