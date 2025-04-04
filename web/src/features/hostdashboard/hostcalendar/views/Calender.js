@@ -4,6 +4,7 @@
  * If you do not understand what is happening here, do not change anything. If something needs to be adjusted, contact me via discord --@marijn3--
  */
 import React, { useState } from "react";
+
 import convertDatesToDBDates from "../utils/convertToDBDates";
 import decodeDateNumber from "../utils/decodeDateNumber";
 import convertDateToHTML from "../utils/convertDateToHTML";
@@ -11,6 +12,8 @@ import getCalDays from "../utils/getCalDays";
 import newDate from "../utils/newDate";
 import deleteDate from "../utils/deleteDate";
 import getMonthName from "../utils/getMonthName";
+import getGridObject from "../utils/getGridObject";
+
 import leftArrowSVG from "./left-arrow.svg";
 import rightArrowSVG from "./right-arrow.svg";
 import trashSVG from "./trash.svg";
@@ -38,7 +41,7 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
     const [selectedMonthState, setSelectedMonth] = useState(selectedMonth);
     const [selectedYearState, setSelectedYear] = useState(selectedYear);
     const [calenderGridObject, setGrid] = useState(
-        getGridObject(selectedMonth, selectedYear),
+        getGridObject(selectedMonth, selectedYear,selectedDates,selectedDate,dayClick),
     );
     const [datesGridObject, setDates] = useState(getDatesObject(selectedDates));
     const [editModeClass, setEditMode] = useState("switch-btn");
@@ -73,43 +76,7 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
         }
 
         setDates(getDatesObject(selectedDates));
-        setGrid(getGridObject(selectedMonth, selectedYear));
-    }
-
-    /**
-     * this function returns the class name of the day, this is used to style the day
-     *
-     * @param {number} date the date has a (year month day structure) e.g. 20250112 is 2025 Jan 12
-     * @param {[number,number]} currentDate this is the current selected month and year month is stored as 0-11
-     * @returns {string}
-     */
-    function getDayClassName(date, currentDate) {
-        let dayClass = "";
-        let dateDecode = decodeDateNumber(date);
-        if (dateDecode[1] != currentDate[0]) {
-            dayClass += "other-month";
-        }
-
-        if (date == selectedDate) {
-            dayClass += " day-selected";
-        }
-
-        for (let i = 0; i < selectedDates.length; i++) {
-            let v = selectedDates[i];
-            if (date >= v[0] && date <= v[1]) {
-                dayClass += " day-range";
-            }
-
-            if (date == v[0]) {
-                dayClass += " day-range-start";
-            }
-
-            if (date == v[1]) {
-                dayClass += " day-range-end";
-            }
-        }
-
-        return dayClass;
+        setGrid(getGridObject(selectedMonth, selectedYear,selectedDates,selectedDate,dayClick));
     }
 
     /**
@@ -124,7 +91,7 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
             anchorElement.parentElement.parentElement.getAttribute("index");
         selectedDates.splice(index, 1);
         setDates(getDatesObject(selectedDates));
-        setGrid(getGridObject(selectedMonth, selectedYear));
+        setGrid(getGridObject(selectedMonth, selectedYear,selectedDates,selectedDate,dayClick));
     }
 
     /**
@@ -151,42 +118,6 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
     }
 
     /**
-     * this function returns the month days as an HTML element
-     *
-     * @param {number} month the month is stored here from 0-11 so 0 is January and 11 is December
-     * @param {number} year
-     * @returns {Element[]}
-     */
-    function getGridObject(month, year) {
-        const calDays = getCalDays(month, year);
-        const tableData = [];
-
-        for (let i = 0; i < 6; i++) {
-            tableData.push(
-                <tr>
-                    {[...Array(7)].map((_, j) => (
-                        <td>
-                            <a
-                                className={getDayClassName(calDays[i * 7 + j].date, [
-                                    month,
-                                    year,
-                                ])}
-                                dateNumber={calDays[i * 7 + j].date}
-                                onClick={dayClick}
-                                href="#day-click"
-                            >
-                                {calDays[i * 7 + j].day}
-                            </a>
-                        </td>
-                    ))}
-                </tr>,
-            );
-        }
-
-        return tableData;
-    }
-
-    /**
      * this function is called when the user clicks the nextMonth button, the Calendar is updated with the days of the next month
      *
      * @param {MouseEvent} e
@@ -203,7 +134,7 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
 
         setSelectedMonth(selectedMonth);
         setSelectedYear(selectedYear);
-        setGrid(getGridObject(selectedMonth, selectedYear));
+        setGrid(getGridObject(selectedMonth, selectedYear,selectedDates,selectedDate,dayClick));
     }
 
     /**
@@ -223,7 +154,7 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
 
         setSelectedMonth(selectedMonth);
         setSelectedYear(selectedYear);
-        setGrid(getGridObject(selectedMonth, selectedYear));
+        setGrid(getGridObject(selectedMonth, selectedYear,selectedDates,selectedDate,dayClick));
     }
 
     /**
@@ -231,7 +162,7 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
      *
      * @param {MouseEvent} e
      */
-    function switchBtn(e) {
+    function switchBtnFunc(e) {
         e.preventDefault();
         if (editMode) {
             editMode = false;
@@ -281,7 +212,7 @@ function CalendarComponent({ passedProp, isNew, updateDates, calenderType, displ
                     <h4>Switch edit mode</h4>
                     <a
                         className={editModeClass}
-                        onClick={switchBtn}
+                        onClick={switchBtnFunc}
                         href="#switch-edit-mode"
                     ></a>
                 </div>
