@@ -37,22 +37,17 @@ const ListingDetails2 = () => {
               alt="Main"
             />
             <div className="small-images-container">
-              {/*{property.images.map()}*/}
-              <img
-                className="small-image"
-                src={`https://accommodation.s3.eu-north-1.amazonaws.com/${property.images[1].key}`}
-                alt="Extra 1"
-              />
-              <img
-                className="small-image"
-                src={`https://accommodation.s3.eu-north-1.amazonaws.com/${property.images[2].key}`}
-                alt="Extra 2"
-              />
-              <img
-                className="small-image"
-                src={`https://accommodation.s3.eu-north-1.amazonaws.com/${property.images[3].key}`}
-                alt="Extra 3"
-              />
+              {property.images.map((image) => {
+                if (image !== property.images[0]) {
+                  return (
+                    <img
+                      className="small-image"
+                      src={`https://accommodation.s3.eu-north-1.amazonaws.com/${image.key}`}
+                      alt={`Extra ${property.images.indexOf(image)}`}
+                    />
+                  );
+                }
+              })}
             </div>
           </div>
           <p className="host-info">
