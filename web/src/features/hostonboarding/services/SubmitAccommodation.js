@@ -2,47 +2,43 @@ import useFormStore from "../stores/formStore";
 import mockData from './data/mockData.json';
 import {getAccessToken} from "../../../services/getAccessToken";
 
-let propertyDTO;
-export async function submitAccommodation(propertyDTO) {
+export async function submitAccommodation() {
+    const {API_BASE_URL, request} = collectData();
+    return await postNewAccommodation();
 
-    if (propertyDTO.size === 0){
-        propertyDTO = mockData;
+    async function postNewAccommodation() {
+        try {
+            console.log("Start submitAccommodation, using url: ", API_BASE_URL);
+            console.log("request:\n", request);
+
+            const response = await fetch(API_BASE_URL, request);
+            return response;
+        } catch (error) {
+            throw error;
+        }
     }
 
-    // Retrieve the token from localStorage
-    const authToken = getAccessToken();
 
-    // Retrieve formdata
-    const {accommodationDetails} = useFormStore.getState();
+    function collectData() {
+        // API URL
+        const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
+        // Retrieve form data from FormStore
+        const {accommodationDetails} = useFormStore.getState();
 
-    console.log(
-        "Submitting accommodationDetails: ",
-        JSON.stringify(accommodationDetails, null, 2),
-    );
-
-    const API_BASE_URL =
-        "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
-
-    console.log("Submitting data:", onboardingData || mockData);
-
-    const request = {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": authToken,
-        },
-        body: JSON.stringify(onboardingData || mockData), // Stringify the data object or use mockdata
-    };
-
-    try {
-        // Using Fetch
-        console.log("Start submitAccommodation, using url: ", API_BASE_URL);
-        console.log("request:\n", request);
-
-        const response = await fetch(API_BASE_URL, request);
-        return response;
-    } catch (error) {
-        throw error;
+        // Log the formStore data
+        console.log(
+            "Submitting accommodationDetails: ",
+            JSON.stringify(accommodationDetails, null, 2),
+        );
+        const request = {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": getAccessToken(),    // Retrieve the token from localStorage
+            },
+            body: JSON.stringify(accommodationDetails), // Use the REAL form data
+        };
+        return {API_BASE_URL, request};
     }
 }
