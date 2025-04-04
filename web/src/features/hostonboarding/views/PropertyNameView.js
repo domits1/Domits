@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import TextAreaField from "../components/TextAreaField";
 import { useAccommodationTitle } from "../hooks/usePropertyName";
-import Button from "../components/button";
+import onboardingNextButton from "../components/onboardingNextButton";
 
 function AccommodationTitleView() {
   const { type: accommodationType } = useParams();
@@ -33,11 +33,11 @@ function AccommodationTitleView() {
       />
 
       <nav className="onboarding-button-box">
-        <Button
+        <onboardingNextButton
           routePath={`/hostonboarding/${accommodationType}/photos`}
           btnText="Go back"
         />
-        <Button
+        <onboardingNextButton
           routePath={`/hostonboarding/${accommodationType}/description`}
           btnText="Proceed"
         />

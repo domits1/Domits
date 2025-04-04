@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useDescription } from "../hooks/usePropertyDescription";
 import TextAreaField from "../components/TextAreaField";
 import SpecificationForm from "../components/SpecificationForm";
-import Button from "../components/button";
+import onboardingNextButton from "../components/onboardingNextButton";
 
 function DescriptionView() {
   const { type: accommodationType } = useParams();
@@ -48,11 +48,11 @@ function DescriptionView() {
         updateSpecification={updateSpecification}
       />
       <nav className="onboarding-button-box">
-        <Button
+        <onboardingNextButton
           routePath={`/hostonboarding/${accommodationType}/title`}
           btnText="Go back"
         />
-        <Button
+        <onboardingNextButton
           routePath={`/hostonboarding/${accommodationType}/pricing`}
           btnText="Proceed"
         />

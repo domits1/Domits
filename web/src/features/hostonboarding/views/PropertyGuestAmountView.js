@@ -4,7 +4,7 @@ import GuestAmountItem from "../components/GuestAmountItem";
 import { useParams } from "react-router-dom";
 import useFormStore from "../stores/formStore";
 import { accommodationFields } from "../constants/propertyAmountofGuestData";
-import Button from "../components/button";
+import onboardingNextButton from "../components/onboardingNextButton";
 
 function GuestAmountView() {
   const { type: accommodationType } = useParams();
@@ -45,8 +45,8 @@ function GuestAmountView() {
         ))}
       </section>
       <nav className="onboarding-button-box">
-      <Button routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
-      <Button routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" />
+      <onboardingNextButton routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
+      <onboardingNextButton routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" />
       </nav>
     </main>
   );
