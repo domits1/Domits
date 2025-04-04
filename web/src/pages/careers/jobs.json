@@ -718,7 +718,8 @@
         "Strong attention to detail and impeccable grasp of the English language.",
         "Strong logical thinking and problem-solving skills.",
         "A good team player who is highly interested in everything related to the domain.",
-        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver.",
+        "Basic knowledge of SEO, SEA, and CRO is required."
       ],
       "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
       "extraInformation": [
@@ -737,10 +738,10 @@
     "category": "Growth",
     "location": "Haarlem, NL",
     "model": "Hybrid/Remote",
-    "description": "Currently we are forming the core growth team and looking for Marketing Automation & CRM specialisten. We're open for intern and trainee Marketing Automation & CRM specialisten. Interested? Send a message or read more...",
+    "description": "Currently we are forming the core growth team and looking for Marketing Automation & CRM specialists. We're open for intern and trainee Marketing Automation & CRM specialists. Interested? Send a message or read more...",
     "details": {
-      "jobDescription": "This is a remote or hybrid position. We are currently seeking a Rental Expert to join our team. We welcome both interns and trainees who are eager to develop into a Rental Expert role. If you're interested, send us a message or read on for more details about the position.",
-      "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Marketing Automation & CRM specialists to join us. We welcome both interns and trainee specialists, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
       "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
       "preferredExperience": [
         "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
@@ -750,24 +751,24 @@
         "Continuous integration and deployment (CI/CD)",
         "Cybersecurity testing"
       ],
-      "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
       "requirements": [
         "A university-level working and thinking mindset is a plus.",
-        "1 - 5+ years of experience in holiday rental is a strong advantage.",
+        "1 - 5+ years of experience as a Marketing Automation & CRM specialist.",
         "Excellent communication skills.",
-        "As a Rental Expert, you’ll work closely with the growth team to create value.",
-        "Strong attention to detail and an impeccable grasp of both Dutch and English. Knowledge of German and French is a plus.",
-        "Excellent verbal and written communication skills.",
+        "As a Marketing Automation & CRM specialist, you’ll work closely with the growth team to create valuable automations.",
+        "Ability to simplify complex Marketing Automation concepts for broader understanding.",
+        "Strong attention to detail and impeccable grasp of the English language.",
         "Strong logical thinking and problem-solving skills.",
         "A good team player who is highly interested in everything related to the domain.",
         "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
       ],
-      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll contact you as soon as possible to discuss the next steps.",
       "extraInformation": [
-        "Education: All levels/University.",
+        "Education Level: All levels/University.",
         "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-        "Working hours per week: 10 - 40+.",
-        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Working Hours Per Week: 10 - 40+.",
+        "Employment Types: Internship, Traineeship, Freelance, and Contract.",
         "Responsibilities: To be discussed in consultation."
       ]
     }
@@ -896,6 +897,39 @@
         "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
         "Working hours per week: 10 - 40+.",
         "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 22,
+    "title": "Success Specialist",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently, we are looking for a Success Specialist to join our team. We're open to interns and trainees interested in growing into the role. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently looking for a Success Specialist to join our team. We welcome both interns and trainees who are eager to develop into a Success Specialist role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience in holiday rental is a strong advantage.",
+        "Excellent communication skills.",
+        "As a Success Specialist, you’ll work closely with the growth team to create value.",
+        "Strong attention to detail and an impeccable grasp of both Dutch and English. Knowledge of German and French is a plus.",
+        "Excellent verbal and written communication skills.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll contact you as soon as possible to discuss the next steps.",
+      "extraInformation": [
+        "Education Level: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working Hours Per Week: 10 - 40+.",
+        "Employment Types: Internship, Traineeship, Freelance, and Contract.",
         "Responsibilities: To be discussed in consultation."
       ]
     }
