@@ -11,7 +11,12 @@ export async function submitAccommodation() {
 
     // Retrieve formdata
     const {accommodationDetails} = useFormStore.getState();
-    console.log("accommodationDetails: ", accommodationDetails)
+
+
+    console.log(
+        "Submitting accommodationDetails: ",
+        JSON.stringify(accommodationDetails, null, 2),
+    );
 
     const API_BASE_URL =
         "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";

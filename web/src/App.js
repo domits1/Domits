@@ -70,7 +70,7 @@ import PaymentConfirmPage from "./features/bookingengine/PaymentConfirmPage";
 import PropertyGuestAmountView from './features/hostonboarding/views/PropertyGuestAmountView';
 import PropertyAmenitiesView from './features/hostonboarding/views/PropertyAmenitiesView';
 
-import AccommodationTypeView from "./features/hostonboarding/views/PropertyTypeView.js";
+import AccommodationTypeView from "./features/hostonboarding/views/AccommodationTypeView.js";
 import GuestAccessView from "./features/hostonboarding/views/HouseTypeView.js";
 import BoatTypeView from "./features/hostonboarding/views/BoatTypeView.js";
 import CamperTypeView from "./features/hostonboarding/views/CamperTypeView.js";

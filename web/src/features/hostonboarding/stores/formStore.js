@@ -1,6 +1,7 @@
 import {create} from "zustand";
 import AccommodationDTO from "../services/AccommodationDTO";
 import {submitAccommodation} from "../services/hostonboardingApi";
+import {PropertyBuilder} from "../services/data/propertyBuilder";
 
 const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
@@ -222,74 +223,125 @@ const useFormStore = create((set) => ({
         const boatOrCamperSpecs = isBoat ? accommodationDetails.boatSpecifications : isCamper ? accommodationDetails.camperSpecifications : {};
 
         try {
-            const newFormat = new AccommodationDTO({
-                id: "0",
-                hostId: "0",
-                title: accommodationDetails.title,
-                subtitle: accommodationDetails.subtitle,
-                description: accommodationDetails.description,
-                guestCapacity: accommodationDetails.accommodationCapacity?.GuestAmount || 1,
-                registrationNumber: accommodationDetails.registrationNumber,
-                status: "INACTIVE",
-                propertyAmenities: [{amenityId: "1"}],
-                propertyAvailability: [{
-                    availableStartDate: 2042483993580, availableEndDate: 2142483993580,
-                },],
-                propertyAvailabilityRestrictions: [{
-                    restriction: "MinimumStay", value: 5
-                },], // TODO: remove hardcoded propertyCheckIn
-                propertyCheckIn: {
-                    checkIn: {from: 1, till: 5}, checkOut: {from: 5, till: 10},
-                }, // GENERAL DETAILS
-                propertyGeneralDetails: [{
-                    detail: "Bathrooms", value: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
-                }, {
-                    detail: "Bedrooms", value: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
-                }, {
-                    detail: "Beds", value: accommodationDetails.accommodationCapacity?.Beds || 0,
-                }, {
-                    detail: "Guests", value: accommodationDetails.accommodationCapacity?.GuestAmount || 1,
-                },],
-                propertyLocation: {
-                    country: "Dummy",
-                    city: "Dummy",
-                    street: "Dummy",
-                    houseNumber: 1,
-                    houseNumberExtension: "a",
-                    postalCode: "0000AB",
-                },
-                propertyPricing: {
-                    roomRate: accommodationDetails.Rent, cleaning: 0, service: 0,
-                }, // TODO: remove hardcoded propertyrules
-                propertyRules: [{
-                    rule: "PetsAllowed", value: true,
-                }, {
-                    rule: "SmokingAllowed", value: true,
-                }, {
-                    rule: "PartiesEventsAllowed", value: false,
-                },],
-                propertyType: {
-                    property_type: accommodationDetails.type, spaceType: "Full house",
-                },
-                propertyImages: [{
-                    key: "images/1/1/Image-1.webp",
-                },],
-                propertyTechnicalDetails: {
-                    length: 1,
-                    height: 1,
-                    fuelConsumption: 1,
-                    speed: 1,
-                    renovationYear: 2020,
-                    transmission: "Manual",
-                    generalPeriodicInspection: 2024,
-                    fourWheelDrive: true,
-                },
-            });
+            const builder = new PropertyBuilder()
+                .addProperty({
+                    title: accommodationDetails.title,
+                    subtitle: accommodationDetails.subtitle,
+                    description: accommodationDetails.description,
+                    livingArea: accommodationDetails.livingArea,
+                    numberOfBathrooms: accommodationDetails.numberOfBathrooms,
+                    numberOfRooms: accommodationDetails.numberOfRooms,
+                    numberOfBedrooms: accommodationDetails.numberOfBedrooms,
+                    numberOfSleepingSpots: accommodationDetails.numberOfSleepingSpots,
+                    floors: accommodationDetails.floors,
+                })
+                .addPropertyType(accommodationDetails.propertyType)
+                .addRules([
+                    {
+                        rule: "PetsAllowed",
+                        value: accommodationDetails.houseRules.AllowPets,
+                    },
+                    {
+                        rule: "SmokingAllowed",
+                        value: accommodationDetails.houseRules.AllowSmoking,
+                    },
+                    {
+                        rule: "PartiesEventsAllowed",
+                        value: accommodationDetails.houseRules.AllowParties,
+                    },
+                ])
+                .addPricing({
+                    roomRate: accommodationDetails.Rent,
+                    cleaning: accommodationDetails.CleaningFee,
+                    service: accommodationDetails.ServiceFee,
+                })
+                .addTechnicalVehicleDetails({
+                    length: accommodationDetails.length,
+                    height: accommodationDetails.height,
+                    fuelConsumption: accommodationDetails.fuelConsumption,
+                    speed: accommodationDetails.speed,
+                    renovationYear: accommodationDetails.renovationYear,
+                    transmission: accommodationDetails.transmission,
+                    generalPeriodicInspection:
+                    accommodationDetails.generalPeriodicInspection,
+                    fourWheelDrive: accommodationDetails.fourWheelDrive,
+                })
+                .addLocation(accommodationDetails.location)
+                .addImages(accommodationDetails.images)
+                .addAvailability(accommodationDetails.availability)
+                .addAvailabilityRestrictions(accommodationDetails.availabilityRestrictions)
+                .addCheckIn({
+                    checkIn: accommodationDetails.checkIn,
+                    checkOut: accommodationDetails.checkOut,
+                })
+                .addAmenities(accommodationDetails.amenities)
+                .addGeneralDetails(accommodationDetails.generalDetails);
 
-            console.log(
-                "Submitting accommodation data:",
-                JSON.stringify(newFormat, null, 2),
-            );
+            const propertyDto = builder.build();
+
+            console.log(propertyDto)
+
+            // const newFormat = new AccommodationDTO({
+            //     id: "0",
+            //     hostId: "0",
+            //     title: accommodationDetails.title,
+            //     subtitle: accommodationDetails.subtitle,
+            //     description: accommodationDetails.description,
+            //     guestCapacity: accommodationDetails.accommodationCapacity?.GuestAmount || 1,
+            //     registrationNumber: accommodationDetails.registrationNumber,
+            //     status: "INACTIVE",
+            //     propertyAmenities: [{amenityId: "1"}],
+            //     propertyAvailability: [{
+            //         availableStartDate: 2042483993580, availableEndDate: 2142483993580,
+            //     },],
+            //     propertyAvailabilityRestrictions: [{
+            //         restriction: "MinimumStay", value: 5
+            //     },],
+            //     propertyCheckIn: {
+            //         checkIn: {from: 1, till: 5}, checkOut: {from: 5, till: 10},
+            //     }, // GENERAL DETAILS
+            //     propertyGeneralDetails: [{
+            //         detail: "Bathrooms", value: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
+            //     }, {
+            //         detail: "Bedrooms", value: accommodationDetails.accommodationCapacity?.Bedrooms || 0,
+            //     }, {
+            //         detail: "Beds", value: accommodationDetails.accommodationCapacity?.Beds || 0,
+            //     }, {
+            //         detail: "Guests", value: accommodationDetails.accommodationCapacity?.GuestAmount || 1,
+            //     },],
+            //     propertyLocation: {
+            //         country: "Dummy",
+            //         city: "Dummy",
+            //         street: "Dummy",
+            //         houseNumber: 1,
+            //         houseNumberExtension: "a",
+            //         postalCode: "0000AB",
+            //     },
+            //     propertyRules: [{
+            //         rule: "PetsAllowed", value: true,
+            //     }, {
+            //         rule: "SmokingAllowed", value: true,
+            //     }, {
+            //         rule: "PartiesEventsAllowed", value: false,
+            //     },],
+            //     // propertyType: {
+            //     //     property_type: accommodationDetails.type, spaceType: "Full house",
+            //     // },
+            //     propertyImages: [{
+            //         key: "images/1/1/Image-1.webp",
+            //     },],
+            //     propertyTechnicalDetails: {
+            //         length: 1,
+            //         height: 1,
+            //         fuelConsumption: 1,
+            //         speed: 1,
+            //         renovationYear: 2020,
+            //         transmission: "Manual",
+            //         generalPeriodicInspection: 2024,
+            //         fourWheelDrive: true,
+            //     },
+            // });
+
 
             const response = await submitAccommodation()
             /// THIS is the result of the form:
