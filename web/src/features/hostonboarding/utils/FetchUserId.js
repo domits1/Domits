@@ -2,6 +2,7 @@ import React, { useEffect } from "react";
 import { Auth } from "aws-amplify"; // Assuming you're using AWS Amplify Auth
 import useFormStore from "../stores/formStore"; // Update with your store path
 
+// Todo: Old, renew
 const FetchUserId = () => {
   const setOwnerId = useFormStore((state) => state.setOwnerId);
 
