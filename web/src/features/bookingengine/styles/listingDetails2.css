@@ -33,7 +33,7 @@ Image galery
     display: grid;
     grid-template-columns: 1.7fr 1.3fr; /* Main image takes 2x width, small images take 1x */
     grid-template-rows: repeat(1, 1fr); /* Two rows for small images */
-    gap: 10px;
+    column-gap: 10px;
     align-items: center;
 }
 
