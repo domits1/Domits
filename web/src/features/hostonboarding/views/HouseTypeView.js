@@ -1,7 +1,7 @@
 // Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
 
 import GuestAccessTypeSelector from "../components/GuestAccessTypeSelector";
-import Button from "../components/button";
+import onboardingNextButton from "../components/onboardingNextButton";
 
 function GuestAccessView() {
   return (
@@ -25,8 +25,8 @@ function GuestAccessView() {
       </section>
 
       <nav className="onboarding-button-box">
-        <Button routePath="/hostonboarding" btnText="Go back" />
-        <Button routePath="/hostonboarding/accommodation/address" btnText="Proceed" />
+        <onboardingNextButton routePath="/hostonboarding" btnText="Go back" />
+        <onboardingNextButton routePath="/hostonboarding/accommodation/address" btnText="Proceed" />
       </nav>
     </main>
   );

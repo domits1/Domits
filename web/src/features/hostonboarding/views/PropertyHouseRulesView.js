@@ -2,7 +2,7 @@ import { useParams } from "react-router-dom";
 import HouseRuleCheckbox from "../components/HouseRuleCheckbox";
 import TimeSelector from "../components/TimeSelector";
 import { useHouseRules } from "../hooks/usePropertyHouseRules";
-import Button from "../components/button";
+import onboardingNextButton from "../components/onboardingNextButton";
 
 function HouseRulesView() {
   const { type: accommodationType } = useParams();
@@ -53,11 +53,11 @@ function HouseRulesView() {
         />
       </div>
       <nav className="onboarding-button-box">
-        <Button
+        <onboardingNextButton
           routePath={`/hostonboarding/${accommodationType}/amenities`}
           btnText="Go back"
         />
-        <Button
+        <onboardingNextButton
           routePath={`/hostonboarding/${accommodationType}/photos`}
           btnText="Proceed"
         />

@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import PricingRow from "../components/PricingRow";
 import { usePricing } from "../hooks/useProperyRate";
-import Button from "../components/button";
+import onboardingNextButton from "../components/onboardingNextButton";
 
 function PricingView() {
   const { type: accommodationType } = useParams();
@@ -53,11 +53,11 @@ function PricingView() {
         <PricingRow label="You earn" value={totalEarnings} readonly />
       </section>
       <nav className="onboarding-button-box">
-        <Button
+        <onboardingNextButton
           routePath={`/hostonboarding/${accommodationType}/description`}
           btnText="Go back"
         />
-        <Button
+        <onboardingNextButton
           routePath={`/hostonboarding/${accommodationType}/availability`}
           btnText="Proceed"
         />

@@ -2,7 +2,7 @@
 
 import { useParams } from "react-router-dom";
 import AddressFormFields from "../components/AddressFormFields";
-import Button from "../components/button";
+import onboardingNextButton from "../components/onboardingNextButton";
 import { useAddressInput } from "../hooks/usePropertyLocation";
 
 function AddressInputView() {
@@ -38,8 +38,8 @@ function AddressInputView() {
       </section>
 
       <nav className="onboarding-button-box">
-        <Button routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
-        <Button routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Proceed" />
+        <onboardingNextButton routePath={`/hostonboarding/${accommodationType}`} btnText="Go back" />
+        <onboardingNextButton routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Proceed" />
       </nav>
     </main>
   );
