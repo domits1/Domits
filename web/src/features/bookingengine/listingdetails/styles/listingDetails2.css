@@ -1,11 +1,35 @@
+.main {
+    display: inline;
+}
+
+.title-section {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    width: 100%;
+    height: 60px;
+}
+
+.title{
+    margin-left: 10px;
+    font-size: 1.5rem;
+    font-weight: 500;
+}
+
+.backButton {
+    text-decoration: underline;
+}
+
 /*
 Main Container
 */
 .container {
+    position: relative;
     display: flex;
     flex-direction: column;
-    padding: 20px;
     gap: 20px;
+    margin: 0 30px;
+    padding: 0;
 }
 
 @media (min-width: 768px) {
@@ -18,21 +42,18 @@ Main Container
 Images and details section
  */
 .left-section {
+    position: relative;
     flex: 2;
 }
 
-.title {
-    font-size: 24px;
-    font-weight: bold;
-}
 
 /*
 Image galery
  */
 .image-gallery {
     display: grid;
-    grid-template-columns: 1.7fr 1.3fr; /* Main image takes 2x width, small images take 1x */
-    grid-template-rows: repeat(1, 1fr); /* Two rows for small images */
+    grid-template-columns: 1.7fr 1.3fr;
+    grid-template-rows: repeat(1, 1fr);
     column-gap: 10px;
     align-items: center;
 }
@@ -42,7 +63,7 @@ Image galery
     height: 100%;
     object-fit: cover;
     border-radius: 10px;
-    grid-row: span 2; /* Makes it span both rows */
+    grid-row: span 2;
 }
 
 .small-images-container {
@@ -60,17 +81,39 @@ Image galery
     border-radius: 10px;
 }
 
-.host-info {
-    color: #666;
+.rating-section {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    padding: 5px 15px;
+    border: 1px solid #0D9813;
+    border-radius: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: inline-block;
+    width: auto;
 }
 
-.rating {
+.rating-star {
     color: gold;
-    font-weight: bold;
+    font-size: 14px;
+}
+
+.rating-rating {
+    color: white;
+    font-size: 14px;
 }
 
 .host-name {
-    font-weight: bold;
+    position: relative;
+    bottom: 40px;
+    left: 10px;
+    padding: 5px 15px;
+    border: 1px solid #0D9813;
+    border-radius: 20px;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: inline-block;
+    width: auto;
+    color: white;
 }
 
 .price {
