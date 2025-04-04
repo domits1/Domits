@@ -99,6 +99,7 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import { ApolloClient, InMemoryCache, ApolloProvider } from "@apollo/client";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
+import ListingDetails2 from "./features/bookingengine/pages/listingDetails2";
 
 Modal.setAppElement("#root");
 
@@ -203,7 +204,7 @@ function App() {
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
                   <Route path="/confirm-email" element={<ConfirmRegister />} />
-                  <Route path="/listingdetails" element={<ListingDetails />} />
+                  <Route path="/listingdetails" element={<ListingDetails2 />} />
                   <Route
                     path="/bookingoverview"
                     element={<BookingOverview />}
