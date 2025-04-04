@@ -2,12 +2,15 @@ import useFormStore from "../stores/formStore";
 import mockData from './data/mockData.json';
 import {getAccessToken} from "../../../services/getAccessToken";
 
-export async function submitAccommodation() {
+let propertyDTO;
+export async function submitAccommodation(propertyDTO) {
 
-    const onboardingData = mockData;
+    if (propertyDTO.size === 0){
+        propertyDTO = mockData;
+    }
 
     // Retrieve the token from localStorage
-    const authToken = getAccessToken;
+    const authToken = getAccessToken();
 
     // Retrieve formdata
     const {accommodationDetails} = useFormStore.getState();

@@ -1,6 +1,6 @@
 import React from "react";
 import "./Sustainability.css";
-import {submitAccommodation} from "../hostonboarding/services/hostonboardingApi";
+import {submitAccommodation} from "../hostonboarding/services/SubmitAccommodation";
 
 const Sustainability = () => {
     return (
