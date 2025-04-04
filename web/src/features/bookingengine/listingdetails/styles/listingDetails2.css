@@ -2,7 +2,7 @@
     display: inline;
 }
 
-.title-section {
+.listing-details-header {
     display: flex;
     flex-direction: row;
     align-items: center;
@@ -12,8 +12,6 @@
 
 .title{
     margin-left: 10px;
-    font-size: 1.5rem;
-    font-weight: 500;
 }
 
 .backButton {
@@ -41,11 +39,15 @@ Main Container
 /*
 Images and details section
  */
-.left-section {
+.property-container {
     position: relative;
     flex: 2;
 }
 
+.image-section {
+    position: relative;
+    flex: 2;
+}
 
 /*
 Image galery
@@ -104,8 +106,8 @@ Image galery
 }
 
 .host-name {
-    position: relative;
-    bottom: 40px;
+    position: absolute;
+    bottom: 10px;
     left: 10px;
     padding: 5px 15px;
     border: 1px solid #0D9813;
@@ -132,7 +134,8 @@ Image galery
 /*
 Reservation section
  */
-.right-section {
+.booking-container {
+    position: relative;
     flex: 1;
     background: white;
     padding: 20px;
@@ -141,6 +144,8 @@ Reservation section
 }
 
 .booking-title {
+    position: absolute;
+    top: -30px;
     font-size: 18px;
     font-weight: bold;
 }
