@@ -388,29 +388,63 @@ const Homepage = () => {
     };
   }, [isFixed]);
 
-  useEffect(() => {
-    document.body.classList.add("hide-header");
+  const fetchBoatAccommodations = async () => {
+    try {
+        setLoading(true);
 
-    return () => {
-      document.body.classList.remove("hide-header");
-    };
-  }, []);
+        const response = await fetch(
+            "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property?type=Boat", { 
+              method: 'GET',
+              headers: { 'Content-Type': 'application/json' },
+              // mode: 'no-cors'
+            }
+        );
 
-  const [currentIndex, setCurrentIndex] = useState(0);
 
-  const handleNextReview = () => {
-    setCurrentIndex((prev) => (prev + 1) % reviews.length);
+        if (!response.ok) throw new Error("Failed to fetch boat accommodations");
+        const jsonResponse = await response.json();
+        const data = typeof jsonResponse.body === "string" ? JSON.parse(jsonResponse.body) : jsonResponse.body;
+        const filteredData = data.filter(item => item.Drafted === false);
+        const limitedData = filteredData.slice(0, 4);
+
+        setBoatAccommodations(limitedData);
+    } catch (error) {
+        console.error("Error fetching boat accommodations:", error);
+    } finally {
+        setLoading(false);
+    }
+};
+
+  const fetchAccommodationsByType = async () => {
+    try {
+      setLoading(true);
+
+      const response = await fetch(
+        "https://ms26uksm37.execute-api.eu-north-1.amazonaws.com/dev/General-Onboarding-Production-Read-MixAccommodations"
+      );
+      if (!response.ok) throw new Error(`Failed to fetch accommodations: ${response.statusText}`);
+
+      const data = await response.json();
+
+      const accommodations = typeof data.body === 'string' ? JSON.parse(data.body) : data.body;
+
+      setByTypeAccommodations(accommodations);
+    } catch (error) {
+      console.error("Error fetching mixed accommodations:", error.message, error.stack);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handlePreviousReview = () => {
     setCurrentIndex((prev) => (prev - 1 + reviews.length) % reviews.length);
   };
 
-  const visibleReviews = [
-    reviews[currentIndex],
-    reviews[(currentIndex + 1) % reviews.length],
-    reviews[(currentIndex + 2) % reviews.length],
-  ];
+  // const visibleReviews = [
+  //   reviews[currentIndex],
+  //   reviews[(currentIndex + 1) % reviews.length],
+  //   reviews[(currentIndex + 2) % reviews.length],
+  // ];
 
   const handleClick = (e, ID) => {
     if (!e || !e.target) {
@@ -535,18 +569,17 @@ const Homepage = () => {
             <h3 className="domits-subHead">Rent a boat for any occasion</h3>
           </div>
           <div className="domits-accommodationGroup">
-            {boatLoading === false ? (
-              boatAccommodations.length > 0 ? (
-                boatAccommodations.map((boat) => (
+            {boatAccommodations.length > 0 ? (
+              boatAccommodations.map((boat) => {
+                return (
                   <AccommodationCard
                     key={boat.property.id}
-                    accommodation={boat}
+                    accommodation={boat.property}
+                    images={Object.values(boat.propertyImages)}
                     onClick={handleClick}
                   />
-                ))
-              ) : (
-                <div>No boats available.</div>
-              )
+                );
+              })
             ) : (
               Array(3)
                 .fill()
@@ -554,6 +587,7 @@ const Homepage = () => {
             )}
           </div>
         </div>
+
 
         <div className="domits-boatContainer">
           <h3 className="domits-subHead">Discover Beautiful Campers</h3>
