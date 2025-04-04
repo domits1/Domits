@@ -3,7 +3,7 @@
 import BoatTypeSelector from "../components/TypeSelector";
 import { boatData } from "../constants/boatData";
 import useFormStore from "../stores/formStore";
-import onboardingNextButton from "../components/onboardingNextButton";
+import OnboardingButton from "../components/OnboardingButton";
 
 function BoatTypeView() {
   const setBoatType = useFormStore((state) => state.setBoatType);
@@ -20,8 +20,8 @@ function BoatTypeView() {
         onSelectType={setBoatType}
       />
       <nav className="onboarding-button-box">
-        <onboardingNextButton class="onboardingNextButton" routePath="/hostonboarding" btnText="Back" />
-        <onboardingNextButton routePath="/hostonboarding/boat/address" btnText="Proceed" />
+        <OnboardingButton class="OnboardingNextButton" routePath="/hostonboarding" btnText="Back" />
+        <OnboardingButton routePath="/hostonboarding/boat/address" btnText="Proceed" />
       </nav>
     </main>
   );

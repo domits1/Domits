@@ -1,7 +1,7 @@
 import { useParams } from "react-router-dom";
 import ImagePreview from "../components/ImagePreview";
 import usePhotos from "../hooks/usePropertyPhotos";
-import onboardingNextButton from "../components/onboardingNextButton";
+import OnboardingButton from "../components/OnboardingButton";
 import { useRef, useState } from "react";
 import "./PhotoVieuw.css";
 
@@ -96,11 +96,11 @@ function PhotosView() {
       )}
 
       <nav className="photo-gallery-navigation">
-        <onboardingNextButton
+        <OnboardingButton
           routePath={`/hostonboarding/${accommodationType}/rules`}
           btnText="Go back"
         />
-        <onboardingNextButton
+        <OnboardingButton
           routePath={`/hostonboarding/${accommodationType}/title`}
           btnText="Proceed"
         />
