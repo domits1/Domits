@@ -7,16 +7,18 @@ import DeclarationSection from "../components/DeclarationSection";
 import useFormStore from "../stores/formStore";
 import FetchUserId from "../utils/FetchUserId";
 import { useNavigate } from "react-router-dom";
+import { submitAccommodation } from "../services/SubmitAccommodation.js";
 
 function SummaryView() {
   const { data, toggleDrafted } = useSummary();
   const type = data.type;
   const navigate = useNavigate();
 
-  const submitAccommodation = useFormStore((state) => state.submitAccommodation);
+  // const submitAccommodation = useFormStore((state) => state.submitAccommodation);
+  // const submitAccommodation = SubmitAccommodation.;
 
   const handleSubmit = () => {
-    submitAccommodation(navigate);
+    console.log("response Promise of submitAccommodation: \n",submitAccommodation(navigate));
   };
 
   return (
