@@ -84,7 +84,7 @@ import DescriptionView from "./features/hostonboarding/views/PropertyDescription
 import PricingView from "./features/hostonboarding/views/PropertyRateView.js";
 import AvailabilityView from "./features/hostonboarding/views/PropertyCalendarAvailabilityView.js";
 import RegistrationNumberView from "./features/verification/hostverification/HostVerifyRegistrationNumber.js";
-import SummaryView from "./features/hostonboarding/views/PropertyCheckOutAndCompletionView.js";
+import SummaryViewAndCheckout from "./features/hostonboarding/views/SummaryViewAndCheckout.js";
 import {ToastContainer} from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -285,12 +285,8 @@ function App() {
                     <Route path="/hostonboarding/:type/description" element={<DescriptionView/>}/>
                     <Route path="/hostonboarding/:type/pricing" element={<PricingView/>}/>
                     <Route path="/hostonboarding/:type/availability" element={<AvailabilityView/>}/>
-                    <Route path="/hostonboarding/legal/registrationnumber"
-                           element={<RegistrationNumberView/>}/>
-
-                    <Route
-                        path="/hostonboarding/summary"
-                        element={<SummaryView/>}
+                    <Route path="/hostonboarding/legal/registrationnumber" element={<RegistrationNumberView/>}/>
+                    <Route path="/hostonboarding/summary" element={<SummaryViewAndCheckout/>}
                     />
                     <Route
                         path="/*"

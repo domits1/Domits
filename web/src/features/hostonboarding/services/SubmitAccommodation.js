@@ -24,8 +24,10 @@ export async function submitAccommodation() {
         const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
         // Retrieve form data from FormStore
-        const {accommodationDetails} = useFormStore.getState();
+        let accommodationDetails = useFormStore.getState();
+        accommodationDetails = mockData;
 
+        console.log("accommodationDetailsBuilder:\n\n", accommodationDetailsBuilder);
         // Log the formStore data
         console.log(
             "Submitting accommodationDetails: ",

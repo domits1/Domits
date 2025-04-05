@@ -2,14 +2,12 @@ import React from "react";
 import { useSummary } from "../hooks/usePropertyCheckOutAndCompletion";
 import SummaryTable from "../components/SummaryTable";
 import SpecificationsTable from "../components/SpecificationsTable";
-import FeatureTable from "../components/FeatureTable";
 import DeclarationSection from "../components/DeclarationSection";
-import useFormStore from "../stores/formStore";
 import FetchUserId from "../utils/FetchUserId";
 import { useNavigate } from "react-router-dom";
 import { submitAccommodation } from "../services/SubmitAccommodation.js";
 
-function SummaryView() {
+function SummaryViewAndCheckout() {
   const { data, toggleDrafted } = useSummary();
   const type = data.type;
   const navigate = useNavigate();
@@ -47,4 +45,4 @@ function SummaryView() {
   );
 }
 
-export default SummaryView;
+export default SummaryViewAndCheckout;
