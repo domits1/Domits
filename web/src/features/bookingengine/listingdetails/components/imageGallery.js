@@ -15,6 +15,7 @@ const ImageGallery = ({ images }) => {
             if (image !== images[0]) {
               return (
                 <img
+                  key={image.key}
                   className="small-image"
                   src={`https://accommodation.s3.eu-north-1.amazonaws.com/${image.key}`}
                   alt={`Extra ${images.indexOf(image)}`}
