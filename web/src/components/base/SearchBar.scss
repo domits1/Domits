@@ -701,26 +701,6 @@ $primary-domits-color: #0d9813;
 }
 
 @include mobile {
-  .mobile-search-button {
-    display: block;
-    width: 75vw;
-    padding: 0.8rem;
-    background-color: #ffffff;
-    border: 1px solid #e2e2e4;
-    border-radius: $border-radius-md;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    font-size: 1rem;
-    color: #000;
-    outline: none;
-    text-align: left;
-    font-weight: 400;
-    overflow: hidden;
-    white-space: nowrap;
-    transition: transform 0.3s ease-in-out;
-    margin-bottom: 0.5rem;
-    text-overflow: ellipsis;
-  }
-
   .Search-bar {
     display: none;
   }
@@ -750,11 +730,8 @@ $primary-domits-color: #0d9813;
     margin-bottom: 0.5rem;
     text-overflow: ellipsis;
   }
-
-  @include mobile {
-    .mobile-search-button {
-      width: 45vw;
-    }
+  .Search-bar-main > div::before {
+    display: none;
   }
 }
 
