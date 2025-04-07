@@ -9,7 +9,6 @@ const FetchPropertyById = async (setProperty, id) => {
       },
     );
     const property = await response.json();
-    console.log(property);
     setProperty(property);
 }
 
