@@ -84,7 +84,6 @@ $primary-domits-color: #0d9813;
     align-items: flex-start;
     height: auto;
     padding: 0.6rem;
-    box-sizing: border-box;
   }
 
   @include tablet {
@@ -412,7 +411,7 @@ $primary-domits-color: #0d9813;
 }
 
 @media (max-width: 1000px) {
-  .Search-bar {
+  .Search-bar-main {
     width: 95%;
   }
 }
@@ -535,18 +534,19 @@ $primary-domits-color: #0d9813;
 }
 
 @include mobile {
-  .Search-bar {
+  .Search-bar-main {
     border: 2px solid $primary-domits-color;
-    width: 110%;
+    width: 100%;
     max-width: 400px;
-    transform: translateX(-0.9rem);
+    // transform: translateX(0rem);
     margin: auto;
     box-shadow: $shadow-default;
     border-radius: $border-radius-md;
     display: flex;
     font-size: 0.6rem;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    justify-content: center;
     height: auto;
     padding: 0.6rem;
     box-sizing: border-box;
@@ -647,7 +647,7 @@ $primary-domits-color: #0d9813;
     margin-top: 0.5rem;
   }
 
-  .Search-bar > div::before {
+  .Search-bar-main > div::before {
     background: transparent;
   }
 
@@ -701,11 +701,11 @@ $primary-domits-color: #0d9813;
 }
 
 @include mobile {
-  .Search-bar {
+  .Search-bar-main {
     display: none;
   }
 
-  .bar-container .Search-bar {
+  .bar-container .Search-bar-main {
     display: block;
   }
 }
@@ -736,7 +736,7 @@ $primary-domits-color: #0d9813;
 }
 
 @media screen and (min-width: 769px) and (max-width: 1024px) {
-  .Search-bar {
+  .Search-bar-main {
     width: 85%;
   }
 
