@@ -14,7 +14,7 @@ const CheckIn = ({ checkInDate, setCheckInDate, checkOutDate }) => {
           }
         }}
         value={checkInDate}
-        className="date"
+        className="inputField"
       />
     </div>
   );
