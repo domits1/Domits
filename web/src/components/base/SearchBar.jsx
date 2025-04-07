@@ -254,7 +254,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
         )}
 
         {(showSearchBar || !isMobile) && (
-          <div className={`SearchBarContainer ${isBarActive ? 'active' : 'inactive'}`}>
+          <div className={`Search-Bar-Main-Container ${isBarActive ? 'active' : 'inactive'}`}>
             <div className="Search-bar-main">
               <div className="Search-location">
                 <input
@@ -278,7 +278,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   isSearchable={false}
                   isClearable={true}
                   placeholder={<span className="searchTitle">Accommodation</span>}
-                  classNamePrefix="custom-select"
+                  classNamePrefix="custom-select-dropdown-menu"
                   components={{ DropdownIndicator: () => null, IndicatorSeparator: () => null }}
                 />
               </div>
@@ -337,9 +337,9 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                 </div>
               </div>
 
-              <div className="Search-check-in">
+              <div className="Search-check-in-out">
                 <input
-                  className="input-calendar"
+                  className="input-calendar-checkInOut"
                   type="text"
                   value={startDate && endDate
                     ? `${formatDateToEnglish(startDate)} - ${formatDateToEnglish(endDate)}`

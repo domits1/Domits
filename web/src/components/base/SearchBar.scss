@@ -28,7 +28,6 @@ $primary-domits-color: #0d9813;
     @content;
   }
 }
-//later komen nog meer resoluties
 
 .Search-bar-main {
   width: 42rem;
@@ -42,9 +41,7 @@ $primary-domits-color: #0d9813;
 
   > div {
     position: relative;
-    transition:
-      background 150ms ease,
-      width 150ms ease;
+    transition: background 150ms ease, width 150ms ease;
 
     &::before {
       position: absolute;
@@ -84,6 +81,7 @@ $primary-domits-color: #0d9813;
     align-items: flex-start;
     height: auto;
     padding: 0.6rem;
+    box-sizing: border-box;
   }
 
   @include tablet {
@@ -113,9 +111,26 @@ $primary-domits-color: #0d9813;
   transform: translateY(-15%);
 }
 
-.Search-check-in {
+.Search-check-in-out {
   width: 17%;
   cursor: auto;
+
+  .input-calendar-checkInOut {
+    background: none;
+    border: none;
+    text-align: center;
+    width: 92%;
+    height: 3.5rem;
+  }
+
+  .DatePicker__calendarContainer {
+    position: absolute;
+    top: calc(-20% + 0.4rem);
+    left: 60%;
+    transform: translateX(-50%);
+    box-shadow: $shadow-dropdown;
+    border-radius: 0.5rem;
+  }
 }
 
 .Search-location {
@@ -129,44 +144,27 @@ $primary-domits-color: #0d9813;
     height: 3rem;
     text-overflow: ellipsis;
   }
-}
 
-.search-places-input {
-  @include reset-input;
-  @include flex-center;
-  margin: 0.6rem auto 0;
-  padding: 10px 5px;
-  width: 85%;
+  .search-places-input {
+    @include reset-input;
+    @include flex-center;
+    margin: 0.6rem auto 0;
+    padding: 10px 5px;
+    width: 85%;
 
-  &::placeholder {
-    font-family: $primary-font;
-    text-align: center;
-    color: $primary-domits-color;
-    font-size: 1rem;
-    font-weight: 500;
-    transform: translateY(0.2rem);
+    &::placeholder {
+      font-family: $primary-font;
+      text-align: center;
+      color: $primary-domits-color;
+      font-size: 1rem;
+      font-weight: 500;
+      transform: translateY(0.2rem);
+    }
   }
-}
 
-.search-places-input:focus {
-  outline: none;
-}
-
-.input-calendar {
-  background: none;
-  border: none;
-  text-align: center;
-  width: 92%;
-  height: 3.5rem;
-}
-
-.DatePicker__calendarContainer {
-  position: absolute;
-  top: calc(-20% + 0.4rem);
-  left: 60%;
-  transform: translateX(-50%);
-  box-shadow: $shadow-dropdown;
-  border-radius: 0.5rem;
+  .search-places-input:focus {
+    outline: none;
+  }
 }
 
 .searchbar-button {
@@ -180,23 +178,21 @@ $primary-domits-color: #0d9813;
   border-radius: 50%;
   color: #ffffff;
   background-color: $primary-domits-color;
-  box-shadow:
-    rgba(27, 31, 35, 0.04) 0px 1px 0px 0px,
-    rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+  box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
   height: 2.5rem;
   width: 2.5rem;
   margin-top: 0.45rem;
   margin-left: 0.4rem;
-}
 
-.searchbar-button:hover {
-  opacity: 90%;
-  transition-duration: 0s;
-}
+  &:hover {
+    opacity: 90%;
+    transition-duration: 0s;
+  }
 
-.searchbar-button svg {
-  color: rgb(255, 255, 255);
-  margin-top: 0.625rem;
+  svg {
+    color: rgb(255, 255, 255);
+    margin-top: 0.625rem;
+  }
 }
 
 .search-text {
@@ -212,25 +208,25 @@ $primary-domits-color: #0d9813;
   width: 90%;
   height: 2rem;
   margin-left: 1rem;
-}
 
-.searchBar_inputfield[type="search"]::-webkit-search-cancel-button {
-  position: relative;
-  color: black;
-  font-size: large;
-  filter: grayscale(100%);
-}
+  &[type="search"]::-webkit-search-cancel-button {
+    position: relative;
+    color: black;
+    font-size: large;
+    filter: grayscale(100%);
+  }
 
-.searchBar_inputfield:focus {
-  outline: none;
-}
+  &:focus {
+    outline: none;
+  }
 
-.searchBar_inputfield::placeholder {
-  color: $primary-domits-color;
-  font-family: $primary-font;
-  font-weight: 500;
-  font-size: 1rem;
-  margin: auto;
+  &::placeholder {
+    color: $primary-domits-color;
+    font-family: $primary-font;
+    font-weight: 500;
+    font-size: 1rem;
+    margin: auto;
+  }
 }
 
 .Search-button-section {
@@ -520,14 +516,12 @@ $primary-domits-color: #0d9813;
   overflow: hidden;
 }
 
-.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(
-    .-selectedEnd
-  ):not(.-selectedBetween) {
+.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(.-selectedEnd):not(.-selectedBetween) {
   color: inherit;
 }
 
 @include mobile {
-  .input-calendar,
+  .input-calendar-checkInOut,
   .DatePicker__input {
     font-size: 0.5rem;
   }
@@ -538,15 +532,13 @@ $primary-domits-color: #0d9813;
     border: 2px solid $primary-domits-color;
     width: 100%;
     max-width: 400px;
-    // transform: translateX(0rem);
     margin: auto;
     box-shadow: $shadow-default;
     border-radius: $border-radius-md;
     display: flex;
     font-size: 0.6rem;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
     height: auto;
     padding: 0.6rem;
     box-sizing: border-box;
@@ -556,7 +548,7 @@ $primary-domits-color: #0d9813;
 @include mobile {
   .Search-button-section,
   .searchInputContainer,
-  .Search-check-in,
+  .Search-check-in-out,
   .search-places-input {
     background-color: #f0f0f0;
     border-radius: $border-radius-md;
@@ -564,7 +556,7 @@ $primary-domits-color: #0d9813;
     margin-bottom: 0.4rem;
   }
 
-  .Search-check-in {
+  .Search-check-in-out {
     height: 3.4rem;
   }
 
@@ -622,7 +614,7 @@ $primary-domits-color: #0d9813;
     position: absolute;
   }
 
-  .input-calendar {
+  .input-calendar-checkInOut {
     border: none;
     text-align: center;
     width: 100%;
@@ -705,7 +697,7 @@ $primary-domits-color: #0d9813;
     display: none;
   }
 
-  .bar-container .Search-bar-main {
+  .bar-container .Search-bar-main{
     display: block;
   }
 }
@@ -750,78 +742,82 @@ $primary-domits-color: #0d9813;
 }
 
 /* dit is de css van de react packages:  */
-.searchInputContainer .custom-select__control {
-  width: 8.8rem;
-  height: 2.7rem;
-  border: none;
-  outline: none;
-  box-shadow: none;
-  background: none;
-  padding: 0;
-  cursor: pointer;
-  margin: auto;
-  transform: translateY(7px);
-}
+.searchInputContainer {
+  .custom-select-dropdown-menu__control {
+    width: 8.8rem;
+    height: 2.7rem;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    margin: auto;
+    transform: translateY(7px);
+  }
 
-@media (max-width: 768px) {
-  .custom-select__control {
-    width: 100%;
-    transform: translateX(0);
+  .custom-select-dropdown-menu__menu {
+    background-color: rgb(255, 255, 255);
+    border-radius: 10px;
+    box-shadow: $shadow-dropdown;
+    margin-top: 1rem;
+    width: 15rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+  }
+
+  .custom-select-dropdown-menu__option {
+    background-color: white;
+    color: #666;
+    font-weight: normal;
+    font-size: 14px;
+    padding: 13.8px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    border-radius: 10px;
+    gap: 15px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .custom-select-dropdown-menu__option:hover {
+    color: black;
+    background-color: #e6e6e6;
+  }
+
+  .custom-select-dropdown-menu__option--is-selected {
+    background-color: #f0f0f0;
+    color: black;
+    font-weight: 800;
+  }
+
+  .custom-select-dropdown-menu__single-value {
+    text-align: center;
+    font-weight: 500;
+    color: #000;
+    font-size: 1rem;
+  }
+
+  .ccustom-select-dropdown-menu__clear-indicator {
+    color: black;
+    font-size: 2rem;
   }
 }
 
-.searchInputContainer .custom-select__menu {
-  background-color: rgb(255, 255, 255);
-  border-radius: 10px;
-  box-shadow: $shadow-dropdown;
-  margin-top: 1rem;
-  width: 15rem;
-  overflow-x: hidden;
-  overflow-y: auto;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 9999;
-}
-
-.searchInputContainer .custom-select__option {
-  background-color: white;
-  color: #666;
-  font-weight: normal;
-  font-size: 14px;
-  padding: 13.8px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  border-radius: 10px;
-  gap: 15px;
-  cursor: pointer;
-  transition: transform 0.2s;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.searchInputContainer .custom-select__option:hover {
-  color: black;
-  background-color: #e6e6e6;
-}
-
-.searchInputContainer .custom-select__option--is-selected {
-  background-color: #f0f0f0;
-  color: black;
-  font-weight: 800;
-}
-
-.searchInputContainer .custom-select__single-value {
-  text-align: center;
-  font-weight: 500;
-  color: #000;
-  font-size: 1rem;
-}
-
-.searchInputContainer .custom-select__clear-indicator {
-  color: black;
-  font-size: 2rem;
+@include mobile {
+  .searchInputContainer {
+    .custom-select-dropdown-menu__control {
+      width: 100%;
+      transform: translateX(0);
+    }
+  }
 }
 
 .search-clear-guests {
