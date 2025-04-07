@@ -1,20 +1,46 @@
 import { useState } from "react";
 import CheckIn from "../components/checkIn";
-import Checkout from "../components/checkOut";
+import CheckOut from "../components/checkOut";
 
 const DateSelectionContainer = () => {
   const [checkInDate, setCheckInDate] = useState();
   const [checkOutDate, setCheckOutDate] = useState();
-  const [nights, setNights] = useState();
+
+  const calculateNights = () => {
+    if (checkInDate && checkOutDate) {
+      const checkIn = new Date(checkInDate);
+      const checkOut = new Date(checkOutDate);
+
+      const timeDifference = checkOut.getTime() - checkIn.getTime();
+      const diffDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+      return diffDays > 0 ? diffDays : 0;
+    }
+    return null;
+  };
+
+  const nights = calculateNights();
 
   return (
     <div className="date-container">
-      <CheckIn checkInDate={checkInDate} setCheckInDate={setCheckInDate} />
+      <CheckIn
+        checkInDate={checkInDate}
+        setCheckInDate={setCheckInDate}
+        checkOutDate={checkOutDate}
+      />
+
       <div className="nights-info">
-        <p className="nights">{nights ? `${nights} nights` : ""}</p>
+        {nights && (
+          <p className="nights">{`${nights} night${nights !== 1 ? "s" : ""}`}</p>
+        )}
         <div className="arrow">↔</div>
       </div>
-      <Checkout checkOutDate={checkOutDate} setCheckOutDate={setCheckOutDate} />
+
+      <CheckOut
+        checkOutDate={checkOutDate}
+        setCheckOutDate={setCheckOutDate}
+        checkInDate={checkInDate}
+      />
     </div>
   );
 };

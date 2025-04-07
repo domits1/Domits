@@ -1,10 +1,26 @@
-const CheckOut = ({checkOutDate, setCheckOutDate}) => {
+const CheckOut = ({ checkOutDate, setCheckOutDate, checkInDate }) => {
   return (
     <div className="date-box">
       <p className="label">Check out</p>
-      <div className="date">
-        {checkOutDate || "Select a date for check out"}
-      </div>
+      <input
+        type="date"
+        onChange={(event) => {
+          const value = event.target.value;
+          if (!value) {
+            setCheckOutDate("");
+            return;
+          }
+          if (checkInDate > value) {
+            alert("Check out date can't be before check in date.");
+            event.target.value = checkOutDate || "";
+          } else {
+            setCheckOutDate(value);
+          }
+        }}
+        value={checkOutDate}
+        className="date"
+        disabled={!checkInDate}
+      />
     </div>
   );
 };
