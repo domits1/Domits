@@ -255,7 +255,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
 
         {(showSearchBar || !isMobile) && (
           <div className={`SearchBarContainer ${isBarActive ? 'active' : 'inactive'}`}>
-            <div className="Search-bar">
+            <div className="Search-bar-main">
               <div className="Search-location">
                 <input
                   type="search"

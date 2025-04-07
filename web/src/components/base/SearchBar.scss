@@ -1,9 +1,9 @@
-$primary-font: 'Kanit', sans-serif;
+$primary-font: "Kanit", sans-serif;
 $border-radius-lg: 1.875rem;
 $border-radius-md: 0.8rem;
 $shadow-default: 0 0 5px hsl(0 0% 78%);
 $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
-
+$primary-domits-color: #0d9813;
 
 @mixin flex-center {
   display: flex;
@@ -18,14 +18,19 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 @mixin mobile {
-  @media (max-width: 768px) { @content; }
+  @media (max-width: 768px) {
+    @content;
+  }
 }
 
 @mixin tablet {
-  @media (max-width: 1024px) { @content; }
+  @media (max-width: 1024px) {
+    @content;
+  }
 }
+//later komen nog meer resoluties
 
-.Search-bar {
+.Search-bar-main {
   width: 42rem;
   margin: auto;
   box-shadow: $shadow-default;
@@ -37,7 +42,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 
   > div {
     position: relative;
-    transition: 
+    transition:
       background 150ms ease,
       width 150ms ease;
 
@@ -69,7 +74,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
 
   @include mobile {
-    border: 2px solid var(--primary-color);
+    border: 2px solid $primary-domits-color;
     width: 110%;
     max-width: 400px;
     transform: translateX(-0.9rem);
@@ -100,12 +105,8 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   margin: 0 !important;
 }
 
-.autocomplete-container input::placeholder {
-  text-align: center;
-}
-
 .searchTitle {
-  color: var(--primary-color);
+  color: $primary-domits-color;
   font-size: 1rem;
   font-family: $primary-font;
   font-weight: 500;
@@ -141,9 +142,10 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   &::placeholder {
     font-family: $primary-font;
     text-align: center;
-    color: var(--primary-color);
+    color: $primary-domits-color;
     font-size: 1rem;
     font-weight: 500;
+    transform: translateY(0.2rem);
   }
 }
 
@@ -175,10 +177,10 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   padding: 3px;
   font-size: 0.6rem;
   line-height: 1.875rem;
-  border: 1px solid var(--primary-color);
+  border: 1px solid $primary-domits-color;
   border-radius: 50%;
   color: #ffffff;
-  background-color: var(--primary-color);
+  background-color: $primary-domits-color;
   box-shadow:
     rgba(27, 31, 35, 0.04) 0px 1px 0px 0px,
     rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
@@ -196,7 +198,6 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 .searchbar-button svg {
   color: rgb(255, 255, 255);
   margin-top: 0.625rem;
-  margin-left: 0.2rem;
 }
 
 .search-text {
@@ -226,7 +227,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .searchBar_inputfield::placeholder {
-  color: var(--primary-color);
+  color: $primary-domits-color;
   font-family: $primary-font;
   font-weight: 500;
   font-size: 1rem;
@@ -309,7 +310,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   align-items: center;
   justify-content: space-between;
   margin-top: 0.4rem;
-  border-bottom: 1px solid var(--primary-color);
+  border-bottom: 1px solid $primary-domits-color;
 }
 
 .Search-guestCounter:last-child {
@@ -318,7 +319,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 
 .Search-guestLabel {
   font-size: 1rem;
-  color: var(--primary-color);
+  color: $primary-domits-color;
   text-align: left;
 }
 
@@ -359,7 +360,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 }
 
 .Search-guestCounter .Search-controls button:hover {
-  border-color: var(--primary-color);
+  border-color: $primary-domits-color;
 }
 
 /* test */
@@ -374,7 +375,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 
 .searchTitleGuest {
   position: absolute;
-  color: var(--primary-color);
+  color: $primary-domits-color;
   font-size: 1rem;
   font-weight: 500;
   margin-top: 0.1rem;
@@ -401,7 +402,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   transform: translateY(0);
 }
 
-@include mobile{
+@include mobile {
   .Calendar-placeholder {
     display: flex;
     justify-content: center;
@@ -428,7 +429,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
 }
 
-@include mobile{
+@include mobile {
   .responsive-calendar {
     font-size: 0.7rem !important;
   }
@@ -437,7 +438,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 @media (max-width: 1500px) {
   .Calendar__monthSelectorItemText,
   .Calendar__yearSelectorText {
-    font-size: 8px !important;
+    font-size: 10px !important;
   }
 }
 
@@ -448,7 +449,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
 }
 
-@include mobile{
+@include mobile {
   .Calendar__monthSelectorItemText,
   .Calendar__yearSelectorText {
     font-size: 1rem !important;
@@ -458,7 +459,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
 @media (min-width: 2500px) {
   .Calendar__monthSelectorItemText,
   .Calendar__yearSelectorText {
-    font-size: 12px !important;
+    font-size: 15px !important;
   }
 }
 
@@ -526,16 +527,16 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   color: inherit;
 }
 
-@include mobile{
+@include mobile {
   .input-calendar,
   .DatePicker__input {
     font-size: 0.5rem;
   }
 }
 
-@include mobile{
+@include mobile {
   .Search-bar {
-    border: 2px solid var(--primary-color);
+    border: 2px solid $primary-domits-color;
     width: 110%;
     max-width: 400px;
     transform: translateX(-0.9rem);
@@ -552,7 +553,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
 }
 
-@include mobile{
+@include mobile {
   .Search-button-section,
   .searchInputContainer,
   .Search-check-in,
@@ -693,13 +694,13 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   display: none;
 }
 
-@include mobile{
+@include mobile {
   .search-text {
     display: inline;
   }
 }
 
-@include mobile{
+@include mobile {
   .mobile-search-button {
     display: block;
     width: 75vw;
@@ -729,7 +730,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   }
 }
 
-@include mobile{
+@include mobile {
   .mobile-search-button {
     display: block;
     width: 90vw;
@@ -750,7 +751,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
     text-overflow: ellipsis;
   }
 
-  @include mobile{
+  @include mobile {
     .mobile-search-button {
       width: 45vw;
     }
@@ -864,7 +865,7 @@ $shadow-dropdown: 0 4px 8px rgba(0, 0, 0, 0.4);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  color: var(--primary-color);
+  color: $primary-domits-color;
   font-weight: 500;
   font-size: 1rem;
   white-space: nowrap;
