@@ -17,9 +17,11 @@ const CheckOut = ({ checkOutDate, setCheckOutDate, checkInDate }) => {
             setCheckOutDate(value);
           }
         }}
+        defaultValue={checkOutDate}
         value={checkOutDate}
         className="inputField"
         disabled={!checkInDate}
+        min={new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0]}
       />
     </div>
   );

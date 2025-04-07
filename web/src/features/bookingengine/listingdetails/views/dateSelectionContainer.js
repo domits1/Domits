@@ -2,9 +2,13 @@ import { useState } from "react";
 import CheckIn from "../components/checkIn";
 import CheckOut from "../components/checkOut";
 
-const DateSelectionContainer = ({setNights}) => {
-  const [checkInDate, setCheckInDate] = useState();
-  const [checkOutDate, setCheckOutDate] = useState();
+const DateSelectionContainer = ({ setNights }) => {
+  const [checkInDate, setCheckInDate] = useState(
+    new Date(Date.now() + 86400000).toISOString().split("T")[0],
+  );
+  const [checkOutDate, setCheckOutDate] = useState(
+    new Date(Date.now() + 86400000 * 2).toISOString().split("T")[0],
+  );
 
   const calculateNights = () => {
     if (checkInDate && checkOutDate) {
@@ -32,7 +36,7 @@ const DateSelectionContainer = ({setNights}) => {
 
       <div className="nights-info">
         {nights && (
-          <p className="nights">{`${nights} night${nights !== 1 ? "s" : ""}`}</p>
+          <p>{`${nights} night${nights !== 1 ? "s" : ""}`}</p>
         )}
         <div className="arrow">↔</div>
       </div>

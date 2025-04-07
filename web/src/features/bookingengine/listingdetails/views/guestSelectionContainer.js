@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-const GuestSelectionContainer = () => {
-  const [adults, setAdults] = useState(0);
+const GuestSelectionContainer = ({setAdultsParent}) => {
+  const [adults, setAdults] = useState(1);
   const [kids, setKids] = useState(0);
 
   return (
@@ -14,7 +14,10 @@ const GuestSelectionContainer = () => {
             value={adults}
             style={{ width: "30px" }}
             min="1"
-            onChange={(event) => setAdults(parseFloat(event.target.value))}
+            onChange={(event) => {
+              setAdults(parseFloat(event.target.value))
+              setAdultsParent(parseFloat(event.target.value))
+            }}
           />{" "}
           adults
         </div>
@@ -24,7 +27,9 @@ const GuestSelectionContainer = () => {
             value={kids}
             style={{ width: "30px" }}
             min="0"
-            onChange={(event) => setKids(parseFloat(event.target.value))}
+            onChange={(event) => {
+              setKids(parseFloat(event.target.value))
+            }}
           />{" "}
           kids
         </div>
