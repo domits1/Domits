@@ -97,9 +97,6 @@ import GuestProtectedRoute from "./features/auth/guestauth/GuestProtectedRoute";
 import Hostchatbot from "./features/hostaiagent/hostchatbot";
 import {ApolloClient, ApolloProvider, InMemoryCache} from "@apollo/client";
 import ReleaseUpdates from "./pages/productupdates/ReleaseUpdates.js";
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
-import ReleaseUpdates from './pages/productupdates/ReleaseUpdates.js'
-import Callback from "./Callback"; 
 
 
 Modal.setAppElement("#root");
@@ -211,6 +208,7 @@ function App() {
                               <Route path="reviews" element={<GuestReviews/>}/>
                               <Route path="bookings" element={<GuestBooking/>}/>
                               <Route path="settings" element={<GuestSettings/>}/>
+                              <Route path="wishlist" element={<GuestWishlistPage />} />
                               {/*<Route path="chat" element={<Chat/>}/>*/}
                             </Routes>
                           </GuestProtectedRoute>
@@ -331,96 +329,7 @@ function App() {
           </Router>
         </FlowContext.Provider>
       </ApolloProvider>
-                  {/* Host Onboarding v3 */}
-                  <Route
-                    path="/hostonboarding"
-                    element={<AccommodationTypeView />}
-                  />
-                  <Route
-                    path="/hostonboarding/accommodation"
-                    element={
-                      <StepGuard step="type">
-                        <GuestAccessView />
-                      </StepGuard>
-                    }
-                  />
-                  <Route
-                    path="/hostonboarding/boat"
-                    element={
-                      <StepGuard step="type">
-                        <BoatTypeView />
-                      </StepGuard>
-                    }
-                  />
-                  <Route
-                    path="/hostonboarding/camper"
-                    element={
-                      <StepGuard step="type">
-                        <CamperTypeView />
-                      </StepGuard>
-                    }
-                  />
-                  <Route
-                    path="/hostonboarding/:type/address"
-                    element={<AddressInputView />}
-                  />
-                  <Route
-                    path="/hostonboarding/:type/capacity"
-                    element={<CapacityView />}
-                  />
-                  <Route
-                    path="/hostonboarding/:type/amenities"
-                    element={<AmenitiesView />}
-                  />
-                  <Route
-                    path="/hostonboarding/:type/rules"
-                    element={<HouseRulesView />}
-                  />
-                  <Route
-                    path="/hostonboarding/:type/photos"
-                    element={<PhotosView />}
-                  />
-                  <Route
-                    path="/hostonboarding/:type/title"
-                    element={<AccommodationTitleView />}
-                  />
-                  <Route
-                    path="/hostonboarding/:type/description"
-                    element={<DescriptionView />}
-                  />
-                  <Route
-                    path="/hostonboarding/:type/pricing"
-                    element={<PricingView />}
-                  />
-                  <Route
-                    path="/hostonboarding/:type/availability"
-                    element={<AvailabilityView />}
-                  />
-                  <Route
-                    path="/hostonboarding/legal/registrationnumber"
-                    element={<RegistrationNumberView />}
-                  />
-                  <Route
-                    path="/hostonboarding/summary"
-                    element={<SummaryView />}
-                  />
-                </Routes>
-
-                <Routes>
-                   {/* Andere routes */}
-                      <Route path="/callback" element={<Callback />} />
-                </Routes>
-
-                {renderFooter()}
-                {currentPath !== "/admin" && <MenuBar />}
-                {/* {renderChatWidget()} */}
-                {/* <Hostchatbot />  */}
-              </div>
-            </UserProvider>
-          </AuthProvider>
-        </Router>
-      </FlowContext.Provider> 
-    </ApolloProvider>
+                 
   );
 }
 
