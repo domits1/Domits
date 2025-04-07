@@ -17,7 +17,7 @@ const ListingDetails2 = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        await FetchPropertyById(setProperty, id);
+        setProperty(await FetchPropertyById(id));
         setLoading(false);
       } catch (error) {
         console.error("Error fetching accommodation data:", error);

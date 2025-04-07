@@ -1,4 +1,4 @@
-const FetchPropertyById = async (setProperty, id) => {
+const FetchPropertyById = async (id) => {
     const response = await fetch(
       `https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property?property=${id}`,
       {
@@ -8,8 +8,7 @@ const FetchPropertyById = async (setProperty, id) => {
         },
       },
     );
-    const property = await response.json();
-    setProperty(property);
+    return await response.json();
 }
 
 export default FetchPropertyById;
