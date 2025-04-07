@@ -41,7 +41,9 @@ $primary-domits-color: #0d9813;
 
   > div {
     position: relative;
-    transition: background 150ms ease, width 150ms ease;
+    transition:
+      background 150ms ease,
+      width 150ms ease;
 
     &::before {
       position: absolute;
@@ -87,19 +89,6 @@ $primary-domits-color: #0d9813;
   @include tablet {
     width: 85%;
   }
-}
-
-.css-h3fyes-control {
-  text-align: center;
-}
-
-.Search-suggestions-container {
-  position: relative;
-  z-index: 1;
-}
-
-.css-qbdosj-Input {
-  margin: 0 !important;
 }
 
 .searchTitle {
@@ -178,7 +167,9 @@ $primary-domits-color: #0d9813;
   border-radius: 50%;
   color: #ffffff;
   background-color: $primary-domits-color;
-  box-shadow: rgba(27, 31, 35, 0.04) 0px 1px 0px 0px, rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+  box-shadow:
+    rgba(27, 31, 35, 0.04) 0px 1px 0px 0px,
+    rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
   height: 2.5rem;
   width: 2.5rem;
   margin-top: 0.45rem;
@@ -198,35 +189,6 @@ $primary-domits-color: #0d9813;
 .search-text {
   font-size: 1rem;
   margin-right: 1rem;
-}
-
-.searchBar_inputfield {
-  background: none;
-  border: none;
-  text-align: left;
-  transform: translateY(10%);
-  width: 90%;
-  height: 2rem;
-  margin-left: 1rem;
-
-  &[type="search"]::-webkit-search-cancel-button {
-    position: relative;
-    color: black;
-    font-size: large;
-    filter: grayscale(100%);
-  }
-
-  &:focus {
-    outline: none;
-  }
-
-  &::placeholder {
-    color: $primary-domits-color;
-    font-family: $primary-font;
-    font-weight: 500;
-    font-size: 1rem;
-    margin: auto;
-  }
 }
 
 .Search-button-section {
@@ -358,7 +320,6 @@ $primary-domits-color: #0d9813;
   border-color: $primary-domits-color;
 }
 
-/* test */
 .Search-guestCounter .Search-controls button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
@@ -516,7 +477,9 @@ $primary-domits-color: #0d9813;
   overflow: hidden;
 }
 
-.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(.-selectedEnd):not(.-selectedBetween) {
+.Calendar__day.-weekend:not(.-selected):not(.-blank):not(.-selectedStart):not(
+    .-selectedEnd
+  ):not(.-selectedBetween) {
   color: inherit;
 }
 
@@ -547,13 +510,15 @@ $primary-domits-color: #0d9813;
 
 @include mobile {
   .Search-button-section,
-  .searchInputContainer,
-  .Search-check-in-out,
-  .search-places-input {
+  .searchSelectContainer,
+  .Search-check-in-out {
     background-color: #f0f0f0;
     border-radius: $border-radius-md;
     width: 100%;
     margin-bottom: 0.4rem;
+  }
+  .search-places-input {
+    transform: translateY(20%);
   }
 
   .Search-check-in-out {
@@ -569,27 +534,6 @@ $primary-domits-color: #0d9813;
     text-overflow: ellipsis;
   }
 
-  .searchBar_inputfield {
-    position: relative;
-    background: none;
-    border: none;
-    text-align: center;
-    width: 95%;
-    height: 2.5rem;
-    transform: translateY(10%);
-    text-overflow: ellipsis;
-    margin: auto;
-  }
-
-  /* kan problemen veroorzaken bij mobile-view */
-  .searchBar_inputfield::placeholder {
-    transform: translateX(2.5%);
-  }
-
-  .searchBar_inputfield * {
-    margin: auto;
-  }
-
   .Search-button-section {
     background-color: #f0f0f0;
     border-radius: $border-radius-md;
@@ -599,7 +543,7 @@ $primary-domits-color: #0d9813;
     height: 3rem;
   }
 
-  .searchInputContainer {
+  .searchSelectContainer {
     height: 2.8rem;
   }
 
@@ -697,7 +641,7 @@ $primary-domits-color: #0d9813;
     display: none;
   }
 
-  .bar-container .Search-bar-main{
+  .bar-container .Search-bar-main {
     display: block;
   }
 }
@@ -742,7 +686,7 @@ $primary-domits-color: #0d9813;
 }
 
 /* dit is de css van de react packages:  */
-.searchInputContainer {
+.searchSelectContainer {
   .custom-select-dropdown-menu__control {
     width: 8.8rem;
     height: 2.7rem;
@@ -812,7 +756,7 @@ $primary-domits-color: #0d9813;
 }
 
 @include mobile {
-  .searchInputContainer {
+  .searchSelectContainer {
     .custom-select-dropdown-menu__control {
       width: 100%;
       transform: translateX(0);

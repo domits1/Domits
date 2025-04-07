@@ -266,7 +266,7 @@ export const SearchBar = ({ setSearchResults, setLoading, toggleBar }) => {
                   className="search-places-input"
                 />
               </div>
-              <div className="searchInputContainer">
+              <div className="searchSelectContainer">
                 <Select
                   value={accommodation ? { label: accommodation, value: accommodation } : null}
                   onChange={(selectedOption) => setAccommodation(selectedOption ? selectedOption.value : '')}
