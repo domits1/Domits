@@ -1,4 +1,6 @@
 import {assertType} from "./AssertType"
+
+// Accommodation builder model class
 export class PropertyModel {
     id;
     hostId;

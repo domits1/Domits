@@ -1,4 +1,4 @@
-import useFormStore, {getAccommodationDetails} from "../stores/formStore";
+import useFormStore from "../stores/formStore";
 import mockData from './data/mockData.json';
 import {getAccessToken} from "../../../services/getAccessToken";
 
@@ -58,6 +58,7 @@ export async function submitAccommodation() {
                     },
                     body: JSON.stringify(accommodationDetails), // Use the REAL form data
                 };
+
                 return {request};
             } else {
                 console.error("No Formdata found!")

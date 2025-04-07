@@ -9,7 +9,6 @@ const Sustainability = () => {
             <hr/>
             <h2>Why choose Domits for sustainability?</h2>
             <hr/>
-            <button onClick={(event) => submitAccommodation(event)}>Submit</button>
 
             <section id="sustainable-business">
                 <h3>
