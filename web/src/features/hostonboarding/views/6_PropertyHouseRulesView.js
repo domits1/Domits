@@ -4,7 +4,8 @@ import TimeSelector from "../components/TimeSelector";
 import { useHouseRules } from "../hooks/usePropertyHouseRules";
 import OnboardingButton from "../components/OnboardingButton";
 
-function HouseRulesView() {
+// Step 6
+function PropertyHouseRulesView() {
   const { type: accommodationType } = useParams();
   const { houseRules, handleCheckboxChange, handleTimeChange } =
     useHouseRules();
@@ -66,4 +67,4 @@ function HouseRulesView() {
   );
 }
 
-export default HouseRulesView;
+export default PropertyHouseRulesView;

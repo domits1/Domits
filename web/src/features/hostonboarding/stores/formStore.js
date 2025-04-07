@@ -1,7 +1,4 @@
-import {create} from "zustand";
-
-const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
-
+import { create } from "zustand";
 
 // old using Zustand
 const useFormStore = create((set) => ({
@@ -37,9 +34,9 @@ const useFormStore = create((set) => ({
         description: "",
         boatSpecifications: {},
         camperSpecifications: {},
-        Rent: "1",
+        Rent: "100",
         CleaningFee: "",
-        ServiceFee: 0,
+        ServiceFee: "0",
         Features: {
             ExtraServices: [],
         },

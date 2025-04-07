@@ -6,7 +6,7 @@ import useFormStore from "../stores/formStore";
 import { accommodationFields } from "../constants/propertyAmountofGuestData";
 import OnboardingButton from "../components/OnboardingButton";
 
-function GuestAmountView() {
+function PropertyCapacityView() {
   const { type: accommodationType } = useParams();
 
   const accommodationCapacity = useFormStore(
@@ -52,4 +52,4 @@ function GuestAmountView() {
   );
 }
 
-export default GuestAmountView;
+export default PropertyCapacityView;

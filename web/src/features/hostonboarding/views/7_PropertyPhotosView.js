@@ -3,8 +3,9 @@ import ImagePreview from "../components/ImagePreview";
 import usePhotos from "../hooks/usePropertyPhotos";
 import OnboardingButton from "../components/OnboardingButton";
 import { useRef, useState } from "react";
-import "./PhotoVieuw.css";
+import "../styles/PhotoVieuw.css";
 
+// step 7
 function PhotosView() {
   const { type: accommodationType } = useParams();
   const {

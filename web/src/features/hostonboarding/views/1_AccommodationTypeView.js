@@ -8,7 +8,7 @@ import {submitAccommodation} from "../services/SubmitAccommodation";
 import React from "react";
 
 // Desc: Step 1 - Choose the type of accommodation you want to list on the platform
-function AccommodationTypeView() {
+export default function AccommodationTypeView() {
   const selectedAccommodationType = useFormStore(
     (state) => state.accommodationDetails.type
   );
@@ -36,5 +36,3 @@ function AccommodationTypeView() {
   </main>
   );
 }
-
-export default AccommodationTypeView;

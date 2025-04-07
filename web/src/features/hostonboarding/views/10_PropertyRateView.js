@@ -4,7 +4,7 @@ import PricingRow from "../components/PricingRow";
 import { usePricing } from "../hooks/useProperyRate";
 import OnboardingButton from "../components/OnboardingButton";
 
-function PricingView() {
+function PropertyRateView() {
   const { type: accommodationType } = useParams();
   const { pricing, updatePricing, calculateServiceFee } = usePricing();
 
@@ -66,4 +66,4 @@ function PricingView() {
   );
 }
 
-export default PricingView;
+export default PropertyRateView;

@@ -7,7 +7,7 @@ import FetchUserId from "../utils/FetchUserId";
 import { useNavigate } from "react-router-dom";
 import { submitAccommodation } from "../services/SubmitAccommodation.js";
 
-function SummaryViewAndCheckout() {
+function SummaryViewAndSubmit() {
   const { data, toggleDrafted } = useSummary();
   const type = data.type;
   const navigate = useNavigate();
@@ -45,4 +45,4 @@ function SummaryViewAndCheckout() {
   );
 }
 
-export default SummaryViewAndCheckout;
+export default SummaryViewAndSubmit;

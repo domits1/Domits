@@ -6,16 +6,14 @@ import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
 import OnboardingButton from "../components/OnboardingButton";
 import { useHandleLegalProceed } from "../hooks/usePropertyRegistrationNumber";
 
-function AvailabilityView() {
+function PropertyAvailabilityView() {
   const { type: accommodationType } = useParams();
   const {
     availability,
     updateSelectedDates,
-    incrementAmount,
-    decrementAmount,
   } = useAvailability();
 
-  const { handleProceed } = useHandleLegalProceed();
+  const {handleProceedToLegal}  = useHandleLegalProceed();
 
   return (
     <main className="container">
@@ -36,10 +34,10 @@ function AvailabilityView() {
           routePath={`/hostonboarding/${accommodationType}/pricing`}
           btnText="Go back"
         />
-        <OnboardingButton onClick={handleProceed} btnText="Proceed" />
+        <OnboardingButton onClick={handleProceedToLegal} btnText="Proceed" />
       </nav>
     </main>
   );
 }
 
-export default AvailabilityView;
+export default PropertyAvailabilityView;

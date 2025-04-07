@@ -1,10 +1,10 @@
-// Desc: Step 3 - Add the address of the accommodation you want to list on the platform
 
 import { useParams } from "react-router-dom";
 import AddressFormFields from "../components/AddressFormFields";
 import OnboardingButton from "../components/OnboardingButton";
 import { useAddressInput } from "../hooks/usePropertyLocation";
 
+// Step 3 - Add the address of the accommodation you want to list on the platform
 function AddressInputView() {
   const { type: accommodationType } = useParams();
 

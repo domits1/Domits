@@ -5,7 +5,7 @@ import TextAreaField from "../components/TextAreaField";
 import SpecificationForm from "../components/SpecificationForm";
 import OnboardingButton from "../components/OnboardingButton";
 
-function DescriptionView() {
+function PropertyDescriptionView() {
   const { type: accommodationType } = useParams();
   const {
     description,
@@ -61,4 +61,4 @@ function DescriptionView() {
   );
 }
 
-export default DescriptionView;
+export default PropertyDescriptionView;

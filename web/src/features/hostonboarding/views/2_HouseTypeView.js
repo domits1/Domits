@@ -1,9 +1,9 @@
-// Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
 
 import GuestAccessTypeSelector from "../components/GuestAccessTypeSelector";
 import OnboardingButton from "../components/OnboardingButton";
 
-function GuestAccessView() {
+// Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
+export default function HouseTypeView() {
   return (
     <main className="container">
       <section className="guest-access">
@@ -31,5 +31,3 @@ function GuestAccessView() {
     </main>
   );
 }
-
-export default GuestAccessView;
