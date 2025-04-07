@@ -5,10 +5,11 @@ import {PropertyBuilder} from "../services/data/PropertyBuilder";
 
 const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
 
+// old using Zustand
 const useFormStore = create((set) => ({
     completedSteps: [], accommodationDetails: {
         type: "",
-        title: "",
+        title: "testtitle",
         subtitle: "",
         guestAccessType: "",
         boatType: "",
@@ -214,85 +215,77 @@ const useFormStore = create((set) => ({
             PaymentDeadlineBeforeCheckIn: "36",
             selectedDates: [],
         },
-    }), submitAccommodation: async (navigate) => {
-        const {accommodationDetails} = useFormStore.getState();
-
-        const isBoat = accommodationDetails.type === "boat";
-        const isCamper = accommodationDetails.type === "camper";
-
-        const boatOrCamperSpecs = isBoat ? accommodationDetails.boatSpecifications : isCamper ? accommodationDetails.camperSpecifications : {};
-
-        try {
-            const propertyDTO = new PropertyBuilder()
-                .addProperty({
-                    title: accommodationDetails.title,
-                    subtitle: accommodationDetails.subtitle,
-                    description: accommodationDetails.description,
-                    livingArea: accommodationDetails.livingArea,
-                    numberOfBathrooms: accommodationDetails.numberOfBathrooms,
-                    numberOfRooms: accommodationDetails.numberOfRooms,
-                    numberOfBedrooms: accommodationDetails.numberOfBedrooms,
-                    numberOfSleepingSpots: accommodationDetails.numberOfSleepingSpots,
-                    floors: accommodationDetails.floors,
-                })
-                .addPropertyType(accommodationDetails.propertyType)
-                .addRules([
-                    {
-                        rule: "PetsAllowed",
-                        value: accommodationDetails.houseRules.AllowPets,
-                    },
-                    {
-                        rule: "SmokingAllowed",
-                        value: accommodationDetails.houseRules.AllowSmoking,
-                    },
-                    {
-                        rule: "PartiesEventsAllowed",
-                        value: accommodationDetails.houseRules.AllowParties,
-                    },
-                ])
-                .addPricing({
-                    roomRate: accommodationDetails.Rent,
-                    cleaning: accommodationDetails.CleaningFee,
-                    service: accommodationDetails.ServiceFee,
-                })
-                .addTechnicalVehicleDetails({
-                    length: accommodationDetails.length,
-                    height: accommodationDetails.height,
-                    fuelConsumption: accommodationDetails.fuelConsumption,
-                    speed: accommodationDetails.speed,
-                    renovationYear: accommodationDetails.renovationYear,
-                    transmission: accommodationDetails.transmission,
-                    generalPeriodicInspection:
-                    accommodationDetails.generalPeriodicInspection,
-                    fourWheelDrive: accommodationDetails.fourWheelDrive,
-                })
-                .addLocation(accommodationDetails.location)
-                .addImages(accommodationDetails.images)
-                .addAvailability(accommodationDetails.availability)
-                .addAvailabilityRestrictions(accommodationDetails.availabilityRestrictions)
-                .addCheckIn({
-                    checkIn: accommodationDetails.checkIn,
-                    checkOut: accommodationDetails.checkOut,
-                })
-                .addAmenities(accommodationDetails.amenities)
-                .addGeneralDetails(accommodationDetails.generalDetails).build();
-
-            console.log(propertyDTO)
-
-            const response = await submitAccommodation(propertyDTO)
-            /// THIS is the result of the form:
-            //Remove this line if you don't want to log the response
-            console.log("Accommodation uploaded successfully:", response.data);
-            console.log("Testing formattedData:", newFormat);
-            //Remove this line if you don't want to log the response
-            if (response.data.statusCode === 200) {
-                navigate("/hostdashboard");
-            }
-        } catch (error) {
-            console.error("Error uploading accommodation:", error);
-        }
-    }
-    ,
+    }),
 }));
 
+// new using builder
+export async function getAccommodationDetails (navigate) {
+    const {accommodationDetails} = useFormStore.getState();
+
+    const isBoat = accommodationDetails.type === "boat";
+    const isCamper = accommodationDetails.type === "camper";
+
+    const boatOrCamperSpecs = isBoat ? accommodationDetails.boatSpecifications : isCamper ? accommodationDetails.camperSpecifications : {};
+
+    try {
+        const propertyDTO = new PropertyBuilder()
+            .addProperty({
+                title: accommodationDetails.title,
+                subtitle: accommodationDetails.subtitle,
+                description: accommodationDetails.description,
+                livingArea: accommodationDetails.livingArea,
+                numberOfBathrooms: accommodationDetails.numberOfBathrooms,
+                numberOfRooms: accommodationDetails.numberOfRooms,
+                numberOfBedrooms: accommodationDetails.numberOfBedrooms,
+                numberOfSleepingSpots: accommodationDetails.numberOfSleepingSpots,
+                floors: accommodationDetails.floors,
+            })
+            .addPropertyType(accommodationDetails.propertyType)
+            .addRules([
+                {
+                    rule: "PetsAllowed",
+                    value: accommodationDetails.houseRules.AllowPets,
+                },
+                {
+                    rule: "SmokingAllowed",
+                    value: accommodationDetails.houseRules.AllowSmoking,
+                },
+                {
+                    rule: "PartiesEventsAllowed",
+                    value: accommodationDetails.houseRules.AllowParties,
+                },
+            ])
+            .addPricing({
+                roomRate: accommodationDetails.Rent,
+                cleaning: accommodationDetails.CleaningFee,
+                service: accommodationDetails.ServiceFee,
+            })
+            .addTechnicalVehicleDetails({
+                length: accommodationDetails.length,
+                height: accommodationDetails.height,
+                fuelConsumption: accommodationDetails.fuelConsumption,
+                speed: accommodationDetails.speed,
+                renovationYear: accommodationDetails.renovationYear,
+                transmission: accommodationDetails.transmission,
+                generalPeriodicInspection:
+                accommodationDetails.generalPeriodicInspection,
+                fourWheelDrive: accommodationDetails.fourWheelDrive,
+            })
+            .addLocation(accommodationDetails.location)
+            .addImages(accommodationDetails.images)
+            .addAvailability(accommodationDetails.availability)
+            .addAvailabilityRestrictions(accommodationDetails.availabilityRestrictions)
+            .addCheckIn({
+                checkIn: accommodationDetails.checkIn,
+                checkOut: accommodationDetails.checkOut,
+            })
+            .addAmenities(accommodationDetails.amenities)
+            .addGeneralDetails(accommodationDetails.generalDetails).build();
+
+        console.log(propertyDTO)
+        return propertyDTO;
+    } catch (error) {
+        console.error("Error getting accommodation data:", error);
+    }
+}
 export default useFormStore;

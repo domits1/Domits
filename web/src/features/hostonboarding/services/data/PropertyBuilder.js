@@ -127,6 +127,19 @@ export class PropertyBuilder {
   }
 
   build() {
-    return this;
+    return {
+      property: this.property,
+      propertyType: this.propertyType,
+      amenities: this.propertyAmenities,
+      availability: this.propertyAvailabilities,
+      availabilityRestrictions: this.propertyAvailabilityRestrictions,
+      checkIn: this.propertyCheckIn,
+      generalDetails: this.propertyGeneralDetails,
+      location: this.propertyLocation,
+      pricing: this.propertyPricing,
+      rules: this.propertyRules,
+      images: this.propertyImages,
+      technicalDetails: this.propertyTechnicalDetails,
+    };
   }
 }
