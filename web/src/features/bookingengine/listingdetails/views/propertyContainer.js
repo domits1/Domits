@@ -1,5 +1,5 @@
 import ImageGallery from "../components/imageGallery";
-import Pricing from "../components/pricing";
+import PricingPerNight from "../components/pricingPerNight";
 import GeneralDetails from "../components/generalDetails";
 import React from "react";
 
@@ -9,7 +9,7 @@ const PropertyContainer = ({ property }) => {
       <section className="image-section">
         <ImageGallery images={property.images} />
       </section>
-      <Pricing pricing={property.pricing} />
+      <PricingPerNight pricing={property.pricing} />
       <GeneralDetails generalDetails={property.generalDetails} />
     </div>
   );

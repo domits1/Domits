@@ -10,8 +10,8 @@ const CheckOut = ({ checkOutDate, setCheckOutDate, checkInDate }) => {
             setCheckOutDate("");
             return;
           }
-          if (checkInDate > value) {
-            alert("Check out date can't be before check in date.");
+          if (checkInDate > value || checkInDate === value) {
+            alert("Check out date has to be after check in date.");
             event.target.value = checkOutDate || "";
           } else {
             setCheckOutDate(value);

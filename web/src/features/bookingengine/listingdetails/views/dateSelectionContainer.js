@@ -2,7 +2,7 @@ import { useState } from "react";
 import CheckIn from "../components/checkIn";
 import CheckOut from "../components/checkOut";
 
-const DateSelectionContainer = () => {
+const DateSelectionContainer = ({setNights}) => {
   const [checkInDate, setCheckInDate] = useState();
   const [checkOutDate, setCheckOutDate] = useState();
 
@@ -14,7 +14,8 @@ const DateSelectionContainer = () => {
       const timeDifference = checkOut.getTime() - checkIn.getTime();
       const diffDays = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
 
-      return diffDays > 0 ? diffDays : 0;
+      setNights(diffDays);
+      return diffDays;
     }
     return null;
   };
