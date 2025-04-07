@@ -1,3 +1,4 @@
+import {assertType} from "./AssertType"
 export class PropertyModel {
     id;
     hostId;
@@ -26,79 +27,57 @@ export class PropertyModel {
     }
 
     set _id(id) {
-        if (typeof id !== "string") {
-            throw new Error("propertyModel - Id must be a string.")
-        }
+        assertType(id, "string", "Id");
         this.id = id;
     }
 
     set _hostId(id) {
-        if (typeof id !== "string") {
-            throw new Error("propertyModel - Host id must be a string.")
-        }
+        assertType(id, "string", "Host id");
         this.hostId = id;
     }
 
     set _title(value) {
-        if (typeof value !== "string") {
-            throw new Error("propertyModel - Title must be a string.")
-        }
+        assertType(value, "string", "Title");
         this.title = value;
     }
 
     set _subtitle(value) {
-        if (typeof value !== "string") {
-            throw new Error("propertyModel - Subtitle must be a string.")
-        }
+        assertType(value, "string", "Subtitle");
         this.subtitle = value;
     }
 
     set _description(value) {
-        if (typeof value !== "string") {
-            throw new Error("propertyModel - Description must be a string.")
-        }
+        assertType(value, "string", "Description");
         this.description = value;
     }
 
     set _guestCapacity(value) {
-        if (typeof value !== "number") {
-            throw new Error("propertyModel - Guest capacity must be a number.")
-        }
+        assertType(value, "number", "Guest capacity");
         this.guestCapacity = value;
     }
 
     set _registrationNumber(value) {
-        if (typeof value !== "string") {
-            throw new Error("propertyModel - Registration number must be a string.")
-        }
+        assertType(value, "string", "Registration number");
         this.registrationNumber = value;
     }
 
     set _status(value) {
-        if (typeof value !== "string") {
-            throw new Error("propertyModel - Status must be a string.")
-        }
+        assertType(value, "string", "Status");
         this.status = value;
     }
 
     set _propertyType(value) {
-        if (typeof value !== "string") {
-            throw new Error("propertyModel - Property type must be a string.")
-        }
+        assertType(value, "string", "Property type");
         this.propertyType = value;
     }
 
     set _createdAt(value) {
-        if (typeof value !== "number") {
-            throw new Error("propertyModel - Created at must be a number.")
-        }
+        assertType(value, "number", "Created at");
         this.createdAt = value;
     }
 
     set _updatedAt(value) {
-        if (typeof value !== "number") {
-            throw new Error("propertyModel - Updated at must be a number.")
-        }
+        assertType(value, "number", "Updated at");
         this.updatedAt = value;
     }
 }
