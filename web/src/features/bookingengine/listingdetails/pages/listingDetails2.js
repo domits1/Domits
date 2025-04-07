@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 import Loading from "../../../hostdashboard/Loading";
-import FetchPropertyById from "../hooks/fetchPropertyById";
-import "../styles/listingDetails2.css";
+import FetchPropertyById from "../services/fetchPropertyById";
+import "../../../../styles/sass/booking-engine/listingDetails.scss";
 import Header from "../components/header";
 import PropertyContainer from "../views/propertyContainer";
 import BookingContainer from "../views/bookingContainer";
@@ -30,11 +30,13 @@ const ListingDetails2 = () => {
     return <Loading />;
   } else {
     return (
-      <div className="main">
-        <Header title={property.property.title} />
-        <div className="container">
-          <PropertyContainer property={property} />
-          <BookingContainer property={property} />
+      <div className="listing-details">
+        <div className="main">
+          <Header title={property.property.title} />
+          <div className="container">
+            <PropertyContainer property={property} />
+            <BookingContainer property={property} />
+          </div>
         </div>
       </div>
     );
