@@ -19,9 +19,8 @@ function Header({ setSearchResults, setLoading }) {
   const [group, setGroup] = useState("");
   const [username, setUsername] = useState("");
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [currentView, setCurrentView] = useState("guest"); 
+  const [currentView, setCurrentView] = useState("guest");
   const [isActiveSearchBar, setActiveSearchBar] = useState(false);
-
 
   useEffect(() => {
     checkAuthentication();
@@ -31,19 +30,18 @@ function Header({ setSearchResults, setLoading }) {
     setDropdownVisible(false);
   }, [location]);
 
-    // useEffect(() => {
-    //     // Voeg het Trustpilot-script toe
-    //     const script = document.createElement('script');
-    //     script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
-    //     script.async = true;
-    //     document.head.appendChild(script);
+  // useEffect(() => {
+  //     // Voeg het Trustpilot-script toe
+  //     const script = document.createElement('script');
+  //     script.src = '//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js';
+  //     script.async = true;
+  //     document.head.appendChild(script);
 
-    //     // Verwijder het script bij demontage van de component
-    //     return () => {
-    //         document.head.removeChild(script);
-    //     };
-    // }, []);
-
+  //     // Verwijder het script bij demontage van de component
+  //     return () => {
+  //         document.head.removeChild(script);
+  //     };
+  // }, []);
 
   const checkAuthentication = async () => {
     try {
@@ -197,13 +195,17 @@ function Header({ setSearchResults, setLoading }) {
           <button onClick={navigateToMessages} className="dropdownLoginButton">
             Messages
           </button>
-          <button onClick={navigateToPayments} className="dropdownLoginButton">
+
+          <button
+            onClick={() => navigate("/guestdashboard/payments")}
+            className="dropdownLoginButton"
+          >
             Payments
           </button>
-          {/* <button onClick={navigateToReviews} className="dropdownLoginButton">
-            Reviews
-          </button> */}
-          <button onClick={navigateToSettings} className="dropdownLoginButton">
+          <button
+            onClick={() => navigate("/guestdashboard/settings")}
+            className="dropdownLoginButton"
+          >
             Settings
           </button>
           <button onClick={handleLogout} className="dropdownLogoutButton">
@@ -323,7 +325,6 @@ function Header({ setSearchResults, setLoading }) {
       </header>
     </div>
   );
-
 }
 
 export default Header;
