@@ -1,6 +1,4 @@
 import {create} from "zustand";
-import AccommodationDTO from "../services/AccommodationDTO";
-import {submitAccommodation} from "../services/SubmitAccommodation";
 import {PropertyBuilder} from "../services/data/PropertyBuilder";
 
 const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/default/property";
@@ -9,7 +7,7 @@ const API_BASE_URL = "https://wkmwpwurbc.execute-api.eu-north-1.amazonaws.com/de
 const useFormStore = create((set) => ({
     completedSteps: [], accommodationDetails: {
         type: "",
-        title: "testtitle",
+        title: "",
         subtitle: "",
         guestAccessType: "",
         boatType: "",
