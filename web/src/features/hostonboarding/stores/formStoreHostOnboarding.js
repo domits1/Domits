@@ -3,7 +3,7 @@ import { create } from "zustand"
 /**
  * Zustand based store for managing multi page host-onboarding of a new accommodation.
  * Stores the accommodationdetails, steps-progress and dynamically updated nested fields.
- * @type {UseBoundStore<Mutate<StoreApi<{setAmenities: function(*, *): *, setBoatDetails: function(*): *, updateSelectedDates: function(*): *, setGuestAccessType: function(*): *, setAccommodationType: function(*): *, updateImage: function(*, *): *, setOwnerId: function(*): *, setAccommodationCapacity: function(*, *): *, completedSteps: [], setCamperType: function(*): *, deleteImage: function(*): *, markStepComplete: function(*): *, updateNestedField: function(*, *, *): *, updateAvailability: function(*, *): *, setAddress: function(*): *, accommodationDetails: {camperDetails: {country: string, zipCode: string, city: string, street: string}, images: {}, address: {zipCode: string, country: string, city: string, street: string}, boatSpecifications: {}, camperSpecifications: {}, ReservationsID: string, accommodationCapacity: {Cabins: number, Bedrooms: number, GuestAmount: number, Bathrooms: number, Beds: number}, description: string, availability: {PaymentDeadlineAfterBooking: string, PaymentDeadlineBeforeCheckIn: string, MinimumStay: number, selectedDates: [], MinimumAdvancedReservation: number, MaximumStay: number, MaximumAdvancedReservation: number, ExpirationTime: number, MinimumBookingPeriod: number}, type: string, title: string, boatType: string, CleaningFee: string, boatDetails: {country: string, city: string, harbor: string}, ServiceFee: string, guestAccessType: string, OwnerId: string, selectedAmenities: {}, registrationNumber: string, subtitle: string, Features: {ExtraServices: []}, houseRules: {AllowPets: boolean, CheckOut: {Til: string, From: string}, AllowParties: boolean, CheckIn: {Til: string, From: string}, AllowSmoking: boolean}, camperType: string, Rent: string}, setHouseRule: function(*, *, *): *, updateBoatSpecification: function(*, *): *, calculateServiceFee: function(): *, updatePricing: function(*, *): *, updateDescription: function(*): *, setBoatType: function(*): *, setCamperDetails: function(*): *, updateAccommodationDetail: function(*, *): *, setRegistrationNumber: function(*): *, updateCamperSpecification: function(*, *): *}>, []>>}
+ * @type {UseBoundStore<Mutate<StoreApi<{setAmenities: function(*, *): *, setBoatDetails: function(*): *, updateSelectedDates: function(*): *, setAccommodationType: function(*): *, updateImage: function(*, *): *, setOwnerId: function(*): *, setAccommodationCapacity: function(*, *): *, completedSteps: [], setCamperType: function(*): *, deleteImage: function(*): *, markStepComplete: function(*): *, updateNestedField: function(*, *, *): *, updateAvailability: function(*, *): *, setAddress: function(*): *, setHouseType: function(*): *, accommodationDetails: {camperDetails: {country: string, zipCode: string, city: string, street: string}, images: {}, address: {zipCode: string, country: string, city: string, street: string}, boatSpecifications: {}, camperSpecifications: {}, ReservationsID: string, accommodationCapacity: {Cabins: number, Bedrooms: number, GuestAmount: number, Bathrooms: number, Beds: number}, description: string, availability: {PaymentDeadlineAfterBooking: string, PaymentDeadlineBeforeCheckIn: string, MinimumStay: number, selectedDates: [], MinimumAdvancedReservation: number, MaximumStay: number, MaximumAdvancedReservation: number, ExpirationTime: number, MinimumBookingPeriod: number}, type: string, title: string, boatType: string, CleaningFee: number, boatDetails: {country: string, city: string, harbor: string}, ServiceFee: number, guestAccessType: string, OwnerId: string, selectedAmenities: {}, registrationNumber: string, subtitle: string, Features: {ExtraServices: []}, houseRules: {AllowPets: boolean, CheckOut: {Til: string, From: string}, AllowParties: boolean, CheckIn: {Til: string, From: string}, AllowSmoking: boolean}, camperType: string, Rent: number}, setHouseRule: function(*, *, *): *, updateBoatSpecification: function(*, *): *, calculateServiceFee: function(): *, updatePricing: function(*, *): *, updateDescription: function(*): *, setBoatType: function(*): *, setCamperDetails: function(*): *, updateAccommodationDetail: function(*, *): *, setRegistrationNumber: function(*): *, updateCamperSpecification: function(*, *): *}>, []>>}
  */
 const useFormStoreHostOnboarding = create((set) => ({
   // Step progress
@@ -44,9 +44,9 @@ const useFormStoreHostOnboarding = create((set) => ({
     description: "",
     boatSpecifications: {},
     camperSpecifications: {},
-    Rent: "100",
-    CleaningFee: "",
-    ServiceFee: "0",
+    Rent: 100,
+    CleaningFee: 0,
+    ServiceFee: 0,
 
     Features: {
       ExtraServices: [],
@@ -233,7 +233,7 @@ const useFormStoreHostOnboarding = create((set) => ({
     set((state) => ({
       accommodationDetails: {
         ...state.accommodationDetails,
-        [field]: value,
+        [field]: parseFloat(value) || 0, // Ensure it's always a number
       },
     })),
 
