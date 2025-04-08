@@ -299,52 +299,6 @@ const useFormStore = create((set) => ({
         },
       },
     })),
-
-  // /// unused resetAccommodationDetails
-  // resetAccommodationDetails: () =>
-  //     set({
-  //         accommodationDetails: {
-  //             type: "",
-  //             title: "",
-  //             subtitle: "",
-  //             guestAccessType: "",
-  //             boatType: "",
-  //             camperType: "",
-  //             boatDetails: {country: "", city: "", harbor: ""},
-  //             camperDetails: {country: "", city: "", street: "", zipCode: ""},
-  //             address: {street: "", city: "", zipCode: "", country: ""},
-  //             accommodationCapacity: {GuestAmount: 0, Cabins: 0, Bedrooms: 0, Bathrooms: 0, Beds: 0},
-  //             selectedAmenities: {},
-  //             houseRules: {
-  //                 AllowSmoking: false, AllowPets: false, AllowParties: false,
-  //                 CheckIn: {From: "00:00", Til: "00:00"},
-  //                 CheckOut: {From: "00:00", Til: "00:00"},
-  //             },
-  //             images: {},
-  //             description: "",
-  //             boatSpecifications: {},
-  //             camperSpecifications: {},
-  //             Rent: "1",
-  //             CleaningFee: "",
-  //             ServiceFee: 0,
-  //             Features: {ExtraServices: []},
-  //             availability: {
-  //                 ExpirationTime: 72,
-  //                 MinimumStay: 1,
-  //                 MinimumBookingPeriod: 3,
-  //                 MaximumStay: 10,
-  //                 MinimumAdvancedReservation: 1,
-  //                 MaximumAdvancedReservation: 1,
-  //                 PaymentDeadlineAfterBooking: "24",
-  //                 PaymentDeadlineBeforeCheckIn: "36",
-  //                 selectedDates: [],
-  //             },
-  //             registrationNumber: "",
-  //             ReservationsID: "",
-  //             OwnerId: "",
-  //         },
-  //         completedSteps: [],
-  //     }),
 }));
 
 export default useFormStore;
