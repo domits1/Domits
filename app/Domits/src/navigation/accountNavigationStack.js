@@ -2,7 +2,7 @@ import {createNativeStackNavigator} from "@react-navigation/native-stack";
 import Account from "../screens/account";
 import LoginScreen from "../screens/login/loginScreen";
 import Register from "../screens/login/register";
-import HostProfileTab from "../screens/hostdashboard/HostProfileTab";
+import HostProfileTab from "../screens/hostprofile/HostProfileTab";
 import GuestProfileTab from "../screens/guestdashboard/GuestProfileTab";
 import ConfirmEmail from "../screens/login/confirmMail";
 import React from "react";

@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, StyleSheet } from "react-native";
 import { Picker } from "@react-native-picker/picker";
-import { useAuth } from "../../context/AuthContext";
-import CalendarComponent from "./CalendarComponent";
-
+import { useAuth } from "../../../../context/AuthContext";
+import CalendarComponent from "../components/CalendarComponent";
+import {styles} from "../styles/HostCalendarStyles";
 
 function HostCalendarTab() {
   const { userAttributes, isAuthenticated, checkAuth } = useAuth();
@@ -131,81 +131,5 @@ function HostCalendarTab() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  body: {
-    flex: 1,
-    backgroundColor: "#f9f9f9",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  spinnerContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#ffffff",
-  },
-  noAccommodationsText: {
-    textAlign: "center",
-    fontSize: 18,
-    color: "#7f8c8d",
-    marginTop: 20,
-  },
-  calendarContent: {
-    flex: 1,
-    marginTop: 20,
-  },
-  header: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 16,
-    color: "#2c3e50",
-  },
-  pickerContainer: {
-    marginBottom: 20,
-    backgroundColor: "#fefefe",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#dcdcdc",
-    overflow: "hidden",
-  },
-  picker: {
-    height: 50,
-    width: "100%",
-    color: "#34495e",
-    marginBottom: 8,
-  },
-  calendarContainer: {
-    flex: 1,
-    marginTop: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 16,
-    backgroundColor: "#ffffff",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e0e0e0",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  accommodationText: {
-    fontSize: 18,
-    fontWeight: "500",
-    marginBottom: 12,
-    textAlign: "center",
-    color: "#34495e",
-  },
-  alertMessage: {
-    textAlign: "center",
-    fontSize: 16,
-    fontStyle: "italic",
-    color: "#95a5a6",
-    marginTop: 20,
-  },
-});
-
-
 
 export default HostCalendarTab;

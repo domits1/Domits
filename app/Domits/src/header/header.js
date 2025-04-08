@@ -21,6 +21,16 @@ function Header() {
       <View style={styles.headerContainer}>
         <View style={styles.contentContainer}>
           <View style={styles.squareContainer}>
+
+            <TouchableOpacity
+                onPress={navigation.navigate('HostDashboard')}
+                style={styles.itemContainer}>
+
+              <Text style={styles.itemText}>
+                dashboard
+              </Text>
+            </TouchableOpacity>
+
             <TouchableOpacity
               onPress={handleBookingsPress}
               style={styles.itemContainer}>
