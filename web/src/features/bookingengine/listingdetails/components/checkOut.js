@@ -17,7 +17,6 @@ const CheckOut = ({ checkOutDate, setCheckOutDate, checkInDate }) => {
             setCheckOutDate(value);
           }
         }}
-        defaultValue={checkOutDate}
         value={checkOutDate}
         className="inputField"
         disabled={!checkInDate}
