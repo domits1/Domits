@@ -29,6 +29,13 @@ $primary-domits-color: #0d9813;
   }
 }
 
+@mixin mobile-section-common {
+  background-color: #f0f0f0;
+  border-radius: $border-radius-md;
+  width: 100%;
+  margin-bottom: 0.4rem;
+}
+
 .Search-bar-main {
   width: 42rem;
   margin: auto;
@@ -78,10 +85,10 @@ $primary-domits-color: #0d9813;
     font-family: $primary-font;
     font-weight: 500;
     text-overflow: ellipsis;
-    text-align: center; // Ensures the text is centered horizontally
-    display: flex; // Enables flexbox for centering
-    justify-content: center; // Centers content horizontally
-    align-items: center; // Centers content vertically
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
   }
 
   .Search-check-in-out {
@@ -351,10 +358,7 @@ $primary-domits-color: #0d9813;
     .Search-check-in-out,
     .Search-button-section,
     .searchSelectContainer {
-      background-color: #f0f0f0;
-      border-radius: $border-radius-md;
-      width: 100%;
-      margin-bottom: 0.4rem;
+      @include mobile-section-common;
     }
 
     .Search-location {
@@ -495,8 +499,6 @@ $primary-domits-color: #0d9813;
     }
   }
 
-  
-
   @include mobile {
     .Search-button-section,
     .searchSelectContainer,
@@ -552,7 +554,6 @@ $primary-domits-color: #0d9813;
       height: 3.5rem;
     }
 
-    /* tijdelijke oplossing het is nog niet responsive */
     .DatePicker__input {
       border: solid transparent;
       transform: translateX(-0%) translateY(-130%);
@@ -846,7 +847,6 @@ $primary-domits-color: #0d9813;
   @include mobile {
     display: block;
     width: 100%;
-    max-width: 400px;
     margin: 0 auto 0.5rem auto;
     padding: 0.8rem;
     background-color: #ffffff;
@@ -868,5 +868,4 @@ $primary-domits-color: #0d9813;
       background-color: #f8f8f8;
     }
   }
-  
 }
