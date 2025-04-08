@@ -2,17 +2,17 @@
 
 import GuestAmountItem from "../components/GuestAmountItem"
 import { useParams } from "react-router-dom"
-import useFormStore from "../stores/formStore"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import { accommodationFields } from "../constants/propertyAmountofGuestData"
 import OnboardingButton from "../components/OnboardingButton"
 
 function PropertyCapacityView() {
   const { type: accommodationType } = useParams()
 
-  const accommodationCapacity = useFormStore(
+  const accommodationCapacity = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.accommodationCapacity,
   )
-  const setAccommodationCapacity = useFormStore(
+  const setAccommodationCapacity = useFormStoreHostOnboarding(
     (state) => state.setAccommodationCapacity,
   )
 

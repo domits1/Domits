@@ -1,7 +1,9 @@
-import useFormStore from "../stores/formStore";
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 
 export const useSummary = () => {
-  const data = useFormStore((state) => state.accommodationDetails);
-  const toggleDrafted = useFormStore((state) => state.toggleDrafted);
-  return { data, toggleDrafted };
-};
+  const data = useFormStoreHostOnboarding((state) => state.accommodationDetails)
+  const toggleDrafted = useFormStoreHostOnboarding(
+    (state) => state.toggleDrafted,
+  )
+  return { data, toggleDrafted }
+}

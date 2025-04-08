@@ -1,3 +1,4 @@
+// Latest Amenities from new DB 08-04-2025
 const amenities = [
   // Accessibility
   { category: "Accessibility", amenity: "Accessible-height bed", id: "63" },

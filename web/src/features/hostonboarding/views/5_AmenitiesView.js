@@ -1,6 +1,6 @@
 import { amenities } from "../constants/propertyAmenitiesData"
 import AmenityCategory from "../components/AmenityCategory"
-import useFormStore from "../stores/formStore"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import { useParams } from "react-router-dom"
 import OnboardingButton from "../components/OnboardingButton"
 import "../styles/onboardingHost.css"
@@ -8,10 +8,10 @@ import "../styles/onboardingHost.css"
 function AmenitiesView() {
   const { type: accommodationType } = useParams()
 
-  const selectedAmenities = useFormStore(
+  const selectedAmenities = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.selectedAmenities,
   )
-  const setAmenities = useFormStore((state) => state.setAmenities)
+  const setAmenities = useFormStoreHostOnboarding((state) => state.setAmenities)
 
   const handleAmenityChange = (category, amenity, isChecked) => {
     const updatedAmenities = isChecked

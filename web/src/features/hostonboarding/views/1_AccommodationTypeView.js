@@ -2,15 +2,17 @@ import React from "react"
 import AccommodationTypeSelector from "../components/TypeSelector"
 import { useHandleAccommodationTypeProceed } from "../hooks/usePropertyType"
 import { accommodationData } from "../constants/propertyTypeData"
-import useFormStore from "../stores/formStore"
+import useFormStoreHostOnboarding from "../stores/formStoreHostOnboarding"
 import OnboardingButton from "../components/OnboardingButton"
 
 // Desc: Step 1 - Choose the type of accommodation you want to list on the platform
 export default function AccommodationTypeView() {
-  const selectedAccommodationType = useFormStore(
+  // Currently selected
+  const selectedAccommodationType = useFormStoreHostOnboarding(
     (state) => state.accommodationDetails.type,
   )
-  const setAccommodationType = useFormStore(
+  // Set the type
+  const setAccommodationType = useFormStoreHostOnboarding(
     (state) => state.setAccommodationType,
   )
 
