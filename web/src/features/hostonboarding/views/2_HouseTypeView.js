@@ -1,6 +1,5 @@
-
-import GuestAccessTypeSelector from "../components/GuestAccessTypeSelector";
-import OnboardingButton from "../components/OnboardingButton";
+import GuestAccessTypeSelector from "../components/GuestAccessTypeSelector"
+import OnboardingButton from "../components/OnboardingButton"
 
 // Desc: dependend step 2 - Choose the type of guest access you want to list on the platform
 export default function HouseTypeView() {
@@ -26,8 +25,11 @@ export default function HouseTypeView() {
 
       <nav className="onboarding-button-box">
         <OnboardingButton routePath="/hostonboarding" btnText="Go back" />
-        <OnboardingButton routePath="/hostonboarding/accommodation/address" btnText="Proceed" />
+        <OnboardingButton
+          routePath="/hostonboarding/accommodation/address"
+          btnText="Proceed"
+        />
       </nav>
     </main>
-  );
+  )
 }

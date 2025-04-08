@@ -1,24 +1,24 @@
-import React, { useEffect } from "react";
-import { useParams } from "react-router-dom";
-import PricingRow from "../components/PricingRow";
-import { usePricing } from "../hooks/useProperyRate";
-import OnboardingButton from "../components/OnboardingButton";
+import React, { useEffect } from "react"
+import { useParams } from "react-router-dom"
+import PricingRow from "../components/PricingRow"
+import { usePricing } from "../hooks/useProperyRate"
+import OnboardingButton from "../components/OnboardingButton"
 
 function PropertyRateView() {
-  const { type: accommodationType } = useParams();
-  const { pricing, updatePricing, calculateServiceFee } = usePricing();
+  const { type: accommodationType } = useParams()
+  const { pricing, updatePricing, calculateServiceFee } = usePricing()
 
   useEffect(() => {
-    calculateServiceFee();
-  }, [pricing.Rent, pricing.CleaningFee, calculateServiceFee]);
+    calculateServiceFee()
+  }, [pricing.Rent, pricing.CleaningFee, calculateServiceFee])
 
   const totalGuestPrice =
     (parseFloat(pricing.Rent) || 0) +
     (parseFloat(pricing.CleaningFee) || 0) +
-    (parseFloat(pricing.ServiceFee) || 0);
+    (parseFloat(pricing.ServiceFee) || 0)
 
   const totalEarnings =
-    (parseFloat(pricing.Rent) || 0) + (parseFloat(pricing.CleaningFee) || 0);
+    (parseFloat(pricing.Rent) || 0) + (parseFloat(pricing.CleaningFee) || 0)
 
   return (
     <main className="container">
@@ -36,7 +36,7 @@ function PropertyRateView() {
           onChange={(value) => updatePricing("Rent", value)}
         />
         {pricing.Features.ExtraServices.includes(
-          "Cleaning service (add service fee manually)"
+          "Cleaning service (add service fee manually)",
         ) && (
           <PricingRow
             label="Cleaning fee"
@@ -63,7 +63,7 @@ function PropertyRateView() {
         />
       </nav>
     </main>
-  );
+  )
 }
 
-export default PropertyRateView;
+export default PropertyRateView

@@ -1,25 +1,25 @@
-import React from "react";
+import React from "react"
 
 function SummaryTable({ data, type }) {
-  console.log(data.selectedAmenities);
-  const formatBoolean = (value) => (value ? "Yes" : "No");
+  console.log(data.selectedAmenities)
+  const formatBoolean = (value) => (value ? "Yes" : "No")
 
   const DateFormatterDD_MM_YYYY = (dateString) => {
-    if (!dateString) return "N/A";
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-GB"); // Formats to dd/mm/yyyy
-  };
+    if (!dateString) return "N/A"
+    const date = new Date(dateString)
+    return date.toLocaleDateString("en-GB") // Formats to dd/mm/yyyy
+  }
 
   // Extract startDate and endDate from selectedDates
-  const { startDate, endDate } = data.availability.selectedDates || {};
+  const { startDate, endDate } = data.availability.selectedDates || {}
 
   // Format the date range
   const dateRange =
     startDate && endDate
       ? `Available from ${DateFormatterDD_MM_YYYY(
-          startDate
+          startDate,
         )} to ${DateFormatterDD_MM_YYYY(endDate)}`
-      : "Date range not set";
+      : "Date range not set"
 
   return (
     <table className="accommodation-summary">
@@ -213,11 +213,11 @@ function SummaryTable({ data, type }) {
                 <td>{category}:</td>
                 <td>{amenities.length > 0 ? amenities.join(", ") : "N/A"}</td>
               </tr>
-            )
+            ),
           )}
       </tbody>
     </table>
-  );
+  )
 }
 
-export default SummaryTable;
+export default SummaryTable

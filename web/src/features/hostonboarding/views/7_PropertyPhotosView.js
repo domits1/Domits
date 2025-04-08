@@ -1,13 +1,13 @@
-import { useParams } from "react-router-dom";
-import ImagePreview from "../components/ImagePreview";
-import usePhotos from "../hooks/usePropertyPhotos";
-import OnboardingButton from "../components/OnboardingButton";
-import { useRef, useState } from "react";
-import "../styles/PhotoVieuw.css";
+import { useParams } from "react-router-dom"
+import ImagePreview from "../components/ImagePreview"
+import usePhotos from "../hooks/usePropertyPhotos"
+import OnboardingButton from "../components/OnboardingButton"
+import { useRef, useState } from "react"
+import "../styles/PhotoVieuw.css"
 
 // step 7
 function PhotosView() {
-  const { type: accommodationType } = useParams();
+  const { type: accommodationType } = useParams()
   const {
     images,
     handleFileChange,
@@ -15,28 +15,28 @@ function PhotosView() {
     reorderImages,
     isDragOver,
     setIsDragOver,
-  } = usePhotos();
+  } = usePhotos()
 
-  const [draggedIndex, setDraggedIndex] = useState(null);
-  const fileInputRef = useRef(null);
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const fileInputRef = useRef(null)
 
   const handleDragStart = (index) => {
-    setDraggedIndex(index);
-  };
+    setDraggedIndex(index)
+  }
 
   const handleDrop = (index) => {
     if (draggedIndex !== null && draggedIndex !== index) {
-      reorderImages(draggedIndex, index);
+      reorderImages(draggedIndex, index)
     }
-    setDraggedIndex(null);
-  };
+    setDraggedIndex(null)
+  }
 
   const handleBoxClick = () => {
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-      fileInputRef.current.click();
+      fileInputRef.current.value = ""
+      fileInputRef.current.click()
     }
-  };
+  }
 
   return (
     <main className="photo-gallery-container">
@@ -47,16 +47,15 @@ function PhotosView() {
           className={`drag-drop-area ${isDragOver ? "drag-over" : ""}`}
           onClick={handleBoxClick}
           onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragOver(true);
+            e.preventDefault()
+            setIsDragOver(true)
           }}
           onDragLeave={() => setIsDragOver(false)}
           onDrop={(e) => {
-            e.preventDefault();
-            setIsDragOver(false);
-            handleFileChange(e.dataTransfer.files);
-          }}
-        >
+            e.preventDefault()
+            setIsDragOver(false)
+            handleFileChange(e.dataTransfer.files)
+          }}>
           <p>Drag and drop your files here or click to upload</p>
           <input
             ref={fileInputRef}
@@ -80,7 +79,9 @@ function PhotosView() {
               />
             ))}
             {images.length < 5 && (
-              <div className="small-photo add-more-box" onClick={handleBoxClick}>
+              <div
+                className="small-photo add-more-box"
+                onClick={handleBoxClick}>
                 <p>Add More +</p>
               </div>
             )}
@@ -107,7 +108,7 @@ function PhotosView() {
         />
       </nav>
     </main>
-  );
+  )
 }
 
-export default PhotosView;
+export default PhotosView

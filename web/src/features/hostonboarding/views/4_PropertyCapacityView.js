@@ -1,34 +1,34 @@
 // Desc: Step 4 - Add the number of guests that can stay in the accommodation you want to list on the platform
 
-import GuestAmountItem from "../components/GuestAmountItem";
-import { useParams } from "react-router-dom";
-import useFormStore from "../stores/formStore";
-import { accommodationFields } from "../constants/propertyAmountofGuestData";
-import OnboardingButton from "../components/OnboardingButton";
+import GuestAmountItem from "../components/GuestAmountItem"
+import { useParams } from "react-router-dom"
+import useFormStore from "../stores/formStore"
+import { accommodationFields } from "../constants/propertyAmountofGuestData"
+import OnboardingButton from "../components/OnboardingButton"
 
 function PropertyCapacityView() {
-  const { type: accommodationType } = useParams();
+  const { type: accommodationType } = useParams()
 
   const accommodationCapacity = useFormStore(
-    (state) => state.accommodationDetails.accommodationCapacity
-  );
+    (state) => state.accommodationDetails.accommodationCapacity,
+  )
   const setAccommodationCapacity = useFormStore(
-    (state) => state.setAccommodationCapacity
-  );
+    (state) => state.setAccommodationCapacity,
+  )
 
   const fields = accommodationFields[accommodationType]
 
   const incrementAmount = (key, max) => {
     if (accommodationCapacity[key] < max) {
-        setAccommodationCapacity(key, accommodationCapacity[key] + 1);
+      setAccommodationCapacity(key, accommodationCapacity[key] + 1)
     }
-  };
+  }
 
   const decrementAmount = (key) => {
     if (accommodationCapacity[key] > 0) {
-        setAccommodationCapacity(key, accommodationCapacity[key] - 1);
+      setAccommodationCapacity(key, accommodationCapacity[key] - 1)
     }
-  };
+  }
   return (
     <main className="container">
       <h2 className="onboardingSectionTitle">How many people can stay here?</h2>
@@ -45,11 +45,17 @@ function PropertyCapacityView() {
         ))}
       </section>
       <nav className="onboarding-button-box">
-      <OnboardingButton routePath={`/hostonboarding/${accommodationType}/address`} btnText="Go back" />
-      <OnboardingButton routePath={`/hostonboarding/${accommodationType}/amenities`} btnText="Proceed" />
+        <OnboardingButton
+          routePath={`/hostonboarding/${accommodationType}/address`}
+          btnText="Go back"
+        />
+        <OnboardingButton
+          routePath={`/hostonboarding/${accommodationType}/amenities`}
+          btnText="Proceed"
+        />
       </nav>
     </main>
-  );
+  )
 }
 
-export default PropertyCapacityView;
+export default PropertyCapacityView

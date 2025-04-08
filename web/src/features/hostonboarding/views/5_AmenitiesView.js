@@ -1,28 +1,28 @@
-import { amenities } from "../constants/propertyAmenitiesData";
-import AmenityCategory from "../components/AmenityCategory";
-import useFormStore from "../stores/formStore";
-import { useParams } from "react-router-dom";
-import OnboardingButton from "../components/OnboardingButton";
+import { amenities } from "../constants/propertyAmenitiesData"
+import AmenityCategory from "../components/AmenityCategory"
+import useFormStore from "../stores/formStore"
+import { useParams } from "react-router-dom"
+import OnboardingButton from "../components/OnboardingButton"
 import "../styles/onboardingHost.css"
 
 function AmenitiesView() {
-  const { type: accommodationType } = useParams();
+  const { type: accommodationType } = useParams()
 
   const selectedAmenities = useFormStore(
-    (state) => state.accommodationDetails.selectedAmenities
-  );
-  const setAmenities = useFormStore((state) => state.setAmenities);
+    (state) => state.accommodationDetails.selectedAmenities,
+  )
+  const setAmenities = useFormStore((state) => state.setAmenities)
 
   const handleAmenityChange = (category, amenity, isChecked) => {
     const updatedAmenities = isChecked
       ? [...(selectedAmenities[category] || []), amenity]
-      : (selectedAmenities[category] || []).filter((item) => item !== amenity);
+      : (selectedAmenities[category] || []).filter((item) => item !== amenity)
 
-    setAmenities(category, updatedAmenities);
-  };
+    setAmenities(category, updatedAmenities)
+  }
 
   const typeAmenities =
-    amenities[`${accommodationType}Amenities`] || amenities.allAmenities;
+    amenities[`${accommodationType}Amenities`] || amenities.allAmenities
 
   return (
     <main className="page-body">
@@ -42,11 +42,17 @@ function AmenitiesView() {
         ))}
       </div>
       <nav className="onboarding-button-box">
-        <OnboardingButton routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Go back" />
-        <OnboardingButton routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" />
+        <OnboardingButton
+          routePath={`/hostonboarding/${accommodationType}/capacity`}
+          btnText="Go back"
+        />
+        <OnboardingButton
+          routePath={`/hostonboarding/${accommodationType}/rules`}
+          btnText="Proceed"
+        />
       </nav>
     </main>
-  );
+  )
 }
 
-export default AmenitiesView;
+export default AmenitiesView
