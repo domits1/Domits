@@ -64,11 +64,6 @@ const HostDashboardTab = () => {
         <Text style={styles.welcome}>Welcome {firstName}</Text>
 
         <View style={styles.rowContainer}>
-          <OnboardingButton
-            onPress={fetchRecentAccommodations}
-            style={styles.sectionButton}>
-            <Text style={styles.infoText}>Refresh</Text>
-          </OnboardingButton>
           <Button
             onPress={() => navigation.navigate('HostListingsTab')}
             style={styles.sectionButton}>

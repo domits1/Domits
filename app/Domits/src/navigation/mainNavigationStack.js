@@ -1,5 +1,4 @@
 import {createNativeStackNavigator} from "@react-navigation/native-stack";
-import HomeScreen from "../screens/homeScreen";
 import GuestDashboard from "../screens/guestdashboard/guestDashboard";
 import Scan from "../header/scan";
 import Pay from "../header/pay";
@@ -31,6 +30,7 @@ import HostHelpDesk from "../features/hostdashboard/hosthelpdesk/screens/HostHel
 import React from "react";
 import HostDashboard from "../features/hostdashboard/screens/HostDashboardTab";
 import ReviewAndSubmitScreen from "../screens/oldHostonboarding/ReviewAndSubmitScreen";
+import HomeScreen from "../features/search/HomeScreen";
 
 const Stack = createNativeStackNavigator();
 

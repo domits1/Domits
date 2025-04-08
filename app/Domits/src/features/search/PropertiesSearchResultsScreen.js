@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {ActivityIndicator, Image, ScrollView, Text, TouchableOpacity, View,} from 'react-native';
 import {useNavigation} from '@react-navigation/native';
-import FetchAccommodationsData from '../features/search/FetchAccommodationsData'
-import FormatAccommodationData from "../components/utils/mappings/FormatAccommodationData";
-import TranslatedText from "../features/translation/components/TranslatedText";
 import {styles} from "./styles/PropertiesSearchResultsStyles";
-import NavigateTo from "../navigation/NavigationFunctions";
+import FormatAccommodationData from "../../components/utils/mappings/FormatAccommodationData";
+import TranslatedText from "../translation/components/TranslatedText";
+import FetchAccommodationsData from "./hooks/FetchAccommodationsData";
+import NavigateTo from "../../navigation/NavigationFunctions";
 
 const PropertiesSearchResultsScreen = ({searchResults}) => {
     const [accommodationsList, setAccommodationsList] = useState([]);
