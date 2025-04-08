@@ -13,11 +13,14 @@ function SummaryViewAndSubmit() {
   const navigate = useNavigate();
 
   const handleSubmit = () => {
-    console.log("response Promise of submitAccommodation: \n",submitAccommodation(navigate));
+    console.log(
+      "response Promise of submitAccommodation: \n",
+      submitAccommodation(navigate),
+    );
   };
 
   return (
-    <div className="container" id="summary">
+    <div className="summary">
       <FetchUserId />
       <h2>Please check if everything is correct</h2>
       <SummaryTable data={data} type={type} />
@@ -34,10 +37,7 @@ function SummaryViewAndSubmit() {
         >
           Go back to change
         </button>
-        <button
-          className="onboarding-button"
-          onClick={handleSubmit}
-        >
+        <button className="onboarding-button" onClick={handleSubmit}>
           Confirm and proceed
         </button>
       </div>

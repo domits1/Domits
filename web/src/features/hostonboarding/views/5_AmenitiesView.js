@@ -3,15 +3,15 @@ import AmenityCategory from "../components/AmenityCategory";
 import useFormStore from "../stores/formStore";
 import { useParams } from "react-router-dom";
 import OnboardingButton from "../components/OnboardingButton";
-import "../styles/onboardingHost.css"
+import "../styles/onboardingHost.scss";
 
 function AmenitiesView() {
   const { type: accommodationType } = useParams();
 
   const selectedAmenities = useFormStore(
     (state) => state.accommodationDetails.selectedAmenities,
-  )
-  const setAmenities = useFormStore((state) => state.setAmenities)
+  );
+  const setAmenities = useFormStore((state) => state.setAmenities);
 
   const handleAmenityChange = (category, amenity, isChecked) => {
     const updatedAmenities = isChecked
@@ -42,8 +42,14 @@ function AmenitiesView() {
         ))}
       </div>
       <nav className="onboarding-button-box">
-        <OnboardingButton routePath={`/hostonboarding/${accommodationType}/capacity`} btnText="Go back" />
-        <OnboardingButton routePath={`/hostonboarding/${accommodationType}/rules`} btnText="Proceed" />
+        <OnboardingButton
+          routePath={`/hostonboarding/${accommodationType}/capacity`}
+          btnText="Go back"
+        />
+        <OnboardingButton
+          routePath={`/hostonboarding/${accommodationType}/rules`}
+          btnText="Proceed"
+        />
       </nav>
     </main>
   );
