@@ -392,7 +392,6 @@
 }
 
 .checkInCheckOut {
-    margin-top: 15px;
     background-color: #f9f9f9;
     padding: 15px;
     border-radius: 8px;
@@ -527,7 +526,7 @@
     bottom: 92%;
     left: 45.5%;
     transform: translateX(-50%);
-    white-space: wrap;
+    white-space: normal;
     opacity: 0;
     transition: opacity 0.3s ease;
     max-width: 15vw;

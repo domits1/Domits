@@ -70,6 +70,9 @@ h2 {
 
 .listing-calendar {
   margin-left: 10%;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
 }
 
 .staying_nights {
@@ -160,15 +163,6 @@ h2 {
   }
 }
 
-.flex-row {
-  width: 100%;
-  flex-wrap: wrap;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
-  gap: 44px;
-}
 
 .form-row {
   justify-content: space-between;
@@ -188,11 +182,6 @@ h2 {
   margin: auto;
 }
 
-.listing-calendar {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-}
 
 .loading {
   display: flex;
@@ -267,7 +256,6 @@ h2 {
   flex-direction: row;
   justify-content: space-between;
 }
-
 .onboarding-button {
   background-color: $domits-host-blue;
   border: none;
@@ -322,10 +310,6 @@ h2 {
   }
 }
 
-.onboardingSectionSubtitle {
-  text-align: center;
-}
-
 .acco-location {
   display: flex;
   flex-direction: row;
@@ -347,7 +331,6 @@ h2 {
 
 .round-button {
   width: 1.5em;
-  /* height: 1.5em; */
   margin-top: 0;
   padding: 0;
   border-radius: 50%;
@@ -682,11 +665,6 @@ input[type="time"] {
   margin-right: 10px;
 }
 
-.onboarding-button-box {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 20px;
-}
 
 .verifyCheck {
   width: 60vw;
