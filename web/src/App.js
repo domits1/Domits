@@ -17,6 +17,7 @@ import Careers from "./pages/careers/Careers";
 import JobDetails from "./pages/careers/jobDetails.js";
 import Contact from "./pages/contact/Contact";
 import HostDashboard from "./features/hostdashboard/HostDashboard";
+import 'leaflet/dist/leaflet.css';
 
 import HostProperty from "./features/hostdashboard/HostProperty";
 import HostMessages from "./features/hostdashboard/hostmessages/pages/hostMessages";

@@ -1,8 +1,7 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSummary } from "../hooks/usePropertyCheckOutAndCompletion";
 import SummaryTable from "../components/SummaryTable";
 import SpecificationsTable from "../components/SpecificationsTable";
-import FeatureTable from "../components/FeatureTable";
 import DeclarationSection from "../components/DeclarationSection";
 import useFormStore from "../stores/formStore";
 import FetchUserId from "../utils/FetchUserId";
@@ -15,7 +14,14 @@ function SummaryView() {
 
     const submitAccommodation = useFormStore((state) => state.submitAccommodation);
 
+    const [declare, setDeclare] = useState(false);
+    const [confirm, setConfirm] = useState(false);
+
     const handleSubmit = async () => {
+        if (!declare || !confirm) {
+            alert("You must agree to the terms and declare the property is legitimate.");
+            return;
+        }
         await submitAccommodation();
         navigate("/hostdashboard/listings");
     };
@@ -30,6 +36,10 @@ function SummaryView() {
             <DeclarationSection
                 drafted={data.Drafted}
                 toggleDrafted={toggleDrafted}
+                declare={declare}
+                toggleDeclareDrafted={() => setDeclare(!declare)}
+                confirm={confirm}
+                toggleConfirmDrafted={() => setConfirm(!confirm)}
             />
             <div className="onboarding-button-box">
                 <button

@@ -1,0 +1,170 @@
+/* PropertyLocationView.css */
+
+/* General Page Body Styling (if not already globally defined) */
+.page-body {
+    max-width: 900px; /* Adjust max-width as needed */
+    margin: 2rem auto; /* Center the content and add top/bottom margin */
+    padding: 1rem 2rem; /* Add padding */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Titles and Subtitles */
+.onboardingSectionTitle {
+    font-size: 1.8rem; /* Slightly larger title */
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333; /* Darker color for better contrast */
+}
+
+.onboardingSectionSubtitle {
+    font-size: 1rem;
+    color: #666; /* Lighter color for subtitle */
+    margin-bottom: 1.5rem; /* More space below subtitles */
+    line-height: 1.5;
+}
+
+/* Map Section Styling */
+.acco-location-map {
+    margin-bottom: 2rem; /* Space between map and address fields */
+    border: 1px solid #ddd; /* Subtle border around the map */
+    border-radius: 8px; /* Rounded corners */
+    overflow: hidden; /* Ensure map tiles respect border-radius */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+}
+
+/* Ensure map container inside InteractiveMap takes full space */
+.acco-location-map .leaflet-container {
+    border-radius: 8px; /* Match outer container */
+}
+
+/* Address Fields Section Styling */
+.address-details-heading {
+    font-size: 1.3rem;
+    font-weight: 500;
+    margin-top: 1rem; /* Space above the address heading */
+    margin-bottom: 0.25rem;
+    color: #444;
+}
+
+.address-details-form-container {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 1.5rem; /* Padding inside the form container */
+    background-color: #f9f9f9; /* Slight background contrast */
+    margin-bottom: 2rem; /* Space below the form fields */
+}
+
+/* Grid Layout for AddressFormFields */
+.location-details-form {
+    display: grid;
+    grid-template-columns: 1fr; /* Default: single column for mobile */
+    gap: 1rem 1.5rem; /* Row gap, Column gap */
+}
+
+/* Two columns for wider screens */
+@media (min-width: 600px) {
+    .location-details-form {
+        grid-template-columns: 1fr 1fr; /* Two equal columns */
+    }
+    /* Example: Make a specific field span both columns if needed */
+    /* .location-details-form .full-width-field { */
+    /*   grid-column: 1 / -1; */
+    /* } */
+}
+
+
+/* Styling for individual LabeledInput/LabeledSelect (assuming basic structure) */
+/* Add specific styles here if needed, e.g., targeting wrapper divs */
+.labeled-input-wrapper, /* Adjust class name based on LabeledInput/Select */
+.labeled-select-wrapper { /* Adjust class name based on LabeledInput/Select */
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem; /* Space between label and input */
+}
+
+.labeled-input-wrapper label,
+.labeled-select-wrapper label {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: #555;
+}
+
+/* Assuming LabeledInput renders an <input> and LabeledSelect uses react-select */
+.labeled-input-wrapper input,
+.labeled-select-wrapper .react-select__control { /* Target react-select */
+    padding: 0.6rem 0.8rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+    width: 100%; /* Ensure inputs take full width of grid cell */
+    box-sizing: border-box; /* Include padding/border in width */
+}
+
+.labeled-select-wrapper .react-select__control--is-focused {
+    border-color: #888; /* Or your theme's focus color */
+    box-shadow: 0 0 0 1px #aaa; /* Example focus ring */
+}
+
+.labeled-input-wrapper input:focus {
+    outline: none;
+    border-color: #888; /* Or your theme's focus color */
+    box-shadow: 0 0 0 1px #aaa; /* Example focus ring */
+}
+
+
+/* Navigation Buttons */
+.onboarding-button-box {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem; /* Add padding above buttons */
+    border-top: 1px solid #eee; /* Separator line */
+    margin-top: 1rem; /* Consistent margin */
+}
+
+/* Assuming Button component renders a <button> or <a> */
+/* Add styles for your Button component if needed, e.g.: */
+.button { /* Replace with your actual button class */
+    padding: 0.7rem 1.5rem;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    text-decoration: none; /* If using <a> tags */
+    display: inline-block;
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+/* Example primary button style */
+.button-primary { /* Add this class or adjust to your primary button style */
+    background-color: #007bff; /* Example primary color */
+    color: white;
+}
+.button-primary:hover {
+    background-color: #0056b3;
+}
+
+/* Example secondary/back button style */
+.button-secondary { /* Add this class or adjust to your secondary button style */
+    background-color: #f0f0f0;
+    color: #333;
+    border: 1px solid #ccc;
+}
+.button-secondary:hover {
+    background-color: #e0e0e0;
+}
+
+/* Disabled Button Style */
+.button-disabled { /* Class applied by PropertyLocationView */
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #ccc; /* More distinct disabled background */
+    color: #666;
+}
+
+.button-disabled:hover {
+    background-color: #ccc; /* Prevent hover effect */
+    opacity: 0.6;
+}
