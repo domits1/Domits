@@ -1,14 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Alert,
-  StyleSheet,
-  ScrollView,
-} from 'react-native';
-import {isSameDay, isBefore, isAfter} from 'date-fns';
-import DateFormatterDD_MM_YYYY from '../utils/DateFormatterDD_MM_YYYY';
+import {Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View,} from 'react-native';
+import {isSameDay} from 'date-fns';
+import {styles} from "../styles/HostCalendarStyles";
+import DateFormatterDD_MM_YYYY from "../../../../screens/utils/DateFormatterDD_MM_YYYY";
 
 const CalendarComponent = ({passedProp, isNew, updateDates}) => {
   const [month, setMonth] = useState(new Date().getMonth());
@@ -188,7 +182,7 @@ const CalendarComponent = ({passedProp, isNew, updateDates}) => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={styles.calendarComponentHeader}>
         <Text style={styles.monthYear}>{`${months[month]} ${year}`}</Text>
         <View style={styles.navButtons}>
           <TouchableOpacity
@@ -256,142 +250,5 @@ const CalendarComponent = ({passedProp, isNew, updateDates}) => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: '#f7f7f7',
-    color: 'black',
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    color: 'black',
-  },
-  monthYear: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'black',
-  },
-  navButtons: {
-    flexDirection: 'row',
-  },
-  navButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 0,
-    padding: 10,
-  },
-  navButtonText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: 'black',
-  },
-  datesContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'flex-start',
-    padding: 10,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    backgroundColor: '#fafafa',
-  },
-  date: {
-    width: '14%',
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 3,
-    marginHorizontal: 4,
-    borderRadius: 8,
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    shadowColor: '#000',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  activeDay: {
-    backgroundColor: '#e3f2fd',
-    borderColor: '#64b5f6',
-    shadowColor: '#64b5f6',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-  },
-  selectedDay: {
-    backgroundColor: '#c8e6c9',
-    borderColor: '#388e3c',
-    shadowColor: '#388e3c',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    transform: [{scale: 1.05}],
-  },
-  startDay: {
-    backgroundColor: '#74c878',
-    borderColor: '#388e3c',
-    shadowColor: '#1b5e20',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    transform: [{scale: 1.1}],
-  },
-  endDay: {
-    backgroundColor: '#74c878',
-    borderColor: '#388e3c',
-    shadowColor: '#1b5e20',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    transform: [{scale: 1.1}],
-  },
-  range: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 8,
-    backgroundColor: '#ffffff',
-    borderRadius: 5,
-    marginVertical: 4,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    color: 'black',
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 16,
-    color: 'black',
-  },
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 5,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginHorizontal: 8,
-    backgroundColor: '#4caf50',
-    color: 'white',
-  },
-  buttonText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: 'white',
-  },
-  UndoButton: {
-    backgroundColor: '#f44336',
-  },
-  SaveButton: {
-    backgroundColor: '#4caf50',
-  },
-  RemoveButton: {
-    backgroundColor: '#f44336',
-  },
-});
 
 export default CalendarComponent;
