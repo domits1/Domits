@@ -9,7 +9,7 @@ const AmenitiesContainer = ({amenityIds}) => {
 
     return (
         <div>
-            <p className="label">This place offers the following:</p>
+            <p className="amenities-title">This place offers the following:</p>
             {featuredAmenities.map(amenity => {
                 return <Amenity key={amenity.id} amenity={amenity.amenity} />;
             })}
