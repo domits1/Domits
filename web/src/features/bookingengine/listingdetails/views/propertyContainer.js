@@ -2,6 +2,7 @@ import ImageGallery from "../components/imageGallery";
 import PricingPerNight from "../components/pricingPerNight";
 import GeneralDetails from "../components/generalDetails";
 import React from "react";
+import AmenitiesContainer from "./amenitiesContainer";
 
 const PropertyContainer = ({ property }) => {
   return (
@@ -11,6 +12,7 @@ const PropertyContainer = ({ property }) => {
       </section>
       <PricingPerNight pricing={property.pricing} />
       <GeneralDetails generalDetails={property.generalDetails} />
+      <AmenitiesContainer amenityIds={property.amenities} />
     </div>
   );
 };
