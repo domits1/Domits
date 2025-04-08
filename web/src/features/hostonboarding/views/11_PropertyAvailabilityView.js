@@ -4,16 +4,13 @@ import { useParams } from "react-router-dom";
 import StayControl from "../components/StayControl";
 import { useAvailability } from "../hooks/usePropertyCalenderAvailability";
 import OnboardingButton from "../components/OnboardingButton";
-import { useHandleLegalProceed } from "../hooks/usePropertyRegistrationNumber";
+import { useHandleLegalProceed } from "../hooks/useHandleLegalProceed";
 
 function PropertyAvailabilityView() {
   const { type: accommodationType } = useParams();
-  const {
-    availability,
-    updateSelectedDates,
-  } = useAvailability();
+  const { availability, updateSelectedDates } = useAvailability();
 
-  const {handleProceedToLegal}  = useHandleLegalProceed();
+  const { handleProceedToLegal } = useHandleLegalProceed();
 
   return (
     <main className="container">
