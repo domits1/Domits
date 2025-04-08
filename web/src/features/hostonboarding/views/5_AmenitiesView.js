@@ -9,9 +9,9 @@ function AmenitiesView() {
   const { type: accommodationType } = useParams();
 
   const selectedAmenities = useFormStore(
-    (state) => state.accommodationDetails.selectedAmenities
-  );
-  const setAmenities = useFormStore((state) => state.setAmenities);
+    (state) => state.accommodationDetails.selectedAmenities,
+  )
+  const setAmenities = useFormStore((state) => state.setAmenities)
 
   const handleAmenityChange = (category, amenity, isChecked) => {
     const updatedAmenities = isChecked
