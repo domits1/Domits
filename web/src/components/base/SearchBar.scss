@@ -72,11 +72,269 @@ $primary-domits-color: #0d9813;
     }
   }
 
+  .searchTitle {
+    color: $primary-domits-color;
+    font-size: 1rem;
+    font-family: $primary-font;
+    font-weight: 500;
+    text-overflow: ellipsis;
+    text-align: center; // Ensures the text is centered horizontally
+    display: flex; // Enables flexbox for centering
+    justify-content: center; // Centers content horizontally
+    align-items: center; // Centers content vertically
+  }
+
+  .Search-check-in-out {
+    width: 17%;
+    cursor: auto;
+
+    .input-calendar-checkInOut {
+      background: none;
+      border: none;
+      text-align: center;
+      width: 92%;
+      height: 3.5rem;
+    }
+
+    .DatePicker__calendarContainer {
+      position: absolute;
+      top: calc(-20% + 0.4rem);
+      left: 60%;
+      transform: translateX(-50%);
+      box-shadow: $shadow-dropdown;
+      border-radius: 0.5rem;
+    }
+  }
+
+  .Search-location {
+    width: 36%;
+
+    @include mobile {
+      background-color: #f0f0f0;
+      border-radius: $border-radius-md;
+      width: 100%;
+      margin-bottom: 0.4rem;
+      height: 3rem;
+      text-overflow: ellipsis;
+    }
+
+    .search-places-input {
+      @include reset-input;
+      @include flex-center;
+      margin: 0.6rem auto 0;
+      padding: 10px 5px;
+      width: 85%;
+
+      &::placeholder {
+        font-family: $primary-font;
+        text-align: center;
+        color: $primary-domits-color;
+        font-size: 1rem;
+        font-weight: 500;
+        transform: translateY(0.2rem);
+      }
+    }
+
+    .search-places-input:focus {
+      outline: none;
+    }
+  }
+
+  .searchbar-button {
+    display: inline-block;
+    outline: 0;
+    cursor: pointer;
+    padding: 3px;
+    font-size: 0.6rem;
+    line-height: 1.875rem;
+    border: 1px solid $primary-domits-color;
+    border-radius: 50%;
+    color: #ffffff;
+    background-color: $primary-domits-color;
+    box-shadow:
+      rgba(27, 31, 35, 0.04) 0px 1px 0px 0px,
+      rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
+    height: 2.5rem;
+    width: 2.5rem;
+    margin-top: 0.45rem;
+    margin-left: 0.4rem;
+
+    &:hover {
+      opacity: 90%;
+      transition-duration: 0s;
+    }
+
+    svg {
+      color: rgb(255, 255, 255);
+      margin-top: 0.625rem;
+    }
+  }
+
+  .search-text {
+    font-size: 1rem;
+    margin-right: 1rem;
+  }
+
+  .Search-button-section {
+    border: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    padding: 1.625rem;
+    border-radius: 1.25rem;
+    width: 10%;
+  }
+
+  .Search-error-message {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 2px solid #f5c6cb;
+    padding: 24px 36px;
+    border-radius: 16px;
+    font-size: 1.2rem;
+    position: absolute;
+    z-index: 999;
+    height: auto;
+    cursor: pointer;
+    transform: translate(60%, 80%);
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+
+  .Search-guest-dropdown {
+    display: none;
+    position: absolute;
+    top: calc(100% + 0.625rem);
+    margin-right: -250%;
+    transform: translateX(-50%) scale(0.95);
+    background: white;
+    box-shadow: $shadow-dropdown;
+    border-radius: $border-radius-lg;
+    padding: 1.5625rem;
+    z-index: 999;
+    width: 25.125rem;
+    min-width: 15.625rem;
+    box-sizing: border-box;
+    cursor: auto;
+
+    &.active {
+      display: block;
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+      animation: dropdownFadeIn 0.3s ease;
+    }
+
+    @include mobile {
+      width: calc(120% - 1.875rem);
+      left: 50%;
+      right: 50%;
+      top: -275%;
+    }
+  }
+
+  @keyframes dropdownFadeIn {
+    0% {
+      opacity: 0;
+      transform: translateX(-50%) scale(0.8);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+  }
+
+  .Search-guestCounter {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.4rem;
+    border-bottom: 1px solid $primary-domits-color;
+  }
+
+  .Search-guestCounter:last-child {
+    border-bottom: none;
+  }
+
+  .Search-guestLabel {
+    font-size: 1rem;
+    color: $primary-domits-color;
+    text-align: left;
+  }
+
+  .Search-selected {
+    color: green;
+  }
+
+  .Search-guestDescription {
+    font-size: 0.7rem;
+    color: #666;
+    text-align: left;
+  }
+
+  .Search-guestCounter .Search-controls {
+    display: flex;
+    align-items: center;
+    padding: 0 0.625rem;
+  }
+
+  .Search-guestCounter .Search-controls span {
+    margin: 0 0.625rem;
+    font-size: 1rem;
+  }
+
+  .Search-guestCounter .Search-controls button {
+    border: 2px solid #cccccc;
+    border-radius: 50%;
+    background-color: #fff;
+    padding: 0;
+    width: 2rem;
+    height: 2rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: #000;
+  }
+
+  .Search-guestCounter .Search-controls button:hover {
+    border-color: $primary-domits-color;
+  }
+
+  .Search-guestCounter .Search-controls button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .searchTitleGuest.hidden {
+    display: none;
+  }
+
+  .searchTitleGuest {
+    position: absolute;
+    color: $primary-domits-color;
+    font-size: 1rem;
+    font-weight: 500;
+    margin-top: 0.1rem;
+  }
+
+  .Search-guestP {
+    text-align: left;
+    font-weight: 500;
+    color: #000;
+    font-size: 0.75rem;
+    margin-top: 1rem;
+  }
+
   @include mobile {
     border: 2px solid $primary-domits-color;
-    width: 110%;
+    width: 100%;
     max-width: 400px;
-    transform: translateX(-0.9rem);
+    margin-bottom: auto;
+    transform: translateX(-0.5rem);
     border-radius: $border-radius-md;
     font-size: 0.6rem;
     flex-direction: column;
@@ -84,342 +342,441 @@ $primary-domits-color: #0d9813;
     height: auto;
     padding: 0.6rem;
     box-sizing: border-box;
+
+    > div::before {
+      display: none;
+    }
+
+    .Search-location,
+    .Search-check-in-out,
+    .Search-button-section,
+    .searchSelectContainer {
+      background-color: #f0f0f0;
+      border-radius: $border-radius-md;
+      width: 100%;
+      margin-bottom: 0.4rem;
+    }
+
+    .Search-location {
+      height: 3rem;
+    }
+
+    .Search-check-in-out {
+      height: 3.4rem;
+
+      .input-calendar-checkInOut {
+        text-align: center;
+        width: 100%;
+        height: 3.5rem;
+      }
+
+      .DatePicker__input {
+        transform: translateX(20%) translateY(-130%);
+        padding: 1rem;
+        width: 60vw;
+      }
+
+      .DatePicker__calendarContainer {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+      }
+    }
+
+    .searchbar-button {
+      height: 2.7rem;
+      width: 100%;
+      border-radius: 10px;
+      transform: translateX(-2.25%);
+      margin-top: 0.5rem;
+    }
+
+    .Search-guest-dropdown {
+      width: calc(120% - 1.875rem);
+      left: 50%;
+      right: 50%;
+      top: -275%;
+    }
+
+    .searchTitleGuest {
+      transform: translateY(-15%);
+      text-align: center;
+      text-overflow: ellipsis;
+    }
+
+    .Search-error-message {
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      height: 3rem;
+      top: 40.6%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 82%;
+    }
+
+    .search-text {
+      display: inline;
+    }
+
+    .mobile-search-button {
+      display: block;
+      width: 90vw;
+      padding: 0.8rem;
+      background-color: #ffffff;
+      border: 1px solid #e2e2e4;
+      border-radius: $border-radius-md;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      text-overflow: ellipsis;
+    }
   }
 
   @include tablet {
     width: 85%;
   }
-}
 
-.searchTitle {
-  color: $primary-domits-color;
-  font-size: 1rem;
-  font-family: $primary-font;
-  font-weight: 500;
-  text-overflow: ellipsis;
-  transform: translateY(-15%);
-}
-
-.Search-check-in-out {
-  width: 17%;
-  cursor: auto;
-
-  .input-calendar-checkInOut {
-    background: none;
-    border: none;
-    text-align: center;
-    width: 92%;
-    height: 3.5rem;
-  }
-
-  .DatePicker__calendarContainer {
-    position: absolute;
-    top: calc(-20% + 0.4rem);
-    left: 60%;
-    transform: translateX(-50%);
-    box-shadow: $shadow-dropdown;
-    border-radius: 0.5rem;
-  }
-}
-
-.Search-location {
-  width: 36%;
-
-  @include mobile {
-    background-color: #f0f0f0;
-    border-radius: $border-radius-md;
+  @media (max-width: 1000px) {
     width: 100%;
-    margin-bottom: 0.4rem;
-    height: 3rem;
-    text-overflow: ellipsis;
   }
 
-  .search-places-input {
-    @include reset-input;
-    @include flex-center;
-    margin: 0.6rem auto 0;
-    padding: 10px 5px;
-    width: 85%;
-
-    &::placeholder {
-      font-family: $primary-font;
-      text-align: center;
-      color: $primary-domits-color;
-      font-size: 1rem;
-      font-weight: 500;
-      transform: translateY(0.2rem);
+  @media (min-width: 2500px) {
+    .responsive-calendar {
+      font-size: 0.8rem !important;
     }
   }
 
-  .search-places-input:focus {
-    outline: none;
-  }
-}
-
-.searchbar-button {
-  display: inline-block;
-  outline: 0;
-  cursor: pointer;
-  padding: 3px;
-  font-size: 0.6rem;
-  line-height: 1.875rem;
-  border: 1px solid $primary-domits-color;
-  border-radius: 50%;
-  color: #ffffff;
-  background-color: $primary-domits-color;
-  box-shadow:
-    rgba(27, 31, 35, 0.04) 0px 1px 0px 0px,
-    rgba(255, 255, 255, 0.25) 0px 1px 0px 0px inset;
-  height: 2.5rem;
-  width: 2.5rem;
-  margin-top: 0.45rem;
-  margin-left: 0.4rem;
-
-  &:hover {
-    opacity: 90%;
-    transition-duration: 0s;
-  }
-
-  svg {
-    color: rgb(255, 255, 255);
-    margin-top: 0.625rem;
-  }
-}
-
-.search-text {
-  font-size: 1rem;
-  margin-right: 1rem;
-}
-
-.Search-button-section {
-  border: none;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-  padding: 1.625rem;
-  border-radius: 1.25rem;
-  width: 10%;
-}
-
-.Search-error-message {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 2px solid #f5c6cb;
-  padding: 24px 36px;
-  border-radius: 16px;
-  font-size: 1.2rem;
-  position: absolute;
-  z-index: 999;
-  height: auto;
-  cursor: pointer;
-  transform: translate(60%, 80%);
-  max-width: 400px;
-  text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.Search-guest-dropdown {
-  display: none;
-  position: absolute;
-  top: calc(100% + 0.625rem);
-  margin-right: -250%;
-  transform: translateX(-50%) scale(0.95);
-  background: white;
-  box-shadow: $shadow-dropdown;
-  border-radius: $border-radius-lg;
-  padding: 1.5625rem;
-  z-index: 999;
-  width: 25.125rem;
-  min-width: 15.625rem;
-  box-sizing: border-box;
-  cursor: auto;
-
-  &.active {
-    display: block;
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
-    animation: dropdownFadeIn 0.3s ease;
+  @media (max-width: 1500px) {
+    .responsive-calendar {
+      font-size: 0.7rem !important;
+    }
   }
 
   @include mobile {
-    width: calc(120% - 1.875rem);
+    .responsive-calendar {
+      font-size: 0.7rem !important;
+    }
+  }
+
+  @media (max-width: 1500px) {
+    .Calendar__monthSelectorItemText,
+    .Calendar__yearSelectorText {
+      font-size: 10px !important;
+    }
+  }
+
+  @media (max-width: 1200px) {
+    .Calendar__monthSelectorItemText,
+    .Calendar__yearSelectorText {
+      font-size: 7px !important;
+    }
+  }
+
+  @include mobile {
+    .Calendar__monthSelectorItemText,
+    .Calendar__yearSelectorText {
+      font-size: 1rem !important;
+    }
+  }
+
+  @media (min-width: 2500px) {
+    .Calendar__monthSelectorItemText,
+    .Calendar__yearSelectorText {
+      font-size: 15px !important;
+    }
+  }
+
+  @include mobile {
+    .input-calendar-checkInOut,
+    .DatePicker__input {
+      font-size: 0.5rem;
+    }
+  }
+
+  
+
+  @include mobile {
+    .Search-button-section,
+    .searchSelectContainer,
+    .Search-check-in-out {
+      background-color: #f0f0f0;
+      border-radius: $border-radius-md;
+      width: 100%;
+      margin-bottom: 0.4rem;
+    }
+
+    .Search-check-in-out {
+      height: 3.4rem;
+    }
+
+    .Search-location {
+      background-color: #f0f0f0;
+      border-radius: $border-radius-md;
+      width: 100%;
+      margin-bottom: 0.4rem;
+      height: 3rem;
+      text-overflow: ellipsis;
+    }
+
+    .Search-button-section {
+      background-color: #f0f0f0;
+      border-radius: $border-radius-md;
+      width: 100%;
+      padding: 0rem;
+      border: none;
+      height: 3rem;
+    }
+
+    .searchSelectContainer {
+      height: 2.8rem;
+    }
+
+    .searchTitleGuest {
+      transform: translateX(-0%);
+      transform: translateY(-15%);
+      text-align: center;
+      text-overflow: ellipsis;
+    }
+
+    .Search-guestP {
+      position: absolute;
+    }
+
+    .input-calendar-checkInOut {
+      border: none;
+      text-align: center;
+      width: 100%;
+      transform: translate(0%);
+      height: 3.5rem;
+    }
+
+    /* tijdelijke oplossing het is nog niet responsive */
+    .DatePicker__input {
+      border: solid transparent;
+      transform: translateX(-0%) translateY(-130%);
+      width: 60vw;
+      max-width: 62vw;
+      box-sizing: border-box;
+    }
+
+    .searchbar-button {
+      height: 2.7rem;
+      width: 100%;
+      border-radius: 10px;
+      transform: translateX(-2.25%);
+      margin-top: 0.5rem;
+    }
+
+    .Search-bar-main > div::before {
+      background: transparent;
+    }
+
+    .DatePicker__calendarContainer {
+      position: absolute;
+      top: calc(-20% + -15.7rem);
+      left: 48%;
+      transform: translateX(-50%);
+    }
+
+    .DatePicker__calendarArrow {
+      border-color: transparent;
+    }
+
+    .Search-ClearButton {
+      margin-top: 0.5rem;
+    }
+
+    .Search-error-message {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 2px solid #f5c6cb;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      position: absolute;
+      z-index: 1;
+      height: 3rem;
+      top: 40.6%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 82%;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .search-icon {
+      margin-right: 10px;
+      transform: translateY(15%);
+    }
+  }
+
+  .search-text {
+    display: none;
+  }
+
+  @include mobile {
+    .search-text {
+      display: inline;
+    }
+  }
+
+  @include mobile {
+    .Search-bar-main {
+      display: none;
+    }
+
+    .bar-container .Search-bar-main {
+      display: block;
+    }
+  }
+
+  @include mobile {
+    .mobile-search-button {
+      display: block;
+      width: 90vw;
+      padding: 0.8rem;
+      background-color: #ffffff;
+      border: 1px solid #e2e2e4;
+      border-radius: $border-radius-md;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      font-size: 1rem;
+      color: #000;
+      outline: none;
+      text-align: left;
+      font-weight: 400;
+      overflow: hidden;
+      white-space: nowrap;
+      transition: transform 0.3s ease-in-out;
+      margin-bottom: 0.5rem;
+      text-overflow: ellipsis;
+    }
+    .Search-bar-main > div::before {
+      display: none;
+    }
+  }
+
+  .searchSelectContainer {
+    .custom-select-dropdown-menu__control {
+      width: 8.8rem;
+      height: 2.7rem;
+      border: none;
+      outline: none;
+      box-shadow: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      margin: auto;
+      transform: translateY(7px);
+    }
+
+    .custom-select-dropdown-menu__menu {
+      background-color: rgb(255, 255, 255);
+      border-radius: 10px;
+      box-shadow: $shadow-dropdown;
+      margin-top: 1rem;
+      width: 15rem;
+      overflow-x: hidden;
+      overflow-y: auto;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 9999;
+    }
+
+    .custom-select-dropdown-menu__option {
+      background-color: white;
+      color: #666;
+      font-weight: normal;
+      font-size: 14px;
+      padding: 13.8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      border-radius: 10px;
+      gap: 15px;
+      cursor: pointer;
+      transition: transform 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .custom-select-dropdown-menu__option:hover {
+      color: black;
+      background-color: #e6e6e6;
+    }
+
+    .custom-select-dropdown-menu__option--is-selected {
+      background-color: #f0f0f0;
+      color: black;
+      font-weight: 800;
+    }
+
+    .custom-select-dropdown-menu__single-value {
+      text-align: center;
+      font-weight: 500;
+      color: #000;
+      font-size: 1rem;
+    }
+
+    .ccustom-select-dropdown-menu__clear-indicator {
+      color: black;
+      font-size: 2rem;
+    }
+  }
+
+  @include mobile {
+    .searchSelectContainer {
+      .custom-select-dropdown-menu__control {
+        width: 100%;
+        transform: translateX(0);
+      }
+    }
+  }
+
+  .search-clear-guests {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-35%);
+    border: none;
+    background: transparent;
+    cursor: pointer;
+  }
+
+  .Calendar-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 50%;
     left: 50%;
-    right: 50%;
-    top: -275%;
-  }
-}
-
-@keyframes dropdownFadeIn {
-  0% {
-    opacity: 0;
-    transform: translateX(-50%) scale(0.8);
+    transform: translate(-50%, -50%);
+    color: $primary-domits-color;
+    font-weight: 500;
+    font-size: 1rem;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
   }
 
-  100% {
-    opacity: 1;
-    transform: translateX(-50%) scale(1);
+  .Search-close-guest-dropdown {
+    position: absolute;
+    padding: 0.3rem;
+    right: 10px;
+    top: 10px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
   }
-}
-
-.Search-guestCounter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 0.4rem;
-  border-bottom: 1px solid $primary-domits-color;
-}
-
-.Search-guestCounter:last-child {
-  border-bottom: none;
-}
-
-.Search-guestLabel {
-  font-size: 1rem;
-  color: $primary-domits-color;
-  text-align: left;
-}
-
-.Search-selected {
-  color: green;
-}
-
-.Search-guestDescription {
-  font-size: 0.7rem;
-  color: #666;
-  text-align: left;
-}
-
-.Search-guestCounter .Search-controls {
-  display: flex;
-  align-items: center;
-  padding: 0 0.625rem;
-}
-
-.Search-guestCounter .Search-controls span {
-  margin: 0 0.625rem;
-  font-size: 1rem;
-}
-
-.Search-guestCounter .Search-controls button {
-  border: 2px solid #cccccc;
-  border-radius: 50%;
-  background-color: #fff;
-  padding: 0;
-  width: 2rem;
-  height: 2rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.5rem;
-  color: #000;
-}
-
-.Search-guestCounter .Search-controls button:hover {
-  border-color: $primary-domits-color;
-}
-
-.Search-guestCounter .Search-controls button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.searchTitleGuest.hidden {
-  display: none;
-}
-
-.searchTitleGuest {
-  position: absolute;
-  color: $primary-domits-color;
-  font-size: 1rem;
-  font-weight: 500;
-  margin-top: 0.1rem;
-}
-
-.Search-guestP {
-  text-align: left;
-  font-weight: 500;
-  color: #000;
-  font-size: 0.75rem;
-  margin-top: 1rem;
 }
 
 .responsive-calendar {
   font-size: 11px !important;
 }
 
-.DatePicker__calendarArrow {
-  display: none;
-}
-
-.Calendar__monthSelector.-open,
-.Calendar__yearSelector.-open {
-  transform: translateY(0);
-}
-
-@include mobile {
-  .Calendar-placeholder {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-  }
-}
-
-@media (max-width: 1000px) {
-  .Search-bar-main {
-    width: 95%;
-  }
-}
-
-@media (min-width: 2500px) {
-  .responsive-calendar {
-    font-size: 0.8rem !important;
-  }
-}
-
-@media (max-width: 1500px) {
-  .responsive-calendar {
-    font-size: 0.7rem !important;
-  }
-}
-
-@include mobile {
-  .responsive-calendar {
-    font-size: 0.7rem !important;
-  }
-}
-
-@media (max-width: 1500px) {
-  .Calendar__monthSelectorItemText,
-  .Calendar__yearSelectorText {
-    font-size: 10px !important;
-  }
-}
-
-@media (max-width: 1200px) {
-  .Calendar__monthSelectorItemText,
-  .Calendar__yearSelectorText {
-    font-size: 7px !important;
-  }
-}
-
-@include mobile {
-  .Calendar__monthSelectorItemText,
-  .Calendar__yearSelectorText {
-    font-size: 1rem !important;
-  }
-}
-
-@media (min-width: 2500px) {
-  .Calendar__monthSelectorItemText,
-  .Calendar__yearSelectorText {
-    font-size: 15px !important;
-  }
-}
-
-/* dit is de styling voor de calendar gedeelte */
 .DatePicker {
   position: relative;
   display: inline-block;
@@ -483,173 +840,14 @@ $primary-domits-color: #0d9813;
   color: inherit;
 }
 
-@include mobile {
-  .input-calendar-checkInOut,
-  .DatePicker__input {
-    font-size: 0.5rem;
-  }
-}
+.mobile-search-button {
+  display: none;
 
-@include mobile {
-  .Search-bar-main {
-    border: 2px solid $primary-domits-color;
+  @include mobile {
+    display: block;
     width: 100%;
     max-width: 400px;
-    margin: auto;
-    box-shadow: $shadow-default;
-    border-radius: $border-radius-md;
-    display: flex;
-    font-size: 0.6rem;
-    flex-direction: column;
-    align-items: flex-start;
-    height: auto;
-    padding: 0.6rem;
-    box-sizing: border-box;
-  }
-}
-
-@include mobile {
-  .Search-button-section,
-  .searchSelectContainer,
-  .Search-check-in-out {
-    background-color: #f0f0f0;
-    border-radius: $border-radius-md;
-    width: 100%;
-    margin-bottom: 0.4rem;
-  }
-  .search-places-input {
-    transform: translateY(20%);
-  }
-
-  .Search-check-in-out {
-    height: 3.4rem;
-  }
-
-  .Search-location {
-    background-color: #f0f0f0;
-    border-radius: $border-radius-md;
-    width: 100%;
-    margin-bottom: 0.4rem;
-    height: 3rem;
-    text-overflow: ellipsis;
-  }
-
-  .Search-button-section {
-    background-color: #f0f0f0;
-    border-radius: $border-radius-md;
-    width: 100%;
-    padding: 0rem;
-    border: none;
-    height: 3rem;
-  }
-
-  .searchSelectContainer {
-    height: 2.8rem;
-  }
-
-  .searchTitleGuest {
-    transform: translateX(-0%);
-    transform: translateY(-15%);
-    text-align: center;
-    text-overflow: ellipsis;
-  }
-
-  .Search-guestP {
-    position: absolute;
-  }
-
-  .input-calendar-checkInOut {
-    border: none;
-    text-align: center;
-    width: 100%;
-    transform: translate(0%);
-    height: 3.5rem;
-  }
-
-  /* tijdelijke oplossing het is nog niet responsive */
-  .DatePicker__input {
-    border: solid transparent;
-    transform: translateX(-0%) translateY(-130%);
-    width: 60vw;
-    max-width: 62vw;
-    box-sizing: border-box;
-  }
-
-  .searchbar-button {
-    height: 2.7rem;
-    width: 100%;
-    border-radius: 10px;
-    transform: translateX(-2.25%);
-    margin-top: 0.5rem;
-  }
-
-  .Search-bar-main > div::before {
-    background: transparent;
-  }
-
-  .DatePicker__calendarContainer {
-    position: absolute;
-    top: calc(-20% + -15.7rem);
-    left: 48%;
-    transform: translateX(-50%);
-  }
-
-  .DatePicker__calendarArrow {
-    border-color: transparent;
-  }
-
-  .Search-ClearButton {
-    margin-top: 0.5rem;
-  }
-
-  .Search-error-message {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 2px solid #f5c6cb;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 16px;
-    position: absolute;
-    z-index: 1;
-    height: 3rem;
-    top: 40.6%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 82%;
-    text-align: center;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-
-  .search-icon {
-    margin-right: 10px;
-    transform: translateY(15%);
-  }
-}
-
-.search-text {
-  display: none;
-}
-
-@include mobile {
-  .search-text {
-    display: inline;
-  }
-}
-
-@include mobile {
-  .Search-bar-main {
-    display: none;
-  }
-
-  .bar-container .Search-bar-main {
-    display: block;
-  }
-}
-
-@include mobile {
-  .mobile-search-button {
-    display: block;
-    width: 90vw;
+    margin: 0 auto 0.5rem auto;
     padding: 0.8rem;
     background-color: #ffffff;
     border: 1px solid #e2e2e4;
@@ -662,141 +860,13 @@ $primary-domits-color: #0d9813;
     font-weight: 400;
     overflow: hidden;
     white-space: nowrap;
-    transition: transform 0.3s ease-in-out;
-    margin-bottom: 0.5rem;
     text-overflow: ellipsis;
-  }
-  .Search-bar-main > div::before {
-    display: none;
-  }
-}
-
-@media screen and (min-width: 769px) and (max-width: 1024px) {
-  .Search-bar-main {
-    width: 85%;
-  }
-
-  .Search-location {
-    width: 28%;
-  }
-
-  .DatePicker__input {
-    padding-left: 0%;
-  }
-}
-
-/* dit is de css van de react packages:  */
-.searchSelectContainer {
-  .custom-select-dropdown-menu__control {
-    width: 8.8rem;
-    height: 2.7rem;
-    border: none;
-    outline: none;
-    box-shadow: none;
-    background: none;
-    padding: 0;
+    transition: transform 0.3s ease-in-out;
     cursor: pointer;
-    margin: auto;
-    transform: translateY(7px);
-  }
 
-  .custom-select-dropdown-menu__menu {
-    background-color: rgb(255, 255, 255);
-    border-radius: 10px;
-    box-shadow: $shadow-dropdown;
-    margin-top: 1rem;
-    width: 15rem;
-    overflow-x: hidden;
-    overflow-y: auto;
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-  }
-
-  .custom-select-dropdown-menu__option {
-    background-color: white;
-    color: #666;
-    font-weight: normal;
-    font-size: 14px;
-    padding: 13.8px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    border-radius: 10px;
-    gap: 15px;
-    cursor: pointer;
-    transition: transform 0.2s;
-    white-space: nowrap;
-    overflow: hidden;
-  }
-
-  .custom-select-dropdown-menu__option:hover {
-    color: black;
-    background-color: #e6e6e6;
-  }
-
-  .custom-select-dropdown-menu__option--is-selected {
-    background-color: #f0f0f0;
-    color: black;
-    font-weight: 800;
-  }
-
-  .custom-select-dropdown-menu__single-value {
-    text-align: center;
-    font-weight: 500;
-    color: #000;
-    font-size: 1rem;
-  }
-
-  .ccustom-select-dropdown-menu__clear-indicator {
-    color: black;
-    font-size: 2rem;
-  }
-}
-
-@include mobile {
-  .searchSelectContainer {
-    .custom-select-dropdown-menu__control {
-      width: 100%;
-      transform: translateX(0);
+    &:hover {
+      background-color: #f8f8f8;
     }
   }
-}
-
-.search-clear-guests {
-  position: absolute;
-  right: 0.5rem;
-  top: 50%;
-  transform: translateY(-35%);
-  border: none;
-  background: transparent;
-  cursor: pointer;
-}
-
-.Calendar-placeholder {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  color: $primary-domits-color;
-  font-weight: 500;
-  font-size: 1rem;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  text-align: center;
-}
-
-.Search-close-guest-dropdown {
-  position: absolute;
-  padding: 0.3rem;
-  right: 10px;
-  top: 10px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-size: 1.1rem;
+  
 }

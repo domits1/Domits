@@ -213,8 +213,8 @@ body {
     }
 
     .headerButtons,
-    .personalMenu,
-    .Search-bar {
+    .personalMenu
+     {
         width: 100%;
         margin-top: 10px;
         margin-right: 0;
@@ -238,17 +238,7 @@ body {
         padding: 10px 20px;
     }
 
-    .SearchBarContainer.inactive,
-    .Search-bar.inactive {
-        display: none;
-    }
-
-    .Search-bar.active {
-        display: block;
-        overflow: hidden;
-    }
-
-    .SearchBarContainer.active {
+    .Search-Bar-Main-Container.active {
         align-content: center;
         margin: 4vh 0 31vh 4vw;
     }
