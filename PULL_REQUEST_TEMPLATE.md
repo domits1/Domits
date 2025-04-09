@@ -33,6 +33,16 @@ Description: [Please add detailed description of the changes here]
 - [ ] NPM Packages updated
 - [ ] Did you check for vulnerabilities using "npm audit"?
 
+## PR workflow
+0. “Pull” the changes to your local machine (get the most recent base)
+1. Create a “branch” (version)
+2. Commit the changes
+   3.a Push your changes
+   3.b Open a “pull request” (propose changes)
+4. Discuss and review your code
+5. Rebase and tests
+6. “Merge” your branch to the master branch
+
 ## Checklist
 - [ ] Check if you didn't use global styling -- for more explanation view https://github.com/domits1/Domits/issues/1691
 - [ ] Console.logs are deleted
