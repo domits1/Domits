@@ -12,6 +12,7 @@ const PropertyContainer = ({ property }) => {
       </section>
       <PricingPerNight pricing={property.pricing} />
       <GeneralDetails generalDetails={property.generalDetails} />
+
       <AmenitiesContainer amenityIds={property.amenities} />
     </div>
   );

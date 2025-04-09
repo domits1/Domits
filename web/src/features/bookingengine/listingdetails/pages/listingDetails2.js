@@ -31,12 +31,10 @@ const ListingDetails2 = () => {
   } else {
     return (
       <div className="listing-details">
-        <div className="main">
+        <div className="container">
           <Header title={property.property.title} />
-          <div className="container">
-            <PropertyContainer property={property} />
-            <BookingContainer property={property} />
-          </div>
+          <PropertyContainer property={property} />
+          <BookingContainer property={property} />
         </div>
       </div>
     );
