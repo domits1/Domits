@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from "react";
-import './guestdashboard.css';
-import { useLocation, useNavigate } from 'react-router-dom';
-import DashboardIcon from '@mui/icons-material/DashboardCustomizeRounded';
-import BookingIcon from '@mui/icons-material/LanguageOutlined';
-import MessageIcon from '@mui/icons-material/QuestionAnswerOutlined';
-import FinanceIcon from '@mui/icons-material/CreditScoreOutlined';
-import RevieuwsIcon from '@mui/icons-material/StarBorderOutlined';
-import Settings from '@mui/icons-material/Settings';
+import "./guestdashboard.css";
+import { useLocation, useNavigate } from "react-router-dom";
+import DashboardIcon from "@mui/icons-material/DashboardCustomizeRounded";
+import BookingIcon from "@mui/icons-material/LanguageOutlined";
+import MessageIcon from "@mui/icons-material/QuestionAnswerOutlined";
+import FinanceIcon from "@mui/icons-material/CreditScoreOutlined";
+import RevieuwsIcon from "@mui/icons-material/StarBorderOutlined";
+import Settings from "@mui/icons-material/Settings";
 
 function Pages() {
-  const [activeTab, setActiveTab] = useState('/guestdashboard');
+  const [activeTab, setActiveTab] = useState("/guestdashboard");
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -21,7 +21,7 @@ function Pages() {
     if (value) {
       navigate(value);
     }
-  }
+  };
 
   return (
     <main>
@@ -29,13 +29,16 @@ function Pages() {
         <br />
         <div className="dropdown-section">
           <div>
-            <select onChange={(e) => handleNavigation(e.target.value)} defaultValue="Guest Options">
+            <select
+              onChange={(e) => handleNavigation(e.target.value)}
+              defaultValue="Guest Options"
+            >
               <option disabled>Guest Options</option>
               <option value="/guestdashboard">Dashboard</option>
               <option value="/guestdashboard/bookings">Bookings</option>
               <option value="/guestdashboard/chat">Messages</option>
               {/* <option value="/guestdashboard/payments">Payments</option> */}
-              {/* <option value="/guestdashboard/reviews">Reviews</option> */}
+              <option value="/guestdashboard/reviews">Reviews</option>
               <option value="/guestdashboard/settings">Settings</option>
             </select>
           </div>
@@ -47,7 +50,8 @@ function Pages() {
           onClick={() => navigate("/guestdashboard")}
         >
           <div className="Mui">
-          <DashboardIcon/></div>
+            <DashboardIcon />
+          </div>
           <p>Dashboard</p>
         </div>
         <div
@@ -55,7 +59,8 @@ function Pages() {
           onClick={() => navigate("/guestdashboard/bookings")}
         >
           <div className="Mui">
-          <BookingIcon/></div>
+            <BookingIcon />
+          </div>
           <p>Bookings</p>
         </div>
         <div
@@ -63,7 +68,8 @@ function Pages() {
           onClick={() => navigate("/guestdashboard/chat")}
         >
           <div className="Mui">
-          <MessageIcon/></div>
+            <MessageIcon />
+          </div>
           <p>Messages</p>
         </div>
         {/* <div
@@ -74,20 +80,22 @@ function Pages() {
           <FinanceIcon/></div>
           <p>Payments</p>
         </div> */}
-        {/* <div
+        <div
           className={`wijzers ${activeTab === "/guestdashboard/reviews" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/reviews")}
         >
           <div className="Mui">
-          <RevieuwsIcon/></div>
+            <RevieuwsIcon />
+          </div>
           <p>Reviews</p>
-        </div> */}
+        </div>
         <div
           className={`wijzers ${activeTab === "/guestdashboard/settings" ? "active" : ""}`}
           onClick={() => navigate("/guestdashboard/settings")}
         >
           <div className="Mui">
-          <Settings/></div>
+            <Settings />
+          </div>
           <p>Settings</p>
         </div>
       </div>
