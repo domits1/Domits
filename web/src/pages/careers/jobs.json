@@ -1,946 +1,937 @@
 [
-    {
-      "id": 1,
-      "title": "HR - IT Recruiter",
-      "experience": "Intern",
-      "category": "People",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the people team and looking for HR - IT Recruiters. We're open for intern and trainee HR - IT Recruiters. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are in the process of building our People team and are actively looking for HR - IT Recruiters to join us. We're open to both interns and trainee HR - IT Recruiters, providing an excellent opportunity to grow within the role. Interested? Send us a message or read on to learn more about the position.",
-        "responsibilities": "Initially, we will work together to explore how we can create a win-win situation that could lead to you becoming a permanent member of our team. Your journey will begin with a trial period, lasting anywhere from 1 to 6 months, during which we will assess our collaboration and your fit with the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You'll play a crucial role in a team of experienced digital professionals, working in a company that helps individuals, organizations, and stakeholders drive business growth through digital expertise. Our team is informal and fun, and we offer ample opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1-5+ years of experience as an HR - IT recruiter is a strong advantage.",
-          "Excellent communication and interpersonal skills are essential.",
-          "Solid knowledge of IT recruitment, with experience hiring web developers and mobile app developers.",
-          "A talent for sourcing candidates through various channels such as job portals, advertisements, headhunting, networking, and employee referrals.",
-          "Analytical and proficient in utilizing different recruitment channels, job portals, and social networking sites to find talent.",
-          "Ability to understand role requirements, screen profiles effectively, and shortlist candidates for preliminary interviews.",
-          "Skilled in developing successful sourcing strategies to reach both active and passive job seekers.",
-          "Strong ability to build rapport with candidates throughout the interview process, ensuring a positive experience for them.",
-          "Consistently updating the internal database with new resumes and contributing innovative recruitment techniques.",
-          "Logical thinking, problem-solving abilities, and being a strong team player are key qualities we value.",
-          "A strong interest in the domain and a meticulous, loyal, energetic, and diligent approach to your work."
-        ],
-        "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll be in touch as soon as possible to discuss the next steps.",
-        "extraInformation": [
-          "Education level: All levels/University",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available",
-          "Working hours per week: 10 - 40+",
-          "Employment types: Internship, Traineeship, Freelance, and Contract",
-          "Responsibilities: To be discussed in consultation"
-        ]
-      }
-    },
-    {
-      "id": 2,
-      "title": "Software Engineer (Javascript, AWS, Fullstack)",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for javascript software engineers (fullstack). We're open for intern and trainee software engineers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking JavaScript software engineers (fullstack) to join us. We welcome both interns and trainee software engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll collaborate to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our partnership and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play an integral role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5-5+ years of experience as a software engineer is advantageous.",
-          "A solid understanding of structured and unstructured databases (MySQL and DynamoDB).",
-          "Familiarity with isomorphic React is a plus.",
-          "Experience in implementing well-known React workflows.",
-          "The ability to learn new technologies and languages quickly.",
-          "Proficient in using code versioning tools, particularly Git.",
-          "Experience with JavaScript backend frameworks like Node.js.",
-          "Strong time-management skills and the ability to deliver a complete front-end application.",
-          "Professional and precise communication skills.",
-          "Deep knowledge of Angular/Node.js/React practices and commonly used modules, based on extensive work experience.",
-          "Proficient in JavaScript, with a good understanding of built-in methods for arrays and objects.",
-          "Strong logical thinking and problem-solving abilities.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 3,
-      "title": "Software Tester",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for software testers. We're open for intern and trainee software testers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking software testers to join us. We welcome both interns and trainee software testers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5-5+ years of experience as a software tester is advantageous.",
-          "Strong knowledge in manual testing and test case preparation.",
-          "Good written and verbal communication skills.",
-          "Excellent analytical and documentation skills to present findings to team members.",
-          "Ability to analyze requirements for validity and feasibility.",
-          "Experience in executing all levels of testing and in detecting, tracking defects and inconsistencies.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }
-    },
-    {
-      "id": 4,
-      "title": "Business Analyst",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for business analysts. We're open for intern and trainee business analysts. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking business analysts to join us. We welcome both interns and trainee business analysts, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5-5+ years of experience as a business analyst is advantageous.",
-          "Excellent communication and documentation skills.",
-          "A solid understanding of the process of capturing business needs and conducting requirement analysis.",
-          "The ability to analyze the business to understand its model and processes.",
-          "Basic knowledge of the Jira tool and Agile methodology is a plus.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 5,
-      "title": "iOS/Android Developer",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for iOS/Android developers. We're open for intern and trainee iOS/Android developers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking iOS/Android developers to join us. We welcome both interns and trainee iOS/Android developers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5-5+ years of experience as a software engineer is advantageous.",
-          "A good understanding of structured and unstructured databases (MySQL and DynamoDB).",
-          "Knowledge of the tech stack is an added advantage.",
-          "Experience in implementing well-known workflows.",
-          "The ability to learn new technologies and languages quickly.",
-          "Proficient in using code versioning tools, particularly Git.",
-          "Experience with JavaScript backend frameworks.",
-          "Strong time-management skills.",
-          "Experience with Restful API services.",
-          "Professional and precise communication skills.",
-          "Deep knowledge of Angular/Node.js/React practices and commonly used modules based on extensive work experience.",
-          "Strong logical thinking and problem-solving abilities.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 6,
-      "title": "UX/UI Designer",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for UX/UI Designers. We're open for intern and trainee UX/UI Designers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking UX/UI Designers to join us. We welcome both interns and trainee UX/UI Designers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1-5+ years of experience as a UX/UI designer is advantageous.",
-          "Excellent communication skills.",
-          "Proficiency in UX/UI design tools like Figma and Adobe Photoshop, along with skills in video editing, GIF animation, and software such as Adobe After Effects and Premiere Pro.",
-          "Experience in designing and creating videos like app explainer videos, product videos, 2D animation videos, corporate videos, etc.",
-          "Strong proficiency in After Effects, Premiere Pro, Illustrator, Corel Draw, and Adobe Photoshop.",
-          "Creative thinking and the ability to develop new design concepts, graphics, and layouts.",
-          "Previous working experience with tools like Adobe After Effects, Premiere Pro, Illustrator, or similar tools.",
-          "A solid understanding of current design trends for both mobile and web, with the ability to create seamless experiences across all platforms.",
-          "A good foundation in graphic design principles, typography, color, and styles.",
-          "The ability to adapt quickly to changes and deliver results.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 7,
-      "title": "DevOps Engineer",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for DevOps Engineers . We're open for intern and trainee DevOps Engineers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking DevOps Engineers to join us. We welcome both interns and trainee DevOps Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1-5+ years of experience as a DevOps engineer is advantageous.",
-          "Excellent communication skills and strong documentation skills.",
-          "Experience deploying applications in DevOps environments.",
-          "Hands-on experience with popular CI/CD tools such as Jenkins, Docker, and Kubernetes.",
-          "Proficient in scripting languages like JavaScript, React, and Node.js.",
-          "Knowledge of MySQL and NoSQL database administration.",
-          "Familiarity with AWS and other DevOps concepts.",
-          "Comfortable with DevOps commands and practices.",
-          "Working knowledge of open-source tools and version control systems, particularly Git.",
-          "Strong logical thinking and problem-solving abilities.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 8,
-      "title": "Product Owner",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for Product Owners. We're open for intern and trainee Product Owners. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking Product Owners to join us. We welcome both interns and trainee Product Owners, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, and GitHub.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5 - 5+ years of experience as a product owner or software engineer is advantageous.",
-          "A solid understanding of product ownership, management, and lifecycle.",
-          "The ability to fine-tune the product vision, keeping the product in line with business goals. You’ll create a product roadmap and communicate with stakeholders to understand business objectives.",
-          "Proficiency in prioritizing needs by juggling scope, budget, and time to prioritize projects while considering the needs and objectives of stakeholders.",
-          "The capability to manage the product backlog, map out dependencies, prioritize items based on overall strategy, and create a list of backlog items.",
-          "Experience in overseeing development stages, contributing to the planning, execution, and review of each sprint, and working with the team to refine and improve the development process.",
-          "A keen ability to anticipate client needs, understand market trends, and create customer journey maps.",
-          "The ability to act as the primary liaison, gaining buy-in from stakeholders and delivering clear instructions to developers.",
-          "Strong skills in evaluating product progress, being accountable for each stage of the development process, and determining whether the final project is acceptable.",
-          "Good time-management skills and professional, precise communication abilities.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 9,
-      "title": "Cyber Security Engineer",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for cyber security engineers. We're open for intern and trainee cyber security engineers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking Cyber Security Engineers to join us. We welcome both interns and trainee Cyber Security Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, and GitHub.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5 - 5+ years of experience as a software engineer.",
-          "A good understanding of structured and unstructured databases, such as MySQL and DynamoDB.",
-          "Knowledge of isomorphic React is an added advantage.",
-          "Experience in implementing well-known React workflows.",
-          "Ability to learn new technologies and languages quickly.",
-          "Proficient understanding of code versioning tools, such as Git.",
-          "Experience with JavaScript backend frameworks like Node.js.",
-          "Knowledge of cyber security concepts including red, purple, and blue teams.",
-          "Knowledge of ethical hacking and penetration testing.",
-          "Good time-management skills.",
-          "Experience with Restful API services and delivering complete front-end applications.",
-          "Professional, precise communication skills.",
-          "Deep knowledge of Angular/Node.js/React practices and commonly used modules based on extensive work experience.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 10,
-      "title": "AI Data Engineer",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for AI Data Engineers. We're open for intern and trainee AI Data Engineers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking AI Data Engineers to join us. We welcome both interns and trainee AI Data Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, and GitHub.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5 - 5+ years of experience as a data engineer.",
-          "A good understanding of structured and unstructured databases, such as MySQL and DynamoDB.",
-          "Knowledge of isomorphic React is an added advantage.",
-          "Experience in implementing well-known React workflows.",
-          "Ability to learn new technologies and languages quickly.",
-          "Proficient understanding of code versioning tools, such as Git.",
-          "Experience with JavaScript backend frameworks like Node.js.",
-          "Good time-management skills.",
-          "Experience with Restful API services and delivering complete front-end applications.",
-          "Professional, precise communication skills.",
-          "Deep knowledge of Angular/Node.js/React practices and commonly used modules based on extensive work experience.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 11,
-      "title": "IoT Software Engineer",
-      "experience": "Intern",
-      "category": "Engineering",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core development team and looking for IoT Software Engineers. We're open for intern and trainee IoT Software Engineers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking IoT Software Engineers to join us. We welcome both interns and trainee IoT Software Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, and GitHub.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5 - 5+ years of experience as an IoT software engineer.",
-          "A good understanding of structured and unstructured databases, such as MySQL and DynamoDB.",
-          "Knowledge of isomorphic React is an added advantage.",
-          "Experience in implementing well-known React workflows.",
-          "Ability to learn new technologies and languages quickly.",
-          "Proficient understanding of code versioning tools, such as Git.",
-          "Experience with JavaScript backend frameworks like Node.js.",
-          "Good time-management skills.",
-          "Experience with Restful API services and delivering complete front-end applications.",
-          "Professional, precise communication skills.",
-          "Deep knowledge of Angular/Node.js/React practices and commonly used modules based on extensive work experience.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 12,
-      "title": "Growth Hacker",
-      "experience": "Intern",
-      "category": "Growth",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core growth team and looking for Growth Hackers. We're open for intern and trainee Growth Hackers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Growth Hackers to join us. We welcome both interns and trainee Growth Hackers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5 - 5+ years of experience as a growth hacker.",
-          "Good written and verbal communication skills.",
-          "Sound knowledge of IT sales.",
-          "Knowledge about lead generation.",
-          "Understanding of the inbound and outbound sales process.",
-          "Logical thinking and the ability to explain software features clearly.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 13,
-      "title": "Business Developer",
-      "experience": "Intern",
-      "category": "Growth",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core growth team and looking for Business Developer. We're open for intern and trainee Business Developer. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Business Developers to join us. We welcome both interns and trainee Business Developers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5 - 5+ years of experience as a business developer.",
-          "Good written and verbal communication skills.",
-          "Sound knowledge of IT sales.",
-          "Knowledge about lead generation.",
-          "Understanding of the inbound and outbound sales process.",
-          "Logical thinking and the ability to explain software features clearly.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 14,
-      "title": "B2B Marketing & Sales",
-      "experience": "Intern",
-      "category": "Growth",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core growth team and looking for B2B Marketing & Sales. We're open for intern and trainee B2B Marketing & Sales. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking B2B Marketing & Sales professionals to join us. We welcome both interns and trainee B2B Marketing & Sales candidates, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1 - 5+ years of experience as a B2B Marketer, Sales, or SEO Analyst.",
-          "Excellent communication skills.",
-          "Plan and implement the overall SEO strategy, including On & Off-page SEO (Quality backlinks).",
-          "Experience with Google Analytics, Google Webmaster & Bing Webmaster tools.",
-          "Ability to create and manage inbound marketing strategies.",
-          "Analyze competition and provide suggestions for improvement.",
-          "Manage company's social media accounts.",
-          "Manage and improve the website and social media content.",
-          "Promote blogs and landing pages using off and on-page SEO strategies.",
-          "Generate keywords for both blog and landing pages.",
-          "Analyze and fix SEO issues on websites.",
-          "Stay updated with the latest industry trends and ensure that the company stays ahead of industry developments.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 15,
-      "title": "Business Developer",
-      "experience": "Intern",
-      "category": "Growth",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core growth team and looking for Business Developer. We're open for intern and trainee Business Developer. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Business Developers to join us. We welcome both interns and trainee Business Developers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "0.5 - 5+ years of experience as a business developer.",
-          "Good written and verbal communication skills.",
-          "Sound knowledge of IT sales.",
-          "Knowledge about lead generation.",
-          "Understanding of the inbound and outbound sales process.",
-          "Logical thinking and the ability to explain software features clearly.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll contact you as soon as possible to discuss the next steps.",
-        "extraInformation": [
-          "Education Level: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 16,
-      "title": "AI Data Marketing Analyst",
-      "experience": "Intern",
-      "category": "Growth",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core growth team and looking for AI Data Marketing Analyst. We're open for intern and trainee AI Data Marketing Analyst. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Performance Marketers (SEO, SEA, CRO) to join us. We welcome both interns and trainee Performance Marketers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1 - 5+ years of experience as a performance marketer.",
-          "Excellent communication skills.",
-          "As a performance marketer, you’ll work closely with the growth team to drive valuable performance outcomes.",
-          "Ability to simplify complex performance marketing concepts for broader understanding.",
-          "Strong attention to detail and impeccable grasp of the English language.",
-          "Basic knowledge of SEO, SEA, and CRO is required.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 17,
-      "title": "Performance Marketer (SEO, SEA, CRO)",
-      "experience": "Intern",
-      "category": "Growth",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core growth team and looking for Performance Marketers (SEO, SEA, CRO). We're open for intern and trainee Performance Marketers. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Marketing Automation & CRM specialists to join us. We welcome both interns and trainee specialists, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1 - 5+ years of experience as a Marketing Automation & CRM specialist.",
-          "Excellent communication skills.",
-          "As a Marketing Automation & CRM specialist, you’ll work closely with the growth team to create valuable automations.",
-          "Ability to simplify complex Marketing Automation concepts for broader understanding.",
-          "Strong attention to detail and impeccable grasp of the English language.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 18,
-      "title": "Marketing Automation & CRM",
-      "experience": "Intern",
-      "category": "Growth",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core growth team and looking for Marketing Automation & CRM specialisten. We're open for intern and trainee Marketing Automation & CRM specialisten. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently seeking a Rental Expert to join our team. We welcome both interns and trainees who are eager to develop into a Rental Expert role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1 - 5+ years of experience in holiday rental is a strong advantage.",
-          "Excellent communication skills.",
-          "As a Rental Expert, you’ll work closely with the growth team to create value.",
-          "Strong attention to detail and an impeccable grasp of both Dutch and English. Knowledge of German and French is a plus.",
-          "Excellent verbal and written communication skills.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 19,
-      "title": "Rental Expert",
-      "experience": "Intern",
-      "category": "Growth",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are looking for a Rental Expert. We're open for intern and trainee who wants to develop to a Rental Expert. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently looking for a Success Specialist to join our team. We welcome both interns and trainees who are eager to develop into a Success Specialist role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1 - 5+ years of experience in holiday rental is a strong advantage.",
-          "Excellent communication skills.",
-          "As a Success Specialist, you’ll work closely with the growth team to create value.",
-          "Strong attention to detail and an impeccable grasp of both Dutch and English. Knowledge of German and French is a plus.",
-          "Excellent verbal and written communication skills.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 20,
-      "title": "Finance - IT Specialist",
-      "experience": "Intern",
-      "category": "Finance",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the finance team and looking for a Finance - IT specialist. We're open for intern and trainee Finance - IT specialist. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our finance team and looking for a Finance - IT Specialist. We welcome both interns and trainees who are eager to develop into this role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1 - 5+ years of experience in Finance and IT is a strong advantage.",
-          "Excellent communication skills.",
-          "As a Finance - IT Specialist, you’ll work closely with all stakeholders.",
-          "Ability to simplify complex finance and IT topics.",
-          "Strong attention to detail and an impeccable grasp of the English language.",
-          "Excellent verbal and written communication skills.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
-    },
-    {
-      "id": 21,
-      "title": "Legal - IT Specialist",
-      "experience": "Intern",
-      "category": "Legal",
-      "location": "Haarlem, NL",
-      "model": "Hybrid/Remote",
-      "description": "Currently we are forming the core legal team and looking for a Legal - IT specialist. We're open for intern and trainee Legal - IT specialist. Interested? Send a message or read more...",
-      "details": {
-        "jobDescription": "This is a remote or hybrid position. We are currently forming our core legal team and looking for a Legal - IT Specialist. We welcome both interns and trainees who are eager to develop into this role. If you're interested, send us a message or read on for more details about the position.",
-        "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
-        "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
-        "preferredExperience": [
-          "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
-          "Quality assurance, both automated and manual testing",
-          "DevOps and cloud management",
-          "Infrastructure automation",
-          "Continuous integration and deployment (CI/CD)",
-          "Cybersecurity testing"
-        ],
-        "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
-        "requirements": [
-          "A university-level working and thinking mindset is a plus.",
-          "1 - 5+ years of experience in legal and IT is a strong advantage.",
-          "Excellent communication skills.",
-          "As a Legal - IT Specialist, you’ll work closely with all stakeholders.",
-          "Ability to simplify complex legal topics.",
-          "Strong attention to detail and an impeccable grasp of the English language.",
-          "Excellent verbal and written communication skills.",
-          "Strong logical thinking and problem-solving skills.",
-          "A good team player who is highly interested in everything related to the domain.",
-          "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
-        ],
-        "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
-        "extraInformation": [
-          "Education: All levels/University.",
-          "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
-          "Working hours per week: 10 - 40+.",
-          "Employment types: Internship, Traineeship, Freelance, and Contract.",
-          "Responsibilities: To be discussed in consultation."
-        ]
-      }    
+  {
+    "id": 1,
+    "title": "HR - IT Recruiter",
+    "experience": "Intern",
+    "category": "People",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the people team and looking for HR - IT Recruiters. We're open for intern and trainee HR - IT Recruiters. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are in the process of building our People team and are actively looking for HR - IT Recruiters to join us. We're open to both interns and trainee HR - IT Recruiters, providing an excellent opportunity to grow within the role. Interested? Send us a message or read on to learn more about the position.",
+      "responsibilities": "Initially, we will work together to explore how we can create a win-win situation that could lead to you becoming a permanent member of our team. Your journey will begin with a trial period, lasting anywhere from 1 to 6 months, during which we will assess our collaboration and your fit with the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You'll play a crucial role in a team of experienced digital professionals, working in a company that helps individuals, organizations, and stakeholders drive business growth through digital expertise. Our team is informal and fun, and we offer ample opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1-5+ years of experience as an HR - IT recruiter is a strong advantage.",
+        "Excellent communication and interpersonal skills are essential.",
+        "Solid knowledge of IT recruitment, with experience hiring web developers and mobile app developers.",
+        "A talent for sourcing candidates through various channels such as job portals, advertisements, headhunting, networking, and employee referrals.",
+        "Analytical and proficient in utilizing different recruitment channels, job portals, and social networking sites to find talent.",
+        "Ability to understand role requirements, screen profiles effectively, and shortlist candidates for preliminary interviews.",
+        "Skilled in developing successful sourcing strategies to reach both active and passive job seekers.",
+        "Strong ability to build rapport with candidates throughout the interview process, ensuring a positive experience for them.",
+        "Consistently updating the internal database with new resumes and contributing innovative recruitment techniques.",
+        "Logical thinking, problem-solving abilities, and being a strong team player are key qualities we value.",
+        "A strong interest in the domain and a meticulous, loyal, energetic, and diligent approach to your work."
+      ],
+      "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll be in touch as soon as possible to discuss the next steps.",
+      "extraInformation": [
+        "Education level: All levels/University",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available",
+        "Working hours per week: 10 - 40+",
+        "Employment types: Internship, Traineeship, Freelance, and Contract",
+        "Responsibilities: To be discussed in consultation"
+      ]
     }
-  ]
+  },
+  {
+    "id": 2,
+    "title": "Software Engineer (Javascript, AWS, Fullstack)",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for javascript software engineers (fullstack). We're open for intern and trainee software engineers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking JavaScript software engineers (fullstack) to join us. We welcome both interns and trainee software engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll collaborate to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our partnership and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play an integral role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5-5+ years of experience as a software engineer is advantageous.",
+        "A solid understanding of structured and unstructured databases (MySQL and DynamoDB).",
+        "Familiarity with isomorphic React is a plus.",
+        "Experience in implementing well-known React workflows.",
+        "The ability to learn new technologies and languages quickly.",
+        "Proficient in using code versioning tools, particularly Git.",
+        "Experience with JavaScript backend frameworks like Node.js.",
+        "Strong time-management skills and the ability to deliver a complete front-end application.",
+        "Professional and precise communication skills.",
+        "Deep knowledge of Angular/Node.js/React practices and commonly used modules, based on extensive work experience.",
+        "Proficient in JavaScript, with a good understanding of built-in methods for arrays and objects.",
+        "Strong logical thinking and problem-solving abilities.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 3,
+    "title": "Software Tester",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for software testers. We're open for intern and trainee software testers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking software testers to join us. We welcome both interns and trainee software testers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5-5+ years of experience as a software tester is advantageous.",
+        "Strong knowledge in manual testing and test case preparation.",
+        "Good written and verbal communication skills.",
+        "Excellent analytical and documentation skills to present findings to team members.",
+        "Ability to analyze requirements for validity and feasibility.",
+        "Experience in executing all levels of testing and in detecting, tracking defects and inconsistencies.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "title": "Business Analyst",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for business analysts. We're open for intern and trainee business analysts. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking business analysts to join us. We welcome both interns and trainee business analysts, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5-5+ years of experience as a business analyst is advantageous.",
+        "Excellent communication and documentation skills.",
+        "A solid understanding of the process of capturing business needs and conducting requirement analysis.",
+        "The ability to analyze the business to understand its model and processes.",
+        "Basic knowledge of the Jira tool and Agile methodology is a plus.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "title": "iOS/Android Developer",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for iOS/Android developers. We're open for intern and trainee iOS/Android developers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking iOS/Android developers to join us. We welcome both interns and trainee iOS/Android developers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5-5+ years of experience as a software engineer is advantageous.",
+        "A good understanding of structured and unstructured databases (MySQL and DynamoDB).",
+        "Knowledge of the tech stack is an added advantage.",
+        "Experience in implementing well-known workflows.",
+        "The ability to learn new technologies and languages quickly.",
+        "Proficient in using code versioning tools, particularly Git.",
+        "Experience with JavaScript backend frameworks.",
+        "Strong time-management skills.",
+        "Experience with Restful API services.",
+        "Professional and precise communication skills.",
+        "Deep knowledge of Angular/Node.js/React practices and commonly used modules based on extensive work experience.",
+        "Strong logical thinking and problem-solving abilities.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 6,
+    "title": "UX/UI Designer",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for UX/UI Designers. We're open for intern and trainee UX/UI Designers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking UX/UI Designers to join us. We welcome both interns and trainee UX/UI Designers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1-5+ years of experience as a UX/UI designer is advantageous.",
+        "Excellent communication skills.",
+        "Proficiency in UX/UI design tools like Figma and Adobe Photoshop, along with skills in video editing, GIF animation, and software such as Adobe After Effects and Premiere Pro.",
+        "Experience in designing and creating videos like app explainer videos, product videos, 2D animation videos, corporate videos, etc.",
+        "Strong proficiency in After Effects, Premiere Pro, Illustrator, Corel Draw, and Adobe Photoshop.",
+        "Creative thinking and the ability to develop new design concepts, graphics, and layouts.",
+        "Previous working experience with tools like Adobe After Effects, Premiere Pro, Illustrator, or similar tools.",
+        "A solid understanding of current design trends for both mobile and web, with the ability to create seamless experiences across all platforms.",
+        "A good foundation in graphic design principles, typography, color, and styles.",
+        "The ability to adapt quickly to changes and deliver results.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 7,
+    "title": "DevOps Engineer",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for DevOps Engineers . We're open for intern and trainee DevOps Engineers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking DevOps Engineers to join us. We welcome both interns and trainee DevOps Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1-5+ years of experience as a DevOps engineer is advantageous.",
+        "Excellent communication skills and strong documentation skills.",
+        "Experience deploying applications in DevOps environments.",
+        "Hands-on experience with popular CI/CD tools such as Jenkins, Docker, and Kubernetes.",
+        "Proficient in scripting languages like JavaScript, React, and Node.js.",
+        "Knowledge of MySQL and NoSQL database administration.",
+        "Familiarity with AWS and other DevOps concepts.",
+        "Comfortable with DevOps commands and practices.",
+        "Working knowledge of open-source tools and version control systems, particularly Git.",
+        "Strong logical thinking and problem-solving abilities.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 8,
+    "title": "Product Owner",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for Product Owners. We're open for intern and trainee Product Owners. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking Product Owners to join us. We welcome both interns and trainee Product Owners, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, and GitHub.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5 - 5+ years of experience as a product owner or software engineer is advantageous.",
+        "A solid understanding of product ownership, management, and lifecycle.",
+        "The ability to fine-tune the product vision, keeping the product in line with business goals. You’ll create a product roadmap and communicate with stakeholders to understand business objectives.",
+        "Proficiency in prioritizing needs by juggling scope, budget, and time to prioritize projects while considering the needs and objectives of stakeholders.",
+        "The capability to manage the product backlog, map out dependencies, prioritize items based on overall strategy, and create a list of backlog items.",
+        "Experience in overseeing development stages, contributing to the planning, execution, and review of each sprint, and working with the team to refine and improve the development process.",
+        "A keen ability to anticipate client needs, understand market trends, and create customer journey maps.",
+        "The ability to act as the primary liaison, gaining buy-in from stakeholders and delivering clear instructions to developers.",
+        "Strong skills in evaluating product progress, being accountable for each stage of the development process, and determining whether the final project is acceptable.",
+        "Good time-management skills and professional, precise communication abilities.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 9,
+    "title": "Cyber Security Engineer",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for cyber security engineers. We're open for intern and trainee cyber security engineers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking Cyber Security Engineers to join us. We welcome both interns and trainee Cyber Security Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, and GitHub.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5 - 5+ years of experience as a software engineer.",
+        "A good understanding of structured and unstructured databases, such as MySQL and DynamoDB.",
+        "Knowledge of isomorphic React is an added advantage.",
+        "Experience in implementing well-known React workflows.",
+        "Ability to learn new technologies and languages quickly.",
+        "Proficient understanding of code versioning tools, such as Git.",
+        "Experience with JavaScript backend frameworks like Node.js.",
+        "Knowledge of cyber security concepts including red, purple, and blue teams.",
+        "Knowledge of ethical hacking and penetration testing.",
+        "Good time-management skills.",
+        "Experience with Restful API services and delivering complete front-end applications.",
+        "Professional, precise communication skills.",
+        "Deep knowledge of Angular/Node.js/React practices and commonly used modules based on extensive work experience.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 10,
+    "title": "AI Data Engineer",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for AI Data Engineers. We're open for intern and trainee AI Data Engineers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking AI Data Engineers to join us. We welcome both interns and trainee AI Data Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, and GitHub.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5 - 5+ years of experience as a data engineer.",
+        "A good understanding of structured and unstructured databases, such as MySQL and DynamoDB.",
+        "Knowledge of isomorphic React is an added advantage.",
+        "Experience in implementing well-known React workflows.",
+        "Ability to learn new technologies and languages quickly.",
+        "Proficient understanding of code versioning tools, such as Git.",
+        "Experience with JavaScript backend frameworks like Node.js.",
+        "Good time-management skills.",
+        "Experience with Restful API services and delivering complete front-end applications.",
+        "Professional, precise communication skills.",
+        "Deep knowledge of Angular/Node.js/React practices and commonly used modules based on extensive work experience.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 11,
+    "title": "IoT Software Engineer",
+    "experience": "Intern",
+    "category": "Engineering",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core development team and looking for IoT Software Engineers. We're open for intern and trainee IoT Software Engineers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core development team and are actively seeking IoT Software Engineers to join us. We welcome both interns and trainee IoT Software Engineers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, and GitHub.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5 - 5+ years of experience as an IoT software engineer.",
+        "A good understanding of structured and unstructured databases, such as MySQL and DynamoDB.",
+        "Knowledge of isomorphic React is an added advantage.",
+        "Experience in implementing well-known React workflows.",
+        "Ability to learn new technologies and languages quickly.",
+        "Proficient understanding of code versioning tools, such as Git.",
+        "Experience with JavaScript backend frameworks like Node.js.",
+        "Good time-management skills.",
+        "Experience with Restful API services and delivering complete front-end applications.",
+        "Professional, precise communication skills.",
+        "Deep knowledge of Angular/Node.js/React practices and commonly used modules based on extensive work experience.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 12,
+    "title": "Growth Hacker",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core growth team and looking for Growth Hackers. We're open for intern and trainee Growth Hackers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Growth Hackers to join us. We welcome both interns and trainee Growth Hackers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5 - 5+ years of experience as a growth hacker.",
+        "Good written and verbal communication skills.",
+        "Sound knowledge of IT sales.",
+        "Knowledge about lead generation.",
+        "Understanding of the inbound and outbound sales process.",
+        "Logical thinking and the ability to explain software features clearly.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 13,
+    "title": "Business Developer",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core growth team and looking for Business Developer. We're open for intern and trainee Business Developer. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Business Developers to join us. We welcome both interns and trainee Business Developers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "0.5 - 5+ years of experience as a business developer.",
+        "Good written and verbal communication skills.",
+        "Sound knowledge of IT sales.",
+        "Knowledge about lead generation.",
+        "Understanding of the inbound and outbound sales process.",
+        "Logical thinking and the ability to explain software features clearly.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 14,
+    "title": "B2B Marketing & Sales",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core growth team and looking for B2B Marketing & Sales. We're open for intern and trainee B2B Marketing & Sales. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking B2B Marketing & Sales professionals to join us. We welcome both interns and trainee B2B Marketing & Sales candidates, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience as a B2B Marketer, Sales, or SEO Analyst.",
+        "Excellent communication skills.",
+        "Plan and implement the overall SEO strategy, including On & Off-page SEO (Quality backlinks).",
+        "Experience with Google Analytics, Google Webmaster & Bing Webmaster tools.",
+        "Ability to create and manage inbound marketing strategies.",
+        "Analyze competition and provide suggestions for improvement.",
+        "Manage company's social media accounts.",
+        "Manage and improve the website and social media content.",
+        "Promote blogs and landing pages using off and on-page SEO strategies.",
+        "Generate keywords for both blog and landing pages.",
+        "Analyze and fix SEO issues on websites.",
+        "Stay updated with the latest industry trends and ensure that the company stays ahead of industry developments.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 15,
+    "title": "AI Data Marketing Analyst",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core growth team and looking for AI Data Marketing Analyst. We're open for intern and trainee AI Data Marketing Analyst. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Performance Marketers (SEO, SEA, CRO) to join us. We welcome both interns and trainee Performance Marketers, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience as a performance marketer.",
+        "Excellent communication skills.",
+        "As a performance marketer, you’ll work closely with the growth team to drive valuable performance outcomes.",
+        "Ability to simplify complex performance marketing concepts for broader understanding.",
+        "Strong attention to detail and impeccable grasp of the English language.",
+        "Basic knowledge of SEO, SEA, and CRO is required.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 16,
+    "title": "Performance Marketer (SEO, SEA, CRO)",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core growth team and looking for Performance Marketers (SEO, SEA, CRO). We're open for intern and trainee Performance Marketers. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Marketing Automation & CRM specialists to join us. We welcome both interns and trainee specialists, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience as a Marketing Automation & CRM specialist.",
+        "Excellent communication skills.",
+        "As a Marketing Automation & CRM specialist, you’ll work closely with the growth team to create valuable automations.",
+        "Ability to simplify complex Marketing Automation concepts for broader understanding.",
+        "Strong attention to detail and impeccable grasp of the English language.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver.",
+        "Basic knowledge of SEO, SEA, and CRO is required."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 17,
+    "title": "Marketing Automation & CRM",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core growth team and looking for Marketing Automation & CRM specialists. We're open for intern and trainee Marketing Automation & CRM specialists. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core growth team and are actively seeking Marketing Automation & CRM specialists to join us. We welcome both interns and trainee specialists, offering an excellent opportunity to develop and grow within the role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To start, we'll work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent team member. Your journey will begin with a trial period, which can last from 1 to 6 months, during which we'll evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the potential for further compensation or stock options depending on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You’ll play a crucial role in a team of experienced digital professionals, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience as a Marketing Automation & CRM specialist.",
+        "Excellent communication skills.",
+        "As a Marketing Automation & CRM specialist, you’ll work closely with the growth team to create valuable automations.",
+        "Ability to simplify complex Marketing Automation concepts for broader understanding.",
+        "Strong attention to detail and impeccable grasp of the English language.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll contact you as soon as possible to discuss the next steps.",
+      "extraInformation": [
+        "Education Level: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working Hours Per Week: 10 - 40+.",
+        "Employment Types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 18,
+    "title": "Rental Expert",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are looking for a Rental Expert. We're open for intern and trainee who wants to develop to a Rental Expert. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently looking for a Success Specialist to join our team. We welcome both interns and trainees who are eager to develop into a Success Specialist role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience in holiday rental is a strong advantage.",
+        "Excellent communication skills.",
+        "As a Success Specialist, you’ll work closely with the growth team to create value.",
+        "Strong attention to detail and an impeccable grasp of both Dutch and English. Knowledge of German and French is a plus.",
+        "Excellent verbal and written communication skills.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 19,
+    "title": "Finance - IT Specialist",
+    "experience": "Intern",
+    "category": "Finance",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the finance team and looking for a Finance - IT specialist. We're open for intern and trainee Finance - IT specialist. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our finance team and looking for a Finance - IT Specialist. We welcome both interns and trainees who are eager to develop into this role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience in Finance and IT is a strong advantage.",
+        "Excellent communication skills.",
+        "As a Finance - IT Specialist, you’ll work closely with all stakeholders.",
+        "Ability to simplify complex finance and IT topics.",
+        "Strong attention to detail and an impeccable grasp of the English language.",
+        "Excellent verbal and written communication skills.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 20,
+    "title": "Legal - IT Specialist",
+    "experience": "Intern",
+    "category": "Legal",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently we are forming the core legal team and looking for a Legal - IT specialist. We're open for intern and trainee Legal - IT specialist. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently forming our core legal team and looking for a Legal - IT Specialist. We welcome both interns and trainees who are eager to develop into this role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "technologies": "On the frontend, we primarily use React (Native), while our backend is built with Node.js. Our client platforms include iOS, Android, and Web, with DynamoDB serving as our primary datastore. We monitor performance using CloudWatch, and our infrastructure is hosted on AWS with a cloud-agnostic approach. For version control, we rely on GitHub, and the tools we use include Slack, Asana, Stripe, Jira, and Confluence.",
+      "preferredExperience": [
+        "Machine Learning (ML), Artificial Intelligence (AI), Python, or Business Intelligence (BI)",
+        "Quality assurance, both automated and manual testing",
+        "DevOps and cloud management",
+        "Infrastructure automation",
+        "Continuous integration and deployment (CI/CD)",
+        "Cybersecurity testing"
+      ],
+      "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience in legal and IT is a strong advantage.",
+        "Excellent communication skills.",
+        "As a Legal - IT Specialist, you’ll work closely with all stakeholders.",
+        "Ability to simplify complex legal topics.",
+        "Strong attention to detail and an impeccable grasp of the English language.",
+        "Excellent verbal and written communication skills.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the perfect candidate for this position and do you meet the requirements? Then apply and we will contact you as soon as possible!",
+      "extraInformation": [
+        "Education: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working hours per week: 10 - 40+.",
+        "Employment types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  },
+  {
+    "id": 22,
+    "title": "Success Specialist",
+    "experience": "Intern",
+    "category": "Growth",
+    "location": "Haarlem, NL",
+    "model": "Hybrid/Remote",
+    "description": "Currently, we are looking for a Success Specialist to join our team. We're open to interns and trainees interested in growing into the role. Interested? Send a message or read more...",
+    "details": {
+      "jobDescription": "This is a remote or hybrid position. We are currently looking for a Success Specialist to join our team. We welcome both interns and trainees who are eager to develop into a Success Specialist role. If you're interested, send us a message or read on for more details about the position.",
+      "responsibilities": "To begin, we will work together to establish a mutually beneficial arrangement that could lead to you becoming a permanent member of our team. Your journey will start with a trial period, lasting from 1 to 6 months, during which we will evaluate our collaboration and your fit within the team.",
+      "offerings": "During the trial or internship period, you'll receive a fee, with the possibility of further compensation or stock options based on your skills and experience. Additionally, we provide the knowledge, tools, and support you need to stay healthy, safe, and prepared for the future, year-round. You will play a crucial role within a team of experienced digital thinkers and doers, working in a company dedicated to helping individuals, organizations, and stakeholders grow their business through digital expertise. Our team is informal and fun, with plenty of opportunities for professional development.",
+      "requirements": [
+        "A university-level working and thinking mindset is a plus.",
+        "1 - 5+ years of experience in holiday rental is a strong advantage.",
+        "Excellent communication skills.",
+        "As a Success Specialist, you’ll work closely with the growth team to create value.",
+        "Strong attention to detail and an impeccable grasp of both Dutch and English. Knowledge of German and French is a plus.",
+        "Excellent verbal and written communication skills.",
+        "Strong logical thinking and problem-solving skills.",
+        "A good team player who is highly interested in everything related to the domain.",
+        "Meticulous, loyal, energetic, intelligent, diligent, and a problem solver."
+      ],
+      "apply": "Are you the ideal candidate for this position and do you meet the requirements? If so, apply today, and we’ll contact you as soon as possible to discuss the next steps.",
+      "extraInformation": [
+        "Education Level: All levels/University.",
+        "Location: Haarlem, The Netherlands, with hybrid or remote options available.",
+        "Working Hours Per Week: 10 - 40+.",
+        "Employment Types: Internship, Traineeship, Freelance, and Contract.",
+        "Responsibilities: To be discussed in consultation."
+      ]
+    }
+  }
+]
