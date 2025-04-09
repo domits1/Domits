@@ -3,7 +3,7 @@ import ImagePreview from "../components/ImagePreview";
 import usePhotos from "../hooks/usePropertyPhotos";
 import OnboardingButton from "../components/OnboardingButton";
 import { useRef, useState } from "react";
-import "../styles/PhotoVieuw.css";
+import "../styles/PhotoVieuw.scss";
 
 // step 7
 function PhotosView() {
@@ -80,7 +80,10 @@ function PhotosView() {
               />
             ))}
             {images.length < 5 && (
-              <div className="small-photo add-more-box" onClick={handleBoxClick}>
+              <div
+                className="small-photo add-more-box"
+                onClick={handleBoxClick}
+              >
                 <p>Add More +</p>
               </div>
             )}
