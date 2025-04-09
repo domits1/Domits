@@ -1,5 +1,5 @@
 .booked-nights-card {
-    width: 320px;
+    width: 300px;
     padding: 20px;
     margin: 20px auto;
     border: 1px solid #ddd;
@@ -7,7 +7,7 @@
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     background-color: #f9f9f9;
     text-align: center;
-    height: 460px;
+    height: 440px;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 
 }

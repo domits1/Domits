@@ -799,7 +799,7 @@ const Homepage = () => {
         <button className="arrow-button" onClick={handlePreviousReview}>
           &lt;
         </button>
-        <div className="review-list">
+        {/* <div className="review-list">
           {visibleReviews.map((review, index) => (
             <div className="review-card" key={index}>
               <img
@@ -813,10 +813,10 @@ const Homepage = () => {
               <p className="review-text">{review.text}</p>
             </div>
           ))}
-        </div>
-        <button className="arrow-button" onClick={handleNextReview}>
+        </div> */}
+        {/* <button className="arrow-button" onClick={handleNextReview}>
           &gt;
-        </button>
+        </button> */}
       </div>
       <div className="domits-communityContainer">
         <h2 className="domits-communityHead">Need help? Join the community</h2>
