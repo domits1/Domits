@@ -136,7 +136,7 @@ $border-hover-color: #007bff;
   cursor: pointer;
   transition: border-color 0.3s ease, background-color 0.3s ease;
 
-  :hover {
+  &:hover {
     border-color: $border-hover-color;
     background-color: #f8fafb;
     color: $border-hover-color;
