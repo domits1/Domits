@@ -10,9 +10,7 @@ import RulesContainer from "./rulesContainer";
 const PropertyContainer = ({ property }) => {
   return (
     <div className="property-container">
-      <section className="image-section">
-        <ImageGallery images={property.images} />
-      </section>
+      <ImageGallery images={property.images} />
       <PricingPerNight pricing={property.pricing} />
       <GeneralDetails generalDetails={property.generalDetails} />
       <Description description={property.property.description} />

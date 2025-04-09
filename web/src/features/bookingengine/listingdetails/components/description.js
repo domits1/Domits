@@ -17,7 +17,7 @@ const Description = ({ description }) => {
   }, [description]);
 
   return (
-    <div>
+    <div className="description-container">
       <div
         ref={descRef}
         className={`description ${expanded ? "expanded" : "collapsed"}`}

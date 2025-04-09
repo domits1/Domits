@@ -3,7 +3,7 @@ import Rating from "./rating";
 
 const ImageGallery = ({ images }) => {
   return (
-    <div>
+    <section className="image-section">
       <div className="image-gallery">
         <img
           className="main-image"
@@ -27,7 +27,7 @@ const ImageGallery = ({ images }) => {
       </div>
       <Rating />
       <div className="host-name">Hosted by Huub Homer</div>
-    </div>
+    </section>
   );
 };
 

@@ -8,7 +8,7 @@ const AmenitiesContainer = ({amenityIds}) => {
     const featuredAmenities = amenities.filter(amenity => amenity.category === "Essentials");
 
     return (
-      <div>
+      <div className="amenities-container">
         <p className="amenities-title">This place offers the following:</p>
         <div className="essential-amenities-container">
           {featuredAmenities.map((amenity) => {

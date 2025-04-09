@@ -21,7 +21,7 @@ const RulesContainer = ({ rules, checkIn }) => {
   };
 
   return (
-    <div>
+    <div className="rules-container">
       <p className="rules-title">House rules:</p>
       <p className="rules">
         {rules.map((rule, index) => formatRule(rule)).join(" - ")}
