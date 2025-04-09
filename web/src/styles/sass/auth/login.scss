@@ -1,135 +1,161 @@
-.loginLogo {
-  width: 15%;
-  margin-top: 25px;
-}
+// =======================
+// Variables
+// =======================
 
-.loginButton {
+$primary-color: #6fb873;
+$secondary-color: #4a86c3;
+$error-bg: red;
+$error-border: darkred;
+$text-color: black;
+$link-hover: royalblue;
+
+$font-family-primary: 'Kanit', sans-serif;
+
+$font-size-lg: 30px;
+$font-size-md: 18px;
+$font-size-sm: 14px;
+
+$padding-btn: 8px 15px;
+$padding-input: 10px;
+
+$radius: 5px;
+
+// =======================
+// Mixins
+// =======================
+
+@mixin button-style($bg-color) {
   width: 100%;
-  padding: 8px 15px;
-  background: var(--primary-color);
-  border-radius: 5px;
+  padding: $padding-btn;
+  background: $bg-color;
+  border-radius: $radius;
   border: none;
   box-shadow: none;
   color: white;
-  font-size: 18px;
-  cursor: pointer; 
-  margin-top: 15px;
-}
-
-.loginButton:hover {
-  background: #6fb873;
-}
-
-.registerButtonLogin {
-  width: 100%;
-  padding: 8px 15px;
-  background: var(--secondary-color);
-  box-shadow: none;
-  border-radius: 5px;
-  border: none;
-  color: white;
-  font-size: 18px;
-  display: block;
-  text-align: center;
-  text-decoration: none; 
+  font-size: $font-size-md;
   cursor: pointer;
   margin-top: 15px;
 }
 
-.registerButtonLogin:hover {
-  background: #4a86c3;
-}
-
-.loginTitle {
-  color: black;
-  font-size: 30px;
-  font-family: 'Kanit', sans-serif;
-  font-weight: 400;
-  line-height: 54px;
-  word-wrap: break-word;
-  margin-top: 40px;
-}
+// =======================
+// Styles
+// =======================
 
 .loginContainer {
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  
+
+  .loginLogo {
+    width: 15%;
+    margin-top: 25px;
+  }
+
+  .loginTitle {
+    color: $text-color;
+    font-size: $font-size-lg;
+    font-family: $font-family-primary;
+    font-weight: 400;
+    line-height: 54px;
+    word-wrap: break-word;
+    margin-top: 40px;
+  }
+
+  .loginForm {
+    min-width: 373px;
+    width: 100%;
+    padding: 15px 30px;
+    border-radius: $radius;
+    margin-bottom: 50px;
+    box-sizing: border-box;
+
+    label {
+      font-size: $font-size-md;
+    }
+
+    .loginInput {
+      width: 100%;
+      height: auto;
+      padding: $padding-btn;
+      margin-top: 10px;
+      margin-bottom: 10px;
+      background: white;
+      border-radius: $radius;
+      border: 1px solid $primary-color;
+      justify-content: flex-start;
+      align-items: center;
+      display: inline-flex;
+      box-sizing: border-box;
+    }
+
+    .passwordContainer {
+      position: relative;
+
+      .togglePasswordButton {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+
+      .loginInput {
+        padding: $padding-input;
+      }
+    }
+
+    .loginButton {
+      @include button-style($primary-color);
+
+      &:hover {
+        background: $primary-color;
+      }
+    }
+
+    .registerButtonLogin {
+      @include button-style($secondary-color);
+
+      &:hover {
+        background: $secondary-color;
+      }
+    }
+
+    .errorText {
+      margin-top: 10px;
+      margin-bottom: 10px;
+      padding: $padding-btn;
+      text-align: center;
+      border: 1px solid $error-border;
+      background: $error-bg;
+      opacity: 0.7;
+      color: white;
+      border-radius: $radius;
+    }
+
+    .forgotPasswordText {
+      &:hover {
+        color: $link-hover;
+        cursor: pointer;
+      }
+    }
+
+    .noAccountText {
+      color: $text-color;
+      margin-top: 20px;
+      font-size: $font-size-sm;
+      font-family: $font-family-primary;
+      font-weight: 400;
+      line-height: 18px;
+      word-wrap: break-word;
+      align-self: flex-start;
+    }
+  }
 }
 
-.loginForm {
-  min-width: 373px;
-  width: 100%;
-  padding: 15px 30px;
-  border-radius: 5px;
-  margin-bottom: 50px;
-  box-sizing: border-box;
-}
-
-label {
-  font-size: 18px;
-}
-
-.loginInput {
-  width: 100%;
-  height: auto;
-  padding: 8px 15px;
-  margin-top: 10px;
-  margin-bottom: 10px;
-  background: white;
-  border-radius: 5px;
-  border: 1px solid var(--primary-color);
-  justify-content: flex-start;
-  align-items: center;
-  display: inline-flex;
-}
 .emailSection {
   padding: 6rem;
   margin-bottom: 15%;
-}
-.forgotPasswordText:hover {
-  color: royalblue;
-  cursor: pointer;
-}
-.noAccountText {
-  color: black;
-  margin-top: 20px;
-  font-size: 14px;
-  font-family: 'Kanit', sans-serif;
-  font-weight: 400;
-  line-height: 18px;
-  word-wrap: break-word;
-  align-self: flex-start;
-}
-
-.errorText {
-  margin-top: 10px;
-  margin-bottom: 10px;
-  padding: 8px 15px;
-  text-align: center;
-  border: 1px solid darkred;
-  background: red;
-  opacity: 0.7;
-  color: white;
-  border-radius: 5px;
-}
-.passwordContainer {
-  position: relative;
-}
-
-.loginInput {
-  width: 100%;
-  padding: 10px;
-  box-sizing: border-box;
-}
-
-.togglePasswordButton {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
 }
