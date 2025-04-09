@@ -63,9 +63,6 @@ Liefst iemand die je code al kent, maar bijvoorbeeld, kunnen ook:
 - Kacper
 - Raman
 
-## Additional Information
-Additional Info: [Add any additional information here]
-
 ## Keep or delete my branch
 - [x] Delete my branch
 - [ ] Keep my branch
